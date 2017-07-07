@@ -94,11 +94,11 @@ module elpa_abstract_impl
       procedure, private :: elpa_get_private_integer
       procedure, private :: elpa_get_private_double
 
-      procedure, private :: elpa_set_integer                     !< private methods to implement the setting of an integer/double key/value pair
-      procedure, private :: elpa_set_double
+      procedure, public :: elpa_set_integer                      !< private methods to implement the setting of an integer/double key/value pair
+      procedure, public :: elpa_set_double
 
-      procedure, private :: elpa_get_integer                     !< private methods to implement the querry of an integer/double key/value pair
-      procedure, private :: elpa_get_double
+      procedure, public :: elpa_get_integer                      !< private methods to implement the querry of an integer/double key/value pair
+      procedure, public :: elpa_get_double
 
   end type
 

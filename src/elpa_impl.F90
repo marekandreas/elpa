@@ -81,46 +81,49 @@ module elpa_impl
      procedure, public :: timer_stop => elpa_timer_stop
 
 
-     !> \brief the private methods
+     !> \brief the implemenation methods
 
-     procedure, private :: elpa_eigenvectors_d                  !< private methods to implement the solve step for real/complex
-                                                                !< double/single matrices
-     procedure, private :: elpa_eigenvectors_f
-     procedure, private :: elpa_eigenvectors_dc
-     procedure, private :: elpa_eigenvectors_fc
+     procedure, public :: elpa_eigenvectors_d                  !< public methods to implement the solve step for real/complex
+                                                               !< double/single matrices
+     procedure, public :: elpa_eigenvectors_f
+     procedure, public :: elpa_eigenvectors_dc
+     procedure, public :: elpa_eigenvectors_fc
 
-     procedure, private :: elpa_eigenvalues_d                   !< private methods to implement the solve step for real/complex
-                                                                !< double/single matrices; only the eigenvalues are computed
-     procedure, private :: elpa_eigenvalues_f
-     procedure, private :: elpa_eigenvalues_dc
-     procedure, private :: elpa_eigenvalues_fc
+     procedure, public :: elpa_eigenvalues_d                   !< public methods to implement the solve step for real/complex
+                                                               !< double/single matrices; only the eigenvalues are computed
+     procedure, public :: elpa_eigenvalues_f
+     procedure, public :: elpa_eigenvalues_dc
+     procedure, public :: elpa_eigenvalues_fc
 
-     procedure, private :: elpa_hermitian_multiply_d            !< private methods to implement a "hermitian" multiplication of matrices a and b
-     procedure, private :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
-     procedure, private :: elpa_hermitian_multiply_dc           !< for complex valued matrices:   a**H * b
-     procedure, private :: elpa_hermitian_multiply_fc
+     procedure, public :: elpa_hermitian_multiply_d            !< public methods to implement a "hermitian" multiplication of matrices a and b
+     procedure, public :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
+     procedure, public :: elpa_hermitian_multiply_dc           !< for complex valued matrices:   a**H * b
+     procedure, public :: elpa_hermitian_multiply_fc
 
-     procedure, private :: elpa_cholesky_d                      !< private methods to implement the cholesky factorisation of
-                                                                !< real/complex double/single matrices
-     procedure, private :: elpa_cholesky_f
-     procedure, private :: elpa_cholesky_dc
-     procedure, private :: elpa_cholesky_fc
+     procedure, public :: elpa_cholesky_d                      !< public methods to implement the cholesky factorisation of
+                                                               !< real/complex double/single matrices
+     procedure, public :: elpa_cholesky_f
+     procedure, public :: elpa_cholesky_dc
+     procedure, public :: elpa_cholesky_fc
 
-     procedure, private :: elpa_invert_trm_d                    !< private methods to implement the inversion of a triangular
-                                                                !< real/complex double/single matrix
-     procedure, private :: elpa_invert_trm_f
-     procedure, private :: elpa_invert_trm_dc
-     procedure, private :: elpa_invert_trm_fc
+     procedure, public :: elpa_invert_trm_d                    !< public methods to implement the inversion of a triangular
+                                                               !< real/complex double/single matrix
+     procedure, public :: elpa_invert_trm_f
+     procedure, public :: elpa_invert_trm_dc
+     procedure, public :: elpa_invert_trm_fc
 
-     procedure, private :: elpa_solve_tridi_d                   !< private methods to implement the solve step for a real valued
-     procedure, private :: elpa_solve_tridi_f                   !< double/single tridiagonal matrix
+     procedure, public :: elpa_solve_tridiagonal_d             !< public methods to implement the solve step for a real valued
+     procedure, public :: elpa_solve_tridiagonal_f             !< double/single tridiagonal matrix
 
-     procedure, private :: associate_int => elpa_associate_int  !< private method to set some pointers
+     procedure, public :: associate_int => elpa_associate_int  !< public method to set some pointers
 
   end type elpa_impl_t
 
-  !> \brief the implementation of the private methods
+
+  !> \brief the implementation of the generic methods
   contains
+
+
     !> \brief function to allocate an ELPA object
     !> Parameters
     !> \param   error      integer, optional to get an error code
@@ -1873,7 +1876,7 @@ module elpa_impl
     end subroutine
 
 
-    !>  \brief elpa_solve_tridi_d: class method to solve the eigenvalue problem for a double real tridiagonal matrix a
+    !>  \brief elpa_solve_tridiagonal_d: class method to solve the eigenvalue problem for a double real tridiagonal matrix a
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
     !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
@@ -1890,7 +1893,7 @@ module elpa_impl
     !>  \param q        matrix  on exit : contains the eigenvectors
     !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
-    subroutine elpa_solve_tridi_d (self, d, e, q, error)
+    subroutine elpa_solve_tridiagonal_d (self, d, e, q, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1913,12 +1916,12 @@ module elpa_impl
           error = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in solve_tridiagonal() and you did not check for errors!"
       endif
     end subroutine
 
 
-    !>  \brief elpa_solve_tridi_f: class method to solve the eigenvalue problem for a float real tridiagonal matrix a
+    !>  \brief elpa_solve_tridiagonal_f: class method to solve the eigenvalue problem for a float real tridiagonal matrix a
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
     !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
@@ -1935,7 +1938,7 @@ module elpa_impl
     !>  \param q        matrix  on exit : contains the eigenvectors
     !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
-    subroutine elpa_solve_tridi_f (self, d, e, q, error)
+    subroutine elpa_solve_tridiagonal_f (self, d, e, q, error)
       use iso_c_binding
       use elpa1_auxiliary_impl
       use precision
@@ -1959,7 +1962,7 @@ module elpa_impl
           error = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in solve_tridi() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in solve_tridiagonal() and you did not check for errors!"
       endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"

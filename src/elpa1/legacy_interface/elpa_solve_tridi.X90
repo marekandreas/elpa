@@ -72,8 +72,8 @@
 #endif
 
       logical, intent(in)         :: wantDebug
-      logical                     :: success
-      integer(kind=iK)            :: successInternal
+      logical                     :: success ! the return value
+      integer                     :: error
       class(elpa_t), pointer      :: obj
 
       !call timer%start("elpa_solve_tridi_&
@@ -108,20 +108,16 @@
         call obj%set("debug",1)
       endif
 
-      select type(obj)
-        class is (elpa_abstract_impl_t)
-          success = elpa_solve_tridi_&
-          &PRECISION&
-          &_impl(obj, d, e, q)
-          !call obj%solve_tridi(d(1:na), e(1:na), q(1:ldq,1:matrixCols), successInternal)
+      call obj%solve_tridiagonal(d, e, q(1:ldq,1:matrixCols), error)
+      if (error /= ELPA_OK) then
+        print *, "Cannot run solve_tridi"
+        success = .false.
+        return
+      else
+        success = .true.
+      endif
 
-          if (.not.(success)) then
-            print *, "Cannot run solve_tridi"
-            return
-          endif
-      end select
       call elpa_deallocate(obj)
-
       call elpa_uninit()
 
      !call timer%stop("elpa_solve_tridi_&

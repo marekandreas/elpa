@@ -132,46 +132,45 @@ module elpa_api
           elpa_invert_trm_dc, &
           elpa_invert_trm_fc
 
-      generic, private :: solve_tridi => &                          !< method to solve the eigenvalue problem for a tridiagonal
-          elpa_solve_tridi_d, &                                     !< matrix
-          elpa_solve_tridi_f
+      generic, public :: solve_tridiagonal => &                           !< method to solve the eigenvalue problem for a tridiagonal
+          elpa_solve_tridiagonal_d, &                                     !< matrix
+          elpa_solve_tridiagonal_f
 
 
-      !> \brief private methods of elpa_t type. NOT accessible for the user
-      ! privates
-      procedure(elpa_set_integer_i), deferred, private :: elpa_set_integer
-      procedure(elpa_set_double_i),  deferred, private :: elpa_set_double
+      !> \brief These method have to be public, in order to be overrideable in the extension types
+      procedure(elpa_set_integer_i), deferred, public :: elpa_set_integer
+      procedure(elpa_set_double_i),  deferred, public :: elpa_set_double
 
-      procedure(elpa_get_integer_i), deferred, private :: elpa_get_integer
-      procedure(elpa_get_double_i),  deferred, private :: elpa_get_double
+      procedure(elpa_get_integer_i), deferred, public :: elpa_get_integer
+      procedure(elpa_get_double_i),  deferred, public :: elpa_get_double
 
-      procedure(elpa_eigenvectors_d_i),    deferred, private :: elpa_eigenvectors_d
-      procedure(elpa_eigenvectors_f_i),    deferred, private :: elpa_eigenvectors_f
-      procedure(elpa_eigenvectors_dc_i), deferred, private :: elpa_eigenvectors_dc
-      procedure(elpa_eigenvectors_fc_i), deferred, private :: elpa_eigenvectors_fc
+      procedure(elpa_eigenvectors_d_i),    deferred, public :: elpa_eigenvectors_d
+      procedure(elpa_eigenvectors_f_i),    deferred, public :: elpa_eigenvectors_f
+      procedure(elpa_eigenvectors_dc_i), deferred, public :: elpa_eigenvectors_dc
+      procedure(elpa_eigenvectors_fc_i), deferred, public :: elpa_eigenvectors_fc
 
-      procedure(elpa_eigenvalues_d_i),    deferred, private :: elpa_eigenvalues_d
-      procedure(elpa_eigenvalues_f_i),    deferred, private :: elpa_eigenvalues_f
-      procedure(elpa_eigenvalues_dc_i), deferred, private :: elpa_eigenvalues_dc
-      procedure(elpa_eigenvalues_fc_i), deferred, private :: elpa_eigenvalues_fc
+      procedure(elpa_eigenvalues_d_i),    deferred, public :: elpa_eigenvalues_d
+      procedure(elpa_eigenvalues_f_i),    deferred, public :: elpa_eigenvalues_f
+      procedure(elpa_eigenvalues_dc_i), deferred, public :: elpa_eigenvalues_dc
+      procedure(elpa_eigenvalues_fc_i), deferred, public :: elpa_eigenvalues_fc
 
-      procedure(elpa_hermitian_multiply_d_i),  deferred, private :: elpa_hermitian_multiply_d
-      procedure(elpa_hermitian_multiply_f_i),  deferred, private :: elpa_hermitian_multiply_f
-      procedure(elpa_hermitian_multiply_dc_i), deferred, private :: elpa_hermitian_multiply_dc
-      procedure(elpa_hermitian_multiply_fc_i), deferred, private :: elpa_hermitian_multiply_fc
+      procedure(elpa_hermitian_multiply_d_i),  deferred, public :: elpa_hermitian_multiply_d
+      procedure(elpa_hermitian_multiply_f_i),  deferred, public :: elpa_hermitian_multiply_f
+      procedure(elpa_hermitian_multiply_dc_i), deferred, public :: elpa_hermitian_multiply_dc
+      procedure(elpa_hermitian_multiply_fc_i), deferred, public :: elpa_hermitian_multiply_fc
 
-      procedure(elpa_cholesky_d_i),    deferred, private :: elpa_cholesky_d
-      procedure(elpa_cholesky_f_i),    deferred, private :: elpa_cholesky_f
-      procedure(elpa_cholesky_dc_i), deferred, private :: elpa_cholesky_dc
-      procedure(elpa_cholesky_fc_i), deferred, private :: elpa_cholesky_fc
+      procedure(elpa_cholesky_d_i),    deferred, public :: elpa_cholesky_d
+      procedure(elpa_cholesky_f_i),    deferred, public :: elpa_cholesky_f
+      procedure(elpa_cholesky_dc_i), deferred, public :: elpa_cholesky_dc
+      procedure(elpa_cholesky_fc_i), deferred, public :: elpa_cholesky_fc
 
-      procedure(elpa_invert_trm_d_i),    deferred, private :: elpa_invert_trm_d
-      procedure(elpa_invert_trm_f_i),    deferred, private :: elpa_invert_trm_f
-      procedure(elpa_invert_trm_dc_i), deferred, private :: elpa_invert_trm_dc
-      procedure(elpa_invert_trm_fc_i), deferred, private :: elpa_invert_trm_fc
+      procedure(elpa_invert_trm_d_i),    deferred, public :: elpa_invert_trm_d
+      procedure(elpa_invert_trm_f_i),    deferred, public :: elpa_invert_trm_f
+      procedure(elpa_invert_trm_dc_i), deferred, public :: elpa_invert_trm_dc
+      procedure(elpa_invert_trm_fc_i), deferred, public :: elpa_invert_trm_fc
 
-      procedure(elpa_solve_tridi_d_i), deferred, private :: elpa_solve_tridi_d
-      procedure(elpa_solve_tridi_f_i), deferred, private :: elpa_solve_tridi_f
+      procedure(elpa_solve_tridiagonal_d_i), deferred, public :: elpa_solve_tridiagonal_d
+      procedure(elpa_solve_tridiagonal_f_i), deferred, public :: elpa_solve_tridiagonal_f
   end type elpa_t
 
 
@@ -1079,7 +1078,7 @@ module elpa_api
   !> \param   q           double real matrix: on output contains the eigenvectors
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_tridi_d_i (self, d, e, q, error)
+    subroutine elpa_solve_tridiagonal_d_i (self, d, e, q, error)
       use iso_c_binding
       import elpa_t
       implicit none
@@ -1108,7 +1107,7 @@ module elpa_api
   !> \param   q           single real matrix: on output contains the eigenvectors
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_solve_tridi_f_i (self, d, e, q, error)
+    subroutine elpa_solve_tridiagonal_f_i (self, d, e, q, error)
       use iso_c_binding
       import elpa_t
       implicit none
