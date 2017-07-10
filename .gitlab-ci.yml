@@ -64,7 +64,7 @@ intel-single-precision-mpi-noomp-jobs:
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # gfortran double precision mpi noomp AVX/SSE
-gfortran-double-precision-mpi-noomp-jobs:
+gfortran-double-precision-mpi-noomp-avx-jobs:
   tags:
     - cpu
   script:
@@ -113,7 +113,7 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-jobs:
 
 
 # gfortran double precision mpi noomp AVX/SSE COVERAGE
-gfortran-double-precision-mpi-noomp-coverage-jobs:
+gfortran-double-precision-mpi-noomp-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -129,7 +129,7 @@ gfortran-double-precision-mpi-noomp-coverage-jobs:
       - coverage_data
 
 # gfortran single precision mpi noomp AVX/SSE COVERAGE
-gfortran-double-precision-mpi-noomp-coverage-jobs:
+gfortran-single-precision-mpi-noomp-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -145,7 +145,7 @@ gfortran-double-precision-mpi-noomp-coverage-jobs:
       - coverage_data
 
 # gfortran double precision mpi noomp AVX/SSE, no assumed size COVERAGE
-gfortran-double-precision-mpi-noomp-no-assumed-size-coverage-jobs:
+gfortran-double-precision-mpi-noomp-no-assumed-size-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -161,7 +161,7 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-coverage-jobs:
       - coverage_data
 
 # gfortran single precision mpi noomp AVX/SSE no assumed size COVERAGE
-gfortran-double-precision-mpi-noomp-no-assumed-size-coverage-jobs:
+gfortran-singe-precision-mpi-noomp-no-assumed-size-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -249,13 +249,13 @@ gfortran-single-precision-mpi-omp-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-# gfortran single precision mpi omp AVX/SSE debug
-gfortran-single-precision-mpi-omp-debug-jobs:
+# gfortran double precision mpi omp AVX/SSE debug
+gfortran-double-precision-mpi-omp-debug-avx-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-g -O3 -mavx" FCFLAGS="-g -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --enable-openmp
+    - ./configure --enable-option-checking=fatal CFLAGS="-g -O3 -mavx" FCFLAGS="-g -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-openmp
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
@@ -263,7 +263,7 @@ gfortran-single-precision-mpi-omp-debug-jobs:
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # gfortran single precision mpi omp AVX/SSE debug
-gfortran-single-precision-mpi-omp-debug-jobs:
+gfortran-single-precision-mpi-omp-debug-avx-jobs:
   tags:
     - cpu
   script:
@@ -318,7 +318,7 @@ gfortran-single-precision-mpi-omp-no-assumed-size-jobs:
 
 
 # gfortran double precision mpi omp AVX/SSE COVERAGE
-gfortran-double-precision-mpi-omp-coverage-jobs:
+gfortran-double-precision-mpi-omp-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -335,7 +335,7 @@ gfortran-double-precision-mpi-omp-coverage-jobs:
       - coverage_data
 
 # gfortran single precision mpi omp AVX/SSE COVERAGE
-gfortran-double-precision-mpi-omp-coverage-jobs:
+gfortran-single-precision-mpi-omp-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -352,7 +352,7 @@ gfortran-double-precision-mpi-omp-coverage-jobs:
       - coverage_data
 
 # gfortran double precision mpi omp AVX/SSE, no assumed size COVERAGE
-gfortran-double-precision-mpi-omp-no-assumed-size-coverage-jobs:
+gfortran-double-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -369,7 +369,7 @@ gfortran-double-precision-mpi-omp-no-assumed-size-coverage-jobs:
       - coverage_data
 
 # gfortran single precision mpi omp AVX/SSE no assumed size COVERAGE
-gfortran-double-precision-mpi-omp-no-assumed-size-coverage-jobs:
+gfortran-single-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -479,7 +479,7 @@ gfortran-single-precision-nompi-noomp-no-assumed-size-jobs:
 
 
 # gfortran double precision nompi noomp AVX/SSE COVERAGE
-gfortran-double-precision-nompi-noomp-coverage-jobs:
+gfortran-double-precision-nompi-noomp-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -495,7 +495,7 @@ gfortran-double-precision-nompi-noomp-coverage-jobs:
       - coverage_data
 
 # gfortran single precision nompi noomp AVX/SSE COVERAGE
-gfortran-double-precision-nompi-noomp-coverage-jobs:
+gfortran-single-precision-nompi-noomp-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -511,7 +511,7 @@ gfortran-double-precision-nompi-noomp-coverage-jobs:
       - coverage_data
 
 # gfortran double precision nompi noomp AVX/SSE, no assumed size COVERAGE
-gfortran-double-precision-nompi-noomp-no-assumed-size-coverage-jobs:
+gfortran-double-precision-nompi-noomp-no-assumed-size-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -527,7 +527,7 @@ gfortran-double-precision-nompi-noomp-no-assumed-size-coverage-jobs:
       - coverage_data
 
 # gfortran single precision nompi noomp AVX/SSE no assumed size COVERAGE
-gfortran-double-precision-nompi-noomp-no-assumed-size-coverage-jobs:
+gfortran-single-precision-nompi-noomp-no-assumed-size-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -615,13 +615,13 @@ gfortran-single-precision-nompi-omp-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-# gfortran single precision nompi omp AVX/SSE debug
-gfortran-single-precision-nompi-omp-debug-jobs:
+# gfortran double precision nompi omp AVX/SSE debug
+gfortran-double-precision-nompi-omp-debug-avx-jobs:
   tags:
     - cpu
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-g -O3 -mavx" FCFLAGS="-g -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --disable-avx2 FC=gfortran --enable-single-precision --enable-openmp --with-mpi=0 --disable-mpi-module
+    - ./configure --enable-option-checking=fatal CFLAGS="-g -O3 -mavx" FCFLAGS="-g -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --disable-avx2 FC=gfortran --enable-openmp --with-mpi=0 --disable-mpi-module
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
@@ -684,7 +684,7 @@ gfortran-single-precision-nompi-omp-no-assumed-size-jobs:
 
 
 # gfortran double precision nompi omp AVX/SSE COVERAGE
-gfortran-double-precision-nompi-omp-coverage-jobs:
+gfortran-double-precision-nompi-omp-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -701,7 +701,7 @@ gfortran-double-precision-nompi-omp-coverage-jobs:
       - coverage_data
 
 # gfortran single precision nompi omp AVX/SSE COVERAGE
-gfortran-double-precision-nompi-omp-coverage-jobs:
+gfortran-single-precision-nompi-omp-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -718,7 +718,7 @@ gfortran-double-precision-nompi-omp-coverage-jobs:
       - coverage_data
 
 # gfortran double precision nompi omp AVX/SSE, no assumed size COVERAGE
-gfortran-double-precision-nompi-omp-no-assumed-size-coverage-jobs:
+gfortran-double-precision-nompi-omp-no-assumed-size-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -735,7 +735,7 @@ gfortran-double-precision-nompi-omp-no-assumed-size-coverage-jobs:
       - coverage_data
 
 # gfortran single precision nompi omp AVX/SSE no assumed size COVERAGE
-gfortran-double-precision-nompi-omp-no-assumed-size-coverage-jobs:
+gfortran-single-precision-nompi-omp-no-assumed-size-coverage-avx-jobs:
   tags:
     - coverage
   script:
@@ -822,7 +822,7 @@ intel-single-precision-mpi-noomp-avx2-jobs:
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # gfortran double precision mpi noomp AVX2
-gfortran-double-precision-mpi-noomp-jobs:
+gfortran-double-precision-mpi-noomp-avx2-jobs:
   tags:
     - avx2
   script:
@@ -1073,13 +1073,13 @@ gfortran-single-precision-mpi-omp-avx2-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-# gfortran single precision mpi omp AVX2 debug
-gfortran-single-precision-mpi-omp-debug-avx2-jobs:
+# gfortran double precision mpi omp AVX2 debug
+gfortran-double-precision-mpi-omp-debug-avx2-jobs:
   tags:
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-g -march=haswell -O3 -mavx" FCFLAGS="-march=haswell -g -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --enable-openmp
+    - ./configure --enable-option-checking=fatal CFLAGS="-g -march=haswell -O3 -mavx" FCFLAGS="-march=haswell -g -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-openmp
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
@@ -1584,13 +1584,13 @@ gfortran-single-precision-nompi-omp-avx2-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-# gfortran single precision nompi omp AVX2 debug
-gfortran-single-precision-nompi-omp-debug-avx2-jobs:
+# gfortran double precision nompi omp AVX2 debug
+gfortran-double-precision-nompi-omp-debug-avx2-jobs:
   tags:
     - avx2
   script:
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="-march=haswell -g -O3 -mavx2 -mfma" FCFLAGS="-march=haswell -g -O3 -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" FC=gfortran --enable-single-precision --enable-openmp --with-mpi=0 --disable-mpi-module
+    - ./configure --enable-option-checking=fatal CFLAGS="-march=haswell -g -O3 -mavx2 -mfma" FCFLAGS="-march=haswell -g -O3 -mavx2 -mfma" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" FC=gfortran  --enable-openmp --with-mpi=0 --disable-mpi-module
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
@@ -1777,7 +1777,7 @@ gfortran-single-precision-nompi-omp-no-assumed-size-avx2-jobs:
 #
 ########################################################################################
 
-gfortran-double-precision-mpi-noomp-coverage-jobs:
+gfortran-double-precision-mpi-noomp-gpu-coverage-jobs:
   tags:
     - gpu-coverage
   script:
@@ -1795,6 +1795,23 @@ gfortran-double-precision-mpi-noomp-coverage-jobs:
     paths:
       - coverage_data
 
+gfortran-single-precision-mpi-noomp-gpu-coverage-jobs:
+  tags:
+    - gpu-coverage
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 --enable-single-precision
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='500 500 128' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 intel-double-precision-mpi-noomp-cuda-jobs-blocksize-32:
   tags:
@@ -1811,6 +1828,45 @@ intel-double-precision-mpi-noomp-cuda-jobs-blocksize-32:
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
+
+gfortran-double-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
+  tags:
+    - gpu-coverage
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
+gfortran-single-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
+  tags:
+    - gpu-coverage
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --enable-single-precision FC=mpif90
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='150 50 32' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
+
+
 intel-double-precision-mpi-noomp-cuda-jobs-blocksize-16:
   tags:
     - gpu
@@ -1826,6 +1882,43 @@ intel-double-precision-mpi-noomp-cuda-jobs-blocksize-16:
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
+
+
+gfortran-double-precision-nompi-noomp-gpu-coverage-jobs:
+  tags:
+    - gpu-coverage
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=gfortran --with-mpi=0
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='1500 500 128' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
+gfortran-single-precision-nompi-noomp-gpu-coverage-jobs:
+  tags:
+    - gpu-coverage
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=gfortran --with-mpi=0 --enable-single-precision
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='1500 500 128' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 intel-double-precision-nompi-noomp-cuda-jobs:
   tags:
     - gpu
