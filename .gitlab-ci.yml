@@ -1777,6 +1777,25 @@ gfortran-single-precision-nompi-omp-no-assumed-size-avx2-jobs:
 #
 ########################################################################################
 
+gfortran-double-precision-mpi-noomp-coverage-jobs:
+  tags:
+    - gpu-coverage
+  script:
+    - module unload gcc
+    - module load gcc/4.9 cuda
+    - module list
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - /home/elpa/bin/reserve_timeslot_2 make check TEST_FLAGS='500 500 128' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
+
 intel-double-precision-mpi-noomp-cuda-jobs-blocksize-32:
   tags:
     - gpu
