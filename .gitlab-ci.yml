@@ -3008,6 +3008,7 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
@@ -3018,6 +3019,8 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
+    - echo $GPJOBID
+    - gpschedule -ö
     - gpschedule -d $GPJOBID
   artifacts:
     paths:
