@@ -2912,9 +2912,40 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      # no coverage on system with tag AVX2
-      #
-      ## gfortran double precision mpi noomp AVX2 COVERAGE
+
+
+
+# gfortran double precision mpi noomp skylake, no assumed size coveravge
+gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
+  tags:
+    - skylake-coverage
+  script:
+    - ./autogen.sh
+    - module purge
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 --coverage -march=skylake-avx512" FCFLAGS="-O3 --coverage -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size
+      #- /home/elpa/wait_until_midnight.sh
+    - /home/elpa/bin/reserve_timeslot_2 make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
+
+
+
       #gfortran-double-precision-mpi-noomp-coverage-avx2-jobs:
       #  tags:
       #    - avx2
