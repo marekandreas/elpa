@@ -3012,15 +3012,17 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
     - echo $GPJOBID
-    - gpschedule -ö
+    - gpschedule -l
     - gpschedule -d $GPJOBID
   artifacts:
     paths:
@@ -3112,19 +3114,25 @@ intel-double-precision-mpi-omp-skylake-jobs:
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-openmp
       #- /home/elpa/wait_until_midnight.sh
     - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+    - echo $GPJOBID
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - echo $GPJOBID
+    - gpschedule -l
     - gpschedule -d $GPJOBID
 
 # intel double precision mpi omp skylake large
@@ -3140,19 +3148,25 @@ intel-double-precision-mpi-omp-large-skylake-jobs:
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-openmp
       #- /home/elpa/wait_until_midnight.sh
     - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+    - echo $GPJOBID
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - echo $GPJOBID
+    - gpschedule -l
     - gpschedule -d $GPJOBID
 
 # intel single precision mpi noomp SKYLAKE
