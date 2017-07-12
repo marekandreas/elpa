@@ -1,4 +1,5 @@
 #!/bin/bash
+PATH=${HOME}/bin:${PATH}
 
 for p in coverage_data/coverage_${CI_BUILD_REF}*.package ; do
         cov_file=${p%.package}.info

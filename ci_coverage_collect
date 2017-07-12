@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PATH=${HOME}/bin:${PATH}
+
 cov_dir=coverage_data
 prefix=$cov_dir/coverage_${CI_BUILD_REF}_${CI_BUILD_NAME}
 mkdir -p $cov_dir/
