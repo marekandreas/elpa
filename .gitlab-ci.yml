@@ -770,12 +770,15 @@ intel-double-precision-mpi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -790,12 +793,15 @@ intel-double-precision-mpi-noomp-large-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -810,15 +816,17 @@ intel-single-precision-mpi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # gfortran double precision mpi noomp AVX2
@@ -831,12 +839,15 @@ gfortran-double-precision-mpi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -851,12 +862,15 @@ gfortran-single-precision-mpi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -871,12 +885,15 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -891,12 +908,15 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -987,12 +1007,15 @@ intel-double-precision-mpi-omp-avx2-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1021,12 +1044,15 @@ intel-single-precision-mpi-omp-avx2-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1042,12 +1068,15 @@ gfortran-double-precision-mpi-omp-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1063,12 +1092,15 @@ gfortran-single-precision-mpi-omp-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1084,12 +1116,15 @@ gfortran-double-precision-mpi-omp-debug-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1105,12 +1140,15 @@ gfortran-single-precision-mpi-omp-debug-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1127,12 +1165,15 @@ gfortran-double-precision-mpi-omp-no-assumed-size-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
@@ -1149,12 +1190,15 @@ gfortran-double-precision-mpi-omp-no-assumed-size-debug-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1170,12 +1214,15 @@ gfortran-single-precision-mpi-omp-no-assumed-size-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1270,12 +1317,15 @@ intel-double-precision-nompi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1290,12 +1340,15 @@ intel-double-precision-nompi-noomp-large-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1310,12 +1363,15 @@ intel-single-precision-nompi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1330,12 +1386,15 @@ gfortran-double-precision-nompi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1350,12 +1409,15 @@ gfortran-single-precision-nompi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1370,12 +1432,15 @@ gfortran-double-precision-nompi-noomp-no-assumed-size-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1390,12 +1455,15 @@ gfortran-single-precision-nompi-noomp-no-assumed-size-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1488,12 +1556,15 @@ intel-double-precision-nompi-omp-avx2-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1509,12 +1580,15 @@ intel-double-precision-nompi-omp-large-avx2-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1530,12 +1604,15 @@ intel-single-precision-nompi-omp-avx2-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
@@ -1552,12 +1629,15 @@ gfortran-double-precision-nompi-omp-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
@@ -1574,12 +1654,15 @@ gfortran-single-precision-nompi-omp-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1595,12 +1678,15 @@ gfortran-double-precision-nompi-omp-debug-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
@@ -1617,12 +1703,15 @@ gfortran-single-precision-nompi-omp-debug-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1639,12 +1728,15 @@ gfortran-double-precision-nompi-omp-no-assumed-size-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
@@ -1661,12 +1753,15 @@ gfortran-double-precision-nompi-omp-no-assumed-size-debug-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
@@ -1684,12 +1779,15 @@ gfortran-single-precision-nompi-omp-no-assumed-size-avx2-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
 
@@ -2060,16 +2158,19 @@ intel-double-precision-mpi-noomp-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # intel double precision mpi noomp AVX512 large
 intel-double-precision-mpi-noomp-large-avx512-jobs:
@@ -2085,16 +2186,19 @@ intel-double-precision-mpi-noomp-large-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # intel single precision mpi noomp AVX512
 intel-single-precision-mpi-noomp-avx512-jobs:
@@ -2110,16 +2214,19 @@ intel-single-precision-mpi-noomp-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi noomp AVX512
 gfortran-double-precision-mpi-noomp-avx512-jobs:
@@ -2135,16 +2242,19 @@ gfortran-double-precision-mpi-noomp-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran single precision mpi noomp AVX512
 gfortran-single-precision-mpi-noomp-avx512-jobs:
@@ -2160,16 +2270,19 @@ gfortran-single-precision-mpi-noomp-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi noomp AVX512, no assumed size
 gfortran-double-precision-mpi-noomp-no-assumed-size-avx512-jobs:
@@ -2185,16 +2298,19 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran single precision mpi noomp AVX512, no assumed size
 gfortran-single-precision-mpi-noomp-no-assumed-size-avx512-jobs:
@@ -2210,16 +2326,19 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -2310,16 +2429,19 @@ intel-double-precision-no-mpi-noomp-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # intel double precision no mpi noomp AVX512 large
 intel-double-precision-no-mpi-noomp-large-avx512-jobs:
@@ -2335,16 +2457,19 @@ intel-double-precision-no-mpi-noomp-large-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # intel single precision no mpi noomp AVX512
 intel-single-precision-no-mpi-noomp-avx512-jobs:
@@ -2360,16 +2485,19 @@ intel-single-precision-no-mpi-noomp-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi noomp AVX512
 gfortran-double-precision-no-mpi-noomp-jobs:
@@ -2385,16 +2513,19 @@ gfortran-double-precision-no-mpi-noomp-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran single precision no mpi noomp AVX512
 gfortran-single-precision-no-mpi-noomp-avx512-jobs:
@@ -2413,13 +2544,15 @@ gfortran-single-precision-no-mpi-noomp-avx512-jobs:
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi noomp AVX512, no assumed size
 gfortran-double-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
@@ -2435,16 +2568,19 @@ gfortran-double-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran single precision no-mpi noomp AVX512, no assumed size
 gfortran-single-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
@@ -2460,16 +2596,19 @@ gfortran-single-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -2561,16 +2700,19 @@ intel-double-precision-no-mpi-omp-avx512-jobs:
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # intel double precision no mpi omp AVX512 large
 intel-double-precision-no-mpi-omp-large-avx512-jobs:
@@ -2587,16 +2729,19 @@ intel-double-precision-no-mpi-omp-large-avx512-jobs:
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # intel single precision no mpi omp AVX512
 intel-single-precision-no-mpi-omp-avx512-jobs:
@@ -2619,10 +2764,11 @@ intel-single-precision-no-mpi-omp-avx512-jobs:
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi omp AVX512
 gfortran-double-precision-no-mpi-omp-jobs:
@@ -2639,16 +2785,19 @@ gfortran-double-precision-no-mpi-omp-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran single precision no mpi omp AVX512
 gfortran-single-precision-no-mpi-omp-avx512-jobs:
@@ -2665,16 +2814,19 @@ gfortran-single-precision-no-mpi-omp-avx512-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi omp AVX512, no assumed size
 gfortran-double-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
@@ -2700,7 +2852,7 @@ gfortran-double-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
 # gfortran single precision no-mpi omp AVX512, no assumed size
 gfortran-single-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
@@ -2717,16 +2869,19 @@ gfortran-single-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+      #    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -2818,12 +2973,15 @@ intel-double-precision-mpi-noomp-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -2845,12 +3003,15 @@ intel-double-precision-mpi-noomp-large-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -2872,12 +3033,15 @@ intel-single-precision-mpi-noomp-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -2899,12 +3063,15 @@ gfortran-double-precision-mpi-noomp-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -2926,12 +3093,15 @@ gfortran-single-precision-mpi-noomp-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -2953,12 +3123,15 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3021,8 +3194,6 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - echo $GPJOBID
-    - gpschedule -l
     - gpschedule -d $GPJOBID
   artifacts:
     paths:
@@ -3114,7 +3285,6 @@ intel-double-precision-mpi-omp-skylake-jobs:
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-openmp
       #- /home/elpa/wait_until_midnight.sh
     - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
-    - echo $GPJOBID
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
@@ -3131,8 +3301,6 @@ intel-double-precision-mpi-omp-skylake-jobs:
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - echo $GPJOBID
-    - gpschedule -l
     - gpschedule -d $GPJOBID
 
 # intel double precision mpi omp skylake large
@@ -3148,7 +3316,6 @@ intel-double-precision-mpi-omp-large-skylake-jobs:
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-openmp
       #- /home/elpa/wait_until_midnight.sh
     - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
-    - echo $GPJOBID
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
@@ -3165,8 +3332,6 @@ intel-double-precision-mpi-omp-large-skylake-jobs:
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - echo $GPJOBID
-    - gpschedule -l
     - gpschedule -d $GPJOBID
 
 # intel single precision mpi noomp SKYLAKE
@@ -3186,12 +3351,15 @@ intel-single-precision-mpi-omp-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3214,12 +3382,15 @@ gfortran-double-precision-mpi-omp-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3242,12 +3413,15 @@ gfortran-single-precision-mpi-omp-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3270,12 +3444,15 @@ gfortran-double-precision-mpi-omp-no-assumed-size-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3298,12 +3475,15 @@ gfortran-single-precision-mpi-omp-no-assumed-size-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3399,12 +3579,15 @@ intel-double-precision-no-mpi-noomp-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3426,12 +3609,15 @@ intel-double-precision-no-mpi-noomp-large-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3453,12 +3639,15 @@ intel-single-precision-no-mpi-noomp-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3480,12 +3669,15 @@ gfortran-double-precision-no-mpi-noomp-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3507,12 +3699,15 @@ gfortran-single-precision-no-mpi-noomp-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3561,12 +3756,15 @@ gfortran-single-precision-no-mpi-noomp-no-assumed-size-skylake-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3663,12 +3861,15 @@ intel-double-precision-no-mpi-omp-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3691,12 +3892,15 @@ intel-double-precision-no-mpi-omp-large-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3719,12 +3923,15 @@ intel-single-precision-no-mpi-omp-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3747,12 +3954,15 @@ gfortran-double-precision-no-mpi-omp-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3775,12 +3985,15 @@ gfortran-single-precision-no-mpi-omp-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3803,12 +4016,15 @@ gfortran-double-precision-no-mpi-omp-no-assumed-size-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3831,12 +4047,15 @@ gfortran-single-precision-no-mpi-omp-no-assumed-size-skylake-jobs:
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
