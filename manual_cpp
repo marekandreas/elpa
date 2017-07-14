@@ -34,7 +34,11 @@ if len(files) > 1:
     raise Exception("Specify exactly one .F90 file")
 elif len(files) == 0:
     # No .F90 file specified, execute program as-is
-    os.execvp(args[0], args[0:])
+    try:
+        os.execvp(args[0], args[0:])
+    except OSError as e:
+        print("Error executing '{0}': {1}".format(args[0], e.args[1]))
+        raise SystemExit(1)
 elif len(files) == 1:
     file, = files
 
