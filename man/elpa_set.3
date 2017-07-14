@@ -48,7 +48,7 @@ elpa_t handle;
 .RI "datatype  \fBvalue\fP: the value which should be assigned to the option \fBname\fP. Datatype can be either \fBint\fP or \fBdouble\fP."
 
 .SH DESCRIPTION
-The elpa_set function is used to set \fBparameters\fP and \fBtunables\fP for the run-time of the ELPA library. It returns an error code which cab be querried with \fBelpa_strerr\fP(3).
+The elpa_set function is used to set \fBparameters\fP and \fBtunables\fP for the run-time of the ELPA library. It returns an error code which can be querried with \fBelpa_strerr\fP(3).
 
 \fBParameters:\fP
 
@@ -56,9 +56,8 @@ Parameters of an ELPA instance have to be set BEFORE the ELPA instance is set up
 
 At the moment the following parameters are supported:
 
-             \fB"na"\fP:  integer parameter. The global matrix has size (na * na)
-            \fB"nev"\fP:  integer parameter. The number of eigenvectors to be computed in a call to \fBelpa_eigenvectors\fP(3).
-	                  Must have dimension 1 <= nev <= na.
+    \fB"na"\fP:  integer parameter. The global matrix has size (na * na)
+    \fB"nev"\fP:  integer parameter. The number of eigenvectors to be computed in a call to \fBelpa_eigenvectors\fP(3). Must have dimension 1 <= nev <= na.
     \fB"local_nrows"\fP:  integer parameter. Number of matrix rows stored on this MPI process.
     \fB"local_ncols"\fP:  integer parameter. Number of matrix cols stored on this MPI process.
 
