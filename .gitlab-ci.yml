@@ -3199,6 +3199,41 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
     paths:
       - coverage_data
 
+# gfortran single precision mpi noomp skylake, no assumed size coveravge
+gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
+  tags:
+    - skylake-coverage
+  script:
+    - ./autogen.sh
+    - module purge
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 --coverage -march=skylake-avx512" FCFLAGS="-O3 --coverage -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision
+      #- /home/elpa/wait_until_midnight.sh
+    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+    - gpschedule -d $GPJOBID
+  artifacts:
+    paths:
+      - coverage_data
+
+
 
 
       #gfortran-double-precision-mpi-noomp-coverage-avx2-jobs:
@@ -3396,6 +3431,41 @@ gfortran-double-precision-mpi-omp-skylake-jobs:
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - gpschedule -d $GPJOBID
 
+# gfortran double precision mpi omp skylake
+gfortran-double-precision-mpi-omp-skylake-coverage-jobs:
+  tags:
+    - skylake-coverage
+  script:
+    - ./autogen.sh
+    - module purge
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 --coverage -march=skylake-avx512" FCFLAGS="-O3 --coverage -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-openmp
+      #- /home/elpa/wait_until_midnight.sh
+    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+    - gpschedule -d $GPJOBID
+  artifacts:
+    paths:
+      - coverage_data
+
 # gfortran single precision mpi omp SKYLAKE
 gfortran-single-precision-mpi-omp-skylake-jobs:
   tags:
@@ -3426,6 +3496,41 @@ gfortran-single-precision-mpi-omp-skylake-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - gpschedule -d $GPJOBID
+
+# gfortran single precision mpi omp skylake
+gfortran-single-precision-mpi-omp-skylake-coverage-jobs:
+  tags:
+    - skylake-coverage
+  script:
+    - ./autogen.sh
+    - module purge
+    - module load gcc/6.3 intel/17.0 impi/2017.2 mkl/2017
+    - export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 --coverage -march=skylake-avx512" FCFLAGS="-O3 --coverage -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-openmp --enable-single-precision
+      #- /home/elpa/wait_until_midnight.sh
+    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK1
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK4
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX512_BLOCK2
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX512_BLOCK6
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+    - gpschedule -d $GPJOBID
+  artifacts:
+    paths:
+      - coverage_data
 
 # gfortran double precision mpi omp skylake, no assumed size
 gfortran-double-precision-mpi-omp-no-assumed-size-skylake-jobs:
