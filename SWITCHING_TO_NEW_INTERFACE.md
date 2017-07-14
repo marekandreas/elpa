@@ -45,7 +45,7 @@ the user application):
 
 2. initialize ELPA and create the instance
 
-   if (elpa_init(20170403) /= ELPA_OK) then           
+   if (elpa_init(20170403) /= ELPA_OK) then
      error stop "ELPA API version not supported"
    endif
 
@@ -132,8 +132,10 @@ the user application):
                                       ! (replaces a) and b) from legacy API)
    b) e%eigenvalues                   ! solve EV problem with solver as set by "set" method; computes eigenvalues only
    c) e%choleksy                      ! do a cholesky decomposition (replaces  d) from legacy API)
-   d) e%invert_tridiagonal            ! invert triangular matrix (replaces  e) from legacy API)
+   d) e%invert_triangular             ! invert triangular matrix (replaces  e) from legacy API)
    e) e%hermitian_multiply            ! multiply a**T *b or a**H *b (replaces f) and g) from legacy API)
+   f) e%solve_tridiagonal             ! solves the eigenvalue problem for a tridiagonal matrix (replaces c) from legacy
+                                      ! API)
 
 7. when not needed anymore, destroy the instance
    call e%destroy()
