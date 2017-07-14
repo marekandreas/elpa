@@ -4375,23 +4375,23 @@ test_project_2stage_intel:
      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
      #    - gpschedule -d $GPJOBID
 
-     #minsky-pure-gnu:
-     #  tags:
-     #    - miy
-     #  script:
-     #    - module purge
-     #    - module load gcc/5.4 ompi/pgi/17.5/1.10.2 essl/5.5 cuda/8.0
-     #    - module list
-     #    - export OMPI_CC=gcc
-     #    - export OMPI_FC=gfortran
-     #    - ./autogen.sh
-     #    - ./configure CC=mpicc FC=mpifort LIBS="-lessl -lreflapack -lessl -lcublas -lgfortran" LDFLAGS="-g -L/home/elpa/libs/scalapack/lib -L/usr/local/cuda-8.0/lib64 " FCFLAGS="-g -O2 " CFLAGS="-g -O2 -I/usr/local/cuda-8.0/include" --enable-single-precision --disable-mpi-module --enable-gpu --with-GPU-compute-capability=sm_60 --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --with-cuda-path=/usr/local/cuda-8.0/
-     #    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
-     #    - make -j 8
-     #    - make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
-     #    - cat test-suite.log
-     #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-     #    - gpschedule -d $GPJOBID
+minsky-pure-gnu:
+  tags:
+    - miy
+  script:
+    - module purge
+    - module load gcc/5.4 ompi/pgi/17.5/1.10.2 essl/5.5 cuda/8.0
+    - module list
+    - export OMPI_CC=gcc
+    - export OMPI_FC=gfortran
+    - ./autogen.sh
+    - ./configure CC=mpicc FC=mpifort LIBS="-lessl -lreflapack -lessl -lcublas -lgfortran" LDFLAGS="-g -L/home/elpa/libs/scalapack/lib -L/usr/local/cuda-8.0/lib64 " FCFLAGS="-g -O2 " CFLAGS="-g -O2 -I/usr/local/cuda-8.0/include" --enable-single-precision --disable-mpi-module --enable-gpu --with-GPU-compute-capability=sm_60 --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --with-cuda-path=/usr/local/cuda-8.0/
+    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+    - make -j 8
+    - make check TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
+    - cat test-suite.log
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - gpschedule -d $GPJOBID
 
 
 # print coverage results
