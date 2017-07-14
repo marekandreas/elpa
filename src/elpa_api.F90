@@ -1207,15 +1207,31 @@ module elpa_api
       character(kind=c_char, len=*), intent(in) :: name
       integer(kind=c_int), intent(in) :: value
       integer(kind=c_int), intent(out), optional :: error
+
+#ifdef PGI_VARIABLE_STRING_BUG
+      character(kind=c_char, len=elpa_int_value_to_strlen_c(name // C_NULL_CHAR, value)), pointer :: string_ptr
+      character(kind=c_char, len=elpa_int_value_to_strlen_c(name // C_NULL_CHAR, value)) :: string
+#else
       character(kind=c_char, len=elpa_int_value_to_strlen_c(name // C_NULL_CHAR, value)), pointer :: string
+#endif
+
       integer(kind=c_int) :: actual_error
       type(c_ptr) :: ptr
 
       actual_error = elpa_int_value_to_string_c(name // C_NULL_CHAR, value, ptr)
       if (c_associated(ptr)) then
+#ifdef PGI_VARIABLE_STRING_BUG
+        call c_f_pointer(ptr, string_ptr)
+        string = string_ptr
+#else
         call c_f_pointer(ptr, string)
+#endif
       else
+#ifdef PGI_VARIABLE_STRING_BUG
+        nullify(string_ptr)
+#else
         nullify(string)
+#endif
       endif
 
       if (present(error)) then

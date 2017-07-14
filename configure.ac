@@ -958,15 +958,27 @@ m4_include([m4/ax_fc_check_define.m4])
 AC_MSG_CHECKING([if workaround for broken preprocessor is needed])
 
 need_manual_cpp=no
-AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[need_manual_cpp=yes],[])
-AX_FC_CHECK_DEFINE([__PGI],[need_manual_cpp=yes],[])
+AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[is_intel=yes],[])
+AX_FC_CHECK_DEFINE([__PGI],[is_pgi=yes],[])
 ACTUAL_FC="$FC"
 AC_SUBST([ACTUAL_FC])
+
+if test x"$is_intel" = x"yes" ; then
+	need_manual_cpp=yes
+fi
+if test x"$is_pgi" = x"yes" ; then
+	need_manual_cpp=yes
+fi
+
 if test x"$need_manual_cpp" = x"yes" ; then
         AC_MSG_RESULT([yes])
         FC="\$(top_srcdir)/manual_cpp $FC"
 else
         AC_MSG_RESULT([no])
+fi
+
+if test x"$is_pgi" = x"yes" ; then
+	AC_DEFINE([PGI_VARIABLE_STRING_BUG], [1], [Work around a PGI bug with variable-length string results])
 fi
 
 
