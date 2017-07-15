@@ -1,0 +1,58 @@
+.TH "elpa_invert_triangular" 3 "Sat Jul 15 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_invert_triangular \- Invert an upper triangular matrix
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "call elpa%\fBinvert_triangular\fP (a, error)"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.TP
+.RI "datatype :: \fBa\fP"
+The matrix a which should be inverted. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)"
+.TP
+.RI "integer, optional :: \fBerror\fP"
+The return error code of the function. Should be "ELPA_OK". The error code can be querried with the function \fBelpa_strerr\fP(3)
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "void \fBelpa_invert_triangular\fP(\fBelpa_t\fP handle, \fBdatatype\fP *a, \fBint\fP *error);"
+.br
+.RI " "
+.br
+.RI "With the definintions of the input and output variables:"
+
+.br
+.TP
+.RI "elpa_t \fBhandle\fP;"
+The handle to the ELPA object
+.TP
+.RI "datatype *\fBa\fP;"
+The matrix which should be inverted. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".
+.RI "int *\fBerror\fP;"
+The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)
+
+.SH DESCRIPTION
+Inverts an upper triangular real or complex matrix. The functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3), \fBelpa_set\fP(3), and \fBelpa_setup\fP(3) must be called \fIBEFORE\fP \fBelpa_eigenvalues\fP can be called.
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
