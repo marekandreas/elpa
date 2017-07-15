@@ -373,6 +373,7 @@ dist_man_MANS = \
   man/elpa_cholesky.3 \
   man/elpa_invert_triangular.3 \
   man/elpa_solve_tridiagonal.3 \
+  man/elpa_hermitian_multiply.3 \
   man/elpa_deallocate.3 \
   man/elpa_uninit.3
 

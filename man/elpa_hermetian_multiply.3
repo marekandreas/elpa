@@ -1,0 +1,115 @@
+.TH "elpa_hermitian_multiply" 3 "Sat Jul 15 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_hermitian_multiply \- Performs C = A**H * B
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "call elpa%\fBhermitian_multiply\fP (uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.TP
+.RI "character*1 :: \fBuplo_a\fP"
+set to 'U' if A is upper triangular, 'L' if A is lower triangular or anything else if A is a full matrix
+.TP
+.RI "character*1 :: \fBuplo_c\fP"
+set to 'U' if only the upper diagonal part of C is needed, to 'L' if only the upper diagonal part of C is needed, or to anything else if the full matrix C is needed
+.TP
+.RI "integer :: \fBncb\fP"
+The number of columns of the global matrices b and c
+.TP
+.RI "datatype :: \fBa\fP"
+The matrix a. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)"
+.TP
+.RI "datatype :: \fBb\fP"
+The matrix b. The dimensions of the matrix are specified by the parametes \fBnrows_b\fP and \fBncols_b\fP. The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)"
+.TP
+.RI "integer :: \fBnrows_b\fP"
+The number of rows of matrix b
+.TP
+.RI "integer :: \fBncols_b\fP"
+The number of columns of matrix b
+.TP
+.RI "datatype :: \fBc\fP"
+The matrix c. The dimensions of the matrix are specified by the parametes \fBnrows_c\fP and \fBncols_c\fP. The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)"
+.TP
+.RI "integer :: \fBnrows_c\fP"
+The number of rows of matrix c
+.TP
+.RI "integer :: \fBncols_c\fP"
+The number of columns of matrix c
+.TP
+.RI "integer, optional :: \fBerror\fP"
+The return error code of the function. Should be "ELPA_OK". The error code can be querried with the function \fBelpa_strerr\fP(3)
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "void \fBelpa_hermitian_multiply\fP(\fBelpa_t\fP handle, \fBchar\fP uplo_a, \fBchar\fP uplo_c, \fBint\fP ncb, \fBdatatype\fP *a, \fBdatatype\fP *b, \fBint\fP nrows_b, \fBint\fP ncols_b, \fBdatatype\fP *c, \fBint\fP nrows_c, \fBint\fP ncols_c, \fBint\fP *error);"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.TP
+.RI "elpa_t \fBhandle\fP;"
+The handle to the ELPA object
+.TP
+.RI "char \fBuplo_a\fP;"
+set to 'U' if A is upper triangular, 'L' if A is lower triangular or anything else if A is a full matrix
+.TP
+.RI "char \fBuplo_c\fP;"
+set to 'U' if only the upper diagonal part of C is needed, to 'L' if only the upper diagonal part of C is needed, or to anything else if the full matrix C is needed
+.TP
+.RI "int \fBncb\fP;"
+The number of columns of the global matrices b and c
+.TP
+.RI "datatype *\fBa\fP;"
+The matrix a. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "double", "float", "double complex", or "float complex"
+.TP
+.RI "datatype *\fBb\fP;"
+The matrix b. The dimensions of the matrix are specified by the parametes \fBnrows_b\fP and \fBncols_b\fP. The datatype of the matrix can be one of "double", "float", "double complex", or "float complex"
+.TP
+.RI "int \fBnrows_b\fP;"
+The number of rows of matrix b
+.TP
+.RI "int \fBncols_b\fP;"
+The number of columns of matrix b
+.TP
+.RI "datatype *\fBc\fP;"
+The matrix c. The dimensions of the matrix are specified by the parametes \fBnrows_c\fP and \fBncols_c\fP. The datatype of the matrix can be one of "double", "float", "double complex", or "float complex"
+.TP
+.RI "int \fBnrows_c\fP;"
+The number of rows of matrix c
+.TP
+.RI "int \fBncols_c\fP;"
+The number of columns of matrix c
+.TP
+.RI "int *\fBerror\fP"
+The return error code of the function. Should be "ELPA_OK". The error code can be querried with the function \fBelpa_strerr\fP(3)
+
+
+.SH DESCRIPTION
+Performa a "hermitian" multiplication C = A**T * B for real matrices and C=A**H * B for complex matrices. The functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3), \fBelpa_set\fP(3), and \fBelpa_setup\fP(3) must be called \fIBEFORE\fP \fBelpa_hermitian_multiply\fP can be called.
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
