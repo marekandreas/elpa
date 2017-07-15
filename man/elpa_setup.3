@@ -20,7 +20,7 @@ class(elpa_t), pointer :: elpa
 .RI "With the definintions of the input and output variables:"
 
 .br
-.RI "integer \fBsucces\fP:  the returned error code. Should normally be ELPA_OK. Can be querried with \fBelpa_strerr\fP3"
+.RI "integer :: \fBsucces\fP  !  the returned error code. Should normally be ELPA_OK. Can be querried with \fBelpa_strerr\fP(3)"
 .br
 
 .br
@@ -38,12 +38,12 @@ elpa_t handle;
 
 .br
 .br
-.RI "elpa_t \fBhandle\fP:    the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
+.RI "elpa_t \fBhandle\fP;  // the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
 .br
-.RI "int   \fBsuccess\fP:    the returned error code. Should normally be ELPA_OK. Can be querried with \fBelpa_strerr\fP(3)"
+.RI "int \fBsuccess\fP;    // the returned error code. Should normally be ELPA_OK. Can be querried with \fBelpa_strerr\fP(3)"
 
 .SH DESCRIPTION
-Setups an ELPA object. BEFORE the setup the functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3) must have been called and some parameters must have been set with \fBelpa_set\fP(3).
+Setups an ELPA object. \fIPrior\fP to calling  the setup, the functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3) \fImust have been called\fP and some parameters must have been set with \fBelpa_set\fP(3).
 .br
 .SH "SEE ALSO"
 .br

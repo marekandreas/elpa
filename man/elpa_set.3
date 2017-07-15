@@ -20,11 +20,17 @@ class(elpa_t), pointer :: elpa
 .RI "With the definintions of the input and output variables:"
 
 .br
-.RI "character(*)       \fBname\fP: the name of the option to be set"
+.TP
+.RI "character(*) :: \fBname\fP"
+the name of the option to be set
 .br
-.RI "datatype          \fBvalue\fP: the value which should be assigned to the option \fBname\fP. The datatype can be \fBinteger\fP or \fBreal(kind=c_double)\fP."
+.TP
+.RI "datatype :: \fBvalue\fP"
+the value which should be assigned to the option \fBname\fP. The datatype can be \fBinteger\fP or \fBreal(kind=c_double)\fP.
 .br
-.RI "integer, optional \fBerror\fP: the returned error code. On success it is ELPA_OK, otherwise an error. The error code can be querried with \fBelpa_strerr\fP(3)"
+.TP
+.RI "integer, optional :: \fBerror\fP"
+the returned error code. On success it is ELPA_OK, otherwise an error. The error code can be querried with \fBelpa_strerr\fP(3)
 
 .br
 .SS C INTERFACE
@@ -41,49 +47,79 @@ elpa_t handle;
 
 .br
 .br
-.RI "elpa_t   \fBhandle\fP: the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
+.TP
+.RI "elpa_t \fBhandle\fP;"
+the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
 .br
-.RI "const char\fB*name\fP: the name of the option to be set."
+.TP
+.RI "const char \fB*name\fP;"
+the name of the option to be set.
 .br
-.RI "datatype  \fBvalue\fP: the value which should be assigned to the option \fBname\fP. Datatype can be either \fBint\fP or \fBdouble\fP."
+.TP
+.RI "datatype \fBvalue\fP;"
+the value which should be assigned to the option \fBname\fP. Datatype can be either \fBint\fP or \fBdouble\fP."
 
 .SH DESCRIPTION
 The elpa_set function is used to set \fBparameters\fP and \fBtunables\fP for the run-time of the ELPA library. It returns an error code which can be querried with \fBelpa_strerr\fP(3).
 
 \fBParameters:\fP
 
-Parameters of an ELPA instance have to be set BEFORE the ELPA instance is set up with the function \fBelpa_setup\fP(3).
+Parameters of an ELPA instance have to be set \fIBEFORE\fP the ELPA instance is set up with the function \fBelpa_setup\fP(3).
 
 At the moment the following parameters are supported:
+.br
+.TP
+.RI \fB"na"\fP:
+integer parameter. The global matrix has size (na * na)
+.TP
+.RI \fB"nev"\fP:
+integer parameter. The number of eigenvectors to be computed in a call to \fBelpa_eigenvectors\fP(3). Must have dimension 1 <= nev <= na.
+.TP
+.RI \fB"local_nrows"\fP:
+integer parameter. Number of matrix rows stored on this MPI process.
+.TP
+.RI \fB"local_ncols"\fP:
+integer parameter. Number of matrix cols stored on this MPI process.
+.TP
+.RI \fB"process_row"\fP:
+integer parameter. Process row number in the 2D domain decomposition.
+.TP
+.RI \fB"process_col"\fP:
+integer parameter. Process col number in the 2D domain decomposition.
+.TP
+.RI \fB"mpi_comm_parent"\fP:
+integer parameter. The parent MPI communicator which includes all MPI process which are used in the 2D domain decomposition.
+.TP
+.RI \fB"bandwidth"\fP:
+integer parameter. Some ELPA compute steps can be accelerated if the matrix is already in banded form. If set, ELPA assumes that the bandwidth of the matrix is the value set.
+.RI \fB"timings"\fP:
+Choose whether time measurements should be done in the ELPA routines.
 
-    \fB"na"\fP:  integer parameter. The global matrix has size (na * na)
-    \fB"nev"\fP:  integer parameter. The number of eigenvectors to be computed in a call to \fBelpa_eigenvectors\fP(3). Must have dimension 1 <= nev <= na.
-    \fB"local_nrows"\fP:  integer parameter. Number of matrix rows stored on this MPI process.
-    \fB"local_ncols"\fP:  integer parameter. Number of matrix cols stored on this MPI process.
-
-    \fB"process_row"\fP:  integer parameter. Process row number in the 2D domain decomposition.
-    \fB"process_col"\fP:  integer parameter. Process col number in the 2D domain decomposition.
-
-\fB"mpi_comm_parent"\fP:  \fBinteger\fP parameter. The parent MPI communicator which includes all MPI process which are used
-                          in the 2D domain decomposition.
-
-      \fB"bandwidth"\fP:  integer parameter. Some ELPA compute steps can be accelerated if the matrix is already in banded
-                          form. If set, ELPA assumes that the bandwidth of the matrix is the value set.
-
-
+.LP
 \fBTunables:\fP
 
-Tunables of an ELPA can be set at anytime.
+Tunables of an ELPA option can be set at \fIanytime\fP.
 
 At the moment the following parameters are supported:
-
-        \fB"solver"\fP:  Choose which solver should be used in the compute steps \fBelpa_eigenvalues\fP(3) or \fBelpa_eigenvectors\fP(3). At the moment allowed option are \fB"ELPA_SOLVER_1STAGE"\fP or \fB"ELPA_SOLVER_2STAGE"\fP.
-   \fB"real_kernel"\fP:  Choose which real kernel should be used in the \fBelpa_eigenvalues\fP(3) or \fBelpa_eigenvectors\fP(3)compute steps, if solver is set to \fB"ELPA_SOLVER_2STAGE"\fP. The available kernels can be querried with \fBelpa2_print_kernels\fP(1).
-\fB"complex_kernel"\fP:  Choose which complex kernel should be used in the \fBelpa_eigenvalues\fP(3) or \fBelpa_eigenvectors\fP(3)compute steps, if solver is set to \fB"ELPA_SOLVER_2STAGE"\fP. The available kernels can be querried with \fBelpa2_print_kernels\fP(1).
-\fB"qr"\fP            :  Choose whether in the real case computations in \fBelpa_eigenvalues\fP(3) or \fBelpa_eigenvectors\fP(3)compute steps, if solver is set to \fB"ELPA_SOLVER_2STAGE"\fP, a QR decompostion should be used.
-\fB"qpu"\fP           :  Choose whether accelerated GPU calculations should be used. Only available if ELPA has been build with GPU support.
-\fB"timings"\fP       :  Choose whether time measurements should be done in the ELPA routines.
-\fB"debug"\f  P       :  Choose whether, in case of an error, more debug information should be provided.
+.br
+.TP
+.RI \fB"solver"\fP:
+Choose which solver should be used in the compute steps \fBelpa_eigenvalues\fP(3) or \fBelpa_eigenvectors\fP(3). At the moment allowed option are \fB"ELPA_SOLVER_1STAGE"\fP or \fB"ELPA_SOLVER_2STAGE"\fP.
+.TP
+.RI \fB"real_kernel"\fP:
+Choose which real kernel should be used in the \fBelpa_eigenvalues\fP(3) or \fBelpa_eigenvectors\fP(3) compute steps, if solver is set to \fB"ELPA_SOLVER_2STAGE"\fP. The available kernels can be querried with \fBelpa2_print_kernels\fP(1).
+.TP
+.RI \fB"complex_kernel"\fP:
+Choose which complex kernel should be used in the \fBelpa_eigenvalues\fP(3) or \fBelpa_eigenvectors\fP(3) compute steps, if solver is set to \fB"ELPA_SOLVER_2STAGE"\fP. The available kernels can be querried with \fBelpa2_print_kernels\fP(1).
+.TP
+.RI \fB"qr"\fP:
+Choose whether in the real case computations in \fBelpa_eigenvalues\fP(3) or \fBelpa_eigenvectors\fP(3) compute steps, if solver is set to \fB"ELPA_SOLVER_2STAGE"\fP, a QR decompostion should be used.
+.TP
+.RI \fB"qpu"\fP:
+Choose whether accelerated GPU calculations should be used. Only available if ELPA has been build with GPU support.
+.TP
+.RI \fB"debug"\fP:
+Choose whether, in case of an error, more debug information should be provided.
 .br
 .SH "SEE ALSO"
 .br

@@ -20,9 +20,9 @@ class(elpa_t), pointer :: elpa
 .RI "With the definintions of the input and output variables:"
 
 .br
-.RI "integer, intent(in) \fBapi_version\fP:  the api version that you want to initialize, currently the version is 20170403"
+.RI "integer, intent(in) :: \fBapi_version\fP  ! the api version that you want to initialize, currently the version is 20170403"
 .br
-.RI "integer             \fBerror\fP:        the return code. If the function returns without an error, the error code will be ELPA_OK."
+.RI "integer             :: \fBerror\fP        ! the return code. If the function returns without an error, the error code will be ELPA_OK."
 .br
 
 .br
@@ -40,9 +40,9 @@ elpa_t handle;
 
 .br
 .br
-.RI "int \fBapi_version\fP:  the api version that you want to initialize currently the version is 20170403"
+.RI "int \fBapi_version\fP;  // the api version that you want to initialize currently the version is 20170403"
 .br
-.RI "int \fBerror\fP:        the return code. If the function returns without an error, the error code will be ELPA_OK."
+.RI "int \fBerror\fP;        // the return code. If the function returns without an error, the error code will be ELPA_OK."
 
 .SH DESCRIPTION
 Initializes the ELPA library for usage. The return code shold be ELPA_OK. The return code can be querried
@@ -50,4 +50,4 @@ with the \fBelpa_strerr\fP(3) function.
 .br
 .SH "SEE ALSO"
 .br
-\fBelpa2_print_kernels\fP(1) \fBelpa_allocate\fP(3) \fPelpa_set\fP(3) \fPelpa_setup\fP(3) \fPelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
+\fBelpa2_print_kernels\fP(1) \fBelpa_allocate\fP(3) \fPelpa_set\fP(3) \fPelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fPelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)

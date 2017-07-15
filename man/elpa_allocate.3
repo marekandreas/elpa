@@ -20,7 +20,7 @@ class(elpa_t), pointer :: elpa
 .RI "With the definintions of the input and output variables:"
 
 .br
-.RI "class(elpa_t)  \fBelpa\fP:  returns an instance of the ELPA object"
+.RI "class(elpa_t) :: \fBelpa\fP  ! returns an instance of the ELPA object"
 .br
 
 .br
@@ -30,7 +30,7 @@ class(elpa_t), pointer :: elpa
 elpa_t handle;
 
 .br
-.RI "\fBelpa_t\fP handle = \fBelpa_allocate\fP ();"
+.RI "\fBelpa_t\fP handle = \fBelpa_allocate\fP();"
 .br
 .RI " "
 .br
@@ -38,11 +38,11 @@ elpa_t handle;
 
 .br
 .br
-.RI "elpa_t \fBhandle\fP:    returns an handle to the allocated ELPA object"
+.RI "elpa_t \fBhandle\fP;  // returns an handle to the allocated ELPA object"
 
 .SH DESCRIPTION
-Allocate an ELPA object. The function \fBelpa_init\fP(3) must be called once BEFORE \fBelpa_allocate\fP can be called.
+Allocate an ELPA object. The function \fBelpa_init\fP(3) must be called once \fIBEFORE\fP \fBelpa_allocate\fP can be called.
 .br
 .SH "SEE ALSO"
 .br
-\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
