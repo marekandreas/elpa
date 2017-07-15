@@ -1,0 +1,72 @@
+.TH "elpa_solve_tridiagonal" 3 "Sat Jul 15 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_solve_tridiagonal \- computes the eigenvalue problem for real symmetric tridiagonal matrix
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "call elpa%\fBeigenvectors\fP (d, e, q, error)"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.RI "class(elpa_t) :: \fBelpa\fP  ! returns an instance of the ELPA object"
+.br
+.TP
+.RI "datatype :: \fBd\fP"
+The diagonal elements of a matrix whose dimensions have been defined in \fBelpa_setup\fP(3). On exist the eigenvalues are stored in this 1d-array. The datatype of the diagonal elements can either be "real(kind=c_double)" or "real(kind=c_float)".
+.TP
+.RI "datatype :: \fBe\fP"
+The offdiagonal elements of the matrix. The datatype of the diagonal elements can either be "real(kind=c_double)" or "real(kind=c_float)".
+.RI "datatype :: \fBq\fP"
+The storage space for the computed eigenvectors. The datatype of the matrix can be either "real(kind=c_double)" or "real(kind=c_float)".
+.TP
+.RI "integer, optional :: \fBerror\fP"
+The return error code of the function. Should be "ELPA_OK". The error code can be querried with the function \fBelpa_strerr\fP(3)
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "void \fBelpa_eigenvalues\fP(\fBelpa_t\fP handle, \fBdatatype\fP *d, \fBdatatype\fP *e, \fBdatatype\fP *q, \fBint\fP *error);"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.TP
+.RI "elpa_t \fBhandle\fP;"
+The handle to the ELPA object
+.TP
+.RI "datatype *\fBd\fP;"
+The diagonal elements of the matrix. The dimensions of the matrix must be set \fIBEFORE\fP with \fBelpa_setup\fP(3). On exist the eigenvalues are stored in d. The \fBdatatype\fP can be one of "double" or "float".
+.TP
+.RI "datatype *\fBe\fP;"
+The offdiagonal elements of the matrix. The \fBdatatype\fP can be one of "double" or "float".
+.TP
+.RI "datatype *\fBq\fP;"
+The storage space for the computed eigenvectors. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".
+.TP
+.RI "int *\fBerror\fP;"
+The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)
+
+.SH DESCRIPTION
+Computes the eigenvalue problem of a real symmtric tridiagonal matrix.The functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3), \fBelpa_set\fP(3), and \fBelpa_setup\fP(3) must be called \fIBEFORE\fP \fBelpa_solve_tridiagonal\fP can be called.
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
