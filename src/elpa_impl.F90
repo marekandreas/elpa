@@ -1204,6 +1204,30 @@ module elpa_impl
       endif
     end subroutine
 
+    !c> void elpa_hermitian_multiply_d(elpa_t handle, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
+    subroutine elpa_hermitian_multiply_d_c(handle, uplo_a, uplo_c, ncb, a_p, b, nrows_b, &
+                                           ncols_b, c, nrows_c, ncols_c, error)          &
+                                           bind(C, name="elpa_hermitian_multiply_d")
+      type(c_ptr), intent(in), value            :: handle, a_p
+      character(1,C_CHAR), value                :: uplo_a, uplo_c
+      integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_double), pointer              :: a(:, :)
+#ifdef USE_ASSUMED_SIZE
+      real(kind=c_double)                       :: b(nrows_b,*), c(nrows_c,*)
+#else
+      real(kind=c_double)                       :: b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+#endif
+      type(elpa_impl_t), pointer                :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_hermitian_multiply_d(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
+                                     ncols_b, c, nrows_c, ncols_c, error)
+    end subroutine
+
     !> \brief  elpa_hermitian_multiply_f: class method to perform C : = A**T * B for float real matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
     !>                 B is a (self%na,ncb) matrix
@@ -1272,6 +1296,29 @@ module elpa_impl
 #endif
     end subroutine
 
+    !c> void elpa_hermitian_multiply_f(elpa_t handle, char uplo_a, char uplo_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
+    subroutine elpa_hermitian_multiply_f_c(handle, uplo_a, uplo_c, ncb, a_p, b, nrows_b, &
+                                           ncols_b, c, nrows_c, ncols_c, error)          &
+                                           bind(C, name="elpa_hermitian_multiply_f")
+      type(c_ptr), intent(in), value            :: handle, a_p
+      character(1,C_CHAR), value                :: uplo_a, uplo_c
+      integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
+      integer(kind=c_int), optional, intent(in) :: error
+
+      real(kind=c_float), pointer               :: a(:, :)
+#ifdef USE_ASSUMED_SIZE
+      real(kind=c_float)                        :: b(nrows_b,*), c(nrows_c,*)
+#else
+      real(kind=c_float)                        :: b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+#endif
+      type(elpa_impl_t), pointer                :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_hermitian_multiply_f(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
+                                     ncols_b, c, nrows_c, ncols_c, error)
+    end subroutine
     !> \brief  elpa_hermitian_multiply_dc: class method to perform C : = A**H * B for double complex matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
     !>                 B is a (self%na,ncb) matrix
@@ -1335,6 +1382,31 @@ module elpa_impl
       endif
     end subroutine
 
+
+    !c> void elpa_hermitian_multiply_dc(elpa_t handle, char uplo_a, char uplo_c, int ncb, double complex *a, double complex *b, int nrows_b, int ncols_b, double complex *c, int nrows_c, int ncols_c, int *error);
+    subroutine elpa_hermitian_multiply_dc_c(handle, uplo_a, uplo_c, ncb, a_p, b, nrows_b, &
+                                            ncols_b, c, nrows_c, ncols_c, error)          &
+                                            bind(C, name="elpa_hermitian_multiply_dc")
+      type(c_ptr), intent(in), value            :: handle, a_p
+      character(1,C_CHAR), value                :: uplo_a, uplo_c
+      integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_double_complex), pointer   :: a(:, :)
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=c_double_complex)            :: b(nrows_b,*), c(nrows_c,*)
+#else
+      complex(kind=c_double_complex)            :: b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+#endif
+      type(elpa_impl_t), pointer                :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_hermitian_multiply_dc(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
+                                     ncols_b, c, nrows_c, ncols_c, error)
+    end subroutine
+
     !> \brief  elpa_hermitian_multiply_fc: class method to perform C : = A**H * B for float complex matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
     !>                 B is a (self%na,ncb) matrix
@@ -1362,7 +1434,7 @@ module elpa_impl
     !> \param ncb                   Number of columns  of global matrices B and C
     !> \param a                     matrix a
     !> \param self%local_nrows      number of rows of local (sub) matrix a, set with class method set("local_nrows",value)
-    !> \param self%local_ncols      number of columns of local (sub) matrix a, set with class method set("local_ncols",value) 
+    !> \param self%local_ncols      number of columns of local (sub) matrix a, set with class method set("local_ncols",value)
     !> \param b                     matrix b
     !> \param nrows_b               number of rows of local (sub) matrix b
     !> \param ncols_b               number of columns of local (sub) matrix b
@@ -1402,6 +1474,32 @@ module elpa_impl
       error = ELPA_ERROR
 #endif
     end subroutine
+
+
+    !c> void elpa_hermitian_multiply_fc(elpa_t handle, char uplo_a, char uplo_c, int ncb, float complex *a, float complex *b, int nrows_b, int ncols_b, float complex *c, int nrows_c, int ncols_c, int *error);
+    subroutine elpa_hermitian_multiply_fc_c(handle, uplo_a, uplo_c, ncb, a_p, b, nrows_b, &
+                                            ncols_b, c, nrows_c, ncols_c, error)          &
+                                            bind(C, name="elpa_hermitian_multiply_fc")
+      type(c_ptr), intent(in), value            :: handle, a_p
+      character(1,C_CHAR), value                :: uplo_a, uplo_c
+      integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
+      integer(kind=c_int), optional, intent(in) :: error
+
+      complex(kind=c_float_complex), pointer    :: a(:, :)
+#ifdef USE_ASSUMED_SIZE
+      complex(kind=c_float_complex)             :: b(nrows_b,*), c(nrows_c,*)
+#else
+      complex(kind=c_float_complex)             :: b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+#endif
+      type(elpa_impl_t), pointer                :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_hermitian_multiply_fc(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
+                                      ncols_b, c, nrows_c, ncols_c, error)
+    end subroutine
+
 
     !>  \brief elpa_choleksy_d: class method to do a cholesky factorization for a double real matrix
     !>
@@ -1640,7 +1738,7 @@ module elpa_impl
       call elpa_cholesky_fc(self, a, error)
     end subroutine
 
-    !>  \brief elpa_invert_trim_d: class method to invert a triangular double real matrix
+    !>  \brief elpa_invert_trm_d: class method to invert a triangular double real matrix
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
     !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
@@ -1696,7 +1794,7 @@ module elpa_impl
       call elpa_invert_trm_d(self, a, error)
     end subroutine
 
-    !>  \brief elpa_invert_trim_f: class method to invert a triangular float real matrix
+    !>  \brief elpa_invert_trm_f: class method to invert a triangular float real matrix
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
     !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
@@ -1757,7 +1855,7 @@ module elpa_impl
       call elpa_invert_trm_f(self, a, error)
     end subroutine
 
-    !>  \brief elpa_invert_trim_dc: class method to invert a triangular double complex matrix
+    !>  \brief elpa_invert_trm_dc: class method to invert a triangular double complex matrix
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
     !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
@@ -1814,7 +1912,7 @@ module elpa_impl
       call elpa_invert_trm_dc(self, a, error)
     end subroutine
 
-    !>  \brief elpa_invert_trim_fc: class method to invert a triangular float complex matrix
+    !>  \brief elpa_invert_trm_fc: class method to invert a triangular float complex matrix
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
     !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE

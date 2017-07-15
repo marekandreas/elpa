@@ -108,6 +108,38 @@
         )(handle, a, error)
 
 
+/*! \brief generic C method for elpa_hermitian_multiply
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  uplo_a  descriptor for matrix a
+ *  \param  uplo_c  descriptor for matrix c
+ *  \param  ncb     int
+ *  \param  a       float/double float complex/double complex pointer to matrix a
+ *  \param  b       float/double float complex/double complex pointer to matrix b
+ *  \param  nrows_b number of rows for matrix b
+ *  \param  ncols_b number of cols for matrix b
+ *  \param  c       float/double float complex/double complex pointer to matrix c
+ *  \param  nrows_c number of rows for matrix c
+ *  \param  ncols_c number of cols for matrix c
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+#define elpa_hermitian_multiply(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error) _Generic((a), \
+                double*: \
+                  elpa_hermitian_multiply_d, \
+                \
+                float*: \
+                  elpa_hermitian_multiply_f, \
+                \
+                double complex*: \
+                  elpa_hermitian_multiply_dc, \
+                \
+                float complex*: \
+                  elpa_hermitian_multiply_fc \
+        )(handle, a, error)
+
+
 /*! \brief generic C method for elpa_invert_triangular
  *
  *  \details
