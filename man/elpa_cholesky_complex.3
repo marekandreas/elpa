@@ -2,7 +2,7 @@
 .ad l
 .nh
 .SH NAME
-elpa_cholesky_complex \- Cholesky factorization of a complex hermetian matrix (legacy interface)
+elpa_cholesky_complex \- Cholesky factorization of a complex hermitian matrix (legacy interface)
 .br
 
 .SH SYNOPSIS
@@ -15,7 +15,7 @@ use elpa1
 .br
 .RI " "
 .br
-.RI "With the definintions of the input and output variables:"
+.RI "With the definitions of the input and output variables:"
 
 .br
 .RI "integer, intent(in)        \fBna\fP:            global dimension of quadratic matrix \fBa\fP to solve"
@@ -46,7 +46,7 @@ use elpa1
 .br
 .RI " "
 .br
-.RI "With the definintions of the input and output variables:"
+.RI "With the definitions of the input and output variables:"
 
 .br
 .RI "int             \fBna\fP:           global dimension of quadratic matrix \fBa\fP to solve"
@@ -69,7 +69,7 @@ use elpa1
 .RI "int             \fBsuccess\fP:       return value indicating success (1) or failure (0)
 
 .SH DESCRIPTION
-Does a Cholesky factorization of a complex, hermetian matrix. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function. The distributed quadratic marix \fBa\fP has global dimensions \fBna\fP x \fBna\fP, and a local size \fBlda\fP x \fBmatrixCols\fP.
+Does a Cholesky factorization of a complex, hermitian matrix. The ELPA communicators \fBmpi_comm_rows\fP and \fBmpi_comm_cols\fP are obtained with the \fBelpa_get_communicators\fP(3) function. The distributed quadratic marix \fBa\fP has global dimensions \fBna\fP x \fBna\fP, and a local size \fBlda\fP x \fBmatrixCols\fP.
 .br
 This function is part of the legacy API of the ELPA library. Better use the current API.
 .br
