@@ -368,6 +368,7 @@ dist_man_MANS = \
   man/elpa_allocate.3 \
   man/elpa_set.3 \
   man/elpa_setup.3 \
+  man/elpa_eigenvalues.3 \
   man/elpa_deallocate.3 \
   man/elpa_uninit.3
 
