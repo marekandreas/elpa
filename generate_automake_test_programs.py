@@ -19,10 +19,17 @@ gpu_flag = {
         1 : "-DTEST_GPU=1",
 }
 
-for g, p, d, s in product(sorted(gpu_flag.keys()),
-                          sorted(prec_flag.keys()),
-                          sorted(domain_flag.keys()),
-                          sorted(solver_flag.keys())):
+test_type_flag = {
+        "eigenvectors" : "-D__EIGENVECTORS",
+        "eigenvalues"  : "-D__EIGENVALUES",
+        "solve_tridiagonal"  : "-D__SOLVE_TRIDIAGONAL",
+}
+
+for g, t, p, d, s in product(sorted(gpu_flag.keys()),
+                             sorted(test_type_flag.keys()),
+                             sorted(prec_flag.keys()),
+                             sorted(domain_flag.keys()),
+                             sorted(solver_flag.keys())):
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
         endifs = 0
@@ -45,7 +52,7 @@ for g, p, d, s in product(sorted(gpu_flag.keys()),
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "test_{0}_{1}_{2}{3}{4}".format(d, p, s, "" if kernel == "nokernel" else "_" + kernel, "_gpu" if g else "")
+        name = "test_{0}_{1}_{2}_{3}{4}{5}".format(d, p, t, s, "" if kernel == "nokernel" else "_" + kernel, "_gpu" if g else "")
         print("noinst_PROGRAMS += " + name)
         print("check_SCRIPTS += " + name + ".sh")
         print(name + "_SOURCES = test/Fortran/test.F90")
@@ -54,6 +61,7 @@ for g, p, d, s in product(sorted(gpu_flag.keys()),
         print("  " + " \\\n  ".join([
             domain_flag[d],
             prec_flag[p],
+            test_type_flag[t],
             solver_flag[s],
             gpu_flag[g]] + extra_flags))
 
