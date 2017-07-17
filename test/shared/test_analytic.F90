@@ -89,7 +89,7 @@ module test_analytic
     if(myid == 0) print *, 'Maximal error in eigenvectors     :', glob_max_z_diff 
     status = 0
     if (max_ev_diff .gt. 5e-14_rk8 .or. max_ev_diff .eq. 0.0_rk8) status = 1
-    if (glob_max_z_diff .gt. 6e-13_rk8 .or. glob_max_z_diff .eq. 0.0_rk8) status = 1
+    if (glob_max_z_diff .gt. 1e-12_rk8 .or. glob_max_z_diff .eq. 0.0_rk8) status = 1
   end function 
 
   function decompose(num, decomposition) result(possible)
