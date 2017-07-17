@@ -153,7 +153,7 @@
             pdlarft_size(1),pdlarfb_size(1), &
                    tmerge_pdlarfb_size(1)))
 #endif
-      call obj%timer%stop("qr_pdgeqrf_2dcomm_&
+        call obj%timer%stop("qr_pdgeqrf_2dcomm_&
           &PRECISION&
           &")
         return
@@ -396,7 +396,7 @@
       end if
 
       !print *,'stop decomposition',rowidx,colidx
-      call obj%timer%start("qr_pdgeqrf_2dcomm_&
+      call obj%timer%stop("qr_pdgeqrf_2dcomm_&
           &PRECISION&
           &")
     end subroutine
@@ -1306,7 +1306,9 @@
         work(1) = 8.0_rk4
 #endif
 
-      call obj%timer%stop("qr_pdlarfg2_1dcomm_seed")
+      call obj%timer%stop("qr_pdlarfg2_1dcomm_seed_&
+          &PRECISION&
+          &")
         return
       end if
       call MPI_Comm_rank(mpicomm, mpirank, mpierr)
@@ -1888,6 +1890,10 @@
 #else
         work(1) = real(2*sendrecv_size,kind=rk4)
 #endif
+        call obj%timer%stop("qr_pdlarfgk_1dcomm_seed_&
+          &PRECISION&
+          &")
+
         return
       end if
 
