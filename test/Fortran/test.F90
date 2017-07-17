@@ -110,6 +110,7 @@ program test
    use test_read_input_parameters
    use test_blacs_infrastructure
    use test_check_correctness
+   use test_analytic
 
    implicit none
 
@@ -124,7 +125,7 @@ program test
    integer :: mpierr
 
    ! blacs
-   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, adjusted_na
 
    ! The Matrix
    MATRIX_TYPE, allocatable :: a(:,:), as(:,:)
@@ -157,6 +158,7 @@ program test
    stop 77
 #endif
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
+
    call setup_mpi(myid, nprocs)
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
@@ -165,6 +167,19 @@ program test
 
    np_rows = nprocs/np_cols
 
+#ifdef TEST_MATRIX_ANALYTIC
+   adjusted_na = 1
+   do while (adjusted_na < na)
+     adjusted_na = adjusted_na * 2
+   end do
+   if (adjusted_na > na) then
+     na = adjusted_na
+     if(myid == 0) then
+       print *, 'At the moment, analytic test works for sizes of matrix of powers of two only. na changed to ', na
+     end if
+   end if
+#endif
+ 
    if (myid == 0) then
      print '((a,i0))', 'Matrix size: ', na
      print '((a,i0))', 'Num eigenvectors: ', nev
@@ -180,7 +195,10 @@ program test
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
-   allocate(a (na_rows,na_cols), as(na_rows,na_cols))
+   allocate(a (na_rows,na_cols))
+#ifdef TEST_MATRIX_RANDOM
+   allocate(as(na_rows,na_cols))
+#endif
    allocate(z (na_rows,na_cols))
    allocate(ev(na))
 
@@ -195,7 +213,11 @@ program test
    ev(:) = 0.0
 
 #ifdef __EIGENVECTORS
+#ifdef TEST_MATRIX_ANALYTIC
+   call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+#else
    call prepare_matrix(na, myid, sc_desc, a, z, as)
+#endif
 #endif
 
 #if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
@@ -352,7 +374,11 @@ program test
      endif
 
 #ifdef __EIGENVECTORS
+#ifdef TEST_MATRIX_ANALYTIC
+     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+#else
      status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
+#endif     
      if (status /= 0) then
        if (myid == 0) print *, "Result incorrect!"
        call exit(status)
@@ -424,7 +450,11 @@ program test
 #endif
 
 #ifdef TEST_ALL_KERNELS
+#ifdef TEST_MATRIX_ANALYTIC
+     call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+#else
      a(:,:) = as(:,:)
+#endif
 #if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
      d = ds
      sd = sds
@@ -436,7 +466,9 @@ program test
    call elpa_uninit()
 
    deallocate(a)
+#ifdef TEST_MATRIX_RANDOM
    deallocate(as)
+#endif
    deallocate(z)
    deallocate(ev)
 

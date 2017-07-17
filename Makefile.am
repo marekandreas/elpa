@@ -459,6 +459,7 @@ libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/test_blacs_infrastructure.F90 \
   test/shared/test_prepare_matrix.F90 \
   test/shared/test_prepare_matrix_template.X90 \
+	test/shared/test_analytic.F90 \
   test/shared/test_output_type.F90
 
 if HAVE_REDIRECT
