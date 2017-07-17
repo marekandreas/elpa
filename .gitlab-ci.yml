@@ -87,6 +87,17 @@ gfortran-single-precision-mpi-noomp-jobs:
     - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
+# gfortran single precision mpi noomp AVX/SSE no legacy
+gfortran-single-precision-mpi-noomp-no-legacy-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --disable-legacy
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 # gfortran single precision mpi noomp AVX/SSE qr
 gfortran-single-precision-mpi-noomp-qr-jobs:
   tags:
