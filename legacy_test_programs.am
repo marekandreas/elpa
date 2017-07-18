@@ -73,278 +73,278 @@ endif
 endif
 
 legacy_real_1stage_c_version@SUFFIX@_SOURCES = test/C/elpa1/legacy_interface/legacy_real_1stage_c_version.c
-legacy_real_1stage_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
-legacy_real_1stage_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_1stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+legacy_real_1stage_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_1stage_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_driver_c_version@SUFFIX@_SOURCES = test/C/driver/legacy_interface/legacy_real_driver_c_version.c
-legacy_real_driver_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
-legacy_real_driver_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_driver_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+legacy_real_driver_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_driver_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_1stage_c_version@SUFFIX@_SOURCES = test/C/elpa1/legacy_interface/legacy_complex_1stage_c_version.c
-legacy_complex_1stage_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
-legacy_complex_1stage_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_1stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+legacy_complex_1stage_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_1stage_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_driver_c_version@SUFFIX@_SOURCES = test/C/driver/legacy_interface/legacy_complex_driver_c_version.c
-legacy_complex_driver_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
-legacy_complex_driver_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_driver_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+legacy_complex_driver_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_driver_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_2stage_c_version@SUFFIX@_SOURCES = test/C/elpa2/legacy_interface/legacy_real_2stage_c_version.c
-legacy_real_2stage_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
-legacy_real_2stage_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_2stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+legacy_real_2stage_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_2stage_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_2stage_c_version@SUFFIX@_SOURCES = test/C/elpa2/legacy_interface/legacy_complex_2stage_c_version.c
-legacy_complex_2stage_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
-legacy_complex_2stage_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_2stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+legacy_complex_2stage_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_2stage_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_1stage@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_real.F90
-legacy_real_1stage@SUFFIX@_LDADD = $(build_lib)
-legacy_real_1stage@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_1stage@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_1stage@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_1stage@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_toeplitz@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_toeplitz.F90
-legacy_real_toeplitz@SUFFIX@_LDADD = $(build_lib)
-legacy_real_toeplitz@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_toeplitz@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_toeplitz@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_toeplitz@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_real_transp_multiply.F90
-legacy_real_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
-legacy_real_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_transpose_multiply@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_transpose_multiply@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_complex_transp_multiply.F90
-legacy_complex_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_transpose_multiply@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_transpose_multiply@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_cholesky@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_real_cholesky.F90
-legacy_real_cholesky@SUFFIX@_LDADD = $(build_lib)
-legacy_real_cholesky@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_cholesky@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_cholesky@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_cholesky@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_invert_trm@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_real_invert_trm.F90
-legacy_real_invert_trm@SUFFIX@_LDADD = $(build_lib)
-legacy_real_invert_trm@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_invert_trm@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_invert_trm@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_cholesky@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_complex_cholesky.F90
-legacy_complex_cholesky@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_cholesky@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_cholesky@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_cholesky@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_cholesky@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_invert_trm@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_complex_invert_trm.F90
-legacy_complex_invert_trm@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_invert_trm@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_invert_trm@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_invert_trm@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_2stage@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_real.F90
-legacy_real_2stage@SUFFIX@_LDADD = $(build_lib)
-legacy_real_2stage@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_2stage@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_2stage@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_2stage@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_2stage_default@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_real_default_kernel.F90
-legacy_real_2stage_default@SUFFIX@_LDADD = $(build_lib)
-legacy_real_2stage_default@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_2stage_default@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_2stage_default@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_2stage_default@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_2stage_qr@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_real_qr.F90
-legacy_real_2stage_qr@SUFFIX@_LDADD = $(build_lib)
-legacy_real_2stage_qr@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_2stage_qr@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_2stage_qr@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_2stage_qr@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_2stage_api@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_real_api.F90
-legacy_real_2stage_api@SUFFIX@_LDADD = $(build_lib)
-legacy_real_2stage_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_2stage_api@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_2stage_api@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_2stage_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_1stage@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_complex.F90
-legacy_complex_1stage@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_1stage@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_1stage@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_1stage@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_1stage@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_2stage@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_complex.F90
-legacy_complex_2stage@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_2stage@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_2stage@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_2stage@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_2stage@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_2stage_default@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_complex_default_kernel.F90
-legacy_complex_2stage_default@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_2stage_default@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_2stage_default@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_2stage_default@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_2stage_default@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_2stage_api@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_complex_api.F90
-legacy_complex_2stage_api@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_2stage_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_2stage_api@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_2stage_api@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_2stage_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_driver@SUFFIX@_SOURCES = test/Fortran/driver/legacy_interface/legacy_real_driver.F90
-legacy_real_driver@SUFFIX@_LDADD = $(build_lib)
-legacy_real_driver@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_driver@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_driver@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_driver@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_driver@SUFFIX@_SOURCES = test/Fortran/driver/legacy_interface/legacy_complex_driver.F90
-legacy_complex_driver@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_driver@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_driver@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_driver@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_driver@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 elpa_tests@SUFFIX@_SOURCES = test/Fortran/elpa_tests.F90
-elpa_tests@SUFFIX@_LDADD = $(build_lib)
+elpa_tests@SUFFIX@_LDADD = $(test_program_ldadd)
 elpa_tests@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)test_modules $(FC_MODINC)modules
 EXTRA_elpa_tests@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 if WANT_SINGLE_PRECISION_REAL
 
 legacy_single_real_1stage@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_real.F90
-legacy_single_real_1stage@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_1stage@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_1stage@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_1stage@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_1stage@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_2stage@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_real.F90
-legacy_single_real_2stage@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_2stage@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_2stage@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_2stage@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_2stage@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_driver@SUFFIX@_SOURCES = test/Fortran/driver/legacy_interface/legacy_single_real_driver.F90
-legacy_single_real_driver@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_driver@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_driver@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_driver@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_driver@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_toeplitz@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_toeplitz.F90
-legacy_single_real_toeplitz@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_toeplitz@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_toeplitz@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_toeplitz@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_toeplitz@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_real_transp_multiply.F90
-legacy_single_real_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_transpose_multiply@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_transpose_multiply@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_driver_c_version@SUFFIX@_SOURCES = test/C/driver/legacy_interface/legacy_single_real_driver_c_version.c
-legacy_single_real_driver_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
-legacy_single_real_driver_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_driver_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+legacy_single_real_driver_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_driver_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_cholesky@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_real_cholesky.F90
-legacy_single_real_cholesky@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_cholesky@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_cholesky@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_cholesky@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_cholesky@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_invert_trm@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_real_invert_trm.F90
-legacy_single_real_invert_trm@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_invert_trm@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_invert_trm@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_invert_trm@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_2stage_default@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_real_default_kernel.F90
-legacy_single_real_2stage_default@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_2stage_default@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_2stage_default@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_2stage_default@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_2stage_default@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_2stage_qr@SUFFIX@_SOURCES = \
                 test/Fortran/elpa2/legacy_interface/legacy_single_real_qr.F90
-legacy_single_real_2stage_qr@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_2stage_qr@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_2stage_qr@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_2stage_qr@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_2stage_qr@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_2stage_api@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_real_api.F90
-legacy_single_real_2stage_api@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_2stage_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_2stage_api@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_2stage_api@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_2stage_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 legacy_single_complex_1stage@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_complex.F90
-legacy_single_complex_1stage@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_1stage@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_1stage@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_1stage@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_1stage@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_driver@SUFFIX@_SOURCES = test/Fortran/driver/legacy_interface/legacy_single_complex_driver.F90
-legacy_single_complex_driver@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_driver@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_driver@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_driver@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_driver@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_driver_c_version@SUFFIX@_SOURCES = test/C/driver/legacy_interface/legacy_single_complex_driver_c_version.c
-legacy_single_complex_driver_c_version@SUFFIX@_LDADD = $(build_lib) $(FCLIBS)
-legacy_single_complex_driver_c_version@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_driver_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+legacy_single_complex_driver_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 legacy_single_complex_driver_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_2stage@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_complex.F90
-legacy_single_complex_2stage@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_2stage@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_2stage@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_2stage@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_2stage@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_2stage_default@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_complex_default_kernel.F90
-legacy_single_complex_2stage_default@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_2stage_default@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_2stage_default@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_2stage_default@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_2stage_default@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_transpose_multiply@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_complex_transp_multiply.F90
-legacy_single_complex_transpose_multiply@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_transpose_multiply@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_transpose_multiply@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_transpose_multiply@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_transpose_multiply@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_cholesky@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_complex_cholesky.F90
-legacy_single_complex_cholesky@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_cholesky@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_cholesky@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_cholesky@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_cholesky@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_invert_trm@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_complex_invert_trm.F90
-legacy_single_complex_invert_trm@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_invert_trm@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_invert_trm@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_invert_trm@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_invert_trm@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_2stage_api@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_complex_api.F90
-legacy_single_complex_2stage_api@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_2stage_api@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_2stage_api@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_2stage_api@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_2stage_api@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 endif
 
 if WITH_GPU_VERSION
 legacy_real_1stage_gpu@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_real_gpu.F90
-legacy_real_1stage_gpu@SUFFIX@_LDADD = $(build_lib)
-legacy_real_1stage_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_1stage_gpu@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_1stage_gpu@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_1stage_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_1stage_gpu@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_complex_gpu.F90
-legacy_complex_1stage_gpu@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_1stage_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_1stage_gpu@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_1stage_gpu@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_1stage_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_real_2stage_gpu@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_real_gpu.F90
-legacy_real_2stage_gpu@SUFFIX@_LDADD = $(build_lib)
-legacy_real_2stage_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_real_2stage_gpu@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_real_2stage_gpu@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_real_2stage_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_complex_2stage_gpu@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_complex_gpu.F90
-legacy_complex_2stage_gpu@SUFFIX@_LDADD = $(build_lib)
-legacy_complex_2stage_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_complex_2stage_gpu@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_complex_2stage_gpu@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_2stage_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 if WANT_SINGLE_PRECISION_REAL
 legacy_single_real_1stage_gpu@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_real_gpu.F90
-legacy_single_real_1stage_gpu@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_1stage_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_1stage_gpu@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_1stage_gpu@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_1stage_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_real_2stage_gpu@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_real_gpu.F90
-legacy_single_real_2stage_gpu@SUFFIX@_LDADD = $(build_lib)
-legacy_single_real_2stage_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_real_2stage_gpu@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_real_2stage_gpu@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_real_2stage_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 legacy_single_complex_1stage_gpu@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_complex_gpu.F90
-legacy_single_complex_1stage_gpu@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_1stage_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_1stage_gpu@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_1stage_gpu@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_1stage_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_2stage_gpu@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_complex_gpu.F90
-legacy_single_complex_2stage_gpu@SUFFIX@_LDADD = $(build_lib)
-legacy_single_complex_2stage_gpu@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+legacy_single_complex_2stage_gpu@SUFFIX@_LDADD = $(test_program_ldadd)
+legacy_single_complex_2stage_gpu@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_single_complex_2stage_gpu@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 endif
 endif

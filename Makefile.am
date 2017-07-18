@@ -19,8 +19,7 @@ libelpa@SUFFIX@_public_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)modules $(FC_MODIN
 libelpa@SUFFIX@_public_la_SOURCES = \
   src/elpa.F90 \
   src/elpa_api.F90 \
-  src/elpa_constants.F90 \
-  src/general/elpa_utilities.F90
+  src/elpa_constants.F90
 
 if ENABLE_LEGACY
 libelpa@SUFFIX@_public_la_SOURCES += \
@@ -63,6 +62,16 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/helpers/matrix_plot.F90 \
   src/elpa_c_interface.c \
   src/elpa_index.c
+
+# elpa_utilities.F90 is private in new API, public in legacy
+if ENABLE_LEGACY
+libelpa@SUFFIX@_public_la_SOURCES += \
+  src/general/elpa_utilities.F90
+else
+libelpa@SUFFIX@_private_la_SOURCES += \
+  src/general/elpa_utilities.F90
+endif
+
 
 if ENABLE_LEGACY
 libelpa@SUFFIX@_private_la_SOURCES += \
@@ -445,11 +454,12 @@ endif
 noinst_PROGRAMS =
 check_SCRIPTS =
 
-build_lib = libelpatest@SUFFIX@.la libelpa@SUFFIX@.la
+test_program_ldadd = libelpatest@SUFFIX@.la libelpa@SUFFIX@.la
+test_program_fcflags = $(AM_FCFLAGS) $(FC_MODOUT)test_modules $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
 # library with shared sources for the test files
 noinst_LTLIBRARIES += libelpatest@SUFFIX@.la
-libelpatest@SUFFIX@_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)test_modules $(FC_MODINC)modules
+libelpatest@SUFFIX@_la_FCFLAGS = $(test_program_fcflags)
 libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/test_util.F90 \
   test/shared/test_read_input_parameters.F90 \
@@ -470,7 +480,7 @@ endif
 
 
 elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2/elpa2_print_kernels.F90
-elpa2_print_kernels@SUFFIX@_LDADD = $(build_lib)
+elpa2_print_kernels@SUFFIX@_LDADD = libelpa@SUFFIX@.la
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)modules
 
 include test_programs.am
@@ -482,26 +492,26 @@ endif
 noinst_PROGRAMS += double_instance@SUFFIX@
 check_SCRIPTS += double_instance@SUFFIX@.sh
 double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
-double_instance@SUFFIX@_LDADD = $(build_lib)
+double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
 double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 noinst_PROGRAMS += real_2stage_banded@SUFFIX@
 check_SCRIPTS += real_2stage_banded@SUFFIX@.sh
 real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
-real_2stage_banded@SUFFIX@_LDADD = $(build_lib)
+real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 noinst_PROGRAMS += complex_2stage_banded@SUFFIX@
 check_SCRIPTS += complex_2stage_banded@SUFFIX@.sh
 complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
-complex_2stage_banded@SUFFIX@_LDADD = $(build_lib)
+complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 if WANT_SINGLE_PRECISION_REAL
 noinst_PROGRAMS += single_real_2stage_banded@SUFFIX@
 check_SCRIPTS += single_real_2stage_banded@SUFFIX@.sh
 single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
-single_real_2stage_banded@SUFFIX@_LDADD = $(build_lib)
+single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 endif
 
@@ -509,7 +519,7 @@ if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += single_complex_2stage_banded@SUFFIX@
 check_SCRIPTS += single_complex_2stage_banded@SUFFIX@.sh
 single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
-single_complex_2stage_banded@SUFFIX@_LDADD = $(build_lib)
+single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 endif
 

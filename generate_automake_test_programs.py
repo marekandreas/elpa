@@ -72,8 +72,8 @@ for m, g, t, p, d, s in product(sorted(matrix_flag.keys()),
         print("noinst_PROGRAMS += " + name)
         print("check_SCRIPTS += " + name + ".sh")
         print(name + "_SOURCES = test/Fortran/test.F90")
-        print(name + "_LDADD = $(build_lib)")
-        print(name + "_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules \\")
+        print(name + "_LDADD = $(test_program_ldadd)")
+        print(name + "_FCFLAGS = $(test_program_fcflags) \\")
         print("  " + " \\\n  ".join([
             domain_flag[d],
             prec_flag[p],
