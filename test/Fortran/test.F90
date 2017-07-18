@@ -135,13 +135,7 @@ program test
    EV_TYPE, allocatable :: ev(:)
 #if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
    EV_TYPE, allocatable :: d(:), sd(:), ev_analytic(:), ds(:), sds(:)
-   EV_TYPE              :: diagonalELement, subdiagonalElement, tmp, maxerr
-#ifdef TEST_DOUBLE
-   EV_TYPE, parameter   :: pi = 3.141592653589793238462643383279_rk8
-#else
-   EV_TYPE, parameter   :: pi = 3.1415926535897932_rk4
-#endif
-   integer              :: loctmp ,rowLocal, colLocal, j,ii
+   EV_TYPE              :: diagonalELement, subdiagonalElement
 #endif
 
 
@@ -221,7 +215,17 @@ program test
 #endif
 
 #if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
-   call prepare_toeplitz_matrix(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
+
+#ifdef TEST_SINGLE
+   diagonalElement = 0.45_c_float
+   subdiagonalElement =  0.78_c_float
+#else
+   diagonalElement = 0.45_c_double
+   subdiagonalElement =  0.78_c_double
+#endif
+   call prepare_toeplitz_matrix(na, diagonalElement, subdiagonalElement, &
+                                d, sd, ds, sds, a, as, nblk, np_rows, &
+                                np_cols, my_prow, my_pcol)
 #endif
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
@@ -355,55 +359,9 @@ program test
      if (myid == 0) print *, ""
 #endif
 #if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
-     status = 0
-     ! analytic solution
-     diagonalElement = ds(1)
-     subdiagonalElement = sds(1)
-     do ii=1, na
-#ifdef TEST_DOUBLE
-       ev_analytic(ii) = diagonalElement + 2.0 * subdiagonalElement *cos( pi*real(ii,kind=rk8)/ real(na+1,kind=rk8) )
-#else
-       ev_analytic(ii) = diagonalElement + 2.0 * subdiagonalElement *cos( pi*real(ii,kind=rk4)/ real(na+1,kind=rk4) )
-#endif
-     enddo
 
-     ! sort analytic solution:
-
-     ! this hack is neither elegant, nor optimized: for huge matrixes it might be expensive
-     ! a proper sorting algorithmus might be implemented here
-
-     tmp    = minval(ev_analytic)
-     loctmp = minloc(ev_analytic, 1)
-
-     ev_analytic(loctmp) = ev_analytic(1)
-     ev_analytic(1) = tmp
-
-     do ii=2, na
-       tmp = ev_analytic(ii)
-       do j= ii, na
-         if (ev_analytic(j) .lt. tmp) then
-           tmp    = ev_analytic(j)
-           loctmp = j
-         endif
-       enddo
-       ev_analytic(loctmp) = ev_analytic(ii)
-       ev_analytic(ii) = tmp
-     enddo
-
-     ! compute a simple error max of eigenvalues
-     maxerr = 0.0
-     maxerr = maxval( (ev(:) - ev_analytic(:))/ev_analytic(:) , 1)
-
-#ifdef TEST_DOUBLE
-     if (maxerr .gt. 8.e-13) then
-#else
-     if (maxerr .gt. 8.e-4) then
-#endif
-       status = 1
-       if (myid .eq. 0) then
-         print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
-       endif
-     endif
+     status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
+         subdiagonalElement, ev, z, myid)
 
      if (status /= 0) then
        call exit(status)

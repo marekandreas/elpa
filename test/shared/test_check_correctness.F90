@@ -56,6 +56,16 @@ module test_check_correctness
 #endif
   end interface
 
+  interface check_correctness_eigenvalues_toeplitz
+    module procedure check_correctness_eigenvalues_toeplitz_complex_double
+    module procedure check_correctness_eigenvalues_toeplitz_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure check_correctness_eigenvalues_toeplitz_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure check_correctness_eigenvalues_toeplitz_complex_single
+#endif
+  end interface
   contains
 
 #define COMPLEXCASE 1

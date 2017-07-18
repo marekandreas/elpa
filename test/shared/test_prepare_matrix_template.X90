@@ -210,8 +210,8 @@ subroutine prepare_matrix_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
-   & (na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
-     use iso_c_binding
+   & (na, diagonalElement, subdiagonalElement, d, sd, ds, sds, a, as, &
+      nblk, np_rows, np_cols, my_prow, my_pcol)
      use test_util
      implicit none
 
@@ -220,35 +220,13 @@ subroutine prepare_matrix_&
 
      real(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
 #if REALCASE == 1
-     real(kind=C_DATATYPE_KIND) :: z(:,:), a(:,:), as(:,:)
+     real(kind=C_DATATYPE_KIND) :: a(:,:), as(:,:)
 #endif
 #if COMPLEXCASE == 1
-     complex(kind=C_DATATYPE_KIND) :: z(:,:), a(:,:), as(:,:)
+     complex(kind=C_DATATYPE_KIND) :: a(:,:), as(:,:)
 #endif
 
      integer                    :: ii, rowLocal, colLocal
-
-#if REALCASE == 1
-
-#ifdef DOUBLE_PRECISION_REAL
-     diagonalElement = 0.45_rk8
-     subdiagonalElement =  0.78_rk8
-#else
-     diagonalElement = 0.45_rk4
-     subdiagonalElement =  0.78_rk4
-#endif
-#endif /* REALCASE */
-
-#if COMPLEXCASE == 1
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-     diagonalElement = 0.45_rk8
-     subdiagonalElement =  0.78_rk8
-#else
-     diagonalElement = 0.45_rk4
-     subdiagonalElement =  0.78_rk4
-#endif
-#endif /* COMPLEXCASE */
 
      d(:) = diagonalElement
      sd(:) = subdiagonalElement
