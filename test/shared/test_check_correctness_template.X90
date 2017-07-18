@@ -246,22 +246,7 @@
       ! Get maximum error norm over all processors
       err = errmax
 #ifdef WITH_MPI
-
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-      call mpi_allreduce(err, errmax, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#else
-      call mpi_allreduce(err, errmax, 1, MPI_REAL4, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call mpi_allreduce(err, errmax, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#else
-      call mpi_allreduce(err, errmax, 1, MPI_REAL4, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#endif
-#endif
-
+      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
       errmax = err
 #endif /* WITH_MPI */
@@ -361,23 +346,7 @@
       ! Get maximum error (max abs value in tmp1)
       err = maxval(abs(tmp1))
 #ifdef WITH_MPI
-
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-      call mpi_allreduce(err, errmax, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#else
-      call mpi_allreduce(err, errmax, 1, MPI_REAL4, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#endif
-#endif
-
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call mpi_allreduce(err, errmax, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#else
-      call mpi_allreduce(err, errmax, 1, MPI_REAL4, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#endif
-#endif
-
+      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
       errmax = err
 #endif /* WITH_MPI */
