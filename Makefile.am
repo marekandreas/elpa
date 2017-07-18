@@ -411,8 +411,7 @@ dist_man_MANS += \
   man/elpa_solve_evp_real_double.3 \
   man/elpa_solve_evp_real_single.3 \
   man/elpa_solve_evp_complex_double.3 \
-  man/elpa_solve_evp_complex_single.3 \
-  man/elpa_tests.1
+  man/elpa_solve_evp_complex_single.3
 endif
 
 
@@ -445,11 +444,6 @@ pkgconfig_DATA = @PKG_CONFIG_FILE@
 # programs
 bin_PROGRAMS = \
   elpa2_print_kernels@SUFFIX@
-
-if ENABLE_LEGACY
-bin_PROGRAMS += \
-  elpa_tests@SUFFIX@
-endif
 
 noinst_PROGRAMS =
 check_SCRIPTS =
