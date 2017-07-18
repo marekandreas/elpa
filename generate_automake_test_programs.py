@@ -40,7 +40,7 @@ for m, g, t, p, d, s in product(sorted(matrix_flag.keys()),
     if(m == "analytic" and (g == 1 or t != "eigenvectors" or p == "single" or d == "complex")):
         continue
 
-    if (t == "solve_tridiagonal" and (s == "2stage" and d == "complex")):
+    if (t == "solve_tridiagonal" and (s == "2stage" or d == "complex")):
         continue
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
