@@ -179,7 +179,7 @@ program test
      end if
    end if
 #endif
- 
+
    if (myid == 0) then
      print '((a,i0))', 'Matrix size: ', na
      print '((a,i0))', 'Num eigenvectors: ', nev
@@ -316,7 +316,7 @@ program test
      if (myid == 0) print *, elpa_int_value_to_string(KERNEL_KEY, kernel), " kernel"
 
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
-#else
+#else /* ALL_KERNELS */
 
 #ifdef __EIGENVECTORS
      call e%timer_start("e%eigenvectors()")
@@ -359,6 +359,7 @@ program test
 
      if (myid .eq. 0) then
 #ifdef TEST_SOLVER_2STAGE
+       call e%print_times("e%eigenvectors()")
        call e%print_times(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #else
 #ifdef __EIGENVECTORS
@@ -378,7 +379,7 @@ program test
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 #else
      status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
-#endif     
+#endif
      if (status /= 0) then
        if (myid == 0) print *, "Result incorrect!"
        call exit(status)
@@ -398,7 +399,7 @@ program test
 
      ! sort analytic solution:
 
-     ! this hack is neihter elegant, nor optimized: for huge matrixes it might be expensive
+     ! this hack is neither elegant, nor optimized: for huge matrixes it might be expensive
      ! a proper sorting algorithmus might be implemented here
 
      tmp    = minval(ev_analytic)
