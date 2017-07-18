@@ -221,21 +221,7 @@ program test
 #endif
 
 #if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
-#ifdef TEST_REAL
-#ifdef TEST_SINGLE
-   call prepare_toeplitz_matrix_real_single(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
-#else
-   call prepare_toeplitz_matrix_real_double(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
-#endif
-#endif
-#ifdef TEST_COMPLEX
-#ifdef TEST_SINGLE
-   call prepare_toeplitz_matrix_complex_single(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
-#else
-   call prepare_toeplitz_matrix_complex_double(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
-#endif
-#endif
-
+   call prepare_toeplitz_matrix(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
 #endif
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
@@ -342,7 +328,6 @@ program test
 
      if (myid .eq. 0) then
 #ifdef TEST_SOLVER_2STAGE
-       call e%print_times("e%eigenvectors()")
        call e%print_times(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #else
 #ifdef __EIGENVECTORS
@@ -372,6 +357,8 @@ program test
 #if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
      status = 0
      ! analytic solution
+     diagonalElement = ds(1)
+     subdiagonalElement = sds(1)
      do ii=1, na
 #ifdef TEST_DOUBLE
        ev_analytic(ii) = diagonalElement + 2.0 * subdiagonalElement *cos( pi*real(ii,kind=rk8)/ real(na+1,kind=rk8) )

@@ -216,7 +216,7 @@ subroutine prepare_matrix_&
      implicit none
 
      integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
-     integer                    :: diagonalElement, subdiagonalElement
+     real(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
 
      real(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
 #if REALCASE == 1
