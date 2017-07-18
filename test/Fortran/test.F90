@@ -221,38 +221,21 @@ program test
 #endif
 
 #if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
-   ! set up simple toeplitz matrix
-#ifdef TEST_DOUBLE
-   diagonalElement = 0.45_rk8
-   subdiagonalElement =  0.78_rk8
+#ifdef TEST_REAL
+#ifdef TEST_SINGLE
+   call prepare_toeplitz_matrix_real_single(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
 #else
-   diagonalElement = 0.45_rk4
-   subdiagonalElement =  0.78_rk4
+   call prepare_toeplitz_matrix_real_double(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
+#endif
+#endif
+#ifdef TEST_COMPLEX
+#ifdef TEST_SINGLE
+   call prepare_toeplitz_matrix_complex_single(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
+#else
+   call prepare_toeplitz_matrix_complex_double(na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
+#endif
 #endif
 
-   d(:) = diagonalElement
-   sd(:) = subdiagonalElement
-
-   ! set up the diagonal and subdiagonals (for general solver test)
-   do ii=1, na ! for diagonal elements
-     if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-       a(rowLocal,colLocal) = diagonalElement
-     endif
-   enddo
-   do ii=1, na-1
-     if (map_global_array_index_to_local_index(ii, ii+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-       a(rowLocal,colLocal) = subdiagonalElement
-     endif
-   enddo
-
-   do ii=2, na
-     if (map_global_array_index_to_local_index(ii, ii-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-       a(rowLocal,colLocal) = subdiagonalElement
-     endif
-   enddo
-   ds = d
-   sds = sd
-   as = a
 #endif
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then

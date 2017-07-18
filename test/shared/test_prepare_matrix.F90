@@ -55,7 +55,24 @@ module test_prepare_matrix
 #endif
    end interface
 
+
+  interface prepare_toeplitz_matrix
+    module procedure prepare_toeplitz_matrix_complex_double
+    module procedure prepare_toeplitz_matrix_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_toeplitz_matrix_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_toeplitz_matrix_complex_single
+#endif
+   end interface
+
+   private prows, pcols, map_global_array_index_to_local_index
+
   contains
+
+#include "../../src/general/prow_pcol.X90"
+#include "../../src/general/map_global_to_local.X90"
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1

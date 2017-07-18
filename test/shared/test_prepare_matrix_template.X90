@@ -47,6 +47,7 @@
     &PRECISION&
     & (na, myid, sc_desc, a, z, as)
 
+
       use test_util
       implicit none
 
@@ -203,5 +204,77 @@ subroutine prepare_matrix_&
       &PRECISION&
       & (na, myid, sc_desc, a, z, as)
     end subroutine
+
+
+   subroutine prepare_toeplitz_matrix_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   & (na, d, sd, ds, sds, a, as, z, nblk, np_rows, np_cols, my_prow, my_pcol)
+     use iso_c_binding
+     use test_util
+     implicit none
+
+     integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     integer                    :: diagonalElement, subdiagonalElement
+
+     real(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
+#if REALCASE == 1
+     real(kind=C_DATATYPE_KIND) :: z(:,:), a(:,:), as(:,:)
+#endif
+#if COMPLEXCASE == 1
+     complex(kind=C_DATATYPE_KIND) :: z(:,:), a(:,:), as(:,:)
+#endif
+
+     integer                    :: ii, rowLocal, colLocal
+
+#if REALCASE == 1
+
+#ifdef DOUBLE_PRECISION_REAL
+     diagonalElement = 0.45_rk8
+     subdiagonalElement =  0.78_rk8
+#else
+     diagonalElement = 0.45_rk4
+     subdiagonalElement =  0.78_rk4
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     diagonalElement = 0.45_rk8
+     subdiagonalElement =  0.78_rk8
+#else
+     diagonalElement = 0.45_rk4
+     subdiagonalElement =  0.78_rk4
+#endif
+#endif /* COMPLEXCASE */
+
+     d(:) = diagonalElement
+     sd(:) = subdiagonalElement
+
+     ! set up the diagonal and subdiagonals (for general solver test)
+     do ii=1, na ! for diagonal elements
+       if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+         a(rowLocal,colLocal) = diagonalElement
+       endif
+     enddo
+     do ii=1, na-1
+       if (map_global_array_index_to_local_index(ii, ii+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+         a(rowLocal,colLocal) = subdiagonalElement
+       endif
+     enddo
+
+     do ii=2, na
+       if (map_global_array_index_to_local_index(ii, ii-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+         a(rowLocal,colLocal) = subdiagonalElement
+       endif
+     enddo
+
+     ds = d
+     sds = sd
+     as = a
+   end subroutine
+
 
 ! vim: syntax=fortran
