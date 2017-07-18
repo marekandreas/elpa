@@ -576,6 +576,8 @@ EXTRA_DIST = \
   manual_cpp \
   test/Fortran/elpa_print_headers.X90 \
   test/Fortran/assert.h \
+  src/general/prow_pcol.X90 \
+  src/general/map_global_to_local.X90 \
   src/elpa1/elpa_reduce_add_vectors.X90 \
   src/elpa1/elpa_transpose_vectors.X90 \
   src/elpa1/elpa1_compute_template.X90 \
