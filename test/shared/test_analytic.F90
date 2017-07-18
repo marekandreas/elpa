@@ -12,7 +12,7 @@ module test_analytic
   end interface
 
   contains
-  
+
   subroutine prepare_matrix_analytic_real_double (na, a, nblk, myid, np_rows, &
                             np_cols, my_prow, my_pcol)
     use elpa_utilities
@@ -20,14 +20,14 @@ module test_analytic
 
     integer(kind=ik), intent(in)    :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
     real(kind=rk8), intent(inout)   :: a(:,:)
-   
+
     integer(kind=ik) :: globI, globJ, locI, locJ, levels
 
-    if(.not. decompose(na, levels)) then 
+    if(.not. decompose(na, levels)) then
       print *, "can not decomopse matrix size"
       stop 1
-    end if 
-    
+    end if
+
     do globI = 1, na
       do globJ = 1, na
         if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
@@ -37,7 +37,7 @@ module test_analytic
       end do
     end do
 
-  end subroutine 
+  end subroutine
 
   function check_correctness_analytic_real_double (na, nev, ev, z, nblk, myid, np_rows, &
                             np_cols, my_prow, my_pcol) result(status)
@@ -48,16 +48,16 @@ module test_analytic
     integer(kind=ik)                :: status
     real(kind=rk8), intent(inout)   :: z(:,:)
     real(kind=rk8), intent(inout)   :: ev(:)
-   
+
     integer(kind=ik) :: globI, globJ, locI, locJ, levels
     real(kind=rk8)   :: diff, max_z_diff, max_ev_diff, glob_max_z_diff, max_curr_z_diff_minus, max_curr_z_diff_plus
     real(kind=rk8)   :: computed, expected
 
-    if(.not. decompose(na, levels)) then 
+    if(.not. decompose(na, levels)) then
       print *, "can not decomopse matrix size"
       stop 1
-    end if 
-    
+    end if
+
     max_z_diff = 0.0_rk8
     max_ev_diff = 0.0_rk8
     do globJ = 1, nev
@@ -85,12 +85,12 @@ module test_analytic
 #else
     glob_max_z_diff = max_z_diff
 #endif
-    if(myid == 0) print *, 'Maximal error in eigenvalues      :', max_ev_diff 
-    if(myid == 0) print *, 'Maximal error in eigenvectors     :', glob_max_z_diff 
+    if(myid == 0) print *, 'Maximal error in eigenvalues      :', max_ev_diff
+    if(myid == 0) print *, 'Maximal error in eigenvectors     :', glob_max_z_diff
     status = 0
     if (max_ev_diff .gt. 5e-14_rk8 .or. max_ev_diff .eq. 0.0_rk8) status = 1
     if (glob_max_z_diff .gt. 1e-12_rk8 .or. glob_max_z_diff .eq. 0.0_rk8) status = 1
-  end function 
+  end function
 
   function decompose(num, decomposition) result(possible)
     implicit none
@@ -98,9 +98,9 @@ module test_analytic
     integer(kind=ik), intent(out)  :: decomposition
     logical                        :: possible
     integer(kind=ik)               :: reminder
-    
+
     decomposition = 0
-    possible = .true. 
+    possible = .true.
     reminder = num
     do while (reminder > 1)
       if (MOD(reminder, 2) == 0) then
@@ -109,13 +109,13 @@ module test_analytic
       else
         possible = .false.
       end if
-    end do 
+    end do
   end function
-  
+
 #define ANALYTIC_MATRIX 0
 #define ANALYTIC_EIGENVECTORS 1
 #define ANALYTIC_EIGENVALUES 2
-  
+
   function analytic_matrix(levels, i, j) result(element)
     implicit none
     integer(kind=ik), intent(in) :: levels, i, j
@@ -143,19 +143,19 @@ module test_analytic
 
   end function
 
-  
+
 
   function analytic(n, i, j, what) result(element)
     implicit none
     integer(kind=ik), intent(in)   :: n, i, j, what
     real(kind=rk8)                 :: element, am
     real(kind=rk8)                 :: a, s, c, mat(2,2)
-    integer(kind=ik)               :: ii, jj, m 
+    integer(kind=ik)               :: ii, jj, m
 
 !    assert(i < 2**n)
 !    assert(j < 2**n)
 !    assert(i >= 0)
-!    assert(j >= 0) 
+!    assert(j >= 0)
     ! go to zero-based indexing
     ii = i - 1
     jj = j - 1
@@ -165,7 +165,7 @@ module test_analytic
     element = 1.0_rk8
     do  m = 1, n
       am = a**(2**(m-1))
-      if(what == ANALYTIC_MATRIX) then 
+      if(what == ANALYTIC_MATRIX) then
         mat = reshape((/ c*c + am * s*s, (1.0_rk8-am) * s*c,  &
                          (1.0_rk8-am) * s*c, s*s + am * c*c  /), &
                                     (/2, 2/))
@@ -182,13 +182,13 @@ module test_analytic
       end if
 !      write(*,*) "calc value, elem: ", element, ", mat: ", mod(ii,2), mod(jj,2),  mat(mod(ii,2), mod(jj,2)), "am ", am
 !      write(*,*) " matrix mat", mat
-      element = element * mat(mod(ii,2) + 1, mod(jj,2) + 1) 
+      element = element * mat(mod(ii,2) + 1, mod(jj,2) + 1)
       ii = ii / 2
       jj = jj / 2
     end do
     !write(*,*) "returning value ", element
   end function
-  
+
   function get_a(n) result (a)
     implicit none
     integer(kind=ik), intent(in)   :: n
