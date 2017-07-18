@@ -192,11 +192,6 @@ legacy_complex_driver@SUFFIX@_LDADD = $(test_program_ldadd)
 legacy_complex_driver@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 EXTRA_legacy_complex_driver@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
-elpa_tests@SUFFIX@_SOURCES = test/Fortran/elpa_tests.F90
-elpa_tests@SUFFIX@_LDADD = $(test_program_ldadd)
-elpa_tests@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)test_modules $(FC_MODINC)modules
-EXTRA_elpa_tests@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
-
 if WANT_SINGLE_PRECISION_REAL
 
 legacy_single_real_1stage@SUFFIX@_SOURCES = test/Fortran/elpa1/legacy_interface/legacy_single_real.F90
