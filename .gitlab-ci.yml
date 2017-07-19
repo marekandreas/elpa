@@ -793,17 +793,17 @@ intel-double-precision-mpi-noomp-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
-    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
-    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=3 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
-    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=4 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
-    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=5 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
-    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=6 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
-    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=7 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # intel double precision mpi noomp AVX2 large
@@ -816,17 +816,17 @@ intel-double-precision-mpi-noomp-large-avx2-jobs:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK1
-    - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=8 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK2
-    - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=10 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
-    - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=11 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK4
-    - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=12 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_complex_kernel=ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
-    - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=13 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - export ELPA_FORCE_real_kernel=ELPA_2STAGE_REAL_AVX2_BLOCK6
-    - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
+    - make check TASKS=14 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # intel single precision mpi noomp AVX2
