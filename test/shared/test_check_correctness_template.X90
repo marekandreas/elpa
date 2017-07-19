@@ -187,22 +187,9 @@
 #endif
 
 #ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-        call pdnrm2(na, err, tmp1, 1, i, sc_desc, 1)
-#else
-        call psnrm2(na, err, tmp1, 1, i, sc_desc, 1)
-#endif
-
+        call scal_PRECISION_NRM2(na, err, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_REAL
-!        call dnrm2(na,err,tmp1,1,i,sc_desc,1)
-        err = dnrm2(na,tmp1(1,i),1)
-#else
-        err = snrm2(na,tmp1(1,i),1)
-#endif
-
+        err = PRECISION_NRM2(na,tmp1(1,i),1)
 #endif /* WITH_MPI */
         errmax = max(errmax, err)
 #endif /* REALCASE */
@@ -210,21 +197,9 @@
 #if COMPLEXCASE == 1
         xc = 0
 #ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-        call pzdotc(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
-#else
-        call pcdotc(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
-#endif
-
+        call scal_PRECISION_DOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-        xc = zdotc(na,tmp1,1,tmp1,1)
-#else
-        xc = cdotc(na,tmp1,1,tmp1,1)
-#endif
-
+        xc = PRECISION_DOTC(na,tmp1,1,tmp1,1)
 #endif /* WITH_MPI */
 
 
