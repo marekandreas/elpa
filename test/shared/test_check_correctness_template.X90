@@ -53,6 +53,7 @@
       real(kind=C_DATATYPE_KIND), intent(in)     :: as(:,:), z(:,:)
       real(kind=C_DATATYPE_KIND)                 :: ev(:)
       real(kind=C_DATATYPE_KIND), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      real(kind=C_DATATYPE_KIND)                :: xc
 
 #ifdef DOUBLE_PRECISION_REAL
       real(kind=C_DATATYPE_KIND), parameter      :: ZERO=0.0_rk8, ONE = 1.0_rk8
@@ -116,28 +117,28 @@
       ! tmp2 = Zi*EVi
       tmp2(:,:) = z(:,:)
       do i=1,nev
+        xc = ev(i)
 #if REALCASE == 1
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-        call pdscal(na, ev(i), tmp2, 1, i, sc_desc, 1)
+        call pdscal(na, xc, tmp2, 1, i, sc_desc, 1)
 #else
-        call psscal(na, ev(i), tmp2, 1, i, sc_desc, 1)
+        call psscal(na, xc, tmp2, 1, i, sc_desc, 1)
 #endif
 
 #else /* WITH_MPI */
 
 #ifdef DOUBLE_PRECISION_REAL
-        call dscal(na,ev(i),tmp2(:,i),1)
+        call dscal(na,xc,tmp2(:,i),1)
 #else
-        call sscal(na,ev(i),tmp2(:,i),1)
+        call sscal(na,xc,tmp2(:,i),1)
 #endif
 
 #endif /* WITH_MPI */
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
-        xc = ev(i)
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
