@@ -519,7 +519,7 @@ endif
 
 
 # test scripts
-MPIEXEC ?= $(MPI_BINARY) -n 2
+MPIEXEC ?= $(MPI_BINARY) '-n $$TASKS'
 if WITH_MPI
   wrapper=$(MPIEXEC)
 else
@@ -527,7 +527,7 @@ else
 endif
 TESTS = $(check_SCRIPTS)
 %.sh: %
-	@echo $(wrapper) ./$^ '$$TEST_FLAGS' > $@
+	@echo $(wrapper) ./$^ '$$TEST_FLAGS' >> $@
 	@chmod +x $@
 
 include doxygen.am
