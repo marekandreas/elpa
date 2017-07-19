@@ -227,48 +227,11 @@
 
       ! Initialize tmp2 to unit matrix
       tmp2 = 0
-#if REALCASE == 1
-
 #ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-      call pdlaset('A', nev, nev, 0.0_rk8, 1.0_rk8, tmp2, 1, 1, sc_desc)
-#else
-      call pslaset('A', nev, nev, 0.0_rk4, 1.0_rk4, tmp2, 1, 1, sc_desc)
-#endif
-
+      call scal_PRECISION_LASET('A', nev, nev, ZERO, ONE, tmp2, 1, 1, sc_desc)
 #else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_REAL
-      call dlaset('A',nev,nev,0.0_rk8,1.0_rk8,tmp2,na)
-#else
-      call slaset('A',nev,nev,0.0_rk4,1.0_rk4,tmp2,na)
-#endif
-
+      call PRECISION_LASET('A',nev,nev,ZERO,ONE,tmp2,na)
 #endif /* WITH_MPI */
-
-#endif /* REALCASE */
-
-#if COMPLEXCASE == 1
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call pzlaset('A', nev, nev, ZERO, ONE, tmp2, 1, 1, sc_desc)
-#else
-      call pclaset('A', nev, nev, ZERO, ONE, tmp2, 1, 1, sc_desc)
-#endif
-
-#else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call zlaset('A',nev,nev,ZERO,ONE,tmp2,na)
-#else
-      call claset('A',nev,nev,ZERO,ONE,tmp2,na)
-#endif
-
-#endif /* WITH_MPI */
-#endif /* COMPLEXCASE */
-
 
       !      ! tmp1 = Z**T * Z - Unit Matrix
       tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
