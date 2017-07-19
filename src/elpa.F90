@@ -107,6 +107,7 @@
 !> \code{.f90}
 !>  use elpa
 !>  class(elpa_t), pointer :: elpa
+!>  integer :: success
 !>
 !>  if (elpa_init(20170403) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
@@ -150,6 +151,7 @@
 !>   #include <elpa/elpa.h>
 !>
 !>   elpa_t handle;
+!>   int error;
 !>
 !>   if (elpa_init(20170403) != ELPA_OK) {
 !>     fprintf(stderr, "Error: ELPA API version not supported");

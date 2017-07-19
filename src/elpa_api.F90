@@ -301,7 +301,7 @@ module elpa_api
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   name        string: the name of the key
   !> \param   value       double: the value associated with the key
-  !> \param   error       integer. optional : error code, which can be queried with elpa_strerr
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_get_double_i(self, name, value, error)
       use iso_c_binding
@@ -319,7 +319,7 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   name        string: the name of the key
-  !> \result  value       integer pointer: the value associated with the key
+  !> \result  value       integer, pointer: the value associated with the key
   abstract interface
     function elpa_associate_int_i(self, name) result(value)
       use iso_c_binding
@@ -364,7 +364,11 @@ module elpa_api
     end subroutine
   end interface
 
-
+  !> \brief abstract definition of the start method for timer
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        character(len=*) the name of the entry int the timer tree
   abstract interface
     subroutine elpa_timer_start_i(self, name)
       import elpa_t
@@ -374,6 +378,11 @@ module elpa_api
     end subroutine
   end interface
 
+  !> \brief abstract definition of the stop method for timer
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        character(len=*) the name of the entry int the timer tree
 
   abstract interface
     subroutine elpa_timer_stop_i(self, name)
@@ -1158,7 +1167,7 @@ module elpa_api
 
     !> \brief function to check whether the ELPA library has been correctly initialised
     !> Parameters
-    !> \result  state      logical: state is either ELPA_OK or ELPA_ERROR, which can be queried with elpa_strerr
+    !> \result  state      integer: state is either ELPA_OK or ELPA_ERROR, which can be queried with elpa_strerr
     function elpa_initialized() result(state)
       integer :: state
       if (initDone) then
