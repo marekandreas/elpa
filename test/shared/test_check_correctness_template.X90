@@ -54,6 +54,12 @@
       real(kind=C_DATATYPE_KIND)                 :: ev(:)
       real(kind=C_DATATYPE_KIND), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
 
+#ifdef DOUBLE_PRECISION_REAL
+      real(kind=C_DATATYPE_KIND), parameter      :: ZERO=0.0_rk8, ONE = 1.0_rk8
+#else
+      real(kind=C_DATATYPE_KIND), parameter      :: ZERO=0.0_rk4, ONE = 1.0_rk4
+#endif
+
 #ifndef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -63,8 +69,6 @@
 #endif
 
 #endif
-
-
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
@@ -73,14 +77,13 @@
       complex(kind=C_DATATYPE_KIND), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
       complex(kind=C_DATATYPE_KIND)                :: xc
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=C_DATATYPE_KIND), parameter     :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
+      complex(kind=C_DATATYPE_KIND), parameter     :: ZERO = (0.0_rk8,0.0_rk8), ONE = (1.0_rk8,0.0_rk8)
 #ifndef WITH_MPI
       complex(kind=C_DATATYPE_KIND)                :: zdotc, cdotc
 #endif
 
-
 #else /* DOUBLE_PRECISION_COMPLEX */
-      complex(kind=C_DATATYPE_KIND), parameter     :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk4)
+      complex(kind=C_DATATYPE_KIND), parameter     :: ZERO = (0.0_rk4,0.0_rk4), ONE = (1.0_rk4,0.0_rk4)
 #ifndef WITH_MPI
       complex(kind=C_DATATYPE_KIND)                :: zdotc, cdotc
 #endif
@@ -102,23 +105,12 @@
       ! tmp1 =  A * Z
       ! as is original stored matrix, Z are the EVs
 
-#if REALCASE == 1
 #ifdef WITH_MPI
-      call scal_PRECISION_GEMM('N', 'N', na, nev, na, CONST_1_0, as, 1, 1, sc_desc, &
-                  z, 1, 1, sc_desc, CONST_0_0, tmp1, 1, 1, sc_desc)
+      call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, as, 1, 1, sc_desc, &
+                  z, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
 #else /* WITH_MPI */
-     call PRECISION_GEMM('N','N',na,nev,na,CONST_1_0,as,na,z,na,CONST_0_0,tmp1,na)
+      call PRECISION_GEMM('N','N',na,nev,na,ONE,as,na,z,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
-#endif /* REALCASE */
-
-#if COMPLEXCASE == 1
-#ifdef WITH_MPI
-      call scal_PRECISION_GEMM('N', 'N', na, nev, na, CONE, as, 1, 1, sc_desc, &
-                  z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
-#else /* WITH_MPI */
-      call PRECISION_GEMM('N','N',na,nev,na,CONE,as,na,z,na,CZERO,tmp1,na)
-#endif /* WITH_MPI */
-#endif /* COMPLEXCASE */
 
 
       ! tmp2 = Zi*EVi
@@ -274,26 +266,12 @@
 
       ! tmp1 = Z**T * Z
       tmp1 = 0
-#if REALCASE == 1
-
 #ifdef WITH_MPI
-      call scal_PRECISION_GEMM('T', 'N', nev, nev, na, CONST_1_0, z, 1, 1, sc_desc, &
-                  z, 1, 1, sc_desc, CONST_0_0, tmp1, 1, 1, sc_desc)
-#else  /* WITH_MPI */
-      call PRECISION_GEMM('T','N',nev,nev,na,CONST_1_0,z,na, &
-                  z,na,CONST_0_0,tmp1,na)
-#endif /* WITH_MPI */
-
-#endif /* REALCASE */
-
-#if COMPLEXCASE == 1
-#ifdef WITH_MPI
-      call scal_PRECISION_GEMM('C', 'N', nev, nev, na, CONE, z, 1, 1, sc_desc, &
-                  z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+      call scal_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nev, nev, na, ONE, z, 1, 1, &
+                        sc_desc, z, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
 #else /* WITH_MPI */
-      call PRECISION_GEMM('C','N',nev,nev,na,CONE,z,na,z,na,CZERO,tmp1,na)
+      call PRECISION_GEMM(BLAS_TRANS_OR_CONJ,'N',nev,nev,na,ONE,z,na,z,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
-#endif /* COMPLEXCASE */
 
       ! Initialize tmp2 to unit matrix
       tmp2 = 0
@@ -323,17 +301,17 @@
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-      call pzlaset('A', nev, nev, CZERO, CONE, tmp2, 1, 1, sc_desc)
+      call pzlaset('A', nev, nev, ZERO, ONE, tmp2, 1, 1, sc_desc)
 #else
-      call pclaset('A', nev, nev, CZERO, CONE, tmp2, 1, 1, sc_desc)
+      call pclaset('A', nev, nev, ZERO, ONE, tmp2, 1, 1, sc_desc)
 #endif
 
 #else /* WITH_MPI */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-      call zlaset('A',nev,nev,CZERO,CONE,tmp2,na)
+      call zlaset('A',nev,nev,ZERO,ONE,tmp2,na)
 #else
-      call claset('A',nev,nev,CZERO,CONE,tmp2,na)
+      call claset('A',nev,nev,ZERO,ONE,tmp2,na)
 #endif
 
 #endif /* WITH_MPI */
