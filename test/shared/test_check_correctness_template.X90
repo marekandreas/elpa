@@ -163,29 +163,11 @@
       tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
 
       ! Get maximum norm of columns of tmp1
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-      errmax = 0.0_rk8
-#else
-      errmax = 0.0_rk4
-#endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-      errmax = 0.0_rk8
-#else
-      errmax = 0.0_rk4
-#endif
-#endif
+      errmax = CONST_REAL_0_0
 
       do i=1,nev
 #if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-        err = 0.0_rk8
-#else
-        err = 0.0_rk4
-#endif
-
+        err = CONST_0_0
 #ifdef WITH_MPI
         call scal_PRECISION_NRM2(na, err, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
@@ -201,13 +183,7 @@
 #else /* WITH_MPI */
         xc = PRECISION_DOTC(na,tmp1,1,tmp1,1)
 #endif /* WITH_MPI */
-
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-        errmax = max(errmax, sqrt(real(xc,kind=rk8)))
-#else
-        errmax = max(errmax, sqrt(real(xc,kind=rk4)))
-#endif
+        errmax = max(errmax, sqrt(real(xc,kind=REAL_DATATYPE)))
 #endif /* COMPLEXCASE */
       enddo
 

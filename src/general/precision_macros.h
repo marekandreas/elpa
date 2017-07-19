@@ -41,6 +41,7 @@
 #undef  PRECISION_SUFFIX
 
 #undef  CONST_0_0
+#undef  CONST_REAL_0_0
 #undef  CONST_0_5
 #undef  CONST_1_0
 #undef  CONST_2_0
@@ -94,6 +95,7 @@
 #define  scal_PRECISION_GEMM PDGEMM
 #define  scal_PRECISION_NRM2 PDNRM2
 #define  CONST_0_0 0.0_rk8
+#define  CONST_REAL_0_0 0.0_rk8
 #define  CONST_0_5 0.5_rk8
 #define  CONST_1_0 1.0_rk8
 #define  CONST_2_0 2.0_rk8
@@ -146,6 +148,7 @@
 #define  scal_PRECISION_GEMM PSGEMM
 #define  scal_PRECISION_NRM2 PSNRM2
 #define  CONST_0_0 0.0_rk4
+#define  CONST_REAL_0_0 0.0_rk4
 #define  CONST_0_5 0.5_rk4
 #define  CONST_1_0 1.0_rk4
 #define  CONST_2_0 2.0_rk4
