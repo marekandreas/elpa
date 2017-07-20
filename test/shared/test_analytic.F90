@@ -42,6 +42,8 @@
 !    the original distribution, the GNU Lesser General Public License.
 
 !#include "assert.h"  ! why complains?
+#include "config-f90.h"
+
 module test_analytic
 
   use test_util
@@ -140,7 +142,7 @@ module test_analytic
     implicit none
 
     integer(kind=ik), intent(in)    :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-    integer(kind=ik)                :: status
+    integer(kind=ik)                :: status, mpierr
     real(kind=rk8), intent(inout)   :: z(:,:)
     real(kind=rk8), intent(inout)   :: ev(:)
 
