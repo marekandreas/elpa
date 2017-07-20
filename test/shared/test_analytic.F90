@@ -41,7 +41,7 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 
-!#include "assert.h"  ! why complains?
+#include "../Fortran/assert.h"  
 #include "config-f90.h"
 
 module test_analytic
