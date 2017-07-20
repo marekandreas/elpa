@@ -350,7 +350,7 @@ program test
 #ifdef TEST_MATRIX_ANALYTIC
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 #else
-     status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
+     status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
 #endif
      if (status /= 0) then
        if (myid == 0) print *, "Result incorrect!"
@@ -368,7 +368,7 @@ program test
      endif
 #ifdef __SOLVE_TRIDIAGONAL
      ! check eigenvectors
-     status = check_correctness(na, nev, as, z, ev, sc_desc, myid)
+     status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
      if (status /= 0) then
        if (myid == 0) print *, "Result incorrect!"
        call exit(status)

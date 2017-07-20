@@ -45,10 +45,10 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    & (na, nev, as, z, ev, sc_desc, myid) result(status)
+    & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status)
       implicit none
       integer(kind=ik)                 :: status
-      integer(kind=ik), intent(in)     :: na, nev, myid
+      integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
 #if REALCASE == 1
       real(kind=C_DATATYPE_KIND), intent(in)     :: as(:,:), z(:,:)
       real(kind=C_DATATYPE_KIND)                 :: ev(:)
@@ -95,7 +95,7 @@
 
       integer(kind=ik)                 :: sc_desc(:)
 
-      integer(kind=ik)                 :: i
+      integer(kind=ik)                 :: i, rowLocal, colLocal
       real(kind=C_DATATYPE_KIND)                   :: err, errmax
 
       integer :: mpierr
@@ -224,7 +224,27 @@
 #else /* WITH_MPI */
       call PRECISION_GEMM(BLAS_TRANS_OR_CONJ,'N',nev,nev,na,ONE,z,na,z,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
+      
+      !TODO for the C interface, not all information is passed (zeros instead)
+      !TODO than this part of the test cannot be done
+      !TODO either we will not have this part of test at all, or it will be improved 
+      if(nblk > 0) then
+        ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
+        err = CONST_REAL_0_0
+        do i=1, nev
+          if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+             err = max(err, abs(tmp1(rowLocal,colLocal) - CONST_REAL_1_0))
+           endif
+        end do
+#ifdef WITH_MPI
+        call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+#else /* WITH_MPI */
+        errmax = err
+#endif /* WITH_MPI */
+        if (myid==0) print *,'Maximal error in eigenvector lengths:',errmax
+      end if
 
+      ! Second, find the maximal error in the whole Z**T * Z matrix (its diference from identity matrix)
       ! Initialize tmp2 to unit matrix
       tmp2 = 0
 #ifdef WITH_MPI
@@ -318,11 +338,14 @@ function check_correctness_&
       real(kind=C_DATATYPE_KIND)    :: ev(1:na)
       integer(kind=c_int)            :: sc_desc(1:9)
 
+      ! TODO: I did not want to add all the variables to the C interface as well
+      ! TODO: I think that we should find a better way to pass this information
+      ! TODO: to all the functions anyway (get it from sc_desc, pass elpa_t, etc..)
       status = check_correctness_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      & (na, nev, as, z, ev, sc_desc, myid)
+      & (na, nev, as, z, ev, sc_desc, 0, myid, 0, 0, 0, 0)
 
     end function
 

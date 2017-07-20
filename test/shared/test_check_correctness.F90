@@ -104,5 +104,7 @@ module test_check_correctness
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
+#include "../../src/general/prow_pcol.X90"
+#include "../../src/general/map_global_to_local.X90"
 
 end module

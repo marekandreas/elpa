@@ -46,6 +46,7 @@
 #undef  CONST_REAL_0_0
 #undef  CONST_0_5
 #undef  CONST_1_0
+#undef  CONST_REAL_1_0
 #undef  CONST_2_0
 #undef  CONST_8_0
 #undef  MPI_REAL_PRECISION
@@ -102,6 +103,7 @@
 #define  CONST_REAL_0_0 0.0_rk8
 #define  CONST_0_5 0.5_rk8
 #define  CONST_1_0 1.0_rk8
+#define  CONST_REAL_1_0 1.0_rk8
 #define  CONST_2_0 2.0_rk8
 #define  CONST_8_0 8.0_rk8
 #define  MPI_REAL_PRECISION MPI_REAL8
@@ -157,6 +159,7 @@
 #define  CONST_REAL_0_0 0.0_rk4
 #define  CONST_0_5 0.5_rk4
 #define  CONST_1_0 1.0_rk4
+#define  CONST_REAL_1_0 1.0_rk4
 #define  CONST_2_0 2.0_rk4
 #define  CONST_8_0 8.0_rk4
 #define  MPI_REAL_PRECISION MPI_REAL4

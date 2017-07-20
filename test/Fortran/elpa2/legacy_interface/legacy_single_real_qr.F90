@@ -338,7 +338,7 @@ program test_real2_default_kernel_qr_decomposition_single_precision
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
-   ret = check_correctness(na, nev, as, z, ev, sc_desc, myid)
+   ret = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
    deallocate(a)
    deallocate(as)

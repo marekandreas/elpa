@@ -55,7 +55,7 @@ program test_solve_tridi_single
 !
 !-------------------------------------------------------------------------------
    use elpa1
-   use elpa_utilities
+   use elpa_utilities, only : error_unit
    use test_util
 
    use test_read_input_parameters
@@ -326,7 +326,7 @@ program test_solve_tridi_single
    endif
 
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness(na, nev, as, a, ev, sc_desc, myid)
+   status = check_correctness(na, nev, as, a, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
    deallocate(a)
    deallocate(as)

@@ -46,7 +46,7 @@
 program test_invert_trm
 
    use elpa1
-   use elpa_utilities
+   use elpa_utilities, only : error_unit
    use test_util
 
    use test_read_input_parameters
