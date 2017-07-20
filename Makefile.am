@@ -527,6 +527,7 @@ else
 endif
 TESTS = $(check_SCRIPTS)
 %.sh: %
+	@echo "#!/bin/bash" > $@
 	@echo $(wrapper) ./$^ '$$TEST_FLAGS' >> $@
 	@chmod +x $@
 
