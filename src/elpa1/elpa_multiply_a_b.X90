@@ -232,6 +232,11 @@
                          MPI_REAL_PRECISION,  &
                          np_bc, mpi_comm_cols, mpierr)
 #endif
+#if COMPLEXCASE == 1
+          call MPI_Bcast(aux_bc, n_aux_bc,    &
+                         MPI_COMPLEX_PRECISION,  &
+                         np_bc, mpi_comm_cols, mpierr)
+#endif
           call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
           ! Insert what we got in aux_mat
