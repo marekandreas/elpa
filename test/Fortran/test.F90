@@ -401,7 +401,7 @@ program test
    deallocate(z)
    deallocate(ev)
 
-#ifdef __EIGENVALUES
+#if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
    deallocate(d, ds)
    deallocate(sd, sds)
    deallocate(ev_analytic)
