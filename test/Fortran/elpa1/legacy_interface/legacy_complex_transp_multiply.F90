@@ -132,8 +132,8 @@ program test_transpose_multiply
    ! consistent (i.e. 0<=my_prow<np_rows, 0<=my_pcol<np_cols and every
    ! process has a unique (my_prow,my_pcol) pair).
 
-   call set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, np_cols, &
-                         nprow, npcol, my_prow, my_pcol)
+   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, 'C', &
+                         my_blacs_ctxt, my_prow, my_pcol)
 
    if (myid==0) then
      print '(a)','| Past BLACS_Gridinfo.'

@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
 
    int np_cols, np_rows, np_colsStart;
 
-   int my_blacs_ctxt, nprow, npcol, my_prow, my_pcol;
+   int my_blacs_ctxt, my_prow, my_pcol;
 
    int mpierr;
 
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
 #else
    my_mpi_comm_world = 1;
 #endif
-   set_up_blacsgrid_f(my_mpi_comm_world, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
+   set_up_blacsgrid_f(my_mpi_comm_world, np_rows, np_cols, 'C', &my_blacs_ctxt, &my_prow, &my_pcol);
 
    if (myid == 0) {
      printf("\n");

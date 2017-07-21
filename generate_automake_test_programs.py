@@ -29,12 +29,19 @@ test_type_flag = {
         "solve_tridiagonal"  : "-D__SOLVE_TRIDIAGONAL",
 }
 
-for m, g, t, p, d, s in product(sorted(matrix_flag.keys()),
+layout_flag = {
+        "all_layouts" : "-DTEST_ALL_LAYOUTS",
+        "square" : ""
+}
+
+for m, g, t, p, d, s, l in product(
+                             sorted(matrix_flag.keys()),
                              sorted(gpu_flag.keys()),
                              sorted(test_type_flag.keys()),
                              sorted(prec_flag.keys()),
                              sorted(domain_flag.keys()),
-                             sorted(solver_flag.keys())):
+                             sorted(solver_flag.keys()),
+                             sorted(layout_flag.keys())):
 
     #todo: decide what tests we actually want
     if(m == "analytic" and (g == 1 or t != "eigenvectors" or p == "single" or d == "complex")):
@@ -59,6 +66,9 @@ for m, g, t, p, d, s in product(sorted(matrix_flag.keys()),
         elif kernel == "all_kernels":
             extra_flags.append("-DTEST_ALL_KERNELS")
 
+        if layout_flag[l]:
+            extra_flags.append(layout_flag[l])
+
         if (p == "single"):
             if (d == "real"):
                 print("if WANT_SINGLE_PRECISION_REAL")
@@ -68,7 +78,12 @@ for m, g, t, p, d, s in product(sorted(matrix_flag.keys()),
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "test_{0}_{1}_{2}_{3}{4}{5}{6}".format(d, p, t, s, "" if kernel == "nokernel" else "_" + kernel, "_gpu" if g else "", "_analytic" if m == "analytic" else "")
+        name = "test_{0}_{1}_{2}_{3}{4}{5}{6}{7}".format(
+                    d, p, t, s,
+                    "" if kernel == "nokernel" else "_" + kernel,
+                    "_gpu" if g else "",
+                    "_analytic" if m == "analytic" else "",
+                    "_all_layouts" if l == "all_layouts" else "")
         print("noinst_PROGRAMS += " + name)
         print("check_SCRIPTS += " + name + ".sh")
         print(name + "_SOURCES = test/Fortran/test.F90")

@@ -146,7 +146,12 @@ program test
 #ifdef TEST_ALL_KERNELS
    integer :: i
 #endif
+#ifdef TEST_ALL_LAYOUTS
+   character(len=1), parameter :: layouts(2) = [ 'C', 'R' ]
+   integer :: i_layout
+#endif
    integer :: kernel
+   character(len=1) :: layout
 
 #if defined(TEST_COMPLEX) && defined(__SOLVE_TRIDIAGONAL)
 #ifdef WITH_MPI
@@ -158,11 +163,27 @@ program test
 
    call setup_mpi(myid, nprocs)
 
+   if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
+     print *, "ELPA API version not supported"
+     stop 1
+   endif
+
+#ifdef TEST_ALL_LAYOUTS
+   do i_layout = 1, size(layouts)               ! layout loop
+     layout = layouts(i_layout)
+     do np_cols = 1, nprocs                     ! factor loop
+       if (mod(nprocs,np_cols) /= 0 ) then
+         cycle
+       endif
+#else
+   layout = 'C'
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
+#endif
 
    np_rows = nprocs/np_cols
+   assert(nprocs == np_rows * np_cols)
 
    if (myid == 0) then
      print '((a,i0))', 'Matrix size: ', na
@@ -170,11 +191,12 @@ program test
      print '((a,i0))', 'Blocksize: ', nblk
      print '((a,i0))', 'Num MPI proc: ', nprocs
      print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
+     print '(a)',      'Process layout: ' // layout
      print *,''
    endif
 
-   call set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, np_cols, &
-                         nprow, npcol, my_prow, my_pcol)
+   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
+                         my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
@@ -217,11 +239,6 @@ program test
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
 #endif
-
-   if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
-     print *, "ELPA API version not supported"
-     stop 1
-   endif
 
    e => elpa_allocate()
 
@@ -382,7 +399,6 @@ program test
 #endif
 
    call elpa_deallocate(e)
-   call elpa_uninit()
 
    deallocate(a)
 #ifdef TEST_MATRIX_RANDOM
@@ -396,6 +412,13 @@ program test
    deallocate(sd, sds)
    deallocate(ev_analytic)
 #endif
+
+#ifdef TEST_ALL_LAYOUTS
+   end do ! factors
+   end do ! layouts
+#endif
+
+   call elpa_uninit()
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

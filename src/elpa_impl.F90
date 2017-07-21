@@ -1176,7 +1176,7 @@ module elpa_impl
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
     !> \param error                 optional argument, error code which can be queried with elpa_strerr
-    subroutine elpa_hermitian_multiply_d (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+    subroutine elpa_hermitian_multiply_d (self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use iso_c_binding
       use elpa1_auxiliary_impl

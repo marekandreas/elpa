@@ -45,42 +45,43 @@ module test_blacs_infrastructure
 
   contains
 
-    subroutine set_up_blacsgrid(mpi_comm_parent, my_blacs_ctxt, np_rows, &
-                                np_cols, nprow, npcol, my_prow, my_pcol)
+    !c> void set_up_blacsgrid_f(int mpi_comm_parent, int np_rows, int np_cols, char layout,
+    !c>                         int* my_blacs_ctxt, int *my_prow, int *my_pcol);
+    subroutine set_up_blacsgrid(mpi_comm_parent, np_rows, np_cols, layout, &
+                                my_blacs_ctxt, my_prow, my_pcol) bind(C, name="set_up_blacsgrid_f")
 
       use test_util
 
       implicit none
-      integer(kind=ik), intent(in)     :: mpi_comm_parent
-      integer(kind=ik), intent(inout)  :: my_blacs_ctxt, np_rows, &
-                                          np_cols, nprow, npcol, my_prow, my_pcol
+      integer(kind=c_int), intent(in), value  :: mpi_comm_parent, np_rows, np_cols
+      character(len=1), intent(in), value     :: layout
+      integer(kind=c_int), intent(out)        :: my_blacs_ctxt, my_prow, my_pcol
+
+#ifdef WITH_MPI
+      integer :: np_rows_, np_cols_
+#endif
+
+      if (layout /= 'R' .and. layout /= 'C') then
+        print *, "layout must be 'R' or 'C'"
+        stop 1
+      end if
 
       my_blacs_ctxt = mpi_comm_parent
 #ifdef WITH_MPI
-      call BLACS_Gridinit(my_blacs_ctxt, 'C', np_rows, np_cols)
-      call BLACS_Gridinfo(my_blacs_ctxt, nprow, npcol, my_prow, my_pcol)
+      call BLACS_Gridinit(my_blacs_ctxt, layout, np_rows, np_cols)
+      call BLACS_Gridinfo(my_blacs_ctxt, np_rows_, np_cols_, my_prow, my_pcol)
+      if (np_rows /= np_rows_) then
+        print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
+        stop 1
+      endif
+      if (np_cols /= np_cols_) then
+        print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
+        stop 1
+      endif
 #else
-      np_rows = 1
-      np_cols = 1
       my_prow = 0
       my_pcol = 0
 #endif
-    end subroutine
-
-    !c> void set_up_blacsgrid_f(int mpi_comm_parent, int* my_blacs_ctxt,
-    !c>                         int *np_rows, int *np_cols, int *nprow, int *npcol,
-    !c>                         int *my_prow, int *my_pcol);
-    subroutine set_up_blacsgrid_f(mpi_comm_parent, my_blacs_ctxt, np_rows,  &
-                                  np_cols, nprow, npcol, my_prow, my_pcol) &
-                                  bind(C, name="set_up_blacsgrid_f")
-      use iso_c_binding
-      implicit none
-      integer(kind=c_int), value :: mpi_comm_parent
-      integer(kind=c_int)        :: my_blacs_ctxt, np_rows, &
-                                    np_cols, nprow, npcol, my_prow, my_pcol
-
-      call set_up_blacsgrid(mpi_comm_parent, my_blacs_ctxt, np_rows, &
-                                np_cols, nprow, npcol, my_prow, my_pcol)
     end subroutine
 
     subroutine set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
@@ -91,9 +92,10 @@ module test_blacs_infrastructure
       use test_util
       implicit none
 
-      integer(kind=ik), intent(inout)  :: na, nblk, my_prow, my_pcol, np_rows,   &
-                                          np_cols, na_rows, na_cols, sc_desc(1:9), &
-                                          my_blacs_ctxt, info
+      integer(kind=ik), intent(in)  :: na, nblk, my_prow, my_pcol, np_rows,   &
+                                       np_cols, &
+                                       my_blacs_ctxt, info
+      integer(kind=ik), intent(out)  :: na_rows, na_cols, sc_desc(1:9)
 #ifdef WITH_MPI
       integer(kind=ik), external       :: numroc
       integer(kind=ik)                 :: mpierr

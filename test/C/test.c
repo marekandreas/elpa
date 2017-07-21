@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
    int mpi_comm;
 
    /* blacs */
-   int my_blacs_ctxt, sc_desc[9], info, nprow, npcol;
+   int my_blacs_ctxt, sc_desc[9], info;
 
    /* The Matrix */
    MATRIX_TYPE *a, *as, *z;
@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
 #else
    mpi_comm = 0;
 #endif
-   set_up_blacsgrid_f(mpi_comm, &my_blacs_ctxt, &np_rows, &np_cols, &nprow, &npcol, &my_prow, &my_pcol);
+   set_up_blacsgrid_f(mpi_comm, np_rows, np_cols, &my_blacs_ctxt, &my_prow, &my_pcol);
    set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info);
 
    /* allocate the matrices needed for elpa */

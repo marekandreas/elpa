@@ -102,8 +102,8 @@ program test_interface
    my_prow = mod(myid, np_cols)
    my_pcol = myid / np_cols
 
-   call set_up_blacsgrid(mpi_comm_world, my_blacs_ctxt, np_rows, np_cols, &
-                         nprow, npcol, my_prow, my_pcol)
+   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, 'C', &
+                         my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
