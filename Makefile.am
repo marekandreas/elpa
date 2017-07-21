@@ -518,17 +518,17 @@ single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_mo
 endif
 
 
-# test scripts
-MPIEXEC ?= $(MPI_BINARY) '-n $$TASKS'
+# test scriptsT
+TASKS ?= 2
 if WITH_MPI
-  wrapper=$(MPIEXEC)
+  wrapper=$(MPI_BINARY) -n $${TASKS:-$(TASKS)}
 else
   wrapper=
 endif
 TESTS = $(check_SCRIPTS)
 %.sh: %
 	@echo "#!/bin/bash" > $@
-	@echo $(wrapper) ./$^ '$$TEST_FLAGS' >> $@
+	@echo '$(wrapper)' ./$^ '$$TEST_FLAGS' >> $@
 	@chmod +x $@
 
 include doxygen.am
