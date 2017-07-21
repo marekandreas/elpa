@@ -125,7 +125,7 @@ program test
    integer :: mpierr
 
    ! blacs
-   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, adjusted_na
+   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol 
 
    ! The Matrix
    MATRIX_TYPE, allocatable :: a(:,:), as(:,:)
@@ -163,19 +163,6 @@ program test
    enddo
 
    np_rows = nprocs/np_cols
-
-#ifdef TEST_MATRIX_ANALYTIC
-   adjusted_na = 1
-   do while (adjusted_na < na)
-     adjusted_na = adjusted_na * 2
-   end do
-   if (adjusted_na > na) then
-     na = adjusted_na
-     if(myid == 0) then
-       print *, 'At the moment, analytic test works for sizes of matrix of powers of two only. na changed to ', na
-     end if
-   end if
-#endif
 
    if (myid == 0) then
      print '((a,i0))', 'Matrix size: ', na
