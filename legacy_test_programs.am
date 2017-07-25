@@ -265,7 +265,7 @@ EXTRA_legacy_single_complex_driver@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_prin
 legacy_single_complex_driver_c_version@SUFFIX@_SOURCES = test/C/driver/legacy_interface/legacy_single_complex_driver_c_version.c
 legacy_single_complex_driver_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
 legacy_single_complex_driver_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
-legacy_single_complex_driver_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
+EXTRA_legacy_single_complex_driver_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.X90
 
 legacy_single_complex_2stage@SUFFIX@_SOURCES = test/Fortran/elpa2/legacy_interface/legacy_single_complex.F90
 legacy_single_complex_2stage@SUFFIX@_LDADD = $(test_program_ldadd)
