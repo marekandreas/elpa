@@ -140,8 +140,8 @@ module test_analytic
 #else
     glob_max_z_diff = max_z_diff
 #endif
-    if(myid == 0) print *, 'Maximal error in eigenvalues      :', max_ev_diff
-    if(myid == 0) print *, 'Maximal error in eigenvectors     :', glob_max_z_diff
+    if(myid == 0) print *, 'Maximum error in eigenvalues      :', max_ev_diff
+    if(myid == 0) print *, 'Maximum error in eigenvectors     :', glob_max_z_diff
     status = 0
     if (max_ev_diff .gt. 5e-14_rk8 .or. max_ev_diff .eq. ZERO) status = 1
     if (glob_max_z_diff .gt. 6e-11_rk8 .or. glob_max_z_diff .eq. ZERO) status = 1
