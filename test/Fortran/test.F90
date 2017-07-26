@@ -149,6 +149,9 @@ program test
    integer :: kernel
 
 #if defined(TEST_COMPLEX) && defined(__SOLVE_TRIDIAGONAL)
+#ifdef WITH_MPI
+   call MPI_finalize(mpierr)
+#endif
    stop 77
 #endif
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)

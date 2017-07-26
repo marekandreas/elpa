@@ -72,6 +72,7 @@ module test_setup_mpi
       if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
         write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
         write(error_unit,*) "           only ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
+        call MPI_FINALIZE(mpierr)
         call exit(77)
       endif
 #endif
