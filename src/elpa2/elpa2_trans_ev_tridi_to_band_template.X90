@@ -98,69 +98,69 @@
       use iso_c_binding
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      logical, intent(in)                      :: useGPU
+      logical, intent(in)                        :: useGPU
 
-      integer(kind=ik), intent(in)             :: kernel
-      integer(kind=ik), intent(in)             :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik), intent(in)               :: kernel
+      integer(kind=ik), intent(in)               :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
 
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                 :: q(ldq,*)
+      real(kind=REAL_DATATYPE)                   :: q(ldq,*)
 #else
-      real(kind=REAL_DATATYPE)                 :: q(ldq,matrixCols)
+      real(kind=REAL_DATATYPE)                   :: q(ldq,matrixCols)
 #endif
 
-      real(kind=REAL_DATATYPE), intent(in)     :: hh_trans(:,:)
+      real(kind=REAL_DATATYPE), intent(in)       :: hh_trans(:,:)
 #endif
-      integer(kind=c_intptr_t)                 :: q_dev
+      integer(kind=c_intptr_t)                   :: q_dev
 
 #if COMPLEXCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)           :: q(ldq,*)
+      complex(kind=COMPLEX_DATATYPE)             :: q(ldq,*)
 #else
-      complex(kind=COMPLEX_DATATYPE)           :: q(ldq,matrixCols)
+      complex(kind=COMPLEX_DATATYPE)             :: q(ldq,matrixCols)
 #endif
-      complex(kind=COMPLEX_DATATYPE)           :: hh_trans(:,:)
+      complex(kind=COMPLEX_DATATYPE)             :: hh_trans(:,:)
 #endif
 
-      integer(kind=ik)                         :: np_rows, my_prow, np_cols, my_pcol
-      integer(kind=ik)                         :: tmp
+      integer(kind=ik)                           :: np_rows, my_prow, np_cols, my_pcol
+      integer(kind=ik)                           :: tmp
 
-      integer(kind=ik)                         :: i, j, ip, sweep, nbuf, l_nev, a_dim2
-      integer(kind=ik)                         :: current_n, current_local_n, current_n_start, current_n_end
-      integer(kind=ik)                         :: next_n, next_local_n, next_n_start, next_n_end
-      integer(kind=ik)                         :: bottom_msg_length, top_msg_length, next_top_msg_length
-      integer(kind=ik)                         :: stripe_width, last_stripe_width, stripe_count
+      integer(kind=ik)                           :: i, j, ip, sweep, nbuf, l_nev, a_dim2
+      integer(kind=ik)                           :: current_n, current_local_n, current_n_start, current_n_end
+      integer(kind=ik)                           :: next_n, next_local_n, next_n_start, next_n_end
+      integer(kind=ik)                           :: bottom_msg_length, top_msg_length, next_top_msg_length
+      integer(kind=ik)                           :: stripe_width, last_stripe_width, stripe_count
 #ifdef WITH_OPENMP
-      integer(kind=ik)                         :: thread_width, csw, b_off, b_len
+      integer(kind=ik)                           :: thread_width, csw, b_off, b_len
 #endif
-      integer(kind=ik)                         :: num_result_blocks, num_result_buffers, num_bufs_recvd
-      integer(kind=ik)                         :: a_off, current_tv_off, max_blk_size
-      integer(kind=ik)                         :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+      integer(kind=ik)                           :: num_result_blocks, num_result_buffers, num_bufs_recvd
+      integer(kind=ik)                           :: a_off, current_tv_off, max_blk_size
+      integer(kind=ik)                           :: mpierr, src, src_offset, dst, offset, nfact, num_blk
 
-      logical                                  :: flag
+      logical                                    :: flag
 #if REALCASE == 1
 #ifdef WITH_OPENMP
-      real(kind=REAL_DATATYPE), pointer        :: aIntern(:,:,:,:)
+      real(kind=REAL_DATATYPE), pointer          :: aIntern(:,:,:,:)
 #else
-      real(kind=REAL_DATATYPE), pointer        :: aIntern(:,:,:)
+      real(kind=REAL_DATATYPE), pointer          :: aIntern(:,:,:)
 #endif
-      real(kind=REAL_DATATYPE)                 :: a_real
+      real(kind=REAL_DATATYPE)                   :: a_real
 #endif
 
 #if COMPLEXCASE == 1
 #ifdef WITH_OPENMP
-      complex(kind=COMPLEX_DATATYPE), pointer  :: aIntern(:,:,:,:)
+      complex(kind=COMPLEX_DATATYPE), pointer    :: aIntern(:,:,:,:)
 #else
-      complex(kind=COMPLEX_DATATYPE), pointer  :: aIntern(:,:,:)
+      complex(kind=COMPLEX_DATATYPE), pointer    :: aIntern(:,:,:)
 #endif
-      complex(kind=COMPLEX_DATATYPE)           :: a_complex
+      complex(kind=COMPLEX_DATATYPE)             :: a_complex
 #endif
-      type(c_ptr)                              :: aIntern_ptr
+      type(c_ptr)                                :: aIntern_ptr
 
 #if REALCASE == 1
-      real(kind=REAL_DATATYPE)   , allocatable :: row(:)
-      real(kind=REAL_DATATYPE)   , allocatable :: row_group(:,:)
+      real(kind=REAL_DATATYPE)   , allocatable   :: row(:)
+      real(kind=REAL_DATATYPE)   , allocatable   :: row_group(:,:)
 #endif
 #if COMPLEXCASE == 1
       complex(kind=COMPLEX_DATATYPE), allocatable :: row(:)
@@ -1706,7 +1706,7 @@
        &MATH_DATATYPE&
        &_openmp_&
        &PRECISION &
-                              (obj,aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                              (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
                                hh_dot_dev, &
@@ -1723,8 +1723,8 @@
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj,aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
-              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
+     & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+              a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
         hh_dot_dev, &
 #endif
@@ -1839,7 +1839,7 @@
     &MATH_DATATYPE&
     &_openmp_&
     &PRECISION&
-    & (obj,aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+    & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
       nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
             hh_dot_dev,  &
@@ -1888,7 +1888,7 @@
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  & (obj,aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+  & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
            a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
      hh_dot_dev, &
@@ -1984,7 +1984,7 @@
     &MATH_DATATYPE&
     &_openmp_&
     &PRECISION&
-    & (obj,aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
+    & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
        nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
              hh_dot_dev, &
@@ -2002,7 +2002,7 @@
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  & (obj,aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+  & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
            a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
      hh_dot_dev,     &
@@ -2080,7 +2080,7 @@
     &MATH_DATATYPE&
     &_openmp_&
     &PRECISION&
-    & (obj,aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+    & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
        nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
              hh_dot_dev, &
@@ -2097,7 +2097,7 @@
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  & (obj,aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+  & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
            a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
 #if REALCASE == 1
      hh_dot_dev,     &
