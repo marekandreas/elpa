@@ -100,8 +100,8 @@
       use redist
       implicit none
 
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      logical, intent(in)                       :: useGPU
+      class(elpa_abstract_impl_t), intent(inout)   :: obj
+      logical, intent(in)                          :: useGPU
       integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
@@ -559,7 +559,7 @@
             call hh_transform_real_&
 #endif
 #if COMPLEXCASE == 1
-          call hh_transform_complex_&
+            call hh_transform_complex_&
 #endif
 &PRECISION &
                                (obj, ab(2,na_s-n_off),vnorm2,hf,tau)
@@ -710,17 +710,17 @@
                                           ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
                 ! Transform diagonal block
-    call obj%timer%start("blas")
+                call obj%timer%start("blas")
 #if REALCASE == 1
                 call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
 #endif
 #if COMPLEXCASE == 1
                 call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_COMPLEX_PAIR_0_0, hd, 1)
 #endif
-    call obj%timer%stop("blas")
+                call obj%timer%stop("blas")
 #if REALCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*tau
-          hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
+                hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
 #endif
 #if COMPLEXCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
@@ -745,7 +745,7 @@
                 if (nr<=0) cycle ! No subdiagonal block present any more
 
                 ! Transform subdiagonal block
-    call obj%timer%start("blas")
+                call obj%timer%start("blas")
                 call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, &
 #if REALCASE == 1
                         CONST_0_0, &
@@ -754,7 +754,7 @@
                                     CONST_COMPLEX_PAIR_0_0, &
 #endif
             hs, 1)
-    call obj%timer%stop("blas")
+                call obj%timer%stop("blas")
                 if (nr>1) then
 
                   ! complete (old) Householder transformation for first column
@@ -799,7 +799,7 @@
 #endif
                   ! update subdiagonal block for old and new Householder transformation
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-      call obj%timer%start("blas")
+                  call obj%timer%start("blas")
 #if REALCASE == 1
                   call PRECISION_GEMV('T',            &
 #endif
@@ -814,7 +814,7 @@
                                       CONST_COMPLEX_PAIR_0_0, &
 #endif
               h(2), 1)
-      call obj%timer%stop("blas")
+                  call obj%timer%stop("blas")
 
                   x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
                   h(2:nb) = h(2:nb) - x*hv(2:nb)
@@ -1038,7 +1038,7 @@
 #if COMPLEXCASE == 1
               ab(1,ne) = CONST_COMPLEX_0_0
 #endif
-        call obj%timer%start("blas")
+              call obj%timer%start("blas")
 
 #if REALCASE == 1
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
@@ -1054,7 +1054,7 @@
 #if COMPLEXCASE == 1
                                             CONST_COMPLEX_PAIR_0_0,hs,1)
 #endif
-        call obj%timer%stop("blas")
+              call obj%timer%stop("blas")
 
               ! ... then request last column ...
 #ifdef WITH_MPI
@@ -1092,7 +1092,7 @@
             else
 
               ! Normal matrix multiply
-        call obj%timer%start("blas")
+              call obj%timer%start("blas")
 #if REALCASE == 1
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
 #endif
@@ -1107,7 +1107,7 @@
                                             CONST_COMPLEX_PAIR_0_0, hs, 1)
 
 #endif
-        call obj%timer%stop("blas")
+              call obj%timer%stop("blas")
             endif
 
             ! Calculate first column of subdiagonal block and calculate new
@@ -1118,7 +1118,7 @@
 #endif
 #if COMPLEXCASE == 1
             hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
-      tau_new = 0
+            tau_new = 0
 #endif
             if (nr>0) then
 
@@ -1269,7 +1269,7 @@
 
             if (nr>0) then
               if (nr>1) then
-          call obj%timer%start("blas")
+                call obj%timer%start("blas")
 #if REALCASE == 1
                 call PRECISION_GEMV('T',            &
 #endif
@@ -1283,7 +1283,7 @@
 #if COMPLEXCASE == 1
                                         CONST_COMPLEX_PAIR_0_0, h(2), 1)
 #endif
-    call obj%timer%stop("blas")
+                call obj%timer%stop("blas")
 
                 x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
                 h(2:nb) = h(2:nb) - x*hv(2:nb)
