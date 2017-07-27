@@ -65,57 +65,57 @@
    use mod_check_for_gpu
    use iso_c_binding
    implicit none
-   class(elpa_abstract_impl_t), intent(inout) :: obj
-   logical                                   :: useGPU
+   class(elpa_abstract_impl_t), intent(inout)                         :: obj
+   logical                                                            :: useGPU
 #if REALCASE == 1
-   logical                                   :: useQR
+   logical                                                            :: useQR
 #endif
-   logical                                   :: useQRActual
+   logical                                                            :: useQRActual
 
-   integer(kind=c_int)                       :: bandwidth
+   integer(kind=c_int)                                                :: bandwidth
 
-   integer(kind=c_int)                       :: kernel
+   integer(kind=c_int)                                                :: kernel
 
 #ifdef USE_ASSUMED_SIZE
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(obj%local_nrows,*)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,*)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,*)
 #else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: a(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,obj%local_ncols)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
 #endif
-   real(kind=C_DATATYPE_KIND), intent(inout) :: ev(obj%na)
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable   :: hh_trans(:,:)
+   real(kind=C_DATATYPE_KIND), intent(inout)                          :: ev(obj%na)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: hh_trans(:,:)
 
-   integer(kind=c_int)                       :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=c_int)                       :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable :: tmat(:,:,:)
-   real(kind=C_DATATYPE_KIND), allocatable   :: e(:)
+   integer(kind=c_int)                                                :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)                                                :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: tmat(:,:,:)
+   real(kind=C_DATATYPE_KIND), allocatable                            :: e(:)
 #if COMPLEXCASE == 1
-   real(kind=C_DATATYPE_KIND), allocatable   :: q_real(:,:)
+   real(kind=C_DATATYPE_KIND), allocatable                            :: q_real(:,:)
 #endif
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target  :: q_dummy(:,:)
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer              :: q_actual(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target           :: q_dummy(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer                       :: q_actual(:,:)
 
 
-   integer(kind=c_intptr_t)                  :: tmat_dev, q_dev, a_dev
+   integer(kind=c_intptr_t)                                           :: tmat_dev, q_dev, a_dev
 
-   integer(kind=c_int)                       :: i
-   logical                                   :: success, successCUDA
-   logical                                   :: wantDebug
-   integer(kind=c_int)                       :: istat, gpu, debug, qr
-   character(200)                            :: errorMessage
-   logical                                   :: do_useGPU, do_useGPU_trans_ev_tridi
-   integer(kind=c_int)                       :: numberOfGPUDevices
-   integer(kind=c_intptr_t), parameter       :: size_of_datatype = size_of_&
-                                                                   &PRECISION&
-                                                                   &_&
-                                                                   &MATH_DATATYPE
-    integer(kind=ik)                         :: na, nev, lda, ldq, nblk, matrixCols, &
-                                                mpi_comm_rows, mpi_comm_cols,        &
-						mpi_comm_all, check_pd
+   integer(kind=c_int)                                                :: i
+   logical                                                            :: success, successCUDA
+   logical                                                            :: wantDebug
+   integer(kind=c_int)                                                :: istat, gpu, debug, qr
+   character(200)                                                     :: errorMessage
+   logical                                                            :: do_useGPU, do_useGPU_trans_ev_tridi
+   integer(kind=c_int)                                                :: numberOfGPUDevices
+   integer(kind=c_intptr_t), parameter                                :: size_of_datatype = size_of_&
+                                                                                            &PRECISION&
+                                                                                            &_&
+                                                                                            &MATH_DATATYPE
+    integer(kind=ik)                                                  :: na, nev, lda, ldq, nblk, matrixCols, &
+                                                                         mpi_comm_rows, mpi_comm_cols,        &
+					                                 mpi_comm_all, check_pd
 
-    logical                                  :: do_bandred, do_tridiag, do_solve_tridi,  &
-                                                do_trans_to_band, do_trans_to_full
+    logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
+                                                                         do_trans_to_band, do_trans_to_full
 
     call obj%timer%start("elpa_solve_evp_&
     &MATH_DATATYPE&
@@ -143,6 +143,7 @@
     if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+	write(error_unit,*) "The compute kernel will be executed on CPUs!"
       else if (nblk .ne. 128) then
         kernel = ELPA_2STAGE_REAL_GENERIC
       endif
@@ -161,6 +162,7 @@
     if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+	write(error_unit,*) "The compute kernel will be executed on CPUs!"
       else if (nblk .ne. 128) then
         kernel = ELPA_2STAGE_COMPLEX_GENERIC
       endif
@@ -176,7 +178,6 @@
     call obj%get("mpi_comm_cols",mpi_comm_cols)
     call obj%get("mpi_comm_parent",mpi_comm_all)
 
-    call obj%get("gpu",gpu)
     if (gpu .eq. 1) then
       useGPU = .true.
     else
