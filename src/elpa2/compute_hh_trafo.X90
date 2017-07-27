@@ -201,7 +201,7 @@
 	   endif
          endif
 
-         call obj%timer%start("compute_hh_trafo_&
+         if (wantDebug) call obj%timer%start("compute_hh_trafo_&
    &MATH_DATATYPE&
 #ifdef WITH_OPENMP
          &_openmp" // &
@@ -247,7 +247,7 @@
            noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
            nl = min(my_thread*thread_width-noff, l_nev-noff)
            if (nl<=0) then
-             call obj%timer%stop("compute_hh_trafo_&
+             if (wantDebug) call obj%timer%stop("compute_hh_trafo_&
        &MATH_DATATYPE&
 #ifdef WITH_OPENMP
              &_openmp" // &
@@ -1576,7 +1576,7 @@
          endif
 #endif
 
-         call obj%timer%stop("compute_hh_trafo_&
+         if (wantDebug) call obj%timer%stop("compute_hh_trafo_&
          &MATH_DATATYPE&
 #ifdef WITH_OPENMP
          &_openmp" // &

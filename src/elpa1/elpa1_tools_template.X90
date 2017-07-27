@@ -248,7 +248,7 @@
     subroutine hh_transform_complex_&
 #endif
     &PRECISION &
-                   (obj, alpha, xnorm_sq, xf, tau)
+                   (obj, alpha, xnorm_sq, xf, tau, wantDebug)
 #if REALCASE  == 1
       ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
 #endif
@@ -261,7 +261,8 @@
       use precision
       use elpa_abstract_impl
       implicit none
-      class(elpa_abstract_impl_t), intent(inout) :: obj
+      class(elpa_abstract_impl_t), intent(inout)    :: obj
+      logical, intent(in)                           :: wantDebug
 #if REALCASE == 1
       real(kind=REAL_DATATYPE), intent(inout)       :: alpha
 #endif
@@ -279,7 +280,7 @@
 
       real(kind=REAL_DATATYPE)                      :: BETA
 
-     call obj%timer%start("hh_transform_&
+     if (wantDebug) call obj%timer%start("hh_transform_&
                       &MATH_DATATYPE&
 		      &" // &
 		      &PRECISION_SUFFIX )
@@ -343,7 +344,7 @@
        ALPHA = BETA
      endif
 
-      call obj%timer%stop("hh_transform_&
+      if (wantDebug) call obj%timer%stop("hh_transform_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX )

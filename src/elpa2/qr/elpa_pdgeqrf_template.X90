@@ -1075,7 +1075,7 @@
         ! General case
         call hh_transform_real_&
 &PRECISION &
-(obj,alpha,xnorm**2,xf,tau)
+(obj,alpha,xnorm**2,xf,tau, .false.)
         if (mpirank .eq. mpirank_top) then
           x(top) = alpha
         end if

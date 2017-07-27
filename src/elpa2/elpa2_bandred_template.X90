@@ -226,14 +226,14 @@
       &" // &
       &PRECISION_SUFFIX &
       )
-      call obj%timer%start("mpi_communication")
+      if (wantDebug) call obj%timer%start("mpi_communication")
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
-      call obj%timer%stop("mpi_communication")
+      if (wantDebug) call obj%timer%stop("mpi_communication")
       success = .true.
 
 
@@ -676,7 +676,7 @@
              endif
 
 #ifdef WITH_MPI
-             call obj%timer%start("mpi_communication")
+             if (wantDebug) call obj%timer%start("mpi_communication")
              call mpi_allreduce(aux1, aux2, 2, &
 #if REALCASE == 1
                                 MPI_REAL_PRECISION, &
@@ -685,7 +685,7 @@
                                 MPI_COMPLEX_PRECISION, &
 #endif
                                 MPI_SUM, mpi_comm_rows, mpierr)
-             call obj%timer%stop("mpi_communication")
+             if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
               aux2 = aux1 ! this should be optimized
@@ -702,7 +702,7 @@
        call hh_transform_complex_&
 #endif
              &PRECISION &
-                              (obj, vrl, vnorm2, xf, tau)
+                              (obj, vrl, vnorm2, xf, tau, wantDebug)
              ! Scale vr and store Householder Vector for back transformation
 
              vr(1:lr) = vr(1:lr) * xf
@@ -725,7 +725,7 @@
 
            vr(lr+1) = tau
 #ifdef WITH_MPI
-           call obj%timer%start("mpi_communication")
+           if (wantDebug) call obj%timer%start("mpi_communication")
      call MPI_Bcast(vr, lr+1, &
 #if REALCASE == 1
                           MPI_REAL_PRECISION, &
@@ -734,7 +734,7 @@
                           MPI_COMPLEX_PRECISION, &
 #endif
                           cur_pcol, mpi_comm_cols, mpierr)
-           call obj%timer%stop("mpi_communication")
+           if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
 
@@ -780,7 +780,7 @@
 
            ! Get global dot products
 #ifdef WITH_MPI
-           call obj%timer%start("mpi_communication")
+           if (wantDebug) call obj%timer%start("mpi_communication")
            if (nlc>0) call mpi_allreduce(aux1, aux2, nlc, MPI_COMPLEX_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
 
            ! Transform
@@ -796,7 +796,7 @@
            enddo
 
 
-           call obj%timer%stop("mpi_communication")
+           if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
 !          if (nlc>0) aux2=aux1
@@ -854,7 +854,7 @@
            !$omp barrier
            !$omp single
 #ifdef WITH_MPI
-           call obj%timer%start("mpi_communication")
+           if (wantDebug) call obj%timer%start("mpi_communication")
            if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc,     &
 #if REALCASE == 1
                                      MPI_REAL_PRECISION,    &
@@ -863,7 +863,7 @@
                                            MPI_COMPLEX_PRECISION, &
 #endif
                          MPI_SUM, mpi_comm_rows, mpierr)
-           call obj%timer%stop("mpi_communication")
+           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
            if (mynlc>0) aux2 = aux1
 #endif /* WITH_MPI */
@@ -907,7 +907,7 @@
 
            ! Get global dot products
 #ifdef WITH_MPI
-           call obj%timer%start("mpi_communication")
+           if (wantDebug) call obj%timer%start("mpi_communication")
            if (nlc>0) call mpi_allreduce(aux1, aux2, nlc,      &
 #if REALCASE == 1
                                    MPI_REAL_PRECISION,   &
@@ -916,7 +916,7 @@
                                          MPI_COMPLEX_PRECISION,&
 #endif
            MPI_SUM, mpi_comm_rows, mpierr)
-           call obj%timer%stop("mpi_communication")
+           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
            if (nlc>0) aux2=aux1
 #endif /* WITH_MPI */
@@ -983,7 +983,7 @@
          ! This can be done in different ways, we use dsyrk
 
          vav = 0
-   call obj%timer%start("blas")
+         call obj%timer%start("blas")
          if (useGPU) then
            if (l_rows>0) &
 #if REALCASE == 1
@@ -1010,7 +1010,7 @@
 #endif
                            n_cols, l_rows, ONE, vmrCPU, ubound(vmrCPU,dim=1), ZERO, vav, ubound(vav,dim=1))
          endif
-   call obj%timer%stop("blas")
+         call obj%timer%stop("blas")
 #if REALCASE == 1
    call symm_matrix_allreduce_&
 #endif
@@ -1020,7 +1020,7 @@
          &PRECISION &
                          (obj, n_cols,vav, nbw, nbw,mpi_comm_rows)
          ! Calculate triangular matrix T for block Householder Transformation
-   call obj%timer%start("blas")
+         call obj%timer%start("blas")
          do lc=n_cols,1,-1
            tau = tmat(lc,lc,istep)
            if (lc<n_cols) then
@@ -1040,7 +1040,7 @@
 #endif
            endif
          enddo
-    call obj%timer%stop("blas")
+         call obj%timer%stop("blas")
 #if REALCASE == 1
        endif !useQR
 #endif
@@ -1297,17 +1297,17 @@
                !C1 += [A11 A12] [B1
                !                 B2]
                if ( lre > lrs .and. l_cols > lcs ) then
-           call obj%timer%start("blas")
+                 call obj%timer%start("blas")
                  call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
                                      ONE, a(lrs,lcs), ubound(a,dim=1),                 &
                                      umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
                                      ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
-           call obj%timer%stop("blas")
+                 call obj%timer%stop("blas")
                endif
 
                ! C1 += A10' B0
                if ( lce > lcs .and. i > 0 ) then
-            call obj%timer%start("blas")
+                 call obj%timer%start("blas")
 #if REALCASE == 1
                  call PRECISION_GEMM('T', 'N',     &
 #endif
@@ -1338,7 +1338,7 @@
                lcs = i*l_cols_tile+1
                lce = min(l_cols,(i+1)*l_cols_tile)
                if (lce<lcs) cycle
-         call obj%timer%start("blas")
+               call obj%timer%start("blas")
                lre = min(l_rows,(i+1)*l_rows_tile)
 #if REALCASE == 1
                call PRECISION_GEMM('T', 'N',          &
@@ -1348,13 +1348,13 @@
 #endif
                              lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
                                    vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-         call obj%timer%stop("blas")
+               call obj%timer%stop("blas")
                if (i==0) cycle
                  lre = min(l_rows,i*l_rows_tile)
-            call obj%timer%start("blas")
+                 call obj%timer%start("blas")
                  call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
                                      umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE,      &
-             vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+                                     vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
                  call obj%timer%stop("blas")
              enddo
            endif
@@ -1411,7 +1411,7 @@
              stop 1
            endif
 
-           call obj%timer%start("mpi_communication")
+           if (wantDebug) call obj%timer%start("mpi_communication")
 
            call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, &
 #if REALCASE == 1
@@ -1428,7 +1428,7 @@
 #if COMPLEXCASE == 1
            umcCUDA(1:l_cols,1:n_cols) = tmpCUDA(1:l_cols,1:n_cols)
 #endif
-           call obj%timer%stop("mpi_communication")
+           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
 !           tmpCUDA(1 : l_cols * n_cols) = umcCUDA(1 : l_cols * n_cols)
@@ -1469,7 +1469,7 @@
            stop 1
          endif
 
-   call obj%timer%start("cublas")
+         call obj%timer%start("cublas")
 #if REALCASE == 1
          call cublas_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit',  &
 #endif
@@ -1477,7 +1477,7 @@
          call  cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',     &
 #endif
                                l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
-   call obj%timer%stop("cublas")
+         call obj%timer%stop("cublas")
 
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
          successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
@@ -1487,7 +1487,7 @@
      &: error in cudaMemcpy vav_dev 2"
            stop 1
          endif
-   call obj%timer%start("cublas")
+         call obj%timer%start("cublas")
 
 #if REALCASE == 1
          call cublas_PRECISION_GEMM('T', 'N',             &
@@ -1506,7 +1506,7 @@
          call cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',        &
 #endif
                               n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
-   call obj%timer%stop("cublas")
+         call obj%timer%stop("cublas")
 
          successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
@@ -1534,7 +1534,7 @@
          endif
 
          ! U = U - 0.5 * V * VAV
-    call obj%timer%start("cublas")
+         call obj%timer%start("cublas")
 
          call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
@@ -1547,7 +1547,7 @@
                                      size_of_datatype),   &
              cur_l_cols, vav_dev,nbw,        &
                                      ONE, umc_dev, cur_l_cols)
-   call obj%timer%stop("cublas")
+         call obj%timer%stop("cublas")
 
          successCUDA = cuda_memcpy(      &
 #if REALCASE == 1
@@ -1617,7 +1617,7 @@
            lce = min(l_cols,(i+1)*l_cols_tile)
            lre = min(l_rows,(i+1)*l_rows_tile)
            if (lce<lcs .or. lre<1) cycle
-     call obj%timer%start("cublas")
+            call obj%timer%start("cublas")
 
 #if REALCASE == 1
            call cublas_PRECISION_GEMM('N', 'T',     &
@@ -1630,7 +1630,7 @@
                                       size_of_datatype), &
               cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
                                       size_of_datatype), lda)
-     call obj%timer%stop("cublas")
+           call obj%timer%stop("cublas")
 
          enddo
 
@@ -1657,7 +1657,7 @@
            endif
 
 #ifdef WITH_MPI
-           call obj%timer%start("mpi_communication")
+           if (wantDebug) call obj%timer%start("mpi_communication")
            call mpi_allreduce(umcCPU, tmpCPU, l_cols*n_cols,    &
 #if REALCASE == 1
                         MPI_REAL_PRECISION,               &
@@ -1667,7 +1667,7 @@
 #endif
             MPI_SUM, mpi_comm_rows, mpierr)
            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-           call obj%timer%stop("mpi_communication")
+           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !           tmpCPU(1:l_cols,1:n_cols) = umcCPU(1:l_cols,1:n_cols)
 #endif /* WITH_MPI */
@@ -1682,7 +1682,7 @@
          endif
 
          ! U = U * Tmat**T
-   call obj%timer%start("blas")
+         call obj%timer%start("blas")
 
 #if REALCASE == 1
          call PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit',     &
@@ -1712,7 +1712,7 @@
 #endif
                        n_cols, n_cols, ONE, tmat(1,1,istep),    &
                              ubound(tmat,dim=1), vav, ubound(vav,dim=1))
-   call obj%timer%stop("blas")
+         call obj%timer%stop("blas")
 
 #if REALCASE == 1
          call symm_matrix_allreduce_&
@@ -1724,7 +1724,7 @@
                               (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
          ! U = U - 0.5 * V * VAV
-   call obj%timer%start("blas")
+         call obj%timer%start("blas")
          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
 #if REALCASE == 1
                        -CONST_0_5,                           &
@@ -1735,7 +1735,7 @@
             umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
                               ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
 
-   call obj%timer%stop("blas")
+         call obj%timer%stop("blas")
          ! Transpose umc -> umr (stored in vmr, second half)
          call elpa_transpose_vectors_&
          &MATH_DATATYPE&
@@ -1777,7 +1777,7 @@
            myend   = mystart + work_per_thread - 1
            if ( myend > lre ) myend = lre
            if ( myend-mystart+1 < 1) cycle
-     call obj%timer%start("blas")
+           call obj%timer%start("blas")
            call PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -CONST_1_0, &
                       vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
                        CONST_1_0, a(mystart,lcs), ubound(a,1))
@@ -1806,7 +1806,7 @@
            lce = min(l_cols,(i+1)*l_cols_tile)
            lre = min(l_rows,(i+1)*l_rows_tile)
            if (lce<lcs .or. lre<1) cycle
-     call obj%timer%start("blas")
+           call obj%timer%start("blas")
 #if REALCASE == 1
            call PRECISION_GEMM('N', 'T',        &
 #endif
@@ -1816,7 +1816,7 @@
                          lre,lce-lcs+1, 2*n_cols, -ONE, &
                                vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
                                ONE, a(1,lcs), lda)
-     call obj%timer%stop("blas")
+           call obj%timer%stop("blas")
          enddo
 #endif /* WITH_OPENMP */
 

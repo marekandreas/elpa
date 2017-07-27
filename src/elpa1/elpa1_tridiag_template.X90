@@ -52,11 +52,21 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
+#include "../general/sanity.X90"
+
+#undef SAVE_MATR
+#ifdef DOUBLE_PRECISION_REAL
+#define SAVE_MATR(name, iteration) \
+call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,name,iteration)
+#else
+#define SAVE_MATR(name, iteration)
+#endif
 
 !> \brief Reduces a distributed symmetric matrix to tridiagonal form (like Scalapack Routine PDSYTRD)
 !>
 !  Parameters
 !
+!> \param obj	      object of elpa_type
 !> \param na          Order of matrix
 !>
 !> \param a_mat(lda,matrixCols)    Distributed matrix which should be reduced.
@@ -80,23 +90,13 @@
 !> \param tau(na)     Factors for the Householder vectors (returned), needed for back transformation
 !>
 !> \param useGPU      If true,  GPU version of the subroutine will be used
+!> \param wantDebug   if true more debug information
 !>
-#include "../general/sanity.X90"
-
-#undef SAVE_MATR
-#ifdef DOUBLE_PRECISION_REAL
-#define SAVE_MATR(name, iteration) \
-call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,name,iteration) 
-#else
-#define SAVE_MATR(name, iteration)
-#endif
-
-
     subroutine tridiag_&
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU)
+    (obj, na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug)
       use cuda_functions
       use iso_c_binding
       use precision
@@ -105,7 +105,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      logical, intent(in)                           :: useGPU
+      logical, intent(in)                           :: useGPU, wantDebug
 
 #if REALCASE == 1
       real(kind=REAL_DATATYPE), intent(out)         :: tau(na)
@@ -227,12 +227,12 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       )
 
 
-      call obj%timer%start("mpi_communication")
+      if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-      call obj%timer%stop("mpi_communication")
+      if (wantDebug) call obj%timer%stop("mpi_communication")
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
       ! seems that tile is a square submatrix, consisting by several blocks
@@ -393,7 +393,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           endif
 
             if (n_stored_vecs > 0 .and. l_rows > 0) then
-              call obj%timer%start("blas")
+              if (wantDebug) call obj%timer%start("blas")
 #if COMPLEXCASE == 1
               aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
@@ -408,7 +408,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
 #endif
                                   ONE, v_row, 1)
-               call obj%timer%stop("blas")
+               if (wantDebug) call obj%timer%stop("blas")
 
             endif
 
@@ -421,10 +421,10 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             endif
 
 #ifdef WITH_MPI
-            call obj%timer%start("mpi_communication")
+            if (wantDebug) call obj%timer%start("mpi_communication")
             call mpi_allreduce(aux1, aux2, 2, MPI_MATH_DATATYPE_PRECISION, &
                                MPI_SUM, mpi_comm_rows, mpierr)
-            call obj%timer%stop("mpi_communication")
+            if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           aux2 = aux1
 #endif /* WITH_MPI */
@@ -439,7 +439,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           call hh_transform_complex_&
 #endif
                &PRECISION &
-                             (obj, vrl, vnorm2, xf, tau(istep))
+                             (obj, vrl, vnorm2, xf, tau(istep), wantDebug)
           ! Scale v_row and store Householder Vector for back transformation
 
           v_row(1:l_rows) = v_row(1:l_rows) * xf
@@ -456,13 +456,15 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           ! add tau after the end of actuall v_row, to be broadcasted with it
           v_row(l_rows+1) = tau(istep)
          endif !(my_pcol == pcol(istep, nblk, np_cols))
-         
+
 !          SAVE_MATR("HH vec stored", na - istep + 1)
 
 #ifdef WITH_MPI
+         if (wantDebug) call obj%timer%start("mpi_communication")
          ! Broadcast the Householder Vector (and tau) along columns
          call MPI_Bcast(v_row, l_rows+1, MPI_MATH_DATATYPE_PRECISION,    &
                         pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+         if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
         !recover tau, which has been broadcasted together with v_row
@@ -508,7 +510,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
           n_iter = 0
 
-          ! first calculate A*v part of (A + VU**T + UV**T)*v 
+          ! first calculate A*v part of (A + VU**T + UV**T)*v
           uc_p(1:l_cols,my_thread) = 0.
           ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP */
@@ -522,7 +524,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               if (l_row_end < l_row_beg) cycle
 #ifdef WITH_OPENMP
               if (mod(n_iter,n_threads) == my_thread) then
-                call obj%timer%start("blas")
+                if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                                     l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                     ONE, a_mat(l_row_beg,l_col_beg), lda,         &
@@ -534,7 +536,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
                                       ONE, ur_p(l_row_beg,my_thread), 1)
                 endif
-                call obj%timer%stop("blas")
+                if (wantDebug) call obj%timer%stop("blas")
               endif
               n_iter = n_iter+1
 #else /* WITH_OPENMP */
@@ -543,7 +545,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
               ! CPU implementation) or by one large matrix Vector multiply
               if (.not. useGPU) then
-                call obj%timer%start("blas")
+                if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                             l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                             ONE, a_mat(l_row_beg, l_col_beg), lda,         &
@@ -557,7 +559,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                                       v_col(l_col_beg), 1,                                &
                                       ONE, u_row(l_row_beg), 1)
                 endif
-                call obj%timer%stop("blas")
+                if (wantDebug) call obj%timer%stop("blas")
               endif ! not useGPU
 
 #endif /* WITH_OPENMP */
@@ -569,7 +571,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
               ! this requires altering of the algorithm when later explicitly updating the matrix
               ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
-              call obj%timer%start("cublas")
+              if (wantDebug) call obj%timer%start("cublas")
               call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
                                         ONE, a_dev, lda,                   &
                                         v_row_dev , 1,                          &
@@ -584,7 +586,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 !                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
 !                                             size_of_datatype, 1)
 !                 endif
-              call obj%timer%stop("cublas")
+              if (wantDebug) call obj%timer%stop("cublas")
 
             else
               !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
@@ -651,7 +653,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
           ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
           if (n_stored_vecs > 0) then
-            call obj%timer%start("blas")
+            if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
             call PRECISION_GEMV('T',     &
 #endif
@@ -665,7 +667,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             call PRECISION_GEMV('N', l_cols, 2*n_stored_vecs,   &
                                 ONE, uv_stored_cols, ubound(uv_stored_cols,dim=1),   &
                                 aux, 1, ONE, u_col,  1)
-            call obj%timer%stop("blas")
+            if (wantDebug) call obj%timer%stop("blas")
           endif
 
         endif  ! (l_rows>0 .and. l_cols>0)
@@ -691,10 +693,10 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         if (l_cols>0) then
           tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
-          call obj%timer%start("mpi_communication")
+          if (wantDebug) call obj%timer%start("mpi_communication")
           call mpi_allreduce(tmp, u_col, l_cols, MPI_MATH_DATATYPE_PRECISION,    &
                              MPI_SUM, mpi_comm_rows, mpierr)
-          call obj%timer%stop("mpi_communication")
+          if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           u_col = tmp
 #endif /* WITH_MPI */
@@ -720,14 +722,14 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #endif
 
 #ifdef WITH_MPI
-        call obj%timer%start("mpi_communication")
+        if (wantDebug) call obj%timer%start("mpi_communication")
 #if REALCASE == 1
         call mpi_allreduce(x, vav, 1, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
 #if COMPLEXCASE == 1
         call mpi_allreduce(xc, vav, 1 , MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
-        call obj%timer%stop("mpi_communication")
+        if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
 #if REALCASE == 1
@@ -795,7 +797,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               if(.not. mat_vec_as_one_block) then
                 ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                 ! we than use the same calls as for CPU version
-                call obj%timer%start("cublas")
+                if (wantDebug) call obj%timer%start("cublas")
                 call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                           l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
                                           ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
@@ -804,29 +806,29 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                                           size_of_datatype,  &
                                           max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *            &
                                           size_of_datatype , lda)
-                call obj%timer%stop("cublas")
+                if (wantDebug) call obj%timer%stop("cublas")
               endif
             else !useGPU
-              call obj%timer%start("blas")
+              if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
                                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
                                    ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
                                    uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
                                    ONE, a_mat(l_row_beg,l_col_beg), lda)
-              call obj%timer%stop("blas")
+              if (wantDebug) call obj%timer%stop("blas")
             endif !useGPU
           enddo
 
           if (useGPU) then
             if(mat_vec_as_one_block) then
-              !update whole (remaining) part of matrix, including tiles below diagonal 
+              !update whole (remaining) part of matrix, including tiles below diagonal
               !we can do that in one large cublas call
-              call obj%timer%start("cublas")
+              if (wantDebug) call obj%timer%start("cublas")
               call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
                                         ONE, vu_stored_rows_dev, max_local_rows, &
                                         uv_stored_cols_dev, max_local_cols,  &
                                         ONE, a_dev, lda)
-              call obj%timer%stop("cublas")
+              if (wantDebug) call obj%timer%stop("cublas")
             endif
           endif
 
@@ -878,23 +880,23 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           endif !useGPU
           call hh_transform_complex_&
                                     &PRECISION &
-                                    (obj, vrl, CONST_REAL_0_0, xf, tau(2))
+                                    (obj, vrl, CONST_REAL_0_0, xf, tau(2), wantDebug)
           e_vec(1) = vrl
 
           a_mat(1,l_cols) = 1. ! for consistency only
         endif
 #ifdef WITH_MPI
-        call obj%timer%start("mpi_communication")
+        if (wantDebug) call obj%timer%start("mpi_communication")
         call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, prow(1, nblk, np_rows), mpi_comm_rows, mpierr)
-        call obj%timer%stop("mpi_communication")
+        if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
       endif
 
 #ifdef WITH_MPI
-      call obj%timer%start("mpi_communication")
+      if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, pcol(2, nblk, np_cols), mpi_comm_cols, mpierr)
-      call obj%timer%stop("mpi_communication")
+      if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
       if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
@@ -989,7 +991,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
 
 #ifdef WITH_MPI
-      call obj%timer%start("mpi_communication")
+      if (wantDebug) call obj%timer%start("mpi_communication")
 #if REALCASE == 1
       tmp = d_vec
       call mpi_allreduce(tmp, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
@@ -1010,7 +1012,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       tmp_real = e_vec
       call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
 #endif
-      call obj%timer%stop("mpi_communication")
+      if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
 #if REALCASE == 1
@@ -1037,5 +1039,3 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
     &MATH_DATATYPE&
     &_&
     &PRECISION
-
-       
