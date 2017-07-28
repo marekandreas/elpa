@@ -78,6 +78,7 @@
 #define _AVX_ADDSUB _mm256_addsub_pd
 #define _AVX_XOR _mm256_xor_pd
 #define _AVX_BROADCAST _mm256_broadcast_sd
+#define _AVX_SET1 _mm256_set1_pd
 #define _AVX_SHUFFLE _mm256_shuffle_pd
 #define _SHUFFLE 0x5
 #define _CAST _mm256_castpd256_pd128
@@ -113,6 +114,7 @@
 #define _AVX_ADDSUB _mm256_addsub_ps
 #define _AVX_XOR _mm256_xor_ps
 #define _AVX_BROADCAST _mm256_broadcast_ss
+#define _AVX_SET1 _mm256_set1_ps
 #define _AVX_SHUFFLE _mm256_shuffle_ps
 #define _SHUFFLE 0xb1
 #define _CAST _mm256_castps256_ps128
@@ -489,8 +491,8 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv_single(float complex
 #endif
 
 	_AVX_STOREU(s_dbl, _CAST(tmp2));
-	h2_real = _AVX_BROADCAST(&s_dbl[0]);
-	h2_imag = _AVX_BROADCAST(&s_dbl[1]);
+	h2_real = _AVX_SET1(s_dbl[0]);
+	h2_imag = _AVX_SET1(s_dbl[1]);
 
 	tmp1 = _AVX_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -933,8 +935,8 @@ static __forceinline void hh_trafo_complex_kernel_6_AVX_2hv_double(double comple
 	tmp2 = _AVX_ADDSUB( _AVX_MUL(h2_real, tmp2), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 	_AVX_STOREU(s_dbl, _CAST(tmp2));
-	h2_real = _AVX_BROADCAST(&s_dbl[0]);
-	h2_imag = _AVX_BROADCAST(&s_dbl[1]);
+	h2_real = _AVX_SET1(s_dbl[0]);
+	h2_imag = _AVX_SET1(s_dbl[1]);
 
 	tmp1 = _AVX_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -1298,8 +1300,8 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv_single(float complex
 	tmp2 = _AVX_ADDSUB( _AVX_MUL(h2_real, tmp2), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 	_AVX_STOREU(s_dbl, _CAST(tmp2));
-	h2_real = _AVX_BROADCAST(&s_dbl[0]);
-	h2_imag = _AVX_BROADCAST(&s_dbl[1]);
+	h2_real = _AVX_SET1(s_dbl[0]);
+	h2_imag = _AVX_SET1(s_dbl[1]);
 
 	tmp1 = _AVX_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -1571,8 +1573,8 @@ static __forceinline void hh_trafo_complex_kernel_2_AVX_2hv_double(double comple
 	tmp2 = _AVX_ADDSUB( _AVX_MUL(h2_real, tmp2), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 	_AVX_STOREU(s_dbl, _CAST(tmp2));
-	h2_real = _AVX_BROADCAST(&s_dbl[0]);
-	h2_imag = _AVX_BROADCAST(&s_dbl[1]);
+	h2_real = _AVX_SET1(s_dbl[0]);
+	h2_imag = _AVX_SET1(s_dbl[1]);
 
 	tmp1 = _AVX_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__

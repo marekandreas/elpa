@@ -487,12 +487,17 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_single(float complex
 	_SSE_STOREU(s_dbl, tmp2);
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	h2_real = _mm_loaddup_pd(&s_dbl[0]);
-	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+        h2_real = _mm_set1_pd(s_dbl[0]);
+        h2_imag = _mm_set1_pd(s_dbl[1]);
+	// h2_real = _mm_loaddup_pd(&s_dbl[0]);
+	// h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&s_dbl[0]) )));
-	h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&s_dbl[1]) )));
+        h2_real = _mm_set1_ps(s_dbl[0]);
+        h2_imag = _mm_set1_ps(s_dbl[1]);
+
+	// h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&s_dbl[0]) )));
+	// h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&s_dbl[1]) )));
 #endif
 
 	tmp1 = _SSE_MUL(h1_imag, y1);
@@ -953,8 +958,11 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv_double(double comple
 	tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 	_SSE_STOREU(s_dbl, tmp2);
-	h2_real = _mm_loaddup_pd(&s_dbl[0]);
-	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+        h2_real = _mm_set1_pd(s_dbl[0]);
+        h2_imag = _mm_set1_pd(s_dbl[1]);
+
+	// h2_real = _mm_loaddup_pd(&s_dbl[0]);
+	// h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
 	tmp1 = _SSE_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -1275,8 +1283,11 @@ static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv_double(double comple
 	tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 	_SSE_STOREU(s_dbl, tmp2);
-	h2_real = _mm_loaddup_pd(&s_dbl[0]);
-	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+        h2_real = _mm_set1_pd(s_dbl[0]);
+        h2_imag = _mm_set1_pd(s_dbl[1]);
+
+	// h2_real = _mm_loaddup_pd(&s_dbl[0]);
+	// h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
 	tmp1 = _SSE_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -1514,8 +1525,11 @@ static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv_double(double comple
 	tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 	_SSE_STOREU(s_dbl, tmp2);
-	h2_real = _mm_loaddup_pd(&s_dbl[0]);
-	h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+        h2_real = _mm_set1_pd(s_dbl[0]);
+        h2_imag = _mm_set1_pd(s_dbl[1]);
+
+        // h2_real = _mm_loaddup_pd(&s_dbl[0]);
+	// h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
 	tmp1 = _SSE_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
