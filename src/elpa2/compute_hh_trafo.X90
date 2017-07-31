@@ -220,10 +220,7 @@
          endif
 #endif
 
-
-#ifndef WITH_OPENMP
-         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
-#else /* WITH_OPENMP */
+#ifdef WITH_OPENMP
 
 #if REALCASE == 1
          if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
@@ -241,6 +238,12 @@
            stop 1
          endif
 #endif
+#endif /* WITH_OPENMP */
+
+#ifndef WITH_OPENMP
+         nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
+#else /* WITH_OPENMP */
+
          if (istripe<stripe_count) then
            nl = stripe_width
          else
@@ -1370,7 +1373,7 @@
 #ifndef WITH_FIXED_REAL_KERNEL
            endif
 #endif /* not WITH_FIXED_REAL_KERNEL */
-#endif /* WITH_REAL_SSE_BLOCK4_KERNEL */
+#endif /* WITH_REAL_SSE_BLOCK6_KERNEL */
 
 #endif /* REALCASE */
 
