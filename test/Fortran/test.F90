@@ -112,6 +112,9 @@ program test
    use test_check_correctness
    use test_analytic
 
+#ifdef HAVE_REDIRECT
+   use test_redirect
+#endif
    implicit none
 
    ! matrix dimensions
@@ -155,6 +158,12 @@ program test
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
+#ifdef HAVE_REDIRECT
+#ifdef WITH_MPI
+     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+#endif
+     call redirect_stdout(myid)
+#endif
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
