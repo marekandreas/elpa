@@ -24,9 +24,9 @@ matrix_flag = {
 }
 
 test_type_flag = {
-        "eigenvectors" : "-D__EIGENVECTORS",
-        "eigenvalues"  : "-D__EIGENVALUES",
-        "solve_tridiagonal"  : "-D__SOLVE_TRIDIAGONAL",
+        "eigenvectors" : "-DTEST_EIGENVECTORS",
+        "eigenvalues"  : "-DTEST_EIGENVALUES",
+        "solve_tridiagonal"  : "-DTEST_SOLVE_TRIDIAGONAL",
 }
 
 layout_flag = {
@@ -61,6 +61,10 @@ for m, g, t, p, d, s, l in product(
             print("if WITH_GPU_VERSION")
             endifs += 1
 
+        if (l == "all_layouts"):
+            print("if WITH_MPI")
+            endifs += 1
+
         if kernel == "default_kernel":
             extra_flags.append("-DTEST_KERNEL=ELPA_2STAGE_{0}_DEFAULT".format(d.upper()))
         elif kernel == "all_kernels":
@@ -89,6 +93,7 @@ for m, g, t, p, d, s, l in product(
         print(name + "_SOURCES = test/Fortran/test.F90")
         print(name + "_LDADD = $(test_program_ldadd)")
         print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+        print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
         print("  " + " \\\n  ".join([
             domain_flag[d],
             prec_flag[p],

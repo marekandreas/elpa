@@ -133,7 +133,7 @@ program test
    MATRIX_TYPE, allocatable :: z(:,:)
    ! eigenvalues
    EV_TYPE, allocatable :: ev(:)
-#if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
    EV_TYPE, allocatable :: d(:), sd(:), ev_analytic(:), ds(:), sds(:)
    EV_TYPE              :: diagonalELement, subdiagonalElement
 #endif
@@ -153,14 +153,7 @@ program test
    integer :: kernel
    character(len=1) :: layout
 
-#if defined(TEST_COMPLEX) && defined(__SOLVE_TRIDIAGONAL)
-#ifdef WITH_MPI
-   call MPI_finalize(mpierr)
-#endif
-   stop 77
-#endif
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
-
    call setup_mpi(myid, nprocs)
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
@@ -168,10 +161,15 @@ program test
      stop 1
    endif
 
+   if (myid == 0) then
+     print '((a,i0))', 'Program ' // TEST_CASE
+     print *, ""
+   endif
+
 #ifdef TEST_ALL_LAYOUTS
-   do i_layout = 1, size(layouts)               ! layout loop
+   do i_layout = 1, size(layouts)               ! layouts
      layout = layouts(i_layout)
-     do np_cols = 1, nprocs                     ! factor loop
+     do np_cols = 1, nprocs                     ! factors
        if (mod(nprocs,np_cols) /= 0 ) then
          cycle
        endif
@@ -189,9 +187,11 @@ program test
      print '((a,i0))', 'Matrix size: ', na
      print '((a,i0))', 'Num eigenvectors: ', nev
      print '((a,i0))', 'Blocksize: ', nblk
+#ifdef WITH_MPI
      print '((a,i0))', 'Num MPI proc: ', nprocs
      print '(3(a,i0))','Number of processor rows=',np_rows,', cols=',np_cols,', total=',nprocs
      print '(a)',      'Process layout: ' // layout
+#endif
      print *,''
    endif
 
@@ -202,13 +202,11 @@ program test
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
    allocate(a (na_rows,na_cols))
-#ifdef TEST_MATRIX_RANDOM
    allocate(as(na_rows,na_cols))
-#endif
    allocate(z (na_rows,na_cols))
    allocate(ev(na))
 
-#if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
    allocate(d (na), ds(na))
    allocate(sd (na), sds(na))
    allocate(ev_analytic(na))
@@ -218,15 +216,16 @@ program test
    z(:,:) = 0.0
    ev(:) = 0.0
 
-#ifdef __EIGENVECTORS
+#ifdef TEST_EIGENVECTORS
 #ifdef TEST_MATRIX_ANALYTIC
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+   as(:,:) = a
 #else
    call prepare_matrix(na, myid, sc_desc, a, z, as)
 #endif
 #endif
 
-#if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
 
 #ifdef TEST_SINGLE
    diagonalElement = 0.45_c_float
@@ -276,8 +275,10 @@ program test
    call e%set("gpu", TEST_GPU, error)
    assert_elpa_ok(error)
 
+   if (myid == 0) print *, ""
+
 #ifdef TEST_ALL_KERNELS
-   do i = 0, elpa_option_cardinality(KERNEL_KEY)
+   do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
      kernel = elpa_option_enumerate(KERNEL_KEY, i)
 #endif
 #ifdef TEST_KERNEL
@@ -292,122 +293,102 @@ program test
      if (error /= ELPA_OK) then
        cycle
      endif
+     ! actually used kernel might be different if forced via environment variables
+     call e%get(KERNEL_KEY, kernel)
 #endif
-     if (myid == 0) print *, elpa_int_value_to_string(KERNEL_KEY, kernel), " kernel"
+     if (myid == 0) then
+       print *, elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
+     endif
+#endif
 
+#ifdef TEST_ALL_KERNELS
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
-#else /* ALL_KERNELS */
-
-#ifdef __EIGENVECTORS
-     call e%timer_start("e%eigenvectors()")
-#endif
-#ifdef __EIGENVALUES
-     call e%timer_start("e%eigenvalues()")
-#endif
-#ifdef __SOLVE_TRIDIAGONAL
-     call e%timer_start("e%solve_tridiagonal()")
-#endif
 #endif
 
      ! The actual solve step
-#ifdef __EIGENVECTORS
+#ifdef TEST_EIGENVECTORS
+     call e%timer_start("e%eigenvectors()")
      call e%eigenvectors(a, ev, z, error)
+     call e%timer_stop("e%eigenvectors()")
 #endif
-#ifdef __EIGENVALUES
+
+#ifdef TEST_EIGENVALUES
+     call e%timer_start("e%eigenvalues()")
      call e%eigenvalues(a, ev, error)
+     call e%timer_stop("e%eigenvalues()")
 #endif
-#if defined(__SOLVE_TRIDIAGONAL) && !defined(TEST_COMPLEX)
+
+#if defined(TEST_SOLVE_TRIDIAGONAL)
+     call e%timer_start("e%solve_tridiagonal()")
      call e%solve_tridiagonal(d, sd, z, error)
+     call e%timer_stop("e%solve_tridiagonal()")
      ev(:) = d(:)
 #endif
 
      assert_elpa_ok(error)
 
-#ifdef TEST_SOLVER_2STAGE
+#ifdef TEST_ALL_KERNELS
      call e%timer_stop(elpa_int_value_to_string(KERNEL_KEY, kernel))
-#else
-#ifdef __EIGENVECTORS
-     call e%timer_stop("e%eigenvectors()")
-#endif
-#ifdef __EIGENVALUES
-     call e%timer_stop("e%eigenvalues()")
-#endif
-#ifdef __SOLVE_TRIDIAGONAL
-     call e%timer_stop("e%solve_tridiagonal()")
-#endif
 #endif
 
      if (myid .eq. 0) then
-#ifdef TEST_SOLVER_2STAGE
+#ifdef TEST_ALL_KERNELS
        call e%print_times(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #else
-#ifdef __EIGENVECTORS
+#ifdef TEST_EIGENVECTORS
        call e%print_times("e%eigenvectors()")
 #endif
-#ifdef __EIGENVALUES
+#ifdef TEST_EIGENVALUES
        call e%print_times("e%eigenvalues()")
 #endif
-#ifdef __SOLVE_TRIDIAGONAL
-     call e%print_times("e%solve_tridiagonal()")
+#ifdef TEST_SOLVE_TRIDIAGONAL
+       call e%print_times("e%solve_tridiagonal()")
 #endif
 #endif
      endif
 
-#ifdef __EIGENVECTORS
+#ifdef TEST_EIGENVECTORS
 #ifdef TEST_MATRIX_ANALYTIC
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 #else
      status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
 #endif
-     if (status /= 0) then
-       if (myid == 0) print *, "Result incorrect!"
-       call exit(status)
-     endif
-     if (myid == 0) print *, ""
+     call check_status(status, myid)
 #endif
-#if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
 
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
      status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
          subdiagonalElement, ev, z, myid)
+     call check_status(status, myid)
 
-     if (status /= 0) then
-       call exit(status)
-     endif
-#ifdef __SOLVE_TRIDIAGONAL
+#ifdef TEST_SOLVE_TRIDIAGONAL
      ! check eigenvectors
      status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
-     if (status /= 0) then
-       if (myid == 0) print *, "Result incorrect!"
-       call exit(status)
-     endif
-     if (myid == 0) print *, ""
+     call check_status(status, myid)
+#endif
 #endif
 
-#endif
+     if (myid == 0) then
+       print *, ""
+     endif
 
 #ifdef TEST_ALL_KERNELS
-#ifdef TEST_MATRIX_ANALYTIC
-     call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
-#else
      a(:,:) = as(:,:)
-#endif
-#if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
      d = ds
      sd = sds
 #endif
-   end do
+   end do ! kernels
 #endif
 
    call elpa_deallocate(e)
 
    deallocate(a)
-#ifdef TEST_MATRIX_RANDOM
    deallocate(as)
-#endif
    deallocate(z)
    deallocate(ev)
 
-#if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
    deallocate(d, ds)
    deallocate(sd, sds)
    deallocate(ev_analytic)
@@ -427,60 +408,19 @@ program test
 
    call exit(status)
 
-!#if defined(__EIGENVALUES) || defined(__SOLVE_TRIDIAGONAL)
-!   contains
-!
-!     !Processor col for global col number
-!     pure function pcol(global_col, nblk, np_cols) result(local_col)
-!       implicit none
-!       integer(kind=c_int), intent(in) :: global_col, nblk, np_cols
-!       integer(kind=c_int)             :: local_col
-!       local_col = MOD((global_col-1)/nblk,np_cols)
-!     end function
-!
-!     !Processor row for global row number
-!     pure function prow(global_row, nblk, np_rows) result(local_row)
-!       implicit none
-!       integer(kind=c_int), intent(in) :: global_row, nblk, np_rows
-!       integer(kind=c_int)             :: local_row
-!       local_row = MOD((global_row-1)/nblk,np_rows)
-!     end function
-!
-!     function map_global_array_index_to_local_index(iGLobal, jGlobal, iLocal, jLocal , nblk, np_rows, np_cols, my_prow, my_pcol) &
-!       result(possible)
-!       implicit none
-!
-!       integer(kind=c_int)              :: pi, pj, li, lj, xi, xj
-!       integer(kind=c_int), intent(in)  :: iGlobal, jGlobal, nblk, np_rows, np_cols, my_prow, my_pcol
-!       integer(kind=c_int), intent(out) :: iLocal, jLocal
-!       logical                       :: possible
-!
-!       possible = .true.
-!       iLocal = 0
-!       jLocal = 0
-!
-!       pi = prow(iGlobal, nblk, np_rows)
-!
-!       if (my_prow .ne. pi) then
-!         possible = .false.
-!         return
-!       endif
-!
-!       pj = pcol(jGlobal, nblk, np_cols)
-!
-!       if (my_pcol .ne. pj) then
-!         possible = .false.
-!         return
-!       endif
-!       li = (iGlobal-1)/(np_rows*nblk) ! block number for rows
-!       lj = (jGlobal-1)/(np_cols*nblk) ! block number for columns
-!
-!       xi = mod( (iGlobal-1),nblk)+1   ! offset in block li
-!       xj = mod( (jGlobal-1),nblk)+1   ! offset in block lj
-!
-!       iLocal = li * nblk + xi
-!       jLocal = lj * nblk + xj
-!
-!     end function
-!#endif
+   contains
+
+     subroutine check_status(status, myid)
+       implicit none
+       integer, intent(in) :: status, myid
+       integer :: mpierr
+       if (status /= 0) then
+         if (myid == 0) print *, "Result incorrect!"
+#ifdef WITH_MPI
+         call mpi_finalize(mpierr)
+#endif
+         call exit(status)
+       endif
+     end subroutine
+
 end program
