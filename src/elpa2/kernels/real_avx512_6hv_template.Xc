@@ -47,6 +47,7 @@
 
 #include "config-f90.h"
 #include <x86intrin.h>
+#include <stdio.h>
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -289,23 +290,25 @@ void hexa_hh_trafo_real_avx512_6hv_single(float* q, float* hh, int* pnb, int* pn
 	{
 		hh_trafo_kernel_24_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
 	}
-	if (nq-i == 16)
-	{
-		hh_trafo_kernel_16_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
-	}
-#endif
         else
-	{
-#ifdef DOUBLE_PRECISION_REAL
-
-		hh_trafo_kernel_8_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+        {
+	  if (nq-i == 16)
+	  {
+		hh_trafo_kernel_16_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+	  }
+          else
+          {
+       		hh_trafo_kernel_8_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+          }
+        }
 #endif
 #ifdef SINGLE_PRECISION_REAL
+        if (nq-i == 16) {
 		hh_trafo_kernel_16_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+         } else {
+         printf("ERROR in avx512 kernel\n");
+         }
 #endif
-
-	}
-
 }
 
 /**

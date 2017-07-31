@@ -227,28 +227,28 @@ void quad_hh_trafo_real_avx512_4hv_single(float* q, float* hh, int* pnb, int* pn
 	{
 		hh_trafo_kernel_24_AVX512_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
-#endif
-#ifdef DOUBLE_PRECISION_REAL
-	if (nq-i == 16)
-	{
+
+	else
+        {
+          if (nq-i == 16)
+	  {
 		hh_trafo_kernel_16_AVX512_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
+	  }
+	  else
+	    {
+		hh_trafo_kernel_8_AVX512_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+	    }
+	  }
 #endif
+
 #ifdef SINGLE_PRECISION_REAL
 	if (nq-i == 32)
 	{
 		hh_trafo_kernel_32_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
-#endif
-        else
-#ifdef DOUBLE_PRECISION_REAL
+	else
 	{
-		hh_trafo_kernel_8_AVX512_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-#endif
-#ifdef SINGLE_PRECISION_REAL
-	{
-		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+			hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
 	}
 #endif
 }
