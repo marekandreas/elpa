@@ -50,6 +50,7 @@
 
 #include <complex.h>
 #include <x86intrin.h>
+#include <stdio.h>
 
 #define __forceinline __attribute__((always_inline))
 
@@ -105,14 +106,20 @@
 //Forward declaration
 #ifdef DOUBLE_PRECISION_COMPLEX
 static  __forceinline void hh_trafo_complex_kernel_24_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_20_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
 static  __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_12_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
 static  __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_4_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
 #endif
 
 #ifdef SINGLE_PRECISION_COMPLEX
 static  __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_40_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
 static  __forceinline void hh_trafo_complex_kernel_32_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_24_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
 static  __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static  __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
 #endif
 
 
@@ -156,44 +163,113 @@ void single_hh_trafo_complex_avx512_1hv_single(float complex* q, float complex* 
 	int nb = *pnb;
 	int nq = *pldq;
 	int ldq = *pldq;
+	int worked_on;
 	//int ldh = *pldh;
 
+	worked_on = 0;
+
 #ifdef DOUBLE_PRECISION_COMPLEX
-	for (i = 0; i < nq-16; i+=24)
+	for (i = 0; i < nq-20; i+=24)
 	{
 		hh_trafo_complex_kernel_24_AVX512_1hv_double(&q[i], hh, nb, ldq);
+		worked_on += i;
 	}
 #endif
+
 #ifdef SINGLE_PRECISION_COMPLEX
-	for (i = 0; i < nq-32; i+=48)
+	for (i = 0; i < nq-40; i+=48)
 	{
 		hh_trafo_complex_kernel_48_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		worked_on += i;
 	}
 #endif
 	if (nq == i)
 	{
 		return;
 	}
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	if (nq-i == 20)
+	{
+		hh_trafo_complex_kernel_20_AVX512_1hv_double(&q[i], hh, nb, ldq);
+		worked_on += 20;
+	}
+#endif
+
+#ifdef SINGLE_PRECISION_COMPLEX
+	if (nq-i == 40)
+	{
+		hh_trafo_complex_kernel_40_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		worked_on += 40;
+	}
+#endif
+
 #ifdef DOUBLE_PRECISION_COMPLEX
 	if (nq-i == 16)
 	{
 		hh_trafo_complex_kernel_16_AVX512_1hv_double(&q[i], hh, nb, ldq);
+		worked_on += 16;
 	}
 #endif
+
 #ifdef SINGLE_PRECISION_COMPLEX
 	if (nq-i == 32)
 	{
 		hh_trafo_complex_kernel_32_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		worked_on += 32;
 	}
 #endif
-	else
-	{
+
 #ifdef DOUBLE_PRECISION_COMPLEX
-		hh_trafo_complex_kernel_8_AVX512_1hv_double(&q[i], hh, nb, ldq);
+	if (nq-i == 12)
+	{
+		hh_trafo_complex_kernel_12_AVX512_1hv_double(&q[i], hh, nb, ldq);
+		worked_on += 12;
+	}
 #endif
+
 #ifdef SINGLE_PRECISION_COMPLEX
-		hh_trafo_complex_kernel_16_AVX512_1hv_single(&q[i], hh, nb, ldq);
+	if (nq-i == 24)
+	{
+		hh_trafo_complex_kernel_24_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		worked_on += 24;
+	}
 #endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	if (nq-i == 8)
+	{
+		hh_trafo_complex_kernel_8_AVX512_1hv_double(&q[i], hh, nb, ldq);
+		worked_on += 8;
+	}
+#endif
+
+#ifdef SINGLE_PRECISION_COMPLEX
+	if (nq-i == 16)
+	{
+		hh_trafo_complex_kernel_16_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		worked_on += 16;
+	}
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	if (nq-i == 4)
+	{
+		hh_trafo_complex_kernel_4_AVX512_1hv_double(&q[i], hh, nb, ldq);
+		worked_on += 4;
+	}
+#endif
+
+#ifdef SINGLE_PRECISION_COMPLEX
+	if (nq-i == 8)
+	{
+		hh_trafo_complex_kernel_8_AVX512_1hv_single(&q[i], hh, nb, ldq);
+		worked_on += 8;
+	}
+#endif
+	if (worked_on != nq)
+	{
+	    printf("Error in complex AVX512 BLOCK 1 kernel \n");
 	}
 }
 
@@ -381,6 +457,172 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_20_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_40_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+#endif
+{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	float* q_dbl = (float*)q;
+	float* hh_dbl = (float*)hh;
+#endif
+	__AVX512_DATATYPE x1, x2, x3, x4, x5, x6;
+	__AVX512_DATATYPE q1, q2, q3, q4, q5, q6;
+	__AVX512_DATATYPE h1_real, h1_imag;
+	__AVX512_DATATYPE tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
+	int i=0;
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	__AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	__AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define offset 8
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define offset 16
+#endif
+
+
+	x1 = _AVX512_LOAD(&q_dbl[0]);    // complex 1, 2, 3, 4
+	x2 = _AVX512_LOAD(&q_dbl[offset]);    // complex 5, 6, 7, 8
+	x3 = _AVX512_LOAD(&q_dbl[2*offset]);   // complex 9, 10, 11, 12
+	x4 = _AVX512_LOAD(&q_dbl[3*offset]);   // complex 13, 14, 15, 16
+	x5 = _AVX512_LOAD(&q_dbl[4*offset]);   // complex 17, 18, 19, 20
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _AVX512_SET1(hh_dbl[i*2]);
+		h1_imag = _AVX512_SET1(hh_dbl[(i*2)+1]);
+
+		q1 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+0]);
+		q2 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+offset]);
+		q3 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+		q4 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
+		q5 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+4*offset]);
+
+		tmp1 = _AVX512_MUL(h1_imag, q1);
+
+		x1 = _AVX512_ADD(x1, _AVX512_FMSUBADD(h1_real, q1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+
+		tmp2 = _AVX512_MUL(h1_imag, q2);
+
+		x2 = _AVX512_ADD(x2, _AVX512_FMSUBADD(h1_real, q2, _AVX512_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+
+		tmp3 = _AVX512_MUL(h1_imag, q3);
+
+		x3 = _AVX512_ADD(x3, _AVX512_FMSUBADD(h1_real, q3, _AVX512_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+
+		tmp4 = _AVX512_MUL(h1_imag, q4);
+
+		x4 = _AVX512_ADD(x4, _AVX512_FMSUBADD(h1_real, q4, _AVX512_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+
+		tmp5 = _AVX512_MUL(h1_imag, q5);
+
+		x5 = _AVX512_ADD(x5, _AVX512_FMSUBADD(h1_real, q5, _AVX512_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+
+	}
+
+	h1_real = _AVX512_SET1(hh_dbl[0]);
+	h1_imag = _AVX512_SET1(hh_dbl[1]);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+
+	tmp1 = _AVX512_MUL(h1_imag, x1);
+
+	x1 = _AVX512_FMADDSUB(h1_real, x1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+
+	tmp2 = _AVX512_MUL(h1_imag, x2);
+
+	x2 = _AVX512_FMADDSUB(h1_real, x2, _AVX512_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+
+	tmp3 = _AVX512_MUL(h1_imag, x3);
+
+	x3 = _AVX512_FMADDSUB(h1_real, x3, _AVX512_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+
+	tmp4 = _AVX512_MUL(h1_imag, x4);
+
+	x4 = _AVX512_FMADDSUB(h1_real, x4, _AVX512_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+
+	tmp5 = _AVX512_MUL(h1_imag, x5);
+
+	x5 = _AVX512_FMADDSUB(h1_real, x5, _AVX512_SHUFFLE(tmp5, tmp5, _SHUFFLE));
+
+	q1 = _AVX512_LOAD(&q_dbl[0]);
+	q2 = _AVX512_LOAD(&q_dbl[offset]);
+	q3 = _AVX512_LOAD(&q_dbl[2*offset]);
+	q4 = _AVX512_LOAD(&q_dbl[3*offset]);
+	q5 = _AVX512_LOAD(&q_dbl[4*offset]);
+
+	q1 = _AVX512_ADD(q1, x1);
+	q2 = _AVX512_ADD(q2, x2);
+	q3 = _AVX512_ADD(q3, x3);
+	q4 = _AVX512_ADD(q4, x4);
+	q5 = _AVX512_ADD(q5, x5);
+
+	_AVX512_STORE(&q_dbl[0], q1);
+	_AVX512_STORE(&q_dbl[offset], q2);
+	_AVX512_STORE(&q_dbl[2*offset], q3);
+	_AVX512_STORE(&q_dbl[3*offset], q4);
+	_AVX512_STORE(&q_dbl[4*offset], q5);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _AVX512_SET1(hh_dbl[i*2]);
+		h1_imag = _AVX512_SET1(hh_dbl[(i*2)+1]);
+
+		q1 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+0]);
+		q2 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+offset]);
+		q3 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+		q4 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
+		q5 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+4*offset]);
+
+		tmp1 = _AVX512_MUL(h1_imag, x1);
+
+		q1 = _AVX512_ADD(q1, _AVX512_FMADDSUB(h1_real, x1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+
+		tmp2 = _AVX512_MUL(h1_imag, x2);
+
+		q2 = _AVX512_ADD(q2, _AVX512_FMADDSUB(h1_real, x2, _AVX512_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+
+		tmp3 = _AVX512_MUL(h1_imag, x3);
+
+		q3 = _AVX512_ADD(q3, _AVX512_FMADDSUB(h1_real, x3, _AVX512_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+
+		tmp4 = _AVX512_MUL(h1_imag, x4);
+
+		q4 = _AVX512_ADD(q4, _AVX512_FMADDSUB(h1_real, x4, _AVX512_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+
+		tmp5 = _AVX512_MUL(h1_imag, x5);
+
+		q5 = _AVX512_ADD(q5, _AVX512_FMADDSUB(h1_real, x5, _AVX512_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+0], q1);
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+offset], q2);
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+2*offset], q3);
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+3*offset], q4);
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+4*offset], q5);
+	}
+}
+
+
+#ifdef DOUBLE_PRECISION_COMPLEX
 static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
@@ -519,6 +761,127 @@ static __forceinline void hh_trafo_complex_kernel_32_AVX512_1hv_single(float com
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_12_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_24_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+#endif
+{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	float* q_dbl = (float*)q;
+	float* hh_dbl = (float*)hh;
+#endif
+
+	__AVX512_DATATYPE x1, x2, x3, x4;
+	__AVX512_DATATYPE q1, q2, q3, q4;
+	__AVX512_DATATYPE h1_real, h1_imag;
+	__AVX512_DATATYPE tmp1, tmp2, tmp3, tmp4;
+	int i=0;
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	__AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	__AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+
+	x1 = _AVX512_LOAD(&q_dbl[0]);   // complex 1 2 3 4
+	x2 = _AVX512_LOAD(&q_dbl[offset]);
+	x3 = _AVX512_LOAD(&q_dbl[2*offset]);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _AVX512_SET1(hh_dbl[i*2]);
+		h1_imag = _AVX512_SET1(hh_dbl[(i*2)+1]);
+
+		q1 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+0]);
+		q2 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+offset]);
+		q3 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+
+		tmp1 = _AVX512_MUL(h1_imag, q1);
+
+		x1 = _AVX512_ADD(x1, _AVX512_FMSUBADD(h1_real, q1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+
+		tmp2 = _AVX512_MUL(h1_imag, q2);
+
+		x2 = _AVX512_ADD(x2, _AVX512_FMSUBADD(h1_real, q2, _AVX512_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+
+		tmp3 = _AVX512_MUL(h1_imag, q3);
+
+		x3 = _AVX512_ADD(x3, _AVX512_FMSUBADD(h1_real, q3, _AVX512_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+
+	}
+
+	h1_real = _AVX512_SET1(hh_dbl[0]);
+	h1_imag = _AVX512_SET1(hh_dbl[1]);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+
+	tmp1 = _AVX512_MUL(h1_imag, x1);
+
+	x1 = _AVX512_FMADDSUB(h1_real, x1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+
+	tmp2 = _AVX512_MUL(h1_imag, x2);
+
+	x2 = _AVX512_FMADDSUB(h1_real, x2, _AVX512_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+
+	tmp3 = _AVX512_MUL(h1_imag, x3);
+
+	x3 = _AVX512_FMADDSUB(h1_real, x3, _AVX512_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+
+	q1 = _AVX512_LOAD(&q_dbl[0]);
+	q2 = _AVX512_LOAD(&q_dbl[offset]);
+	q3 = _AVX512_LOAD(&q_dbl[2*offset]);
+
+	q1 = _AVX512_ADD(q1, x1);
+	q2 = _AVX512_ADD(q2, x2);
+	q3 = _AVX512_ADD(q3, x3);
+
+	_AVX512_STORE(&q_dbl[0], q1);
+	_AVX512_STORE(&q_dbl[offset], q2);
+	_AVX512_STORE(&q_dbl[2*offset], q3);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _AVX512_SET1(hh_dbl[i*2]);
+		h1_imag = _AVX512_SET1(hh_dbl[(i*2)+1]);
+
+		q1 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+0]);
+		q2 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+offset]);
+		q3 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+
+		tmp1 = _AVX512_MUL(h1_imag, x1);
+
+		q1 = _AVX512_ADD(q1, _AVX512_FMADDSUB(h1_real, x1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+
+		tmp2 = _AVX512_MUL(h1_imag, x2);
+
+		q2 = _AVX512_ADD(q2, _AVX512_FMADDSUB(h1_real, x2, _AVX512_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+
+		tmp3 = _AVX512_MUL(h1_imag, x3);
+
+		q3 = _AVX512_ADD(q3, _AVX512_FMADDSUB(h1_real, x3, _AVX512_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+0], q1);
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+offset], q2);
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+2*offset], q3);
+	}
+}
+
+
+#ifdef DOUBLE_PRECISION_COMPLEX
 static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
@@ -611,3 +974,82 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_single(float com
 		_AVX512_STORE(&q_dbl[(2*i*ldq)+offset], q2);
 	}
 }
+
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_4_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+#endif
+{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	float* q_dbl = (float*)q;
+	float* hh_dbl = (float*)hh;
+#endif
+	__AVX512_DATATYPE x1, x2;
+	__AVX512_DATATYPE q1, q2;
+	__AVX512_DATATYPE h1_real, h1_imag;
+	__AVX512_DATATYPE tmp1, tmp2;
+	int i=0;
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	__AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	__AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+
+	x1 = _AVX512_LOAD(&q_dbl[0]);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _AVX512_SET1(hh_dbl[i*2]);
+		h1_imag = _AVX512_SET1(hh_dbl[(i*2)+1]);
+
+		q1 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+0]);
+
+		tmp1 = _AVX512_MUL(h1_imag, q1);
+		x1 = _AVX512_ADD(x1, _AVX512_FMSUBADD(h1_real, q1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+	}
+
+	h1_real = _AVX512_SET1(hh_dbl[0]);
+	h1_imag = _AVX512_SET1(hh_dbl[1]);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+	h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+	h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+
+	tmp1 = _AVX512_MUL(h1_imag, x1);
+	x1 = _AVX512_FMADDSUB(h1_real, x1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+
+	q1 = _AVX512_LOAD(&q_dbl[0]);
+
+	q1 = _AVX512_ADD(q1, x1);
+
+	_AVX512_STORE(&q_dbl[0], q1);
+
+	for (i = 1; i < nb; i++)
+	{
+		h1_real = _AVX512_SET1(hh_dbl[i*2]);
+		h1_imag = _AVX512_SET1(hh_dbl[(i*2)+1]);
+
+		q1 = _AVX512_LOAD(&q_dbl[(2*i*ldq)+0]);
+
+		tmp1 = _AVX512_MUL(h1_imag, x1);
+		q1 = _AVX512_ADD(q1, _AVX512_FMADDSUB(h1_real, x1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+
+		_AVX512_STORE(&q_dbl[(2*i*ldq)+0], q1);
+	}
+}
+
