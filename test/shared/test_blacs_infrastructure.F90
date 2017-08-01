@@ -96,10 +96,12 @@ module test_blacs_infrastructure
                                        np_cols, &
                                        my_blacs_ctxt, info
       integer(kind=ik), intent(out)  :: na_rows, na_cols, sc_desc(1:9)
+
 #ifdef WITH_MPI
       integer(kind=ik), external       :: numroc
       integer(kind=ik)                 :: mpierr
 
+      sc_desc(:) = 0
       ! determine the neccessary size of the distributed matrices,
       ! we use the scalapack tools routine NUMROC
 
