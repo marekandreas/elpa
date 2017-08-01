@@ -68,7 +68,10 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value);
 static const char *complex_kernel_name(int kernel);
 
 static int na_is_valid(elpa_index_t index, int n, int new_value);
+static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
+
+static int is_positive(elpa_index_t index, int n, int new_value);
 
 static int elpa_double_string_to_value(char *name, char *string, double *value);
 static int elpa_double_value_to_string(char *name, double value, const char **string);
@@ -84,9 +87,10 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
                         .private = private_value, \
                 }
 
-#define INT_PARAMETER_ENTRY(option_name, option_description) \
+#define INT_PARAMETER_ENTRY(option_name, option_description, valid_func) \
         { \
                 BASE_ENTRY(option_name, option_description, 1, 0, 0), \
+                .valid = valid_func, \
         }
 
 #define BOOL_ENTRY(option_name, option_description, default) \
@@ -120,16 +124,15 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
         }
 
 static const elpa_index_int_entry_t int_entries[] = {
-        INT_ENTRY("na", "Global matrix has size (na * na)", 0,
-                        NULL, NULL, na_is_valid, NULL),
-        INT_PARAMETER_ENTRY("nev", "Number of eigenvectors to be computed, 0 <= nev <= na"),
-        INT_PARAMETER_ENTRY("nblk", "Block size of scalapack block-cyclic distribution"),
-        INT_PARAMETER_ENTRY("local_nrows", "Number of matrix rows stored on this process"),
-        INT_PARAMETER_ENTRY("local_ncols", "Number of matrix columns stored on this process"),
-        INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition"),
-        INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition"),
-        INT_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", -1,
-                        NULL, NULL, bw_is_valid, NULL),
+        INT_PARAMETER_ENTRY("na", "Global matrix has size (na * na)", na_is_valid),
+        INT_PARAMETER_ENTRY("nev", "Number of eigenvectors to be computed, 0 <= nev <= na", nev_is_valid),
+        INT_PARAMETER_ENTRY("nblk", "Block size of scalapack block-cyclic distribution", is_positive),
+        INT_PARAMETER_ENTRY("local_nrows", "Number of matrix rows stored on this process", NULL),
+        INT_PARAMETER_ENTRY("local_ncols", "Number of matrix columns stored on this process", NULL),
+        INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition", NULL),
+        INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition", NULL),
+        INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", bw_is_valid),
+
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication"),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator"),
@@ -610,6 +613,17 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 static int na_is_valid(elpa_index_t index, int n, int new_value) {
+        return new_value > 0;
+}
+
+static int nev_is_valid(elpa_index_t index, int n, int new_value) {
+        if (!elpa_index_int_value_is_set(index, "na")) {
+                return 0;
+        }
+        return 0 < new_value && new_value <= elpa_index_get_int_value(index, "na", NULL);
+}
+
+static int is_positive(elpa_index_t index, int n, int new_value) {
         return new_value > 0;
 }
 
