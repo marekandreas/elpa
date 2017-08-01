@@ -48,6 +48,7 @@
 #include "config-f90.h"
 #include <x86intrin.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -113,6 +114,8 @@ void hexa_hh_trafo_real_avx512_6hv_double(double* q, double* hh, int* pnb, int* 
 #ifdef SINGLE_PRECISION_REAL
 static void hh_trafo_kernel_16_AVX512_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
 static void hh_trafo_kernel_32_AVX512_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
+static void hh_trafo_kernel_48_AVX512_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
+static void hh_trafo_kernel_64_AVX512_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
 
 void hexa_hh_trafo_real_avx512_6hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 
@@ -162,6 +165,9 @@ void hexa_hh_trafo_real_avx512_6hv_single(float* q, float* hh, int* pnb, int* pn
 	int nq = *pldq;
 	int ldq = *pldq;
 	int ldh = *pldh;
+	int worked_on;
+
+	worked_on = 0;
 
 	// calculating scalar products to compute
 	// 6 householder vectors simultaneously
@@ -273,12 +279,14 @@ void hexa_hh_trafo_real_avx512_6hv_single(float* q, float* hh, int* pnb, int* pn
 	for (i = 0; i < nq-24; i+=32)
 	{
 		hh_trafo_kernel_32_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += i;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	for (i = 0; i < nq-16; i+=32)
+	for (i = 0; i < nq-48; i+=64)
 	{
-		hh_trafo_kernel_32_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		hh_trafo_kernel_64_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += i;
 	}
 #endif
 	if (nq == i)
@@ -289,26 +297,54 @@ void hexa_hh_trafo_real_avx512_6hv_single(float* q, float* hh, int* pnb, int* pn
 	if (nq-i == 24)
 	{
 		hh_trafo_kernel_24_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 24;
 	}
-        else
-        {
-	  if (nq-i == 16)
-	  {
+#endif
+
+#ifdef SINGLE_PRECISION_REAL
+	if (nq-i ==48)
+	{
+		hh_trafo_kernel_48_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 48;
+	}
+#endif
+
+#ifdef DOUBLE_PRECISION_REAL
+	if (nq-i == 16)
+	{
 		hh_trafo_kernel_16_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
-	  }
-          else
-          {
-       		hh_trafo_kernel_8_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
-          }
+		worked_on += 16;
         }
 #endif
+
 #ifdef SINGLE_PRECISION_REAL
-        if (nq-i == 16) {
-		hh_trafo_kernel_16_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
-         } else {
-         printf("ERROR in avx512 kernel\n");
-         }
+	if (nq-i ==32)
+	{
+		hh_trafo_kernel_32_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 32;
+	}
 #endif
+
+#ifdef DOUBLE_PRECISION_REAL
+	if (nq-i == 8)
+	{
+		hh_trafo_kernel_8_AVX512_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 8;
+        }
+#endif
+
+#ifdef SINGLE_PRECISION_REAL
+	if (nq-i == 16)
+	{
+		hh_trafo_kernel_16_AVX512_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 16;
+	}
+#endif
+        if (worked_on != nq)
+	{
+         // printf("ERROR in avx512 kernel\n");
+	 // abort();
+        }
 }
 
 /**
@@ -319,7 +355,6 @@ void hexa_hh_trafo_real_avx512_6hv_single(float* q, float* hh, int* pnb, int* pn
 #ifdef SINGLE_PRECISION_REAL
  * 16 rows of Q simultaneously, a
 #endif
-
  * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
@@ -1349,14 +1384,24 @@ __forceinline void hh_trafo_kernel_32_AVX512_6hv_single(float* q, float* hh, int
 
 }
 
-#ifdef DOUBLE_PRECISION_REAL
 /**
  * Unrolled kernel that computes
+#ifdef DOUBLE_PRECISION_REAL
  * 24 rows of Q simultaneously, a
+#endif
+#ifdef DOUBLE_PRECISION_REAL
+ * 48 rows of Q simultaneously, a
+#endif
+
  * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
+#ifdef DOUBLE_PRECISION_REAL
 __forceinline void hh_trafo_kernel_24_AVX512_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+__forceinline void hh_trafo_kernel_48_AVX512_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods)
+#endif
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [8 x nb+3] * hh
@@ -2074,20 +2119,24 @@ __forceinline void hh_trafo_kernel_24_AVX512_6hv_double(double* q, double* hh, i
 	_AVX512_STORE(&q[((nb+4)*ldq)+2*offset],q3);
 
 }
-#endif /* DOUBLE_PRECISION_REAL */
 
-#ifdef DOUBLE_PRECISION_REAL
 /**
  * Unrolled kernel that computes
 #ifdef DOUBLE_PRECISION_REAL
  * 32 rows of Q simultaneously, a
 #endif
 #ifdef SINGLE_PRECISION_REAL
-
+ * 64 rows of Q simultaneously, a
+#endif
  * matrix Vector product with two householder
  * vectors + a rank 1 update is performed
  */
+#ifdef DOUBLE_PRECISION_REAL
 __forceinline void hh_trafo_kernel_32_AVX512_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+__forceinline void hh_trafo_kernel_64_AVX512_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods)
+#endif
 {
 	/////////////////////////////////////////////////////
 	// Matrix Vector Multiplication, Q [8 x nb+3] * hh
@@ -2947,5 +2996,4 @@ __forceinline void hh_trafo_kernel_32_AVX512_6hv_double(double* q, double* hh, i
 	_AVX512_STORE(&q[((nb+4)*ldq)+3*offset],q4);
 
 }
-#endif /* DOUBLE_PRECISION_REAL */
 

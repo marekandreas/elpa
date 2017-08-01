@@ -48,6 +48,8 @@
 #include "config-f90.h"
 
 #include <x86intrin.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -151,6 +153,9 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	int nq = *pldq;
 	int ldq = *pldq;
 	int ldh = *pldh;
+	int worked_on;
+
+	worked_on = 0;
 
 	// calculating scalar product to compute
 	// 2 householder vectors simultaneously
@@ -171,12 +176,14 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	for (i = 0; i < nq-24; i+=32)
 	{
 		hh_trafo_kernel_32_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += i;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-48; i+=64)
 	{
 		hh_trafo_kernel_64_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += i;
 	}
 #endif
 	if (nq == i)
@@ -184,40 +191,52 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 		return;
 	}
 #ifdef DOUBLE_PRECISION_REAL
-	if (nq-i == 24)
+        if (nq-i == 24)
 	{
 		hh_trafo_kernel_24_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += 24;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	if (nq-i == 48)
 	{
 		hh_trafo_kernel_48_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += 48;
 	}
 #endif
 #ifdef DOUBLE_PRECISION_REAL
-	else if (nq-i == 16)
+	if (nq-i == 16)
 	{
 		hh_trafo_kernel_16_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += 16;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	else if (nq-i == 32)
+	if (nq-i == 32)
 	{
 		hh_trafo_kernel_32_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += 32;
 	}
 #endif
-	else
 #ifdef DOUBLE_PRECISION_REAL
+	if (nq-i == 8)
 	{
 		hh_trafo_kernel_8_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += 8;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
+	if (nq-i == 16)
 	{
 		hh_trafo_kernel_16_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += 16;
 	}
 #endif
+        if (worked_on != nq)
+	{
+		// printf("Error in AVX512 real BLOCK 2 kernel \n");
+		// abort();
+	}
 }
 
 /**

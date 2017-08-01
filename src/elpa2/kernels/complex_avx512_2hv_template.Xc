@@ -49,6 +49,7 @@
 #include <complex.h>
 #include <x86intrin.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define __forceinline __attribute__((always_inline))
 
@@ -193,25 +194,29 @@ void double_hh_trafo_complex_avx512_2hv_single(float complex* q, float complex* 
 		return;
 	}
 #ifdef DOUBLE_PRECISION_COMPLEX
-        if (nq-i == 12 ) {
+        if (nq-i == 12 )
+	{
 		hh_trafo_complex_kernel_12_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 		worked_on += 12;
-		}
+	}
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-        if (nq-i == 24 ) {
+        if (nq-i == 24 )
+	{
 		hh_trafo_complex_kernel_24_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
 		worked_on += 24;
 	}
 #endif
 #ifdef DOUBLE_PRECISION_COMPLEX
-        if (nq-i == 8 ) {
+        if (nq-i == 8 )
+	{
 		hh_trafo_complex_kernel_8_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 		worked_on += 8;
-		}
+	}
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-        if (nq-i == 16 ) {
+        if (nq-i == 16 )
+	{
 		hh_trafo_complex_kernel_16_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
 		worked_on += 16;
 	}
@@ -235,7 +240,8 @@ void double_hh_trafo_complex_avx512_2hv_single(float complex* q, float complex* 
 
 	if (worked_on != nq)
 	{
-	    printf("Error in complex AVX512 BLOCK 2 kernel \n");
+	    // printf("Error in complex AVX512 BLOCK 2 kernel \n");
+	    // abort();
 	}
 
 }
