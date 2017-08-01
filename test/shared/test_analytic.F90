@@ -115,10 +115,12 @@ module test_analytic
 
     max_z_diff = ZERO
     max_ev_diff = ZERO
-    do globJ = 1, nev
+    do globJ = 1, na
       diff = abs(ev(globJ) - analytic_eigenvalues(na, globJ))
       max_ev_diff = max(diff, max_ev_diff)
+    end do
 
+    do globJ = 1, nev
       ! calculated eigenvector can be in opposite direction
       max_curr_z_diff_minus = ZERO
       max_curr_z_diff_plus  = ZERO
