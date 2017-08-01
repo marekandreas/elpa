@@ -2072,6 +2072,7 @@ module elpa_impl
     subroutine elpa_destroy(self)
       use elpa_generated_fortran_interfaces
       class(elpa_impl_t) :: self
+      call timer_free(self%timer)
       call elpa_index_free_c(self%index)
     end subroutine
 
