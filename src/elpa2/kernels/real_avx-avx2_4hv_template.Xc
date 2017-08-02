@@ -62,6 +62,8 @@
 #include "config-f90.h"
 
 #include <x86intrin.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -142,7 +144,6 @@ void quad_hh_trafo_real_avx_avx2_4hv_double(double* q, double* hh, int* pnb, int
 #endif
 #ifdef SINGLE_PRECISION_REAL
 //Forward declaration
-__forceinline void hh_trafo_kernel_4_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
 __forceinline void hh_trafo_kernel_8_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
 __forceinline void hh_trafo_kernel_16_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
 __forceinline void hh_trafo_kernel_24_AVX_4hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s_1_2, float s_1_3, float s_2_3, float s_1_4, float s_2_4, float s_3_4);
@@ -194,6 +195,9 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 	int nq = *pldq;
 	int ldq = *pldq;
 	int ldh = *pldh;
+	int worked_on;
+
+	worked_on = 0;
 
 	// calculating scalar products to compute
 	// 4 householder vectors simultaneously
@@ -246,41 +250,58 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 	for (i = 0; i < nq-8; i+=12)
 	{
 		hh_trafo_kernel_12_AVX_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += i;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-16; i+=24)
 	{
 		hh_trafo_kernel_24_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += i;
 	}
 #endif
 	if (nq == i)
 	{
 		return;
 	}
+
 #ifdef DOUBLE_PRECISION_REAL
-	else
+        if (nq-i == 8)
 	{
-		if (nq-i > 4)
-		{
-			hh_trafo_kernel_8_AVX_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		}
-		else
-		{
-			hh_trafo_kernel_4_AVX_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		}
+		hh_trafo_kernel_8_AVX_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 8;
 	}
 #endif
+
 #ifdef SINGLE_PRECISION_REAL
-	if (nq-i == 16)
+        if (nq-i == 16)
 	{
-		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-	}
-        else
-	{
-		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh,  s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		hh_trafo_kernel_16_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 16;
 	}
 #endif
+
+#ifdef DOUBLE_PRECISION_REAL
+        if (nq-i == 4)
+	{
+		hh_trafo_kernel_4_AVX_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 4;
+	}
+#endif
+
+#ifdef SINGLE_PRECISION_REAL
+        if (nq-i == 8)
+	{
+		hh_trafo_kernel_8_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 8;
+	}
+#endif
+
+        if (worked_on != nq)
+	{
+	    //printf("Error in real AVX/AVX2 BLOCK4 kernel \n");
+	    //abort();
+	}
 }
 /**
  * Unrolled kernel that computes
@@ -1439,6 +1460,8 @@ __forceinline void hh_trafo_kernel_8_AVX_4hv_single(float* q, float* hh, int nb,
 	_AVX_STORE(&q[(nb+2)*ldq],q1);
 }
 
+
+#if 0
 #ifdef SINGLE_PRECISION_REAL
 /**
  * Unrolled kernel that computes
@@ -1691,4 +1714,4 @@ __forceinline void hh_trafo_kernel_4_AVX_4hv_single(float* q, float* hh, int nb,
 //	_AVX_STORE(&q[(nb+2)*ldq],q1);
 }
 #endif /* SINGLE_PRECISION_REAL */
-
+#endif

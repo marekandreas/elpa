@@ -64,6 +64,7 @@
 #include <complex.h>
 #include <x86intrin.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define __forceinline __attribute__((always_inline))
 
@@ -269,7 +270,8 @@ void double_hh_trafo_complex_avx_avx2_2hv_single(float complex* q, float complex
 	}
 #endif
 	if (worked_on != nq) {
-         printf("Error in complex avx-avx2 BLOCK 2 kernel \n");
+         //printf("Error in complex avx-avx2 BLOCK 2 kernel \n");
+	 //abort();
 	}
 }
 

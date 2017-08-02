@@ -63,6 +63,8 @@
 #include "config-f90.h"
 
 #include <x86intrin.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -142,7 +144,6 @@ void hexa_hh_trafo_real_avx_avx2_6hv_double(double* q, double* hh, int* pnb, int
 
 #ifdef SINGLE_PRECISION_REAL
 //Forward declaration
-static void hh_trafo_kernel_4_AVX_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
 static void hh_trafo_kernel_8_AVX_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
 static void hh_trafo_kernel_16_AVX_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
 
@@ -193,6 +194,9 @@ void hexa_hh_trafo_real_avx_avx2_6hv_single(float* q, float* hh, int* pnb, int* 
 	int nq = *pldq;
 	int ldq = *pldq;
 	int ldh = *pldh;
+	int worked_on;
+
+	worked_on = 0;
 
 	// calculating scalar products to compute
 	// 6 householder vectors simultaneously
@@ -303,27 +307,39 @@ void hexa_hh_trafo_real_avx_avx2_6hv_single(float* q, float* hh, int* pnb, int* 
 	for (i = 0; i < nq-4; i+=8)
 	{
 		hh_trafo_kernel_8_AVX_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += i;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-8; i+=16)
 	{
 		hh_trafo_kernel_16_AVX_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += i;
 	}
 #endif
 	if (nq == i)
 	{
 		return;
 	}
-	else
-	{
 #ifdef DOUBLE_PRECISION_REAL
+        if (nq-i == 4)
+	{
 		hh_trafo_kernel_4_AVX_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 4;
+	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
+        if (nq-i == 8)
+	{
 		hh_trafo_kernel_8_AVX_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
-#endif
+		worked_on += 8;
 	}
+#endif
+	if (worked_on != nq)
+	{
+	    //printf("Error in real AVX/AVX2 BLOCK6 kernel \n");
+	    //abort();
+	 }
 }
 
 /**
@@ -1687,6 +1703,7 @@ __forceinline void hh_trafo_kernel_8_AVX_6hv_single(float* q, float* hh, int nb,
 	_AVX_STORE(&q[(nb+4)*ldq],q1);
 }
 
+#if 0
 #ifdef SINGLE_PRECISION_REAL
 /**
  * Unrolled kernel that computes
@@ -2256,4 +2273,5 @@ __forceinline void hh_trafo_kernel_4_AVX_6hv_single(float* q, float* hh, int nb,
 #endif
 	_mm_store_ps(&q[(nb+4)*ldq], _mm256_castps256_ps128(q1));
 }
+#endif
 #endif
