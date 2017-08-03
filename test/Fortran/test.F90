@@ -161,8 +161,8 @@ program test
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-#endif
      call redirect_stdout(myid)
+#endif
 #endif
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
