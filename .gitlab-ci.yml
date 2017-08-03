@@ -1838,22 +1838,22 @@ intel-double-precision-mpi-noomp-large-avx512-jobs:
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - gpschedule -d $GPJOBID
 
-      #### intel single precision mpi noomp AVX512
-      ###intel-single-precision-mpi-noomp-avx512-jobs:
-      ###  tags:
-      ###    - KNL
-      ###  script:
-      ###    - ./autogen.sh
-      ###    - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -Wl,-rpath,$MKLROOT/lib/intel64"
-      ###    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
-      ###    - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
-      ###      #- /home/elpa/wait_until_midnight.sh
-      ###    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
-      ###    - make -j 8
-      ###    - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
-      ###    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-      ###    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-      ###    - gpschedule -d $GPJOBID
+# intel single precision mpi noomp AVX512
+intel-single-precision-mpi-noomp-avx512-jobs:
+  tags:
+    - KNL
+  script:
+    - ./autogen.sh
+    - export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -Wl,-rpath,$MKLROOT/lib/intel64"
+    - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
+    - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
+      #- /home/elpa/wait_until_midnight.sh
+    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
+    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi noomp AVX512
 gfortran-double-precision-mpi-noomp-avx512-jobs:
