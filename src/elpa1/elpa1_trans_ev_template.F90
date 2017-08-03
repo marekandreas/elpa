@@ -52,7 +52,7 @@
 ! distributed along with the original code in the file "COPYING".
 #endif
 
-#include "../general/sanity.X90"
+#include "../general/sanity.F90"
 
 !> \brief Transforms the eigenvectors of a tridiagonal matrix back
 !>                     to the eigenvectors of the original matrix

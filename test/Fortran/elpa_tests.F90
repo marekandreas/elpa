@@ -152,7 +152,7 @@ program test_all_real
    STATUS = 0
 
 !#define DATATYPE REAL !!! check here
-!#include "elpa_print_headers.X90"
+!#include "elpa_print_headers.F90"
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit

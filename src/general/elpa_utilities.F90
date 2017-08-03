@@ -74,10 +74,10 @@ module ELPA_utilities
   !******
   contains
 
-#include "prow_pcol.X90"
+#include "prow_pcol.F90"
 
 !-------------------------------------------------------------------------------
-#include "map_global_to_local.X90"
+#include "map_global_to_local.F90"
 
  integer function local_index(idx, my_proc, num_procs, nblk, iflag)
 

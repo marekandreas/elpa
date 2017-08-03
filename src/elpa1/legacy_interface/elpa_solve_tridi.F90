@@ -54,67 +54,79 @@
 
 
 
-#include "../general/sanity.X90"
+#include "../../general/sanity.F90"
 
-      use elpa1_compute, solve_tridi_&
-                         &PRECISION&
-			 &_private_impl => solve_tridi_&
-			 &PRECISION&
-			 &_impl
       use precision
+      use elpa1_auxiliary_impl, only : elpa_solve_tridi_&
+      &PRECISION&
+      &_impl
+      use elpa
       use elpa_abstract_impl
-
       implicit none
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE) :: d(obj%na), e(obj%na)
+      integer(kind=ik)            :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=REAL_DATATYPE)    :: d(na), e(na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE) :: q(obj%local_nrows,*)
+      real(kind=REAL_DATATYPE)    :: q(ldq,*)
 #else
-      real(kind=REAL_DATATYPE) :: q(obj%local_nrows, obj%local_ncols)
+      real(kind=REAL_DATATYPE)    :: q(ldq,matrixCols)
 #endif
 
-      logical                  :: wantDebug
-      logical                  :: success
+      logical, intent(in)         :: wantDebug
+      logical                     :: success ! the return value
+      integer                     :: error
+      class(elpa_t), pointer      :: obj
 
-      integer                  :: debug
+      !call timer%start("elpa_solve_tridi_&
+      !&PRECISION&
+      !&_legacy_interface")
 
-      call obj%timer%start("elpa_solve_tridi_public_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      &")
-      na         = obj%na
-      nev        = obj%nev
-      nblk       = obj%nblk
-      ldq        = obj%local_nrows
-      matrixCols = obj%local_ncols
-
-      call obj%get("mpi_comm_rows", mpi_comm_rows)
-      call obj%get("mpi_comm_cols", mpi_comm_cols)
-
-      call obj%get("debug",debug)
-      if (debug == 1) then
-        wantDebug = .true.
-      else
-        wantDebug = .false.
-      endif
       success = .false.
 
-      call solve_tridi_&
-      &PRECISION&
-      &_private_impl(obj, na, nev, d, e, q, ldq, nblk, matrixCols, &
-               mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+      if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
+        print *, "ELPA API version not supported"
+        success = .false.
+      endif
 
-      call obj%timer%stop("elpa_solve_tridi_public_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      &")
+      obj => elpa_allocate()
 
+      call obj%set("na", na)
+      call obj%set("nev", nev)
+      call obj%set("local_nrows", ldq)
+      call obj%set("local_ncols", matrixCols)
+      call obj%set("nblk", nblk)
+
+      call obj%set("mpi_comm_rows", mpi_comm_rows)
+      call obj%set("mpi_comm_cols", mpi_comm_cols)
+
+      if (obj%setup() .ne. ELPA_OK) then
+        print *, "Cannot setup ELPA instance"
+        success = .false.
+        return
+      endif
+
+      if (wantDebug) then
+        call obj%set("debug",1)
+      endif
+
+      call obj%solve_tridiagonal(d, e, q(1:ldq,1:matrixCols), error)
+      if (error /= ELPA_OK) then
+        print *, "Cannot run solve_tridi"
+        success = .false.
+        return
+      else
+        success = .true.
+      endif
+
+      call elpa_deallocate(obj)
+      call elpa_uninit()
+
+     !call timer%stop("elpa_solve_tridi_&
+     !&PRECISION&
+     !&_legacy_interface")
 
 #undef REALCASE
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 
+! vim: syntax=fortran

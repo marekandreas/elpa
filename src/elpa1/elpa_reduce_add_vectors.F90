@@ -44,7 +44,7 @@
 #endif
 
 #include "config-f90.h"
-#include "../general/sanity.X90"
+#include "../general/sanity.F90"
 
 subroutine elpa_reduce_add_vectors_&
 &MATH_DATATYPE&

@@ -41,90 +41,80 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
+!
+!
+! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+!
+! Copyright of the original code rests with the authors inside the ELPA
+! consortium. The copyright of any additional modifications shall rest
+! with their original authors, but shall adhere to the licensing terms
+! distributed along with the original code in the file "COPYING".
+!
+! Author: A. Marek, MPCDF
 
-#include "../../general/sanity.X90"
-      use elpa
+
+
+#include "../general/sanity.F90"
+
+      use elpa1_compute, solve_tridi_&
+                         &PRECISION&
+			 &_private_impl => solve_tridi_&
+			 &PRECISION&
+			 &_impl
       use precision
+      use elpa_abstract_impl
+
       implicit none
-
-      integer(kind=ik)                 :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#if REALCASE == 1
+      class(elpa_abstract_impl_t), intent(inout) :: obj
+      integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=REAL_DATATYPE) :: d(obj%na), e(obj%na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)         :: a(lda,*)
+      real(kind=REAL_DATATYPE) :: q(obj%local_nrows,*)
 #else
-      real(kind=REAL_DATATYPE)         :: a(lda,matrixCols)
+      real(kind=REAL_DATATYPE) :: q(obj%local_nrows, obj%local_ncols)
 #endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)   :: a(lda,*)
-#else
-      complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
-#endif
-#endif
-      integer(kind=ik)                 :: nev
-      logical, intent(in)              :: wantDebug
-      logical                          :: success
-      integer(kind=ik)                 :: successInternal
 
-      class(elpa_t), pointer           :: e
+      logical                  :: wantDebug
+      logical                  :: success
 
-      !call timer%start("elpa_cholesky_&
-      !&MATH_DATATYPE&
-      !&_&
-      !&PRECISION&
-      !&_legacy_interface")
+      integer                  :: debug
 
-      success = .true.
+      call obj%timer%start("elpa_solve_tridi_public_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &")
+      na         = obj%na
+      nev        = obj%nev
+      nblk       = obj%nblk
+      ldq        = obj%local_nrows
+      matrixCols = obj%local_ncols
 
-      if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
-        print *, "ELPA API version not supported"
-        success = .false.
-        return
-      endif
+      call obj%get("mpi_comm_rows", mpi_comm_rows)
+      call obj%get("mpi_comm_cols", mpi_comm_cols)
 
-      e => elpa_allocate()
-
-      call e%set("na", na)
-      call e%set("nev", nev)
-      call e%set("local_nrows", lda)
-      call e%set("local_ncols", matrixCols)
-      call e%set("nblk", nblk)
-
-      call e%set("mpi_comm_rows", mpi_comm_rows)
-      call e%set("mpi_comm_cols", mpi_comm_cols)
-
-      if (e%setup() .ne. ELPA_OK) then
-        print *, "Cannot setup ELPA instance"
-        success = .false.
-        return
-      endif
-
-      if (wantDebug) then
-        call e%set("debug",1)
-      endif
-      call e%cholesky(a(1:lda,1:matrixCols), successInternal)
-
-      if (successInternal .ne. ELPA_OK) then
-        print *, "Cannot run cholesky"
-        success = .false.
-        return
+      call obj%get("debug",debug)
+      if (debug == 1) then
+        wantDebug = .true.
       else
-        success =.true.
+        wantDebug = .false.
       endif
-      call elpa_deallocate(e)
+      success = .false.
 
-      call elpa_uninit()
+      call solve_tridi_&
+      &PRECISION&
+      &_private_impl(obj, na, nev, d, e, q, ldq, nblk, matrixCols, &
+               mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 
-      !call timer%stop("elpa_cholesky_&
-      !&MATH_DATATYPE&
-      !&_&
-      !&PRECISION&
-      !&_legacy_interface")
+      call obj%timer%stop("elpa_solve_tridi_public_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &")
+
 
 #undef REALCASE
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 
-! vim: syntax=fortran

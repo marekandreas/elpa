@@ -288,7 +288,7 @@ module ELPA1_AUXILIARY
 
     function elpa_cholesky_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                              wantDebug) result(success)
-#include "./elpa_cholesky_template.X90"
+#include "./elpa_cholesky_template.F90"
     end function
 
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -315,7 +315,7 @@ module ELPA1_AUXILIARY
 
     function elpa_cholesky_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                                             wantDebug) result(success)
-#include "./elpa_cholesky_template.X90"
+#include "./elpa_cholesky_template.F90"
     end function
 
 #endif /* WANT_SINGLE_PRECSION_REAL */
@@ -338,7 +338,7 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
      function elpa_invert_trm_real_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "./elpa_invert_trm.X90"
+#include "./elpa_invert_trm.F90"
      end function
 
 #if WANT_SINGLE_PRECISION_REAL
@@ -361,7 +361,7 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
     function elpa_invert_trm_real_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "./elpa_invert_trm.X90"
+#include "./elpa_invert_trm.F90"
     end function
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
@@ -387,7 +387,7 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
     function elpa_cholesky_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "./elpa_cholesky_template.X90"
+#include "./elpa_cholesky_template.F90"
     end function
 
 
@@ -412,7 +412,7 @@ module ELPA1_AUXILIARY
 !> \param wantDebug             logical, more debug information on failure
 !> \result succes               logical, reports success or failure
     function elpa_cholesky_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "./elpa_cholesky_template.X90"
+#include "./elpa_cholesky_template.F90"
     end function
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
@@ -437,7 +437,7 @@ module ELPA1_AUXILIARY
 !> \result succes               logical, reports success or failure
 
     function elpa_invert_trm_complex_double(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "./elpa_invert_trm.X90"
+#include "./elpa_invert_trm.F90"
     end function
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
@@ -461,7 +461,7 @@ module ELPA1_AUXILIARY
 !> \result succes               logical, reports success or failure
 
     function elpa_invert_trm_complex_single(na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) result(success)
-#include "./elpa_invert_trm.X90"
+#include "./elpa_invert_trm.F90"
     end function
 
 #endif /* WANT_SINGE_PRECISION_COMPLEX */
@@ -503,7 +503,7 @@ module ELPA1_AUXILIARY
 
     function elpa_mult_at_b_real_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
-#include "./elpa_multiply_a_b.X90"
+#include "./elpa_multiply_a_b.F90"
     end function elpa_mult_at_b_real_double
 
 #if WANT_SINGLE_PRECISION_REAL
@@ -546,7 +546,7 @@ module ELPA1_AUXILIARY
     function elpa_mult_at_b_real_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                               mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 
-#include "./elpa_multiply_a_b.X90"
+#include "./elpa_multiply_a_b.F90"
 
     end function elpa_mult_at_b_real_single
 
@@ -593,7 +593,7 @@ module ELPA1_AUXILIARY
 
     function elpa_mult_ah_b_complex_double(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                                  mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
-#include "./elpa_multiply_a_b.X90"
+#include "./elpa_multiply_a_b.F90"
 
     end function elpa_mult_ah_b_complex_double
 
@@ -639,7 +639,7 @@ module ELPA1_AUXILIARY
     function elpa_mult_ah_b_complex_single(uplo_a, uplo_c, na, ncb, a, lda, ldaCols, b, ldb, ldbCols, nblk, &
                                  mpi_comm_rows, mpi_comm_cols, c, ldc, ldcCols) result(success)
 
-#include "./elpa_multiply_a_b.X90"
+#include "./elpa_multiply_a_b.F90"
 
     end function elpa_mult_ah_b_complex_single
 
@@ -669,7 +669,7 @@ module ELPA1_AUXILIARY
     function elpa_solve_tridi_double(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug) &
           result(success)
 
-#include "./elpa_solve_tridi.X90"
+#include "./elpa_solve_tridi.F90"
 
     end function
 
@@ -699,7 +699,7 @@ module ELPA1_AUXILIARY
     function elpa_solve_tridi_single(na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
                                      mpi_comm_cols, wantDebug) result(success)
 
-#include "./elpa_solve_tridi.X90"
+#include "./elpa_solve_tridi.F90"
 
     end function
 

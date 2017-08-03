@@ -181,7 +181,7 @@ program test_real2_default_kernel_qr_decomposition_double_precision
 
 
 #define REALCASE
-#include "../../elpa_print_headers.X90"
+#include "../../elpa_print_headers.F90"
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns

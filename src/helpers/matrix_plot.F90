@@ -1,11 +1,11 @@
 #define  REAL_DATATYPE rk8
 
-! module for producing matrix traces, to be plotted by provided python ploter
+! module for producing matrix traces, to be plotted by provided python plotter
 ! currently the module is very simple and non-flexible
-! it is only ussable for printing the matrix A and possibly its counterpart A_DEV
+! it is only usable for printing the matrix A and possibly its counterpart A_DEV
 ! both are assumed to be in block-cyclic distribution
 ! At the moment, the output works for double real only
-! To simplify thihngs, a conveninece macro (as follows) can be placed to .X90 template file:
+! To simplify things, a convenience macro (as follows) can be placed in a template file:
 
 ! #undef SAVE_MATR
 ! #ifdef DOUBLE_PRECISION_REAL

@@ -71,7 +71,7 @@ module elpa_pdgeqrf
 #define DOUBLE_PRECISION 1
 #undef ALREADY_DEFINED
 #include "../../general/precision_macros.h"
-#include "elpa_pdgeqrf_template.X90"
+#include "elpa_pdgeqrf_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 #define ALREADY_DEFINED
@@ -82,7 +82,7 @@ module elpa_pdgeqrf
 #define ALREADY_DEFINED
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "elpa_pdgeqrf_template.X90"
+#include "elpa_pdgeqrf_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif

@@ -49,7 +49,7 @@
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "complex_avx512_1hv_template.Xc"
+#include "complex_avx512_1hv_template.c"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 

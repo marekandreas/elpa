@@ -71,7 +71,7 @@ module test_check_correctness
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../src/general/precision_macros.h"
-#include "test_check_correctness_template.X90"
+#include "test_check_correctness_template.F90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -80,7 +80,7 @@ module test_check_correctness
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../../src/general/precision_macros.h"
-#include "test_check_correctness_template.X90"
+#include "test_check_correctness_template.F90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
@@ -88,7 +88,7 @@ module test_check_correctness
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../src/general/precision_macros.h"
-#include "test_check_correctness_template.X90"
+#include "test_check_correctness_template.F90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -97,14 +97,14 @@ module test_check_correctness
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../src/general/precision_macros.h"
-#include "test_check_correctness_template.X90"
+#include "test_check_correctness_template.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
 
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
-#include "../../src/general/prow_pcol.X90"
-#include "../../src/general/map_global_to_local.X90"
+#include "../../src/general/prow_pcol.F90"
+#include "../../src/general/map_global_to_local.F90"
 
 end module

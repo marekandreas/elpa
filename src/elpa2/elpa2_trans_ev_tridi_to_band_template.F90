@@ -50,7 +50,7 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 
-#include "../general/sanity.X90"
+#include "../general/sanity.F90"
 
   subroutine trans_ev_tridi_to_band_&
     &MATH_DATATYPE&

@@ -93,7 +93,7 @@ module elpa1_auxiliary_impl
 #include "../general/precision_macros.h"
 
    function elpa_cholesky_real_double_impl (obj, a) result(success)
-#include "elpa_cholesky_template.X90"
+#include "elpa_cholesky_template.F90"
 
     end function elpa_cholesky_real_double_impl
 #undef DOUBLE_PRECISION
@@ -105,7 +105,7 @@ module elpa1_auxiliary_impl
 #include "../general/precision_macros.h"
 
    function elpa_cholesky_real_single_impl(obj, a) result(success)
-#include "elpa_cholesky_template.X90"
+#include "elpa_cholesky_template.F90"
 
     end function elpa_cholesky_real_single_impl
 #undef SINGLE_PRECISION
@@ -132,7 +132,7 @@ module elpa1_auxiliary_impl
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
     function elpa_invert_trm_real_double_impl(obj, a) result(success)
-#include "elpa_invert_trm.X90"
+#include "elpa_invert_trm.F90"
      end function elpa_invert_trm_real_double_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -159,7 +159,7 @@ module elpa1_auxiliary_impl
 !> \result succes                 logical, reports success or failure
 
     function elpa_invert_trm_real_single_impl(obj, a) result(success)
-#include "elpa_invert_trm.X90"
+#include "elpa_invert_trm.F90"
     end function elpa_invert_trm_real_single_impl
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -188,7 +188,7 @@ module elpa1_auxiliary_impl
 !> \result succes                 logical, reports success or failure
     function elpa_cholesky_complex_double_impl(obj, a) result(success)
 
-#include "elpa_cholesky_template.X90"
+#include "elpa_cholesky_template.F90"
 
     end function elpa_cholesky_complex_double_impl
 #undef DOUBLE_PRECISION
@@ -216,7 +216,7 @@ module elpa1_auxiliary_impl
 !> \result succes                 logical, reports success or failure
     function elpa_cholesky_complex_single_impl(obj, a) result(success)
 
-#include "elpa_cholesky_template.X90"
+#include "elpa_cholesky_template.F90"
 
     end function elpa_cholesky_complex_single_impl
 #undef SINGLE_PRECISION
@@ -244,7 +244,7 @@ module elpa1_auxiliary_impl
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
      function elpa_invert_trm_complex_double_impl(obj, a) result(success)
-#include "elpa_invert_trm.X90"
+#include "elpa_invert_trm.F90"
     end function elpa_invert_trm_complex_double_impl
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -270,7 +270,7 @@ module elpa1_auxiliary_impl
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
     function elpa_invert_trm_complex_single_impl(obj, a) result(success)
-#include "elpa_invert_trm.X90"
+#include "elpa_invert_trm.F90"
     end function elpa_invert_trm_complex_single_impl
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
@@ -282,7 +282,7 @@ module elpa1_auxiliary_impl
 #include "../general/precision_macros.h"
     function elpa_mult_at_b_real_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                              c, ldc, ldcCols) result(success)
-#include "elpa_multiply_a_b.X90"
+#include "elpa_multiply_a_b.F90"
     end function elpa_mult_at_b_real_double_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -327,7 +327,7 @@ module elpa1_auxiliary_impl
     function elpa_mult_at_b_real_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                              c, ldc, ldcCols) result(success)
 
-#include "elpa_multiply_a_b.X90"
+#include "elpa_multiply_a_b.F90"
 
     end function elpa_mult_at_b_real_single_impl
 #undef SINGLE_PRECISION
@@ -375,7 +375,7 @@ module elpa1_auxiliary_impl
 
     function elpa_mult_ah_b_complex_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                                 c, ldc, ldcCols) result(success)
-#include "elpa_multiply_a_b.X90"
+#include "elpa_multiply_a_b.F90"
 
     end function elpa_mult_ah_b_complex_double_impl
 #undef DOUBLE_PRECISION
@@ -423,7 +423,7 @@ module elpa1_auxiliary_impl
     function elpa_mult_ah_b_complex_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                                 c, ldc, ldcCols) result(success)
 
-#include "elpa_multiply_a_b.X90"
+#include "elpa_multiply_a_b.F90"
 
     end function elpa_mult_ah_b_complex_single_impl
 #undef SINGLE_PRECISION
@@ -452,7 +452,7 @@ module elpa1_auxiliary_impl
 !> \result succes                 logical, reports success or failure
     function elpa_solve_tridi_double_impl(obj, d, e, q) result(success)
 
-#include "elpa_solve_tridi_impl_public.X90"
+#include "elpa_solve_tridi_impl_public.F90"
 
     end function
 #undef DOUBLE_PRECISION
@@ -481,7 +481,7 @@ module elpa1_auxiliary_impl
 !> \result succes                 logical, reports success or failure
     function elpa_solve_tridi_single_impl(obj, d, e, q) result(success)
 
-#include "elpa_solve_tridi_impl_public.X90"
+#include "elpa_solve_tridi_impl_public.F90"
 
     end function
 #undef SINGLE_PRECISION

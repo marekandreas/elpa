@@ -70,14 +70,14 @@ module complex_generic_kernel
 
 #define DOUBLE_PRECISION_COMPLEX 1
 #define COMPLEX_DATATYPE ck8
-#include "complex_template.X90"
+#include "complex_template.F90"
 #undef DOUBLE_PRECISION_COMPLEX
 #undef COMPLEX_DATATYPE
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #undef DOUBLE_PRECISION_COMPLEX
 #define COMPLEX_DATATYPE ck4
-#include "complex_template.X90"
+#include "complex_template.F90"
 #undef DOUBLE_PRECISION_COMPLEX
 #undef COMPLEX_DATATYPE
 #endif

@@ -57,22 +57,22 @@
 
 //the complex part
 #define DOUBLE_PRECISION_COMPLEX 1
-#include "ev_tridi_band_gpu_c_v2_complex_template.Xcu"
+#include "ev_tridi_band_gpu_c_v2_complex_template.cu"
 #undef DOUBLE_PRECISION_COMPLEX
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 #undef DOUBLE_PRECISION_COMPLEX
-#include "ev_tridi_band_gpu_c_v2_complex_template.Xcu"
+#include "ev_tridi_band_gpu_c_v2_complex_template.cu"
 #endif
 
 
 //the real part
 #define DOUBLE_PRECISION_REAL 1
-#include "ev_tridi_band_gpu_c_v2_real_template.Xcu"
+#include "ev_tridi_band_gpu_c_v2_real_template.cu"
 #undef DOUBLE_PRECISION_REAL
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #undef DOUBLE_PRECISION_REAL
-#include "ev_tridi_band_gpu_c_v2_real_template.Xcu"
+#include "ev_tridi_band_gpu_c_v2_real_template.cu"
 #endif
 

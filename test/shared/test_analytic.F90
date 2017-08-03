@@ -62,8 +62,8 @@ module test_analytic
 
   contains
 
-#include "../../src/general/prow_pcol.X90"
-#include "../../src/general/map_global_to_local.X90"
+#include "../../src/general/prow_pcol.F90"
+#include "../../src/general/map_global_to_local.F90"
 
   subroutine prepare_matrix_analytic_real_double (na, a, nblk, myid, np_rows, &
                             np_cols, my_prow, my_pcol)

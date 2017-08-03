@@ -134,7 +134,7 @@ program test_real_gpu_version_single_precision
 
 #define REALCASE
 #define ELPA1
-#include "../../elpa_print_headers.X90"
+#include "../../elpa_print_headers.F90"
 
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit

@@ -46,8 +46,8 @@ src/elpa_generated_public_fortran_interfaces.h: $(filter-out $(wildcard $(top_sr
 	@rm -f $@
 	$(call extract_interface,!pf>)
 
-generated_headers += src/fortran_constants.X90
-src/fortran_constants.X90: $(top_srcdir)/src/fortran_constants.h | src
+generated_headers += src/fortran_constants.F90
+src/fortran_constants.F90: $(top_srcdir)/src/fortran_constants.h | src
 	@$(CPP) $(CPPFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/ -I. $< -o $@_ || { rm -f $@; exit 1; }
 	@awk '/!ELPA_C_DEFINE/ {gsub(/!ELPA_C_DEFINE/, "\n"); gsub(/NEWLINE/, "\n"); print;}' < $@_ > $@ || { rm -f $@; exit 1; }
 	@rm $@_

@@ -145,7 +145,7 @@ program test_complex2_gpu_version_double_precision
    STATUS = 0
 
 #define COMPLEXCASE
-#include "../../elpa_print_headers.X90"
+#include "../../elpa_print_headers.F90"
 
 
    !-------------------------------------------------------------------------------

@@ -49,7 +49,7 @@
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "real_avx-avx2_6hv_template.Xc"
+#include "real_avx-avx2_6hv_template.c"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 

@@ -51,7 +51,7 @@ module elpa_qrkernels
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "elpa_qrkernels_template.X90"
+#include "elpa_qrkernels_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -59,7 +59,7 @@ module elpa_qrkernels
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "elpa_qrkernels_template.X90"
+#include "elpa_qrkernels_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */

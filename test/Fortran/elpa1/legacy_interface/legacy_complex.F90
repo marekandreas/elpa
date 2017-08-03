@@ -132,7 +132,7 @@ program test_complex_double_precision
 
 #define COMPLEXCASE
 #define ELPA1
-#include "../../elpa_print_headers.X90"
+#include "../../elpa_print_headers.F90"
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns

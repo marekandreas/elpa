@@ -104,7 +104,7 @@ module ELPA2_compute
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa2_compute_real_template.X90"
+#include "elpa2_compute_real_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -114,7 +114,7 @@ module ELPA2_compute
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa2_compute_real_template.X90"
+#include "elpa2_compute_real_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 
@@ -124,7 +124,7 @@ module ELPA2_compute
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa2_compute_complex_template.X90"
+#include "elpa2_compute_complex_template.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
@@ -134,7 +134,7 @@ module ELPA2_compute
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa2_compute_complex_template.X90"
+#include "elpa2_compute_complex_template.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 

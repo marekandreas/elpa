@@ -73,7 +73,7 @@ module pack_unpack_gpu
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "pack_unpack_gpu.X90"
+#include "pack_unpack_gpu.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -82,7 +82,7 @@ module pack_unpack_gpu
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "pack_unpack_gpu.X90"
+#include "pack_unpack_gpu.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif
@@ -91,7 +91,7 @@ module pack_unpack_gpu
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "pack_unpack_gpu.X90"
+#include "pack_unpack_gpu.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
@@ -100,7 +100,7 @@ module pack_unpack_gpu
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "pack_unpack_gpu.X90"
+#include "pack_unpack_gpu.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif

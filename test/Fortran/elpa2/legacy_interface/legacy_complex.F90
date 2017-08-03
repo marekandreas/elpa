@@ -144,7 +144,7 @@ program test_complex2_double_precision
 
    STATUS = 0
 
-#include "../../elpa_print_headers.X90"
+#include "../../elpa_print_headers.F90"
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns

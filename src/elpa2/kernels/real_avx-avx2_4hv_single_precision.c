@@ -49,7 +49,7 @@
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "real_avx-avx2_4hv_template.Xc"
+#include "real_avx-avx2_4hv_template.c"
 #undef REALCASE
 #undef SINGLE_PRECISION
 

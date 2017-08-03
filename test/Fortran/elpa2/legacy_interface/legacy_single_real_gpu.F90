@@ -143,7 +143,7 @@ program test_real2_gpu_version_single_precision
    STATUS = 0
 
 #define REALCASE
-#include "../../elpa_print_headers.X90"
+#include "../../elpa_print_headers.F90"
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns

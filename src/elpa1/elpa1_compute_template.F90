@@ -1,3 +1,4 @@
+#if 0
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -50,83 +51,55 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !
-! Author: A. Marek, MPCDF
-
-
-
-#include "../../general/sanity.X90"
-
-      use precision
-      use elpa1_auxiliary_impl, only : elpa_solve_tridi_&
-      &PRECISION&
-      &_impl
-      use elpa
-      use elpa_abstract_impl
-      implicit none
-      integer(kind=ik)            :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE)    :: d(na), e(na)
-#ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)    :: q(ldq,*)
-#else
-      real(kind=REAL_DATATYPE)    :: q(ldq,matrixCols)
+! Author: Andreas Marek, MPCDF
 #endif
 
-      logical, intent(in)         :: wantDebug
-      logical                     :: success ! the return value
-      integer                     :: error
-      class(elpa_t), pointer      :: obj
+#include "../general/sanity.F90"
 
-      !call timer%start("elpa_solve_tridi_&
-      !&PRECISION&
-      !&_legacy_interface")
+#if REALCASE == 1
 
-      success = .false.
+!cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
+#define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
+#define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
+#define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
 
-      if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
-        print *, "ELPA API version not supported"
-        success = .false.
-      endif
+#endif
 
-      obj => elpa_allocate()
+#if REALCASE == 1
 
-      call obj%set("na", na)
-      call obj%set("nev", nev)
-      call obj%set("local_nrows", ldq)
-      call obj%set("local_ncols", matrixCols)
-      call obj%set("nblk", nblk)
+#include "elpa1_tridiag_template.F90"
+#include "elpa1_trans_ev_template.F90"
 
-      call obj%set("mpi_comm_rows", mpi_comm_rows)
-      call obj%set("mpi_comm_cols", mpi_comm_cols)
+! now comes a dirty hack:
+! the file elpa1_solve_tridi_real_template.F90 must be included twice
+! for the legacy and for the new API. In the new API, however, some routines
+! must be named "..._impl"
 
-      if (obj%setup() .ne. ELPA_OK) then
-        print *, "Cannot setup ELPA instance"
-        success = .false.
-        return
-      endif
+#ifdef DOUBLE_PRECISION_REAL
+#define PRECISION_AND_SUFFIX double
+#else
+#define PRECISION_AND_SUFFIX single
+#endif
+#include "elpa1_solve_tridi_real_template.F90"
+#undef PRECISION_AND_SUFFIX
+#ifdef DOUBLE_PRECISION_REAL
+#define PRECISION_AND_SUFFIX  double_impl
+#else
+#define PRECISION_AND_SUFFIX  single_impl
+#endif
+#include "elpa1_solve_tridi_real_template.F90"
+#undef PRECISION_AND_SUFFIX
+#include "elpa1_merge_systems_real_template.F90"
+#include "elpa1_tools_template.F90"
 
-      if (wantDebug) then
-        call obj%set("debug",1)
-      endif
+#endif
 
-      call obj%solve_tridiagonal(d, e, q(1:ldq,1:matrixCols), error)
-      if (error /= ELPA_OK) then
-        print *, "Cannot run solve_tridi"
-        success = .false.
-        return
-      else
-        success = .true.
-      endif
+#if COMPLEXCASE == 1
 
-      call elpa_deallocate(obj)
-      call elpa_uninit()
+#include "elpa1_tridiag_template.F90"
+#include "elpa1_trans_ev_template.F90"
+#include "elpa1_tools_template.F90"
 
-     !call timer%stop("elpa_solve_tridi_&
-     !&PRECISION&
-     !&_legacy_interface")
+#define ALREADY_DEFINED 1
 
-#undef REALCASE
-#undef COMPLEXCASE
-#undef DOUBLE_PRECISION
-#undef SINGLE_PRECISION
-
-! vim: syntax=fortran
+#endif

@@ -53,18 +53,18 @@
 ! Author: Andreas Marek, MPCDF
 #endif
 
-#include "../general/sanity.X90"
+#include "../general/sanity.F90"
 
 #define REALCASE 1
 #undef COMPLEXCASE
-#include "elpa2_bandred_template.X90"
+#include "elpa2_bandred_template.F90"
 #define REALCASE 1
-#include "elpa2_symm_matrix_allreduce_real_template.X90"
+#include "elpa2_symm_matrix_allreduce_real_template.F90"
 #undef REALCASE
 #define REALCASE 1
-#include "elpa2_trans_ev_band_to_full_template.X90"
-#include "elpa2_tridiag_band_template.X90"
-#include "elpa2_trans_ev_tridi_to_band_template.X90"
+#include "elpa2_trans_ev_band_to_full_template.F90"
+#include "elpa2_tridiag_band_template.F90"
+#include "elpa2_trans_ev_tridi_to_band_template.F90"
 
 
 

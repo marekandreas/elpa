@@ -393,7 +393,7 @@ module elpa2
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
-#include "./elpa2_template.X90"
+#include "./elpa2_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -441,7 +441,7 @@ module elpa2
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
-#include "./elpa2_template.X90"
+#include "./elpa2_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 
@@ -487,7 +487,7 @@ module elpa2
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
-#include "./elpa2_template.X90"
+#include "./elpa2_template.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
@@ -534,7 +534,7 @@ module elpa2
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
-#include "./elpa2_template.X90"
+#include "./elpa2_template.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 

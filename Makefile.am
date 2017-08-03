@@ -81,52 +81,52 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
-  src/elpa1/elpa_reduce_add_vectors.X90 \
-  src/elpa1/elpa_transpose_vectors.X90 \
-  src/elpa1/elpa1_compute_template.X90 \
-  src/elpa2/elpa2_compute_real_template.X90 \
-  src/elpa2/elpa2_compute_complex_template.X90 \
-  src/elpa1/elpa1_template.X90 \
-  src/elpa2/elpa2_template.X90 \
-  src/elpa2/qr/qr_utils_template.X90 \
-  src/elpa2/qr/elpa_pdlarfb_template.X90 \
-  src/elpa2/qr/elpa_pdgeqrf_template.X90 \
-  src/elpa2/elpa2_bandred_template.X90 \
-  src/elpa2/elpa2_symm_matrix_allreduce_real_template.X90 \
-  src/elpa2/elpa2_trans_ev_band_to_full_template.X90 \
-  src/elpa2/elpa2_tridiag_band_template.X90 \
-  src/elpa2/elpa2_trans_ev_tridi_to_band_template.X90 \
-  src/elpa2/elpa2_herm_matrix_allreduce_complex_template.X90 \
-  src/elpa2/kernels/real_template.X90 \
-  src/elpa2/kernels/complex_template.X90 \
-  src/elpa2/kernels/simple_template.X90 \
-  src/elpa2/pack_unpack_cpu.X90 \
-  src/elpa2/pack_unpack_gpu.X90 \
-  src/elpa2/compute_hh_trafo.X90 \
-  src/elpa2/redist_band.X90 \
-  src/general/sanity.X90 \
-  src/elpa1/elpa_cholesky_template.X90 \
-  src/elpa1/elpa_invert_trm.X90 \
-  src/elpa1/elpa_multiply_a_b.X90 \
-  src/elpa1/elpa_solve_tridi_impl_public.X90 \
+  src/elpa1/elpa_reduce_add_vectors.F90 \
+  src/elpa1/elpa_transpose_vectors.F90 \
+  src/elpa1/elpa1_compute_template.F90 \
+  src/elpa2/elpa2_compute_real_template.F90 \
+  src/elpa2/elpa2_compute_complex_template.F90 \
+  src/elpa1/elpa1_template.F90 \
+  src/elpa2/elpa2_template.F90 \
+  src/elpa2/qr/qr_utils_template.F90 \
+  src/elpa2/qr/elpa_pdlarfb_template.F90 \
+  src/elpa2/qr/elpa_pdgeqrf_template.F90 \
+  src/elpa2/elpa2_bandred_template.F90 \
+  src/elpa2/elpa2_symm_matrix_allreduce_real_template.F90 \
+  src/elpa2/elpa2_trans_ev_band_to_full_template.F90 \
+  src/elpa2/elpa2_tridiag_band_template.F90 \
+  src/elpa2/elpa2_trans_ev_tridi_to_band_template.F90 \
+  src/elpa2/elpa2_herm_matrix_allreduce_complex_template.F90 \
+  src/elpa2/kernels/real_template.F90 \
+  src/elpa2/kernels/complex_template.F90 \
+  src/elpa2/kernels/simple_template.F90 \
+  src/elpa2/pack_unpack_cpu.F90 \
+  src/elpa2/pack_unpack_gpu.F90 \
+  src/elpa2/compute_hh_trafo.F90 \
+  src/elpa2/redist_band.F90 \
+  src/general/sanity.F90 \
+  src/elpa1/elpa_cholesky_template.F90 \
+  src/elpa1/elpa_invert_trm.F90 \
+  src/elpa1/elpa_multiply_a_b.F90 \
+  src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/precision_macros.h
 
 if ENABLE_LEGACY
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES += \
-  src/elpa1/legacy_interface/elpa1_template.X90 \
-  src/elpa2/legacy_interface/elpa2_template.X90 \
-  src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
-  src/elpa2/legacy_interface/elpa2_c_interface_template.X90 \
-  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_cholesky_template.X90 \
-  src/elpa1/legacy_interface/elpa_invert_trm.X90 \
-  src/elpa1/legacy_interface/elpa_multiply_a_b.X90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi.X90
+  src/elpa1/legacy_interface/elpa1_template.F90 \
+  src/elpa2/legacy_interface/elpa2_template.F90 \
+  src/elpa1/legacy_interface/elpa1_c_interface_template.F90 \
+  src/elpa2/legacy_interface/elpa2_c_interface_template.F90 \
+  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_cholesky_template.F90 \
+  src/elpa1/legacy_interface/elpa_invert_trm.F90 \
+  src/elpa1/legacy_interface/elpa_multiply_a_b.F90 \
+  src/elpa1/legacy_interface/elpa_solve_tridi.F90
 endif
 
 if HAVE_DETAILED_TIMINGS
@@ -152,7 +152,7 @@ endif
 
 if WITH_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES +=  src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2.cu
-  EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu
+  EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu
 endif
 
 if !WITH_MPI
@@ -458,12 +458,10 @@ libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/test_util.F90 \
   test/shared/test_read_input_parameters.F90 \
   test/shared/test_check_correctness.F90 \
-  test/shared/test_check_correctness_template.X90 \
   test/shared/test_setup_mpi.F90 \
   test/shared/test_blacs_infrastructure.F90 \
   test/shared/test_prepare_matrix.F90 \
-  test/shared/test_prepare_matrix_template.X90 \
-	test/shared/test_analytic.F90 \
+  test/shared/test_analytic.F90 \
   test/shared/test_output_type.F90
 
 if HAVE_REDIRECT
@@ -569,99 +567,101 @@ distclean-local:
 	-rmdir .fortran_dependencies/
 
 EXTRA_DIST = \
+  elpa.spec \
   elpa/elpa.h \
-  elpa/elpa_legacy.h \
   elpa/elpa_generic.h \
-  fdep/fortran_dependencies.pl \
+  elpa/elpa_legacy.h \
   fdep/fortran_dependencies.mk \
+  fdep/fortran_dependencies.pl \
   manual_cpp \
-  test/Fortran/elpa_print_headers.X90 \
-  test/Fortran/assert.h \
-  src/general/prow_pcol.X90 \
-  src/general/map_global_to_local.X90 \
-  src/elpa1/elpa_reduce_add_vectors.X90 \
-  src/elpa1/elpa_transpose_vectors.X90 \
-  src/elpa1/elpa1_compute_template.X90 \
-  src/elpa1/elpa1_merge_systems_real_template.X90 \
-  src/elpa1/elpa1_solve_tridi_real_template.X90 \
-  src/elpa1/elpa1_tools_template.X90 \
-  src/elpa1/elpa1_trans_ev_template.X90 \
-  src/elpa1/elpa1_tridiag_template.X90 \
-  src/elpa2/elpa2_compute_real_template.X90 \
-  src/elpa2/elpa2_compute_complex_template.X90 \
-  src/elpa2/elpa2_bandred_template.X90 \
-  src/elpa2/elpa2_herm_matrix_allreduce_complex_template.X90 \
-  src/elpa2/elpa2_symm_matrix_allreduce_real_template.X90 \
-  src/elpa1/elpa1_template.X90 \
-  src/elpa2/elpa2_template.X90 \
-  src/elpa2/qr/qr_utils_template.X90 \
-  src/elpa2/qr/elpa_pdlarfb_template.X90 \
-  src/elpa2/qr/elpa_pdgeqrf_template.X90 \
-  src/elpa2/elpa2_tridiag_band_template.X90 \
-  src/elpa2/elpa2_trans_ev_band_to_full_template.X90 \
-  src/elpa2/elpa2_trans_ev_tridi_to_band_template.X90 \
-  src/general/precision_macros.h \
+  nvcc_wrap \
+  src/GPU/cuUtils_template.cu \
+  src/elpa1/elpa1_compute_template.F90 \
+  src/elpa1/elpa1_merge_systems_real_template.F90 \
+  src/elpa1/elpa1_solve_tridi_real_template.F90 \
+  src/elpa1/elpa1_template.F90 \
+  src/elpa1/elpa1_tools_template.F90 \
+  src/elpa1/elpa1_trans_ev_template.F90 \
+  src/elpa1/elpa1_tridiag_template.F90 \
+  src/elpa1/elpa_cholesky_template.F90 \
+  src/elpa1/elpa_invert_trm.F90 \
+  src/elpa1/elpa_multiply_a_b.F90 \
+  src/elpa1/elpa_reduce_add_vectors.F90 \
+  src/elpa1/elpa_solve_tridi_impl_public.F90 \
+  src/elpa1/elpa_transpose_vectors.F90 \
+  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu \
+  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu \
+  src/elpa2/compute_hh_trafo.F90 \
+  src/elpa2/elpa2_bandred_template.F90 \
+  src/elpa2/elpa2_compute_complex_template.F90 \
+  src/elpa2/elpa2_compute_real_template.F90 \
+  src/elpa2/elpa2_herm_matrix_allreduce_complex_template.F90 \
+  src/elpa2/elpa2_symm_matrix_allreduce_real_template.F90 \
+  src/elpa2/elpa2_template.F90 \
+  src/elpa2/elpa2_trans_ev_band_to_full_template.F90 \
+  src/elpa2/elpa2_trans_ev_tridi_to_band_template.F90 \
+  src/elpa2/elpa2_tridiag_band_template.F90 \
+  src/elpa2/kernels/complex_avx-avx2_1hv_template.c \
+  src/elpa2/kernels/complex_avx-avx2_2hv_template.c \
+  src/elpa2/kernels/complex_avx512_1hv_template.c \
+  src/elpa2/kernels/complex_avx512_2hv_template.c \
+  src/elpa2/kernels/complex_sse_1hv_template.c \
+  src/elpa2/kernels/complex_sse_2hv_template.c \
+  src/elpa2/kernels/complex_template.F90 \
+  src/elpa2/kernels/real_avx-avx2_2hv_template.c \
+  src/elpa2/kernels/real_avx-avx2_4hv_template.c \
+  src/elpa2/kernels/real_avx-avx2_6hv_template.c \
+  src/elpa2/kernels/real_avx512_2hv_template.c \
+  src/elpa2/kernels/real_avx512_4hv_template.c \
+  src/elpa2/kernels/real_avx512_6hv_template.c \
+  src/elpa2/kernels/real_sse_2hv_template.c \
+  src/elpa2/kernels/real_sse_4hv_template.c \
+  src/elpa2/kernels/real_sse_6hv_template.c \
+  src/elpa2/kernels/real_template.F90 \
+  src/elpa2/kernels/simple_template.F90 \
+  src/elpa2/pack_unpack_cpu.F90 \
+  src/elpa2/pack_unpack_gpu.F90 \
+  src/elpa2/qr/elpa_pdgeqrf_template.F90 \
+  src/elpa2/qr/elpa_pdlarfb_template.F90 \
+  src/elpa2/qr/elpa_qrkernels_template.F90 \
+  src/elpa2/qr/qr_utils_template.F90 \
+  src/elpa2/redist_band.F90 \
   src/elpa_index.h \
   src/fortran_constants.h \
-  src/elpa2/kernels/real_template.X90 \
-  src/elpa2/kernels/complex_template.X90 \
-  src/elpa2/kernels/simple_template.X90 \
-  src/elpa2/kernels/real_sse_2hv_template.Xc \
-  src/elpa2/kernels/real_sse_4hv_template.Xc \
-  src/elpa2/kernels/real_sse_6hv_template.Xc \
-  src/elpa2/kernels/real_avx-avx2_2hv_template.Xc \
-  src/elpa2/kernels/real_avx-avx2_4hv_template.Xc \
-  src/elpa2/kernels/real_avx-avx2_6hv_template.Xc \
-  src/elpa2/kernels/real_avx512_2hv_template.Xc \
-  src/elpa2/kernels/real_avx512_4hv_template.Xc \
-  src/elpa2/kernels/real_avx512_6hv_template.Xc \
-  src/elpa2/kernels/complex_sse_1hv_template.Xc \
-  src/elpa2/kernels/complex_sse_2hv_template.Xc \
-  src/elpa2/kernels/complex_avx-avx2_1hv_template.Xc \
-  src/elpa2/kernels/complex_avx-avx2_2hv_template.Xc \
-  src/elpa2/kernels/complex_avx512_1hv_template.Xc \
-  src/elpa2/kernels/complex_avx512_2hv_template.Xc \
-  src/elpa2/redist_band.X90 \
-  src/elpa2/pack_unpack_cpu.X90 \
-  src/elpa2/pack_unpack_gpu.X90 \
-  src/elpa2/compute_hh_trafo.X90 \
-  src/general/sanity.X90 \
-  src/elpa1/elpa_cholesky_template.X90 \
-  src/elpa1/elpa_invert_trm.X90 \
-  src/elpa1/elpa_multiply_a_b.X90 \
-  src/elpa1/elpa_solve_tridi_impl_public.X90 \
-  src/elpa2/qr/elpa_qrkernels_template.X90 \
-  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
-  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu \
-  src/GPU/cuUtils_template.Xcu \
-  test/shared/test_prepare_matrix_template.X90 \
-  test/shared/test_check_correctness_template.X90 \
-  nvcc_wrap \
+  src/general/map_global_to_local.F90 \
+  src/general/precision_macros.h \
+  src/general/prow_pcol.F90 \
+  src/general/sanity.F90 \
+  test/Fortran/assert.h \
+  test/Fortran/elpa_print_headers.F90 \
+  test/shared/test_check_correctness_template.F90 \
+  test/shared/test_check_correctness_template.F90 \
+  test/shared/test_prepare_matrix_template.F90 \
+  test/shared/test_prepare_matrix_template.F90 \
   test_project/Makefile.am \
   test_project/autogen.sh \
   test_project/configure.ac \
   test_project/fdep \
-  test_project/src/test_real.F90 \
   test_project/m4 \
-  elpa.spec
+  test_project/src/test_real.F90
 
 if ENABLE_LEGACY
 EXTRA_DIST += \
-  src/elpa1/elpa1_solve_tridi_real_template.X90 \
-  src/elpa1/legacy_interface/elpa1_template.X90 \
-  src/elpa2/legacy_interface/elpa2_template.X90 \
-  src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
-  src/elpa2/legacy_interface/elpa2_c_interface_template.X90 \
-  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.X90 \
-  src/elpa1/legacy_interface/elpa_cholesky_template.X90 \
-  src/elpa1/legacy_interface/elpa_invert_trm.X90 \
-  src/elpa1/legacy_interface/elpa_multiply_a_b.X90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi.X90
+  src/elpa1/elpa1_solve_tridi_real_template.F90 \
+  src/elpa1/legacy_interface/elpa1_template.F90 \
+  src/elpa2/legacy_interface/elpa2_template.F90 \
+  src/elpa1/legacy_interface/elpa1_c_interface_template.F90 \
+  src/elpa2/legacy_interface/elpa2_c_interface_template.F90 \
+  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.F90 \
+  src/elpa1/legacy_interface/elpa_cholesky_template.F90 \
+  src/elpa1/legacy_interface/elpa_invert_trm.F90 \
+  src/elpa1/legacy_interface/elpa_multiply_a_b.F90 \
+  src/elpa1/legacy_interface/elpa_solve_tridi.F90
 endif
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@

@@ -75,7 +75,7 @@ contains
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "elpa_pdlarfb_template.X90"
+#include "elpa_pdlarfb_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -85,7 +85,7 @@ contains
 #define ALREADY_DEFINED
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "elpa_pdlarfb_template.X90"
+#include "elpa_pdlarfb_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif

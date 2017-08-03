@@ -150,7 +150,7 @@
 #include "../../general/precision_macros.h"
   !lc> int elpa_solve_evp_real_1stage_double_precision(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 
-#include "./elpa1_c_interface_template.X90"
+#include "./elpa1_c_interface_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -186,7 +186,7 @@
 
   !lc> int elpa_solve_evp_real_1stage_single_precision(int na, int nev, float *a, int lda, float *ev, float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 
-#include "./elpa1_c_interface_template.X90"
+#include "./elpa1_c_interface_template.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
 #endif /* WANT_SINGLE_PRECISION_REAL */
@@ -221,7 +221,7 @@
 
   !lc> int elpa_solve_evp_complex_1stage_double_precision(int na, int nev, double complex *a, int lda, double *ev, double complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 
-#include "./elpa1_c_interface_template.X90"
+#include "./elpa1_c_interface_template.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
@@ -257,7 +257,7 @@
 
   !lc> int elpa_solve_evp_complex_1stage_single_precision(int na, int nev,  complex float *a, int lda, float *ev, complex float *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int useGPU);
 
-#include "./elpa1_c_interface_template.X90"
+#include "./elpa1_c_interface_template.F90"
 
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
@@ -285,7 +285,7 @@
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_solve_tridi_c_interface_template.X90"
+#include "./elpa_solve_tridi_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -313,7 +313,7 @@
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_solve_tridi_c_interface_template.X90"
+#include "./elpa_solve_tridi_c_interface_template.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
 
@@ -360,7 +360,7 @@
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_mult_at_b_c_interface_template.X90"
+#include "./elpa_mult_at_b_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -406,7 +406,7 @@
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_mult_at_b_c_interface_template.X90"
+#include "./elpa_mult_at_b_c_interface_template.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
 
@@ -450,7 +450,7 @@
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_mult_ah_b_c_interface_template.X90"
+#include "./elpa_mult_ah_b_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -495,7 +495,7 @@
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_mult_ah_b_c_interface_template.X90"
+#include "./elpa_mult_ah_b_c_interface_template.F90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
@@ -521,7 +521,7 @@
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_invert_trm_c_interface_template.X90"
+#include "./elpa_invert_trm_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -549,7 +549,7 @@
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_invert_trm_c_interface_template.X90"
+#include "./elpa_invert_trm_c_interface_template.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
 
@@ -576,7 +576,7 @@
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_invert_trm_c_interface_template.X90"
+#include "./elpa_invert_trm_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -602,7 +602,7 @@
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_invert_trm_c_interface_template.X90"
+#include "./elpa_invert_trm_c_interface_template.F90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
 
@@ -632,7 +632,7 @@
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_cholesky_c_interface_template.X90"
+#include "./elpa_cholesky_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -661,7 +661,7 @@
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_cholesky_c_interface_template.X90"
+#include "./elpa_cholesky_c_interface_template.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
 
@@ -690,7 +690,7 @@
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_cholesky_c_interface_template.X90"
+#include "./elpa_cholesky_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -718,7 +718,7 @@
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../../general/precision_macros.h"
-#include "./elpa_cholesky_c_interface_template.X90"
+#include "./elpa_cholesky_c_interface_template.F90"
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */

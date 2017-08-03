@@ -75,7 +75,7 @@
   !lc> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 
 #include "../../general/precision_macros.h"
-#include "./elpa2_c_interface_template.X90"
+#include "./elpa2_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -115,7 +115,7 @@
   !lc> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR, int useGPU);
 
 #include "../../general/precision_macros.h"
-#include "./elpa2_c_interface_template.X90"
+#include "./elpa2_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -156,7 +156,7 @@
   !lc> int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 
 #include "../../general/precision_macros.h"
-#include "./elpa2_c_interface_template.X90"
+#include "./elpa2_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -196,7 +196,7 @@
   !lc> int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API, int useGPU);
 
 #include "../../general/precision_macros.h"
-#include "./elpa2_c_interface_template.X90"
+#include "./elpa2_c_interface_template.F90"
 #undef DOUBLE_PRECISION
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE

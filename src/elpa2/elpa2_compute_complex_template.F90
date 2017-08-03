@@ -4,7 +4,7 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!    - Max Planck Computing and Data Facility (MPCDF), fomerly known as
 !      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
@@ -44,7 +44,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+! ELPA2 -- 2-stage solver for ELPA
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
@@ -54,52 +54,17 @@
 ! Author: Andreas Marek, MPCDF
 #endif
 
-#include "../general/sanity.X90"
+#include "../general/sanity.F90"
 
-#if REALCASE == 1
+#define COMPLEXCASE 1
+#undef REALCASE
+#include "elpa2_bandred_template.F90"
+#undef COMPLEXCASE
+#define COMPLEXCASE 1
+#include "elpa2_herm_matrix_allreduce_complex_template.F90"
+#undef COMPLEXCASE
+#define COMPLEXCASE 1
+#include "elpa2_trans_ev_band_to_full_template.F90"
+#include "elpa2_tridiag_band_template.F90"
+#include "elpa2_trans_ev_tridi_to_band_template.F90"
 
-!cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
-#define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
-#define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
-#define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
-
-#endif
-
-#if REALCASE == 1
-
-#include "elpa1_tridiag_template.X90"
-#include "elpa1_trans_ev_template.X90"
-
-! now comes a dirty hack:
-! the file elpa1_solve_tridi_real_template.X90 must be included twice
-! for the legacy and for the new API. In the new API, however, some routines
-! must be named "..._impl"
-
-#ifdef DOUBLE_PRECISION_REAL
-#define PRECISION_AND_SUFFIX double
-#else
-#define PRECISION_AND_SUFFIX single
-#endif
-#include "elpa1_solve_tridi_real_template.X90"
-#undef PRECISION_AND_SUFFIX
-#ifdef DOUBLE_PRECISION_REAL
-#define PRECISION_AND_SUFFIX  double_impl
-#else
-#define PRECISION_AND_SUFFIX  single_impl
-#endif
-#include "elpa1_solve_tridi_real_template.X90"
-#undef PRECISION_AND_SUFFIX
-#include "elpa1_merge_systems_real_template.X90"
-#include "elpa1_tools_template.X90"
-
-#endif
-
-#if COMPLEXCASE == 1
-
-#include "elpa1_tridiag_template.X90"
-#include "elpa1_trans_ev_template.X90"
-#include "elpa1_tools_template.X90"
-
-#define ALREADY_DEFINED 1
-
-#endif

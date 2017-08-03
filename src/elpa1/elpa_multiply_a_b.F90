@@ -53,7 +53,7 @@
 ! Author: A. Marek, MPCDF
 
 
-#include "../general/sanity.X90"
+#include "../general/sanity.F90"
 
       use elpa1_compute
       use elpa_mpi

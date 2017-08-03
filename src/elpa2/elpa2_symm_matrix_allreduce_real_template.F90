@@ -1,10 +1,9 @@
-#if 0
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Max Planck Computing and Data Facility (MPCDF), fomerly known as
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
 !      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
@@ -44,27 +43,77 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
-! ELPA2 -- 2-stage solver for ELPA
+! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
-!
-! Author: Andreas Marek, MPCDF
+
+#include "../general/sanity.F90"
+
+    subroutine symm_matrix_allreduce_&
+&PRECISION &
+                    (obj, n, a, lda, ldb, comm)
+    !-------------------------------------------------------------------------------
+    !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
+    !  On entry, only the upper half of A needs to be set
+    !  On exit, the complete matrix is set
+    !-------------------------------------------------------------------------------
+      use elpa_abstract_impl
+      use precision
+      implicit none
+      class(elpa_abstract_impl_t), intent(inout) :: obj
+      integer(kind=ik)             :: n, lda, ldb, comm
+#ifdef USE_ASSUMED_SIZE
+      real(kind=REAL_DATATYPE)     :: a(lda,*)
+#else
+      real(kind=REAL_DATATYPE)     :: a(lda,ldb)
 #endif
+      integer(kind=ik)             :: i, nc, mpierr
+      real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
-#include "../general/sanity.X90"
+      call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
-#define COMPLEXCASE 1
-#undef REALCASE
-#include "elpa2_bandred_template.X90"
-#undef COMPLEXCASE
-#define COMPLEXCASE 1
-#include "elpa2_herm_matrix_allreduce_complex_template.X90"
-#undef COMPLEXCASE
-#define COMPLEXCASE 1
-#include "elpa2_trans_ev_band_to_full_template.X90"
-#include "elpa2_tridiag_band_template.X90"
-#include "elpa2_trans_ev_tridi_to_band_template.X90"
+      nc = 0
+      do i=1,n
+        h1(nc+1:nc+i) = a(1:i,i)
+        nc = nc+i
+      enddo
+
+#ifdef WITH_MPI
+      call obj%timer%start("mpi_communication")
+      call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
+      call obj%timer%stop("mpi_communication")
+      nc = 0
+      do i=1,n
+        a(1:i,i) = h2(nc+1:nc+i)
+        a(i,1:i-1) = a(1:i-1,i)
+        nc = nc+i
+      enddo
+
+#else /* WITH_MPI */
+!      h2=h1
+
+      nc = 0
+      do i=1,n
+        a(1:i,i) = h1(nc+1:nc+i)
+        a(i,1:i-1) = a(1:i-1,i)
+        nc = nc+i
+      enddo
+
+#endif /* WITH_MPI */
+!      nc = 0
+!      do i=1,n
+!        a(1:i,i) = h2(nc+1:nc+i)
+!        a(i,1:i-1) = a(1:i-1,i)
+!        nc = nc+i
+!      enddo
+
+      call obj%timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
+
+    end subroutine symm_matrix_allreduce_&
+    &PRECISION
+
+
 
