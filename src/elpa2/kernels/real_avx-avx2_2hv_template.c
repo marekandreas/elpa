@@ -214,14 +214,14 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 	for (i = 0; i < nq-20; i+=24)
 	{
 		hh_trafo_kernel_24_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += i;
+		worked_on += 24;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-40; i+=48)
 	{
                 hh_trafo_kernel_48_AVX_2hv_single(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += i;
+		worked_on += 48;
 	}
 #endif
 
@@ -312,8 +312,8 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 #endif
         if (worked_on != nq)
 	{
-	   //printf("Error in real avx/avx2 BLOCK 2 kernel \n");
-	   //abort();
+	   printf("Error in real avx/avx2 BLOCK 2 kernel \n");
+	   abort();
 	}
 }
 

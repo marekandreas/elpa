@@ -250,14 +250,14 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 	for (i = 0; i < nq-8; i+=12)
 	{
 		hh_trafo_kernel_12_AVX_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		worked_on += i;
+		worked_on += 12;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-16; i+=24)
 	{
 		hh_trafo_kernel_24_AVX_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		worked_on += i;
+		worked_on += 24;
 	}
 #endif
 	if (nq == i)
@@ -299,8 +299,8 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 
         if (worked_on != nq)
 	{
-	    //printf("Error in real AVX/AVX2 BLOCK4 kernel \n");
-	    //abort();
+	    printf("Error in real AVX/AVX2 BLOCK4 kernel \n");
+	    abort();
 	}
 }
 /**

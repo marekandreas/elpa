@@ -173,7 +173,7 @@ void single_hh_trafo_complex_avx512_1hv_single(float complex* q, float complex* 
 	for (i = 0; i < nq-20; i+=24)
 	{
 		hh_trafo_complex_kernel_24_AVX512_1hv_double(&q[i], hh, nb, ldq);
-		worked_on += i;
+		worked_on += 24;
 	}
 #endif
 
@@ -181,7 +181,7 @@ void single_hh_trafo_complex_avx512_1hv_single(float complex* q, float complex* 
 	for (i = 0; i < nq-40; i+=48)
 	{
 		hh_trafo_complex_kernel_48_AVX512_1hv_single(&q[i], hh, nb, ldq);
-		worked_on += i;
+		worked_on += 48;
 	}
 #endif
 	if (nq == i)
@@ -270,8 +270,8 @@ void single_hh_trafo_complex_avx512_1hv_single(float complex* q, float complex* 
 #endif
 	if (worked_on != nq)
 	{
-	    // printf("Error in complex AVX512 BLOCK 1 kernel \n");
-	    // abort();
+	     printf("Error in complex AVX512 BLOCK 1 kernel \n");
+	     abort();
 	}
 }
 
