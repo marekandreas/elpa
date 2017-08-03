@@ -62,6 +62,8 @@
 #include "config-f90.h"
 
 #include <x86intrin.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -145,6 +147,9 @@ void hexa_hh_trafo_real_sse_6hv_single(float* q, float* hh, int* pnb, int* pnq, 
 	int nq = *pldq;
 	int ldq = *pldq;
 	int ldh = *pldh;
+	int worked_on ;
+
+	worked_on = 0;
 
 	// calculating scalar products to compute
 	// 6 householder vectors simultaneously
@@ -255,26 +260,38 @@ void hexa_hh_trafo_real_sse_6hv_single(float* q, float* hh, int* pnb, int* pnq, 
 	for (i = 0; i < nq-2; i+=4)
 	{
 		hh_trafo_kernel_4_SSE_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 4;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-4; i+=8)
 	{
 	        hh_trafo_kernel_8_SSE_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 8;
 	}
 #endif
 	if (nq == i)
 	{
 		return;
 	}
-	else
-	{
 #ifdef DOUBLE_PRECISION_REAL
+	if (nq -i == 2)
+	{
 		hh_trafo_kernel_2_SSE_6hv_double(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 2;
+	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
+	if (nq -i == 4)
+	{
 		hh_trafo_kernel_4_SSE_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		worked_on += 4;
+	}
 #endif
+	if (worked_on != nq)
+	{
+		printf("Error in real SSE BLOCK6 kernel \n");
+		abort();
 	}
 }
 

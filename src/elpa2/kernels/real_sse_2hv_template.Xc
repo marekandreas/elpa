@@ -164,16 +164,17 @@ void double_hh_trafo_real_sse_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	for (i = 0; i < nq-10; i+=12)
 	{
 		hh_trafo_kernel_12_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += i;
+		worked_on += 12;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-20; i+=24)
 	{
-	        hh_trafo_kernel_20_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += i;
+	        hh_trafo_kernel_24_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+		worked_on += 24;
 	}
 #endif
+
 	if (nq == i)
 	{
 		return;
@@ -262,8 +263,8 @@ void double_hh_trafo_real_sse_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
         if (worked_on != nq)
 	{
-	//	printf("Error in real SSE BLOCK2 kernel \n");
-	//	abort();
+		printf("Error in real SSE BLOCK2 kernel %d %d\n", worked_on, nq);
+		abort();
 	}
 }
 

@@ -62,6 +62,7 @@
 
 #include "config-f90.h"
 
+
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 2
 #define __SSE_DATATYPE __m128d
@@ -82,6 +83,8 @@
 #endif
 
 #include <x86intrin.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -149,6 +152,10 @@ void quad_hh_trafo_real_sse_4hv_single(float* q, float* hh, int* pnb, int* pnq, 
 	int nq = *pldq;
 	int ldq = *pldq;
 	int ldh = *pldh;
+	int worked_on;
+
+
+	worked_on = 0;
 
 	// calculating scalar products to compute
 	// 4 householder vectors simultaneously
@@ -200,12 +207,14 @@ void quad_hh_trafo_real_sse_4hv_single(float* q, float* hh, int* pnb, int* pnq, 
 	for (i = 0; i < nq-4; i+=6)
 	{
 		hh_trafo_kernel_6_SSE_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 6;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-8; i+=12)
 	{
 		hh_trafo_kernel_12_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 12;
 
 	}
 #endif
@@ -213,28 +222,44 @@ void quad_hh_trafo_real_sse_4hv_single(float* q, float* hh, int* pnb, int* pnq, 
 	{
 		return;
 	}
+
+#ifdef DOUBLE_PRECISION_REAL
+	if (nq-i ==4)
+	{
+		hh_trafo_kernel_4_SSE_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 4;
+	}
+#endif
+
 #ifdef SINGLE_PRECISION_REAL
 	if (nq-i ==8)
 	{
 		hh_trafo_kernel_8_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 8;
 	}
 #endif
-	else
-	{
+
 #ifdef DOUBLE_PRECISION_REAL
-		if (nq-i > 2)
-		{
-			hh_trafo_kernel_4_SSE_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		}
-		else
-		{
-			hh_trafo_kernel_2_SSE_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-		}
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                hh_trafo_kernel_4_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
-#endif
+	if (nq-i == 2)
+	{
+		hh_trafo_kernel_2_SSE_4hv_double(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 2;
 	}
+#endif
+
+#ifdef SINGLE_PRECISION_REAL
+	if (nq-i ==4)
+	{
+		hh_trafo_kernel_4_SSE_4hv_single(&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
+		worked_on += 4;
+	}
+#endif
+        if (worked_on != nq)
+	{
+		printf("Error in real SSE BLOCK4 kernel \n");
+		abort();
+	}
+
 }
 
 /**
