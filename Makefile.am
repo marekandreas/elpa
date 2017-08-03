@@ -152,7 +152,7 @@ endif
 
 if WITH_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES +=  src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2.cu
-  EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu
+  EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu
 endif
 
 if !WITH_MPI

@@ -54,13 +54,13 @@
 #define REALCASE 1
 #undef COMPLEXCASE
 #define DOUBLE_PRECISION_REAL 1
-#include "cuUtils_template.Xcu"
+#include "cuUtils_template.cu"
 #undef DOUBLE_PRECISION_REAL
 
 #if WANT_SINGLE_PRECISION_REAL
 
 #undef DOUBLE_PRECISION_REAL
-#include "cuUtils_template.Xcu"
+#include "cuUtils_template.cu"
 
 #endif
 
@@ -68,13 +68,13 @@
 #define COMPLEXCASE 1
 #undef REALCASE
 #define DOUBLE_PRECISION_COMPLEX 1
-#include "cuUtils_template.Xcu"
+#include "cuUtils_template.cu"
 #undef DOUBLE_PRECISION_COMPLEX
 
 #if WANT_SINGLE_PRECISION_COMPLEX
 
 #undef DOUBLE_PRECISION_COMPLEX
-#include "cuUtils_template.Xcu"
+#include "cuUtils_template.cu"
 
 #endif
 

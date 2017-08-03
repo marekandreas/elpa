@@ -878,58 +878,58 @@ RECURSIVE              = YES
 EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
                          @top_srcdir@/src/GPU/cuUtils.cu \
                          @top_srcdir@/src/GPU/cuUtils.h \
-                         @top_srcdir@/src/GPU/cuUtils_template.Xcu \
+                         @top_srcdir@/src/GPU/cuUtils_template.cu \
                          @top_srcdir@/src/GPU/cudaFunctions.cu \
                          @top_srcdir@/src/GPU/mod_cuda.F90 \
                          @top_srcdir@/src/elpa1/elpa1.F90 \
                          @top_srcdir@/src/elpa1/elpa1_auxiliary.F90 \
                          @top_srcdir@/src/elpa1/elpa1_compute_private.F90 \
-                         @top_srcdir@/src/elpa1/elpa1_compute_template.X90 \
-                         @top_srcdir@/src/elpa1/elpa1_merge_systems_real_template.X90 \
-                         @top_srcdir@/src/elpa1/elpa1_solve_tridi_real_template.X90 \
-                         @top_srcdir@/src/elpa1/elpa1_template.X90 \
-                         @top_srcdir@/src/elpa1/elpa1_tools_template.X90 \
-                         @top_srcdir@/src/elpa1/elpa1_trans_ev_template.X90 \
-                         @top_srcdir@/src/elpa1/elpa1_tridiag_template.X90 \
+                         @top_srcdir@/src/elpa1/elpa1_compute_template.F90 \
+                         @top_srcdir@/src/elpa1/elpa1_merge_systems_real_template.F90 \
+                         @top_srcdir@/src/elpa1/elpa1_solve_tridi_real_template.F90 \
+                         @top_srcdir@/src/elpa1/elpa1_template.F90 \
+                         @top_srcdir@/src/elpa1/elpa1_tools_template.F90 \
+                         @top_srcdir@/src/elpa1/elpa1_trans_ev_template.F90 \
+                         @top_srcdir@/src/elpa1/elpa1_tridiag_template.F90 \
                          @top_srcdir@/src/elpa1/elpa1_utilities.F90 \
-                         @top_srcdir@/src/elpa1/elpa_cholesky_template.X90 \
-                         @top_srcdir@/src/elpa1/elpa_invert_trm.X90 \
-                         @top_srcdir@/src/elpa1/elpa_multiply_a_b.X90 \
-                         @top_srcdir@/src/elpa1/elpa_reduce_add_vectors.X90 \
-                         @top_srcdir@/src/elpa1/elpa_solve_tridi_impl_public.X90 \
-                         @top_srcdir@/src/elpa1/elpa_transpose_vectors.X90 \
+                         @top_srcdir@/src/elpa1/elpa_cholesky_template.F90 \
+                         @top_srcdir@/src/elpa1/elpa_invert_trm.F90 \
+                         @top_srcdir@/src/elpa1/elpa_multiply_a_b.F90 \
+                         @top_srcdir@/src/elpa1/elpa_reduce_add_vectors.F90 \
+                         @top_srcdir@/src/elpa1/elpa_solve_tridi_impl_public.F90 \
+                         @top_srcdir@/src/elpa1/elpa_transpose_vectors.F90 \
                          @top_srcdir@/src/elpa1/legacy_interface/elpa1.F90 \
                          @top_srcdir@/src/elpa1/legacy_interface/elpa1_auxiliary.F90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa1_c_interface_template.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa1_template.X90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa1_c_interface_template.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa1_template.F90 \
                          @top_srcdir@/src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_cholesky_template.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_invert_trm.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_multiply_a_b.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_solve_tridi.X90 \
-                         @top_srcdir@/src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.X90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_cholesky_template.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_invert_trm.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_multiply_a_b.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_solve_tridi.F90 \
+                         @top_srcdir@/src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.F90 \
                          @top_srcdir@/src/elpa2/GPU/ev_tridi_band_gpu_c_v2.cu  \
-                         @top_srcdir@/src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.Xcu \
-                         @top_srcdir@/src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.Xcu \
+                         @top_srcdir@/src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu \
+                         @top_srcdir@/src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu \
                          @top_srcdir@/src/elpa2/GPU/interface_c_kernel.F90 \
-                         @top_srcdir@/src/elpa2/compute_hh_trafo.X90 \
+                         @top_srcdir@/src/elpa2/compute_hh_trafo.F90 \
                          @top_srcdir@/src/elpa2/elpa2.F90 \
-                         @top_srcdir@/src/elpa2/elpa2_bandred_template.X90 \
+                         @top_srcdir@/src/elpa2/elpa2_bandred_template.F90 \
                          @top_srcdir@/src/elpa2/elpa2_compute.F90 \
-                         @top_srcdir@/src/elpa2/elpa2_compute_complex_template.X90 \
-                         @top_srcdir@/src/elpa2/elpa2_compute_real_template.X90 \
+                         @top_srcdir@/src/elpa2/elpa2_compute_complex_template.F90 \
+                         @top_srcdir@/src/elpa2/elpa2_compute_real_template.F90 \
                          @top_srcdir@/src/elpa2/elpa2_determine_workload.F90 \
-                         @top_srcdir@/src/elpa2/elpa2_herm_matrix_allreduce_complex_template.X90 \
+                         @top_srcdir@/src/elpa2/elpa2_herm_matrix_allreduce_complex_template.F90 \
                          @top_srcdir@/src/elpa2/elpa2_print_kernels.F90 \
-                         @top_srcdir@/src/elpa2/elpa2_symm_matrix_allreduce_real_template.X90 \
-                         @top_srcdir@/src/elpa2/elpa2_template.X90 \
-                         @top_srcdir@/src/elpa2/elpa2_trans_ev_band_to_full_template.X90 \
-                         @top_srcdir@/src/elpa2/elpa2_trans_ev_tridi_to_band_template.X90 \
-                         @top_srcdir@/src/elpa2/elpa2_tridiag_band_template.X90 \
+                         @top_srcdir@/src/elpa2/elpa2_symm_matrix_allreduce_real_template.F90 \
+                         @top_srcdir@/src/elpa2/elpa2_template.F90 \
+                         @top_srcdir@/src/elpa2/elpa2_trans_ev_band_to_full_template.F90 \
+                         @top_srcdir@/src/elpa2/elpa2_trans_ev_tridi_to_band_template.F90 \
+                         @top_srcdir@/src/elpa2/elpa2_tridiag_band_template.F90 \
                          @top_srcdir@/src/elpa2/kernels/asm_x86_64_double_precision.s \
                          @top_srcdir@/src/elpa2/kernels/asm_x86_64_single_precision.s \
                          @top_srcdir@/src/elpa2/kernels/complex.F90 \
@@ -946,7 +946,7 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
                          @top_srcdir@/src/elpa2/kernels/complex_sse_1hv_single_precision.c \
                          @top_srcdir@/src/elpa2/kernels/complex_sse_2hv_double_precision.c \
                          @top_srcdir@/src/elpa2/kernels/complex_sse_2hv_single_precision.c \
-                         @top_srcdir@/src/elpa2/kernels/complex_template.X90 \
+                         @top_srcdir@/src/elpa2/kernels/complex_template.F90 \
                          @top_srcdir@/src/elpa2/kernels/real.F90 \
                          @top_srcdir@/src/elpa2/kernels/real_avx-avx2_2hv_double_precision.c \
                          @top_srcdir@/src/elpa2/kernels/real_avx-avx2_2hv_single_precision.c \
@@ -969,34 +969,34 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
                          @top_srcdir@/src/elpa2/kernels/real_sse_4hv_single_precision.c \
                          @top_srcdir@/src/elpa2/kernels/real_sse_6hv_double_precision.c \
                          @top_srcdir@/src/elpa2/kernels/real_sse_6hv_single_precision.c \
-                         @top_srcdir@/src/elpa2/kernels/real_template.X90 \
-                         @top_srcdir@/src/elpa2/kernels/simple_template.X90 \
+                         @top_srcdir@/src/elpa2/kernels/real_template.F90 \
+                         @top_srcdir@/src/elpa2/kernels/simple_template.F90 \
                          @top_srcdir@/src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
                          @top_srcdir@/src/elpa2/legacy_interface/elpa2.F90 \
-                         @top_srcdir@/src/elpa2/legacy_interface/elpa2_c_interface_template.X90 \
-                         @top_srcdir@/src/elpa2/legacy_interface/elpa2_template.X90 \
+                         @top_srcdir@/src/elpa2/legacy_interface/elpa2_c_interface_template.F90 \
+                         @top_srcdir@/src/elpa2/legacy_interface/elpa2_template.F90 \
                          @top_srcdir@/src/elpa2/legacy_interface/elpa2_utilities.F90 \
                          @top_srcdir@/src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 \
                          @top_srcdir@/src/elpa2/mod_compute_hh_trafo.F90 \
                          @top_srcdir@/src/elpa2/mod_pack_unpack_cpu.F90 \
                          @top_srcdir@/src/elpa2/mod_pack_unpack_gpu.F90 \
                          @top_srcdir@/src/elpa2/mod_redist_band.F90 \
-                         @top_srcdir@/src/elpa2/pack_unpack_cpu.X90 \
-                         @top_srcdir@/src/elpa2/pack_unpack_gpu.X90 \
+                         @top_srcdir@/src/elpa2/pack_unpack_cpu.F90 \
+                         @top_srcdir@/src/elpa2/pack_unpack_gpu.F90 \
                          @top_srcdir@/src/elpa2/qr/elpa_pdgeqrf.F90 \
-                         @top_srcdir@/src/elpa2/qr/elpa_pdgeqrf_template.X90 \
+                         @top_srcdir@/src/elpa2/qr/elpa_pdgeqrf_template.F90 \
                          @top_srcdir@/src/elpa2/qr/elpa_pdlarfb.F90 \
-                         @top_srcdir@/src/elpa2/qr/elpa_pdlarfb_template.X90 \
+                         @top_srcdir@/src/elpa2/qr/elpa_pdlarfb_template.F90 \
                          @top_srcdir@/src/elpa2/qr/elpa_qrkernels.F90 \
-                         @top_srcdir@/src/elpa2/qr/elpa_qrkernels_template.X90 \
+                         @top_srcdir@/src/elpa2/qr/elpa_qrkernels_template.F90 \
                          @top_srcdir@/src/elpa2/qr/qr_utils.F90 \
-                         @top_srcdir@/src/elpa2/qr/qr_utils_template.X90 \
-                         @top_srcdir@/src/elpa2/redist_band.X90 \
+                         @top_srcdir@/src/elpa2/qr/qr_utils_template.F90 \
+                         @top_srcdir@/src/elpa2/redist_band.F90 \
                          @top_srcdir@/src/elpa_c_interface.c \
                          @top_srcdir@/src/elpa_constants.F90 \
                          @top_srcdir@/src/elpa_driver/legacy_interface/elpa.F90  \
                          @top_srcdir@/src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90  \
-                         @top_srcdir@/src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.X90 \
+                         @top_srcdir@/src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.F90 \
                          @top_srcdir@/src/elpa_generated_fortran_interfaces.F90 \
                          @top_srcdir@/src/elpa_impl.F90 \
                          @top_srcdir@/src/elpa_index.c \
@@ -1013,7 +1013,7 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
                          @top_srcdir@/src/ftimings/virtual_memory.c \
                          @top_srcdir@/src/general/elpa_utilities.F90 \
                          @top_srcdir@/src/general/precision_macros.h \
-                         @top_srcdir@/src/general/sanity.X90 \
+                         @top_srcdir@/src/general/sanity.F90 \
                          @top_srcdir@/src/helpers/aligned_mem.F90  \
                          @top_srcdir@/src/helpers/mod_mpi.F90 \
                          @top_srcdir@/src/helpers/mod_mpi_stubs.F90 \
@@ -1097,7 +1097,7 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
                          @top_srcdir@/test/Fortran/elpa2/single_real_2stage.F90 \
                          @top_srcdir@/test/Fortran/elpa2/single_real_2stage_banded.F90 \
                          @top_srcdir@/test/Fortran/elpa2/single_real_2stage_gpu.F90 \
-                         @top_srcdir@/test/Fortran/elpa_print_headers.X90 \
+                         @top_srcdir@/test/Fortran/elpa_print_headers.F90 \
                          @top_srcdir@/test/Fortran/elpa_tests.F90 \
                          @top_srcdir@/test/Fortran/test.F90 \
                          @top_srcdir@/test/TO_DO_AFTER_MERGE.TXT \
@@ -1105,12 +1105,12 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
                          @top_srcdir@/test/shared/call_elpa1.c \
                          @top_srcdir@/test/shared/call_elpa2.c \ \
                          @top_srcdir@/test/shared/check_correctness.F90 \
-                         @top_srcdir@/test/shared/check_correctness_template.X90 \
+                         @top_srcdir@/test/shared/check_correctness_template.F90 \
                          @top_srcdir@/test/shared/mod_assert.F90 \
                          @top_srcdir@/test/shared/mod_from_c.F90 \
                          @top_srcdir@/test/shared/mod_output_types.F90 \
                          @top_srcdir@/test/shared/prepare_matrix.F90 \
-                         @top_srcdir@/test/shared/prepare_matrix_template.X90 \
+                         @top_srcdir@/test/shared/prepare_matrix_template.F90 \
                          @top_srcdir@/test/shared/read_input_parameters.F90 \
                          @top_srcdir@/test/shared/redir.c \
                          @top_srcdir@/test/shared/redirect.F90 \
