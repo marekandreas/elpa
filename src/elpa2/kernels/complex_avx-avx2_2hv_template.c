@@ -4,15 +4,15 @@
 //    consisting of the following organizations:
 //
 //    - Max Planck Computing and Data Facility (MPCDF), formerly known as
-//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//	Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 //    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
-//      Informatik,
+//	Informatik,
 //    - Technische Universität München, Lehrstuhl für Informatik mit
-//      Schwerpunkt Wissenschaftliches Rechnen ,
+//	Schwerpunkt Wissenschaftliches Rechnen ,
 //    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
 //    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
-//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
-//      and
+//	Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//	and
 //    - IBM Deutschland GmbH
 //
 //    This particular source code file contains additions, changes and
@@ -33,7 +33,7 @@
 //    GNU Lesser General Public License for more details.
 //
 //    You should have received a copy of the GNU Lesser General Public License
-//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+//    along with ELPA.	If not, see <http://www.gnu.org/licenses/>
 //
 //    ELPA reflects a substantial effort on the part of the original
 //    ELPA consortium, and we ask you to respect the spirit of the
@@ -72,8 +72,6 @@
 #define offset 4
 #define __AVX_DATATYPE __m256d
 #define _AVX_LOAD _mm256_load_pd
-#define _AVX_LOADU _mm_loadu_pd
-#define _AVX_STOREU _mm_storeu_pd
 #define _AVX_STORE _mm256_store_pd
 #define _AVX_ADD _mm256_add_pd
 #define _AVX_MUL _mm256_mul_pd
@@ -108,8 +106,6 @@
 #define offset 8
 #define __AVX_DATATYPE __m256
 #define _AVX_LOAD _mm256_load_ps
-#define _AVX_LOADU _mm_loadu_ps
-#define _AVX_STOREU _mm_storeu_ps
 #define _AVX_STORE _mm256_store_ps
 #define _AVX_ADD _mm256_add_ps
 #define _AVX_MUL _mm256_mul_ps
@@ -159,12 +155,12 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv_single(float complex
 !f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
 !f> interface
 !f>   subroutine double_hh_trafo_complex_avx_avx2_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
-!f>                             bind(C, name="double_hh_trafo_complex_avx_avx2_2hv_double")
-!f>     use, intrinsic :: iso_c_binding
-!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
-!f>     ! complex(kind=c_double_complex)     :: q(*)
-!f>     type(c_ptr), value                   :: q
-!f>     complex(kind=c_double_complex)     :: hh(pnb,2)
+!f>				bind(C, name="double_hh_trafo_complex_avx_avx2_2hv_double")
+!f>	use, intrinsic :: iso_c_binding
+!f>	integer(kind=c_int)	:: pnb, pnq, pldq, pldh
+!f>	! complex(kind=c_double_complex)     :: q(*)
+!f>	type(c_ptr), value		     :: q
+!f>	complex(kind=c_double_complex)	   :: hh(pnb,2)
 !f>   end subroutine
 !f> end interface
 !f>#endif
@@ -175,12 +171,12 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv_single(float complex
 !f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
 !f> interface
 !f>   subroutine double_hh_trafo_complex_avx_avx2_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
-!f>                             bind(C, name="double_hh_trafo_complex_avx_avx2_2hv_single")
-!f>     use, intrinsic :: iso_c_binding
-!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
-!f>     ! complex(kind=c_float_complex)   :: q(*)
-!f>     type(c_ptr), value                :: q
-!f>     complex(kind=c_float_complex)   :: hh(pnb,2)
+!f>				bind(C, name="double_hh_trafo_complex_avx_avx2_2hv_single")
+!f>	use, intrinsic :: iso_c_binding
+!f>	integer(kind=c_int)	:: pnb, pnq, pldq, pldh
+!f>	! complex(kind=c_float_complex)   :: q(*)
+!f>	type(c_ptr), value		  :: q
+!f>	complex(kind=c_float_complex)	:: hh(pnb,2)
 !f>   end subroutine
 !f> end interface
 !f>#endif
@@ -230,48 +226,48 @@ void double_hh_trafo_complex_avx_avx2_2hv_single(float complex* q, float complex
 	}
 #endif
 	if (nq-i == 0) {
-          return;
+	  return;
 	}
 #ifdef DOUBLE_PRECISION_COMPLEX
-        if (nq-i == 6) {
+	if (nq-i == 6) {
 		hh_trafo_complex_kernel_6_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 		worked_on += 6;
-        }
+	}
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-        if (nq-i == 12) {
+	if (nq-i == 12) {
 		hh_trafo_complex_kernel_12_AVX_2hv_single(&q[i], hh, nb, ldq, ldh, s, s);
 		worked_on += 12;
-        }
+	}
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-        if (nq-i == 4) {
+	if (nq-i == 4) {
 		hh_trafo_complex_kernel_4_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 		worked_on += 4;
-        }
+	}
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-        if (nq-i == 8) {
+	if (nq-i == 8) {
 		hh_trafo_complex_kernel_8_AVX_2hv_single(&q[i], hh, nb, ldq, ldh, s, s);
 		worked_on += 8;
-        }
+	}
 #endif
 #ifdef DOUBLE_PRECISION_COMPLEX
-        if (nq-i == 2) {
+	if (nq-i == 2) {
 		hh_trafo_complex_kernel_2_AVX_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 		worked_on += 2;
 	}
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-        if (nq-i == 4) {
+	if (nq-i == 4) {
 		hh_trafo_complex_kernel_4_AVX_2hv_single(&q[i], hh, nb, ldq, ldh, s, s);
 		worked_on += 4;
 	}
 #endif
 	if (worked_on != nq) {
-         printf("Error in complex avx-avx2 BLOCK 2 kernel \n");
-	 abort();
+		printf("Error in complex avx-avx2 BLOCK 2 kernel \n");
+		abort();
 	}
 }
 
@@ -356,7 +352,7 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX_2hv_single(float comple
 		q3 = _AVX_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
 		q4 = _AVX_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
 
-                h1_real = _AVX_BROADCAST(&hh_dbl[(i-1)*2]);
+		h1_real = _AVX_BROADCAST(&hh_dbl[(i-1)*2]);
 		h1_imag = _AVX_BROADCAST(&hh_dbl[((i-1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
 		// conjugate
@@ -503,12 +499,11 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX_2hv_single(float comple
 	h2_imag = _AVX_XOR(h2_imag, sign);
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	__m128d tmp_s_128 = _AVX_LOADU(s_dbl);
-	tmp2 = _mm256_broadcast_pd(&tmp_s_128);
+	tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-        __m128 tmp_s_128 =  _AVX_LOADU(s_dbl);
-	tmp2 = _mm256_broadcast_ps(&tmp_s_128);
+	tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
 
 	tmp1 = _AVX_MUL(h2_imag, tmp2);
@@ -518,9 +513,8 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX_2hv_single(float comple
 	tmp2 = _AVX_ADDSUB( _AVX_MUL(h2_real, tmp2), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 
-	_AVX_STOREU(s_dbl, _CAST(tmp2));
-	h2_real = _AVX_SET1(s_dbl[0]);
-	h2_imag = _AVX_SET1(s_dbl[1]);
+	h2_real = _AVX_SET1(tmp2[0]);
+	h2_imag = _AVX_SET1(tmp2[1]);
 
 	tmp1 = _AVX_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -934,23 +928,21 @@ static __forceinline void hh_trafo_complex_kernel_12_AVX_2hv_single(float comple
 	h2_imag = _AVX_XOR(h2_imag, sign);
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	__m128d tmp_s_128 = _AVX_LOADU(s_dbl);
-	tmp2 = _mm256_broadcast_pd(&tmp_s_128);
+	tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
 
-#ifdef SINGLE_PRECISION_COMPLEX
-	__m128 tmp_s_128 = _AVX_LOADU(s_dbl);
-	tmp2 = _mm256_broadcast_ps(&tmp_s_128);
-#endif
 	tmp1 = _AVX_MUL(h2_imag, tmp2);
 #ifdef __ELPA_USE_FMA__
 	tmp2 = _AVX_FMADDSUB(h2_real, tmp2, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
 	tmp2 = _AVX_ADDSUB( _AVX_MUL(h2_real, tmp2), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-	_AVX_STOREU(s_dbl, _CAST(tmp2));
-	h2_real = _AVX_SET1(s_dbl[0]);
-	h2_imag = _AVX_SET1(s_dbl[1]);
+	h2_real = _AVX_SET1(tmp2[0]);
+	h2_imag = _AVX_SET1(tmp2[1]);
 
 	tmp1 = _AVX_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -1283,12 +1275,11 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv_single(float complex
 	h2_imag = _AVX_XOR(h2_imag, sign);
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	__m128d tmp_s_128 = _AVX_LOADU(s_dbl);
-	tmp2 = _mm256_broadcast_pd(&tmp_s_128);
+	tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	__m128 tmp_s_128 = _AVX_LOADU(s_dbl);
-	tmp2 = _mm256_broadcast_ps(&tmp_s_128);
+	tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
 
 	tmp1 = _AVX_MUL(h2_imag, tmp2);
@@ -1297,9 +1288,8 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX_2hv_single(float complex
 #else
 	tmp2 = _AVX_ADDSUB( _AVX_MUL(h2_real, tmp2), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-	_AVX_STOREU(s_dbl, _CAST(tmp2));
-	h2_real = _AVX_SET1(s_dbl[0]);
-	h2_imag = _AVX_SET1(s_dbl[1]);
+	h2_real = _AVX_SET1(tmp2[0]);
+	h2_imag = _AVX_SET1(tmp2[1]);
 
 	tmp1 = _AVX_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -1547,13 +1537,13 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv_single(float complex
 	h2_real = _AVX_XOR(h2_real, sign);
 	h2_imag = _AVX_XOR(h2_imag, sign);
 
+	__AVX_DATATYPE tmp2;
 #ifdef DOUBLE_PRECISION_COMPLEX
-	__m128d tmp_s_128 = _AVX_LOADU(s_dbl);
-	__AVX_DATATYPE tmp2 = _mm256_broadcast_pd(&tmp_s_128);
+	tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	__m128 tmp_s_128 = _AVX_LOADU(s_dbl);
-	__AVX_DATATYPE tmp2 = _mm256_broadcast_ps(&tmp_s_128);
+	tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
+			     s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
 	tmp1 = _AVX_MUL(h2_imag, tmp2);
 #ifdef __ELPA_USE_FMA__
@@ -1561,9 +1551,8 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_2hv_single(float complex
 #else
 	tmp2 = _AVX_ADDSUB( _AVX_MUL(h2_real, tmp2), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-	_AVX_STOREU(s_dbl, _CAST(tmp2));
-	h2_real = _AVX_SET1(s_dbl[0]);
-	h2_imag = _AVX_SET1(s_dbl[1]);
+	h2_real = _AVX_SET1(tmp2[0]);
+	h2_imag = _AVX_SET1(tmp2[1]);
 
 	tmp1 = _AVX_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__

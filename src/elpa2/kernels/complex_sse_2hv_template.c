@@ -63,6 +63,7 @@
 
 #include <complex.h>
 #include <x86intrin.h>
+#include <pmmintrin.h>
 
 #define __forceinline __attribute__((always_inline))
 
@@ -155,31 +156,31 @@ void double_hh_trafo_complex_sse_2hv_double(double complex* q, double complex* h
 void double_hh_trafo_complex_sse_2hv_single(float complex* q, float complex* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 #endif
 {
-	int i;
-	int nb = *pnb;
-	int nq = *pldq;
-	int ldq = *pldq;
-	int ldh = *pldh;
+        int i;
+        int nb = *pnb;
+        int nq = *pldq;
+        int ldq = *pldq;
+        int ldh = *pldh;
 #ifdef DOUBLE_PRECISION_COMPLEX
-	double complex s = conj(hh[(ldh)+1])*1.0;
+        double complex s = conj(hh[(ldh)+1])*1.0;
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	float complex s = conj(hh[(ldh)+1])*1.0f;
+        float complex s = conj(hh[(ldh)+1])*1.0f;
 #endif
-	for (i = 2; i < nb; i++)
-	{
-		s += hh[i-1] * conj(hh[(i+ldh)]);
-	}
+        for (i = 2; i < nb; i++)
+        {
+                s += hh[i-1] * conj(hh[(i+ldh)]);
+        }
 
-	for (i = 0; i < nq; i+=4)
-	{
+        for (i = 0; i < nq; i+=4)
+        {
 #ifdef DOUBLE_PRECISION_COMPLEX
-		hh_trafo_complex_kernel_4_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+                hh_trafo_complex_kernel_4_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-		hh_trafo_complex_kernel_4_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s, s);
+                hh_trafo_complex_kernel_4_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s, s);
 #endif
-	}
+        }
 }
 #ifdef DOUBLE_PRECISION_COMPLEX
 static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
@@ -189,590 +190,587 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_single(float complex
 #endif
 {
 #ifdef DOUBLE_PRECISION_COMPLEX
-	double* q_dbl = (double*)q;
-	double* hh_dbl = (double*)hh;
-	double* s_dbl = (double*)(&s);
+        double* q_dbl = (double*)q;
+        double* hh_dbl = (double*)hh;
+        double* s_dbl = (double*)(&s);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	float* q_dbl = (float*)q;
-	float* hh_dbl = (float*)hh;
-	float* s_dbl = (float*)(&s);
+        float* q_dbl = (float*)q;
+        float* hh_dbl = (float*)hh;
+        float* s_dbl = (float*)(&s);
 #endif
-	__SSE_DATATYPE x1, x2, x3, x4;
-	__SSE_DATATYPE y1, y2, y3, y4;
-	__SSE_DATATYPE q1, q2, q3, q4;
-	__SSE_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
-	__SSE_DATATYPE tmp1, tmp2, tmp3, tmp4;
-	int i=0;
+        __SSE_DATATYPE x1, x2, x3, x4;
+        __SSE_DATATYPE y1, y2, y3, y4;
+        __SSE_DATATYPE q1, q2, q3, q4;
+        __SSE_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
+        __SSE_DATATYPE tmp1, tmp2, tmp3, tmp4;
+        int i=0;
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+        __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000);
+        __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
 
-	x1 = _SSE_LOAD(&q_dbl[(2*ldq)+0]);
-	x2 = _SSE_LOAD(&q_dbl[(2*ldq)+offset]);
+        x1 = _SSE_LOAD(&q_dbl[(2*ldq)+0]);
+        x2 = _SSE_LOAD(&q_dbl[(2*ldq)+offset]);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	x3 = _SSE_LOAD(&q_dbl[(2*ldq)+2*offset]);
-	x4 = _SSE_LOAD(&q_dbl[(2*ldq)+3*offset]);
+        x3 = _SSE_LOAD(&q_dbl[(2*ldq)+2*offset]);
+        x4 = _SSE_LOAD(&q_dbl[(2*ldq)+3*offset]);
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
-	h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
+        h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
+        h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
 #endif
 
 #ifndef __ELPA_USE_FMA__
-	// conjugate
-	h2_imag = _SSE_XOR(h2_imag, sign);
+        // conjugate
+        h2_imag = _SSE_XOR(h2_imag, sign);
 #endif
 
-	y1 = _SSE_LOAD(&q_dbl[0]);
-	y2 = _SSE_LOAD(&q_dbl[offset]);
+        y1 = _SSE_LOAD(&q_dbl[0]);
+        y2 = _SSE_LOAD(&q_dbl[offset]);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	y3 = _SSE_LOAD(&q_dbl[2*offset]);
-	y4 = _SSE_LOAD(&q_dbl[3*offset]);
+        y3 = _SSE_LOAD(&q_dbl[2*offset]);
+        y4 = _SSE_LOAD(&q_dbl[3*offset]);
 #endif
 
-	tmp1 = _SSE_MUL(h2_imag, x1);
+        tmp1 = _SSE_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h2_imag, x2);
+        tmp2 = _SSE_MUL(h2_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	tmp3 = _SSE_MUL(h2_imag, x3);
+        tmp3 = _SSE_MUL(h2_imag, x3);
 #ifdef __ELPA_USE_FMA__
-	y3 = _SSE_ADD(y3, _mm_msubadd_pd(h2_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADD(y3, _mm_msubadd_pd(h2_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-	tmp4 = _SSE_MUL(h2_imag, x4);
+        tmp4 = _SSE_MUL(h2_imag, x4);
 #ifdef __ELPA_USE_FMA__
-	y4 = _SSE_ADD(y4, _mm_msubadd_pd(h2_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        y4 = _SSE_ADD(y4, _mm_msubadd_pd(h2_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-	y4 = _SSE_ADD(y4, _SSE_ADDSUB( _SSE_MUL(h2_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        y4 = _SSE_ADD(y4, _SSE_ADDSUB( _SSE_MUL(h2_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
-	for (i = 2; i < nb; i++)
-	{
-		q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
-		q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+offset]);
+        for (i = 2; i < nb; i++)
+        {
+                q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+                q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+offset]);
 #ifdef DOUBLE_PRECISION_COMPLEX
-		q3 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
-		q4 = _SSE_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
+                q3 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+                q4 = _SSE_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
-		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+                h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+                h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-		h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-1)*2]) )));
-		h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-1)*2)+1]) )));
+                h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-1)*2]) )));
+                h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-1)*2)+1]) )));
 #endif
 
 #ifndef __ELPA_USE_FMA__
-		// conjugate
-		h1_imag = _SSE_XOR(h1_imag, sign);
+                // conjugate
+                h1_imag = _SSE_XOR(h1_imag, sign);
 #endif
 
-		tmp1 = _SSE_MUL(h1_imag, q1);
+                tmp1 = _SSE_MUL(h1_imag, q1);
 #ifdef __ELPA_USE_FMA__
-		x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h1_imag, q2);
+                tmp2 = _SSE_MUL(h1_imag, q2);
 #ifdef __ELPA_USE_FMA__
-		x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-		tmp3 = _SSE_MUL(h1_imag, q3);
+                tmp3 = _SSE_MUL(h1_imag, q3);
 #ifdef __ELPA_USE_FMA__
-		x3 = _SSE_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                x3 = _SSE_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-		x3 = _SSE_ADD(x3, _SSE_ADDSUB( _SSE_MUL(h1_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                x3 = _SSE_ADD(x3, _SSE_ADDSUB( _SSE_MUL(h1_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-		tmp4 = _SSE_MUL(h1_imag, q4);
+                tmp4 = _SSE_MUL(h1_imag, q4);
 #ifdef __ELPA_USE_FMA__
-		x4 = _SSE_ADD(x4, _mm_msubadd_pd(h1_real, q4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+                x4 = _SSE_ADD(x4, _mm_msubadd_pd(h1_real, q4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-		x4 = _SSE_ADD(x4, _SSE_ADDSUB( _SSE_MUL(h1_real, q4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+                x4 = _SSE_ADD(x4, _SSE_ADDSUB( _SSE_MUL(h1_real, q4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
-		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+                h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-		h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
-		h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
+                h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
+                h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
 #endif
 
 #ifndef __ELPA_USE_FMA__
-		// conjugate
-		h2_imag = _SSE_XOR(h2_imag, sign);
+                // conjugate
+                h2_imag = _SSE_XOR(h2_imag, sign);
 #endif
 
-		tmp1 = _SSE_MUL(h2_imag, q1);
+                tmp1 = _SSE_MUL(h2_imag, q1);
 #ifdef __ELPA_USE_FMA__
-		y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h2_imag, q2);
+                tmp2 = _SSE_MUL(h2_imag, q2);
 #ifdef __ELPA_USE_FMA__
-		y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-		tmp3 = _SSE_MUL(h2_imag, q3);
+                tmp3 = _SSE_MUL(h2_imag, q3);
 #ifdef __ELPA_USE_FMA__
-		y3 = _SSE_ADD(y3, _mm_msubadd_pd(h2_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                y3 = _SSE_ADD(y3, _mm_msubadd_pd(h2_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-		y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-		tmp4 = _SSE_MUL(h2_imag, q4);
+                tmp4 = _SSE_MUL(h2_imag, q4);
 #ifdef __ELPA_USE_FMA__
-		y4 = _SSE_ADD(y4, _mm_msubadd_pd(h2_real, q4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+                y4 = _SSE_ADD(y4, _mm_msubadd_pd(h2_real, q4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-		y4 = _SSE_ADD(y4, _SSE_ADDSUB( _SSE_MUL(h2_real, q4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+                y4 = _SSE_ADD(y4, _SSE_ADDSUB( _SSE_MUL(h2_real, q4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
-	}
+        }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
-	h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
+        h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
+        h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
 #endif
 
 #ifndef __ELPA_USE_FMA__
-	// conjugate
-	h1_imag = _SSE_XOR(h1_imag, sign);
+        // conjugate
+        h1_imag = _SSE_XOR(h1_imag, sign);
 #endif
 
-	q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+offset]);
+        q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+offset]);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	q3 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
-	q4 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+3*offset]);
+        q3 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
+        q4 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+3*offset]);
 #endif
 
-	tmp1 = _SSE_MUL(h1_imag, q1);
+        tmp1 = _SSE_MUL(h1_imag, q1);
 #ifdef __ELPA_USE_FMA__
-	x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h1_imag, q2);
+        tmp2 = _SSE_MUL(h1_imag, q2);
 #ifdef __ELPA_USE_FMA__
-	x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	tmp3 = _SSE_MUL(h1_imag, q3);
+        tmp3 = _SSE_MUL(h1_imag, q3);
 #ifdef __ELPA_USE_FMA__
-	x3 = _SSE_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        x3 = _SSE_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	x3 = _SSE_ADD(x3, _SSE_ADDSUB( _SSE_MUL(h1_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        x3 = _SSE_ADD(x3, _SSE_ADDSUB( _SSE_MUL(h1_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-	tmp4 = _SSE_MUL(h1_imag, q4);
+        tmp4 = _SSE_MUL(h1_imag, q4);
 #ifdef __ELPA_USE_FMA__
-	x4 = _SSE_ADD(x4, _mm_msubadd_pd(h1_real, q4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        x4 = _SSE_ADD(x4, _mm_msubadd_pd(h1_real, q4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-	x4 = _SSE_ADD(x4, _SSE_ADDSUB( _SSE_MUL(h1_real, q4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        x4 = _SSE_ADD(x4, _SSE_ADDSUB( _SSE_MUL(h1_real, q4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[0]) )));
-	h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[1]) )));
+        h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[0]) )));
+        h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[1]) )));
 #endif
 
-	h1_real = _SSE_XOR(h1_real, sign);
-	h1_imag = _SSE_XOR(h1_imag, sign);
+        h1_real = _SSE_XOR(h1_real, sign);
+        h1_imag = _SSE_XOR(h1_imag, sign);
 
-	tmp1 = _SSE_MUL(h1_imag, x1);
+        tmp1 = _SSE_MUL(h1_imag, x1);
 
 #ifdef __ELPA_USE_FMA__
-	x1 = _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        x1 = _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-	x1 = _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        x1 = _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-	tmp2 = _SSE_MUL(h1_imag, x2);
+        tmp2 = _SSE_MUL(h1_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	x2 = _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+        x2 = _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
 #else
-	x2 = _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+        x2 = _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	tmp3 = _SSE_MUL(h1_imag, x3);
+        tmp3 = _SSE_MUL(h1_imag, x3);
 #ifdef __ELPA_USE_FMA__
-	x3 = _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+        x3 = _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
 #else
-	x3 = _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+        x3 = _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
 #endif
-	tmp4 = _SSE_MUL(h1_imag, x4);
+        tmp4 = _SSE_MUL(h1_imag, x4);
 #ifdef __ELPA_USE_FMA__
-	x4 = _mm_maddsub_pd(h1_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+        x4 = _mm_maddsub_pd(h1_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE));
 #else
-	x4 = _SSE_ADDSUB( _SSE_MUL(h1_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+        x4 = _SSE_ADDSUB( _SSE_MUL(h1_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
-	h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
+        h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
+        h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
-	h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
+        h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
+        h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
 #endif
 
-	h1_real = _SSE_XOR(h1_real, sign);
-	h1_imag = _SSE_XOR(h1_imag, sign);
-	h2_real = _SSE_XOR(h2_real, sign);
-	h2_imag = _SSE_XOR(h2_imag, sign);
+        h1_real = _SSE_XOR(h1_real, sign);
+        h1_imag = _SSE_XOR(h1_imag, sign);
+        h2_real = _SSE_XOR(h2_real, sign);
+        h2_imag = _SSE_XOR(h2_imag, sign);
 
-	tmp2 = _SSE_LOADU(s_dbl);
-	tmp1 = _SSE_MUL(h2_imag, tmp2);
-
-#ifdef __ELPA_USE_FMA__
-	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#else
-	tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#endif
-
-	_SSE_STOREU(s_dbl, tmp2);
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-        h2_real = _mm_set1_pd(s_dbl[0]);
-        h2_imag = _mm_set1_pd(s_dbl[1]);
-	// h2_real = _mm_loaddup_pd(&s_dbl[0]);
-	// h2_imag = _mm_loaddup_pd(&s_dbl[1]);
-#endif
 #ifdef SINGLE_PRECISION_COMPLEX
-        h2_real = _mm_set1_ps(s_dbl[0]);
-        h2_imag = _mm_set1_ps(s_dbl[1]);
-
-	// h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&s_dbl[0]) )));
-	// h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&s_dbl[1]) )));
-#endif
-
-	tmp1 = _SSE_MUL(h1_imag, y1);
-#ifdef __ELPA_USE_FMA__
-	y1 = _mm_maddsub_pd(h1_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        tmp2 = _mm_castpd_ps(_mm_load_pd1((double *) s_dbl));
 #else
-	y1 = _SSE_ADDSUB( _SSE_MUL(h1_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        tmp2 = _SSE_LOADU(s_dbl);
 #endif
-	tmp2 = _SSE_MUL(h1_imag, y2);
+        tmp1 = _SSE_MUL(h2_imag, tmp2);
+
 #ifdef __ELPA_USE_FMA__
-	y2 = _mm_maddsub_pd(h1_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+        tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-	y2 = _SSE_ADDSUB( _SSE_MUL(h1_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+        tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	tmp3 = _SSE_MUL(h1_imag, y3);
-#ifdef __ELPA_USE_FMA__
-	y3 = _mm_maddsub_pd(h1_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
-#else
-	y3 = _SSE_ADDSUB( _SSE_MUL(h1_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+        h2_real = _mm_movedup_pd(tmp2);
+        h2_imag = _mm_set1_pd(tmp2[1]);
 #endif
-	tmp4 = _SSE_MUL(h1_imag, y4);
+#ifdef SINGLE_PRECISION_COMPLEX
+        h2_real = _mm_moveldup_ps(tmp2);
+        h2_imag = _mm_movehdup_ps(tmp2);
+#endif
+
+        tmp1 = _SSE_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
-	y4 = _mm_maddsub_pd(h1_real, y4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+        y1 = _mm_maddsub_pd(h1_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-	y4 = _SSE_ADDSUB( _SSE_MUL(h1_real, y4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+        y1 = _SSE_ADDSUB( _SSE_MUL(h1_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+        tmp2 = _SSE_MUL(h1_imag, y2);
+#ifdef __ELPA_USE_FMA__
+        y2 = _mm_maddsub_pd(h1_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#else
+        y2 = _SSE_ADDSUB( _SSE_MUL(h1_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+        tmp3 = _SSE_MUL(h1_imag, y3);
+#ifdef __ELPA_USE_FMA__
+        y3 = _mm_maddsub_pd(h1_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#else
+        y3 = _SSE_ADDSUB( _SSE_MUL(h1_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#endif
+        tmp4 = _SSE_MUL(h1_imag, y4);
+#ifdef __ELPA_USE_FMA__
+        y4 = _mm_maddsub_pd(h1_real, y4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+#else
+        y4 = _SSE_ADDSUB( _SSE_MUL(h1_real, y4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
-	tmp1 = _SSE_MUL(h2_imag, x1);
+        tmp1 = _SSE_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	y1 = _SSE_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h2_imag, x2);
+        tmp2 = _SSE_MUL(h2_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	y2 = _SSE_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	tmp3 = _SSE_MUL(h2_imag, x3);
+        tmp3 = _SSE_MUL(h2_imag, x3);
 #ifdef __ELPA_USE_FMA__
-	y3 = _SSE_ADD(y3, _mm_maddsub_pd(h2_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADD(y3, _mm_maddsub_pd(h2_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-	tmp4 = _SSE_MUL(h2_imag, x4);
+        tmp4 = _SSE_MUL(h2_imag, x4);
 #ifdef __ELPA_USE_FMA__
-	y4 = _SSE_ADD(y4, _mm_maddsub_pd(h2_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        y4 = _SSE_ADD(y4, _mm_maddsub_pd(h2_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-	y4 = _SSE_ADD(y4, _SSE_ADDSUB( _SSE_MUL(h2_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        y4 = _SSE_ADD(y4, _SSE_ADDSUB( _SSE_MUL(h2_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
-	q1 = _SSE_LOAD(&q_dbl[0]);
-	q2 = _SSE_LOAD(&q_dbl[offset]);
+        q1 = _SSE_LOAD(&q_dbl[0]);
+        q2 = _SSE_LOAD(&q_dbl[offset]);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	q3 = _SSE_LOAD(&q_dbl[2*offset]);
-	q4 = _SSE_LOAD(&q_dbl[3*offset]);
+        q3 = _SSE_LOAD(&q_dbl[2*offset]);
+        q4 = _SSE_LOAD(&q_dbl[3*offset]);
 #endif
-	q1 = _SSE_ADD(q1, y1);
-	q2 = _SSE_ADD(q2, y2);
+        q1 = _SSE_ADD(q1, y1);
+        q2 = _SSE_ADD(q2, y2);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	q3 = _SSE_ADD(q3, y3);
-	q4 = _SSE_ADD(q4, y4);
+        q3 = _SSE_ADD(q3, y3);
+        q4 = _SSE_ADD(q4, y4);
 #endif
-	_SSE_STORE(&q_dbl[0], q1);
-	_SSE_STORE(&q_dbl[offset], q2);
+        _SSE_STORE(&q_dbl[0], q1);
+        _SSE_STORE(&q_dbl[offset], q2);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	_SSE_STORE(&q_dbl[2*offset], q3);
-	_SSE_STORE(&q_dbl[3*offset], q4);
+        _SSE_STORE(&q_dbl[2*offset], q3);
+        _SSE_STORE(&q_dbl[3*offset], q4);
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
-	h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
+        h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
+        h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
 #endif
 
-	q1 = _SSE_LOAD(&q_dbl[(ldq*2)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(ldq*2)+offset]);
+        q1 = _SSE_LOAD(&q_dbl[(ldq*2)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(ldq*2)+offset]);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	q3 = _SSE_LOAD(&q_dbl[(ldq*2)+2*offset]);
-	q4 = _SSE_LOAD(&q_dbl[(ldq*2)+3*offset]);
+        q3 = _SSE_LOAD(&q_dbl[(ldq*2)+2*offset]);
+        q4 = _SSE_LOAD(&q_dbl[(ldq*2)+3*offset]);
 #endif
-	q1 = _SSE_ADD(q1, x1);
-	q2 = _SSE_ADD(q2, x2);
+        q1 = _SSE_ADD(q1, x1);
+        q2 = _SSE_ADD(q2, x2);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	q3 = _SSE_ADD(q3, x3);
-	q4 = _SSE_ADD(q4, x4);
+        q3 = _SSE_ADD(q3, x3);
+        q4 = _SSE_ADD(q4, x4);
 #endif
-	tmp1 = _SSE_MUL(h2_imag, y1);
+        tmp1 = _SSE_MUL(h2_imag, y1);
 
 #ifdef __ELPA_USE_FMA__
-	q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h2_imag, y2);
+        tmp2 = _SSE_MUL(h2_imag, y2);
 #ifdef __ELPA_USE_FMA__
-	q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	tmp3 = _SSE_MUL(h2_imag, y3);
+        tmp3 = _SSE_MUL(h2_imag, y3);
 #ifdef __ELPA_USE_FMA__
-	q3 = _SSE_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        q3 = _SSE_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h2_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h2_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-	tmp4 = _SSE_MUL(h2_imag, y4);
+        tmp4 = _SSE_MUL(h2_imag, y4);
 #ifdef __ELPA_USE_FMA__
-	q4 = _SSE_ADD(q4, _mm_maddsub_pd(h2_real, y4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        q4 = _SSE_ADD(q4, _mm_maddsub_pd(h2_real, y4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-	q4 = _SSE_ADD(q4, _SSE_ADDSUB( _SSE_MUL(h2_real, y4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        q4 = _SSE_ADD(q4, _SSE_ADDSUB( _SSE_MUL(h2_real, y4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
-	_SSE_STORE(&q_dbl[(ldq*2)+0], q1);
-	_SSE_STORE(&q_dbl[(ldq*2)+offset], q2);
+        _SSE_STORE(&q_dbl[(ldq*2)+0], q1);
+        _SSE_STORE(&q_dbl[(ldq*2)+offset], q2);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	_SSE_STORE(&q_dbl[(ldq*2)+2*offset], q3);
-	_SSE_STORE(&q_dbl[(ldq*2)+3*offset], q4);
+        _SSE_STORE(&q_dbl[(ldq*2)+2*offset], q3);
+        _SSE_STORE(&q_dbl[(ldq*2)+3*offset], q4);
 #endif
 
-	for (i = 2; i < nb; i++)
-	{
-		q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
-		q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+offset]);
+        for (i = 2; i < nb; i++)
+        {
+                q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+                q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+offset]);
 #ifdef DOUBLE_PRECISION_COMPLEX
-		q3 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
-		q4 = _SSE_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
+                q3 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+                q4 = _SSE_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
 #endif
 #ifdef DOUBLE_PRECISION_COMPLEX
-		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
-		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+                h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+                h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-		h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-1)*2]) )));
-		h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-1)*2)+1]) )));
+                h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-1)*2]) )));
+                h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-1)*2)+1]) )));
 #endif
 
-		tmp1 = _SSE_MUL(h1_imag, x1);
+                tmp1 = _SSE_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-		q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h1_imag, x2);
+                tmp2 = _SSE_MUL(h1_imag, x2);
 #ifdef __ELPA_USE_FMA__
-		q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-		tmp3 = _SSE_MUL(h1_imag, x3);
+                tmp3 = _SSE_MUL(h1_imag, x3);
 #ifdef __ELPA_USE_FMA__
-		q3 = _SSE_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                q3 = _SSE_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-		q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-		tmp4 = _SSE_MUL(h1_imag, x4);
+                tmp4 = _SSE_MUL(h1_imag, x4);
 #ifdef __ELPA_USE_FMA__
-		q4 = _SSE_ADD(q4, _mm_maddsub_pd(h1_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+                q4 = _SSE_ADD(q4, _mm_maddsub_pd(h1_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-		q4 = _SSE_ADD(q4, _SSE_ADDSUB( _SSE_MUL(h1_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+                q4 = _SSE_ADD(q4, _SSE_ADDSUB( _SSE_MUL(h1_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
-		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+                h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-		h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
-		h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
+                h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
+                h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
 #endif
 
-		tmp1 = _SSE_MUL(h2_imag, y1);
+                tmp1 = _SSE_MUL(h2_imag, y1);
 #ifdef __ELPA_USE_FMA__
-		q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h2_imag, y2);
+                tmp2 = _SSE_MUL(h2_imag, y2);
 #ifdef __ELPA_USE_FMA__
-		q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-		tmp3 = _SSE_MUL(h2_imag, y3);
+                tmp3 = _SSE_MUL(h2_imag, y3);
 #ifdef __ELPA_USE_FMA__
-		q3 = _SSE_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                q3 = _SSE_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-		q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h2_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h2_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-		tmp4 = _SSE_MUL(h2_imag, y4);
+                tmp4 = _SSE_MUL(h2_imag, y4);
 #ifdef __ELPA_USE_FMA__
-		q4 = _SSE_ADD(q4, _mm_maddsub_pd(h2_real, y4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+                q4 = _SSE_ADD(q4, _mm_maddsub_pd(h2_real, y4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-		q4 = _SSE_ADD(q4, _SSE_ADDSUB( _SSE_MUL(h2_real, y4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+                q4 = _SSE_ADD(q4, _SSE_ADDSUB( _SSE_MUL(h2_real, y4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
-		_SSE_STORE(&q_dbl[(2*i*ldq)+0], q1);
-		_SSE_STORE(&q_dbl[(2*i*ldq)+offset], q2);
+                _SSE_STORE(&q_dbl[(2*i*ldq)+0], q1);
+                _SSE_STORE(&q_dbl[(2*i*ldq)+offset], q2);
 #ifdef DOUBLE_PRECISION_COMPLEX
-		_SSE_STORE(&q_dbl[(2*i*ldq)+2*offset], q3);
-		_SSE_STORE(&q_dbl[(2*i*ldq)+3*offset], q4);
+                _SSE_STORE(&q_dbl[(2*i*ldq)+2*offset], q3);
+                _SSE_STORE(&q_dbl[(2*i*ldq)+3*offset], q4);
 #endif
-	}
+        }
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-	h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
-	h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
+        h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
+        h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
 #endif
 
 
-	q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+offset]);
+        q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+offset]);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	q3 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
-	q4 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+3*offset]);
+        q3 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
+        q4 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+3*offset]);
 #endif
 
-	tmp1 = _SSE_MUL(h1_imag, x1);
+        tmp1 = _SSE_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h1_imag, x2);
+        tmp2 = _SSE_MUL(h1_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-	tmp3 = _SSE_MUL(h1_imag, x3);
+        tmp3 = _SSE_MUL(h1_imag, x3);
 #ifdef __ELPA_USE_FMA__
-	q3 = _SSE_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        q3 = _SSE_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-	tmp4 = _SSE_MUL(h1_imag, x4);
+        tmp4 = _SSE_MUL(h1_imag, x4);
 #ifdef __ELPA_USE_FMA__
-	q4 = _SSE_ADD(q4, _mm_maddsub_pd(h1_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        q4 = _SSE_ADD(q4, _mm_maddsub_pd(h1_real, x4, _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #else
-	q4 = _SSE_ADD(q4, _SSE_ADDSUB( _SSE_MUL(h1_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+        q4 = _SSE_ADD(q4, _SSE_ADDSUB( _SSE_MUL(h1_real, x4), _SSE_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
 #endif
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
 
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+0], q1);
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+offset], q2);
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+0], q1);
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+offset], q2);
 #ifdef DOUBLE_PRECISION_COMPLEX
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+2*offset], q3);
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+3*offset], q4);
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+2*offset], q3);
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+3*offset], q4);
 #endif
 }
 
@@ -780,358 +778,358 @@ static __forceinline void hh_trafo_complex_kernel_4_SSE_2hv_single(float complex
 
 static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
 {
-	double* q_dbl = (double*)q;
-	double* hh_dbl = (double*)hh;
-	double* s_dbl = (double*)(&s);
+        double* q_dbl = (double*)q;
+        double* hh_dbl = (double*)hh;
+        double* s_dbl = (double*)(&s);
 
-	__SSE_DATATYPE x1, x2, x3;
-	__SSE_DATATYPE y1, y2, y3;
-	__SSE_DATATYPE q1, q2, q3;
-	__SSE_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
-	__SSE_DATATYPE tmp1, tmp2, tmp3;
-	int i=0;
+        __SSE_DATATYPE x1, x2, x3;
+        __SSE_DATATYPE y1, y2, y3;
+        __SSE_DATATYPE q1, q2, q3;
+        __SSE_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
+        __SSE_DATATYPE tmp1, tmp2, tmp3;
+        int i=0;
 
-	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+        __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
 
-	x1 = _SSE_LOAD(&q_dbl[(2*ldq)+0]);
-	x2 = _SSE_LOAD(&q_dbl[(2*ldq)+2]);
-	x3 = _SSE_LOAD(&q_dbl[(2*ldq)+4]);
+        x1 = _SSE_LOAD(&q_dbl[(2*ldq)+0]);
+        x2 = _SSE_LOAD(&q_dbl[(2*ldq)+2]);
+        x3 = _SSE_LOAD(&q_dbl[(2*ldq)+4]);
 
-	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
-	// conjugate
-	h2_imag = _SSE_XOR(h2_imag, sign);
+        // conjugate
+        h2_imag = _SSE_XOR(h2_imag, sign);
 #endif
 
-	y1 = _SSE_LOAD(&q_dbl[0]);
-	y2 = _SSE_LOAD(&q_dbl[2]);
-	y3 = _SSE_LOAD(&q_dbl[4]);
+        y1 = _SSE_LOAD(&q_dbl[0]);
+        y2 = _SSE_LOAD(&q_dbl[2]);
+        y3 = _SSE_LOAD(&q_dbl[4]);
 
-	tmp1 = _SSE_MUL(h2_imag, x1);
+        tmp1 = _SSE_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h2_imag, x2);
+        tmp2 = _SSE_MUL(h2_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
-	tmp3 = _SSE_MUL(h2_imag, x3);
+        tmp3 = _SSE_MUL(h2_imag, x3);
 #ifdef __ELPA_USE_FMA__
-	y3 = _SSE_ADD(y3, _mm_msubadd_pd(h2_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADD(y3, _mm_msubadd_pd(h2_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
 
-	for (i = 2; i < nb; i++)
-	{
-		q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
-		q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2]);
-		q3 = _SSE_LOAD(&q_dbl[(2*i*ldq)+4]);
+        for (i = 2; i < nb; i++)
+        {
+                q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+                q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2]);
+                q3 = _SSE_LOAD(&q_dbl[(2*i*ldq)+4]);
 
-		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
-		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+                h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+                h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
-		// conjugate
-		h1_imag = _SSE_XOR(h1_imag, sign);
+                // conjugate
+                h1_imag = _SSE_XOR(h1_imag, sign);
 #endif
 
-		tmp1 = _SSE_MUL(h1_imag, q1);
+                tmp1 = _SSE_MUL(h1_imag, q1);
 #ifdef __ELPA_USE_FMA__
-		x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h1_imag, q2);
+                tmp2 = _SSE_MUL(h1_imag, q2);
 #ifdef __ELPA_USE_FMA__
-		x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
-		tmp3 = _SSE_MUL(h1_imag, q3);
+                tmp3 = _SSE_MUL(h1_imag, q3);
 #ifdef __ELPA_USE_FMA__
-		x3 = _SSE_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                x3 = _SSE_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-		x3 = _SSE_ADD(x3, _SSE_ADDSUB( _SSE_MUL(h1_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                x3 = _SSE_ADD(x3, _SSE_ADDSUB( _SSE_MUL(h1_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
 
-		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
-		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+                h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 #ifndef __ELPA_USE_FMA__
-		// conjugate
-		h2_imag = _SSE_XOR(h2_imag, sign);
+                // conjugate
+                h2_imag = _SSE_XOR(h2_imag, sign);
 #endif
 
-		tmp1 = _SSE_MUL(h2_imag, q1);
+                tmp1 = _SSE_MUL(h2_imag, q1);
 #ifdef __ELPA_USE_FMA__
-		y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h2_imag, q2);
+                tmp2 = _SSE_MUL(h2_imag, q2);
 #ifdef __ELPA_USE_FMA__
-		y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
-		tmp3 = _SSE_MUL(h2_imag, q3);
+                tmp3 = _SSE_MUL(h2_imag, q3);
 #ifdef __ELPA_USE_FMA__
-		y3 = _SSE_ADD(y3, _mm_msubadd_pd(h2_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                y3 = _SSE_ADD(y3, _mm_msubadd_pd(h2_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-		y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
-	}
+        }
 
-	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
-	// conjugate
-	h1_imag = _SSE_XOR(h1_imag, sign);
+        // conjugate
+        h1_imag = _SSE_XOR(h1_imag, sign);
 #endif
 
-	q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2]);
-	q3 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+4]);
+        q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2]);
+        q3 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+4]);
 
-	tmp1 = _SSE_MUL(h1_imag, q1);
+        tmp1 = _SSE_MUL(h1_imag, q1);
 #ifdef __ELPA_USE_FMA__
-	x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h1_imag, q2);
+        tmp2 = _SSE_MUL(h1_imag, q2);
 #ifdef __ELPA_USE_FMA__
-	x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
-	tmp3 = _SSE_MUL(h1_imag, q3);
+        tmp3 = _SSE_MUL(h1_imag, q3);
 #ifdef __ELPA_USE_FMA__
-	x3 = _SSE_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        x3 = _SSE_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	x3 = _SSE_ADD(x3, _SSE_ADDSUB( _SSE_MUL(h1_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
-#endif
-
-	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
-	h1_real = _SSE_XOR(h1_real, sign);
-	h1_imag = _SSE_XOR(h1_imag, sign);
-
-	tmp1 = _SSE_MUL(h1_imag, x1);
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#else
-	x1 = _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#endif
-	tmp2 = _SSE_MUL(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-	x2 = _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
-#else
-	x2 = _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
-#endif
-	tmp3 = _SSE_MUL(h1_imag, x3);
-#ifdef __ELPA_USE_FMA__
-	x3 = _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
-#else
-	x3 = _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+        x3 = _SSE_ADD(x3, _SSE_ADDSUB( _SSE_MUL(h1_real, q3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
 
-	h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
-	h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+        h1_real = _SSE_XOR(h1_real, sign);
+        h1_imag = _SSE_XOR(h1_imag, sign);
 
-	h1_real = _SSE_XOR(h1_real, sign);
-	h1_imag = _SSE_XOR(h1_imag, sign);
-	h2_real = _SSE_XOR(h2_real, sign);
-	h2_imag = _SSE_XOR(h2_imag, sign);
-
-	tmp2 = _SSE_LOADU(s_dbl);
-	tmp1 = _SSE_MUL(h2_imag, tmp2);
+        tmp1 = _SSE_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        x1 = _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-	tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        x1 = _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-	_SSE_STOREU(s_dbl, tmp2);
+        tmp2 = _SSE_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+        x2 = _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#else
+        x2 = _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#endif
+        tmp3 = _SSE_MUL(h1_imag, x3);
+#ifdef __ELPA_USE_FMA__
+        x3 = _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#else
+        x3 = _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#endif
+
+        h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+
+        h1_real = _SSE_XOR(h1_real, sign);
+        h1_imag = _SSE_XOR(h1_imag, sign);
+        h2_real = _SSE_XOR(h2_real, sign);
+        h2_imag = _SSE_XOR(h2_imag, sign);
+
+        tmp2 = _SSE_LOADU(s_dbl);
+        tmp1 = _SSE_MUL(h2_imag, tmp2);
+#ifdef __ELPA_USE_FMA__
+        tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+        tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+        _SSE_STOREU(s_dbl, tmp2);
         h2_real = _mm_set1_pd(s_dbl[0]);
         h2_imag = _mm_set1_pd(s_dbl[1]);
 
-	// h2_real = _mm_loaddup_pd(&s_dbl[0]);
-	// h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+        // h2_real = _mm_loaddup_pd(&s_dbl[0]);
+        // h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
-	tmp1 = _SSE_MUL(h1_imag, y1);
+        tmp1 = _SSE_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
-	y1 = _mm_maddsub_pd(h1_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        y1 = _mm_maddsub_pd(h1_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-	y1 = _SSE_ADDSUB( _SSE_MUL(h1_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        y1 = _SSE_ADDSUB( _SSE_MUL(h1_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-	tmp2 = _SSE_MUL(h1_imag, y2);
+        tmp2 = _SSE_MUL(h1_imag, y2);
 #ifdef __ELPA_USE_FMA__
-	y2 = _mm_maddsub_pd(h1_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+        y2 = _mm_maddsub_pd(h1_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
 #else
-	y2 = _SSE_ADDSUB( _SSE_MUL(h1_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+        y2 = _SSE_ADDSUB( _SSE_MUL(h1_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
 #endif
-	tmp3 = _SSE_MUL(h1_imag, y3);
+        tmp3 = _SSE_MUL(h1_imag, y3);
 #ifdef __ELPA_USE_FMA__
-	y3 = _mm_maddsub_pd(h1_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+        y3 = _mm_maddsub_pd(h1_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
 #else
-	y3 = _SSE_ADDSUB( _SSE_MUL(h1_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
-#endif
-
-	tmp1 = _SSE_MUL(h2_imag, x1);
-#ifdef __ELPA_USE_FMA__
-	y1 = _SSE_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-	y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-	tmp2 = _SSE_MUL(h2_imag, x2);
-#ifdef __ELPA_USE_FMA__
-	y2 = _SSE_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#else
-	y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#endif
-	tmp3 = _SSE_MUL(h2_imag, x3);
-#ifdef __ELPA_USE_FMA__
-	y3 = _SSE_ADD(y3, _mm_maddsub_pd(h2_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
-#else
-	y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADDSUB( _SSE_MUL(h1_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE));
 #endif
 
-	q1 = _SSE_LOAD(&q_dbl[0]);
-	q2 = _SSE_LOAD(&q_dbl[2]);
-	q3 = _SSE_LOAD(&q_dbl[4]);
-
-	q1 = _SSE_ADD(q1, y1);
-	q2 = _SSE_ADD(q2, y2);
-	q3 = _SSE_ADD(q3, y3);
-
-	_SSE_STORE(&q_dbl[0], q1);
-	_SSE_STORE(&q_dbl[2], q2);
-	_SSE_STORE(&q_dbl[4], q3);
-
-	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
-
-	q1 = _SSE_LOAD(&q_dbl[(ldq*2)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(ldq*2)+2]);
-	q3 = _SSE_LOAD(&q_dbl[(ldq*2)+4]);
-
-	q1 = _SSE_ADD(q1, x1);
-	q2 = _SSE_ADD(q2, x2);
-	q3 = _SSE_ADD(q3, x3);
-
-	tmp1 = _SSE_MUL(h2_imag, y1);
+        tmp1 = _SSE_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h2_imag, y2);
+        tmp2 = _SSE_MUL(h2_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
-	tmp3 = _SSE_MUL(h2_imag, y3);
+        tmp3 = _SSE_MUL(h2_imag, x3);
 #ifdef __ELPA_USE_FMA__
-	q3 = _SSE_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADD(y3, _mm_maddsub_pd(h2_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h2_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        y3 = _SSE_ADD(y3, _SSE_ADDSUB( _SSE_MUL(h2_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
 
-	_SSE_STORE(&q_dbl[(ldq*2)+0], q1);
-	_SSE_STORE(&q_dbl[(ldq*2)+2], q2);
-	_SSE_STORE(&q_dbl[(ldq*2)+4], q3);
+        q1 = _SSE_LOAD(&q_dbl[0]);
+        q2 = _SSE_LOAD(&q_dbl[2]);
+        q3 = _SSE_LOAD(&q_dbl[4]);
 
-	for (i = 2; i < nb; i++)
-	{
-		q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
-		q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2]);
-		q3 = _SSE_LOAD(&q_dbl[(2*i*ldq)+4]);
+        q1 = _SSE_ADD(q1, y1);
+        q2 = _SSE_ADD(q2, y2);
+        q3 = _SSE_ADD(q3, y3);
 
-		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
-		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+        _SSE_STORE(&q_dbl[0], q1);
+        _SSE_STORE(&q_dbl[2], q2);
+        _SSE_STORE(&q_dbl[4], q3);
 
-		tmp1 = _SSE_MUL(h1_imag, x1);
-#ifdef __ELPA_USE_FMA__
-		q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-		q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-		tmp2 = _SSE_MUL(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-		q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#else
-		q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#endif
-		tmp3 = _SSE_MUL(h1_imag, x3);
-#ifdef __ELPA_USE_FMA__
-		q3 = _SSE_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
-#else
-		q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
-#endif
+        h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
 
-		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
-		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+        q1 = _SSE_LOAD(&q_dbl[(ldq*2)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(ldq*2)+2]);
+        q3 = _SSE_LOAD(&q_dbl[(ldq*2)+4]);
 
-		tmp1 = _SSE_MUL(h2_imag, y1);
+        q1 = _SSE_ADD(q1, x1);
+        q2 = _SSE_ADD(q2, x2);
+        q3 = _SSE_ADD(q3, x3);
+
+        tmp1 = _SSE_MUL(h2_imag, y1);
 #ifdef __ELPA_USE_FMA__
-		q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h2_imag, y2);
+        tmp2 = _SSE_MUL(h2_imag, y2);
 #ifdef __ELPA_USE_FMA__
-		q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
-		tmp3 = _SSE_MUL(h2_imag, y3);
+        tmp3 = _SSE_MUL(h2_imag, y3);
 #ifdef __ELPA_USE_FMA__
-		q3 = _SSE_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        q3 = _SSE_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-		q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h2_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+        q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h2_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
 
-		_SSE_STORE(&q_dbl[(2*i*ldq)+0], q1);
-		_SSE_STORE(&q_dbl[(2*i*ldq)+2], q2);
-		_SSE_STORE(&q_dbl[(2*i*ldq)+4], q3);
-	}
+        _SSE_STORE(&q_dbl[(ldq*2)+0], q1);
+        _SSE_STORE(&q_dbl[(ldq*2)+2], q2);
+        _SSE_STORE(&q_dbl[(ldq*2)+4], q3);
 
-	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+        for (i = 2; i < nb; i++)
+        {
+                q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+                q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2]);
+                q3 = _SSE_LOAD(&q_dbl[(2*i*ldq)+4]);
 
-	q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2]);
-	q3 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+4]);
+                h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+                h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 
-	tmp1 = _SSE_MUL(h1_imag, x1);
+                tmp1 = _SSE_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h1_imag, x2);
+                tmp2 = _SSE_MUL(h1_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
-	tmp3 = _SSE_MUL(h1_imag, x3);
+                tmp3 = _SSE_MUL(h1_imag, x3);
 #ifdef __ELPA_USE_FMA__
-	q3 = _SSE_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                q3 = _SSE_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #else
-	q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+                q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
 
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+0], q1);
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+2], q2);
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+4], q3);
+                h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+
+                tmp1 = _SSE_MUL(h2_imag, y1);
+#ifdef __ELPA_USE_FMA__
+                q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+                q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+                tmp2 = _SSE_MUL(h2_imag, y2);
+#ifdef __ELPA_USE_FMA__
+                q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+                q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+                tmp3 = _SSE_MUL(h2_imag, y3);
+#ifdef __ELPA_USE_FMA__
+                q3 = _SSE_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+                q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h2_real, y3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+                _SSE_STORE(&q_dbl[(2*i*ldq)+0], q1);
+                _SSE_STORE(&q_dbl[(2*i*ldq)+2], q2);
+                _SSE_STORE(&q_dbl[(2*i*ldq)+4], q3);
+        }
+
+        h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+
+        q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2]);
+        q3 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+4]);
+
+        tmp1 = _SSE_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+        q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+        tmp2 = _SSE_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+        q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+        q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+        tmp3 = _SSE_MUL(h1_imag, x3);
+#ifdef __ELPA_USE_FMA__
+        q3 = _SSE_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+        q3 = _SSE_ADD(q3, _SSE_ADDSUB( _SSE_MUL(h1_real, x3), _SSE_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+0], q1);
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+2], q2);
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+4], q3);
 }
 
 #endif
@@ -1139,473 +1137,473 @@ static __forceinline void hh_trafo_complex_kernel_3_SSE_2hv_double(double comple
 #if 0
 static __forceinline void hh_trafo_complex_kernel_2_SSE_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
 {
-	double* q_dbl = (double*)q;
-	double* hh_dbl = (double*)hh;
-	double* s_dbl = (double*)(&s);
+        double* q_dbl = (double*)q;
+        double* hh_dbl = (double*)hh;
+        double* s_dbl = (double*)(&s);
 
-	__SSE_DATATYPE x1, x2;
-	__SSE_DATATYPE y1, y2;
-	__SSE_DATATYPE q1, q2;
-	__SSE_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
-	__SSE_DATATYPE tmp1, tmp2;
-	int i=0;
+        __SSE_DATATYPE x1, x2;
+        __SSE_DATATYPE y1, y2;
+        __SSE_DATATYPE q1, q2;
+        __SSE_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
+        __SSE_DATATYPE tmp1, tmp2;
+        int i=0;
 
-	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+        __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
 
-	x1 = _SSE_LOAD(&q_dbl[(2*ldq)+0]);
-	x2 = _SSE_LOAD(&q_dbl[(2*ldq)+2]);
+        x1 = _SSE_LOAD(&q_dbl[(2*ldq)+0]);
+        x2 = _SSE_LOAD(&q_dbl[(2*ldq)+2]);
 
-	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
-	// conjugate
-	h2_imag = _SSE_XOR(h2_imag, sign);
+        // conjugate
+        h2_imag = _SSE_XOR(h2_imag, sign);
 #endif
 
-	y1 = _SSE_LOAD(&q_dbl[0]);
-	y2 = _SSE_LOAD(&q_dbl[2]);
+        y1 = _SSE_LOAD(&q_dbl[0]);
+        y2 = _SSE_LOAD(&q_dbl[2]);
 
-	tmp1 = _SSE_MUL(h2_imag, x1);
+        tmp1 = _SSE_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h2_imag, x2);
+        tmp2 = _SSE_MUL(h2_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
-	for (i = 2; i < nb; i++)
-	{
-		q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
-		q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2]);
+        for (i = 2; i < nb; i++)
+        {
+                q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+                q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2]);
 
-		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
-		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+                h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+                h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
-		// conjugate
-		h1_imag = _SSE_XOR(h1_imag, sign);
+                // conjugate
+                h1_imag = _SSE_XOR(h1_imag, sign);
 #endif
 
-		tmp1 = _SSE_MUL(h1_imag, q1);
+                tmp1 = _SSE_MUL(h1_imag, q1);
 #ifdef __ELPA_USE_FMA__
-		x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h1_imag, q2);
+                tmp2 = _SSE_MUL(h1_imag, q2);
 #ifdef __ELPA_USE_FMA__
-		x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
-		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
-		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+                h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 #ifndef __ELPA_USE_FMA__
-		// conjugate
-		h2_imag = _SSE_XOR(h2_imag, sign);
+                // conjugate
+                h2_imag = _SSE_XOR(h2_imag, sign);
 #endif
 
-		tmp1 = _SSE_MUL(h2_imag, q1);
+                tmp1 = _SSE_MUL(h2_imag, q1);
 #ifdef __ELPA_USE_FMA__
-		y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-		tmp2 = _SSE_MUL(h2_imag, q2);
+                tmp2 = _SSE_MUL(h2_imag, q2);
 #ifdef __ELPA_USE_FMA__
-		y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                y2 = _SSE_ADD(y2, _mm_msubadd_pd(h2_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-		y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+                y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
-	}
+        }
 
-	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
-	// conjugate
-	h1_imag = _SSE_XOR(h1_imag, sign);
+        // conjugate
+        h1_imag = _SSE_XOR(h1_imag, sign);
 #endif
 
-	q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2]);
+        q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2]);
 
-	tmp1 = _SSE_MUL(h1_imag, q1);
+        tmp1 = _SSE_MUL(h1_imag, q1);
 #ifdef __ELPA_USE_FMA__
-	x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
-	tmp2 = _SSE_MUL(h1_imag, q2);
+        tmp2 = _SSE_MUL(h1_imag, q2);
 #ifdef __ELPA_USE_FMA__
-	x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        x2 = _SSE_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #else
-	x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+        x2 = _SSE_ADD(x2, _SSE_ADDSUB( _SSE_MUL(h1_real, q2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
-	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
-	h1_real = _SSE_XOR(h1_real, sign);
-	h1_imag = _SSE_XOR(h1_imag, sign);
+        h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+        h1_real = _SSE_XOR(h1_real, sign);
+        h1_imag = _SSE_XOR(h1_imag, sign);
 
-	tmp1 = _SSE_MUL(h1_imag, x1);
+        tmp1 = _SSE_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	x1 = _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        x1 = _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-	x1 = _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        x1 = _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-	tmp2 = _SSE_MUL(h1_imag, x2);
+        tmp2 = _SSE_MUL(h1_imag, x2);
 #ifdef __ELPA_USE_FMA__
-	x2 = _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+        x2 = _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
 #else
-	x2 = _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+        x2 = _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
 #endif
 
-	h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
-	h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
 
-	h1_real = _SSE_XOR(h1_real, sign);
-	h1_imag = _SSE_XOR(h1_imag, sign);
-	h2_real = _SSE_XOR(h2_real, sign);
-	h2_imag = _SSE_XOR(h2_imag, sign);
+        h1_real = _SSE_XOR(h1_real, sign);
+        h1_imag = _SSE_XOR(h1_imag, sign);
+        h2_real = _SSE_XOR(h2_real, sign);
+        h2_imag = _SSE_XOR(h2_imag, sign);
 
-	tmp2 = _SSE_LOADU(s_dbl);
-	tmp1 = _SSE_MUL(h2_imag, tmp2);
+        tmp2 = _SSE_LOADU(s_dbl);
+        tmp1 = _SSE_MUL(h2_imag, tmp2);
 #ifdef __ELPA_USE_FMA__
-	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-	tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-	_SSE_STOREU(s_dbl, tmp2);
-        h2_real = _mm_set1_pd(s_dbl[0]);
-        h2_imag = _mm_set1_pd(s_dbl[1]);
-
-	// h2_real = _mm_loaddup_pd(&s_dbl[0]);
-	// h2_imag = _mm_loaddup_pd(&s_dbl[1]);
-
-	tmp1 = _SSE_MUL(h1_imag, y1);
-#ifdef __ELPA_USE_FMA__
-	y1 = _mm_maddsub_pd(h1_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#else
-	y1 = _SSE_ADDSUB( _SSE_MUL(h1_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#endif
-	tmp2 = _SSE_MUL(h1_imag, y2);
-#ifdef __ELPA_USE_FMA__
-	y2 = _mm_maddsub_pd(h1_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
-#else
-	y2 = _SSE_ADDSUB( _SSE_MUL(h1_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
-#endif
-
-	tmp1 = _SSE_MUL(h2_imag, x1);
-#ifdef __ELPA_USE_FMA__
-	y1 = _SSE_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-	y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-	tmp2 = _SSE_MUL(h2_imag, x2);
-#ifdef __ELPA_USE_FMA__
-	y2 = _SSE_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#else
-	y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#endif
-
-	q1 = _SSE_LOAD(&q_dbl[0]);
-	q2 = _SSE_LOAD(&q_dbl[2]);
-
-	q1 = _SSE_ADD(q1, y1);
-	q2 = _SSE_ADD(q2, y2);
-
-	_SSE_STORE(&q_dbl[0], q1);
-	_SSE_STORE(&q_dbl[2], q2);
-
-	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
-
-	q1 = _SSE_LOAD(&q_dbl[(ldq*2)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(ldq*2)+2]);
-
-	q1 = _SSE_ADD(q1, x1);
-	q2 = _SSE_ADD(q2, x2);
-
-	tmp1 = _SSE_MUL(h2_imag, y1);
-#ifdef __ELPA_USE_FMA__
-	q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-	q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-	tmp2 = _SSE_MUL(h2_imag, y2);
-#ifdef __ELPA_USE_FMA__
-	q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#else
-	q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#endif
-
-	_SSE_STORE(&q_dbl[(ldq*2)+0], q1);
-	_SSE_STORE(&q_dbl[(ldq*2)+2], q2);
-
-	for (i = 2; i < nb; i++)
-	{
-		q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
-		q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2]);
-
-		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
-		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
-
-		tmp1 = _SSE_MUL(h1_imag, x1);
-#ifdef __ELPA_USE_FMA__
-		q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-		q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-		tmp2 = _SSE_MUL(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-		q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#else
-		q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#endif
-
-		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
-		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
-
-		tmp1 = _SSE_MUL(h2_imag, y1);
-#ifdef __ELPA_USE_FMA__
-		q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-		q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-		tmp2 = _SSE_MUL(h2_imag, y2);
-#ifdef __ELPA_USE_FMA__
-		q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#else
-		q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#endif
-
-		_SSE_STORE(&q_dbl[(2*i*ldq)+0], q1);
-		_SSE_STORE(&q_dbl[(2*i*ldq)+2], q2);
-	}
-
-	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
-
-	q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
-	q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2]);
-
-	tmp1 = _SSE_MUL(h1_imag, x1);
-#ifdef __ELPA_USE_FMA__
-	q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-	q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-	tmp2 = _SSE_MUL(h1_imag, x2);
-#ifdef __ELPA_USE_FMA__
-	q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#else
-	q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
-#endif
-
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+0], q1);
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+2], q2);
-}
-
-static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
-{
-	double* q_dbl = (double*)q;
-	double* hh_dbl = (double*)hh;
-	double* s_dbl = (double*)(&s);
-
-	__SSE_DATATYPE x1;
-	__SSE_DATATYPE y1;
-	__SSE_DATATYPE q1;
-	__SSE_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
-	__SSE_DATATYPE tmp1;
-	int i=0;
-
-	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
-
-	x1 = _SSE_LOAD(&q_dbl[(2*ldq)+0]);
-
-	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
-#ifndef __ELPA_USE_FMA__
-	// conjugate
-	h2_imag = _SSE_XOR(h2_imag, sign);
-#endif
-
-	y1 = _SSE_LOAD(&q_dbl[0]);
-
-	tmp1 = _SSE_MUL(h2_imag, x1);
-#ifdef __ELPA_USE_FMA__
-	y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-	y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-
-	for (i = 2; i < nb; i++)
-	{
-		q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
-
-		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
-		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
-#ifndef __ELPA_USE_FMA__
-		// conjugate
-		h1_imag = _SSE_XOR(h1_imag, sign);
-#endif
-
-		tmp1 = _SSE_MUL(h1_imag, q1);
-#ifdef __ELPA_USE_FMA__
-		x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-		x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-
-		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
-		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
-#ifndef __ELPA_USE_FMA__
-		// conjugate
-		h2_imag = _SSE_XOR(h2_imag, sign);
-#endif
-
-		tmp1 = _SSE_MUL(h2_imag, q1);
-#ifdef __ELPA_USE_FMA__
-		y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-		y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-	}
-
-	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
-#ifndef __ELPA_USE_FMA__
-	// conjugate
-	h1_imag = _SSE_XOR(h1_imag, sign);
-#endif
-
-	q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
-
-	tmp1 = _SSE_MUL(h1_imag, q1);
-#ifdef __ELPA_USE_FMA__
-	x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-	x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#endif
-
-	h1_real = _mm_loaddup_pd(&hh_dbl[0]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
-	h1_real = _SSE_XOR(h1_real, sign);
-	h1_imag = _SSE_XOR(h1_imag, sign);
-
-	tmp1 = _SSE_MUL(h1_imag, x1);
-#ifdef __ELPA_USE_FMA__
-	x1 = _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#else
-	x1 = _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#endif
-
-	h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
-	h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
-
-	h1_real = _SSE_XOR(h1_real, sign);
-	h1_imag = _SSE_XOR(h1_imag, sign);
-	h2_real = _SSE_XOR(h2_real, sign);
-	h2_imag = _SSE_XOR(h2_imag, sign);
-
-	__SSE_DATATYPE tmp2 = _SSE_LOADU(s_dbl);
-	tmp1 = _SSE_MUL(h2_imag, tmp2);
-#ifdef __ELPA_USE_FMA__
-	tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#else
-	tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#endif
-	_SSE_STOREU(s_dbl, tmp2);
+        _SSE_STOREU(s_dbl, tmp2);
         h2_real = _mm_set1_pd(s_dbl[0]);
         h2_imag = _mm_set1_pd(s_dbl[1]);
 
         // h2_real = _mm_loaddup_pd(&s_dbl[0]);
-	// h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+        // h2_imag = _mm_loaddup_pd(&s_dbl[1]);
 
-	tmp1 = _SSE_MUL(h1_imag, y1);
+        tmp1 = _SSE_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
-	y1 = _mm_maddsub_pd(h1_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        y1 = _mm_maddsub_pd(h1_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-	y1 = _SSE_ADDSUB( _SSE_MUL(h1_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        y1 = _SSE_ADDSUB( _SSE_MUL(h1_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+        tmp2 = _SSE_MUL(h1_imag, y2);
+#ifdef __ELPA_USE_FMA__
+        y2 = _mm_maddsub_pd(h1_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#else
+        y2 = _SSE_ADDSUB( _SSE_MUL(h1_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE));
 #endif
 
-	tmp1 = _SSE_MUL(h2_imag, x1);
+        tmp1 = _SSE_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	y1 = _SSE_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+        tmp2 = _SSE_MUL(h2_imag, x2);
+#ifdef __ELPA_USE_FMA__
+        y2 = _SSE_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+        y2 = _SSE_ADD(y2, _SSE_ADDSUB( _SSE_MUL(h2_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
-	q1 = _SSE_LOAD(&q_dbl[0]);
+        q1 = _SSE_LOAD(&q_dbl[0]);
+        q2 = _SSE_LOAD(&q_dbl[2]);
 
-	q1 = _SSE_ADD(q1, y1);
+        q1 = _SSE_ADD(q1, y1);
+        q2 = _SSE_ADD(q2, y2);
 
-	_SSE_STORE(&q_dbl[0], q1);
+        _SSE_STORE(&q_dbl[0], q1);
+        _SSE_STORE(&q_dbl[2], q2);
 
-	h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
-	h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
 
-	q1 = _SSE_LOAD(&q_dbl[(ldq*2)+0]);
+        q1 = _SSE_LOAD(&q_dbl[(ldq*2)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(ldq*2)+2]);
 
-	q1 = _SSE_ADD(q1, x1);
+        q1 = _SSE_ADD(q1, x1);
+        q2 = _SSE_ADD(q2, x2);
 
-	tmp1 = _SSE_MUL(h2_imag, y1);
+        tmp1 = _SSE_MUL(h2_imag, y1);
 #ifdef __ELPA_USE_FMA__
-	q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+        tmp2 = _SSE_MUL(h2_imag, y2);
+#ifdef __ELPA_USE_FMA__
+        q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+        q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
-	_SSE_STORE(&q_dbl[(ldq*2)+0], q1);
+        _SSE_STORE(&q_dbl[(ldq*2)+0], q1);
+        _SSE_STORE(&q_dbl[(ldq*2)+2], q2);
 
-	for (i = 2; i < nb; i++)
-	{
-		q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+        for (i = 2; i < nb; i++)
+        {
+                q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+                q2 = _SSE_LOAD(&q_dbl[(2*i*ldq)+2]);
 
-		h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
-		h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+                h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+                h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
 
-		tmp1 = _SSE_MUL(h1_imag, x1);
+                tmp1 = _SSE_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-		q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+                tmp2 = _SSE_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+                q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+                q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
-		h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
-		h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+                h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
 
-		tmp1 = _SSE_MUL(h2_imag, y1);
+                tmp1 = _SSE_MUL(h2_imag, y1);
 #ifdef __ELPA_USE_FMA__
-		q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-		q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+                tmp2 = _SSE_MUL(h2_imag, y2);
+#ifdef __ELPA_USE_FMA__
+                q2 = _SSE_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+                q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h2_real, y2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
-		_SSE_STORE(&q_dbl[(2*i*ldq)+0], q1);
-	}
+                _SSE_STORE(&q_dbl[(2*i*ldq)+0], q1);
+                _SSE_STORE(&q_dbl[(2*i*ldq)+2], q2);
+        }
 
-	h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
-	h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
 
-	q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q2 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+2]);
 
-	tmp1 = _SSE_MUL(h1_imag, x1);
+        tmp1 = _SSE_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-	q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-	q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+        tmp2 = _SSE_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+        q2 = _SSE_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+        q2 = _SSE_ADD(q2, _SSE_ADDSUB( _SSE_MUL(h1_real, x2), _SSE_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
 #endif
 
-	_SSE_STORE(&q_dbl[(2*nb*ldq)+0], q1);
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+0], q1);
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+2], q2);
+}
+
+static __forceinline void hh_trafo_complex_kernel_1_SSE_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
+{
+        double* q_dbl = (double*)q;
+        double* hh_dbl = (double*)hh;
+        double* s_dbl = (double*)(&s);
+
+        __SSE_DATATYPE x1;
+        __SSE_DATATYPE y1;
+        __SSE_DATATYPE q1;
+        __SSE_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
+        __SSE_DATATYPE tmp1;
+        int i=0;
+
+        __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+
+        x1 = _SSE_LOAD(&q_dbl[(2*ldq)+0]);
+
+        h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#ifndef __ELPA_USE_FMA__
+        // conjugate
+        h2_imag = _SSE_XOR(h2_imag, sign);
+#endif
+
+        y1 = _SSE_LOAD(&q_dbl[0]);
+
+        tmp1 = _SSE_MUL(h2_imag, x1);
+#ifdef __ELPA_USE_FMA__
+        y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+        for (i = 2; i < nb; i++)
+        {
+                q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+
+                h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+                h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+#ifndef __ELPA_USE_FMA__
+                // conjugate
+                h1_imag = _SSE_XOR(h1_imag, sign);
+#endif
+
+                tmp1 = _SSE_MUL(h1_imag, q1);
+#ifdef __ELPA_USE_FMA__
+                x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+                x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+                h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#ifndef __ELPA_USE_FMA__
+                // conjugate
+                h2_imag = _SSE_XOR(h2_imag, sign);
+#endif
+
+                tmp1 = _SSE_MUL(h2_imag, q1);
+#ifdef __ELPA_USE_FMA__
+                y1 = _SSE_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+                y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+        }
+
+        h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#ifndef __ELPA_USE_FMA__
+        // conjugate
+        h1_imag = _SSE_XOR(h1_imag, sign);
+#endif
+
+        q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+
+        tmp1 = _SSE_MUL(h1_imag, q1);
+#ifdef __ELPA_USE_FMA__
+        x1 = _SSE_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        x1 = _SSE_ADD(x1, _SSE_ADDSUB( _SSE_MUL(h1_real, q1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+        h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+        h1_real = _SSE_XOR(h1_real, sign);
+        h1_imag = _SSE_XOR(h1_imag, sign);
+
+        tmp1 = _SSE_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+        x1 = _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+        x1 = _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+        h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+        h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+
+        h1_real = _SSE_XOR(h1_real, sign);
+        h1_imag = _SSE_XOR(h1_imag, sign);
+        h2_real = _SSE_XOR(h2_real, sign);
+        h2_imag = _SSE_XOR(h2_imag, sign);
+
+        __SSE_DATATYPE tmp2 = _SSE_LOADU(s_dbl);
+        tmp1 = _SSE_MUL(h2_imag, tmp2);
+#ifdef __ELPA_USE_FMA__
+        tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+        tmp2 = _SSE_ADDSUB( _SSE_MUL(h2_real, tmp2), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+        _SSE_STOREU(s_dbl, tmp2);
+        h2_real = _mm_set1_pd(s_dbl[0]);
+        h2_imag = _mm_set1_pd(s_dbl[1]);
+
+        // h2_real = _mm_loaddup_pd(&s_dbl[0]);
+        // h2_imag = _mm_loaddup_pd(&s_dbl[1]);
+
+        tmp1 = _SSE_MUL(h1_imag, y1);
+#ifdef __ELPA_USE_FMA__
+        y1 = _mm_maddsub_pd(h1_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+        y1 = _SSE_ADDSUB( _SSE_MUL(h1_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+        tmp1 = _SSE_MUL(h2_imag, x1);
+#ifdef __ELPA_USE_FMA__
+        y1 = _SSE_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        y1 = _SSE_ADD(y1, _SSE_ADDSUB( _SSE_MUL(h2_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+        q1 = _SSE_LOAD(&q_dbl[0]);
+
+        q1 = _SSE_ADD(q1, y1);
+
+        _SSE_STORE(&q_dbl[0], q1);
+
+        h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+
+        q1 = _SSE_LOAD(&q_dbl[(ldq*2)+0]);
+
+        q1 = _SSE_ADD(q1, x1);
+
+        tmp1 = _SSE_MUL(h2_imag, y1);
+#ifdef __ELPA_USE_FMA__
+        q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+        _SSE_STORE(&q_dbl[(ldq*2)+0], q1);
+
+        for (i = 2; i < nb; i++)
+        {
+                q1 = _SSE_LOAD(&q_dbl[(2*i*ldq)+0]);
+
+                h1_real = _mm_loaddup_pd(&hh_dbl[(i-1)*2]);
+                h1_imag = _mm_loaddup_pd(&hh_dbl[((i-1)*2)+1]);
+
+                tmp1 = _SSE_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+                q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+                q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+                h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+
+                tmp1 = _SSE_MUL(h2_imag, y1);
+#ifdef __ELPA_USE_FMA__
+                q1 = _SSE_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+                q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h2_real, y1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+                _SSE_STORE(&q_dbl[(2*i*ldq)+0], q1);
+        }
+
+        h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+
+        q1 = _SSE_LOAD(&q_dbl[(2*nb*ldq)+0]);
+
+        tmp1 = _SSE_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+        q1 = _SSE_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        q1 = _SSE_ADD(q1, _SSE_ADDSUB( _SSE_MUL(h1_real, x1), _SSE_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+        _SSE_STORE(&q_dbl[(2*nb*ldq)+0], q1);
 }
 #endif

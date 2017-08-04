@@ -4,15 +4,15 @@
 //    consisting of the following organizations:
 //
 //    - Max Planck Computing and Data Facility (MPCDF), formerly known as
-//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//	Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 //    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
-//      Informatik,
+//	Informatik,
 //    - Technische Universität München, Lehrstuhl für Informatik mit
-//      Schwerpunkt Wissenschaftliches Rechnen ,
+//	Schwerpunkt Wissenschaftliches Rechnen ,
 //    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
 //    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
-//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
-//      and
+//	Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//	and
 //    - IBM Deutschland GmbH
 //
 //    This particular source code file contains additions, changes and
@@ -33,7 +33,7 @@
 //    GNU Lesser General Public License for more details.
 //
 //    You should have received a copy of the GNU Lesser General Public License
-//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+//    along with ELPA.	If not, see <http://www.gnu.org/licenses/>
 //
 //    ELPA reflects a substantial effort on the part of the original
 //    ELPA consortium, and we ask you to respect the spirit of the
@@ -109,11 +109,11 @@ void hexa_hh_trafo_real_sse_6hv_single_(float* q, float* hh, int* pnb, int* pnq,
 !f>#ifdef HAVE_SSE_INTRINSICS
 !f> interface
 !f>   subroutine hexa_hh_trafo_real_sse_6hv_double(q, hh, pnb, pnq, pldq, pldh) &
-!f>                             bind(C, name="hexa_hh_trafo_real_sse_6hv_double")
-!f>     use, intrinsic :: iso_c_binding
-!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
-!f>     type(c_ptr), value      :: q
-!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>				bind(C, name="hexa_hh_trafo_real_sse_6hv_double")
+!f>	use, intrinsic :: iso_c_binding
+!f>	integer(kind=c_int)	:: pnb, pnq, pldq, pldh
+!f>	type(c_ptr), value	:: q
+!f>	real(kind=c_double)	:: hh(pnb,6)
 !f>   end subroutine
 !f> end interface
 !f>#endif
@@ -124,11 +124,11 @@ void hexa_hh_trafo_real_sse_6hv_single_(float* q, float* hh, int* pnb, int* pnq,
 !f>#ifdef HAVE_SSE_INTRINSICS
 !f> interface
 !f>   subroutine hexa_hh_trafo_real_sse_6hv_single(q, hh, pnb, pnq, pldq, pldh) &
-!f>                             bind(C, name="hexa_hh_trafo_real_sse_6hv_single")
-!f>     use, intrinsic :: iso_c_binding
-!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
-!f>     type(c_ptr), value      :: q
-!f>     real(kind=c_float)      :: hh(pnb,6)
+!f>				bind(C, name="hexa_hh_trafo_real_sse_6hv_single")
+!f>	use, intrinsic :: iso_c_binding
+!f>	integer(kind=c_int)	:: pnb, pnq, pldq, pldh
+!f>	type(c_ptr), value	:: q
+!f>	real(kind=c_float)	:: hh(pnb,6)
 !f>   end subroutine
 !f> end interface
 !f>#endif
@@ -266,7 +266,7 @@ void hexa_hh_trafo_real_sse_6hv_single(float* q, float* hh, int* pnb, int* pnq, 
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-4; i+=8)
 	{
-	        hh_trafo_kernel_8_SSE_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
+		hh_trafo_kernel_8_SSE_6hv_single(&q[i], hh, nb, ldq, ldh, scalarprods);
 		worked_on += 8;
 	}
 #endif
@@ -327,18 +327,18 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	__SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE h_6_5 = _mm_loaddup_pd(&hh[(ldh*5)+1]);
-	__SSE_DATATYPE h_6_4 = _mm_loaddup_pd(&hh[(ldh*5)+2]);
-	__SSE_DATATYPE h_6_3 = _mm_loaddup_pd(&hh[(ldh*5)+3]);
-	__SSE_DATATYPE h_6_2 = _mm_loaddup_pd(&hh[(ldh*5)+4]);
-	__SSE_DATATYPE h_6_1 = _mm_loaddup_pd(&hh[(ldh*5)+5]);
+	__SSE_DATATYPE h_6_5 = _mm_set1_pd(hh[(ldh*5)+1]);
+	__SSE_DATATYPE h_6_4 = _mm_set1_pd(hh[(ldh*5)+2]);
+	__SSE_DATATYPE h_6_3 = _mm_set1_pd(hh[(ldh*5)+3]);
+	__SSE_DATATYPE h_6_2 = _mm_set1_pd(hh[(ldh*5)+4]);
+	__SSE_DATATYPE h_6_1 = _mm_set1_pd(hh[(ldh*5)+5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE h_6_5 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*5)+1]) ));
-	__SSE_DATATYPE h_6_4 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*5)+2]) ));
-	__SSE_DATATYPE h_6_3 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*5)+3]) ));
-	__SSE_DATATYPE h_6_2 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*5)+4]) ));
-	__SSE_DATATYPE h_6_1 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*5)+5]) ));
+	__SSE_DATATYPE h_6_5 =	 _mm_set1_ps(hh[(ldh*5)+1]) ;
+	__SSE_DATATYPE h_6_4 =	 _mm_set1_ps(hh[(ldh*5)+2]) ;
+	__SSE_DATATYPE h_6_3 =	 _mm_set1_ps(hh[(ldh*5)+3]) ;
+	__SSE_DATATYPE h_6_2 =	 _mm_set1_ps(hh[(ldh*5)+4]) ;
+	__SSE_DATATYPE h_6_1 =	 _mm_set1_ps(hh[(ldh*5)+5]) ;
 #endif
 
 
@@ -349,16 +349,16 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE h_5_4 = _mm_loaddup_pd(&hh[(ldh*4)+1]);
-	__SSE_DATATYPE h_5_3 = _mm_loaddup_pd(&hh[(ldh*4)+2]);
-	__SSE_DATATYPE h_5_2 = _mm_loaddup_pd(&hh[(ldh*4)+3]);
-	__SSE_DATATYPE h_5_1 = _mm_loaddup_pd(&hh[(ldh*4)+4]);
+	__SSE_DATATYPE h_5_4 = _mm_set1_pd(hh[(ldh*4)+1]);
+	__SSE_DATATYPE h_5_3 = _mm_set1_pd(hh[(ldh*4)+2]);
+	__SSE_DATATYPE h_5_2 = _mm_set1_pd(hh[(ldh*4)+3]);
+	__SSE_DATATYPE h_5_1 = _mm_set1_pd(hh[(ldh*4)+4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE h_5_4 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*4)+1]) ));
-	__SSE_DATATYPE h_5_3 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*4)+2]) ));
-	__SSE_DATATYPE h_5_2 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*4)+3]) ));
-	__SSE_DATATYPE h_5_1 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*4)+4]) ));
+	__SSE_DATATYPE h_5_4 =	 _mm_set1_ps(hh[(ldh*4)+1]) ;
+	__SSE_DATATYPE h_5_3 =	 _mm_set1_ps(hh[(ldh*4)+2]) ;
+	__SSE_DATATYPE h_5_2 =	 _mm_set1_ps(hh[(ldh*4)+3]) ;
+	__SSE_DATATYPE h_5_1 =	 _mm_set1_ps(hh[(ldh*4)+4]) ;
 #endif
 
 	register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4));
@@ -367,14 +367,14 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE h_4_3 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
-	__SSE_DATATYPE h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
-	__SSE_DATATYPE h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	__SSE_DATATYPE h_4_3 = _mm_set1_pd(hh[(ldh*3)+1]);
+	__SSE_DATATYPE h_4_2 = _mm_set1_pd(hh[(ldh*3)+2]);
+	__SSE_DATATYPE h_4_1 = _mm_set1_pd(hh[(ldh*3)+3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE h_4_3 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*3)+1]) ));
-	__SSE_DATATYPE h_4_2 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*3)+2]) ));
-	__SSE_DATATYPE h_4_1 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*3)+3]) ));
+	__SSE_DATATYPE h_4_3 =	 _mm_set1_ps(hh[(ldh*3)+1]) ;
+	__SSE_DATATYPE h_4_2 =	 _mm_set1_ps(hh[(ldh*3)+2]) ;
+	__SSE_DATATYPE h_4_1 =	 _mm_set1_ps(hh[(ldh*3)+3]) ;
 #endif
 
 	register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
@@ -382,14 +382,14 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE h_2_1 = _mm_loaddup_pd(&hh[ldh+1]);
-	__SSE_DATATYPE h_3_2 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
-	__SSE_DATATYPE h_3_1 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+	__SSE_DATATYPE h_2_1 = _mm_set1_pd(hh[ldh+1]);
+	__SSE_DATATYPE h_3_2 = _mm_set1_pd(hh[(ldh*2)+1]);
+	__SSE_DATATYPE h_3_1 = _mm_set1_pd(hh[(ldh*2)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE h_2_1 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[ldh+1]) ));
-	__SSE_DATATYPE h_3_2 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*2)+1]) ));
-	__SSE_DATATYPE h_3_1 =   _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) &hh[(ldh*2)+2]) ));
+	__SSE_DATATYPE h_2_1 =	 _mm_set1_ps(hh[ldh+1]) ;
+	__SSE_DATATYPE h_3_2 =	 _mm_set1_ps(hh[(ldh*2)+1]) ;
+	__SSE_DATATYPE h_3_1 =	 _mm_set1_ps(hh[(ldh*2)+2]) ;
 #endif
 
 	register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
@@ -436,10 +436,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	for(i = 6; i < nb; i++)
 	{
 #ifdef DOUBLE_PRECISION_REAL
-		h1 = _mm_loaddup_pd(&hh[i-5]);
+		h1 = _mm_set1_pd(hh[i-5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[i-5])) );
+		h1 = _mm_set1_ps(hh[i-5] );
 #endif
 		q1 = _SSE_LOAD(&q[i*ldq]);
 		q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
@@ -448,56 +448,56 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 		x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h2 = _mm_loaddup_pd(&hh[ldh+i-4]);
+		h2 = _mm_set1_pd(hh[ldh+i-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+i-4])) );
+		h2 = _mm_set1_ps(hh[ldh+i-4] );
 #endif
 		y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 		y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-3]);
+		h3 = _mm_set1_pd(hh[(ldh*2)+i-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+i-3])) );
+		h3 = _mm_set1_ps(hh[(ldh*2)+i-3] );
 #endif
 		z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 		z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i-2]);
+		h4 = _mm_set1_pd(hh[(ldh*3)+i-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+i-2])) );
+		h4 = _mm_set1_ps(hh[(ldh*3)+i-2] );
 #endif
 		w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 		w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h5 = _mm_loaddup_pd(&hh[(ldh*4)+i-1]);
+		h5 = _mm_set1_pd(hh[(ldh*4)+i-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*4)+i-1])) );
+		h5 = _mm_set1_ps(hh[(ldh*4)+i-1] );
 #endif
 		v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
 		v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h6 = _mm_loaddup_pd(&hh[(ldh*5)+i]);
+		h6 = _mm_set1_pd(hh[(ldh*5)+i]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*5)+i])) );
+		h6 = _mm_set1_ps(hh[(ldh*5)+i] );
 #endif
 		t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
 		t2 = _SSE_ADD(t2, _SSE_MUL(q2,h6));
 	}
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-5]);
+	h1 = _mm_set1_pd(hh[nb-5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-5])) );
+	h1 = _mm_set1_ps(hh[nb-5] );
 #endif
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
@@ -506,47 +506,47 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-4]);
+	h2 = _mm_set1_pd(hh[ldh+nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-4])) );
+	h2 = _mm_set1_ps(hh[ldh+nb-4] );
 #endif
 	y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 	y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-3]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-3])) );
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-3] );
 #endif
 	z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 	z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+nb-2]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+nb-2])) );
+	h4 = _mm_set1_ps(hh[(ldh*3)+nb-2] );
 #endif
 	w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 	w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+nb-1]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*4)+nb-1])) );
+	h5 = _mm_set1_ps(hh[(ldh*4)+nb-1] );
 #endif
 
 	v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
 	v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-4]);
+	h1 = _mm_set1_pd(hh[nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-4])) );
+	h1 = _mm_set1_ps(hh[nb-4] );
 #endif
 	q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
 	q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
@@ -555,40 +555,40 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-3]);
+	h2 = _mm_set1_pd(hh[ldh+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-3])) );
+	h2 = _mm_set1_ps(hh[ldh+nb-3] );
 #endif
 
 	y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 	y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef DOUBLE_PRECISION
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-2]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-2])) );
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-2] );
 #endif
 
 	z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 	z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+nb-1]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+nb-1])) );
+	h4 = _mm_set1_ps(hh[(ldh*3)+nb-1] );
 #endif
 
 	w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 	w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	h1 = _mm_set1_pd(hh[nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-3])) );
+	h1 = _mm_set1_ps(hh[nb-3] );
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
@@ -598,30 +598,30 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	h2 = _mm_set1_pd(hh[ldh+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-2])) );
+	h2 = _mm_set1_ps(hh[ldh+nb-2] );
 #endif
 
 	y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 	y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-1])) );
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-1] );
 #endif
 
 	z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 	z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	h1 = _mm_set1_pd(hh[nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-2])) );
+	h1 = _mm_set1_ps(hh[nb-2] );
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
@@ -631,10 +631,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
+	h2 = _mm_set1_pd(hh[ldh+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-1])) );
+	h2 = _mm_set1_ps(hh[ldh+nb-1] );
 #endif
 
 
@@ -642,10 +642,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-1])) );
+	h1 = _mm_set1_ps(hh[nb-1] );
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
@@ -659,21 +659,21 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	/////////////////////////////////////////////////////
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau1 = _mm_loaddup_pd(&hh[0]);
+	__SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 	x1 = _SSE_MUL(x1, tau1);
 	x2 = _SSE_MUL(x2, tau1);
 
-	__SSE_DATATYPE tau2 = _mm_loaddup_pd(&hh[ldh]);
-	__SSE_DATATYPE vs_1_2 = _mm_loaddup_pd(&scalarprods[0]);
+	__SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
+	__SSE_DATATYPE vs_1_2 = _mm_set1_pd(scalarprods[0]);
 	h2 = _SSE_MUL(tau2, vs_1_2);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[0])) );
+	__SSE_DATATYPE tau1 = _mm_set1_ps(hh[0] );
 	x1 = _SSE_MUL(x1, tau1);
 	x2 = _SSE_MUL(x2, tau1);
 
-        __SSE_DATATYPE tau2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh])) );
-        __SSE_DATATYPE vs_1_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[0])) );
+	__SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh] );
+	__SSE_DATATYPE vs_1_2 = _mm_set1_ps(scalarprods[0] );
 	h2 = _SSE_MUL(tau2, vs_1_2);
 #endif
 
@@ -681,16 +681,16 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	y2 = _SSE_SUB(_SSE_MUL(y2,tau2), _SSE_MUL(x2,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau3 = _mm_loaddup_pd(&hh[ldh*2]);
-	__SSE_DATATYPE vs_1_3 = _mm_loaddup_pd(&scalarprods[1]);
-	__SSE_DATATYPE vs_2_3 = _mm_loaddup_pd(&scalarprods[2]);
+	__SSE_DATATYPE tau3 = _mm_set1_pd(hh[ldh*2]);
+	__SSE_DATATYPE vs_1_3 = _mm_set1_pd(scalarprods[1]);
+	__SSE_DATATYPE vs_2_3 = _mm_set1_pd(scalarprods[2]);
 	h2 = _SSE_MUL(tau3, vs_1_3);
 	h3 = _SSE_MUL(tau3, vs_2_3);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*2])) );
-        __SSE_DATATYPE vs_1_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[1])) );
-        __SSE_DATATYPE vs_2_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[2])) );
+	__SSE_DATATYPE tau3 = _mm_set1_ps(hh[ldh*2] );
+	__SSE_DATATYPE vs_1_3 = _mm_set1_ps(scalarprods[1] );
+	__SSE_DATATYPE vs_2_3 = _mm_set1_ps(scalarprods[2] );
 	h2 = _SSE_MUL(tau3, vs_1_3);
 	h3 = _SSE_MUL(tau3, vs_2_3);
 #endif
@@ -699,22 +699,22 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	z2 = _SSE_SUB(_SSE_MUL(z2,tau3), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau4 = _mm_loaddup_pd(&hh[ldh*3]);
-	__SSE_DATATYPE vs_1_4 = _mm_loaddup_pd(&scalarprods[3]);
-	__SSE_DATATYPE vs_2_4 = _mm_loaddup_pd(&scalarprods[4]);
+	__SSE_DATATYPE tau4 = _mm_set1_pd(hh[ldh*3]);
+	__SSE_DATATYPE vs_1_4 = _mm_set1_pd(scalarprods[3]);
+	__SSE_DATATYPE vs_2_4 = _mm_set1_pd(scalarprods[4]);
 	h2 = _SSE_MUL(tau4, vs_1_4);
 	h3 = _SSE_MUL(tau4, vs_2_4);
-	__SSE_DATATYPE vs_3_4 = _mm_loaddup_pd(&scalarprods[5]);
+	__SSE_DATATYPE vs_3_4 = _mm_set1_pd(scalarprods[5]);
 	h4 = _SSE_MUL(tau4, vs_3_4);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       __SSE_DATATYPE tau4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*3])) );
-        __SSE_DATATYPE vs_1_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[3])) );
-        __SSE_DATATYPE vs_2_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[4])) );
+       __SSE_DATATYPE tau4 = _mm_set1_ps(hh[ldh*3] );
+	__SSE_DATATYPE vs_1_4 = _mm_set1_ps(scalarprods[3] );
+	__SSE_DATATYPE vs_2_4 = _mm_set1_ps(scalarprods[4] );
 	h2 = _SSE_MUL(tau4, vs_1_4);
 	h3 = _SSE_MUL(tau4, vs_2_4);
 
-	__SSE_DATATYPE vs_3_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[5])) );
+	__SSE_DATATYPE vs_3_4 = _mm_set1_ps(scalarprods[5] );
 	h4 = _SSE_MUL(tau4, vs_3_4);
 #endif
 
@@ -722,25 +722,25 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	w2 = _SSE_SUB(_SSE_MUL(w2,tau4), _SSE_ADD(_SSE_MUL(z2,h4), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau5 = _mm_loaddup_pd(&hh[ldh*4]);
-	__SSE_DATATYPE vs_1_5 = _mm_loaddup_pd(&scalarprods[6]);
-	__SSE_DATATYPE vs_2_5 = _mm_loaddup_pd(&scalarprods[7]);
+	__SSE_DATATYPE tau5 = _mm_set1_pd(hh[ldh*4]);
+	__SSE_DATATYPE vs_1_5 = _mm_set1_pd(scalarprods[6]);
+	__SSE_DATATYPE vs_2_5 = _mm_set1_pd(scalarprods[7]);
 	h2 = _SSE_MUL(tau5, vs_1_5);
 	h3 = _SSE_MUL(tau5, vs_2_5);
-	__SSE_DATATYPE vs_3_5 = _mm_loaddup_pd(&scalarprods[8]);
-	__SSE_DATATYPE vs_4_5 = _mm_loaddup_pd(&scalarprods[9]);
+	__SSE_DATATYPE vs_3_5 = _mm_set1_pd(scalarprods[8]);
+	__SSE_DATATYPE vs_4_5 = _mm_set1_pd(scalarprods[9]);
 	h4 = _SSE_MUL(tau5, vs_3_5);
 	h5 = _SSE_MUL(tau5, vs_4_5);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*4])) );
-	__SSE_DATATYPE vs_1_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[6])) );
-	__SSE_DATATYPE vs_2_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[7])) );
+	__SSE_DATATYPE tau5 = _mm_set1_ps(hh[ldh*4] );
+	__SSE_DATATYPE vs_1_5 = _mm_set1_ps(scalarprods[6] );
+	__SSE_DATATYPE vs_2_5 = _mm_set1_ps(scalarprods[7] );
 	h2 = _SSE_MUL(tau5, vs_1_5);
 	h3 = _SSE_MUL(tau5, vs_2_5);
 
-	__SSE_DATATYPE vs_3_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[8])) );
-	__SSE_DATATYPE vs_4_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[9])) );
+	__SSE_DATATYPE vs_3_5 = _mm_set1_ps(scalarprods[8] );
+	__SSE_DATATYPE vs_4_5 = _mm_set1_ps(scalarprods[9] );
 
 	h4 = _SSE_MUL(tau5, vs_3_5);
 	h5 = _SSE_MUL(tau5, vs_4_5);
@@ -750,29 +750,29 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	v2 = _SSE_SUB(_SSE_MUL(v2,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau6 = _mm_loaddup_pd(&hh[ldh*5]);
-	__SSE_DATATYPE vs_1_6 = _mm_loaddup_pd(&scalarprods[10]);
-	__SSE_DATATYPE vs_2_6 = _mm_loaddup_pd(&scalarprods[11]);
+	__SSE_DATATYPE tau6 = _mm_set1_pd(hh[ldh*5]);
+	__SSE_DATATYPE vs_1_6 = _mm_set1_pd(scalarprods[10]);
+	__SSE_DATATYPE vs_2_6 = _mm_set1_pd(scalarprods[11]);
 	h2 = _SSE_MUL(tau6, vs_1_6);
 	h3 = _SSE_MUL(tau6, vs_2_6);
-	__SSE_DATATYPE vs_3_6 = _mm_loaddup_pd(&scalarprods[12]);
-	__SSE_DATATYPE vs_4_6 = _mm_loaddup_pd(&scalarprods[13]);
-	__SSE_DATATYPE vs_5_6 = _mm_loaddup_pd(&scalarprods[14]);
+	__SSE_DATATYPE vs_3_6 = _mm_set1_pd(scalarprods[12]);
+	__SSE_DATATYPE vs_4_6 = _mm_set1_pd(scalarprods[13]);
+	__SSE_DATATYPE vs_5_6 = _mm_set1_pd(scalarprods[14]);
 	h4 = _SSE_MUL(tau6, vs_3_6);
 	h5 = _SSE_MUL(tau6, vs_4_6);
 	h6 = _SSE_MUL(tau6, vs_5_6);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh*5])) );
-	__SSE_DATATYPE vs_1_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[10])) );
-	__SSE_DATATYPE vs_2_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[11])) );
+	__SSE_DATATYPE tau6 = _mm_set1_ps(hh[ldh*5] );
+	__SSE_DATATYPE vs_1_6 = _mm_set1_ps(scalarprods[10] );
+	__SSE_DATATYPE vs_2_6 = _mm_set1_ps(scalarprods[11] );
 
 	h2 = _SSE_MUL(tau6, vs_1_6);
 	h3 = _SSE_MUL(tau6, vs_2_6);
 
-	__SSE_DATATYPE vs_3_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[12])) );
-	__SSE_DATATYPE vs_4_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[13])) );
-	__SSE_DATATYPE vs_5_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&scalarprods[14])) );
+	__SSE_DATATYPE vs_3_6 = _mm_set1_ps(scalarprods[12] );
+	__SSE_DATATYPE vs_4_6 = _mm_set1_ps(scalarprods[13] );
+	__SSE_DATATYPE vs_5_6 = _mm_set1_ps(scalarprods[14] );
 
 	h4 = _SSE_MUL(tau6, vs_3_6);
 	h5 = _SSE_MUL(tau6, vs_4_6);
@@ -795,10 +795,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+1]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*5)+1])) );
+	h6 = _mm_set1_ps(hh[(ldh*5)+1] );
 #endif
 
 
@@ -814,10 +814,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[(ldq+offset)],q2);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+1]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*4)+1])) );
+	h5 = _mm_set1_ps(hh[(ldh*4)+1] );
 #endif
 	q1 = _SSE_LOAD(&q[ldq*2]);
 	q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
@@ -827,10 +827,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+2]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*5)+2])) );
+	h6 = _mm_set1_ps(hh[(ldh*5)+2] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -840,10 +840,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[(ldq*2)+offset],q2);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+1])) );
+	h4 = _mm_set1_ps(hh[(ldh*3)+1] );
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq*3]);
@@ -855,20 +855,20 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+2]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*4)+2])) );
+	h5 = _mm_set1_ps(hh[(ldh*4)+2] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 	q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+3]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*5)+3])) );
+	h6 = _mm_set1_ps(hh[(ldh*5)+3] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -878,10 +878,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[(ldq*3)+offset],q2);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+1])) );
+	h3 = _mm_set1_ps(hh[(ldh*2)+1] );
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq*4]);
@@ -893,30 +893,30 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+2])) );
+	h4 = _mm_set1_ps(hh[(ldh*3)+2] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 	q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+3]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*4)+3])) );
+	h5 = _mm_set1_ps(hh[(ldh*4)+3] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 	q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+4]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*5)+4])) );
+	h6 = _mm_set1_ps(hh[(ldh*5)+4] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -926,10 +926,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[(ldq*4)+offset],q2);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[(ldh)+1]);
+	h2 = _mm_set1_pd(hh[(ldh)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh)+1])) );
+	h2 = _mm_set1_ps(hh[(ldh)+1] );
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq*5]);
@@ -941,40 +941,40 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+2])) );
+	h3 = _mm_set1_ps(hh[(ldh*2)+2] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 	q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+3])) );
+	h4 = _mm_set1_ps(hh[(ldh*3)+3] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 	q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+4]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*4)+4])) );
+	h5 = _mm_set1_ps(hh[(ldh*4)+4] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 	q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+5]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*5)+5])) );
+	h6 = _mm_set1_ps(hh[(ldh*5)+5] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -988,60 +988,60 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 		q1 = _SSE_LOAD(&q[i*ldq]);
 		q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
 #ifdef DOUBLE_PRECISION_REAL
-		h1 = _mm_loaddup_pd(&hh[i-5]);
+		h1 = _mm_set1_pd(hh[i-5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[i-5])) );
+		h1 = _mm_set1_ps(hh[i-5] );
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 		q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h2 = _mm_loaddup_pd(&hh[ldh+i-4]);
+		h2 = _mm_set1_pd(hh[ldh+i-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+i-4])) );
+		h2 = _mm_set1_ps(hh[ldh+i-4] );
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 		q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-3]);
+		h3 = _mm_set1_pd(hh[(ldh*2)+i-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+i-3])) );
+		h3 = _mm_set1_ps(hh[(ldh*2)+i-3] );
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 		q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i-2]);
+		h4 = _mm_set1_pd(hh[(ldh*3)+i-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+i-2])) );
+		h4 = _mm_set1_ps(hh[(ldh*3)+i-2] );
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 		q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h5 = _mm_loaddup_pd(&hh[(ldh*4)+i-1]);
+		h5 = _mm_set1_pd(hh[(ldh*4)+i-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*4)+i-1])) );
+		h5 = _mm_set1_ps(hh[(ldh*4)+i-1] );
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 		q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h6 = _mm_loaddup_pd(&hh[(ldh*5)+i]);
+		h6 = _mm_set1_pd(hh[(ldh*5)+i]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*5)+i])) );
+		h6 = _mm_set1_ps(hh[(ldh*5)+i] );
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -1052,10 +1052,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	}
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-5]);
+	h1 = _mm_set1_pd(hh[nb-5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-5])) );
+	h1 = _mm_set1_ps(hh[nb-5] );
 #endif
 
 	q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1065,40 +1065,40 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-4]);
+	h2 = _mm_set1_pd(hh[ldh+nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-4])) );
+	h2 = _mm_set1_ps(hh[ldh+nb-4] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 	q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-3]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-3])) );
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-3] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 	q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+nb-2]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+nb-2])) );
+	h4 = _mm_set1_ps(hh[(ldh*3)+nb-2] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 	q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+nb-1]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*4)+nb-1])) );
+	h5 = _mm_set1_ps(hh[(ldh*4)+nb-1] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
@@ -1108,10 +1108,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[(nb*ldq)+offset],q2);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-4]);
+	h1 = _mm_set1_pd(hh[nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-4])) );
+	h1 = _mm_set1_ps(hh[nb-4] );
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
@@ -1121,30 +1121,30 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-3]);
+	h2 = _mm_set1_pd(hh[ldh+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-3])) );
+	h2 = _mm_set1_ps(hh[ldh+nb-3] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 	q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-2]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-2])) );
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-2] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 	q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+nb-1]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*3)+nb-1])) );
+	h4 = _mm_set1_ps(hh[(ldh*3)+nb-1] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
@@ -1154,10 +1154,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[((nb+1)*ldq)+offset],q2);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	h1 = _mm_set1_pd(hh[nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-3])) );
+	h1 = _mm_set1_ps(hh[nb-3] );
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
@@ -1167,20 +1167,20 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	h2 = _mm_set1_pd(hh[ldh+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-2])) );
+	h2 = _mm_set1_ps(hh[ldh+nb-2] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 	q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[(ldh*2)+nb-1])) );
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-1] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
@@ -1190,10 +1190,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[((nb+2)*ldq)+offset],q2);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	h1 = _mm_set1_pd(hh[nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-2])) );
+	h1 = _mm_set1_ps(hh[nb-2] );
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
@@ -1203,10 +1203,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
+	h2 = _mm_set1_pd(hh[ldh+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[ldh+nb-1])) );
+	h2 = _mm_set1_ps(hh[ldh+nb-1] );
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
@@ -1216,10 +1216,10 @@ __forceinline void hh_trafo_kernel_8_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[((nb+3)*ldq)+offset],q2);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *)&hh[nb-1])) );
+	h1 = _mm_set1_ps(hh[nb-1] );
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
@@ -1263,18 +1263,18 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	__SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE h_6_5 = _mm_loaddup_pd(&hh[(ldh*5)+1]);
-	__SSE_DATATYPE h_6_4 = _mm_loaddup_pd(&hh[(ldh*5)+2]);
-	__SSE_DATATYPE h_6_3 = _mm_loaddup_pd(&hh[(ldh*5)+3]);
-	__SSE_DATATYPE h_6_2 = _mm_loaddup_pd(&hh[(ldh*5)+4]);
-	__SSE_DATATYPE h_6_1 = _mm_loaddup_pd(&hh[(ldh*5)+5]);
+	__SSE_DATATYPE h_6_5 = _mm_set1_pd(hh[(ldh*5)+1]);
+	__SSE_DATATYPE h_6_4 = _mm_set1_pd(hh[(ldh*5)+2]);
+	__SSE_DATATYPE h_6_3 = _mm_set1_pd(hh[(ldh*5)+3]);
+	__SSE_DATATYPE h_6_2 = _mm_set1_pd(hh[(ldh*5)+4]);
+	__SSE_DATATYPE h_6_1 = _mm_set1_pd(hh[(ldh*5)+5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE h_6_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+1]) )));
-	__SSE_DATATYPE h_6_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+2]) )));
-	__SSE_DATATYPE h_6_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+3]) )));
-	__SSE_DATATYPE h_6_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+4]) )));
-	__SSE_DATATYPE h_6_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+5]) )));
+	__SSE_DATATYPE h_6_5 = _mm_set1_ps(hh[(ldh*5)+1]) ;
+	__SSE_DATATYPE h_6_4 = _mm_set1_ps(hh[(ldh*5)+2]) ;
+	__SSE_DATATYPE h_6_3 = _mm_set1_ps(hh[(ldh*5)+3]) ;
+	__SSE_DATATYPE h_6_2 = _mm_set1_ps(hh[(ldh*5)+4]) ;
+	__SSE_DATATYPE h_6_1 = _mm_set1_ps(hh[(ldh*5)+5]) ;
 #endif
 
 	register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5));
@@ -1284,16 +1284,16 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE h_5_4 = _mm_loaddup_pd(&hh[(ldh*4)+1]);
-	__SSE_DATATYPE h_5_3 = _mm_loaddup_pd(&hh[(ldh*4)+2]);
-	__SSE_DATATYPE h_5_2 = _mm_loaddup_pd(&hh[(ldh*4)+3]);
-	__SSE_DATATYPE h_5_1 = _mm_loaddup_pd(&hh[(ldh*4)+4]);
+	__SSE_DATATYPE h_5_4 = _mm_set1_pd(hh[(ldh*4)+1]);
+	__SSE_DATATYPE h_5_3 = _mm_set1_pd(hh[(ldh*4)+2]);
+	__SSE_DATATYPE h_5_2 = _mm_set1_pd(hh[(ldh*4)+3]);
+	__SSE_DATATYPE h_5_1 = _mm_set1_pd(hh[(ldh*4)+4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE h_5_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+1]) )));
-	__SSE_DATATYPE h_5_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+2]) )));
-	__SSE_DATATYPE h_5_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+3]) )));
-	__SSE_DATATYPE h_5_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+4]) )));
+	__SSE_DATATYPE h_5_4 = _mm_set1_ps(hh[(ldh*4)+1]) ;
+	__SSE_DATATYPE h_5_3 = _mm_set1_ps(hh[(ldh*4)+2]) ;
+	__SSE_DATATYPE h_5_2 = _mm_set1_ps(hh[(ldh*4)+3]) ;
+	__SSE_DATATYPE h_5_1 = _mm_set1_ps(hh[(ldh*4)+4]) ;
 #endif
 
 	register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4));
@@ -1302,28 +1302,28 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE h_4_3 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
-	__SSE_DATATYPE h_4_2 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
-	__SSE_DATATYPE h_4_1 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	__SSE_DATATYPE h_4_3 = _mm_set1_pd(hh[(ldh*3)+1]);
+	__SSE_DATATYPE h_4_2 = _mm_set1_pd(hh[(ldh*3)+2]);
+	__SSE_DATATYPE h_4_1 = _mm_set1_pd(hh[(ldh*3)+3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE h_4_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+1]) )));
-	__SSE_DATATYPE h_4_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+2]) )));
-	__SSE_DATATYPE h_4_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+3]) )));
+	__SSE_DATATYPE h_4_3 = _mm_set1_ps(hh[(ldh*3)+1]) ;
+	__SSE_DATATYPE h_4_2 = _mm_set1_ps(hh[(ldh*3)+2]) ;
+	__SSE_DATATYPE h_4_1 = _mm_set1_ps(hh[(ldh*3)+3]) ;
 #endif
 	register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
 	w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
 	w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE h_2_1 = _mm_loaddup_pd(&hh[ldh+1]);
-	__SSE_DATATYPE h_3_2 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
-	__SSE_DATATYPE h_3_1 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+	__SSE_DATATYPE h_2_1 = _mm_set1_pd(hh[ldh+1]);
+	__SSE_DATATYPE h_3_2 = _mm_set1_pd(hh[(ldh*2)+1]);
+	__SSE_DATATYPE h_3_1 = _mm_set1_pd(hh[(ldh*2)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE h_2_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+1]) )));
-	__SSE_DATATYPE h_3_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+1]) )));
-	__SSE_DATATYPE h_3_1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+2]) )));
+	__SSE_DATATYPE h_2_1 = _mm_set1_ps(hh[ldh+1]) ;
+	__SSE_DATATYPE h_3_2 = _mm_set1_ps(hh[(ldh*2)+1]) ;
+	__SSE_DATATYPE h_3_1 = _mm_set1_ps(hh[(ldh*2)+2]) ;
 #endif
 
 	register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
@@ -1344,56 +1344,56 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	for(i = 6; i < nb; i++)
 	{
 #ifdef DOUBLE_PRECISION_REAL
-		h1 = _mm_loaddup_pd(&hh[i-5]);
+		h1 = _mm_set1_pd(hh[i-5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[i-5]) )));
+		h1 = _mm_set1_ps(hh[i-5]) ;
 #endif
 		q1 = _SSE_LOAD(&q[i*ldq]);
 
 		x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h2 = _mm_loaddup_pd(&hh[ldh+i-4]);
+		h2 = _mm_set1_pd(hh[ldh+i-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+i-4]) )));
+		h2 = _mm_set1_ps(hh[ldh+i-4]) ;
 #endif
 
 		y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-3]);
+		h3 = _mm_set1_pd(hh[(ldh*2)+i-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+i-3]) )));
+		h3 = _mm_set1_ps(hh[(ldh*2)+i-3]) ;
 #endif
 
 		z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i-2]);
+		h4 = _mm_set1_pd(hh[(ldh*3)+i-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+i-2]) )));
+		h4 = _mm_set1_ps(hh[(ldh*3)+i-2]) ;
 #endif
 
 		w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h5 = _mm_loaddup_pd(&hh[(ldh*4)+i-1]);
+		h5 = _mm_set1_pd(hh[(ldh*4)+i-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+i-1]) )));
+		h5 = _mm_set1_ps(hh[(ldh*4)+i-1]) ;
 #endif
 
 		v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h6 = _mm_loaddup_pd(&hh[(ldh*5)+i]);
+		h6 = _mm_set1_pd(hh[(ldh*5)+i]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-		h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+i]) )));
+		h6 = _mm_set1_ps(hh[(ldh*5)+i]) ;
 #endif
 
 		t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
@@ -1401,10 +1401,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	}
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-5]);
+	h1 = _mm_set1_pd(hh[nb-5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-5]) )));
+	h1 = _mm_set1_ps(hh[nb-5]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1412,47 +1412,47 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-4]);
+	h2 = _mm_set1_pd(hh[ldh+nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+nb-4]) )));
+	h2 = _mm_set1_ps(hh[ldh+nb-4]) ;
 #endif
 
 	y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-3]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+nb-3]) )));
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-3]) ;
 #endif
 
 	z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+nb-2]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+nb-2]) )));
+	h4 = _mm_set1_ps(hh[(ldh*3)+nb-2]) ;
 #endif
 
 
 	w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+nb-1]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+nb-1]) )));
+	h5 = _mm_set1_ps(hh[(ldh*4)+nb-1]) ;
 #endif
 
 	v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-4]);
+	h1 = _mm_set1_pd(hh[nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-4]) )));
+	h1 = _mm_set1_ps(hh[nb-4]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
@@ -1460,37 +1460,37 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-3]);
+	h2 = _mm_set1_pd(hh[ldh+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+nb-3]) )));
+	h2 = _mm_set1_ps(hh[ldh+nb-3]) ;
 #endif
 
 	y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-2]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+nb-2]) )));
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-2]) ;
 #endif
 
 	z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+nb-1]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+nb-1]) )));
+	h4 = _mm_set1_ps(hh[(ldh*3)+nb-1]) ;
 #endif
 
 	w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	h1 = _mm_set1_pd(hh[nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-3]) )));
+	h1 = _mm_set1_ps(hh[nb-3]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
@@ -1498,28 +1498,28 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	h2 = _mm_set1_pd(hh[ldh+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+nb-2]) )));
+	h2 = _mm_set1_ps(hh[ldh+nb-2]) ;
 #endif
 
 	y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+nb-1]) )));
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-1]) ;
 #endif
 
 	z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	h1 = _mm_set1_pd(hh[nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-2]) )));
+	h1 = _mm_set1_ps(hh[nb-2]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
@@ -1527,19 +1527,19 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
+	h2 = _mm_set1_pd(hh[ldh+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+nb-1]) )));
+	h2 = _mm_set1_ps(hh[ldh+nb-1]) ;
 #endif
 
 	y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-1]) )));
+	h1 = _mm_set1_ps(hh[nb-1]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
@@ -1551,20 +1551,20 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	/////////////////////////////////////////////////////
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau1 = _mm_loaddup_pd(&hh[0]);
+	__SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE tau1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[0]) )));
+	__SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]) ;
 #endif
 	x1 = _SSE_MUL(x1, tau1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau2 = _mm_loaddup_pd(&hh[ldh]);
-	__SSE_DATATYPE vs_1_2 = _mm_loaddup_pd(&scalarprods[0]);
+	__SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
+	__SSE_DATATYPE vs_1_2 = _mm_set1_pd(scalarprods[0]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE tau2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh]) )));
-	__SSE_DATATYPE vs_1_2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[0]) )));
+	__SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]) ;
+	__SSE_DATATYPE vs_1_2 = _mm_set1_ps(scalarprods[0]) ;
 #endif
 
 	h2 = _SSE_MUL(tau2, vs_1_2);
@@ -1572,14 +1572,14 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	y1 = _SSE_SUB(_SSE_MUL(y1,tau2), _SSE_MUL(x1,h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau3 = _mm_loaddup_pd(&hh[ldh*2]);
-	__SSE_DATATYPE vs_1_3 = _mm_loaddup_pd(&scalarprods[1]);
-	__SSE_DATATYPE vs_2_3 = _mm_loaddup_pd(&scalarprods[2]);
+	__SSE_DATATYPE tau3 = _mm_set1_pd(hh[ldh*2]);
+	__SSE_DATATYPE vs_1_3 = _mm_set1_pd(scalarprods[1]);
+	__SSE_DATATYPE vs_2_3 = _mm_set1_pd(scalarprods[2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE tau3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh*2]) )));
-	__SSE_DATATYPE vs_1_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[1]) )));
-	__SSE_DATATYPE vs_2_3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[2]) )));
+	__SSE_DATATYPE tau3 = _mm_set1_ps(hh[ldh*2]) ;
+	__SSE_DATATYPE vs_1_3 = _mm_set1_ps(scalarprods[1]) ;
+	__SSE_DATATYPE vs_2_3 = _mm_set1_ps(scalarprods[2]) ;
 #endif
 
 	h2 = _SSE_MUL(tau3, vs_1_3);
@@ -1588,23 +1588,23 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	z1 = _SSE_SUB(_SSE_MUL(z1,tau3), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau4 = _mm_loaddup_pd(&hh[ldh*3]);
-	__SSE_DATATYPE vs_1_4 = _mm_loaddup_pd(&scalarprods[3]);
-	__SSE_DATATYPE vs_2_4 = _mm_loaddup_pd(&scalarprods[4]);
+	__SSE_DATATYPE tau4 = _mm_set1_pd(hh[ldh*3]);
+	__SSE_DATATYPE vs_1_4 = _mm_set1_pd(scalarprods[3]);
+	__SSE_DATATYPE vs_2_4 = _mm_set1_pd(scalarprods[4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE tau4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh*3]) )));
-	__SSE_DATATYPE vs_1_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[3]) )));
-	__SSE_DATATYPE vs_2_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[4]) )));
+	__SSE_DATATYPE tau4 = _mm_set1_ps(hh[ldh*3]) ;
+	__SSE_DATATYPE vs_1_4 = _mm_set1_ps(scalarprods[3]) ;
+	__SSE_DATATYPE vs_2_4 = _mm_set1_ps(scalarprods[4]) ;
 #endif
 	h2 = _SSE_MUL(tau4, vs_1_4);
 	h3 = _SSE_MUL(tau4, vs_2_4);
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE vs_3_4 = _mm_loaddup_pd(&scalarprods[5]);
+	__SSE_DATATYPE vs_3_4 = _mm_set1_pd(scalarprods[5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE vs_3_4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[5]) )));
+	__SSE_DATATYPE vs_3_4 = _mm_set1_ps(scalarprods[5]) ;
 #endif
 
 	h4 = _SSE_MUL(tau4, vs_3_4);
@@ -1612,25 +1612,25 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	w1 = _SSE_SUB(_SSE_MUL(w1,tau4), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau5 = _mm_loaddup_pd(&hh[ldh*4]);
-	__SSE_DATATYPE vs_1_5 = _mm_loaddup_pd(&scalarprods[6]);
-	__SSE_DATATYPE vs_2_5 = _mm_loaddup_pd(&scalarprods[7]);
+	__SSE_DATATYPE tau5 = _mm_set1_pd(hh[ldh*4]);
+	__SSE_DATATYPE vs_1_5 = _mm_set1_pd(scalarprods[6]);
+	__SSE_DATATYPE vs_2_5 = _mm_set1_pd(scalarprods[7]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE tau5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh*4]) )));
-	__SSE_DATATYPE vs_1_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[6]) )));
-	__SSE_DATATYPE vs_2_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[7]) )));
+	__SSE_DATATYPE tau5 = _mm_set1_ps(hh[ldh*4]) ;
+	__SSE_DATATYPE vs_1_5 = _mm_set1_ps(scalarprods[6]) ;
+	__SSE_DATATYPE vs_2_5 = _mm_set1_ps(scalarprods[7]) ;
 #endif
 	h2 = _SSE_MUL(tau5, vs_1_5);
 	h3 = _SSE_MUL(tau5, vs_2_5);
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE vs_3_5 = _mm_loaddup_pd(&scalarprods[8]);
-	__SSE_DATATYPE vs_4_5 = _mm_loaddup_pd(&scalarprods[9]);
+	__SSE_DATATYPE vs_3_5 = _mm_set1_pd(scalarprods[8]);
+	__SSE_DATATYPE vs_4_5 = _mm_set1_pd(scalarprods[9]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE vs_3_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[8]) )));
-	__SSE_DATATYPE vs_4_5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[9]) )));
+	__SSE_DATATYPE vs_3_5 = _mm_set1_ps(scalarprods[8]) ;
+	__SSE_DATATYPE vs_4_5 = _mm_set1_ps(scalarprods[9]) ;
 #endif
 	h4 = _SSE_MUL(tau5, vs_3_5);
 	h5 = _SSE_MUL(tau5, vs_4_5);
@@ -1638,27 +1638,27 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE tau6 = _mm_loaddup_pd(&hh[ldh*5]);
-	__SSE_DATATYPE vs_1_6 = _mm_loaddup_pd(&scalarprods[10]);
-	__SSE_DATATYPE vs_2_6 = _mm_loaddup_pd(&scalarprods[11]);
+	__SSE_DATATYPE tau6 = _mm_set1_pd(hh[ldh*5]);
+	__SSE_DATATYPE vs_1_6 = _mm_set1_pd(scalarprods[10]);
+	__SSE_DATATYPE vs_2_6 = _mm_set1_pd(scalarprods[11]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE tau6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh*5]) )));
-	__SSE_DATATYPE vs_1_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[10]) )));
-	__SSE_DATATYPE vs_2_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[11]) )));
+	__SSE_DATATYPE tau6 = _mm_set1_ps(hh[ldh*5]) ;
+	__SSE_DATATYPE vs_1_6 = _mm_set1_ps(scalarprods[10]) ;
+	__SSE_DATATYPE vs_2_6 = _mm_set1_ps(scalarprods[11]) ;
 #endif
 	h2 = _SSE_MUL(tau6, vs_1_6);
 	h3 = _SSE_MUL(tau6, vs_2_6);
 
 #ifdef DOUBLE_PRECISION_REAL
-	__SSE_DATATYPE vs_3_6 = _mm_loaddup_pd(&scalarprods[12]);
-	__SSE_DATATYPE vs_4_6 = _mm_loaddup_pd(&scalarprods[13]);
-	__SSE_DATATYPE vs_5_6 = _mm_loaddup_pd(&scalarprods[14]);
+	__SSE_DATATYPE vs_3_6 = _mm_set1_pd(scalarprods[12]);
+	__SSE_DATATYPE vs_4_6 = _mm_set1_pd(scalarprods[13]);
+	__SSE_DATATYPE vs_5_6 = _mm_set1_pd(scalarprods[14]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	__SSE_DATATYPE vs_3_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[12]) )));
-	__SSE_DATATYPE vs_4_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[13]) )));
-	__SSE_DATATYPE vs_5_6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&scalarprods[14]) )));
+	__SSE_DATATYPE vs_3_6 = _mm_set1_ps(scalarprods[12]) ;
+	__SSE_DATATYPE vs_4_6 = _mm_set1_ps(scalarprods[13]) ;
+	__SSE_DATATYPE vs_5_6 = _mm_set1_ps(scalarprods[14]) ;
 #endif
 
 	h4 = _SSE_MUL(tau6, vs_3_6);
@@ -1676,10 +1676,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[0],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+1]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+1]) )));
+	h6 = _mm_set1_ps(hh[(ldh*5)+1]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq]);
@@ -1690,10 +1690,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[ldq],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+1]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+1]) )));
+	h5 = _mm_set1_ps(hh[(ldh*4)+1]) ;
 #endif
 	q1 = _SSE_LOAD(&q[ldq*2]);
 	q1 = _SSE_SUB(q1, w1);
@@ -1701,10 +1701,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+2]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+2]) )));
+	h6 = _mm_set1_ps(hh[(ldh*5)+2]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -1712,10 +1712,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[ldq*2],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+1]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+1]) )));
+	h4 = _mm_set1_ps(hh[(ldh*3)+1]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq*3]);
@@ -1724,19 +1724,19 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+2]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+2]) )));
+	h5 = _mm_set1_ps(hh[(ldh*4)+2]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+3]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+3]) )));
+	h6 = _mm_set1_ps(hh[(ldh*5)+3]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -1744,10 +1744,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[ldq*3],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+1]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+1]) )));
+	h3 = _mm_set1_ps(hh[(ldh*2)+1]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq*4]);
@@ -1756,28 +1756,28 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+2]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+2]) )));
+	h4 = _mm_set1_ps(hh[(ldh*3)+2]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+3]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+3]) )));
+	h5 = _mm_set1_ps(hh[(ldh*4)+3]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+4]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+4]) )));
+	h6 = _mm_set1_ps(hh[(ldh*5)+4]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -1785,10 +1785,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[ldq*4],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[(ldh)+1]);
+	h2 = _mm_set1_pd(hh[(ldh)+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh)+1]) )));
+	h2 = _mm_set1_ps(hh[(ldh)+1]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq*5]);
@@ -1797,37 +1797,37 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+2]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+2]) )));
+	h3 = _mm_set1_ps(hh[(ldh*2)+2]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+3]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+3]) )));
+	h4 = _mm_set1_ps(hh[(ldh*3)+3]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+4]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+4]) )));
+	h5 = _mm_set1_ps(hh[(ldh*4)+4]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h6 = _mm_loaddup_pd(&hh[(ldh*5)+5]);
+	h6 = _mm_set1_pd(hh[(ldh*5)+5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+5]) )));
+	h6 = _mm_set1_ps(hh[(ldh*5)+5]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -1838,55 +1838,55 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	{
 		q1 = _SSE_LOAD(&q[i*ldq]);
 #ifdef DOUBLE_PRECISION_REAL
-		h1 = _mm_loaddup_pd(&hh[i-5]);
+		h1 = _mm_set1_pd(hh[i-5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-          	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[i-5]) )));
+		h1 = _mm_set1_ps(hh[i-5]) ;
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h2 = _mm_loaddup_pd(&hh[ldh+i-4]);
+		h2 = _mm_set1_pd(hh[ldh+i-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-          	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+i-4]) )));
+		h2 = _mm_set1_ps(hh[ldh+i-4]) ;
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h3 = _mm_loaddup_pd(&hh[(ldh*2)+i-3]);
+		h3 = _mm_set1_pd(hh[(ldh*2)+i-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-          	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+i-3]) )));
+		h3 = _mm_set1_ps(hh[(ldh*2)+i-3]) ;
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h4 = _mm_loaddup_pd(&hh[(ldh*3)+i-2]);
+		h4 = _mm_set1_pd(hh[(ldh*3)+i-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-          	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+i-2]) )));
+		h4 = _mm_set1_ps(hh[(ldh*3)+i-2]) ;
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h5 = _mm_loaddup_pd(&hh[(ldh*4)+i-1]);
+		h5 = _mm_set1_pd(hh[(ldh*4)+i-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-          	h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+i-1]) )));
+		h5 = _mm_set1_ps(hh[(ldh*4)+i-1]) ;
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 
 #ifdef DOUBLE_PRECISION_REAL
-		h6 = _mm_loaddup_pd(&hh[(ldh*5)+i]);
+		h6 = _mm_set1_pd(hh[(ldh*5)+i]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-          	h6 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*5)+i]) )));
+		h6 = _mm_set1_ps(hh[(ldh*5)+i]) ;
 #endif
 
 		q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
@@ -1895,10 +1895,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	}
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-5]);
+	h1 = _mm_set1_pd(hh[nb-5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-5]) )));
+	h1 = _mm_set1_ps(hh[nb-5]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1906,37 +1906,37 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-4]);
+	h2 = _mm_set1_pd(hh[ldh+nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+nb-4]) )));
+	h2 = _mm_set1_ps(hh[ldh+nb-4]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-3]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+nb-3]) )));
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-3]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+nb-2]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+nb-2]) )));
+	h4 = _mm_set1_ps(hh[(ldh*3)+nb-2]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h5 = _mm_loaddup_pd(&hh[(ldh*4)+nb-1]);
+	h5 = _mm_set1_pd(hh[(ldh*4)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h5 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*4)+nb-1]) )));
+	h5 = _mm_set1_ps(hh[(ldh*4)+nb-1]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
@@ -1944,10 +1944,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[nb*ldq],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-4]);
+	h1 = _mm_set1_pd(hh[nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-4]) )));
+	h1 = _mm_set1_ps(hh[nb-4]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
@@ -1955,28 +1955,28 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-3]);
+	h2 = _mm_set1_pd(hh[ldh+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+nb-3]) )));
+	h2 = _mm_set1_ps(hh[ldh+nb-3]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-2]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+nb-2]) )));
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-2]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h4 = _mm_loaddup_pd(&hh[(ldh*3)+nb-1]);
+	h4 = _mm_set1_pd(hh[(ldh*3)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h4 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*3)+nb-1]) )));
+	h4 = _mm_set1_ps(hh[(ldh*3)+nb-1]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
@@ -1984,10 +1984,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[(nb+1)*ldq],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-3]);
+	h1 = _mm_set1_pd(hh[nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-3]) )));
+	h1 = _mm_set1_ps(hh[nb-3]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
@@ -1995,19 +1995,19 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-2]);
+	h2 = _mm_set1_pd(hh[ldh+nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+nb-2]) )));
+	h2 = _mm_set1_ps(hh[ldh+nb-2]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h3 = _mm_loaddup_pd(&hh[(ldh*2)+nb-1]);
+	h3 = _mm_set1_pd(hh[(ldh*2)+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h3 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[(ldh*2)+nb-1]) )));
+	h3 = _mm_set1_ps(hh[(ldh*2)+nb-1]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
@@ -2015,10 +2015,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[(nb+2)*ldq],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-2]);
+	h1 = _mm_set1_pd(hh[nb-2]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-2]) )));
+	h1 = _mm_set1_ps(hh[nb-2]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
@@ -2026,10 +2026,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
 #ifdef DOUBLE_PRECISION_REAL
-	h2 = _mm_loaddup_pd(&hh[ldh+nb-1]);
+	h2 = _mm_set1_pd(hh[ldh+nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h2 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[ldh+nb-1]) )));
+	h2 = _mm_set1_ps(hh[ldh+nb-1]) ;
 #endif
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
@@ -2037,10 +2037,10 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	_SSE_STORE(&q[(nb+3)*ldq],q1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = _mm_loaddup_pd(&hh[nb-1]);
+	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-       	h1 = _mm_moveldup_ps( _mm_castpd_ps(_mm_loaddup_pd( (double *) (&hh[nb-1]) )));
+	h1 = _mm_set1_ps(hh[nb-1]) ;
 #endif
 
 	q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
