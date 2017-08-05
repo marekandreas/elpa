@@ -335,11 +335,13 @@ void hexa_hh_trafo_real_avx_avx2_6hv_single(float* q, float* hh, int* pnb, int* 
 		worked_on += 8;
 	}
 #endif
+#ifdef WITH_DEBUG
 	if (worked_on != nq)
 	{
 	    printf("Error in real AVX/AVX2 BLOCK6 kernel \n");
 	    abort();
 	 }
+#endif
 }
 
 /**

@@ -310,11 +310,13 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 		worked_on += 8;
 	}
 #endif
+#ifdef WITH_DEBUG
         if (worked_on != nq)
 	{
 	   printf("Error in real avx/avx2 BLOCK 2 kernel \n");
 	   abort();
 	}
+#endif
 }
 
 /**

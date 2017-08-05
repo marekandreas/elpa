@@ -268,11 +268,13 @@ void single_hh_trafo_complex_avx512_1hv_single(float complex* q, float complex* 
 		worked_on += 8;
 	}
 #endif
+#ifdef WITH_DEBUG
 	if (worked_on != nq)
 	{
 	     printf("Error in complex AVX512 BLOCK 1 kernel \n");
 	     abort();
 	}
+#endif
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX

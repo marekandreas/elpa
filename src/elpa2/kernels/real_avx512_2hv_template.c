@@ -232,11 +232,14 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 		worked_on += 16;
 	}
 #endif
+
+#ifdef WITH_DEBUG
         if (worked_on != nq)
 	{
 		 printf("Error in AVX512 real BLOCK 2 kernel \n");
 		 abort();
 	}
+#endif
 }
 
 /**

@@ -340,11 +340,14 @@ void hexa_hh_trafo_real_avx512_6hv_single(float* q, float* hh, int* pnb, int* pn
 		worked_on += 16;
 	}
 #endif
+
+#ifdef WITH_DEBUG
         if (worked_on != nq)
 	{
           printf("ERROR in avx512 kernel\n");
 	  abort();
         }
+#endif
 }
 
 /**

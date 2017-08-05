@@ -254,11 +254,13 @@ void quad_hh_trafo_real_sse_4hv_single(float* q, float* hh, int* pnb, int* pnq, 
 		worked_on += 4;
 	}
 #endif
+#ifdef WITH_DEBUG
 	if (worked_on != nq)
 	{
 		printf("Error in real SSE BLOCK4 kernel \n");
 		abort();
 	}
+#endif
 
 }
 

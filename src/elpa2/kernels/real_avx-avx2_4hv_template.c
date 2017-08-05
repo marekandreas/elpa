@@ -297,11 +297,13 @@ void quad_hh_trafo_real_avx_avx2_4hv_single(float* q, float* hh, int* pnb, int* 
 	}
 #endif
 
+#ifdef WITH_DEBUG
         if (worked_on != nq)
 	{
 	    printf("Error in real AVX/AVX2 BLOCK4 kernel \n");
 	    abort();
 	}
+#endif
 }
 /**
  * Unrolled kernel that computes
