@@ -1015,12 +1015,12 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         ])
 ])
 
-echo " "
-echo "***********************************************************************"
-echo "*  This is a the release candidate  ELPA 2017.05.001.rc2              *"
-echo "*  All functionality of the release ELPA 2017.05.001 is already there.*"
-echo "*  This release candidate reflects, except for maybe smaller bug      *"
-echo "*  corrections, the release of ELPA 2017.05.001                       *"
-echo "***********************************************************************"
-echo " "
+#echo " "
+#echo "***********************************************************************"
+#echo "*  This is a the release candidate  ELPA 2017.05.001.rc2              *"
+#echo "*  All functionality of the release ELPA 2017.05.001 is already there.*"
+#echo "*  This release candidate reflects, except for maybe smaller bug      *"
+#echo "*  corrections, the release of ELPA 2017.05.001                       *"
+#echo "***********************************************************************"
+#echo " "
 make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
