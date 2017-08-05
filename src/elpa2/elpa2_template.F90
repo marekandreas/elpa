@@ -136,6 +136,11 @@
     nblk       = obj%nblk
     matrixCols = obj%local_ncols
 
+   if (nev == 0) then
+     nev = 1
+     obj%eigenvalues_only = .true.
+   endif
+
 #if REALCASE == 1
     call obj%get("real_kernel",kernel)
     ! check consistency between request for GPUs and defined kernel

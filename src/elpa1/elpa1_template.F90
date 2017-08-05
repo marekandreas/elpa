@@ -136,6 +136,12 @@ function elpa_solve_evp_&
    nblk       = obj%nblk
    matrixCols = obj%local_ncols
 
+   if (nev == 0) then
+     nev = 1
+     obj%eigenvalues_only = .true.
+   endif
+
+
    call obj%get("mpi_comm_rows",mpi_comm_rows)
    call obj%get("mpi_comm_cols",mpi_comm_cols)
    call obj%get("mpi_comm_parent", mpi_comm_all)

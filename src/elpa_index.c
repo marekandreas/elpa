@@ -620,7 +620,7 @@ static int nev_is_valid(elpa_index_t index, int n, int new_value) {
         if (!elpa_index_int_value_is_set(index, "na")) {
                 return 0;
         }
-        return 0 < new_value && new_value <= elpa_index_get_int_value(index, "na", NULL);
+        return 0 <= new_value && new_value <= elpa_index_get_int_value(index, "na", NULL);
 }
 
 static int is_positive(elpa_index_t index, int n, int new_value) {
