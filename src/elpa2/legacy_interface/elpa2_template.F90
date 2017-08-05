@@ -204,61 +204,63 @@
       return
     endif
 
-    time_evp_fwd = e%get_time("elpa_solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION&
-   &","bandred")
+    if (na .gt. 1) then
+      time_evp_fwd = e%get_time("elpa_solve_evp_&
+      &MATH_DATATYPE&
+      &_2stage_&
+      &PRECISION&
+      &","bandred")
 
-   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      write(error_unit,*) 'Time bandred_real               :', time_evp_fwd
+      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+        write(error_unit,*) 'Time bandred_real               :', time_evp_fwd
 
-   time_evp_fwd =  time_evp_fwd + e%get_time("elpa_solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION&
-   &","tridiag")
+      time_evp_fwd =  time_evp_fwd + e%get_time("elpa_solve_evp_&
+      &MATH_DATATYPE&
+      &_2stage_&
+      &PRECISION&
+      &","tridiag")
 
-   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-      write(error_unit,*) 'Time tridiag_band_real          :',e%get_time("elpa_solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION&
-   &","tridiag")
+      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+        write(error_unit,*) 'Time tridiag_band_real          :',e%get_time("elpa_solve_evp_&
+        &MATH_DATATYPE&
+        &_2stage_&
+        &PRECISION&
+        &","tridiag")
 
-   time_evp_solve = e%get_time("elpa_solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION&
-   &","solve")
+      time_evp_solve = e%get_time("elpa_solve_evp_&
+      &MATH_DATATYPE&
+      &_2stage_&
+      &PRECISION&
+      &","solve")
 
-   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-     write(error_unit,*) 'Time solve_tridi                :',time_evp_solve
+      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+        write(error_unit,*) 'Time solve_tridi                :',time_evp_solve
 
-   time_evp_back = e%get_time("elpa_solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION&
-   &","trans_ev_to_band")
+      if (nev .ge. 1) then
+        time_evp_back = e%get_time("elpa_solve_evp_&
+        &MATH_DATATYPE&
+        &_2stage_&
+        &PRECISION&
+        &","trans_ev_to_band")
 
-   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-     write(error_unit,*) 'Time trans_ev_tridi_to_band_real:',time_evp_back
+      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+        write(error_unit,*) 'Time trans_ev_tridi_to_band_real:',time_evp_back
 
-   time_evp_back = time_evp_back  + &
-   e%get_time("elpa_solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION&
-   &","trans_ev_to_full")
+      time_evp_back = time_evp_back  + &
+      e%get_time("elpa_solve_evp_&
+      &MATH_DATATYPE&
+      &_2stage_&
+      &PRECISION&
+      &","trans_ev_to_full")
 
-   if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
-     write(error_unit,*) 'Time trans_ev_band_to_full_real :',e%get_time("elpa_solve_evp_&
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION&
-   &","trans_ev_to_full")
-
-
+      if (my_prow==0 .and. my_pcol==0 .and. elpa_print_times) &
+        write(error_unit,*) 'Time trans_ev_band_to_full_real :',e%get_time("elpa_solve_evp_&
+       &MATH_DATATYPE&
+       &_2stage_&
+       &PRECISION&
+       &","trans_ev_to_full")
+      endif
+    endif ! na > 1
     call elpa_deallocate(e)
 
     call elpa_uninit()

@@ -122,6 +122,7 @@ function elpa_solve_evp_&
    &PRECISION&
    &")
 
+   success = .true.
 
    if (present(q)) then
      obj%eigenvalues_only = .false.
@@ -135,6 +136,28 @@ function elpa_solve_evp_&
    ldq        = obj%local_nrows
    nblk       = obj%nblk
    matrixCols = obj%local_ncols
+
+   ! special case na = 1
+   if (na .eq. 1) then
+#if REALCASE == 1
+     ev(1) = a(1,1)
+     if (.not.(obj%eigenvalues_only)) then
+       q(1,1) = CONST_REAL_1_0
+     endif
+#endif
+#if COMPLEXCASE == 1
+     ev(1) = real(a(1,1))
+     if (.not.(obj%eigenvalues_only)) then
+       q(1,1) = CONST_COMPLEX_PAIR_1_0
+     endif
+#endif
+     call obj%timer%stop("elpa_solve_evp_&
+     &MATH_DATATYPE&
+     &_1stage_&
+     &PRECISION&
+     &")
+     return
+   endif
 
    if (nev == 0) then
      nev = 1
@@ -167,7 +190,6 @@ function elpa_solve_evp_&
 #endif
 
    call obj%timer%stop("mpi_communication")
-   success = .true.
 
    call obj%get("debug", debug)
    wantDebug = debug == 1

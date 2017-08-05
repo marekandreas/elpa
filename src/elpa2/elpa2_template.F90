@@ -123,6 +123,8 @@
     &PRECISION&
     &")
 
+    success = .true.
+
     if (present(q)) then
       obj%eigenvalues_only = .false.
     else
@@ -135,6 +137,28 @@
     ldq        = obj%local_nrows
     nblk       = obj%nblk
     matrixCols = obj%local_ncols
+
+   ! special case na = 1
+   if (na .eq. 1) then
+#if REALCASE == 1
+     ev(1) = a(1,1)
+     if (.not.(obj%eigenvalues_only)) then
+       q(1,1) = CONST_REAL_1_0
+     endif
+#endif
+#if COMPLEXCASE == 1
+     ev(1) = real(a(1,1))
+     if (.not.(obj%eigenvalues_only)) then
+       q(1,1) = CONST_COMPLEX_PAIR_1_0
+     endif
+#endif
+     call obj%timer%stop("elpa_solve_evp_&
+     &MATH_DATATYPE&
+     &_2stage_&
+     &PRECISION&
+     &")
+     return
+   endif
 
    if (nev == 0) then
      nev = 1
@@ -210,7 +234,6 @@
 
     call obj%get("debug",debug)
     wantDebug = debug == 1
-    success = .true.
 
     do_useGPU      = .false.
     do_useGPU_trans_ev_tridi =.false.

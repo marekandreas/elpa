@@ -238,7 +238,11 @@ module test_analytic
     ! go to zero-based indexing
     ii = i - 1
     jj = j - 1
-    a = exp(log(largest_ev)/(na-1))
+    if (na .gt. 2) then
+      a = exp(log(largest_ev)/(na-1))
+    else
+      a = exp(log(largest_ev)/(1))
+    endif
     s = 0.5_rk8
     c = sqrt(3.0_rk8)/2.0_rk8
     element = ONE
