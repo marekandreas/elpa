@@ -145,8 +145,13 @@ module test_analytic
     if(myid == 0) print *, 'Maximum error in eigenvalues      :', max_ev_diff
     if(myid == 0) print *, 'Maximum error in eigenvectors     :', glob_max_z_diff
     status = 0
-    if (max_ev_diff .gt. 5e-14_rk8 .or. max_ev_diff .eq. ZERO) status = 1
-    if (glob_max_z_diff .gt. 6e-11_rk8 .or. glob_max_z_diff .eq. ZERO) status = 1
+    if (nev .gt. 2) then
+      if (max_ev_diff .gt. 5e-14_rk8 .or. max_ev_diff .eq. ZERO) status = 1
+      if (glob_max_z_diff .gt. 6e-11_rk8 .or. glob_max_z_diff .eq. ZERO) status = 1
+    else
+      if (max_ev_diff .gt. 5e-14_rk8) status = 1
+      if (glob_max_z_diff .gt. 6e-11_rk8) status = 1
+    endif
   end function
 
   function decompose(num, decomposition) result(possible)

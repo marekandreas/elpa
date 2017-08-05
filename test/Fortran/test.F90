@@ -136,7 +136,7 @@ program test
    MATRIX_TYPE, allocatable :: z(:,:)
    ! eigenvalues
    EV_TYPE, allocatable :: ev(:)
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS)
    EV_TYPE, allocatable :: d(:), sd(:), ev_analytic(:), ds(:), sds(:)
    EV_TYPE              :: diagonalELement, subdiagonalElement
 #endif
@@ -215,7 +215,7 @@ program test
    allocate(z (na_rows,na_cols))
    allocate(ev(na))
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS)
    allocate(d (na), ds(na))
    allocate(sd (na), sds(na))
    allocate(ev_analytic(na))
@@ -228,9 +228,23 @@ program test
 #ifdef TEST_EIGENVECTORS
 #ifdef TEST_MATRIX_ANALYTIC
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
-   as(:,:) = a
+     as(:,:) = a
 #else
-   call prepare_matrix(na, myid, sc_desc, a, z, as)
+   if (nev .ge. 1) then
+     call prepare_matrix(na, myid, sc_desc, a, z, as)
+   else
+     ! zero eigenvectors and not analytic test => toeplitz matrix
+#ifdef TEST_SINGLE
+     diagonalElement = 0.45_c_float
+     subdiagonalElement =  0.78_c_float
+#else
+     diagonalElement = 0.45_c_double
+     subdiagonalElement =  0.78_c_double
+#endif
+     call prepare_toeplitz_matrix(na, diagonalElement, subdiagonalElement, &
+                                  d, sd, ds, sds, a, as, nblk, np_rows, &
+                                  np_cols, my_prow, my_pcol)
+   endif
 #endif
 #endif
 
@@ -246,7 +260,7 @@ program test
    call prepare_toeplitz_matrix(na, diagonalElement, subdiagonalElement, &
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
-#endif
+#endif /* EIGENVALUES OR TRIDIAGONAL */
 
    e => elpa_allocate()
 
@@ -360,7 +374,13 @@ program test
 #ifdef TEST_MATRIX_ANALYTIC
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 #else
-     status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+     if (nev .ge. 1) then
+       status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+     else
+       ! zero eigenvectors and no analytic test => toeplitz
+       status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
+         subdiagonalElement, ev, z, myid)
+     endif
 #endif
      call check_status(status, myid)
 #endif
@@ -383,7 +403,7 @@ program test
 
 #ifdef TEST_ALL_KERNELS
      a(:,:) = as(:,:)
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS)
      d = ds
      sd = sds
 #endif
@@ -397,7 +417,7 @@ program test
    deallocate(z)
    deallocate(ev)
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS)
    deallocate(d, ds)
    deallocate(sd, sds)
    deallocate(ev_analytic)

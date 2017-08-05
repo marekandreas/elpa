@@ -182,13 +182,15 @@ function elpa_solve_evp_&
 
    if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time solve_tridi  :',time_evp_solve
 
-   time_evp_back = e%get_time("elpa_solve_evp_&
-   &MATH_DATATYPE&
-   &_1stage_&
-   &PRECISION&
-   &","back")
+   if (nev .ge. 1) then
+     time_evp_back = e%get_time("elpa_solve_evp_&
+     &MATH_DATATYPE&
+     &_1stage_&
+     &PRECISION&
+     &","back")
 
-   if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',time_evp_back
+     if(my_prow==0 .and. my_pcol==0 .and. elpa_print_times) write(error_unit,*) 'Time trans_ev_real:',time_evp_back
+   endif
 
    if (successInternal .ne. ELPA_OK) then
      print *, "Cannot solve with ELPA 1stage"

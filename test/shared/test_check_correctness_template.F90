@@ -197,22 +197,43 @@
 
       if (myid==0) print *,'Error Residual     :',errmax
 #if REALCASE == 1
+      if (nev .ge. 2) then
 #ifdef DOUBLE_PRECISION_REAL
-      if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
+        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-      if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
+        if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
+          status = 1
+        endif
+      else
+#ifdef DOUBLE_PRECISION_REAL
+        if (errmax .gt. 5e-12_rk8) then
+#else
+        if (errmax .gt. 3e-3_rk4) then
+#endif
+          status = 1
+        endif
+      endif
 #endif
 #if COMPLEXCASE == 1
+      if (nev .gt. 2) then
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
+        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-      if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
+        if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
+          status =1
+        endif
+      else
+#ifdef DOUBLE_PRECISION_COMPLEX
+        if (errmax .gt. 5e-12_rk8) then
+#else
+        if (errmax .gt. 3e-3_rk4) then
 #endif
-
-        status = 1
+          status = 1
+        endif
       endif
+#endif
 
       ! 2. Eigenvector orthogonality
 
@@ -224,7 +245,6 @@
 #else /* WITH_MPI */
       call PRECISION_GEMM(BLAS_TRANS_OR_CONJ,'N',nev,nev,na,ONE,z,na,z,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
-      
       !TODO for the C interface, not all information is passed (zeros instead)
       !TODO than this part of the test cannot be done
       !TODO either we will not have this part of test at all, or it will be improved 
@@ -266,22 +286,44 @@
 
       if (myid==0) print *,'Error Orthogonality:',errmax
 #if REALCASE == 1
+      if (nev .ge. 2) then
 #ifdef DOUBLE_PRECISION_REAL
-      if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
+        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-      if (errmax .gt. 9e-4_rk4 .or. errmax .eq. 0.0_rk4) then
+        if (errmax .gt. 9e-4_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
+          status = 1
+        endif
+      else
+#ifdef DOUBLE_PRECISION_REAL
+        if (errmax .gt. 5e-12_rk8) then
+#else
+        if (errmax .gt. 9e-4_rk4) then
+#endif
+          status = 1
+        endif
+      endif
 #endif
 #if COMPLEXCASE == 1
+      if (nev .ge. 2) then
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
+        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-      if (errmax .gt. 9e-4_rk4 .or. errmax .eq. 0.0_rk4) then
+        if (errmax .gt. 9e-4_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
+          status = 1
+        endif
+      else
+#ifdef DOUBLE_PRECISION_COMPLEX
+        if (errmax .gt. 5e-12_rk8) then
+#else
+        if (errmax .gt. 9e-4_rk4) then
+#endif
+          status = 1
+        endif
+      endif
 #endif
 
-        status = 1
-      endif
     end function
 
 
