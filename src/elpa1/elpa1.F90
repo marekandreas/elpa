@@ -91,8 +91,6 @@ module elpa1_impl
   ! The following routines are public:
   private
 
-  public :: elpa_get_communicators_impl               !< Sets MPI row/col communicators as needed by ELPA
-
   public :: elpa_solve_evp_real_1stage_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
 
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -134,64 +132,6 @@ module elpa1_impl
 #endif
 
 contains
-
-!-------------------------------------------------------------------------------
-
-! All ELPA routines need MPI communicators for communicating within
-! rows or columns of processes, these are set here.
-! mpi_comm_rows/mpi_comm_cols can be free'd with MPI_Comm_free if not used any more.
-!
-!  Parameters
-!
-!> \param  mpi_comm_global   Global communicator for the calculations (in)
-!>
-!> \param  my_prow           Row coordinate of the calling process in the process grid (in)
-!>
-!> \param  my_pcol           Column coordinate of the calling process in the process grid (in)
-!>
-!> \param  mpi_comm_rows     Communicator for communicating within rows of processes (out)
-!>
-!> \param  mpi_comm_cols     Communicator for communicating within columns of processes (out)
-!> \result mpierr            integer error value of mpi_comm_split function
-
-
-function elpa_get_communicators_impl(mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols) result(mpierr)
-   ! use precision
-   use elpa_mpi
-   use iso_c_binding
-   implicit none
-
-   integer(kind=c_int), intent(in)     :: mpi_comm_global, my_prow, my_pcol
-   integer(kind=c_int), intent(out)    :: mpi_comm_rows, mpi_comm_cols
-
-   integer                             :: mpierr, mpi_string_length, mpierr2
-#ifdef WITH_MPI
-   character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
-#endif
-   ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
-   ! having the same column coordinate share one mpi_comm_rows.
-   ! So the "color" for splitting is my_pcol and the "key" is my row coordinate.
-   ! Analogous for mpi_comm_cols
-
-   call mpi_comm_split(mpi_comm_global,my_pcol,my_prow,mpi_comm_rows,mpierr)
-#ifdef WITH_MPI
-   if (mpierr .ne. MPI_SUCCESS) then
-     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
-     print *,"MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
-     stop
-   endif
-#endif
-
-   call mpi_comm_split(mpi_comm_global,my_prow,my_pcol,mpi_comm_cols, mpierr)
-#ifdef WITH_MPI
-   if (mpierr .ne. MPI_SUCCESS) then
-     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
-     print *,"MPI ERROR occured during mpi_comm_split for col communicator: ", trim(mpierr_string)
-     stop
-   endif
-#endif
-
-end function elpa_get_communicators_impl
 
 
 !> \brief elpa_solve_evp_real_1stage_double_impl: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
