@@ -111,8 +111,8 @@
     call e%set("nblk", nblk)
 
     call e%set("mpi_comm_parent", mpi_comm_all)
-    call e%set("process_row", my_prow)
-    call e%set("process_col", my_pcol)
+    call e%set("mpi_comm_rows", mpi_comm_rows)
+    call e%set("mpi_comm_cols", mpi_comm_cols)
 
     call e%set("timings",1)
 
