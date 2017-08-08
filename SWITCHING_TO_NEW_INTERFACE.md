@@ -138,7 +138,7 @@ the user application):
                                       ! API)
 
 7. when not needed anymore, destroy the instance
-   call e%deallocate()
+   call elpa_deallocate()
 
 8. when *ELPA* is not needed anymore, unitialize the *ELPA* library
    call elpa_uninit()
