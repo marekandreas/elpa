@@ -47,46 +47,39 @@
     &PRECISION&
     & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status)
       implicit none
+#include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
 #if REALCASE == 1
-      real(kind=C_DATATYPE_KIND), intent(in)     :: as(:,:), z(:,:)
-      real(kind=C_DATATYPE_KIND)                 :: ev(:)
-      real(kind=C_DATATYPE_KIND), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      real(kind=C_DATATYPE_KIND)                :: xc
-
-#ifdef DOUBLE_PRECISION_REAL
-      real(kind=C_DATATYPE_KIND), parameter      :: ZERO=0.0_rk8, ONE = 1.0_rk8
-#else
-      real(kind=C_DATATYPE_KIND), parameter      :: ZERO=0.0_rk4, ONE = 1.0_rk4
-#endif
+      real(kind=rck), intent(in)     :: as(:,:), z(:,:)
+      real(kind=rck)                 :: ev(:)
+      real(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      real(kind=rck)                :: xc
 
 #ifndef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-      real(kind=C_DATATYPE_KIND)                 :: dnrm2
+      real(kind=rck)                 :: dnrm2
 #else
-      real(kind=C_DATATYPE_KIND)                 :: snrm2
+      real(kind=rck)                 :: snrm2
 #endif
 
 #endif
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND), intent(in)    :: as(:,:), z(:,:)
-      real(kind=C_DATATYPE_KIND)                   :: ev(:)
-      complex(kind=C_DATATYPE_KIND), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      complex(kind=C_DATATYPE_KIND)                :: xc
+      complex(kind=rck), intent(in)    :: as(:,:), z(:,:)
+      real(kind=rck)                   :: ev(:)
+      complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      complex(kind=rck)                :: xc
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=C_DATATYPE_KIND), parameter     :: ZERO = (0.0_rk8,0.0_rk8), ONE = (1.0_rk8,0.0_rk8)
 #ifndef WITH_MPI
-      complex(kind=C_DATATYPE_KIND)                :: zdotc, cdotc
+      complex(kind=rck)                :: zdotc, cdotc
 #endif
 
 #else /* DOUBLE_PRECISION_COMPLEX */
-      complex(kind=C_DATATYPE_KIND), parameter     :: ZERO = (0.0_rk4,0.0_rk4), ONE = (1.0_rk4,0.0_rk4)
 #ifndef WITH_MPI
-      complex(kind=C_DATATYPE_KIND)                :: zdotc, cdotc
+      complex(kind=rck)                :: zdotc, cdotc
 #endif
 
 #endif /* DOUBLE_PRECISION_COMPLEX */
@@ -96,7 +89,7 @@
       integer(kind=ik)                 :: sc_desc(:)
 
       integer(kind=ik)                 :: i, rowLocal, colLocal
-      real(kind=C_DATATYPE_KIND)                   :: err, errmax
+      real(kind=rck)                   :: err, errmax
 
       integer :: mpierr
 
@@ -163,11 +156,11 @@
       tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
 
       ! Get maximum norm of columns of tmp1
-      errmax = CONST_REAL_0_0
+      errmax = 0.0_rk
 
       do i=1,nev
 #if REALCASE == 1
-        err = CONST_0_0
+        err = 0.0_rk
 #ifdef WITH_MPI
         call scal_PRECISION_NRM2(na, err, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
@@ -367,17 +360,12 @@ function check_correctness_&
       use iso_c_binding
 
       implicit none
+#include "../../src/general/precision_kinds.F90"
 
       integer(kind=c_int)            :: status
       integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols
-#if REALCASE == 1
-      real(kind=C_DATATYPE_KIND)     :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-#endif
-
-#if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND) :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-#endif
-      real(kind=C_DATATYPE_KIND)    :: ev(1:na)
+      MATH_DATATYPE(kind=rck)     :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
+      real(kind=rck)    :: ev(1:na)
       integer(kind=c_int)            :: sc_desc(1:9)
 
       ! TODO: I did not want to add all the variables to the C interface as well
@@ -398,24 +386,20 @@ function check_correctness_&
     & (na, diagonalElement, subdiagonalElement, ev, z, myid) result(status)
       use iso_c_binding
       implicit none
+#include "../../src/general/precision_kinds.F90"
 
       integer               :: status, ii, j, myid
       integer, intent(in)   :: na
-      real(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
-      real(kind=C_DATATYPE_KIND) :: ev_analytic(na), ev(na)
-#if REALCASE == 1
-      real(kind=C_DATATYPE_KIND) :: z(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND) :: z(:,:)
-#endif
+      real(kind=rck) :: diagonalElement, subdiagonalElement
+      real(kind=rck) :: ev_analytic(na), ev(na)
+      MATH_DATATYPE(kind=rck) :: z(:,:)
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-      real(kind=C_DATATYPE_KIND), parameter   :: pi = 3.141592653589793238462643383279_c_double
+      real(kind=rck), parameter   :: pi = 3.141592653589793238462643383279_c_double
 #else
-      real(kind=C_DATATYPE_KIND), parameter   :: pi = 3.1415926535897932_c_float
+      real(kind=rck), parameter   :: pi = 3.1415926535897932_c_float
 #endif
-      real(kind=C_DATATYPE_KIND)              :: tmp, maxerr
+      real(kind=rck)              :: tmp, maxerr
       integer                                 :: loctmp
       status = 0
 
