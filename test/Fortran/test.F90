@@ -48,16 +48,16 @@
 ! Define TEST_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
-#if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
-error: define exactly one of TEST_REAL or TEST_COMPLEX
+#if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX) )
+error: define exactly one of TEST_REAL or TEST_COMPLEX 
 #endif
 
 #if !(defined(TEST_SINGLE) ^ defined(TEST_DOUBLE))
 error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #endif
 
-#if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE))
-error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
+#if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE) ^ defined(TEST_SCALAPACK_ALL))
+error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE or TEST_SCALAPACK_ALL 
 #endif
 
 #ifdef TEST_SOLVER_1STAGE
@@ -111,6 +111,7 @@ program test
    use test_blacs_infrastructure
    use test_check_correctness
    use test_analytic
+   use test_scalapack
 
 #ifdef HAVE_REDIRECT
    use test_redirect
@@ -331,7 +332,11 @@ program test
      ! The actual solve step
 #ifdef TEST_EIGENVECTORS
      call e%timer_start("e%eigenvectors()")
+#ifdef TEST_SCALAPACK_ALL
+     call solve_scalapack_all(na, a, sc_desc, ev, z)
+#else
      call e%eigenvectors(a, ev, z, error)
+#endif
      call e%timer_stop("e%eigenvectors()")
 #endif
 
@@ -347,6 +352,7 @@ program test
      call e%timer_stop("e%solve_tridiagonal()")
      ev(:) = d(:)
 #endif
+
 
      assert_elpa_ok(error)
 
