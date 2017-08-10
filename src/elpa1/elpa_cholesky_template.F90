@@ -49,22 +49,13 @@
      use precision
      use elpa_abstract_impl
      implicit none
-
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-#if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)      :: a(obj%local_nrows,*)
+      MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,*)
 #else
-      real(kind=REAL_DATATYPE)      :: a(obj%local_nrows,obj%local_ncols)
-#endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)   :: a(obj%local_nrows,*)
-#else
-      complex(kind=COMPLEX_DATATYPE)   :: a(obj%local_nrows,obj%local_ncols)
-#endif
+      MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,obj%local_ncols)
 #endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
@@ -72,12 +63,7 @@
       integer(kind=ik)              :: lcs, lce, lrs, lre
       integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
 
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
       logical                       :: wantDebug
       logical                       :: success
       integer(kind=ik)              :: istat, debug
@@ -256,16 +242,8 @@
 
           call obj%timer%start("blas")
           if (l_cols-l_colx+1>0) &
-#if REALCASE == 1
-              call PRECISION_TRSM('L', 'U', 'T', 'N', nblk, l_cols-l_colx+1, CONST_1_0, tmp2, ubound(tmp2,dim=1), &
-                            a(l_row1,l_colx), lda)
-#endif
-
-#if COMPLEXCASE == 1
-              call PRECISION_TRSM('L', 'U', 'C', 'N', nblk, l_cols-l_colx+1, CONST_COMPLEX_PAIR_1_0, &
-                            tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
-
-#endif
+              call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', nblk, l_cols-l_colx+1, ONE, tmp2, &
+                            ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
           call obj%timer%stop("blas")
         endif
 
@@ -282,14 +260,8 @@
 
           call obj%timer%start("mpi_communication")
           if (l_cols-l_colx+1>0) &
-            call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1,    &
-#if REALCASE == 1
-                     MPI_REAL_PRECISION,      &
-#endif
-#if COMPLEXCASE == 1
-                           MPI_COMPLEX_PRECISION,   &
-#endif
-         prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+            call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_MATH_DATATYPE_PRECISION, &
+                           prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
 
           call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -310,18 +282,9 @@
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
           call obj%timer%start("blas")
-
-#if REALCASE == 1
-          call PRECISION_GEMM('N', 'T', lre-lrs+1, lce-lcs+1, nblk, -CONST_1_0,  &
+          call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, lre-lrs+1, lce-lcs+1, nblk, -ONE,  &
                               tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
-            CONST_1_0, a(lrs,lcs), lda)
-#endif
-
-#if COMPLEXCASE == 1
-          call PRECISION_GEMM('N', 'C', lre-lrs+1, lce-lcs+1, nblk, -CONST_COMPLEX_PAIR_1_0, &
-                        tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
-                              CONST_COMPLEX_PAIR_1_0, a(lrs,lcs), lda)
-#endif
+                              ONE, a(lrs,lcs), lda)
           call obj%timer%stop("blas")
 
         enddo
@@ -351,8 +314,3 @@
       &_&
       &PRECISION&
       &")
-
-#undef REALCASE
-#undef COMPLEXCASE
-#undef DOUBLE_PRECISION
-#undef SINGLE_PRECISION
