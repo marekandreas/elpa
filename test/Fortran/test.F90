@@ -48,8 +48,8 @@
 ! Define TEST_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
-#if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX) )
-error: define exactly one of TEST_REAL or TEST_COMPLEX 
+#if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
+error: define exactly one of TEST_REAL or TEST_COMPLEX
 #endif
 
 #if !(defined(TEST_SINGLE) ^ defined(TEST_DOUBLE))
@@ -111,7 +111,9 @@ program test
    use test_blacs_infrastructure
    use test_check_correctness
    use test_analytic
+#ifdef WITH_SCALAPACK_TESTS
    use test_scalapack
+#endif
 
 #ifdef HAVE_REDIRECT
    use test_redirect

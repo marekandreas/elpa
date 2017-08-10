@@ -50,10 +50,9 @@ AM_CONDITIONAL([ENABLE_LEGACY],[test x"$enable_legacy" = x"yes"])
 m4_include([fdep/fortran_dependencies.m4])
 FDEP_F90_GNU_MAKE_DEPS
 
-###
 
+dnl OpenMP
 m4_include([m4/ax_elpa_openmp.m4])
-
 AC_MSG_CHECKING(whether --enable-openmp is specified)
 AC_ARG_ENABLE([openmp],
               AS_HELP_STRING([--enable-openmp],
@@ -66,6 +65,7 @@ if test x"${enable_openmp}" = x"yes"; then
         AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
 fi
 
+
 dnl mpi
 AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi=[[yes|no]]], [compile with MPI. Default: yes])],,[with_mpi=yes])
 AM_CONDITIONAL([WITH_MPI],[test x"$with_mpi" = x"yes"])
@@ -73,7 +73,25 @@ if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
 
-# C
+
+dnl Scalapack tests
+AC_MSG_CHECKING(whether --enable-scalapack-tests is specified)
+AC_ARG_ENABLE([scalapack-tests],
+              AS_HELP_STRING([--enable-scalapack-tests],
+                             [build SCALAPACK test cases for performance comparison, needs MPI, default no.]),
+              [],
+              [enable_scalapack_tests="no"])
+AC_MSG_RESULT([$enable_scalapack_tests])
+if test x"${enable_scalapack_tests}" = x"yes"; then
+        if test x"$with_mpi" = x"no"; then
+                AC_MSG_ERROR([You cannot build the SCALAPCK test cases without MPI])
+        fi
+        AC_DEFINE([WITH_SCALAPACK_TESTS], [1], [build SCALAPACK test cases])
+fi
+AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"])
+
+
+dnl C
 AC_LANG_PUSH([C])
 AX_PROG_CC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_c=yes],[found_mpi_c=no])
 if test x"$with_mpi" = x"yes"; then

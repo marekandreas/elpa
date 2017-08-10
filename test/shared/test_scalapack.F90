@@ -61,7 +61,7 @@ contains
     integer(kind=ik)                 :: info, lwork, liwork
     real(kind=rk8), allocatable      :: work(:)
     integer, allocatable             :: iwork(:) 
-  
+
     allocate(work(1), iwork(1))
 
     ! query for required workspace
@@ -69,11 +69,11 @@ contains
     !  write(*,*) "computed sizes", lwork, liwork, "required sizes ", work(1), iwork(1)
     lwork = work(1)
     liwork = iwork(1)
-      
+
     deallocate(work, iwork)
     allocate(work(lwork), stat = info)
     allocate(iwork(liwork), stat = info)
-    
+
     ! the actuall call to the method
     call pdsyevd('V', 'U', na, a, 1, 1, sc_desc, ev, z, 1, 1, sc_desc, work, lwork, iwork, liwork, info)
 

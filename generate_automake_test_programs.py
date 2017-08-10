@@ -69,6 +69,10 @@ for m, g, t, p, d, s, l in product(
             print("if WITH_MPI")
             endifs += 1
 
+        if (s == "scalapack_all"):
+            print("if WITH_SCALAPACK_TESTS")
+            endifs += 1
+
         if kernel == "default_kernel":
             extra_flags.append("-DTEST_KERNEL=ELPA_2STAGE_{0}_DEFAULT".format(d.upper()))
         elif kernel == "all_kernels":
