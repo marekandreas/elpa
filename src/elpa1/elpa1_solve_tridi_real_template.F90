@@ -62,6 +62,7 @@ subroutine solve_tridi_&
       use precision
       use elpa_abstract_impl
       implicit none
+#include "../../src/general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE), intent(inout)   :: d(na), e(na)
@@ -96,7 +97,7 @@ subroutine solve_tridi_&
       l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
       ! Set Q to 0
-      q(1:l_rows, 1:l_cols) = CONST_0_0
+      q(1:l_rows, 1:l_cols) = 0.0_rk
 
       ! Get the limits of the subdivisons, each subdivison has as many cols
       ! as fit on the respective processor column

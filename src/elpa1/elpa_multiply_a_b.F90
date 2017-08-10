@@ -1,4 +1,3 @@
-!    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
@@ -61,25 +60,17 @@
       use elpa_abstract_impl
       implicit none
 
+#include "../../src/general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
 
       character*1                   :: uplo_a, uplo_c
 
       integer(kind=ik), intent(in)  :: ldb, ldbCols, ldc, ldcCols
       integer(kind=ik)              :: na, ncb
-#if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                 :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
+      MATH_DATATYPE(kind=rck)                 :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
 #else
-      real(kind=REAL_DATATYPE)                 :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)           ::  a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
-#else
-      complex(kind=COMPLEX_DATATYPE)           :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
-#endif
+      MATH_DATATYPE(kind=rck)                 :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np
@@ -89,12 +80,7 @@
       integer(kind=ik), allocatable :: lrs_save(:), lre_save(:)
 
       logical                       :: a_lower, a_upper, c_lower, c_upper
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable    :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable    :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
       logical                       :: success
@@ -279,28 +265,8 @@
 
               if (lrs<=lre) then
                 call obj%timer%start("blas")
-#if REALCASE == 1
-                call PRECISION_GEMM('T', 'N',          &
-#endif
-#if COMPLEXCASE == 1
-                call PRECISION_GEMM('C', 'N',          &
-#endif
-                        nstor, lce-lcs+1, lre-lrs+1, &
-#if REALCASE == 1
-            CONST_1_0,      &
-#endif
-#if COMPLEXCASE == 1
-                                    CONST_COMPLEX_PAIR_1_0,  &
-#endif
-            aux_mat(lrs,1), ubound(aux_mat,dim=1), &
-                                    b(lrs,lcs), ldb,                       &
-#if REALCASE == 1
-            CONST_0_0,     &
-#endif
-#if COMPLEXCASE == 1
-                                    CONST_COMPLEX_PAIR_0_0,                &
-#endif
-            tmp1, nstor)
+                call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nstor, lce-lcs+1, lre-lrs+1, ONE, &
+                        aux_mat(lrs,1), ubound(aux_mat,dim=1), b(lrs,lcs), ldb,ZERO, tmp1, nstor)
                 call obj%timer%stop("blas")
               else
                 tmp1 = 0
@@ -309,16 +275,8 @@
               ! Sum up the results and send to processor row np
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1),     &
-
-#if REALCASE == 1
-                        MPI_REAL_PRECISION,                &
-#endif
-#if COMPLEXCASE == 1
-                        MPI_COMPLEX_PRECISION,             &
-#endif
-            MPI_SUM, np, mpi_comm_rows, mpierr)
-
+              call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1),  MPI_MATH_DATATYPE_PRECISION, &
+                              MPI_SUM, np, mpi_comm_rows, mpierr)
               call obj%timer%stop("mpi_communication")
               ! Put the result into C
               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
@@ -360,9 +318,4 @@
       &_&
       &PRECISION&
       &")
-
-#undef REALCASE
-#undef COMPLEXCASE
-#undef DOUBLE_PRECISION
-#undef SINGLE_PRECISION
 

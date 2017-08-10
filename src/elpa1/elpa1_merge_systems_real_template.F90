@@ -62,6 +62,7 @@
       use precision
       use elpa_abstract_impl
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)               :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
                                                     mpi_comm_cols, npc_0, npc_n
@@ -501,7 +502,7 @@
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
         ! Calculate scale factors for eigenvectors
-        ev_scale(:) = CONST_0_0
+        ev_scale(:) = 0.0_rk
 
 #ifdef WITH_OPENMP
 

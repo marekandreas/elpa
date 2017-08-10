@@ -157,7 +157,7 @@
       use precision
       use elpa_abstract_impl
       implicit none
-
+#include "../../src/general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)           :: n, i
       real(kind=REAL_DATATYPE)   :: d(n), z(n), delta(n), rho, dlam
@@ -180,7 +180,7 @@
        dshift = d(n)
        delta(:) = d(:) - dshift
 
-       a = CONST_0_0 ! delta(n)
+       a = 0.0_rk ! delta(n)
        b = rho*SUM(z(:)**2) + CONST_1_0 ! rho*SUM(z(:)**2) is the lower bound for the guess
       else
 
