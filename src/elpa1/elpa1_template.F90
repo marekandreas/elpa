@@ -56,9 +56,9 @@
 
 function elpa_solve_evp_&
          &MATH_DATATYPE&
-	 &_1stage_&
-	 &PRECISION&
-	 &_impl (obj, a, ev, q) result(success)
+   &_1stage_&
+   &PRECISION&
+   &_impl (obj, a, ev, q) result(success)
    use precision
    use cuda_functions
    use mod_check_for_gpu
@@ -67,31 +67,25 @@ function elpa_solve_evp_&
    use elpa_mpi
    use elpa1_compute
    implicit none
-
+#include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout) :: obj
    real(kind=REAL_DATATYPE), intent(out)           :: ev(obj%na)
-#if REALCASE == 1
+
 #ifdef USE_ASSUMED_SIZE
-   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(obj%local_nrows,*)
-   real(kind=C_DATATYPE_KIND), optional,target,intent(out)  :: q(obj%local_nrows,*)
+   MATH_DATATYPE(kind=rck), intent(inout)       :: a(obj%local_nrows,*)
+   MATH_DATATYPE(kind=rck), optional,target,intent(out)  :: q(obj%local_nrows,*)
 #else
-   real(kind=C_DATATYPE_KIND), intent(inout)       :: a(obj%local_nrows,obj%local_ncols)
-   real(kind=C_DATATYPE_KIND), optional, target, intent(out)  :: q(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=rck), intent(inout)       :: a(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=rck), optional, target, intent(out)  :: q(obj%local_nrows,obj%local_ncols)
 #endif
+
+#if REALCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable         :: tau(:)
    real(kind=C_DATATYPE_KIND), allocatable, target         :: q_dummy(:,:)
    real(kind=C_DATATYPE_KIND), pointer             :: q_actual(:,:)
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(obj%local_nrows,*)
-   complex(kind=C_DATATYPE_KIND), optional, target, intent(out)      :: q(obj%local_nrows,*)
-#else
-   complex(kind=C_DATATYPE_KIND), intent(inout)    :: a(obj%local_nrows,obj%local_ncols)
-   complex(kind=C_DATATYPE_KIND), optional, target, intent(out)      :: q(obj%local_nrows,obj%local_ncols)
-#endif
-
    real(kind=REAL_DATATYPE), allocatable           :: q_real(:,:)
    complex(kind=C_DATATYPE_KIND), allocatable      :: tau(:)
    complex(kind=C_DATATYPE_KIND), allocatable,target :: q_dummy(:,:)
@@ -112,7 +106,7 @@ function elpa_solve_evp_&
    character(200)                                  :: errorMessage
    integer(kind=ik)                                :: na, nev, lda, ldq, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols,        &
-						      mpi_comm_all, check_pd, i
+                                                      mpi_comm_all, check_pd, i
 
    logical                                         :: do_bandred, do_solve, do_trans_ev
 
@@ -141,16 +135,13 @@ function elpa_solve_evp_&
    if (na .eq. 1) then
 #if REALCASE == 1
      ev(1) = a(1,1)
-     if (.not.(obj%eigenvalues_only)) then
-       q(1,1) = CONST_REAL_1_0
-     endif
 #endif
 #if COMPLEXCASE == 1
      ev(1) = real(a(1,1))
-     if (.not.(obj%eigenvalues_only)) then
-       q(1,1) = CONST_COMPLEX_PAIR_1_0
-     endif
 #endif
+     if (.not.(obj%eigenvalues_only)) then
+       q(1,1) = ONE
+     endif
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&
      &_1stage_&

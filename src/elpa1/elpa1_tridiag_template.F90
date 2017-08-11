@@ -103,6 +103,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       use elpa_abstract_impl
       use matrix_plot
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU, wantDebug
@@ -135,20 +136,6 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       ! id in processor row and column and total numbers of processor rows and columns
       integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols, my_rank
       integer(kind=ik)                              :: mpierr
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-      real(kind=rk8), parameter                     :: ZERO=0.0_rk8, ONE = 1.0_rk8
-#else
-      real(kind=rk4), parameter                     :: ZERO=0.0_rk4, ONE = 1.0_rk4
-#endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=ck8), parameter                  :: ZERO = (0.0_rk8,0.0_rk8), ONE = (1.0_rk8,0.0_rk8)
-#else
-      complex(kind=ck4), parameter                  :: ZERO = (0.0_rk4,0.0_rk4), ONE = (1.0_rk4,0.0_rk4)
-#endif
-#endif
       integer(kind=ik)                              :: totalblocks, max_loc_block_rows, max_loc_block_cols, max_local_rows, &
                                                        max_local_cols
       ! updated after each istep (in the main cycle) to contain number of
@@ -880,7 +867,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           endif !useGPU
           call hh_transform_complex_&
                                     &PRECISION &
-                                    (obj, vrl, CONST_REAL_0_0, xf, tau(2), wantDebug)
+                                    (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
           e_vec(1) = vrl
 
           a_mat(1,l_cols) = 1. ! for consistency only

@@ -193,7 +193,7 @@
       ! Calculations start here
 
       beta = abs(e)
-      sig  = sign(CONST_1_0,e)
+      sig  = sign(1.0_rk,e)
 
       ! Calculate rank-1 modifier z
 
@@ -218,8 +218,8 @@
       &(obj, z, na)
       ! Normalize z so that norm(z) = 1.  Since z is the concatenation of
       ! two normalized vectors, norm2(z) = sqrt(2).
-      z = z/sqrt(CONST_2_0)
-      rho = CONST_2_0*beta
+      z = z/sqrt(2.0_rk)
+      rho = 2.0_rk*beta
       ! Calculate index for merging both systems by ascending eigenvalues
       call obj%timer%start("blas")
       call PRECISION_LAMRG( nm, na-nm, d, 1, 1, idx )
@@ -230,7 +230,7 @@
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
       EPS = PRECISION_LAMCH( 'Epsilon' )
-      TOL = CONST_8_0*EPS*MAX(dmax,zmax)
+      TOL = 8.0_rk*EPS*MAX(dmax,zmax)
 
       ! If the rank-1 modifier is small enough, no more needs to be done
       ! except to reorganize D and Q
@@ -733,8 +733,8 @@
 !       else
               call obj%timer%start("blas")
               if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
-                  call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu, CONST_1_0, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
-                             CONST_1_0, qtmp2(1,1), ubound(qtmp2,dim=1))
+                  call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu, 1.0_rk, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
+                             1.0_rk, qtmp2(1,1), ubound(qtmp2,dim=1))
               call obj%timer%stop("blas")
 !            endif ! useGPU
             ! Compute eigenvectors of the rank-1 modified matrix.
@@ -760,8 +760,8 @@
 !       else
               call obj%timer%start("blas")
               if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-                 call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl, CONST_1_0, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
-                            ubound(ev,dim=1), CONST_1_0, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+                 call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl, 1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
+                            ubound(ev,dim=1), 1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
               call obj%timer%stop("blas")
 !            endif ! useGPU
              ! Put partial result into (output) Q
@@ -817,7 +817,7 @@
           &PRECISION&
           &(obj, tmp(1:na1),na1,ddiff(i))
           tmp(1:na1) = z(1:na1) / tmp(1:na1)
-          ev_scale_value = CONST_1_0/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
+          ev_scale_value = 1.0_rk/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
 
         end subroutine add_tmp_&
         &PRECISION

@@ -181,14 +181,14 @@
        delta(:) = d(:) - dshift
 
        a = 0.0_rk ! delta(n)
-       b = rho*SUM(z(:)**2) + CONST_1_0 ! rho*SUM(z(:)**2) is the lower bound for the guess
+       b = rho*SUM(z(:)**2) + 1.0_rk ! rho*SUM(z(:)**2) is the lower bound for the guess
       else
 
         ! Other eigenvalues: lower bound is d(i), upper bound is d(i+1)
         ! We check the sign of the function in the midpoint of the interval
         ! in order to determine if eigenvalue is more close to d(i) or d(i+1)
-        x = CONST_0_5*(d(i)+d(i+1))
-        y = CONST_1_0 + rho*SUM(z(:)**2/(d(:)-x))
+        x = 0.5_rk*(d(i)+d(i+1))
+        y = 1.0_rk + rho*SUM(z(:)**2/(d(:)-x))
         if (y>0) then
           ! solution is next to d(i)
           dshift = d(i)
@@ -208,7 +208,7 @@
       do iter=1,200
 
         ! Interval subdivision
-        x = CONST_0_5*(a+b)
+        x = 0.5_rk*(a+b)
         if (x==a .or. x==b) exit   ! No further interval subdivisions possible
 #ifdef DOUBLE_PRECISION_REAL
         if (abs(x) < 1.e-200_rk8) exit ! x next to pole
