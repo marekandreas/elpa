@@ -1848,7 +1848,7 @@ intel-single-precision-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -2050,7 +2050,7 @@ intel-single-precision-no-mpi-noomp-avx512-jobs:
     - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi noomp AVX512
-gfortran-double-precision-no-mpi-noomp-jobs:
+gfortran-double-precision-no-mpi-noomp-AVX512-jobs:
   tags:
     - KNL
   script:
@@ -2238,7 +2238,7 @@ intel-single-precision-no-mpi-omp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-single-precision --enable-openmp
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
@@ -2247,7 +2247,7 @@ intel-single-precision-no-mpi-omp-avx512-jobs:
     - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi omp AVX512
-gfortran-double-precision-no-mpi-omp-jobs:
+gfortran-double-precision-no-mpi-omp-avx512-jobs:
   tags:
     - KNL
   script:
