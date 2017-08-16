@@ -150,7 +150,7 @@ module ELPA1_AUXILIARY
 
 
   interface cholesky_complex
-    module procedure elpa_cholesky_real_double
+    module procedure elpa_cholesky_complex_double
   end interface
 
 !> \brief  old, deprecated interface invert_trm_complex: Inverts a double-precision complex upper triangular matrix
