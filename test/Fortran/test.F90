@@ -165,6 +165,16 @@ program test
 #endif
    integer :: kernel
    character(len=1) :: layout
+!#ifdef TEST_COMPLEX
+!   MATRIX_TYPE, allocatable :: tmp1(:,:), tmp2(:,:)
+!   EV_TYPE :: norm, normmax
+!#ifdef TEST_SINGLE
+!   EV_TYPE :: pclange
+!#else
+!   EV_TYPE :: pzlange
+!#endif
+!   MATRIX_TYPE, parameter :: CONE = (1.0, 0.0) CZERO = (0.0, 0.0)
+!#endif
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -480,8 +490,57 @@ program test
 #endif
 
 #if defined(TEST_CHOLESKY)
+
+!#ifdef TEST_REAL
      status = check_correctness_cholesky(na, a, as, na_rows, sc_desc, myid )
      call check_status(status, myid)
+!#endif
+        !-------------------------------------------------------------------------------
+!#ifdef TEST_COMPLEX
+!   ! Test correctness of result (using plain scalapack routines)
+!   allocate(tmp1(na_rows,na_cols))
+!   allocate(tmp2(na_rows,na_cols))
+!
+!   tmp1(:,:) = 0.0_ck8
+!
+!   ! tmp1 = a**H
+!#ifdef WITH_MPI
+!   call pztranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+!#else
+!   tmp1 = transpose(conjg(a))
+!#endif
+!   ! tmp2 = a * a**H
+!#ifdef WITH_MPI
+!   call pzgemm("N","N", na, na, na, CONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
+!               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
+!#else
+!   call zgemm("N","N", na, na, na, CONE, a, na, tmp1, na, CZERO, tmp2, na)
+!#endif
+!
+!   ! compare tmp2 with c
+!   tmp2(:,:) = tmp2(:,:) - as(:,:)
+!
+!#ifdef WITH_MPI
+!   norm = pzlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+!#else
+!   norm = zlange("M",na, na, tmp2, na_rows, tmp1)
+!#endif
+!#ifdef WITH_MPI
+!   call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+!#else
+!   normmax = norm
+!#endif
+!   if (myid .eq. 0) then
+!     print *," Maximum error of result: ", normmax
+!   endif
+!
+!   if (normmax .gt. 5e-11_rk8) then
+!        status = 1
+!   endif
+!
+!   deallocate(tmp1, tmp2)
+!#endif
+
 #endif
 
 #if defined(TEST_HERMITIAN_MULTIPLY)

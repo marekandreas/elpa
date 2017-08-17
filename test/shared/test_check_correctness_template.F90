@@ -499,17 +499,17 @@ function check_correctness_&
 
 #ifdef WITH_MPI
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=rck)                   :: pzlange
+      real(kind=rck)                   :: pzlange
 #else
-      complex(kind=rck)                   :: pclange
+      real(kind=rck)                   :: pclange
 #endif
 
 #else /* WITH_MPI */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=rck)                   :: zlange
+      real(kind=rck)                   :: zlange
 #else
-      complex(kind=rck)                   :: clange
+      real(kind=rck)                   :: clange
 #endif
 
 #endif /* WITH_MPI */
@@ -757,17 +757,17 @@ function check_correctness_&
 
 #ifdef WITH_MPI
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=rck)                   :: pzlange
+      real(kind=rck)                   :: pzlange
 #else
-      complex(kind=rck)                   :: pclange
+      real(kind=rck)                   :: pclange
 #endif
 
 #else /* WITH_MPI */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=rck)                   :: zlange
+      real(kind=rck)                   :: zlange
 #else
-      complex(kind=rck)                   :: clange
+      real(kind=rck)                   :: clange
 #endif
 
 #endif /* WITH_MPI */
