@@ -216,9 +216,19 @@ subroutine prepare_matrix_&
      implicit none
 
      integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+#if REALCASE == 1
      real(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
 
      real(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
+#endif
+
+#if COMPLEXCASE == 1
+     complex(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
+
+     complex(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
+#endif
+
+
 #if REALCASE == 1
      real(kind=C_DATATYPE_KIND) :: a(:,:), as(:,:)
 #endif
@@ -253,6 +263,63 @@ subroutine prepare_matrix_&
      sds = sd
      as = a
    end subroutine
+
+   subroutine prepare_toeplitz_matrix_mixed_complex&
+   &_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+#if COMPLEXCASE == 1
+   & (na, diagonalElement, subdiagonalElement, d, sd, ds, sds, a, as, &
+      nblk, np_rows, np_cols, my_prow, my_pcol)
+#endif
+#if REALCASE == 1
+   & (na, diagonalElement, subdiagonalElement, d, sd, ds, sds, &
+      nblk, np_rows, np_cols, my_prow, my_pcol)
+#endif
+     use test_util
+     implicit none
+
+     integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     real(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
+
+     real(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
+
+#if COMPLEXCASE == 1
+     complex(kind=C_DATATYPE_KIND) :: a(:,:), as(:,:)
+#endif
+#if REALCASE == 1
+#endif
+
+     integer                    :: ii, rowLocal, colLocal
+#if COMPLEXCASE == 1
+     d(:) = diagonalElement
+     sd(:) = subdiagonalElement
+
+     ! set up the diagonal and subdiagonals (for general solver test)
+     do ii=1, na ! for diagonal elements
+       if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+         a(rowLocal,colLocal) = diagonalElement
+       endif
+     enddo
+     do ii=1, na-1
+       if (map_global_array_index_to_local_index(ii, ii+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+         a(rowLocal,colLocal) = subdiagonalElement
+       endif
+     enddo
+
+     do ii=2, na
+       if (map_global_array_index_to_local_index(ii, ii-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+         a(rowLocal,colLocal) = subdiagonalElement
+       endif
+     enddo
+
+     ds = d
+     sds = sd
+     as = a
+#endif
+   end subroutine
+
 
 
 ! vim: syntax=fortran

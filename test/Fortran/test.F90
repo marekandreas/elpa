@@ -57,7 +57,7 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #endif
 
 #if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE) ^ defined(TEST_SCALAPACK_ALL))
-error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE or TEST_SCALAPACK_ALL 
+error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE or TEST_SCALAPACK_ALL
 #endif
 
 #ifdef TEST_SOLVER_1STAGE
@@ -135,15 +135,22 @@ program test
 
    ! The Matrix
    MATRIX_TYPE, allocatable :: a(:,:), as(:,:)
+#if defined(TEST_HERMITIAN_MULTIPLY)
+   MATRIX_TYPE, allocatable :: b(:,:), c(:,:)
+#endif
    ! eigenvectors
    MATRIX_TYPE, allocatable :: z(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable :: ev(:)
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
-   EV_TYPE, allocatable :: d(:), sd(:), ev_analytic(:), ds(:), sds(:)
+   EV_TYPE, allocatable :: ev(:), ev_analytic(:)
+
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY)
+   EV_TYPE, allocatable :: d(:), sd(:), ds(:), sds(:)
    EV_TYPE              :: diagonalELement, subdiagonalElement
 #endif
-
+#if defined(TEST_CHOLESKY)
+   MATRIX_TYPE, allocatable :: d(:), sd(:), ds(:), sds(:)
+   MATRIX_TYPE              :: diagonalELement, subdiagonalElement
+#endif
 
    integer :: error, status
 
@@ -218,6 +225,11 @@ program test
    allocate(z (na_rows,na_cols))
    allocate(ev(na))
 
+#ifdef TEST_HERMITIAN_MULTIPLY
+   allocate(b (na_rows,na_cols))
+   allocate(c (na_rows,na_cols))
+#endif
+
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
    allocate(d (na), ds(na))
    allocate(sd (na), sds(na))
@@ -228,10 +240,10 @@ program test
    z(:,:) = 0.0
    ev(:) = 0.0
 
-#ifdef TEST_EIGENVECTORS
+#if defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY)
 #ifdef TEST_MATRIX_ANALYTIC
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
-     as(:,:) = a
+   as(:,:) = a
 #else
    if (nev .ge. 1) then
      call prepare_matrix(na, myid, sc_desc, a, z, as)
@@ -248,8 +260,36 @@ program test
                                   d, sd, ds, sds, a, as, nblk, np_rows, &
                                   np_cols, my_prow, my_pcol)
    endif
+
+#ifdef TEST_HERMITIAN_MULTIPLY
+#if REALCASE == 1
+
+#ifdef DOUBLE_PRECISION_REAL
+   b(:,:) = 2.0_rk8 * a(:,:)
+   c(:,:) = 0.0_rk8
+#else
+   b(:,:) = 2.0_rk4 * a(:,:)
+   c(:,:) = 0.0_rk4
 #endif
+
 #endif
+
+#if COMPLEXCASE == 1
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+   b(:,:) = 2.0_ck8 * a(:,:)
+   c(:,:) = 0.0_ck8
+#else
+   b(:,:) = 2.0_ck4 * a(:,:)
+   c(:,:) = 0.0_ck4
+#endif
+
+#endif
+
+#endif /* TEST_HERMITIAN_MULTIPLY */
+
+#endif /* TEST_MATRIX_ANALYTIC */
+#endif /* defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) */
 
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
 
@@ -268,15 +308,17 @@ program test
 #if defined(TEST_CHOLESKY)
 
 #ifdef TEST_SINGLE
-   diagonalElement = 2.546_c_float
-   subdiagonalElement =  0.0_c_float
+   diagonalElement = (2.546_c_float, 0.0_c_float)
+   subdiagonalElement =  (0.0_c_float, 0.0_c_float)
 #else
-   diagonalElement = 2.546_c_double
-   subdiagonalElement =  0.0_c_double
+   diagonalElement = (2.546_c_double, 0.0_c_double)
+   subdiagonalElement =  (0.0_c_double, 0.0_c_double)
 #endif
    call prepare_toeplitz_matrix(na, diagonalElement, subdiagonalElement, &
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
+
+
 #endif /* TEST_CHOLESKY */
 
    e => elpa_allocate()
@@ -375,6 +417,11 @@ program test
      call e%timer_stop("e%cholesky()")
 #endif
 
+#if defined(TEST_HERMITIAN_MULTIPLY)
+     call e%timer_start("e%hermitian_multiply()")
+     call e%hermitian_multiply('F','F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, error)
+     call e%timer_stop("e%hermitian_multiply()")
+#endif
 
      assert_elpa_ok(error)
 
@@ -398,6 +445,9 @@ program test
 #endif
 #ifdef TEST_CHOLESKY
        call e%print_times("e%cholesky()")
+#endif
+#ifdef TEST_HERMITIAN_MULTIPLY
+       call e%print_times("e%hermitian_multiply()")
 #endif
 #endif /* TEST_ALL_KERNELS */
      endif
@@ -434,6 +484,12 @@ program test
      call check_status(status, myid)
 #endif
 
+#if defined(TEST_HERMITIAN_MULTIPLY)
+     status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
+     call check_status(status, myid)
+#endif
+
+
      if (myid == 0) then
        print *, ""
      endif
@@ -453,6 +509,11 @@ program test
    deallocate(as)
    deallocate(z)
    deallocate(ev)
+
+#ifdef TEST_HERMITIAN_MULTIPLY
+   deallocate(b)
+   deallocate(c)
+#endif
 
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
    deallocate(d, ds)

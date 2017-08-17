@@ -29,6 +29,7 @@ test_type_flag = {
         "eigenvalues"  : "-DTEST_EIGENVALUES",
         "solve_tridiagonal"  : "-DTEST_SOLVE_TRIDIAGONAL",
         "cholesky"  : "-DTEST_CHOLESKY",
+        "hermitian_multiply"  : "-DTEST_HERMITIAN_MULTIPLY",
 }
 
 layout_flag = {
@@ -56,6 +57,12 @@ for m, g, t, p, d, s, l in product(
         continue
 
     if (t == "cholesky" and (s == "2stage")):
+        continue
+
+    if (t == "hermitian_multiply" and (s == "2stage")):
+        continue
+
+    if (t == "hermitian_multiply" and (p == "single")):
         continue
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
