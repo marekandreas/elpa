@@ -524,11 +524,20 @@ function check_correctness_&
       status = 0
 
 #if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
       tmp1(:,:) = 0.0_rk8
+#else
+      tmp1(:,:) = 0.0_rk4
 #endif
+#endif /* REALCASE */
+
 #if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
       tmp1(:,:) = 0.0_ck8
+#else
+      tmp1(:,:) = 0.0_ck4
 #endif
+#endif /* COMPLEXCASE */
 
 
 #if REALCASE == 1
@@ -672,12 +681,13 @@ function check_correctness_&
 #endif /* WITH_MPI */
 
 
-#endif /* REALCASE == 1 */
+#endif /* COMPLEXCASE == 1 */
 
       if (myid .eq. 0) then
         print *," Maximum error of result: ", normmax
       endif
 
+#if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
       if (normmax .gt. 5e-12_rk8) then
         status = 1
@@ -687,7 +697,19 @@ function check_correctness_&
         status = 1
       endif
 #endif
+#endif
 
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+      if (normmax .gt. 5e-11_rk8) then
+        status = 1
+      endif
+#else
+      if (normmax .gt. 5e-3_rk4) then
+        status = 1
+      endif
+#endif
+#endif
     end function
 
     function check_correctness_hermitian_multiply_&

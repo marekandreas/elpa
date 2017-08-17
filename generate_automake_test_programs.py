@@ -62,7 +62,7 @@ for m, g, t, p, d, s, l in product(
     if (t == "hermitian_multiply" and (s == "2stage")):
         continue
 
-    if (t == "hermitian_multiply" and (p == "single")):
+    if (t == "hermitian_multiply"):
         continue
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
