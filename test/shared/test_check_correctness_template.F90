@@ -240,7 +240,7 @@
 #endif /* WITH_MPI */
       !TODO for the C interface, not all information is passed (zeros instead)
       !TODO than this part of the test cannot be done
-      !TODO either we will not have this part of test at all, or it will be improved 
+      !TODO either we will not have this part of test at all, or it will be improved
       if(nblk > 0) then
         ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
         err = CONST_REAL_0_0
@@ -453,5 +453,242 @@ function check_correctness_&
        endif
      endif
     end function
+
+    function check_correctness_cholesky_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (na, a, as, na_rows, sc_desc, myid) result(status)
+      implicit none
+#include "../../src/general/precision_kinds.F90"
+      integer(kind=ik)                 :: status
+      integer(kind=ik), intent(in)     :: na, myid, na_rows
+#if REALCASE == 1
+      real(kind=rck), intent(in)       :: a(:,:), as(:,:)
+      real(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      real(kind=rck)                   :: norm, normmax
+
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+      real(kind=rck)                   :: pdlange
+#else
+      real(kind=rck)                   :: pslange
+#endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+      real(kind=rck)                   :: dlange
+#else
+      real(kind=rck)                   :: slange
+#endif
+
+#endif /* WITH_MPI */
+
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+      complex(kind=rck), intent(in)    :: a(:,:), as(:,:)
+      complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      real(kind=rck)                :: norm, normmax
+#ifdef DOUBLE_PRECISION_COMPLEX
+      complex(kind=ck8), parameter   :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
+#else
+      complex(kind=ck4), parameter   :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk8)
+#endif
+
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_COMPLEX
+      complex(kind=rck)                   :: pzlange
+#else
+      complex(kind=rck)                   :: pclange
+#endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+      complex(kind=rck)                   :: zlange
+#else
+      complex(kind=rck)                   :: clange
+#endif
+
+#endif /* WITH_MPI */
+#endif /* COMPLEXCASE */
+
+      integer(kind=ik)                 :: sc_desc(:)
+
+      real(kind=rck)                   :: err, errmax
+
+      integer :: mpierr
+
+      status = 0
+
+#if REALCASE == 1
+      tmp1(:,:) = 0.0_rk8
+#endif
+#if COMPLEXCASE == 1
+      tmp1(:,:) = 0.0_ck8
+#endif
+
+
+#if REALCASE == 1
+      ! tmp1 = a**T
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+      call pdtran(na, na, 1.0_rk8, a, 1, 1, sc_desc, 0.0_rk8, tmp1, 1, 1, sc_desc)
+#else
+
+      call pstran(na, na, 1.0_rk4, a, 1, 1, sc_desc, 0.0_rk4, tmp1, 1, 1, sc_desc)
+#endif
+
+#else /* WITH_MPI */
+      tmp1 = transpose(a)
+#endif /* WITH_MPI */
+
+      ! tmp2 = a * a**T
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+      call pdgemm("N","N", na, na, na, 1.0_rk8, a, 1, 1, sc_desc, tmp1, 1, 1, &
+               sc_desc, 0.0_rk8, tmp2, 1, 1, sc_desc)
+#else
+      call psgemm("N","N", na, na, na, 1.0_rk4, a, 1, 1, sc_desc, tmp1, 1, 1, &
+               sc_desc, 0.0_rk4, tmp2, 1, 1, sc_desc)
+
+#endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_REAL
+      call dgemm("N","N", na, na, na, 1.0_rk8, a, na, tmp1, na, 0.0_rk8, tmp2, na)
+#else
+      call sgemm("N","N", na, na, na, 1.0_rk4, a, na, tmp1, na, 0.0_rk4, tmp2, na)
+#endif
+#endif /* WITH_MPI */
+
+
+#endif /* REALCASE == 1 */
+
+#if COMPLEXCASE == 1
+      ! tmp1 = a**H
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_COMPLEX
+      call pztranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#else
+
+      call pctranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#endif
+
+#else /* WITH_MPI */
+      tmp1 = transpose(conjg(a))
+#endif /* WITH_MPI */
+
+      ! tmp2 = a * a**T
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_COMPLEX
+      call pzgemm("N","N", na, na, na, CONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
+               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
+#else
+      call pcgemm("N","N", na, na, na, CONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
+               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
+
+#endif
+
+#else /* WITH_MPI */
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+      call zgemm("N","N", na, na, na, CONE, a, na, tmp1, na, CZERO, tmp2, na)
+#else
+      call cgemm("N","N", na, na, na, CONE, a, na, tmp1, na, CZERO, tmp2, na)
+#endif
+#endif /* WITH_MPI */
+
+
+#endif /* COMPLEXCASE == 1 */
+
+      ! compare tmp2 with original matrix
+      tmp2(:,:) = tmp2(:,:) - as(:,:)
+#if REALCASE == 1
+
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+
+      norm = pdlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+#else
+      norm = pslange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+#endif
+
+#else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
+      norm = dlange("M", na, na, tmp2, na_rows, tmp1)
+#else
+      norm = slange("M", na, na, tmp2, na_rows, tmp1)
+
+#endif
+#endif /* WITH_MPI */
+
+
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+      call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+      call mpi_allreduce(norm,normmax,1,MPI_REAL4,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#endif
+#else /* WITH_MPI */
+      normmax = norm
+#endif /* WITH_MPI */
+
+
+#endif /* REALCASE == 1 */
+
+#if COMPLEXCASE == 1
+
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_COMPLEX
+
+      norm = pzlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+#else
+      norm = pclange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+#endif
+
+#else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_COMPLEX
+      norm = zlange("M", na, na, tmp2, na_rows, tmp1)
+#else
+      norm = clange("M", na, na, tmp2, na_rows, tmp1)
+
+#endif
+#endif /* WITH_MPI */
+
+
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_COMPLEX
+      call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+      call mpi_allreduce(norm,normmax,1,MPI_REAL4,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#endif
+#else /* WITH_MPI */
+      normmax = norm
+#endif /* WITH_MPI */
+
+
+#endif /* REALCASE == 1 */
+
+      if (myid .eq. 0) then
+        print *," Maximum error of result: ", normmax
+      endif
+
+#ifdef DOUBLE_PRECISION_REAL
+      if (normmax .gt. 5e-12_rk8) then
+        status = 1
+      endif
+#else
+      if (normmax .gt. 5e-4_rk4) then
+        status = 1
+      endif
+#endif
+
+    end function
+
+
 
 ! vim: syntax=fortran

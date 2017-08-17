@@ -66,6 +66,18 @@ module test_check_correctness
     module procedure check_correctness_eigenvalues_toeplitz_complex_single
 #endif
   end interface
+
+  interface check_correctness_cholesky
+    module procedure check_correctness_cholesky_complex_double
+    module procedure check_correctness_cholesky_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure check_correctness_cholesky_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure check_correctness_cholesky_complex_single
+#endif
+  end interface
+
   contains
 
 #define COMPLEXCASE 1

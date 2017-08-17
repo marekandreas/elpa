@@ -28,6 +28,7 @@ test_type_flag = {
         "eigenvectors" : "-DTEST_EIGENVECTORS",
         "eigenvalues"  : "-DTEST_EIGENVALUES",
         "solve_tridiagonal"  : "-DTEST_SOLVE_TRIDIAGONAL",
+        "cholesky"  : "-DTEST_CHOLESKY",
 }
 
 layout_flag = {
@@ -52,6 +53,9 @@ for m, g, t, p, d, s, l in product(
         continue
 
     if (t == "solve_tridiagonal" and (s == "2stage" or d == "complex")):
+        continue
+
+    if (t == "cholesky" and (s == "2stage")):
         continue
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:

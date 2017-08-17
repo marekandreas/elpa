@@ -131,7 +131,7 @@ program test
    integer :: mpierr
 
    ! blacs
-   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol 
+   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
    MATRIX_TYPE, allocatable :: a(:,:), as(:,:)
@@ -139,7 +139,7 @@ program test
    MATRIX_TYPE, allocatable :: z(:,:)
    ! eigenvalues
    EV_TYPE, allocatable :: ev(:)
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
    EV_TYPE, allocatable :: d(:), sd(:), ev_analytic(:), ds(:), sds(:)
    EV_TYPE              :: diagonalELement, subdiagonalElement
 #endif
@@ -218,7 +218,7 @@ program test
    allocate(z (na_rows,na_cols))
    allocate(ev(na))
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
    allocate(d (na), ds(na))
    allocate(sd (na), sds(na))
    allocate(ev_analytic(na))
@@ -264,6 +264,20 @@ program test
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
 #endif /* EIGENVALUES OR TRIDIAGONAL */
+
+#if defined(TEST_CHOLESKY)
+
+#ifdef TEST_SINGLE
+   diagonalElement = 2.546_c_float
+   subdiagonalElement =  0.0_c_float
+#else
+   diagonalElement = 2.546_c_double
+   subdiagonalElement =  0.0_c_double
+#endif
+   call prepare_toeplitz_matrix(na, diagonalElement, subdiagonalElement, &
+                                d, sd, ds, sds, a, as, nblk, np_rows, &
+                                np_cols, my_prow, my_pcol)
+#endif /* TEST_CHOLESKY */
 
    e => elpa_allocate()
 
@@ -340,7 +354,7 @@ program test
      call e%eigenvectors(a, ev, z, error)
 #endif
      call e%timer_stop("e%eigenvectors()")
-#endif
+#endif /* TEST_EIGENVECTORS */
 
 #ifdef TEST_EIGENVALUES
      call e%timer_start("e%eigenvalues()")
@@ -355,6 +369,12 @@ program test
      ev(:) = d(:)
 #endif
 
+#if defined(TEST_CHOLESKY)
+     call e%timer_start("e%cholesky()")
+     call e%cholesky(a, error)
+     call e%timer_stop("e%cholesky()")
+#endif
+
 
      assert_elpa_ok(error)
 
@@ -365,7 +385,8 @@ program test
      if (myid .eq. 0) then
 #ifdef TEST_ALL_KERNELS
        call e%print_times(elpa_int_value_to_string(KERNEL_KEY, kernel))
-#else
+#else /* TEST_ALL_KERNELS */
+
 #ifdef TEST_EIGENVECTORS
        call e%print_times("e%eigenvectors()")
 #endif
@@ -375,7 +396,10 @@ program test
 #ifdef TEST_SOLVE_TRIDIAGONAL
        call e%print_times("e%solve_tridiagonal()")
 #endif
+#ifdef TEST_CHOLESKY
+       call e%print_times("e%cholesky()")
 #endif
+#endif /* TEST_ALL_KERNELS */
      endif
 
 #ifdef TEST_EIGENVECTORS
@@ -405,13 +429,18 @@ program test
 #endif
 #endif
 
+#if defined(TEST_CHOLESKY)
+     status = check_correctness_cholesky(na, a, as, na_rows, sc_desc, myid )
+     call check_status(status, myid)
+#endif
+
      if (myid == 0) then
        print *, ""
      endif
 
 #ifdef TEST_ALL_KERNELS
      a(:,:) = as(:,:)
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
      d = ds
      sd = sds
 #endif
@@ -425,7 +454,7 @@ program test
    deallocate(z)
    deallocate(ev)
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
    deallocate(d, ds)
    deallocate(sd, sds)
    deallocate(ev_analytic)
