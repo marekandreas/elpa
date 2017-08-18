@@ -121,61 +121,63 @@ program test
    implicit none
 
    ! matrix dimensions
-   integer :: na, nev, nblk
+   integer                     :: na, nev, nblk
 
    ! mpi
-   integer :: myid, nprocs
-   integer :: na_cols, na_rows  ! local matrix size
-   integer :: np_cols, np_rows  ! number of MPI processes per column/row
-   integer :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   integer :: mpierr
+   integer                     :: myid, nprocs
+   integer                     :: na_cols, na_rows  ! local matrix size
+   integer                     :: np_cols, np_rows  ! number of MPI processes per column/row
+   integer                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
+   integer                     :: mpierr
 
    ! blacs
-   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   integer                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
-   MATRIX_TYPE, allocatable :: a(:,:), as(:,:)
+   MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
 #if defined(TEST_HERMITIAN_MULTIPLY)
-   MATRIX_TYPE, allocatable :: b(:,:), c(:,:)
+   MATRIX_TYPE, allocatable    :: b(:,:), c(:,:)
 #endif
    ! eigenvectors
-   MATRIX_TYPE, allocatable :: z(:,:)
+   MATRIX_TYPE, allocatable    :: z(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable :: ev(:), ev_analytic(:)
+   EV_TYPE, allocatable        :: ev(:), ev_analytic(:)
 
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY)
-   EV_TYPE, allocatable :: d(:), sd(:), ds(:), sds(:)
-   EV_TYPE              :: diagonalELement, subdiagonalElement
+   EV_TYPE, allocatable        :: d(:), sd(:), ds(:), sds(:)
+   EV_TYPE                     :: diagonalELement, subdiagonalElement
 #endif
 #if defined(TEST_CHOLESKY)
-   MATRIX_TYPE, allocatable :: d(:), sd(:), ds(:), sds(:)
-   MATRIX_TYPE              :: diagonalELement, subdiagonalElement
+   MATRIX_TYPE, allocatable    :: d(:), sd(:), ds(:), sds(:)
+   MATRIX_TYPE                 :: diagonalELement, subdiagonalElement
 #endif
 
-   integer :: error, status
+   integer                     :: error, status
 
-   type(output_t) :: write_to_file
-   class(elpa_t), pointer :: e
+   type(output_t)              :: write_to_file
+   class(elpa_t), pointer      :: e
 #ifdef TEST_ALL_KERNELS
-   integer :: i
+   integer                     :: i
 #endif
 #ifdef TEST_ALL_LAYOUTS
    character(len=1), parameter :: layouts(2) = [ 'C', 'R' ]
-   integer :: i_layout
+   integer                     :: i_layout
 #endif
-   integer :: kernel
-   character(len=1) :: layout
-!#ifdef TEST_COMPLEX
-!   MATRIX_TYPE, allocatable :: tmp1(:,:), tmp2(:,:)
-!   EV_TYPE :: norm, normmax
-!#ifdef TEST_SINGLE
-!   EV_TYPE :: pclange
-!#else
-!   EV_TYPE :: pzlange
-!#endif
-!   MATRIX_TYPE, parameter :: CONE = (1.0, 0.0) CZERO = (0.0, 0.0)
-!#endif
-
+   integer                     :: kernel
+   character(len=1)            :: layout
+#ifdef TEST_COMPLEX
+   EV_TYPE                     :: norm, normmax
+   MATRIX_TYPE, allocatable    :: tmp1(:,:), tmp2(:,:)
+#ifdef TEST_DOUBLE
+   MATRIX_TYPE, parameter      :: CONE = (1.0_c_double, 0.0_c_double), &
+                                  CZERO = (0.0_c_double, 0.0_c_double)
+   EV_TYPE :: pzlange, zlange
+#else
+   MATRIX_TYPE, parameter      :: CONE = (1.0_c_float, 0.0_c_float), &
+                                  CZERO = (0.0_c_float, 0.0_c_float)
+   EV_TYPE :: pclange, clange
+#endif
+#endif
    call read_input_parameters_traditional(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
@@ -490,63 +492,97 @@ program test
 #endif
 
 #if defined(TEST_CHOLESKY)
-
-!#ifdef TEST_REAL
      status = check_correctness_cholesky(na, a, as, na_rows, sc_desc, myid )
      call check_status(status, myid)
-!#endif
-        !-------------------------------------------------------------------------------
-!#ifdef TEST_COMPLEX
-!   ! Test correctness of result (using plain scalapack routines)
-!   allocate(tmp1(na_rows,na_cols))
-!   allocate(tmp2(na_rows,na_cols))
-!
-!   tmp1(:,:) = 0.0_ck8
-!
-!   ! tmp1 = a**H
-!#ifdef WITH_MPI
-!   call pztranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
-!#else
-!   tmp1 = transpose(conjg(a))
-!#endif
-!   ! tmp2 = a * a**H
-!#ifdef WITH_MPI
-!   call pzgemm("N","N", na, na, na, CONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
-!               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
-!#else
-!   call zgemm("N","N", na, na, na, CONE, a, na, tmp1, na, CZERO, tmp2, na)
-!#endif
-!
-!   ! compare tmp2 with c
-!   tmp2(:,:) = tmp2(:,:) - as(:,:)
-!
-!#ifdef WITH_MPI
-!   norm = pzlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
-!#else
-!   norm = zlange("M",na, na, tmp2, na_rows, tmp1)
-!#endif
-!#ifdef WITH_MPI
-!   call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
-!#else
-!   normmax = norm
-!#endif
-!   if (myid .eq. 0) then
-!     print *," Maximum error of result: ", normmax
-!   endif
-!
-!   if (normmax .gt. 5e-11_rk8) then
-!        status = 1
-!   endif
-!
-!   deallocate(tmp1, tmp2)
-!#endif
-
 #endif
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
+
+#ifdef TEST_REAL
      status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
      call check_status(status, myid)
 #endif
+#ifdef TEST_COMPLEX
+   status = 0
+
+   !-------------------------------------------------------------------------------
+   ! Test correctness of result (using plain scalapack routines)
+   allocate(tmp1(na_rows,na_cols))
+   allocate(tmp2(na_rows,na_cols))
+#ifdef TEST_DOUBLE
+   tmp1(:,:) = 0.0_ck8
+#else
+   tmp1(:,:) = 0.0_ck4
+#endif
+   ! tmp1 = a**T
+#ifdef WITH_MPI
+#ifdef TEST_DOUBLE
+   call pztranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#else
+   call pctranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#endif
+#else
+   tmp1 = transpose(conjg(a))
+#endif
+   ! tmp2 = tmp1 * b
+#ifdef TEST_DOUBLE
+#ifdef WITH_MPI
+   call pzgemm("N","N", na, na, na, CONE, tmp1, 1, 1, sc_desc, b, 1, 1, &
+               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
+#else
+   call zgemm("N","N", na, na, na, CONE, tmp1, na, b, na, CZERO, tmp2, na)
+#endif
+#else
+#ifdef WITH_MPI
+   call pcgemm("N","N", na, na, na, CONE, tmp1, 1, 1, sc_desc, b, 1, 1, &
+               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
+#else
+   call cgemm("N","N", na, na, na, CONE, tmp1, na, b, na, CZERO, tmp2, na)
+#endif
+#endif
+
+   ! compare tmp2 with c
+   tmp2(:,:) = tmp2(:,:) - c(:,:)
+#ifdef TEST_DOUBLE
+#ifdef WITH_MPI
+   norm = pzlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+#else
+   norm = zlange("M",na, na, tmp2, na_rows, tmp1)
+#endif
+#else
+#ifdef WITH_MPI
+   norm = pclange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+#else
+   norm = clange("M",na, na, tmp2, na_rows, tmp1)
+#endif
+#endif
+#ifdef WITH_MPI
+#ifdef TEST_DOUBLE
+   call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#else
+   call mpi_allreduce(norm,normmax,1,MPI_REAL4,MPI_MAX,MPI_COMM_WORLD,mpierr)
+#endif
+#else
+   normmax = norm
+#endif
+   if (myid .eq. 0) then
+     print *," Maximum error of result: ", normmax
+   endif
+
+#ifdef TEST_DOUBLE
+   if (normmax .gt. 5e-11_rk8) then
+#else
+   if (normmax .gt. 5e-11_rk4) then
+#endif
+        print *,"norm= ",normmax
+        status = 1
+   endif
+
+   deallocate(tmp1)
+   deallocate(tmp2)
+
+#endif
+#endif /* TEST_HERMITIAN_MULTIPLY */
 
 
      if (myid == 0) then
