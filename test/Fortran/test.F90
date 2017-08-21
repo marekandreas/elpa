@@ -570,7 +570,7 @@ program test
    endif
 
 #ifdef TEST_DOUBLE
-   if (normmax .gt. 5e-10_rk8) then
+   if (normmax .gt. 5e-11_rk8) then
 #else
    if (normmax .gt. 5e-3_rk4) then
 #endif

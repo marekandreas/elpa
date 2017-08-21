@@ -942,11 +942,11 @@ function check_correctness_&
       endif
 
 #ifdef DOUBLE_PRECISION_REAL
-      if (normmax .gt. 5e-12_rk8) then
+      if (normmax .gt. 5e-11_rk8) then
         status = 1
       endif
 #else
-      if (normmax .gt. 5e-4_rk4) then
+      if (normmax .gt. 5e-3_rk4) then
         status = 1
       endif
 #endif
