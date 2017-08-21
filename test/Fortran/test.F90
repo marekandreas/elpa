@@ -274,26 +274,26 @@ program test
    endif
 
 #ifdef TEST_HERMITIAN_MULTIPLY
-#if REALCASE == 1
+#ifdef TEST_REAL
 
-#ifdef DOUBLE_PRECISION_REAL
-   b(:,:) = 2.0_rk8 * a(:,:)
-   c(:,:) = 0.0_rk8
+#ifdef TEST_DOUBLE
+   b(:,:) = 2.0_c_double * a(:,:)
+   c(:,:) = 0.0_c_double
 #else
-   b(:,:) = 2.0_rk4 * a(:,:)
-   c(:,:) = 0.0_rk4
+   b(:,:) = 2.0_c_float * a(:,:)
+   c(:,:) = 0.0_c_float
 #endif
 
 #endif
 
-#if COMPLEXCASE == 1
+#ifdef TEST_COMPLEX
 
-#ifdef DOUBLE_PRECISION_COMPLEX
-   b(:,:) = 2.0_ck8 * a(:,:)
-   c(:,:) = 0.0_ck8
+#ifdef TEST_DOUBLE
+   b(:,:) = 2.0_c_double * a(:,:)
+   c(:,:) = (0.0_c_double, 0.0_c_double)
 #else
-   b(:,:) = 2.0_ck4 * a(:,:)
-   c(:,:) = 0.0_ck4
+   b(:,:) = 2.0_c_float * a(:,:)
+   c(:,:) = (0.0_c_float, 0.0_c_float)
 #endif
 
 #endif
@@ -510,9 +510,9 @@ program test
    allocate(tmp1(na_rows,na_cols))
    allocate(tmp2(na_rows,na_cols))
 #ifdef TEST_DOUBLE
-   tmp1(:,:) = 0.0_ck8
+   tmp1(:,:) = (0.0_c_double, 0.0_c_double)
 #else
-   tmp1(:,:) = 0.0_ck4
+   tmp1(:,:) = (0.0_c_float, 0.0_c_float)
 #endif
    ! tmp1 = a**T
 #ifdef WITH_MPI
