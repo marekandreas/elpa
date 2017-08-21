@@ -209,9 +209,19 @@ module elpa_impl
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, &
                                              mpierr, mpierr2, process_row, process_col, mpi_string_length
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
+#endif
 
-      error = ELPA_ERROR
+#ifdef HAVE_DETAILED_TIMINGS
+      call self%get("timings",timings)
+      if (timings == 1) then
+        call self%timer%enable()
+      endif
+#endif
 
+      error = ELPA_OK
+
+#ifdef WITH_MPI
+      ! Create communicators ourselves
       if (self%is_set("mpi_comm_parent") == 1 .and. &
           self%is_set("process_row") == 1 .and. &
           self%is_set("process_col") == 1) then
@@ -226,6 +236,7 @@ module elpa_impl
         ! Analogous for mpi_comm_cols
 
         call mpi_comm_split(mpi_comm_parent,process_col,process_row,mpi_comm_rows,mpierr)
+
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
@@ -246,21 +257,18 @@ module elpa_impl
         self%communicators_owned = 1
 
         error = ELPA_OK
+        return
       endif
 
+      ! Externally supplied communicators
       if (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) then
         self%communicators_owned = 0
         error = ELPA_OK
+        return
       endif
-#else /* !WITH_MPI */
-      error = ELPA_OK
-#endif
 
-#ifdef HAVE_DETAILED_TIMINGS
-      call self%get("timings",timings)
-      if (timings == 1) then
-        call self%timer%enable()
-      endif
+      ! Otherwise parameters are missing
+      error = ELPA_ERROR
 #endif
 
     end function
@@ -2099,17 +2107,19 @@ module elpa_impl
       integer :: mpi_comm_rows, mpi_comm_cols, mpierr
 #endif
       class(elpa_impl_t) :: self
-      call timer_free(self%timer)
-      call elpa_index_free_c(self%index)
 
 #ifdef WITH_MPI
       if (self%communicators_owned == 1) then
         call self%get("mpi_comm_rows", mpi_comm_rows)
         call self%get("mpi_comm_cols", mpi_comm_cols)
+
         call mpi_comm_free(mpi_comm_rows, mpierr)
         call mpi_comm_free(mpi_comm_cols, mpierr)
       endif
 #endif
+
+      call timer_free(self%timer)
+      call elpa_index_free_c(self%index)
 
     end subroutine
 
