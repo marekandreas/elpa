@@ -97,32 +97,18 @@
       class(elpa_abstract_impl_t), intent(inout)   :: obj
       logical, intent(in)                          :: useGPU, wantDebug
       integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
-#if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE), intent(in)         :: aMatrix(lda,*)
+      MATH_DATATYPE(kind=rck), intent(in)         :: aMatrix(lda,*)
 #else
-      real(kind=REAL_DATATYPE), intent(in)         :: aMatrix(lda,matrixCols)
+      MATH_DATATYPE(kind=rck), intent(in)         :: aMatrix(lda,matrixCols)
 #endif
-#endif /* REALCASE */
-#if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE),intent(in)    :: aMatrix(lda,*)
-#else
-      complex(kind=COMPLEX_DATATYPE), intent(in)   :: aMatrix(lda,matrixCols)
-#endif
-#endif /* COMPLEXCASE */
       integer(kind=c_intptr_t)                     :: a_dev
-      real(kind=REAL_DATATYPE), intent(out)        :: d(na), e(na) ! set only on PE 0
+      real(kind=rk), intent(out)        :: d(na), e(na) ! set only on PE 0
       MATH_DATATYPE(kind=rck), intent(out), allocatable   :: hh_trans(:,:)
-      real(kind=REAL_DATATYPE)                     :: vnorm2
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE)                     :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
-      real(kind=REAL_DATATYPE)                     :: hd(nb), hs(nb)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE)               :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
-      complex(kind=COMPLEX_DATATYPE)               :: hd(nb), hs(nb)
-#endif
+
+      real(kind=rk)                     :: vnorm2
+      MATH_DATATYPE(kind=rck)                     :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
+      MATH_DATATYPE(kind=rck)                     :: hd(nb), hs(nb)
 
       integer(kind=ik)                             :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
       integer(kind=ik)                             :: my_pe, n_pes, mpierr
@@ -137,23 +123,13 @@
 !      integer(kind=ik), allocatable               :: mpi_statuses(:,:), global_id_tmp(:,:)
       integer(kind=ik), allocatable                :: global_id_tmp(:,:)
       integer(kind=ik), allocatable                :: omp_block_limits(:)
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable        :: hv_t(:,:), tau_t(:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable  :: hv_t(:,:), tau_t(:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable        :: hv_t(:,:), tau_t(:)
       integer(kind=ik)                             :: omp_get_max_threads
 #endif /* WITH_OPENMP */
       integer(kind=ik), allocatable                :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
       integer(kind=ik), allocatable                :: limits(:), snd_limits(:,:)
       integer(kind=ik), allocatable                :: block_limits(:)
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable        :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable  :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable        :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
       integer                                      :: istat
       character(200)                               :: errorMessage
 
