@@ -59,13 +59,7 @@
 #endif
     &PRECISION &
     (obj, na, nb, nblk, aMatrix, a_dev, lda, d, e, matrixCols, &
-#if REALCASE == 1
-    hh_trans_real, &
-#endif
-#if COMPLEXCASE == 1
-    hh_trans_complex, &
-#endif
-    mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug)
+    hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug)
     !-------------------------------------------------------------------------------
     ! tridiag_band_real/complex:
     ! Reduces a real symmetric band matrix to tridiagonal form
@@ -81,7 +75,7 @@
     !  lda         Leading dimension of a
     !  matrixCols  local columns of matrix a
     !
-    ! hh_trans_real/complex : housholder vectors
+    ! hh_trans : housholder vectors
     !
     !  d(na)       Diagonal of tridiagonal matrix, set only on PE 0 (output)
     !
@@ -99,7 +93,7 @@
       use iso_c_binding
       use redist
       implicit none
-
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)   :: obj
       logical, intent(in)                          :: useGPU, wantDebug
       integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
@@ -119,15 +113,7 @@
 #endif /* COMPLEXCASE */
       integer(kind=c_intptr_t)                     :: a_dev
       real(kind=REAL_DATATYPE), intent(out)        :: d(na), e(na) ! set only on PE 0
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), intent(out), &
-          allocatable                              :: hh_trans_real(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), intent(inout), &
-          allocatable                              :: hh_trans_complex(:,:)
-#endif
-
+      MATH_DATATYPE(kind=rck), intent(out), allocatable   :: hh_trans(:,:)
       real(kind=REAL_DATATYPE)                     :: vnorm2
 #if REALCASE == 1
       real(kind=REAL_DATATYPE)                     :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
@@ -302,20 +288,16 @@
 
       ! Allocate space for HH vectors
 
-#if REALCASE == 1
-      allocate(hh_trans_real(nb,num_hh_vecs), stat=istat, errmsg=errorMessage)
+      allocate(hh_trans(nb,num_hh_vecs), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"tridiag_band_real: error when allocating hh_trans_real"//errorMessage
-        stop 1
-      endif
+#if REALCASE == 1
+        print *,"tridiag_band_real: error when allocating hh_trans"//errorMessage
 #endif
 #if COMPLEXCASE == 1
-      allocate(hh_trans_complex(nb,num_hh_vecs), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_complex: error when allocating hh_trans_comples "//errorMessage
+        print *,"tridiag_band_complex: error when allocating hh_trans "//errorMessage
+#endif
         stop 1
       endif
-#endif
 
       ! Allocate and init MPI requests
 
@@ -345,12 +327,7 @@
           num_chunks  = num_chunks+1
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-#if REALCASE == 1
-          call mpi_irecv(hh_trans_real(1,num_hh_vecs+1),          &
-#endif
-#if COMPLEXCASE == 1
-          call mpi_irecv(hh_trans_complex(1,num_hh_vecs+1),       &
-#endif
+          call mpi_irecv(hh_trans(1,num_hh_vecs+1),          &
                    nb*local_size,                           &
 #if REALCASE == 1
        MPI_REAL_PRECISION,                     &
@@ -363,8 +340,8 @@
 
 #else /* WITH_MPI */
           ! carefull non-block recv data copy must be done at wait or send
-          ! hh_trans_real(1:nb*local_size,num_hh_vecs+1) = hh_send(1:nb*hh_cnt(iblk),1,iblk)
-    ! hh_trans_complex(1:nb*local_size,num_hh_vecs+1) = hh_send(1:nb*hh_cnt(iblk),1,iblk)
+          ! hh_trans(1:nb*local_size,num_hh_vecs+1) = hh_send(1:nb*hh_cnt(iblk),1,iblk)
+
 #endif /* WITH_MPI */
           num_hh_vecs = num_hh_vecs + local_size
         endif
@@ -506,12 +483,7 @@
       endif
 
 #ifndef WITH_MPI
-#if REALCASE == 1
-          startAddr = ubound(hh_trans_real,dim=2)
-#endif
-#if COMPLEXCASE == 1
-          startAddr = ubound(hh_trans_complex,dim=2)
-#endif
+          startAddr = ubound(hh_trans,dim=2)
 #endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP
@@ -996,12 +968,7 @@
 #else /* WITH_MPI */
              ! do the post-poned irecv here
              startAddr = startAddr - hh_cnt(iblk)
-#if REALCASE == 1
-             hh_trans_real(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
-#endif
-#if COMPLEXCASE == 1
-             hh_trans_complex(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
-#endif
+             hh_trans(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
 #endif /* WITH_MPI */
 
             ! Reset counter and increase destination row
@@ -1351,12 +1318,7 @@
 #else /* WITH_MPI */
             ! do the post-poned irecv here
             startAddr = startAddr - hh_cnt(iblk)
-#if REALCASE == 1
-            hh_trans_real(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
-#endif
-#if COMPLEXCASE == 1
-            hh_trans_complex(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
-#endif
+            hh_trans(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
 #endif /* WITH_MPI */
 
             ! Reset counter and increase destination row
