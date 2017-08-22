@@ -624,10 +624,10 @@
                 ! Transform diagonal block
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
+                call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_COMPLEX_PAIR_0_0, hd, 1)
+                call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
 #endif
                 if (wantDebug) call obj%timer%stop("blas")
 #if REALCASE == 1
@@ -652,14 +652,7 @@
 
                 ! Transform subdiagonal block
                 if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, &
-#if REALCASE == 1
-                        CONST_0_0, &
-#endif
-#if COMPLEXCASE == 1
-                                    CONST_COMPLEX_PAIR_0_0, &
-#endif
-            hs, 1)
+                call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
                 if (wantDebug) call obj%timer%stop("blas")
                 if (nr>1) then
 
@@ -696,20 +689,8 @@
                   ! update subdiagonal block for old and new Householder transformation
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
                   if (wantDebug) call obj%timer%start("blas")
-#if REALCASE == 1
-                  call PRECISION_GEMV('T',            &
-#endif
-#if COMPLEXCASE == 1
-                  call PRECISION_GEMV('C',            &
-#endif
-                          nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, &
-#if REALCASE == 1
-              CONST_0_0,      &
-#endif
-#if COMPLEXCASE == 1
-                                      CONST_COMPLEX_PAIR_0_0, &
-#endif
-              h(2), 1)
+                  call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
+                          nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, ZERO, h(2), 1)
                   if (wantDebug) call obj%timer%stop("blas")
 
                   x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
@@ -917,19 +898,13 @@
               if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
-              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
+              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1,CONST_COMPLEX_PAIR_0_0,hd,1)
+              call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd,1)
 #endif
               ! Subdiagonal block
-              if (nr>0) call PRECISION_GEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1,  &
-#if REALCASE == 1
-                                      CONST_0_0, hs, 1)
-#endif
-#if COMPLEXCASE == 1
-                                            CONST_COMPLEX_PAIR_0_0,hs,1)
-#endif
+              if (nr>0) call PRECISION_GEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
               if (wantDebug) call obj%timer%stop("blas")
 
               ! ... then request last column ...
@@ -970,19 +945,12 @@
               ! Normal matrix multiply
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_0_0, hd, 1)
+              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, CONST_COMPLEX_PAIR_0_0, hd, 1)
+              call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
 #endif
-              if (nr>0) call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, &
-#if REALCASE == 1
-                                      CONST_0_0, hs, 1)
-#endif
-#if COMPLEXCASE == 1
-                                            CONST_COMPLEX_PAIR_0_0, hs, 1)
-
-#endif
+              if (nr>0) call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
               if (wantDebug) call obj%timer%stop("blas")
             endif
 
@@ -1130,19 +1098,8 @@
             if (nr>0) then
               if (nr>1) then
                 if (wantDebug) call obj%timer%start("blas")
-#if REALCASE == 1
-                call PRECISION_GEMV('T',            &
-#endif
-#if COMPLEXCASE == 1
-                call PRECISION_GEMV('C',            &
-#endif
-                            nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, hv_new, 1, &
-#if REALCASE == 1
-          CONST_0_0, h(2), 1)
-#endif
-#if COMPLEXCASE == 1
-                                        CONST_COMPLEX_PAIR_0_0, h(2), 1)
-#endif
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, &
+                                    hv_new, 1, ZERO, h(2), 1)
                 if (wantDebug) call obj%timer%stop("blas")
 
                 x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
