@@ -347,14 +347,9 @@
         stop 1
       endif
 
-#if REALCASE == 1
-      hh_gath(:,:,:) = CONST_0_0
-      hh_send(:,:,:) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-      hh_gath(:,:,:) = CONST_COMPLEX_0_0
-      hh_send(:,:,:) = CONST_COMPLEX_0_0
-#endif
+      hh_gath(:,:,:) = 0.0_rck
+      hh_send(:,:,:) = 0.0_rck
+
       ! Some counters
 
       allocate(hh_cnt(nblocks), stat=istat, errmsg=errorMessage)
@@ -425,14 +420,8 @@
         stop 1
       endif
 
-#if REALCASE == 1
-      hv_t = 0
-      tau_t = 0
-#endif
-#if COMPLEXCASE == 1
-      hv_t = CONST_COMPLEX_0_0
-      tau_t = CONST_COMPLEX_0_0
-#endif
+      hv_t = 0.0_rck
+      tau_t = 0.0_rck
 #endif /* WITH_OPENMP */
 
       ! ---------------------------------------------------------------------------
@@ -470,14 +459,8 @@
 
         if (my_pe==0) then
           n = MIN(na-na_s,nb) ! number of rows to be reduced
-#if REALCASE == 1
-          hv(:) = CONST_0_0
-          tau = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-          hv(:) = CONST_COMPLEX_0_0
-          tau = CONST_COMPLEX_0_0
-#endif
+          hv(:) = 0.0_rck
+          tau = 0.0_rck
 
           ! Transform first column of remaining matrix
 #if REALCASE == 1
@@ -525,12 +508,7 @@
           e(istep) = ab(2,na_s-n_off)
           if (istep == na-1) then
             d(na) = ab(1,na_s+1-n_off)
-#if REALCASE == 1
-            e(na) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-           e(na) = CONST_REAL_0_0
-#endif
+            e(na) = 0.0_rck
           endif
         else
           if (na>na_s) then
@@ -577,24 +555,14 @@
 
 #endif /* WITH_OPENMP */
             tau = hv(1)
-#if REALCASE == 1
-            hv(1) = CONST_1_0
-#endif
-#if COMPLEXCASE == 1
-            hv(1) = CONST_COMPLEX_1_0
-#endif
+            hv(1) = 1.0_rck
           endif
         endif
 
         na_s = na_s+1
         if (na_s-n_off > nb) then
           ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-#if REALCASE == 1
-          ab(:,nblocks*nb+1:(nblocks+1)*nb) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-          ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0
-#endif
+          ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0.0_rck
           n_off = n_off + nb
         endif
 
@@ -682,14 +650,8 @@
                 call PRECISION_HER2('L', nc, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
                 if (wantDebug) call obj%timer%stop("blas")
-#if REALCASE == 1
-                hv_t(:,my_thread) = CONST_0_0
-                tau_t(my_thread)  = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-              hv_t(:,my_thread) = CONST_COMPLEX_0_0
-              tau_t(my_thread)  = CONST_COMPLEX_0_0
-#endif
+                hv_t(:,my_thread) = 0.0_rck
+                tau_t(my_thread)  = 0.0_rck
                 if (nr<=0) cycle ! No subdiagonal block present any more
 
                 ! Transform subdiagonal block
@@ -732,19 +694,9 @@
                   &PRECISION &
                         (obj, ab(nb+1,ns), vnorm2, hf, tau_t(my_thread), wantDebug)
 
-#if REALCASE == 1
-                  hv_t(1   ,my_thread) = CONST_1_0
-#endif
-#if COMPLEXCASE == 1
-                  hv_t(1   ,my_thread) = CONST_COMPLEX_1_0
-#endif
+                  hv_t(1   ,my_thread) = 1.0_rck
                   hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
-#if REALCASE == 1
-                  ab(nb+2:,ns) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-                  ab(nb+2:,ns) = CONST_COMPLEX_0_0
-#endif
+                  ab(nb+2:,ns) = 0.0_rck
                   ! update subdiagonal block for old and new Householder transformation
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
                   if (wantDebug) call obj%timer%start("blas")
@@ -790,12 +742,7 @@
 #endif
                   enddo
                   ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
-#if REALCASE == 1
-                  hv_t(1,my_thread) = CONST_1_0
-#endif
-#if COMPLEXCASE == 1
-                  hv_t(1,my_thread) = CONST_COMPLEX_1_0
-#endif
+                  hv_t(1,my_thread) = 1.0_rck
                 endif
 
               enddo
@@ -975,12 +922,7 @@
               ! First do the matrix multiplications without last column ...
 
               ! Diagonal block, the contribution of the last element is added below!
-#if REALCASE == 1
-              ab(1,ne) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-              ab(1,ne) = CONST_COMPLEX_0_0
-#endif
+              ab(1,ne) = 0.0_rck
               if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
@@ -1055,14 +997,8 @@
 
             ! Calculate first column of subdiagonal block and calculate new
             ! Householder transformation for this column
-#if REALCASE == 1
-            hv_new(:) = CONST_0_0 ! Needed, last rows must be 0 for nr < nb
-            tau_new = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-            hv_new(:) = 0 ! Needed, last rows must be 0 for nr < nb
-            tau_new = 0
-#endif
+            hv_new(:) = 0.0_rck ! Needed, last rows must be 0 for nr < nb
+            tau_new = 0.0_rck
             if (nr>0) then
 
               ! complete (old) Householder transformation for first column
@@ -1090,19 +1026,9 @@
 #endif
                 &PRECISION &
                              (obj, ab(nb+1,ns), vnorm2, hf, tau_new, wantDebug)
-#if REALCASE == 1
-                hv_new(1) = CONST_1_0
-#endif
-#if COMPLEXCASE == 1
-                hv_new(1) = CONST_COMPLEX_1_0
-#endif
+                hv_new(1) = 1.0_rck
                 hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
-#if REALCASE == 1
-                ab(nb+2:,ns) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-                ab(nb+2:,ns) = CONST_COMPLEX_0_0
-#endif
+                ab(nb+2:,ns) = 0.0_rck
               endif ! nr > 1
 
               ! ... and send it away immediatly if this is the last block
