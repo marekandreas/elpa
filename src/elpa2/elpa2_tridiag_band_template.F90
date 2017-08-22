@@ -495,14 +495,10 @@
 &PRECISION &
                                (obj, ab(2,na_s-n_off), vnorm2, hf, tau, wantDebug)
 
-#if REALCASE == 1
-            hv(1) = CONST_1_0
+            hv(1) = 1.0_rck
             hv(2:n) = ab(3:n+1,na_s-n_off)*hf
+#if REALCASE == 1
           endif
-#endif
-#if COMPLEXCASE == 1
-          hv(1) = CONST_COMPLEX_1_0
-          hv(2:n) = ab(3:n+1,na_s-n_off)*hf
 #endif
           d(istep) = ab(1,na_s-n_off)
           e(istep) = ab(2,na_s-n_off)
