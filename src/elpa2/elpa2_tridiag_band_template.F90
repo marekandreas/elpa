@@ -632,12 +632,11 @@
                 if (wantDebug) call obj%timer%stop("blas")
 #if REALCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*tau
-                hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
 #endif
 #if COMPLEXCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
-                hd(1:nc) = hd(1:nc) - 0.5*x*hv(1:nc)
 #endif
+                hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
                 call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
@@ -1026,12 +1025,11 @@
             ! Transform diagonal block
 #if REALCASE == 1
             x = dot_product(hv(1:nc),hd(1:nc))*tau
-            hd(1:nc) = hd(1:nc) - CONST_0_5*x*hv(1:nc)
 #endif
 #if COMPLEXCASE == 1
             x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
-            hd(1:nc) = hd(1:nc) - CONST_REAL_0_5*x*hv(1:nc)
 #endif
+            hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
             if (my_pe>0 .and. iblk==1) then
 
               ! The first column of the diagonal block has to be send to the previous PE
