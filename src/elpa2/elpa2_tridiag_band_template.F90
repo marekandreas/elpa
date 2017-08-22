@@ -640,10 +640,10 @@
 #endif
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYR2('L', nc, -CONST_1_0 ,hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_HER2('L', nc, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                call PRECISION_HER2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
                 if (wantDebug) call obj%timer%stop("blas")
                 hv_t(:,my_thread) = 0.0_rck
@@ -1073,10 +1073,10 @@
               ! ... and calculate remaining columns with rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              if (nc>1) call PRECISION_SYR2('L', nc-1, -CONST_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+              if (nc>1) call PRECISION_SYR2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
 #endif
 #if COMPLEXCASE == 1
-              if (nc>1) call PRECISION_HER2('L', nc-1, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+              if (nc>1) call PRECISION_HER2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
 #endif
               if (wantDebug) call obj%timer%stop("blas")
 
@@ -1084,10 +1084,10 @@
               ! No need to  send, just a rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_SYR2('L', nc, -CONST_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+              call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HER2('L', nc, CONST_COMPLEX_PAIR_NEGATIVE_1_0, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+              call PRECISION_HER2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
 #endif
               if (wantDebug) call obj%timer%stop("blas")
 
