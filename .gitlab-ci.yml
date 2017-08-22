@@ -238,18 +238,18 @@ intel-double-precision-mpi-omp-large-jobs:
     - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      ## intel single precision mpi omp AVX/SSE
-      #intel-single-precision-mpi-omp-jobs:
-      #  tags:
-      #    - cpu
-      #  script:
-      #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-single-precision --disable-avx2 --enable-openmp || { cat config.log; exit 1; }
-      #    - make -j 8
-      #    - export OMP_NUM_THREADS=2
-      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      #    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+# intel single precision mpi omp AVX/SSE
+intel-single-precision-mpi-omp-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-single-precision --disable-avx2 --enable-openmp || { cat config.log; exit 1; }
+    - make -j 8
+    - export OMP_NUM_THREADS=2
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # gfortran double precision mpi omp AVX/SSE
 gfortran-double-precision-mpi-omp-jobs:
@@ -264,18 +264,18 @@ gfortran-double-precision-mpi-omp-jobs:
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      ## gfortran single precision mpi omp AVX/SSE
-      #gfortran-single-precision-mpi-omp-jobs:
-      #  tags:
-      #    - cpu
-      #  script:
-      #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
-      #    - make -j 8
-      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      #    - export OMP_NUM_THREADS=1
-      #    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+# gfortran single precision mpi omp AVX/SSE
+gfortran-single-precision-mpi-omp-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
+    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 # gfortran double precision mpi omp AVX/SSE debug
 gfortran-double-precision-mpi-omp-debug-avx-jobs:
@@ -290,18 +290,18 @@ gfortran-double-precision-mpi-omp-debug-avx-jobs:
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      ## gfortran single precision mpi omp AVX/SSE debug
-      #gfortran-single-precision-mpi-omp-debug-avx-jobs:
-      #  tags:
-      #    - cpu
-      #  script:
-      #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal CFLAGS="-g -O3 -mavx" FCFLAGS="-g -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
-      #    - make -j 8
-      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      #    - export OMP_NUM_THREADS=1
-      #    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+# gfortran single precision mpi omp AVX/SSE debug
+gfortran-single-precision-mpi-omp-debug-avx-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="-g -O3 -mavx" FCFLAGS="-g -O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
+    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
 # gfortran double precision mpi noomp AVX/SSE, no assumed size
@@ -330,19 +330,19 @@ gfortran-double-precision-mpi-omp-no-assumed-size-debug-jobs:
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
-      ## gfortran single precision mpi omp AVX/SSE, no assumed size
-      #gfortran-single-precision-mpi-omp-no-assumed-size-jobs:
-      #  tags:
-      #    - cpu
-      #  script:
-      #    - ./autogen.sh
-      #    - ./configure --enable-option-checking=fatal CFLAGS="-O2 -mavx" FCFLAGS="-O2 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --disable-assumed-size --enable-openmp || { cat config.log; exit 1; }
-      #
-      #    - make -j 8
-      #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-      #    - export OMP_NUM_THREADS=1
-      #    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-      #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+# gfortran single precision mpi omp AVX/SSE, no assumed size
+gfortran-single-precision-mpi-omp-no-assumed-size-jobs:
+  tags:
+    - cpu
+  script:
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="-O2 -mavx" FCFLAGS="-O2 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --disable-assumed-size --enable-openmp || { cat config.log; exit 1; }
+
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
+    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
 
 # gfortran double precision mpi omp AVX/SSE COVERAGE
@@ -362,22 +362,22 @@ gfortran-double-precision-mpi-omp-coverage-avx-jobs:
     paths:
       - coverage_data
 
-        ## gfortran single precision mpi omp AVX/SSE COVERAGE
-        #gfortran-single-precision-mpi-omp-coverage-avx-jobs:
-        #  tags:
-        #    - coverage
-        #  script:
-        #    - ./autogen.sh
-        #    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O0 -mavx" FCFLAGS="--coverage -O0 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
-        #    - make -j 8
-        #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-        #    - export OMP_NUM_THREADS=1
-        #    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-        #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-        #    - ./ci_coverage_collect
-        #  artifacts:
-        #    paths:
-        #      - coverage_data
+# gfortran single precision mpi omp AVX/SSE COVERAGE
+gfortran-single-precision-mpi-omp-coverage-avx-jobs:
+  tags:
+    - coverage
+  script:
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O0 -mavx" FCFLAGS="--coverage -O0 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
+    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 # gfortran double precision mpi omp AVX/SSE, no assumed size COVERAGE
 gfortran-double-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
@@ -396,22 +396,22 @@ gfortran-double-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
     paths:
       - coverage_data
 
-        ## gfortran single precision mpi omp AVX/SSE no assumed size COVERAGE
-        #gfortran-single-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
-        #  tags:
-        #    - coverage
-        #  script:
-        #    - ./autogen.sh
-        #    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O1 -mavx" FCFLAGS="--coverage -O1 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --disable-assumed-size --enable-openmp || { cat config.log; exit 1; }
-        #    - make -j 8
-        #    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-        #    - export OMP_NUM_THREADS=1
-        #    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-        #    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-        #    - ./ci_coverage_collect
-        #  artifacts:
-        #    paths:
-        #      - coverage_data
+# gfortran single precision mpi omp AVX/SSE no assumed size COVERAGE
+gfortran-single-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
+  tags:
+    - coverage
+  script:
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O1 -mavx" FCFLAGS="--coverage -O1 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --disable-assumed-size --enable-openmp || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - export OMP_NUM_THREADS=1
+    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_coverage_collect
+  artifacts:
+    paths:
+      - coverage_data
 
 
 ########################################################################################
