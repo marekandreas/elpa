@@ -53,7 +53,11 @@
     integer(kind=ik) :: globI, globJ, locI, locJ, levels(num_primes)
 
     ! for debug only, do it systematicaly somehow ... unit tests
-    call check_module_sanity(myid)
+    call check_module_sanity_&
+            &MATH_DATATYPE&
+            &_&
+            &PRECISION&
+            &(myid)
 
     if(.not. decompose(na, levels)) then
       if(myid == 0) then
@@ -255,30 +259,30 @@
         total_level = total_level + 1
         if(what == ANALYTIC_MATRIX) then
 #ifdef REALCASE
-          mat2x2 = reshape((/ c*c + amp * s*s, (1.0_rk-amp) * s*c,  &
-                           (1.0_rk-amp) * s*c, s*s + amp * c*c  /), &
-                                      (/2, 2/))
+          mat2x2 = reshape((/ c*c + amp * s*s, (amp - 1.0_rk) * s*c,  &
+                           (amp - 1.0_rk) * s*c, s*s + amp * c*c  /), &
+                                      (/2, 2/), order=(/2,1/))
 #endif
 #ifdef COMPLEXCASE
           mat2x2 = reshape((/ 0.5_rck * (amp + 1.0_rck) * (1.0_rk, 0.0_rk),   sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, 1.0_rk),   &
                               sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, -1.0_rk),  0.5_rck * (amp + 1.0_rck) * (1.0_rk, 0.0_rk) /), &
-                                      (/2, 2/))
+                                      (/2, 2/), order=(/2,1/))
 #endif
         else if(what == ANALYTIC_EIGENVECTORS) then
 #ifdef REALCASE
           mat2x2 = reshape((/ c, s,  &
                            -s,  c  /), &
-                                (/2, 2/))
+                                (/2, 2/), order=(/2,1/))
 #endif
 #ifdef COMPLEXCASE
           mat2x2 = reshape((/ -sq2/2.0_rck * (1.0_rk, 0.0_rk),       -sq2/2.0_rck * (1.0_rk, 0.0_rk),  &
                               0.5_rk * (1.0_rk, -1.0_rk),  0.5_rk * (-1.0_rk, 1.0_rk)  /), &
-                                (/2, 2/))
+                                (/2, 2/), order=(/2,1/))
 #endif
         else if(what == ANALYTIC_EIGENVALUES) then
           mat2x2 = reshape((/ 1.0_rck, 0.0_rck,  &
                            0.0_rck, amp  /), &
-                                 (/2, 2/))
+                                 (/2, 2/), order=(/2,1/))
         else
           assert(.false.)
         end if
@@ -319,3 +323,115 @@
     end do
     !write(*,*) "returning value ", element
   end function
+
+
+  subroutine print_matrix_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &(myid, na, mat, mat_name)
+    implicit none
+#include "../../src/general/precision_kinds.F90"
+    integer(kind=ik), intent(in)    :: myid, na
+    character(len=*), intent(in)    :: mat_name
+    MATH_DATATYPE(kind=rck)         :: mat(na, na)
+    integer(kind=ik)                :: i,j
+    character(len=20)               :: na_str
+
+    if(myid .ne. 0) &
+      return
+    write(*,*) "Matrix: "//trim(mat_name)
+    write(na_str, *) na
+    do i = 1, na
+#ifdef REALCASE
+      write(*, '('//trim(na_str)//'f8.3)') mat(i, :)
+#endif
+#ifdef COMPLEXCASE
+      write(*,'('//trim(na_str)//'(A,f8.3,A,f8.3,A))') ('(', real(mat(i,j)), ',', aimag(mat(i,j)), ')', j=1,na)
+#endif
+    end do
+    write(*,*)
+  end subroutine
+
+
+  subroutine check_matrices_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &(myid, na)
+    implicit none
+#include "../../src/general/precision_kinds.F90"
+    integer(kind=ik), intent(in)    :: myid, na
+    MATH_DATATYPE(kind=rck)                  :: A(na, na), S(na, na), L(na, na), res(na, na)
+    integer(kind=ik)                :: i, j, decomposition(num_primes)
+
+    assert(decompose(na, decomposition))
+
+    do i = 1, na
+      do j = 1, na
+        A(i,j) = analytic_matrix_&
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION&
+              &(na, i, j)
+        S(i,j) = analytic_eigenvectors_&
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION&
+              &(na, i, j)
+        L(i,j) = analytic_&
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION&
+              &(na, i, j, ANALYTIC_EIGENVALUES)
+      end do
+    end do
+
+    res = matmul(A,S) - matmul(S,L)
+#ifdef DOUBLE_PRECISION
+    assert(maxval(abs(res)) < 1e-8)
+#elif SINGLE_PRECISION
+    assert(maxval(abs(res)) < 1e-4)
+#else
+    assert(.false.)
+#endif
+    if(.false.) then
+    !if(na == 2 .or. na == 5) then
+      call print_matrix(myid, na, A, "A")
+      call print_matrix(myid, na, S, "S")
+      call print_matrix(myid, na, L, "L")
+
+      call print_matrix(myid, na, matmul(A,S), "AS")
+      call print_matrix(myid, na, matmul(S,L), "SL")
+
+      call print_matrix(myid, na, res , "res")
+    end if
+
+  end subroutine
+
+  subroutine check_module_sanity_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &(myid)
+    implicit none
+    integer(kind=ik), intent(in)   :: myid
+    integer(kind=ik)               :: decomposition(num_primes), i
+    integer(kind=ik), parameter    :: check_sizes(7) = (/2, 3, 5, 6, 10, 25, 150/)
+    if(myid == 0) print *, "Checking test_analytic module sanity.... "
+    assert(decompose(1500, decomposition))
+    assert(all(decomposition == (/2,1,3/)))
+    assert(decompose(6,decomposition))
+    assert(all(decomposition == (/1,1,0/)))
+
+    do i =1, size(check_sizes)
+      call check_matrices_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION&
+          &(myid, check_sizes(i))
+    end do
+
+    if(myid == 0) print *, "Checking test_analytic module sanity.... DONE"
+
+  end subroutine

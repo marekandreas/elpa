@@ -69,6 +69,18 @@ module test_analytic
 #endif
   end interface
 
+
+  interface print_matrix
+    module procedure print_matrix_complex_double
+    module procedure print_matrix_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure print_matrix_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure print_matrix_complex_single
+#endif
+  end interface
+
   integer(kind=ik), parameter, private  :: num_primes = 3
   integer(kind=ik), parameter, private  :: primes(num_primes) = (/2,3,5/)
 
@@ -111,24 +123,6 @@ module test_analytic
     end do
   end function
 
-  subroutine print_matrix(myid, na, mat, mat_name)
-    implicit none
-    integer(kind=ik), intent(in)    :: myid, na
-    character(len=*), intent(in)    :: mat_name
-    real(kind=rk8)                  :: mat(na, na)
-    integer(kind=ik)                :: i
-    character(len=20)               :: str
-
-    if(myid .ne. 0) &
-      return
-    write(*,*) "Matrix: "//trim(mat_name)
-    write(str, *) na
-    do i = 1, na
-      write(*, '('//trim(str)//'f8.3)') mat(i, :)
-    end do
-    write(*,*)
-  end subroutine
-
 
 #include "../../src/general/prow_pcol.F90"
 #include "../../src/general/map_global_to_local.F90"
@@ -170,53 +164,5 @@ module test_analytic
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
-  subroutine check_matrices(myid, na)
-    implicit none
-    integer(kind=ik), intent(in)    :: myid, na
-    real(kind=rk8)                  :: A(na, na), S(na, na), L(na, na), res(na, na)
-    integer(kind=ik)                :: i, j, decomposition(num_primes)
-
-    assert(decompose(na, decomposition))
-
-    do i = 1, na
-      do j = 1, na
-        A(i,j) = analytic_matrix_real_double(na, i, j)
-        S(i,j) = analytic_eigenvectors_real_double(na, i, j)
-        L(i,j) = analytic_real_double(na, i, j, ANALYTIC_EIGENVALUES)
-      end do
-    end do
-
-    res = matmul(A,S) - matmul(S,L)
-    assert(maxval(abs(res)) < 1e-8)
-
-    !call print_matrix(myid, na, A, "A")
-    !call print_matrix(myid, na, S, "S")
-    !call print_matrix(myid, na, L, "L")
-    !call print_matrix(myid, na, res , "res")
-
-  end subroutine
-
-  subroutine check_module_sanity(myid)
-    implicit none
-    integer(kind=ik), intent(in)   :: myid
-    integer(kind=ik)               :: decomposition(num_primes)
-
-    if(myid == 0) print *, "Checking test_analytic module sanity.... "
-    assert(decompose(1500, decomposition))
-    assert(all(decomposition == (/2,1,3/)))
-    assert(decompose(6,decomposition))
-    assert(all(decomposition == (/1,1,0/)))
-
-    call check_matrices(myid, 2)
-    call check_matrices(myid, 3)
-    call check_matrices(myid, 5)
-    call check_matrices(myid, 6)
-    call check_matrices(myid, 10)
-    call check_matrices(myid, 25)
-    call check_matrices(myid, 150)
-
-    if(myid == 0) print *, "Checking test_analytic module sanity.... DONE"
-
-  end subroutine
 
 end module
