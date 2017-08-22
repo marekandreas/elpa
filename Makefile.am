@@ -642,9 +642,8 @@ EXTRA_DIST = \
   test/Fortran/assert.h \
   test/Fortran/elpa_print_headers.F90 \
   test/shared/test_check_correctness_template.F90 \
-  test/shared/test_check_correctness_template.F90 \
   test/shared/test_prepare_matrix_template.F90 \
-  test/shared/test_prepare_matrix_template.F90 \
+  test/shared/test_analytic_template.F90 \
   test_project/Makefile.am \
   test_project/autogen.sh \
   test_project/configure.ac \

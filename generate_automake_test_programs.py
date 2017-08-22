@@ -47,8 +47,7 @@ for m, g, t, p, d, s, l in product(
                              sorted(solver_flag.keys()),
                              sorted(layout_flag.keys())):
 
-    #todo: decide what tests we actually want
-    if(m == "analytic" and (g == 1 or t != "eigenvectors" or p == "single" or d == "complex")):
+    if(m == "analytic" and (g == 1 or t != "eigenvectors" or d == "complex" )):
         continue
 
     if(s == "scalapack_all" and (g == 1 or t != "eigenvectors" or p == "single" or d == "complex" or m != "analytic")):

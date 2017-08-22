@@ -47,112 +47,36 @@
 module test_analytic
 
   use test_util
-
   interface prepare_matrix_analytic
+    module procedure prepare_matrix_analytic_complex_double
     module procedure prepare_matrix_analytic_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_analytic_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_analytic_complex_single
+#endif
   end interface
 
   interface check_correctness_analytic
+    module procedure check_correctness_analytic_complex_double
     module procedure check_correctness_analytic_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure check_correctness_analytic_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure check_correctness_analytic_complex_single
+#endif
   end interface
 
   integer(kind=ik), parameter, private  :: num_primes = 3
   integer(kind=ik), parameter, private  :: primes(num_primes) = (/2,3,5/)
-  real(kind=rk8), parameter, private :: ZERO = 0.0_rk8, ONE = 1.0_rk8
+
+  integer(kind=ik), parameter, private  :: ANALYTIC_MATRIX = 0
+  integer(kind=ik), parameter, private  :: ANALYTIC_EIGENVECTORS = 1
+  integer(kind=ik), parameter, private  :: ANALYTIC_EIGENVALUES = 2
 
   contains
-
-#include "../../src/general/prow_pcol.F90"
-#include "../../src/general/map_global_to_local.F90"
-
-  subroutine prepare_matrix_analytic_real_double (na, a, nblk, myid, np_rows, &
-                            np_cols, my_prow, my_pcol)
-    implicit none
-
-    integer(kind=ik), intent(in)    :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-    real(kind=rk8), intent(inout)   :: a(:,:)
-
-    integer(kind=ik) :: globI, globJ, locI, locJ, levels(num_primes)
-
-    ! for debug only, do it systematicaly somehow ... unit tests
-    ! call check_module_sanity(myid)
-
-    if(.not. decompose(na, levels)) then
-      if(myid == 0) then
-        print *, "Analytic test can be run only with matrix sizes of the form 2^n * 3^m * 5^o"
-        stop 1
-      end if
-    end if
-
-    do globI = 1, na
-      do globJ = 1, na
-        if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
-                 nblk, np_rows, np_cols, my_prow, my_pcol)) then
-           a(locI, locJ) = analytic_matrix(na, globI, globJ)
-        end if
-      end do
-    end do
-
-  end subroutine
-
-  function check_correctness_analytic_real_double (na, nev, ev, z, nblk, myid, np_rows, &
-                            np_cols, my_prow, my_pcol) result(status)
-    implicit none
-
-    integer(kind=ik), intent(in)    :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-    integer(kind=ik)                :: status, mpierr
-    real(kind=rk8), intent(inout)   :: z(:,:)
-    real(kind=rk8), intent(inout)   :: ev(:)
-
-    integer(kind=ik) :: globI, globJ, locI, locJ, levels(num_primes)
-    real(kind=rk8)   :: diff, max_z_diff, max_ev_diff, glob_max_z_diff, max_curr_z_diff_minus, max_curr_z_diff_plus
-    real(kind=rk8)   :: computed, expected
-
-    if(.not. decompose(na, levels)) then
-      print *, "can not decomopse matrix size"
-      stop 1
-    end if
-
-    max_z_diff = ZERO
-    max_ev_diff = ZERO
-    do globJ = 1, na
-      diff = abs(ev(globJ) - analytic_eigenvalues(na, globJ))
-      max_ev_diff = max(diff, max_ev_diff)
-    end do
-
-    do globJ = 1, nev
-      ! calculated eigenvector can be in opposite direction
-      max_curr_z_diff_minus = ZERO
-      max_curr_z_diff_plus  = ZERO
-      do globI = 1, na
-        if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
-                 nblk, np_rows, np_cols, my_prow, my_pcol)) then
-           computed = z(locI, locJ)
-           expected = analytic_eigenvectors(na, globI, globJ)
-           max_curr_z_diff_minus = max(abs(computed - expected), max_curr_z_diff_minus)
-           max_curr_z_diff_plus = max(abs(computed + expected), max_curr_z_diff_plus)
-        end if
-      end do
-      ! we have max difference of one of the eigenvectors, update global
-      max_z_diff = max(max_z_diff, min(max_curr_z_diff_minus, max_curr_z_diff_plus))
-    end do
-
-#ifdef WITH_MPI
-    call mpi_allreduce(max_z_diff, glob_max_z_diff, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, mpierr)
-#else
-    glob_max_z_diff = max_z_diff
-#endif
-    if(myid == 0) print *, 'Maximum error in eigenvalues      :', max_ev_diff
-    if(myid == 0) print *, 'Maximum error in eigenvectors     :', glob_max_z_diff
-    status = 0
-    if (nev .gt. 2) then
-      if (max_ev_diff .gt. 5e-14_rk8 .or. max_ev_diff .eq. ZERO) status = 1
-      if (glob_max_z_diff .gt. 6e-11_rk8 .or. glob_max_z_diff .eq. ZERO) status = 1
-    else
-      if (max_ev_diff .gt. 5e-14_rk8) status = 1
-      if (glob_max_z_diff .gt. 6e-11_rk8) status = 1
-    endif
-  end function
 
   function decompose(num, decomposition) result(possible)
     implicit none
@@ -187,124 +111,6 @@ module test_analytic
     end do
   end function
 
-#define ANALYTIC_MATRIX 0
-#define ANALYTIC_EIGENVECTORS 1
-#define ANALYTIC_EIGENVALUES 2
-
-  function analytic_matrix(na, i, j) result(element)
-    implicit none
-    integer(kind=ik), intent(in) :: na, i, j
-    real(kind=rk8)               :: element
-
-    element = analytic(na, i, j, ANALYTIC_MATRIX)
-
-  end function
-
-  function analytic_eigenvectors(na, i, j) result(element)
-    implicit none
-    integer(kind=ik), intent(in) :: na, i, j
-    real(kind=rk8)               :: element
-
-    element = analytic(na, i, j, ANALYTIC_EIGENVECTORS)
-
-  end function
-
-  function analytic_eigenvalues(na, i) result(element)
-    implicit none
-    integer(kind=ik), intent(in) :: na, i
-    real(kind=rk8)               :: element
-
-    element = analytic(na, i, i, ANALYTIC_EIGENVALUES)
-
-  end function
-
-
-
-  function analytic(na, i, j, what) result(element)
-    implicit none
-    integer(kind=ik), intent(in)   :: na, i, j, what
-    real(kind=rk8)                 :: element, am
-    real(kind=rk8)                 :: a, s, c, mat2x2(2,2), mat(5,5)
-    integer(kind=ik)               :: levels(num_primes)
-    integer(kind=ik)               :: ii, jj, m, prime_id, prime, total_level, level
-
-    real(kind=rk8), parameter      :: largest_ev = 2.0_rk8
-
-    assert(i <= na)
-    assert(j <= na)
-    assert(i >= 0)
-    assert(j >= 0)
-    assert(decompose(na, levels))
-    ! go to zero-based indexing
-    ii = i - 1
-    jj = j - 1
-    if (na .gt. 2) then
-      a = exp(log(largest_ev)/(na-1))
-    else
-      a = exp(log(largest_ev)/(1))
-    endif
-    s = 0.5_rk8
-    c = sqrt(3.0_rk8)/2.0_rk8
-    element = ONE
-    total_level = 0
-    am = a
-    do prime_id = 1,num_primes
-      prime = primes(prime_id)
-      do  level = 1, levels(prime_id)
-        total_level = total_level + 1
-        if(what == ANALYTIC_MATRIX) then
-          mat2x2 = reshape((/ c*c + am**(prime-1) * s*s, (ONE-am**(prime-1)) * s*c,  &
-                           (ONE-am**(prime-1)) * s*c, s*s + am**(prime-1) * c*c  /), &
-                                      (/2, 2/))
-        else if(what == ANALYTIC_EIGENVECTORS) then
-          mat2x2 = reshape((/ c, s,  &
-                           -s,  c  /), &
-                                (/2, 2/))
-        else if(what == ANALYTIC_EIGENVALUES) then
-          mat2x2 = reshape((/ ONE, ZERO,  &
-                           ZERO, am**(prime-1)  /), &
-                                 (/2, 2/))
-        else
-          assert(.false.)
-        end if
-
-        mat = ZERO
-        if(prime == 2) then
-          mat(1:2, 1:2) = mat2x2
-        else if(prime == 3) then
-          mat((/1,3/),(/1,3/)) = mat2x2
-          if(what == ANALYTIC_EIGENVECTORS) then
-            mat(2,2) = ONE
-          else
-            mat(2,2) = am
-          end if
-        else if(prime == 5) then
-          mat((/1,5/),(/1,5/)) = mat2x2
-          if(what == ANALYTIC_EIGENVECTORS) then
-            mat(2,2) = ONE
-            mat(3,3) = ONE
-            mat(4,4) = ONE
-          else
-            mat(2,2) = am
-            mat(3,3) = am**2
-            mat(4,4) = am**3
-          end if
-        else
-          assert(.false.)
-        end if
-
-  !      write(*,*) "calc value, elem: ", element, ", mat: ", mod(ii,2), mod(jj,2),  mat(mod(ii,2), mod(jj,2)), "am ", am
-  !      write(*,*) " matrix mat", mat
-        element = element * mat(mod(ii,prime) + 1, mod(jj,prime) + 1)
-        ii = ii / prime
-        jj = jj / prime
-
-        am = am**prime
-      end do
-    end do
-    !write(*,*) "returning value ", element
-  end function
-
   subroutine print_matrix(myid, na, mat, mat_name)
     implicit none
     integer(kind=ik), intent(in)    :: myid, na
@@ -323,25 +129,70 @@ module test_analytic
     write(*,*)
   end subroutine
 
+
+#include "../../src/general/prow_pcol.F90"
+#include "../../src/general/map_global_to_local.F90"
+
+
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../src/general/precision_macros.h"
+#include "test_analytic_template.F90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "../../src/general/precision_macros.h"
+#include "test_analytic_template.F90"
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
+
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../src/general/precision_macros.h"
+#include "test_analytic_template.F90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../../src/general/precision_macros.h"
+#include "test_analytic_template.F90"
+#undef SINGLE_PRECISION
+#undef REALCASE
+
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
   subroutine check_matrices(myid, na)
     implicit none
     integer(kind=ik), intent(in)    :: myid, na
-    real(kind=rk8)                  :: A(na, na), S(na, na), L(na, na)
+    real(kind=rk8)                  :: A(na, na), S(na, na), L(na, na), res(na, na)
     integer(kind=ik)                :: i, j, decomposition(num_primes)
 
     assert(decompose(na, decomposition))
 
     do i = 1, na
       do j = 1, na
-        A(i,j) = analytic_matrix(na, i, j)
-        S(i,j) = analytic_eigenvectors(na, i, j)
-        L(i,j) = analytic(na, i, j, ANALYTIC_EIGENVALUES)
+        A(i,j) = analytic_matrix_real_double(na, i, j)
+        S(i,j) = analytic_eigenvectors_real_double(na, i, j)
+        L(i,j) = analytic_real_double(na, i, j, ANALYTIC_EIGENVALUES)
       end do
     end do
 
-    call print_matrix(myid, na, A, "A")
-    call print_matrix(myid, na, S, "S")
-    call print_matrix(myid, na, L, "L")
+    res = matmul(A,S) - matmul(S,L)
+    assert(maxval(abs(res)) < 1e-8)
+
+    !call print_matrix(myid, na, A, "A")
+    !call print_matrix(myid, na, S, "S")
+    !call print_matrix(myid, na, L, "L")
+    !call print_matrix(myid, na, res , "res")
 
   end subroutine
 
@@ -361,6 +212,8 @@ module test_analytic
     call check_matrices(myid, 5)
     call check_matrices(myid, 6)
     call check_matrices(myid, 10)
+    call check_matrices(myid, 25)
+    call check_matrices(myid, 150)
 
     if(myid == 0) print *, "Checking test_analytic module sanity.... DONE"
 
