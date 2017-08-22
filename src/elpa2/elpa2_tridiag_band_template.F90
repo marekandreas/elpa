@@ -891,12 +891,7 @@
 #endif /* WITH_MPI */
 
             ! Reset counter and increase destination row
-#if REALCASE == 1
-              hh_cnt(iblk) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
               hh_cnt(iblk) = 0
-#endif
               hh_dst(iblk) = hh_dst(iblk)+1
             endif
 
@@ -1220,12 +1215,7 @@
 #endif /* WITH_MPI */
 
             ! Reset counter and increase destination row
-#if REALCASE == 1
-            hh_cnt(iblk) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
             hh_cnt(iblk) = 0
-#endif
             hh_dst(iblk) = hh_dst(iblk)+1
           endif
 
