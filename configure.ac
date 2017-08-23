@@ -660,7 +660,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
         # find the number of this kernel
         ELPA_2STAGE_[]m4_toupper(elpa_m4_kind)[]_DEFAULT=`grep -i '^ *X(ELPA_2STAGE_'$default_[]elpa_m4_kind[]_kernel'\>' $srcdir/elpa/elpa_constants.h.in | \
-                                                                awk '// { gsub(/^[[^,]]*, */, ""); gsub(/,.*/, ""); print;}'`
+                                                                perl -pe 's/^[[^,]]*, *//; s/,.*//;'`
         AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kind)[_DEFAULT])
 ])
 
