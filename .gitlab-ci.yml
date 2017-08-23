@@ -1832,7 +1832,7 @@ intel-double-precision-mpi-noomp-large-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 || { cat config.log; exit 1; }
       #    - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
