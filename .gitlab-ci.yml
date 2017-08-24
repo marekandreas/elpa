@@ -18,7 +18,8 @@ before_script:
   - module list
   - if [ "$HOST" != "buildtest-rzg" ]; then  pushd $HOME/bin/reserve_timeslot && git pull && popd ; fi
   - source .ci-env-vars
-  - export ASAN_OPTIONS="suppressions=no_asan_for_mpi.supp"
+  - export ASAN_OPTIONS=suppressions=no_asan_for_mpi.supp,fast_unwind_on_malloc=0
+  - export LSAN_OPTIONS=suppressions=no_lsan_for_mpi.supp
 
 
 # For some reason sometimes not-writable files remain, which cause trouble the
@@ -1543,7 +1544,7 @@ gfortran-double-precision-mpi-noomp-gpu-coverage-jobs:
     - module load gcc/4.9 cuda
     - module list
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2 -fsanitize=address" FCFLAGS="--coverage -O1 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 || { cat config.log; exit 1; }
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
@@ -1563,7 +1564,7 @@ gfortran-single-precision-mpi-noomp-gpu-coverage-jobs:
     - module load gcc/4.9 cuda
     - module list
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2 -fsanitize=address" FCFLAGS="--coverage -O1 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 --enable-single-precision || { cat config.log; exit 1; }
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 --enable-single-precision || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
@@ -1601,7 +1602,7 @@ gfortran-double-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
     - module load gcc/4.9 cuda
     - module list
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2 -fsanitize=address" FCFLAGS="--coverage -O1 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 || { cat config.log; exit 1; }
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
@@ -1621,7 +1622,7 @@ gfortran-single-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
     - module load gcc/4.9 cuda
     - module list
     - ./autogen.sh
-    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2 -fsanitize=address" FCFLAGS="--coverage -O1 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --enable-single-precision FC=mpif90 || { cat config.log; exit 1; }
+    - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --enable-single-precision FC=mpif90 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
 #    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
