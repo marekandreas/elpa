@@ -94,7 +94,7 @@
     real(kind=rk), intent(inout)   :: ev(:)
 
     integer(kind=ik) :: globI, globJ, locI, locJ, levels(num_primes)
-    real(kind=rk)   :: diff, max_z_diff, max_ev_diff, glob_max_z_diff, max_curr_z_diff_minus, max_curr_z_diff_plus
+    real(kind=rk)   :: diff, max_z_diff, max_ev_diff, glob_max_z_diff, max_curr_z_diff 
 #ifdef DOUBLE_PRECISION
     real(kind=rk), parameter   :: tol_eigenvalues = 5e-14_rk8
     real(kind=rk), parameter   :: tol_eigenvectors = 6e-11_rk8
@@ -107,6 +107,10 @@
 #endif
     real(kind=rk)             :: computed_ev, expected_ev
     MATH_DATATYPE(kind=rck)   :: computed_z,  expected_z
+
+    MATH_DATATYPE(kind=rck)   :: max_value_for_normalization, computed_z_on_max_position, normalization_quotient
+    integer(kind=ik)          :: max_value_idx, rank_with_max, rank_with_max_reduced
+
 
     if(.not. decompose(na, levels)) then
       print *, "can not decomopse matrix size"
@@ -126,9 +130,41 @@
     end do
 
     do globJ = 1, nev
-      ! calculated eigenvector can be in opposite direction
-      max_curr_z_diff_minus = 0.0_rk
-      max_curr_z_diff_plus  = 0.0_rk
+      max_curr_z_diff = 0.0_rk
+
+      ! eigenvectors are unique up to multiplication by scalar (complex in complex case)
+      ! to be able to compare them with analytic, we have to normalize them somehow
+      ! we will find a value in analytic eigenvector with highest absolut value and enforce
+      ! such multiple of computed eigenvector, that the value on corresponding position is the same
+      max_value_for_normalization = 0.0_rk
+      max_value_idx = -1
+      do globI = 1, na
+        expected_z = analytic_eigenvectors_&
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION&
+              &(na, globI, globJ)
+        if(abs(expected_z) > abs(max_value_for_normalization)) then
+          max_value_for_normalization = expected_z
+          max_value_idx = globI
+        end if
+      end do
+
+      assert(max_value_idx >= 0)
+      if(map_global_array_index_to_local_index(max_value_idx, globJ, locI, locJ, &
+               nblk, np_rows, np_cols, my_prow, my_pcol)) then
+        rank_with_max = myid
+        computed_z_on_max_position = z(locI, locJ)
+      else
+        rank_with_max = -1
+      end if
+
+#ifdef WITH_MPI
+      call MPI_Allreduce(rank_with_max, rank_with_max_reduced, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD, mpierr)
+      call MPI_Bcast(computed_z_on_max_position, 1, MPI_MATH_DATATYPE_PRECISION, rank_with_max_reduced, MPI_COMM_WORLD, mpierr)
+#endif
+      !write(*,*) computed_z_on_max_position, max_value_for_normalization
+      normalization_quotient = max_value_for_normalization / computed_z_on_max_position
       do globI = 1, na
         if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
                  nblk, np_rows, np_cols, my_prow, my_pcol)) then
@@ -138,12 +174,11 @@
               &_&
               &PRECISION&
               &(na, globI, globJ)
-           max_curr_z_diff_minus = max(abs(computed_z - expected_z), max_curr_z_diff_minus)
-           max_curr_z_diff_plus = max(abs(computed_z + expected_z), max_curr_z_diff_plus)
+           max_curr_z_diff = max(abs(normalization_quotient * computed_z - expected_z), max_curr_z_diff)
         end if
       end do
       ! we have max difference of one of the eigenvectors, update global
-      max_z_diff = max(max_z_diff, min(max_curr_z_diff_minus, max_curr_z_diff_plus))
+      max_z_diff = max(max_z_diff, max_curr_z_diff)
     end do
 
 #ifdef WITH_MPI
