@@ -1225,6 +1225,7 @@
 
          !Code for Algorithm 4
 
+         ! n_way is actually a branch for the number of OpenMP threads
          n_way = 1
 #ifdef WITH_OPENMP
 #if REALCASE == 1
@@ -1281,10 +1282,8 @@
              !This algorithm chosen because in this algoirhtm, the loop around the dgemm calls
              !is easily parallelized, and regardless of choise of algorithm,
              !the startup cost for parallelizing the dgemms inside the loop is too great
-#ifdef WITH_OPENMP
-#if REALCASE == 1
+#ifdef REALCASE == 1
              !$omp do schedule(static,1)
-#endif
 #endif
              do i=0,(istep*nbw-1)/tile_size
                lcs = i*l_cols_tile+1                   ! local column start
@@ -1322,13 +1321,15 @@
              enddo
            endif ! l_cols>0 .and. l_rows>0
          else ! n_way > 1
+#endif /* WITH_OPENMP */
+
 #if REALCASE == 1
            umcCPU(1:l_cols,1:n_cols) = CONST_0_0
            vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_0_0
 #endif
 #if COMPLEXCASE == 1
            umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-     vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+           vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
 
 #endif
            if (l_cols>0 .and. l_rows>0) then
@@ -1357,10 +1358,11 @@
                  call obj%timer%stop("blas")
              enddo
            endif
-         endif ! n_way > 1
+
 #ifdef WITH_OPENMP
+         endif ! n_way > 1
 #if REALCASE == 1
-        !$omp end parallel
+         !$omp end parallel
 #endif
 #endif
        endif ! do not useGPU version
