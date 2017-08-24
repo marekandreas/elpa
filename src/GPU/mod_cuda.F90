@@ -54,7 +54,7 @@ module cuda_functions
   integer(kind=ik) :: cudaHostRegisterPortable
   integer(kind=ik) :: cudaHostRegisterMapped
   integer(kind=ik) :: cudaMemcpyDeviceToDevice
-  
+
   integer(kind=C_intptr_T) :: cublasHandle
 
   integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
