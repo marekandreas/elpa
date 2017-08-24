@@ -1228,7 +1228,6 @@
          n_way = 1
 #ifdef WITH_OPENMP
 #if REALCASE == 1
-         ! check whether this can also be done in complex case
          n_way = omp_get_max_threads()
 #endif
 #endif
