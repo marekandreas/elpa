@@ -30,6 +30,7 @@ test_type_flag = {
         "solve_tridiagonal"  : "-DTEST_SOLVE_TRIDIAGONAL",
         "cholesky"  : "-DTEST_CHOLESKY",
         "hermitian_multiply"  : "-DTEST_HERMITIAN_MULTIPLY",
+        "qr"  : "-DTEST_QR_DECOMPOSITION",
 }
 
 layout_flag = {
@@ -60,6 +61,9 @@ for m, g, t, p, d, s, l in product(
         continue
 
     if (t == "hermitian_multiply" and (s == "2stage")):
+        continue
+
+    if (t == "qr" and (s == "1stage" or d == "complex")):
         continue
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:

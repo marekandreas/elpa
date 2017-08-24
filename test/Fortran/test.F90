@@ -143,7 +143,7 @@ program test
    ! eigenvalues
    EV_TYPE, allocatable        :: ev(:), ev_analytic(:)
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_HERMITIAN_MULTIPLY)
    EV_TYPE, allocatable        :: d(:), sd(:), ds(:), sds(:)
    EV_TYPE                     :: diagonalELement, subdiagonalElement
 #endif
@@ -187,6 +187,8 @@ program test
 #endif
 #endif
 
+
+
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
      stop 1
@@ -226,6 +228,29 @@ program test
      print *,''
    endif
 
+#ifdef TEST_QR_DECOMPOSITION
+
+#if TEST_GPU == 1
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+   if (nblk .lt. 64) then
+     if (myid .eq. 0) then
+       print *,"At the moment QR decomposition need blocksize of at least 64"
+     endif
+     if ((na .lt. 64) .and. (myid .eq. 0)) then
+       print *,"This is why the matrix size must also be at least 64 or only 1 MPI task can be used"
+     endif
+
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+   endif
+#endif
+
    call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
                          my_blacs_ctxt, my_prow, my_pcol)
 
@@ -242,7 +267,7 @@ program test
    allocate(c (na_rows,na_cols))
 #endif
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_CHOLESKY)
    allocate(d (na), ds(na))
    allocate(sd (na), sds(na))
    allocate(ev_analytic(na))
@@ -252,7 +277,7 @@ program test
    z(:,:) = 0.0
    ev(:) = 0.0
 
-#if defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION)
 #ifdef TEST_MATRIX_ANALYTIC
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
    as(:,:) = a
@@ -301,7 +326,7 @@ program test
 #endif /* TEST_HERMITIAN_MULTIPLY */
 
 #endif /* TEST_MATRIX_ANALYTIC */
-#endif /* defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) */
+#endif /* defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION) */
 
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
 
@@ -369,6 +394,11 @@ program test
    call e%set("gpu", TEST_GPU, error)
    assert_elpa_ok(error)
 
+#ifdef TEST_QR_DECOMPOSITION
+   call e%set("qr", 1, error)
+   assert_elpa_ok(error)
+#endif
+
    if (myid == 0) print *, ""
 
 #ifdef TEST_ALL_KERNELS
@@ -400,7 +430,7 @@ program test
 #endif
 
      ! The actual solve step
-#ifdef TEST_EIGENVECTORS
+#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
      call e%timer_start("e%eigenvectors()")
 #ifdef TEST_SCALAPACK_ALL
      call solve_scalapack_all(na, a, sc_desc, ev, z)
@@ -408,7 +438,7 @@ program test
      call e%eigenvectors(a, ev, z, error)
 #endif
      call e%timer_stop("e%eigenvectors()")
-#endif /* TEST_EIGENVECTORS */
+#endif /* TEST_EIGENVECTORS || defined(TEST_QR_DECOMPOSITION) */
 
 #ifdef TEST_EIGENVALUES
      call e%timer_start("e%eigenvalues()")
@@ -446,7 +476,7 @@ program test
        call e%print_times(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #else /* TEST_ALL_KERNELS */
 
-#ifdef TEST_EIGENVECTORS
+#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
        call e%print_times("e%eigenvectors()")
 #endif
 #ifdef TEST_EIGENVALUES
@@ -464,7 +494,7 @@ program test
 #endif /* TEST_ALL_KERNELS */
      endif
 
-#ifdef TEST_EIGENVECTORS
+#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
 #ifdef TEST_MATRIX_ANALYTIC
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 #else
@@ -591,7 +621,7 @@ program test
 
 #ifdef TEST_ALL_KERNELS
      a(:,:) = as(:,:)
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_CHOLESKY)
      d = ds
      sd = sds
 #endif
@@ -610,7 +640,7 @@ program test
    deallocate(c)
 #endif
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_CHOLESKY)
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_CHOLESKY)
    deallocate(d, ds)
    deallocate(sd, sds)
    deallocate(ev_analytic)
