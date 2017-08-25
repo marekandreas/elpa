@@ -1115,17 +1115,16 @@
        ! n_way is actually a branch for the number of OpenMP threads
        n_way = 1
 #ifdef WITH_OPENMP
-#if REALCASE == 1
-       n_way = omp_get_max_threads()
-#endif
 
 #if REALCASE == 1
+       n_way = omp_get_max_threads()
+
        !$omp parallel private( i,lcs,lce,lrs,lre)
 #endif
        if (n_way > 1) then
 #if REALCASE == 1
-       !$omp do
-#endif
+         !$omp do
+#endif 
          do i=1,min(l_cols_tile, l_cols)
 #if REALCASE == 1
            umcCPU(i,1:n_cols) = CONST_0_0
@@ -1134,6 +1133,7 @@
            umcCPU(i,1:n_cols) = CONST_COMPLEX_0_0
 #endif
          enddo
+
 #if REALCASE == 1
          !$omp do
 #endif
@@ -1190,7 +1190,7 @@
                call PRECISION_GEMM('T', 'N',     &
 #endif
 #if COMPLEXCASE == 1
-               call PRECISION_GEMM('T', 'N',     &
+               call PRECISION_GEMM('C', 'N',     &
 #endif
                         lce-lcs+1, n_cols, lrs-1,              &
                                     ONE, a(1,lcs),   ubound(a,dim=1),      &
@@ -1295,6 +1295,7 @@
                                           size_of_datatype),              &
                                             cur_l_rows)
               call obj%timer%stop("cublas")
+
             else ! useGPU
 
               call obj%timer%start("blas")
@@ -1717,8 +1718,6 @@
        ! A = A - V*U**T - U*V**T
 
 #ifdef WITH_OPENMP
-
-#if REALCASE == 1
        !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
        n_threads = omp_get_num_threads()
        if (mod(n_threads, 2) == 0) then
@@ -1747,26 +1746,32 @@
          if ( myend > lre ) myend = lre
          if ( myend-mystart+1 < 1) cycle
          call obj%timer%start("blas")
+#if REALCASE == 1
          call PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -CONST_1_0, &
                     vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
                      CONST_1_0, a(mystart,lcs), ubound(a,1))
+#endif
+#if COMPLEXCASE == 1
+         call PRECISION_GEMM('N', 'C', myend-mystart+1, lce-lcs+1, 2*n_cols, -ONE, &
+                    vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
+                     one, a(mystart,lcs), ubound(a,1))
+#endif
           call obj%timer%stop("blas")
        enddo
        !$omp end parallel
-#endif
-#if COMPLEXCASE == 1
-       do i=0,(istep*nbw-1)/tile_size
-         lcs = i*l_cols_tile+1
-         lce = min(l_cols,(i+1)*l_cols_tile)
-         lre = min(l_rows,(i+1)*l_rows_tile)
-         if (lce<lcs .or. lre<1) cycle
-         call obj%timer%start("blas")
-         call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
-                       vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                       ONE, a(1,lcs), lda)
-         call obj%timer%stop("blas")
-       enddo
-#endif
+!#if COMPLEXCASE == 1
+!       do i=0,(istep*nbw-1)/tile_size
+!         lcs = i*l_cols_tile+1
+!         lce = min(l_cols,(i+1)*l_cols_tile)
+!         lre = min(l_rows,(i+1)*l_rows_tile)
+!         if (lce<lcs .or. lre<1) cycle
+!         call obj%timer%start("blas")
+!         call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
+!                       vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
+!                       ONE, a(1,lcs), lda)
+!         call obj%timer%stop("blas")
+!       enddo
+!#endif
 
 #else /* WITH_OPENMP */
 
@@ -1844,50 +1849,6 @@
      enddo ! istep
 
      if (useGPU) then
-       ! this is not needed since a_dev is passed along from one subroutine to the other
-
-!       successCUDA = cuda_memcpy ( &
-!#if REALCASE == 1
-!                                   loc(a),      &
-!#endif
-!#if COMPLEXCASE == 1
-!                                   loc(a(1,1)), &
-!#endif
-!                                   a_dev, lda*na_cols*  &
-!#if REALCASE == 1
-!                                   size_of_PRECISION_real,   &
-!#endif
-!#if COMPLEXCASE ==1
-!                                   size_of_PRECISION_complex,&
-!#endif
-!                                   cudaMemcpyDeviceToHost)
-!       if (.not.(successCUDA)) then
-!         print *,"bandred_&
-!   &MATH_DATATYPE&
-!   &: error in cudaMemcpy a_dev 3"
-!         stop 1
-!       endif
-
-!       successCUDA = cuda_free(a_dev)
-!       if (.not.(successCUDA)) then
-!         print *,"bandred_&
-!   &MATH_DATATYPE&
-!   &: error in cudaFree a_dev 4"
-!         stop 1
-!       endif
-
-!#ifdef WITH_MPI
-!! it should be possible to keep tmat dev on the device and not copy it arround
-!! this is not necessary tmat_dev is passed (unchanged) from one routine to the other
-!       successCUDA = cuda_free(tmat_dev)
-!       if (.not.(successCUDA)) then
-!         print *,"bandred_&
-!   &MATH_DATATYPE&
-!   &: error in cudaFree tmat_dev 3"
-!         stop 1
-!       endif
-!#endif
-
        successCUDA = cuda_free(vav_dev)
        if (.not.(successCUDA)) then
          print *,"bandred_&
