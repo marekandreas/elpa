@@ -102,48 +102,18 @@
       use iso_c_binding
       use elpa_abstract_impl
       implicit none
-
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       logical, intent(in)                    :: useGPU
 #if REALCASE == 1
      logical, intent(in)                     :: useQR
 #endif
       integer(kind=ik)                       :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
-#if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
-      !real(kind=rk8)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+      MATH_DATATYPE(kind=rck)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
 #else
-      real(kind=REAL_DATATYPE)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
-      !real(kind=rk8)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      MATH_DATATYPE(kind=rck)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
 #endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)         :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
-      !complex(kind=ck8)         :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
-#else
-      complex(kind=COMPLEX_DATATYPE)         :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
-      !complex(kind=ck8)         :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
-#endif
-#endif
-
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-       real(kind=REAL_DATATYPE), parameter   :: ZERO = 0.0_rk8, ONE = 1.0_rk8
-#else
-       real(kind=REAL_DATATYPE), parameter   :: ZERO = 0.0_rk4, ONE = 1.0_rk4
-#endif
-
-#endif
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-       complex(kind=COMPLEX_DATATYPE), parameter   :: ZERO = (0.0_rk8,0.0_rk8), ONE = (1.0_rk8,0.0_rk8)
-#else
-       complex(kind=COMPLEX_DATATYPE), parameter   :: ZERO = (0.0_rk4,0.0_rk4), ONE = (1.0_rk4,0.0_rk4)
-#endif
-#endif
-
       integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
 
       integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -152,12 +122,7 @@
       integer(kind=ik)                       :: l_cols, l_rows, l_colh, n_cols
       integer(kind=ik)                       :: istep, lc, ncol, nrow, nb, ns
 
-#if REALCASE ==1
-      real(kind=REAL_DATATYPE), allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
       ! hvm_dev is fist used and set in this routine
       ! q is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
       ! tmp_dev is first used in this routine
@@ -167,12 +132,7 @@
       integer(kind=ik)                       :: i
 
 #ifdef BAND_TO_FULL_BLOCKING
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
       integer(kind=ik)                       :: cwy_blocking, t_blocking, t_cols, t_rows
 #endif
 
