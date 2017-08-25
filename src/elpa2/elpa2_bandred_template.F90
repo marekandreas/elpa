@@ -271,24 +271,24 @@
         successCUDA = cuda_malloc(a_dev, lda*na_cols* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"bandred_&
-    &MATH_DATATYPE&
-    &: error in cudaMalloc a_dev 1"
+                  &MATH_DATATYPE&
+                  &: error in cudaMalloc a_dev 1"
           stop 1
         endif
 
         successCUDA = cuda_malloc(tmat_dev, nbw*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"bandred_&
-    &MATH_DATATYPE&
-    &: error in cudaMalloc tmat_dev 1"
+                  &MATH_DATATYPE&
+                  &: error in cudaMalloc tmat_dev 1"
           stop 1
         endif
 
         successCUDA = cuda_malloc(vav_dev, nbw*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"bandred_&
-    &MATH_DATATYPE&
-    &: error in cudaMalloc vav_dev 1"
+                  &MATH_DATATYPE&
+                  &: error in cudaMalloc vav_dev 1"
           stop 1
         endif
       endif ! useGPU
@@ -334,15 +334,15 @@
 
 #ifdef USE_ASSUMED_SIZE_QR
           call qr_pdgeqrf_2dcomm_&
-    &PRECISION&
-    &(obj, a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
+               &PRECISION&
+               &(obj, a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
                                  nbw, nbw, dwork_size, 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
 
 #else
           call qr_pdgeqrf_2dcomm_&
-    &PRECISION&
-    &(obj, a(1:lda,1:matrixCols), matrixCols, lda, vmrCPU(1:max(l_rows,1),1:vmrCols), max(l_rows,1), &
+               &PRECISION&
+               &(obj, a(1:lda,1:matrixCols), matrixCols, lda, vmrCPU(1:max(l_rows,1),1:vmrCols), max(l_rows,1), &
                                  vmrCols, tauvector(1:na), na, tmat(1:nbw,1:nbw,1), nbw, &
                                  nbw, dwork_size(1:1), 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
@@ -374,8 +374,8 @@
         successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)* size_of_datatype, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"bandred_&
-    &MATH_DATATYPE&
-    &: error in cudaMemcpy a_dev 2"
+                  &MATH_DATATYPE&
+                  &: error in cudaMemcpy a_dev 2"
           stop 1
         endif
       endif ! useGPU
@@ -405,16 +405,16 @@
               deallocate(vr, stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
                 print *,"bandred_&
-    &MATH_DATATYPE&
-    &: error when deallocating vr "//errorMessage
+                        &MATH_DATATYPE&
+                        &: error when deallocating vr "//errorMessage
                 stop 1
               endif
             endif
             allocate(vr(l_rows + 1), stat=istat, errmsg=errorMessage)
             if (istat .ne. 0) then
               print *,"bandred_&
-        &MATH_DATATYPE&
-        &: error when allocating vr "//errorMessage
+                      &MATH_DATATYPE&
+                      &: error when allocating vr "//errorMessage
               stop 1
             endif
 
@@ -425,15 +425,15 @@
               deallocate(vmrCUDA, stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
                 print *,"bandred_&
-    &MATH_DATATYPE&
-    &: error when allocating vmrCUDA "//errorMessage
+                        &MATH_DATATYPE&
+                        &: error when allocating vmrCUDA "//errorMessage
                 stop 1
               endif
 
               successCUDA = cuda_free(vmr_dev)
               if (.not.(successCUDA)) then
                 print *,"bandred_&
-    &MATH_DATATYPE&: error in cuda_free vmr_dev 1"
+                        &MATH_DATATYPE&: error in cuda_free vmr_dev 1"
                 stop 1
               endif
             endif
@@ -446,15 +446,15 @@
 #endif
             if (istat .ne. 0) then
               print *,"bandred_&
-        &MATH_DATATYPE&
-        &: error when allocating vmrCUDA "//errorMessage
+                      &MATH_DATATYPE&
+                      &: error when allocating vmrCUDA "//errorMessage
               stop 1
             endif
             successCUDA = cuda_malloc(vmr_dev, vmr_size* size_of_datatype)
             if (.not.(successCUDA)) then
               print *,"bandred_&
-        &MATH_DATATYPE&
-        &: error in cudaMalloc: vmr_dev2"
+                      &MATH_DATATYPE&
+                      &: error in cudaMalloc: vmr_dev2"
               stop 1
             endif
 
@@ -465,16 +465,16 @@
               deallocate(umcCUDA, stat=istat, errmsg=errorMessage)
               if (istat .ne. 0) then
                 print *,"bandred_&
-    &MATH_DATATYPE&
-    &: error when deallocating umcCUDA "//errorMessage
+                        &MATH_DATATYPE&
+                        &: error when deallocating umcCUDA "//errorMessage
                 stop 1
               endif
 
               successCUDA = cuda_free(umc_dev)
               if (.not.(successCUDA)) then
                  print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaFree umc_dev 1"
+                         &MATH_DATATYPE&
+                         &: error in cudaFree umc_dev 1"
                  stop 1
               endif
 
@@ -488,16 +488,16 @@
 #endif
             if (istat .ne. 0) then
               print *,"bandred_&
-        &MATH_DATATYPE&
-        &: error when deallocating umcCUDA "//errorMessage
+                      &MATH_DATATYPE&
+                      &: error when deallocating umcCUDA "//errorMessage
               stop 1
             endif
 
             successCUDA = cuda_malloc(umc_dev, umc_size* size_of_datatype)
             if (.not.(successCUDA)) then
               print *,"bandred_&
-        &MATH_DATATYPE&
-        &: error in cudaMalloc umc_dev 2"
+                      &MATH_DATATYPE&
+                      &: error in cudaMalloc umc_dev 2"
               stop 1
             endif
 
@@ -512,24 +512,24 @@
           allocate(vmrCPU(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_&
-      &MATH_DATATYPE&
-      &: error when allocating vmrCPU "//errorMessage
+                     &MATH_DATATYPE&
+                     &: error when allocating vmrCPU "//errorMessage
             stop 1
           endif
 
           allocate(umcCPU(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_&
-      &MATH_DATATYPE&
-      &: error when allocating umcCPU "//errorMessage
+                    &MATH_DATATYPE&
+                    &: error when allocating umcCPU "//errorMessage
             stop 1
           endif
 
           allocate(vr(l_rows+1), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_&
-      &MATH_DATATYPE&
-      &: error when allocating vr "//errorMessage
+                    &MATH_DATATYPE&
+                    &: error when allocating vr "//errorMessage
             stop 1
           endif
 
@@ -603,8 +603,8 @@
 
             if (.not.(successCUDA)) then
               print *,"bandred_&
-        &MATH_DATATYPE&
-        &: error in cudaMemcpy2d"
+                      &MATH_DATATYPE&
+                      &: error in cudaMemcpy2d"
               stop 1
             endif
 
@@ -618,8 +618,8 @@
             vmrCols = 2*n_cols
 #ifdef USE_ASSUMED_SIZE_QR
             call qr_pdgeqrf_2dcomm_&
-      &PRECISION&
-      &(obj, a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
+                 &PRECISION&
+                 &(obj, a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
                                    na, tmat(1,1,istep), nbw, nbw, work_blocked, work_size,        &
                                      work_size, na, n_cols, nblk, nblk,        &
                                      istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
@@ -628,8 +628,8 @@
 
 #else
             call qr_pdgeqrf_2dcomm_&
-      &PRECISION&
-      &(obj, a(1:lda,1:matrixCols), lda, matrixCols, vmrCPU(1:max(l_rows,1),1:vmrCols) ,   &
+                 &PRECISION&
+                 &(obj, a(1:lda,1:matrixCols), lda, matrixCols, vmrCPU(1:max(l_rows,1),1:vmrCols) ,   &
                                     max(l_rows,1), vmrCols, tauvector(1:na), na, &
                                      tmat(1:nbw,1:nbw,istep), nbw, nbw, work_blocked(1:work_size), work_size, &
                                      work_size, na, n_cols, nblk, nblk,        &
@@ -1012,7 +1012,7 @@
          endif
          call obj%timer%stop("blas")
 #if REALCASE == 1
-   call symm_matrix_allreduce_&
+         call symm_matrix_allreduce_&
 #endif
 #if COMPLEXCASE == 1
          call herm_matrix_allreduce_&
