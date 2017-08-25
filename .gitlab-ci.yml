@@ -1547,11 +1547,11 @@ gfortran-double-precision-mpi-noomp-gpu-coverage-jobs:
     - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='500 500 128' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -1567,11 +1567,11 @@ gfortran-single-precision-mpi-noomp-gpu-coverage-jobs:
     - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 --enable-single-precision || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='500 500 128' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -1587,11 +1587,11 @@ intel-double-precision-mpi-noomp-cuda-jobs-blocksize-32:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='150 50 32' || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 
 gfortran-double-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
@@ -1605,11 +1605,11 @@ gfortran-double-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
     - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=mpif90 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='150 50 32' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -1625,11 +1625,11 @@ gfortran-single-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
     - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --enable-single-precision FC=mpif90 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='150 50 32' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -1647,11 +1647,11 @@ intel-double-precision-mpi-noomp-cuda-jobs-blocksize-16:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 
 gfortran-double-precision-nompi-noomp-gpu-coverage-jobs:
@@ -1665,11 +1665,11 @@ gfortran-double-precision-nompi-noomp-gpu-coverage-jobs:
     - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=gfortran --with-mpi=0 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='1500 500 128' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -1685,11 +1685,11 @@ gfortran-single-precision-nompi-noomp-gpu-coverage-jobs:
     - ./configure --enable-option-checking=fatal CFLAGS="--coverage -O2" FCFLAGS="--coverage -O1" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" --enable-gpu --with-cuda-path=$CUDA_HOME/ --disable-assumed-size --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 FC=gfortran --with-mpi=0 --enable-single-precision || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='1500 500 128' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -1704,11 +1704,11 @@ intel-double-precision-nompi-noomp-cuda-jobs:
     - ./configure --enable-option-checking=fatal FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --with-mpi=0  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 intel-single-precision-mpi-noomp-cuda-jobs:
   tags:
@@ -1721,11 +1721,11 @@ intel-single-precision-mpi-noomp-cuda-jobs:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 intel-single-precision-mpi-noomp-cuda-jobs-blocksize-64:
   tags:
@@ -1738,11 +1738,11 @@ intel-single-precision-mpi-noomp-cuda-jobs-blocksize-64:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='150 50 64' || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 
 intel-single-precision-mpi-noomp-cuda-larger-jobs:
@@ -1756,11 +1756,11 @@ intel-single-precision-mpi-noomp-cuda-larger-jobs:
     - ./configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='1500 500 128' || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 
 intel-single-precision-nompi-noomp-cuda-jobs:
@@ -1774,11 +1774,11 @@ intel-single-precision-nompi-noomp-cuda-jobs:
     - ./configure --enable-option-checking=fatal FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='150 50 128' || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 intel-single-precision-nompi-noomp-cuda-larger-jobs:
   tags:
@@ -1791,11 +1791,11 @@ intel-single-precision-nompi-noomp-cuda-larger-jobs:
     - ./configure --enable-option-checking=fatal FC=ifort SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP -L$CUDA_HOME/lib64 -lcublas -I$CUDA_HOME/include" CFLAGS="-O2"  FCFLAGS="-O1" --enable-gpu --with-cuda-path=$CUDA_HOME/ --enable-single-precision --with-mpi=0  --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make check TASKS=2 TEST_FLAGS='1500 500 128' || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 
 ########################################################################################
@@ -1815,12 +1815,12 @@ intel-double-precision-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel double precision mpi noomp AVX512 large
 intel-double-precision-mpi-noomp-large-avx512-jobs:
@@ -1832,12 +1832,12 @@ intel-double-precision-mpi-noomp-large-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 || { cat config.log; exit 1; }
       #    - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel single precision mpi noomp AVX512
 intel-single-precision-mpi-noomp-avx512-jobs:
@@ -1849,12 +1849,12 @@ intel-single-precision-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi noomp AVX512
 gfortran-double-precision-mpi-noomp-avx512-jobs:
@@ -1866,12 +1866,12 @@ gfortran-double-precision-mpi-noomp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision mpi noomp AVX512
 gfortran-single-precision-mpi-noomp-avx512-jobs:
@@ -1883,12 +1883,12 @@ gfortran-single-precision-mpi-noomp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi noomp AVX512, no assumed size
 gfortran-double-precision-mpi-noomp-no-assumed-size-avx512-jobs:
@@ -1900,12 +1900,12 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision mpi noomp AVX512, no assumed size
 gfortran-single-precision-mpi-noomp-no-assumed-size-avx512-jobs:
@@ -1917,12 +1917,12 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=native" FCFLAGS="-O3 -march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -2009,12 +2009,12 @@ intel-double-precision-no-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel double precision no mpi noomp AVX512 large
 intel-double-precision-no-mpi-noomp-large-avx512-jobs:
@@ -2026,12 +2026,12 @@ intel-double-precision-no-mpi-noomp-large-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel single precision no mpi noomp AVX512
 intel-single-precision-no-mpi-noomp-avx512-jobs:
@@ -2043,12 +2043,12 @@ intel-single-precision-no-mpi-noomp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --enable-single-precision || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 4000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 4000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi noomp AVX512
 gfortran-double-precision-no-mpi-noomp-AVX512-jobs:
@@ -2060,12 +2060,12 @@ gfortran-double-precision-no-mpi-noomp-AVX512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native -fsanitize=address" FCFLAGS="-O3 -march=native -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision no mpi noomp AVX512
 gfortran-single-precision-no-mpi-noomp-avx512-jobs:
@@ -2077,12 +2077,12 @@ gfortran-single-precision-no-mpi-noomp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native -fsanitize=address" FCFLAGS="-O3 -march=native -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-single-precision || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi noomp AVX512, no assumed size
 gfortran-double-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
@@ -2094,12 +2094,12 @@ gfortran-double-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native -fsanitize=address" FCFLAGS="-O3 -march=native -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision no-mpi noomp AVX512, no assumed size
 gfortran-single-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
@@ -2111,12 +2111,12 @@ gfortran-single-precision-no-mpi-noomp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native -fsanitize=address" FCFLAGS="-O3 -march=native -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-single-precision || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -2203,13 +2203,13 @@ intel-double-precision-no-mpi-omp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-openmp || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export OMP_NUM_THREADS=2
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel double precision no mpi omp AVX512 large
 intel-double-precision-no-mpi-omp-large-avx512-jobs:
@@ -2221,13 +2221,13 @@ intel-double-precision-no-mpi-omp-large-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-openmp || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel single precision no mpi omp AVX512
 intel-single-precision-no-mpi-omp-avx512-jobs:
@@ -2239,13 +2239,13 @@ intel-single-precision-no-mpi-omp-avx512-jobs:
     - export MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -mtune=knl -xMIC-AVX512" FCFLAGS="-O3 -axMIC-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 3600 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi omp AVX512
 gfortran-double-precision-no-mpi-omp-avx512-jobs:
@@ -2257,13 +2257,13 @@ gfortran-double-precision-no-mpi-omp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native -fsanitize=address" FCFLAGS="-O3 -march=native -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-openmp || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision no mpi omp AVX512
 gfortran-single-precision-no-mpi-omp-avx512-jobs:
@@ -2275,13 +2275,13 @@ gfortran-single-precision-no-mpi-omp-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native -fsanitize=address" FCFLAGS="-O3 -march=native -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000 )
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi omp AVX512, no assumed size
 gfortran-double-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
@@ -2293,13 +2293,13 @@ gfortran-double-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native -fsanitize=address" FCFLAGS="-O3 -march=native -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-openmp || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision no-mpi omp AVX512, no assumed size
 gfortran-single-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
@@ -2311,13 +2311,13 @@ gfortran-single-precision-no-mpi-omp-no-assumed-size-avx512-jobs:
     - export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKLROOT/include/intel64/lp64"
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=native -fsanitize=address" FCFLAGS="-O3 -march=native -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --disable-assumed-size --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 2000)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -2401,12 +2401,12 @@ intel-double-precision-mpi-noomp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 || { cat config.log; exit 1; }
       # - /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel double precision mpi noomp skylake large
 intel-double-precision-mpi-noomp-large-skylake-jobs:
@@ -2416,12 +2416,12 @@ intel-double-precision-mpi-noomp-large-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel single precision mpi noomp SKYLAKE
 intel-single-precision-mpi-noomp-skylake-jobs:
@@ -2431,12 +2431,12 @@ intel-single-precision-mpi-noomp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi noomp SKTLAKE
 gfortran-double-precision-mpi-noomp-skylake-jobs:
@@ -2446,12 +2446,12 @@ gfortran-double-precision-mpi-noomp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision mpi noomp SKYLAKE
 gfortran-single-precision-mpi-noomp-skylake-jobs:
@@ -2461,7 +2461,7 @@ gfortran-single-precision-mpi-noomp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-single-precision || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 1800)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 1800)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
@@ -2488,7 +2488,7 @@ gfortran-single-precision-mpi-noomp-skylake-jobs:
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - make check TASKS=14 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi noomp skylake, no assumed size
 gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-jobs:
@@ -2498,12 +2498,12 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision mpi noomp skylake, no assumed size
 gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-jobs:
@@ -2513,12 +2513,12 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 
 # gfortran double precision mpi noomp skylake, no assumed size coveravge
@@ -2529,13 +2529,13 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 --coverage -march=skylake-avx512" FCFLAGS="-O3 --coverage -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -2548,13 +2548,13 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 --coverage -march=skylake-avx512" FCFLAGS="-O3 --coverage -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -2641,13 +2641,13 @@ intel-double-precision-mpi-omp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel double precision mpi omp skylake large
 intel-double-precision-mpi-omp-large-skylake-jobs:
@@ -2657,13 +2657,13 @@ intel-double-precision-mpi-omp-large-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='1500 500 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       #### intel single precision mpi noomp SKYLAKE
       ###intel-single-precision-mpi-omp-skylake-jobs:
@@ -2673,13 +2673,13 @@ intel-double-precision-mpi-omp-large-skylake-jobs:
       ###    - ./autogen.sh
       ###    - ./configure  FC=mpiifort CC=mpiicc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
       ###      #- /home/elpa/wait_until_midnight.sh
-      ###    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+      ####    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
       ###    - make -j 8
       ###    - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
       ###    - export OMP_NUM_THREADS=2
       ###    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
       ###    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-      ###    - gpschedule -d $GPJOBID
+      ####    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi omp SKTLAKE
 gfortran-double-precision-mpi-omp-skylake-jobs:
@@ -2689,13 +2689,13 @@ gfortran-double-precision-mpi-omp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI__OMP" --enable-avx512 --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision mpi omp skylake
 gfortran-double-precision-mpi-omp-skylake-coverage-jobs:
@@ -2705,14 +2705,14 @@ gfortran-double-precision-mpi-omp-skylake-coverage-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 --coverage -march=skylake-avx512" FCFLAGS="-O3 --coverage -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     - ./ci_coverage_collect
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
   artifacts:
     paths:
       - coverage_data
@@ -2725,13 +2725,13 @@ gfortran-single-precision-mpi-omp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       #### gfortran single precision mpi omp skylake
       ###gfortran-single-precision-mpi-omp-skylake-coverage-jobs:
@@ -2741,14 +2741,14 @@ gfortran-single-precision-mpi-omp-skylake-jobs:
       ###    - ./autogen.sh
       ###    - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 --coverage -march=skylake-avx512" FCFLAGS="-O3 --coverage -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-avx512 --enable-openmp --enable-single-precision || { cat config.log; exit 1; }
       ###      #- /home/elpa/wait_until_midnight.sh
-      ###    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+      ####    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
       ###    - make -j 8
       ###    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
       ###    - export OMP_NUM_THREADS=1
       ###    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
       ###    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
       ###    - ./ci_coverage_collect
-      ###    - gpschedule -d $GPJOBID
+      ####    - gpschedule -d $GPJOBID
       ###  artifacts:
       ###    paths:
       ###      - coverage_data
@@ -2761,13 +2761,13 @@ gfortran-double-precision-mpi-omp-no-assumed-size-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --disable-assumed-size --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision mpi omp skylake, no assumed size
 gfortran-single-precision-mpi-omp-no-assumed-size-skylake-jobs:
@@ -2777,13 +2777,13 @@ gfortran-single-precision-mpi-omp-no-assumed-size-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=mpif90 CC=mpicc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512" FCFLAGS="-O3 -march=skylake-avx512" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -2867,12 +2867,12 @@ intel-double-precision-no-mpi-noomp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel double precision no-mpi noomp skylake large
 intel-double-precision-no-mpi-noomp-large-skylake-jobs:
@@ -2882,12 +2882,12 @@ intel-double-precision-no-mpi-noomp-large-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       #### intel single precision no mpi noomp SKYLAKE
       ###intel-single-precision-no-mpi-noomp-skylake-jobs:
@@ -2897,12 +2897,12 @@ intel-double-precision-no-mpi-noomp-large-skylake-jobs:
       ###    - ./autogen.sh
       ###    - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --enable-single-precision --with-mpi=0 || { cat config.log; exit 1; }
       ###      #- /home/elpa/wait_until_midnight.sh
-      ###    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+      ####    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
       ###    - make -j 8
       ###    - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
       ###    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
       ###    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-      ###    - gpschedule -d $GPJOBID
+      ####    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi noomp SKYLAKE
 gfortran-double-precision-no-mpi-noomp-skylake-jobs:
@@ -2912,12 +2912,12 @@ gfortran-double-precision-no-mpi-noomp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" FCFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision no mpi noomp SKYLAKE
 gfortran-single-precision-no-mpi-noomp-skylake-jobs:
@@ -2927,12 +2927,12 @@ gfortran-single-precision-no-mpi-noomp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" FCFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --enable-single-precision --with-mpi=0 --disable-mpi-module || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi noomp skylake, no assumed size
 gfortran-double-precision-no-mpi-noomp-no-assumed-size-skylake-jobs:
@@ -2942,12 +2942,12 @@ gfortran-double-precision-no-mpi-noomp-no-assumed-size-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" FCFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --with-mpi=0 --disable-mpi-module || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision no mpi noomp skylake, no assumed size
 gfortran-single-precision-no-mpi-noomp-no-assumed-size-skylake-jobs:
@@ -2957,12 +2957,12 @@ gfortran-single-precision-no-mpi-noomp-no-assumed-size-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" FCFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision --with-mpi=0 --disable-mpi-module || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -3046,13 +3046,13 @@ intel-double-precision-no-mpi-omp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # intel double precision no-mpi omp skylake large
 intel-double-precision-no-mpi-omp-large-skylake-jobs:
@@ -3062,13 +3062,13 @@ intel-double-precision-no-mpi-omp-large-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       #### intel single precision no mpi omp SKYLAKE
       ###intel-single-precision-no-mpi-omp-skylake-jobs:
@@ -3078,13 +3078,13 @@ intel-double-precision-no-mpi-omp-large-skylake-jobs:
       ###    - ./autogen.sh
       ###    - ./configure  FC=ifort CC=icc --enable-option-checking=fatal CFLAGS="-O3 -xCORE-AVX512" FCFLAGS="-O3 -xCORE-AVX512" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --enable-single-precision --with-mpi=0 --enable-openmp || { cat config.log; exit 1; }
       ###      #- /home/elpa/wait_until_midnight.sh
-      ###    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+      ####    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
       ###    - make -j 8
       ###    - export LD_LIBRARY_PATH=$MKLROOT/lib/intel64:$LD_LIBRARY_PATH
       ###    - export OMP_NUM_THREADS=2
       ###    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
       ###    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-      ###    - gpschedule -d $GPJOBID
+      ####    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi omp SKYLAKE
 gfortran-double-precision-no-mpi-omp-skylake-jobs:
@@ -3094,13 +3094,13 @@ gfortran-double-precision-no-mpi-omp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" FCFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --with-mpi=0 --disable-mpi-module --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision no mpi omp SKYLAKE
 gfortran-single-precision-no-mpi-omp-skylake-jobs:
@@ -3110,13 +3110,13 @@ gfortran-single-precision-no-mpi-omp-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" FCFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --enable-single-precision --with-mpi=0 --disable-mpi-module --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran double precision no mpi omp skylake, no assumed size
 gfortran-double-precision-no-mpi-omp-no-assumed-size-skylake-jobs:
@@ -3126,13 +3126,13 @@ gfortran-double-precision-no-mpi-omp-no-assumed-size-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" FCFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --disable-assumed-size --with-mpi=0 --disable-mpi-module --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 # gfortran single precision no mpi omp skylake, no assumed size
 gfortran-single-precision-no-mpi-omp-no-assumed-size-skylake-jobs:
@@ -3142,13 +3142,13 @@ gfortran-single-precision-no-mpi-omp-no-assumed-size-skylake-jobs:
     - ./autogen.sh
     - ./configure  FC=gfortran CC=gcc --enable-option-checking=fatal CFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" FCFLAGS="-O3 -march=skylake-avx512 -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP" --enable-avx512 --disable-assumed-size --enable-single-precision --with-mpi=0 --disable-mpi-module --enable-openmp || { cat config.log; exit 1; }
       #- /home/elpa/wait_until_midnight.sh
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot 600)
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
       # no coverage on system with tag AVX2
       #
@@ -3354,12 +3354,12 @@ minsky:
     - export PATH=/opt/ibm/spectrum_mpi/bin:$PATH
     - ./autogen.sh
     - ./configure CC=mpicc FC=mpifort LIBS="-lessl -lreflapack -lessl -lcublas -lgfortran" LDFLAGS="-g -L/home/elpa/libs/scalapack/lib -L/usr/local/cuda-8.0/lib64 " FCFLAGS="-g -O2 " CFLAGS="-g -O2 -I/usr/local/cuda-8.0/include" --enable-single-precision --disable-mpi-module --enable-gpu --with-GPU-compute-capability=sm_60 --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --with-cuda-path=/usr/local/cuda-8.0/ || { cat config.log; exit 1; }
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make -j 8
     - make check TASKS=2 TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 minsky-pure-gnu:
   tags:
@@ -3374,12 +3374,12 @@ minsky-pure-gnu:
     - export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH
     - export PATH=/opt/ibm/spectrum_mpi/bin:$PATH
     - ./configure CC=mpicc FC=mpifort LIBS="-lessl -lreflapack -lessl -lcublas -lgfortran" LDFLAGS="-g -L/home/elpa/libs/scalapack/lib -L/usr/local/cuda-8.0/lib64 " FCFLAGS="-g -O2 " CFLAGS="-g -O2 -I/usr/local/cuda-8.0/include" --enable-single-precision --disable-mpi-module --enable-gpu --with-GPU-compute-capability=sm_60 --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --with-cuda-path=/usr/local/cuda-8.0/ || { cat config.log; exit 1; }
-    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
+#    - GPJOBID=$(/home/elpa/bin/reserve_timeslot/reserve_timeslot)
     - make -j 8
     - make check TASKS=2 TEST_FLAGS='150 50 32'  || { cat test-suite.log; exit 1; }
     - cat test-suite.log
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    - gpschedule -d $GPJOBID
+#    - gpschedule -d $GPJOBID
 
 
 # print coverage results
