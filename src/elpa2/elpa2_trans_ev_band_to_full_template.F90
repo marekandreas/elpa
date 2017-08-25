@@ -280,14 +280,8 @@
           stop 1
         endif
 
-#if REALCASE == 1
-        hvm = CONST_0_0   ! Must be set to 0 !!!
-        hvb = CONST_0_0   ! Safety only
-#endif
-#if COMPLEXCASE == 1
-        hvm = CONST_COMPLEX_0_0   ! Must be set to 0 !!!
-        hvb = CONST_COMPLEX_0_0   ! Safety only
-#endif
+        hvm = 0.0_rck   ! Must be set to 0 !!!
+        hvb = 0.0_rck   ! Safety only
         l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
         do istep=1,(na-1)/nbw
@@ -337,12 +331,7 @@
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
             hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-#if REALCASE == 1
-            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = CONST_1_0
-#endif
-#if COMPLEXCASE == 1
-            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
-#endif
+            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.0_rck
             nb = nb+l_rows
           enddo
 
@@ -398,14 +387,7 @@
 #endif
 
           else ! l_rows>0
-
-#if REALCASE == 1
-            tmp1(1:l_cols*n_cols) = 0
-#endif
-#if COMPLEXCASE == 1
-            tmp1(1:l_cols*n_cols) = CONST_COMPLEX_0_0
-#endif
-
+            tmp1(1:l_cols*n_cols) = 0.0_rck
           endif ! l_rows>0
 
           !#ifdef WITH_GPU_VERSION
@@ -620,14 +602,8 @@
 !          allocate(hvm(max_local_rows,nbw))
 !        endif
 
-#if REALCASE == 1
-        hvm = CONST_0_0   ! Must be set to 0 !!!
-        hvb = CONST_0_0   ! Safety only
-#endif
-#if COMPLEXCASE == 1
-        hvm = CONST_COMPLEX_0_0   ! Must be set to 0 !!!
-        hvb = CONST_COMPLEX_0_0   ! Safety only
-#endif
+        hvm = 0.0_rck   ! Must be set to 0 !!!
+        hvb = 0.0_rck   ! Safety only
         l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
 
 !       if ( na >= ((t_blocking+1)*nbw) ) then
@@ -704,12 +680,7 @@
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
 
             hvm(1:l_rows,lc) = hvb(nb+1:nb+l_rows)
-#if REALCASE == 1
-            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = CONST_1_0
-#endif
-#if COMPLEXCASE == 1
-            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.
-#endif
+            if (my_prow==prow(nrow, nblk, np_rows)) hvm(l_rows+1,lc) = 1.0_rck
             nb = nb+l_rows
           enddo
 
@@ -796,12 +767,7 @@
 
           else ! l_rows>0
 
-#if REALCASE == 1
-            tmp1(1:l_cols*n_cols) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-            tmp1(1:l_cols*n_cols) = CONST_COMPLEX_0_0
-#endif
+            tmp1(1:l_cols*n_cols) = 0.0_rck
           endif ! l_rows>0
 
 #ifdef WITH_MPI
