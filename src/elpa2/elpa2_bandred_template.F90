@@ -1231,19 +1231,13 @@
 #if REALCASE == 1
          n_way = omp_get_max_threads()
 #endif
-#endif
-         !umcCPU(1:l_cols,1:n_cols) = 0.d0
-         !vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0
-#ifdef WITH_OPENMP
+
 #if REALCASE == 1
          !$omp parallel private( i,lcs,lce,lrs,lre)
 #endif
-#endif
          if (n_way > 1) then
-#ifdef WITH_OPENMP
 #if REALCASE == 1
            !$omp do
-#endif
 #endif
            do i=1,min(l_cols_tile, l_cols)
 #if REALCASE == 1
@@ -1253,10 +1247,8 @@
              umcCPU(i,1:n_cols) = CONST_COMPLEX_0_0
 #endif
            enddo
-#ifdef WITH_OPENMP
 #if REALCASE == 1
            !$omp do
-#endif
 #endif
            do i=1,l_rows
 #if REALCASE == 1
@@ -1282,7 +1274,7 @@
              !This algorithm chosen because in this algoirhtm, the loop around the dgemm calls
              !is easily parallelized, and regardless of choise of algorithm,
              !the startup cost for parallelizing the dgemms inside the loop is too great
-#ifdef REALCASE == 1
+#if REALCASE == 1
              !$omp do schedule(static,1)
 #endif
              do i=0,(istep*nbw-1)/tile_size
