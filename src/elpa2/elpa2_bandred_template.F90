@@ -1080,316 +1080,325 @@
        ! of the tiles, so we can use strips of the matrix
 
 
-       ! here the GPU version and CPU version diverged substantially, due to the newest
-       ! optimizations due to Intel. The GPU version has to be re-written
-       if (useGPU) then
-#if REALCASE == 1
-         umcCUDA(1 : l_cols * n_cols) = CONST_0_0
-         vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-         umcCUDA(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-         vmrCUDA(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
-#endif
-         if (l_cols>0 .and. l_rows>0) then
-           successCUDA = cuda_memcpy(vmr_dev,        &
-#if REALCASE == 1
-                                     loc(vmrCUDA(1)),&
-#endif
-#if COMPLEXCASE == 1
-                                     loc(vmrCUDA(1,1)), &
-#endif
-                                     vmr_size*size_of_datatype,cudaMemcpyHostToDevice)
-           if (.not.(successCUDA)) then
-             print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error in cudaMemcpy vmr_dev 3"
-             stop 1
-           endif
-           successCUDA = cuda_memcpy(umc_dev,    &
-#if REALCASE == 1
-                                     loc(umcCUDA(1)), &
-#endif
-#if COMPLEXCASE == 1
-                                     loc(umcCUDA(1,1)), &
-#endif
-                                   umc_size*size_of_datatype,cudaMemcpyHostToDevice)
-           if (.not.(successCUDA)) then
-             print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error in cudaMemcpy umc_dev 3"
-             stop 1
-           endif
-
-           do i=0,(istep*nbw-1)/tile_size
-
-             lcs = i*l_cols_tile+1
-             lce = min(l_cols,(i+1)*l_cols_tile)
-             if (lce<lcs) cycle
-
-             call obj%timer%start("cublas")
-             lre = min(l_rows,(i+1)*l_rows_tile)
-#if REALCASE == 1
-             call cublas_PRECISION_GEMM('T', 'N',               &
-#endif
-#if COMPLEXCASE == 1
-             call cublas_PRECISION_GEMM('C', 'N',               &
-#endif
-                                  lce-lcs+1, n_cols, lre, &
-                                        ONE, (a_dev + ((lcs-1)*lda* &
-                                        size_of_datatype)),         &
-          lda, vmr_dev,cur_l_rows, ONE, &
-                                        (umc_dev+ (lcs-1)*            &
-          size_of_datatype),      &
-          cur_l_cols)
-             call obj%timer%stop("cublas")
-
-             if(i==0) cycle
-             call obj%timer%start("cublas")
-
-             lre = min(l_rows,i*l_rows_tile)
-             call cublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
-                                        (a_dev+ ((lcs-1)*lda*                 &
-          size_of_datatype)),             &
-          lda, (umc_dev+(cur_l_cols * n_cols+lcs-1)* &
-          size_of_datatype),              &
-          cur_l_cols, ONE, (vmr_dev+(cur_l_rows * n_cols)* &
-          size_of_datatype),              &
-          cur_l_rows)
-             call obj%timer%stop("cublas")
-           enddo
-
-           successCUDA = cuda_memcpy(     &
-#if REALCASE == 1
-                                     loc(vmrCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                     loc(vmrCUDA(1,1)),    &
-#endif
-                                     vmr_dev,vmr_size*size_of_datatype,cudaMemcpyDeviceToHost)
-           if (.not.(successCUDA)) then
-             print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error in cudaMemcpy vmr_dev 4"
-             stop 1
-           endif
-
-           successCUDA = cuda_memcpy(    &
-#if REALCASE == 1
-                                     loc(umcCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                     loc(umcCUDA(1,1)),    &
-#endif
-                                     umc_dev, umc_size*size_of_datatype,cudaMemcpyDeviceToHost)
-           if (.not.(successCUDA)) then
-             print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error in cudaMemcpy umc_dev 4"
-             stop 1
-           endif
-
-         endif ! l_cols>0 .and. l_rows>0
-
-
-       else ! do not useGPU version
 #if 0
-! original complex implemetation check for performance
-          umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-          vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+       ! original complex implemetation check for performance
+       umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
+       vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
 
-        if (l_cols>0 .and. l_rows>0) then
-          do i=0,(istep*nbw-1)/tile_size
+       if (l_cols>0 .and. l_rows>0) then
+         do i=0,(istep*nbw-1)/tile_size
 
-            lcs = i*l_cols_tile+1
-            lce = min(l_cols,(i+1)*l_cols_tile)
-            if (lce<lcs) cycle
+           lcs = i*l_cols_tile+1
+           lce = min(l_cols,(i+1)*l_cols_tile)
+           if (lce<lcs) cycle
 
-            lre = min(l_rows,(i+1)*l_rows_tile)
+           lre = min(l_rows,(i+1)*l_rows_tile)
 
-              call obj%timer%start("blas")
-              call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
-                         vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-              call obj%timer%stop("blas")
+             call obj%timer%start("blas")
+             call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
+                        vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+             call obj%timer%stop("blas")
 
-            if (i==0) cycle
-            lre = min(l_rows,i*l_rows_tile)
-              call obj%timer%start("blas")
-              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
-                         umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
-              call obj%timer%stop("blas")
-          enddo
+           if (i==0) cycle
+           lre = min(l_rows,i*l_rows_tile)
+             call obj%timer%start("blas")
+             call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
+                        umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+             call obj%timer%stop("blas")
+         enddo
 
-        endif ! (l_cols>0 .and. l_rows>0)
+       endif ! (l_cols>0 .and. l_rows>0)
 #endif /* if 0 */
 
-         !Code for Algorithm 4
+       !Code for Algorithm 4
 
-         ! n_way is actually a branch for the number of OpenMP threads
-         n_way = 1
+       ! n_way is actually a branch for the number of OpenMP threads
+       n_way = 1
 #ifdef WITH_OPENMP
 #if REALCASE == 1
-         n_way = omp_get_max_threads()
+       n_way = omp_get_max_threads()
 #endif
 
 #if REALCASE == 1
-         !$omp parallel private( i,lcs,lce,lrs,lre)
+       !$omp parallel private( i,lcs,lce,lrs,lre)
 #endif
-         if (n_way > 1) then
+       if (n_way > 1) then
 #if REALCASE == 1
-           !$omp do
+       !$omp do
 #endif
-           do i=1,min(l_cols_tile, l_cols)
+         do i=1,min(l_cols_tile, l_cols)
 #if REALCASE == 1
-             umcCPU(i,1:n_cols) = CONST_0_0
+           umcCPU(i,1:n_cols) = CONST_0_0
 #endif
 #if COMPLEXCASE == 1
-             umcCPU(i,1:n_cols) = CONST_COMPLEX_0_0
+           umcCPU(i,1:n_cols) = CONST_COMPLEX_0_0
 #endif
-           enddo
+         enddo
 #if REALCASE == 1
-           !$omp do
+         !$omp do
 #endif
-           do i=1,l_rows
+         do i=1,l_rows
 #if REALCASE == 1
-             vmrCPU(i,n_cols+1:2*n_cols) = CONST_0_0
+           vmrCPU(i,n_cols+1:2*n_cols) = CONST_0_0
 #endif
 #if COMPLEXCASE == 1
-             vmrCPU(i,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+           vmrCPU(i,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
 #endif
-           enddo
-           if (l_cols>0 .and. l_rows>0) then
+         enddo
 
-             !SYMM variant 4
-             !Partitioned Matrix Expression:
-             ! Ct = Atl Bt + Atr Bb
-             ! Cb = Atr' Bt + Abl Bb
-             !
-             !Loop invariant:
-             ! Ct = Atl Bt + Atr Bb
-             !
-             !Update:
-             ! C1 = A10'B0 + A11B1 + A21 B2
-             !
-             !This algorithm chosen because in this algoirhtm, the loop around the dgemm calls
-             !is easily parallelized, and regardless of choise of algorithm,
-             !the startup cost for parallelizing the dgemms inside the loop is too great
+         if (l_cols>0 .and. l_rows>0) then
+
+           !SYMM variant 4
+           !Partitioned Matrix Expression:
+           ! Ct = Atl Bt + Atr Bb
+           ! Cb = Atr' Bt + Abl Bb
+           !
+           !Loop invariant:
+           ! Ct = Atl Bt + Atr Bb
+           !
+           !Update:
+           ! C1 = A10'B0 + A11B1 + A21 B2
+           !
+           !This algorithm chosen because in this algoirhtm, the loop around the dgemm calls
+           !is easily parallelized, and regardless of choise of algorithm,
+           !the startup cost for parallelizing the dgemms inside the loop is too great
 #if REALCASE == 1
-             !$omp do schedule(static,1)
+           !$omp do schedule(static,1)
 #endif
-             do i=0,(istep*nbw-1)/tile_size
-               lcs = i*l_cols_tile+1                   ! local column start
-               lce = min(l_cols, (i+1)*l_cols_tile)    ! local column end
+           do i=0,(istep*nbw-1)/tile_size
+             lcs = i*l_cols_tile+1                   ! local column start
+             lce = min(l_cols, (i+1)*l_cols_tile)    ! local column end
 
-               lrs = i*l_rows_tile+1                   ! local row start
-               lre = min(l_rows, (i+1)*l_rows_tile)    ! local row end
+             lrs = i*l_rows_tile+1                   ! local row start
+             lre = min(l_rows, (i+1)*l_rows_tile)    ! local row end
 
-               !C1 += [A11 A12] [B1
-               !                 B2]
-               if ( lre > lrs .and. l_cols > lcs ) then
-                 call obj%timer%start("blas")
-                 call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
-                                     ONE, a(lrs,lcs), ubound(a,dim=1),                 &
-                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
-                                     ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
-                 call obj%timer%stop("blas")
-               endif
+             !C1 += [A11 A12] [B1
+             !                 B2]
+             if ( lre > lrs .and. l_cols > lcs ) then
+               call obj%timer%start("blas")
+               call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
+                                   ONE, a(lrs,lcs), ubound(a,dim=1),                 &
+                                   umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
+                                   ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
+               call obj%timer%stop("blas")
+             endif
 
-               ! C1 += A10' B0
-               if ( lce > lcs .and. i > 0 ) then
-                 call obj%timer%start("blas")
+             ! C1 += A10' B0
+             if ( lce > lcs .and. i > 0 ) then
+               call obj%timer%start("blas")
 #if REALCASE == 1
-                 call PRECISION_GEMM('T', 'N',     &
+               call PRECISION_GEMM('T', 'N',     &
 #endif
 #if COMPLEXCASE == 1
-                 call PRECISION_GEMM('T', 'N',     &
+               call PRECISION_GEMM('T', 'N',     &
 #endif
                         lce-lcs+1, n_cols, lrs-1,              &
                                     ONE, a(1,lcs),   ubound(a,dim=1),      &
                                     vmrCPU(1,1),   ubound(vmrCPU,dim=1),   &
                                     ZERO, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-                 call obj%timer%stop("blas")
-               endif
-             enddo
-           endif ! l_cols>0 .and. l_rows>0
-         else ! n_way > 1
+               call obj%timer%stop("blas")
+             endif
+           enddo
+         endif ! l_cols>0 .and. l_rows>0
+
+      else ! n_way > 1
 #endif /* WITH_OPENMP */
 
+        if (useGPU) then
 #if REALCASE == 1
-           umcCPU(1:l_cols,1:n_cols) = CONST_0_0
-           vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_0_0
+          umcCUDA(1 : l_cols * n_cols) = CONST_0_0
+          vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = CONST_0_0
 #endif
 #if COMPLEXCASE == 1
-           umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-           vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
-
+          umcCUDA(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
+          vmrCUDA(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
 #endif
-           if (l_cols>0 .and. l_rows>0) then
-             do i=0,(istep*nbw-1)/tile_size
-
-               lcs = i*l_cols_tile+1
-               lce = min(l_cols,(i+1)*l_cols_tile)
-               if (lce<lcs) cycle
-               call obj%timer%start("blas")
-               lre = min(l_rows,(i+1)*l_rows_tile)
+        else ! useGPU
 #if REALCASE == 1
-               call PRECISION_GEMM('T', 'N',          &
+          umcCPU(1:l_cols,1:n_cols) = CONST_0_0
+          vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_0_0
 #endif
 #if COMPLEXCASE == 1
-               call PRECISION_GEMM('C', 'N',          &
+          umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
+          vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+#endif
+        endif ! useGPU
+
+        if (l_cols>0 .and. l_rows>0) then
+
+          if (useGPU) then
+            successCUDA = cuda_memcpy(vmr_dev,        &
+#if REALCASE == 1
+                                       loc(vmrCUDA(1)),&
+#endif
+#if COMPLEXCASE == 1
+                                       loc(vmrCUDA(1,1)), &
+#endif
+                                       vmr_size*size_of_datatype,cudaMemcpyHostToDevice)
+            if (.not.(successCUDA)) then
+              print *,"bandred_&
+                      &MATH_DATATYPE&
+                      &: error in cudaMemcpy vmr_dev 3"
+              stop 1
+            endif
+            successCUDA = cuda_memcpy(umc_dev,    &
+#if REALCASE == 1
+                                      loc(umcCUDA(1)), &
+#endif
+#if COMPLEXCASE == 1
+                                      loc(umcCUDA(1,1)), &
+#endif
+                                      umc_size*size_of_datatype,cudaMemcpyHostToDevice)
+            if (.not.(successCUDA)) then
+              print *,"bandred_&
+                      &MATH_DATATYPE&
+                      &: error in cudaMemcpy umc_dev 3"
+              stop 1
+            endif
+          endif ! useGPU
+
+          do i=0,(istep*nbw-1)/tile_size
+
+            lcs = i*l_cols_tile+1
+            lce = min(l_cols,(i+1)*l_cols_tile)
+            if (lce<lcs) cycle
+            lre = min(l_rows,(i+1)*l_rows_tile)
+
+            if (useGPU) then
+              call obj%timer%start("cublas")
+#if REALCASE == 1
+              call cublas_PRECISION_GEMM('T', 'N',                   &
+#endif
+#if COMPLEXCASE == 1
+              call cublas_PRECISION_GEMM('C', 'N',                   &
+#endif
+                                         lce-lcs+1, n_cols, lre,     &
+                                         ONE, (a_dev + ((lcs-1)*lda* &
+                                         size_of_datatype)),         &
+                                         lda, vmr_dev,cur_l_rows,    &
+                                         ONE, (umc_dev+ (lcs-1)*     &
+                                             size_of_datatype),      &
+                                         cur_l_cols)
+
+              call obj%timer%stop("cublas")
+
+              if(i==0) cycle
+              call obj%timer%start("cublas")
+
+              lre = min(l_rows,i*l_rows_tile)
+              call cublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
+                                          (a_dev+ ((lcs-1)*lda*                 &
+                                                size_of_datatype)),             &
+                                     lda, (umc_dev+(cur_l_cols * n_cols+lcs-1)* &
+                                            size_of_datatype),              &
+                                            cur_l_cols, ONE, (vmr_dev+(cur_l_rows * n_cols)* &
+                                          size_of_datatype),              &
+                                            cur_l_rows)
+              call obj%timer%stop("cublas")
+            else ! useGPU
+
+              call obj%timer%start("blas")
+#if REALCASE == 1
+              call PRECISION_GEMM('T', 'N',          &
+#endif
+#if COMPLEXCASE == 1
+              call PRECISION_GEMM('C', 'N',          &
 #endif
                              lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
                                    vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-               call obj%timer%stop("blas")
-               if (i==0) cycle
-                 lre = min(l_rows,i*l_rows_tile)
-                 call obj%timer%start("blas")
-                 call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
+              call obj%timer%stop("blas")
+              if (i==0) cycle
+              lre = min(l_rows,i*l_rows_tile)
+              call obj%timer%start("blas")
+              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
                                      umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE,      &
                                      vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
-                 call obj%timer%stop("blas")
-             enddo
-           endif
+              call obj%timer%stop("blas")
+            endif ! useGPU
+          enddo ! i=0,(istep*nbw-1)/tile_size
+
+          if (useGPU) then
+            successCUDA = cuda_memcpy(     &
+#if REALCASE == 1
+                                  loc(vmrCUDA(1)),    &
+#endif
+#if COMPLEXCASE == 1
+                                  loc(vmrCUDA(1,1)),    &
+#endif
+                                   vmr_dev,vmr_size*size_of_datatype,cudaMemcpyDeviceToHost)
+            if (.not.(successCUDA)) then
+              print *,"bandred_&
+                      &MATH_DATATYPE&
+                      &: error in cudaMemcpy vmr_dev 4"
+              stop 1
+            endif
+
+            successCUDA = cuda_memcpy(    &
+#if REALCASE == 1
+                                loc(umcCUDA(1)),    &
+#endif
+#if COMPLEXCASE == 1
+                                loc(umcCUDA(1,1)),    &
+#endif
+                                umc_dev, umc_size*size_of_datatype,cudaMemcpyDeviceToHost)
+            if (.not.(successCUDA)) then
+              print *,"bandred_&
+              &MATH_DATATYPE&
+              &: error in cudaMemcpy umc_dev 4"
+              stop 1
+            endif
+          endif ! useGPU
+        endif ! l_cols>0 .and. l_rows>0
 
 #ifdef WITH_OPENMP
-         endif ! n_way > 1
+      endif ! n_way > 1
 #if REALCASE == 1
-         !$omp end parallel
+      !$omp end parallel
 #endif
 #endif
-       endif ! do not useGPU version
-
        ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
        ! on the processors containing the diagonal
        ! This is only necessary if ur has been calculated, i.e. if the
        ! global tile size is smaller than the global remaining matrix
 
-       if (useGPU) then
-         ! here the GPU version and CPU version divereged due to the same reasons as above
+       ! Or if we used the Algorithm 4
+       if (tile_size < istep*nbw .or. n_way > 1) then
 
-         if (tile_size < istep*nbw) then
+         if (useGPU) then
+
            call elpa_reduce_add_vectors_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION &
 #if REALCASE == 1
-                                               (obj, vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,  &
+                                (obj, vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,  &
 #endif
 #if COMPLEXCASE == 1
-                                               (obj, vmrCUDA(1,n_cols+1),ubound(vmrCUDA,dim=1),    &
+                                (obj, vmrCUDA(1,n_cols+1),ubound(vmrCUDA,dim=1),    &
 #endif
-                 mpi_comm_rows, umcCUDA,                        &
+                                 mpi_comm_rows, umcCUDA,                            &
 #if REALCASE == 1
-                 cur_l_cols,                                    &
+                                 cur_l_cols,                                        &
 #endif
 #if COMPLEXCASE == 1
-                                               ubound(umcCUDA,dim=1),                         &
+                                 ubound(umcCUDA,dim=1),                             &
 #endif
-                 mpi_comm_cols, istep*nbw, n_cols, nblk)
-         endif
+                                 mpi_comm_cols, istep*nbw, n_cols, nblk)
+         else ! useGPU
 
+           call elpa_reduce_add_vectors_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+                                            (obj, vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
+                                             umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                             istep*nbw, n_cols, nblk)
+         endif ! useGPU
+       endif ! tile_size < istep*nbw .or. n_way > 1
 
-         if (l_cols>0) then
+       if (l_cols>0) then
+
+         if (useGPU) then
 #ifdef WITH_MPI
 #if REALCASE == 1
            allocate(tmpCUDA(l_cols * n_cols), stat=istat, errmsg=errorMessage)
@@ -1399,8 +1408,8 @@
 #endif
            if (istat .ne. 0) then
              print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error when allocating tmpCUDA "//errorMessage
+                      &MATH_DATATYPE&
+                      &: error when allocating tmpCUDA "//errorMessage
              stop 1
            endif
 
@@ -1408,12 +1417,12 @@
 
            call mpi_allreduce(umcCUDA, tmpCUDA, l_cols*n_cols, &
 #if REALCASE == 1
-                        MPI_REAL_PRECISION,              &
+                              MPI_REAL_PRECISION,              &
 #endif
 #if COMPLEXCASE == 1
                               MPI_COMPLEX_PRECISION,           &
 #endif
-                MPI_SUM, mpi_comm_rows, ierr)
+                              MPI_SUM, mpi_comm_rows, ierr)
 
 #if REALCASE == 1
            umcCUDA(1 : l_cols * n_cols) = tmpCUDA(1 : l_cols * n_cols)
@@ -1424,7 +1433,7 @@
            if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
-!           tmpCUDA(1 : l_cols * n_cols) = umcCUDA(1 : l_cols * n_cols)
+           ! tmpCUDA(1 : l_cols * n_cols) = umcCUDA(1 : l_cols * n_cols)
 
 #endif /* WITH_MPI */
 
@@ -1432,220 +1441,19 @@
              deallocate(tmpCUDA, stat=istat, errmsg=errorMessage)
              if (istat .ne. 0) then
                print *,"bandred_&
-         &MATH_DATATYPE&
-         &: error when deallocating tmpCUDA "//errorMessage
+                       &MATH_DATATYPE&
+                       &: error when deallocating tmpCUDA "//errorMessage
                stop 1
              endif
            endif
-         endif ! l_cols
 
-         ! U = U * Tmat**T
-         successCUDA = cuda_memcpy(umc_dev,    &
-#if REALCASE == 1
-                                   loc(umcCUDA(1)),   &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(umcCUDA(1,1)),   &
-#endif
-                                   umc_size*size_of_datatype, cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy umc_dev 5"
-           stop 1
-         endif
-         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy tmat_dev 2"
-           stop 1
-         endif
+         else ! useGPU
 
-         call obj%timer%start("cublas")
-#if REALCASE == 1
-         call cublas_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit',  &
-#endif
-#if COMPLEXCASE == 1
-         call  cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',     &
-#endif
-                               l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
-         call obj%timer%stop("cublas")
-
-         ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy vav_dev 2"
-           stop 1
-         endif
-         call obj%timer%start("cublas")
-
-#if REALCASE == 1
-         call cublas_PRECISION_GEMM('T', 'N',             &
-#endif
-#if COMPLEXCASE == 1
-         call cublas_PRECISION_GEMM('C', 'N',             &
-#endif
-                              n_cols, n_cols, l_cols, ONE, umc_dev, cur_l_cols, &
-            (umc_dev+(cur_l_cols * n_cols )*size_of_datatype),cur_l_cols, &
-                                    ZERO, vav_dev, nbw)
-
-#if REALCASE == 1
-         call cublas_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit',    &
-#endif
-#if COMPLEXCASE == 1
-         call cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',        &
-#endif
-                              n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
-         call obj%timer%stop("cublas")
-
-         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy vav_dev3"
-           stop 1
-         endif
-
-#if REALCASE == 1
-         call symm_matrix_allreduce_&
-#endif
-#if COMPLEXCASE == 1
-         call herm_matrix_allreduce_&
-#endif
-         &PRECISION &
-                            (obj, n_cols,vav, nbw,nbw,mpi_comm_cols)
-
-         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy vav_dev4"
-           stop 1
-         endif
-
-         ! U = U - 0.5 * V * VAV
-         call obj%timer%start("cublas")
-
-         call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
-#if REALCASE == 1
-                                    -CONST_0_5,                      &
-#endif
-#if COMPLEXCASE == 1
-                                    CONST_COMPLEX_PAIR_NEGATIVE_0_5, &
-#endif
-            (umc_dev+(cur_l_cols * n_cols )* &
-                                     size_of_datatype),   &
-             cur_l_cols, vav_dev,nbw,        &
-                                     ONE, umc_dev, cur_l_cols)
-         call obj%timer%stop("cublas")
-
-         successCUDA = cuda_memcpy(      &
-#if REALCASE == 1
-                                   loc(umcCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(umcCUDA(1,1)),    &
-#endif
-                                   umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
-
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy umc_dev 6"
-           stop 1
-         endif
-
-         ! Transpose umc -> umr (stored in vmr, second half)
-         call elpa_transpose_vectors_&
-         &MATH_DATATYPE&
-         &_&
-         &PRECISION &
-#if REALCASE == 1
-                                           (obj, umcCUDA, cur_l_cols, mpi_comm_cols, &
-                                            vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
-
-#endif
-#if COMPLEXCASE == 1
-                                           (obj, umcCUDA, ubound(umcCUDA,dim=1), mpi_comm_cols, &
-                                            vmrCUDA(1,n_cols+1), ubound(vmrCUDA,dim=1), mpi_comm_rows, &
-#endif
-                                            1, istep*nbw, n_cols, nblk)
-
-         successCUDA = cuda_memcpy(vmr_dev,       &
-#if REALCASE == 1
-                                   loc(vmrCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(vmrCUDA(1,1)),    &
-#endif
-                                   vmr_size*size_of_datatype, cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy vmr_dev 5 "
-           stop 1
-         endif
-
-         successCUDA = cuda_memcpy(umc_dev,     &
-#if REALCASE == 1
-                                   loc(umcCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(umcCUDA(1,1)),    &
-#endif
-                                   umc_size*size_of_datatype, cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy umc_dev 7"
-           stop 1
-         endif
-
-         ! A = A - V*U**T - U*V**T
-         do i=0,(istep*nbw-1)/tile_size
-           lcs = i*l_cols_tile+1
-           lce = min(l_cols,(i+1)*l_cols_tile)
-           lre = min(l_rows,(i+1)*l_rows_tile)
-           if (lce<lcs .or. lre<1) cycle
-            call obj%timer%start("cublas")
-
-#if REALCASE == 1
-           call cublas_PRECISION_GEMM('N', 'T',     &
-#endif
-#if COMPLEXCASE == 1
-           call cublas_PRECISION_GEMM('N', 'C',      &
-#endif
-                                lre, lce-lcs+1, 2*n_cols, -ONE, &
-                                      vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
-                                      size_of_datatype), &
-              cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
-                                      size_of_datatype), lda)
-           call obj%timer%stop("cublas")
-
-         enddo
-
-       else ! do not useGPU
-
-         ! Or if we used the Algorithm 4
-         if (tile_size < istep*nbw .or. n_way > 1) then
-           call elpa_reduce_add_vectors_&
-           &MATH_DATATYPE&
-           &_&
-           &PRECISION &
-                                            (obj, vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
-                                             umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                             istep*nbw, n_cols, nblk)
-         endif
-
-         if (l_cols>0) then
            allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
              print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error when allocating tmpCPU "//errorMessage
+                     &MATH_DATATYPE&
+                     &: error when allocating tmpCPU "//errorMessage
              stop 1
            endif
 
@@ -1668,13 +1476,87 @@
            deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
              print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error when deallocating tmpCPU "//errorMessage
+                     &MATH_DATATYPE&
+                     &: error when deallocating tmpCPU "//errorMessage
              stop 1
            endif
+         endif ! useGPU
+       endif ! l_cols > 0
+
+       ! U = U * Tmat**T
+
+       if (useGPU) then
+         successCUDA = cuda_memcpy(umc_dev,    &
+#if REALCASE == 1
+                                   loc(umcCUDA(1)),   &
+#endif
+#if COMPLEXCASE == 1
+                                   loc(umcCUDA(1,1)),   &
+#endif
+                                   umc_size*size_of_datatype, cudaMemcpyHostToDevice)
+         if (.not.(successCUDA)) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaMemcpy umc_dev 5"
+           stop 1
          endif
 
-         ! U = U * Tmat**T
+         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+         if (.not.(successCUDA)) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaMemcpy tmat_dev 2"
+           stop 1
+         endif
+
+         call obj%timer%start("cublas")
+#if REALCASE == 1
+         call cublas_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit',  &
+#endif
+#if COMPLEXCASE == 1
+         call  cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',     &
+#endif
+                               l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
+         call obj%timer%stop("cublas")
+
+         ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+         if (.not.(successCUDA)) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaMemcpy vav_dev 2"
+           stop 1
+         endif
+         call obj%timer%start("cublas")
+
+#if REALCASE == 1
+         call cublas_PRECISION_GEMM('T', 'N',             &
+#endif
+#if COMPLEXCASE == 1
+         call cublas_PRECISION_GEMM('C', 'N',             &
+#endif
+                                    n_cols, n_cols, l_cols, ONE, umc_dev, cur_l_cols, &
+                                    (umc_dev+(cur_l_cols * n_cols )*size_of_datatype),cur_l_cols, &
+                                    ZERO, vav_dev, nbw)
+
+#if REALCASE == 1
+         call cublas_PRECISION_TRMM('Right', 'Upper', 'Trans', 'Nonunit',    &
+#endif
+#if COMPLEXCASE == 1
+         call cublas_PRECISION_TRMM('Right', 'Upper', 'C', 'Nonunit',        &
+#endif
+                            n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
+         call obj%timer%stop("cublas")
+
+         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
+         if (.not.(successCUDA)) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaMemcpy vav_dev3"
+           stop 1
+         endif
+       else ! useGPU
+
          call obj%timer%start("blas")
 
 #if REALCASE == 1
@@ -1707,16 +1589,107 @@
                              ubound(tmat,dim=1), vav, ubound(vav,dim=1))
          call obj%timer%stop("blas")
 
+       endif ! useGPU
+
 #if REALCASE == 1
-         call symm_matrix_allreduce_&
+       call symm_matrix_allreduce_&
 #endif
 #if COMPLEXCASE == 1
-         call herm_matrix_allreduce_&
+       call herm_matrix_allreduce_&
 #endif
-         &PRECISION &
+            &PRECISION &
                               (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
-         ! U = U - 0.5 * V * VAV
+       if (useGPU) then
+         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+         if (.not.(successCUDA)) then
+           print *,"bandred_&
+           &MATH_DATATYPE&
+           &: error in cudaMemcpy vav_dev4"
+           stop 1
+         endif
+       endif
+
+       ! U = U - 0.5 * V * VAV
+
+       if (useGPU) then
+         call obj%timer%start("cublas")
+
+         call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
+#if REALCASE == 1
+                                    -CONST_0_5,                      &
+#endif
+#if COMPLEXCASE == 1
+                                    CONST_COMPLEX_PAIR_NEGATIVE_0_5, &
+#endif
+                                    (umc_dev+(cur_l_cols * n_cols )* &
+                                    size_of_datatype),   &
+                                    cur_l_cols, vav_dev,nbw,        &
+                                    ONE, umc_dev, cur_l_cols)
+         call obj%timer%stop("cublas")
+
+         successCUDA = cuda_memcpy(      &
+#if REALCASE == 1
+                                   loc(umcCUDA(1)),    &
+#endif
+#if COMPLEXCASE == 1
+                                   loc(umcCUDA(1,1)),    &
+#endif
+                                   umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
+
+         if (.not.(successCUDA)) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaMemcpy umc_dev 6"
+           stop 1
+         endif
+
+         ! Transpose umc -> umr (stored in vmr, second half)
+         call elpa_transpose_vectors_&
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION &
+#if REALCASE == 1
+                          (obj, umcCUDA, cur_l_cols, mpi_comm_cols, &
+                           vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
+
+#endif
+#if COMPLEXCASE == 1
+                          (obj, umcCUDA, ubound(umcCUDA,dim=1), mpi_comm_cols, &
+                           vmrCUDA(1,n_cols+1), ubound(vmrCUDA,dim=1), mpi_comm_rows, &
+#endif
+                           1, istep*nbw, n_cols, nblk)
+
+         successCUDA = cuda_memcpy(vmr_dev,       &
+#if REALCASE == 1
+                                   loc(vmrCUDA(1)),    &
+#endif
+#if COMPLEXCASE == 1
+                                   loc(vmrCUDA(1,1)),    &
+#endif
+                                   vmr_size*size_of_datatype, cudaMemcpyHostToDevice)
+         if (.not.(successCUDA)) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaMemcpy vmr_dev 5 "
+           stop 1
+         endif
+
+         successCUDA = cuda_memcpy(umc_dev,     &
+#if REALCASE == 1
+                                   loc(umcCUDA(1)),    &
+#endif
+#if COMPLEXCASE == 1
+                                   loc(umcCUDA(1,1)),    &
+#endif
+                                   umc_size*size_of_datatype, cudaMemcpyHostToDevice)
+         if (.not.(successCUDA)) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaMemcpy umc_dev 7"
+           stop 1
+         endif
+       else ! useGPU
          call obj%timer%start("blas")
          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
 #if REALCASE == 1
@@ -1738,67 +1711,89 @@
                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                          1, istep*nbw, n_cols, nblk)
 
-         ! A = A - V*U**T - U*V**T
+       endif  ! useGPU
+
+
+       ! A = A - V*U**T - U*V**T
 
 #ifdef WITH_OPENMP
 
 #if REALCASE == 1
-         !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
-         n_threads = omp_get_num_threads()
-         if (mod(n_threads, 2) == 0) then
-           n_way = 2
-         else
-           n_way = 1
-         endif
+       !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
+       n_threads = omp_get_num_threads()
+       if (mod(n_threads, 2) == 0) then
+         n_way = 2
+       else
+         n_way = 1
+       endif
 
-         m_way = n_threads / n_way
+       m_way = n_threads / n_way
 
-         m_id = mod(omp_get_thread_num(),  m_way)
-         n_id = omp_get_thread_num() / m_way
+       m_id = mod(omp_get_thread_num(),  m_way)
+       n_id = omp_get_thread_num() / m_way
 
-         do ii=n_id*tile_size,(istep*nbw-1),tile_size*n_way
-           i = ii / tile_size
-           lcs = i*l_cols_tile+1
-           lce = min(l_cols,(i+1)*l_cols_tile)
-           lre = min(l_rows,(i+1)*l_rows_tile)
-           if (lce<lcs .or. lre<1) cycle
+       do ii=n_id*tile_size,(istep*nbw-1),tile_size*n_way
+         i = ii / tile_size
+         lcs = i*l_cols_tile+1
+         lce = min(l_cols,(i+1)*l_cols_tile)
+         lre = min(l_rows,(i+1)*l_rows_tile)
+         if (lce<lcs .or. lre<1) cycle
 
-           !Figure out this thread's range
-           work_per_thread = lre / m_way
-           if (work_per_thread * m_way < lre) work_per_thread = work_per_thread + 1
-           mystart = m_id * work_per_thread + 1
-           myend   = mystart + work_per_thread - 1
-           if ( myend > lre ) myend = lre
-           if ( myend-mystart+1 < 1) cycle
-           call obj%timer%start("blas")
-           call PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -CONST_1_0, &
-                      vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
-                       CONST_1_0, a(mystart,lcs), ubound(a,1))
-            call obj%timer%stop("blas")
-         enddo
-         !$omp end parallel
+         !Figure out this thread's range
+         work_per_thread = lre / m_way
+         if (work_per_thread * m_way < lre) work_per_thread = work_per_thread + 1
+         mystart = m_id * work_per_thread + 1
+         myend   = mystart + work_per_thread - 1
+         if ( myend > lre ) myend = lre
+         if ( myend-mystart+1 < 1) cycle
+         call obj%timer%start("blas")
+         call PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -CONST_1_0, &
+                    vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
+                     CONST_1_0, a(mystart,lcs), ubound(a,1))
+          call obj%timer%stop("blas")
+       enddo
+       !$omp end parallel
 #endif
 #if COMPLEXCASE == 1
-         do i=0,(istep*nbw-1)/tile_size
-           lcs = i*l_cols_tile+1
-           lce = min(l_cols,(i+1)*l_cols_tile)
-           lre = min(l_rows,(i+1)*l_rows_tile)
-           if (lce<lcs .or. lre<1) cycle
-             call obj%timer%start("blas")
-             call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
-                         vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                         ONE, a(1,lcs), lda)
-             call obj%timer%stop("blas")
-           enddo
+       do i=0,(istep*nbw-1)/tile_size
+         lcs = i*l_cols_tile+1
+         lce = min(l_cols,(i+1)*l_cols_tile)
+         lre = min(l_rows,(i+1)*l_rows_tile)
+         if (lce<lcs .or. lre<1) cycle
+         call obj%timer%start("blas")
+         call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
+                       vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
+                       ONE, a(1,lcs), lda)
+         call obj%timer%stop("blas")
+       enddo
 #endif
 
 #else /* WITH_OPENMP */
 
-         do i=0,(istep*nbw-1)/tile_size
-           lcs = i*l_cols_tile+1
-           lce = min(l_cols,(i+1)*l_cols_tile)
-           lre = min(l_rows,(i+1)*l_rows_tile)
-           if (lce<lcs .or. lre<1) cycle
+       do i=0,(istep*nbw-1)/tile_size
+         lcs = i*l_cols_tile+1
+         lce = min(l_cols,(i+1)*l_cols_tile)
+         lre = min(l_rows,(i+1)*l_rows_tile)
+         if (lce<lcs .or. lre<1) cycle
+
+         if (useGPU) then
+           call obj%timer%start("cublas")
+
+#if REALCASE == 1
+           call cublas_PRECISION_GEMM('N', 'T',     &
+#endif
+#if COMPLEXCASE == 1
+           call cublas_PRECISION_GEMM('N', 'C',      &
+#endif
+                                      lre, lce-lcs+1, 2*n_cols, -ONE, &
+                                      vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
+                                      size_of_datatype), &
+                                      cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
+                                      size_of_datatype), lda)
+           call obj%timer%stop("cublas")
+
+         else ! useGPU
+
            call obj%timer%start("blas")
 #if REALCASE == 1
            call PRECISION_GEMM('N', 'T',        &
@@ -1810,10 +1805,9 @@
                                vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
                                ONE, a(1,lcs), lda)
            call obj%timer%stop("blas")
-         enddo
+         endif ! useGPU
+       enddo ! i=0,(istep*nbw-1)/tile_size
 #endif /* WITH_OPENMP */
-
-       endif ! useGPU
 
        if (.not.(useGPU)) then
          if (allocated(vr)) then
