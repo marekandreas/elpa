@@ -171,7 +171,8 @@
 #endif
 
 #if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCUDA(:,:), vmrCUDA(:,:), umcCUDA(:,:) ! note the different dimension in real case
+!      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCUDA(:,:), vmrCUDA(:,:), umcCUDA(:,:) ! note the different dimension in real case
+      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
       complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
       complex(kind=COMPLEX_DATATYPE), allocatable :: vr(:)
 #endif
@@ -438,12 +439,8 @@
               endif
             endif
 
-#if REALCASE == 1
             allocate(vmrCUDA(vmr_size), stat=istat, errmsg=errorMessage)
-#endif
-#if COMPLEXCASE == 1
-            allocate(vmrCUDA(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
-#endif
+
             if (istat .ne. 0) then
               print *,"bandred_&
                       &MATH_DATATYPE&
@@ -480,12 +477,8 @@
 
             endif
 
-#if REALCASE == 1
             allocate(umcCUDA(umc_size), stat=istat, errmsg=errorMessage)
-#endif
-#if COMPLEXCASE == 1
-            allocate(umcCUDA(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
-#endif
+
             if (istat .ne. 0) then
               print *,"bandred_&
                       &MATH_DATATYPE&
@@ -540,7 +533,7 @@
           vmrCUDA(1 : cur_l_rows * n_cols) = CONST_0_0
 #endif
 #if COMPLEXCASE == 1
-          vmrCUDA(1:l_rows,1:n_cols) = CONST_COMPLEX_0_0
+          vmrCUDA(1: cur_l_rows * n_cols) = CONST_COMPLEX_0_0
 #endif
         else
 #if REALCASE == 1
@@ -574,31 +567,11 @@
 
           if (my_pcol == cur_pcol) then
             successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), &
-#if REALCASE == 1
-                                            lda * size_of_datatype, &
-#endif
-#if COMPLEXCASE == 1
                                       int((lda*size_of_datatype),kind=c_intptr_t), &
-#endif
-#if REALCASE == 1
-                                            (a_dev + ((lc_start-1) * lda*size_of_datatype)),    &
-#endif
-#if COMPLEXCASE == 1
                                             (a_dev + int( ( (lc_start-1) * lda*size_of_datatype),kind=c_intptr_t )),      &
-#endif
-#if REALCASE == 1
-                                            lda*size_of_datatype, lr_end*size_of_datatype, &
-#endif
-#if COMPLEXCASE == 1
                                             int(lda*size_of_datatype,kind=c_intptr_t),              &
                                             int(lr_end*size_of_datatype,kind=c_intptr_t),           &
-#endif
-#if REALCASE == 1
-                                             (lc_end - lc_start+1), cudaMemcpyDeviceToHost)
-#endif
-#if COMPLEXCASE == 1
                                              int((lc_end - lc_start+1),kind=c_intptr_t),int(cudaMemcpyDeviceToHost,kind=c_int))
-#endif
 
 
             if (.not.(successCUDA)) then
@@ -607,7 +580,6 @@
                       &: error in cudaMemcpy2d"
               stop 1
             endif
-
           endif
         endif ! useGPU
 
@@ -726,7 +698,7 @@
            vr(lr+1) = tau
 #ifdef WITH_MPI
            if (wantDebug) call obj%timer%start("mpi_communication")
-     call MPI_Bcast(vr, lr+1, &
+           call MPI_Bcast(vr, lr+1, &
 #if REALCASE == 1
                           MPI_REAL_PRECISION, &
 #endif
@@ -739,12 +711,7 @@
 #endif /* WITH_MPI */
 
            if (useGPU) then
-#if REALCASE == 1
              vmrCUDA(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
-#endif
-#if COMPLEXCASE == 1
-             vmrCUDA(1:lr,lc) = vr(1:lr)
-#endif
            else
              vmrCPU(1:lr,lc) = vr(1:lr)
            endif
@@ -943,37 +910,17 @@
            cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
            if (my_pcol == cur_pcol) then
              successCUDA = cuda_memcpy2d((a_dev+        &
-#if REALCASE == 1
-                                         ((lc_start-1)*lda*size_of_datatype)),          &
-#endif
-#if COMPLEXCASE == 1
                                          int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)),    &
-#endif
-#if REALCASE == 1
-                                         lda*size_of_datatype, loc(a(1, lc_start)),    &
-#endif
-#if COMPLEXCASE == 1
                                          int(lda*size_of_datatype,kind=c_intptr_t), loc(a(1,lc_start)), &
-#endif
-#if REALCASE == 1
-                                         lda*size_of_datatype,  lr_end*size_of_datatype, &
-#endif
-#if COMPLEXCASE == 1
                                          int(lda*size_of_datatype,kind=c_intptr_t),           &
                                          int(lr_end*size_of_datatype,kind=c_intptr_t),        &
-#endif
-#if REALCASE == 1
-                                         (lc_end - lc_start+1),cudaMemcpyHostToDevice)
-#endif
-#if COMPLEXCASE == 1
                                          int((lc_end - lc_start+1),kind=c_intptr_t), &
                                          int(cudaMemcpyHostToDevice,kind=c_int))
-#endif
 
              if (.not.(successCUDA)) then
                print *, "bandred_&
-         &MATH_DATATYPE&
-         &: cuda memcpy a_dev  failed ", istat
+                        &MATH_DATATYPE&
+                        &: cuda memcpy a_dev  failed ", istat
                stop 1
              endif
            endif
@@ -993,13 +940,9 @@
              call PRECISION_HERK('U', 'C',            &
 #endif
                            n_cols, l_rows, ONE, &
-#if REALCASE == 1
-         vmrCUDA, cur_l_rows, &
-#endif
-#if COMPLEXCASE == 1
-                                 vmrCUDA, ubound(vmrCUDA,dim=1), &
-#endif
-         ZERO, vav, ubound(vav,dim=1))
+                           vmrCUDA, cur_l_rows, &
+                           ZERO, vav, ubound(vav,dim=1))
+
          else ! useGPU
            if (l_rows>0) &
 #if REALCASE == 1
@@ -1050,20 +993,9 @@
               &MATH_DATATYPE&
               &_&
               &PRECISION &
-#if REALCASE == 1
-                                     (obj, vmrCUDA, cur_l_rows,  &
-#endif
-#if COMPLEXCASE == 1
-                                           (obj, vmrCUDA, ubound(vmrCUDA,dim=1), &
-#endif
-              mpi_comm_rows, &
-#if REALCASE == 1
-                                            umcCUDA(cur_l_cols * n_cols + 1), cur_l_cols, &
-#endif
-#if COMPLEXCASE == 1
-                                            umcCUDA(1,n_cols+1), ubound(umcCUDA,dim=1),     &
-#endif
-              mpi_comm_cols, 1, istep*nbw, n_cols, nblk)
+                           (obj, vmrCUDA, cur_l_rows, mpi_comm_rows, &
+                            umcCUDA(cur_l_cols * n_cols + 1), cur_l_cols, &
+                            mpi_comm_cols, 1, istep*nbw, n_cols, nblk)
        else ! useGPU
          call elpa_transpose_vectors_&
               &MATH_DATATYPE&
@@ -1124,7 +1056,7 @@
        if (n_way > 1) then
 #if REALCASE == 1
          !$omp do
-#endif 
+#endif
          do i=1,min(l_cols_tile, l_cols)
 #if REALCASE == 1
            umcCPU(i,1:n_cols) = CONST_0_0
@@ -1210,8 +1142,8 @@
           vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = CONST_0_0
 #endif
 #if COMPLEXCASE == 1
-          umcCUDA(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-          vmrCUDA(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+          umcCUDA(1 : l_cols * n_cols) = CONST_COMPLEX_0_0
+          vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = CONST_COMPLEX_0_0
 #endif
         else ! useGPU
 #if REALCASE == 1
@@ -1228,12 +1160,7 @@
 
           if (useGPU) then
             successCUDA = cuda_memcpy(vmr_dev,        &
-#if REALCASE == 1
                                        loc(vmrCUDA(1)),&
-#endif
-#if COMPLEXCASE == 1
-                                       loc(vmrCUDA(1,1)), &
-#endif
                                        vmr_size*size_of_datatype,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -1241,13 +1168,9 @@
                       &: error in cudaMemcpy vmr_dev 3"
               stop 1
             endif
+
             successCUDA = cuda_memcpy(umc_dev,    &
-#if REALCASE == 1
                                       loc(umcCUDA(1)), &
-#endif
-#if COMPLEXCASE == 1
-                                      loc(umcCUDA(1,1)), &
-#endif
                                       umc_size*size_of_datatype,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -1295,7 +1218,6 @@
                                           size_of_datatype),              &
                                             cur_l_rows)
               call obj%timer%stop("cublas")
-
             else ! useGPU
 
               call obj%timer%start("blas")
@@ -1320,12 +1242,7 @@
 
           if (useGPU) then
             successCUDA = cuda_memcpy(     &
-#if REALCASE == 1
                                   loc(vmrCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                  loc(vmrCUDA(1,1)),    &
-#endif
                                    vmr_dev,vmr_size*size_of_datatype,cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -1335,12 +1252,7 @@
             endif
 
             successCUDA = cuda_memcpy(    &
-#if REALCASE == 1
                                 loc(umcCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                loc(umcCUDA(1,1)),    &
-#endif
                                 umc_dev, umc_size*size_of_datatype,cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -1371,20 +1283,9 @@
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION &
-#if REALCASE == 1
                                 (obj, vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,  &
-#endif
-#if COMPLEXCASE == 1
-                                (obj, vmrCUDA(1,n_cols+1),ubound(vmrCUDA,dim=1),    &
-#endif
                                  mpi_comm_rows, umcCUDA,                            &
-#if REALCASE == 1
-                                 cur_l_cols,                                        &
-#endif
-#if COMPLEXCASE == 1
-                                 ubound(umcCUDA,dim=1),                             &
-#endif
-                                 mpi_comm_cols, istep*nbw, n_cols, nblk)
+                                 cur_l_cols, mpi_comm_cols, istep*nbw, n_cols, nblk)
          else ! useGPU
 
            call elpa_reduce_add_vectors_&
@@ -1401,12 +1302,7 @@
 
          if (useGPU) then
 #ifdef WITH_MPI
-#if REALCASE == 1
            allocate(tmpCUDA(l_cols * n_cols), stat=istat, errmsg=errorMessage)
-#endif
-#if COMPLEXCASE == 1
-           allocate(tmpCUDA(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-#endif
            if (istat .ne. 0) then
              print *,"bandred_&
                       &MATH_DATATYPE&
@@ -1425,12 +1321,7 @@
 #endif
                               MPI_SUM, mpi_comm_rows, ierr)
 
-#if REALCASE == 1
            umcCUDA(1 : l_cols * n_cols) = tmpCUDA(1 : l_cols * n_cols)
-#endif
-#if COMPLEXCASE == 1
-           umcCUDA(1:l_cols,1:n_cols) = tmpCUDA(1:l_cols,1:n_cols)
-#endif
            if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -1488,12 +1379,7 @@
 
        if (useGPU) then
          successCUDA = cuda_memcpy(umc_dev,    &
-#if REALCASE == 1
                                    loc(umcCUDA(1)),   &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(umcCUDA(1,1)),   &
-#endif
                                    umc_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -1501,7 +1387,6 @@
                    &: error in cudaMemcpy umc_dev 5"
            stop 1
          endif
-
          successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -1630,12 +1515,7 @@
          call obj%timer%stop("cublas")
 
          successCUDA = cuda_memcpy(      &
-#if REALCASE == 1
                                    loc(umcCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(umcCUDA(1,1)),    &
-#endif
                                    umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
@@ -1650,24 +1530,12 @@
               &MATH_DATATYPE&
               &_&
               &PRECISION &
-#if REALCASE == 1
                           (obj, umcCUDA, cur_l_cols, mpi_comm_cols, &
                            vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
-
-#endif
-#if COMPLEXCASE == 1
-                          (obj, umcCUDA, ubound(umcCUDA,dim=1), mpi_comm_cols, &
-                           vmrCUDA(1,n_cols+1), ubound(vmrCUDA,dim=1), mpi_comm_rows, &
-#endif
                            1, istep*nbw, n_cols, nblk)
 
          successCUDA = cuda_memcpy(vmr_dev,       &
-#if REALCASE == 1
                                    loc(vmrCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(vmrCUDA(1,1)),    &
-#endif
                                    vmr_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -1677,12 +1545,7 @@
          endif
 
          successCUDA = cuda_memcpy(umc_dev,     &
-#if REALCASE == 1
                                    loc(umcCUDA(1)),    &
-#endif
-#if COMPLEXCASE == 1
-                                   loc(umcCUDA(1,1)),    &
-#endif
                                    umc_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -1819,8 +1682,8 @@
            deallocate(vr, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
              print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error when deallocating vr "//errorMessage
+                     &MATH_DATATYPE&
+                     &: error when deallocating vr "//errorMessage
              stop 1
            endif
          endif
@@ -1829,8 +1692,8 @@
            deallocate(umcCPU, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
              print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error when deallocating umcCPU "//errorMessage
+                     &MATH_DATATYPE&
+                     &: error when deallocating umcCPU "//errorMessage
              stop 1
            endif
          endif
@@ -1839,8 +1702,8 @@
            deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
            if (istat .ne. 0) then
              print *,"bandred_&
-       &MATH_DATATYPE&
-       &: error when deallocating vmrCPU "//errorMessage
+                     &MATH_DATATYPE&
+                     &: error when deallocating vmrCPU "//errorMessage
              stop 1
            endif
          endif
@@ -1852,8 +1715,8 @@
        successCUDA = cuda_free(vav_dev)
        if (.not.(successCUDA)) then
          print *,"bandred_&
-   &MATH_DATATYPE&
-   &: error in cudaFree vav_dev 4"
+                 &MATH_DATATYPE&
+                 &: error in cudaFree vav_dev 4"
          stop 1
        endif
      endif ! useGPU
@@ -1862,8 +1725,8 @@
        deallocate(vr, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"bandred_&
-   &MATH_DATATYPE&
-   &: error when deallocating vr "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating vr "//errorMessage
          stop 1
        endif
      endif
@@ -1872,8 +1735,8 @@
        deallocate(umcCPU, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"bandred_&
-   &MATH_DATATYPE&
-   &: error when deallocating umcCPU "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating umcCPU "//errorMessage
          stop 1
        endif
      endif
@@ -1882,8 +1745,8 @@
        deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"bandred_&
-   &MATH_DATATYPE&
-   &: error when deallocating vmrCPU "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating vmrCPU "//errorMessage
          stop 1
        endif
      endif
@@ -1903,16 +1766,16 @@
        successCUDA = cuda_free(vmr_dev)
        if (.not.(successCUDA)) then
          print *,"bandred_&
-   &MATH_DATATYPE&
-   &: error in cudaFree vmr_dev 6"
+                 &MATH_DATATYPE&
+                 &: error in cudaFree vmr_dev 6"
          stop 1
        endif
 
        successCUDA = cuda_free(umc_dev)
        if (.not.(successCUDA)) then
          print *,"bandred_&
-   &MATH_DATATYPE&
-   &: error in cudaFree umc_dev 8"
+                 &MATH_DATATYPE&
+                 &: error in cudaFree umc_dev 8"
          stop
        endif
 
@@ -1920,8 +1783,8 @@
          deallocate(umcCUDA, stat=istat, errmsg=errorMessage)
          if (istat .ne. 0) then
            print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error when deallocating umcCUDA "//errorMessage
+                   &MATH_DATATYPE&
+                   &: error when deallocating umcCUDA "//errorMessage
            stop 1
          endif
        endif
@@ -1929,8 +1792,8 @@
          deallocate(vmrCUDA, stat=istat, errmsg=errorMessage)
          if (istat .ne. 0) then
            print *,"bandred_&
-     &MATH_DATATYPE&
-     &: error when deallocating vmrCUDA "//errorMessage
+                   &MATH_DATATYPE&
+                   &: error when deallocating vmrCUDA "//errorMessage
            stop 1
          endif
        endif

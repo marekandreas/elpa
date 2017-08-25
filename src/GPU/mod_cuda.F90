@@ -201,14 +201,14 @@ module cuda_functions
 
       implicit none
 
-      integer(kind=C_intptr_T), value              :: dst
+      integer(kind=C_intptr_T), value                :: dst
       integer(kind=c_intptr_t), intent(in), value    :: dpitch
-      integer(kind=C_intptr_T), value              :: src
+      integer(kind=C_intptr_T), value                :: src
       integer(kind=c_intptr_t), intent(in), value    :: spitch
       integer(kind=c_intptr_t), intent(in), value    :: width
       integer(kind=c_intptr_t), intent(in), value    :: height
-      integer(kind=C_INT), intent(in), value       :: dir
-      integer(kind=C_INT)                          :: istat
+      integer(kind=C_INT), intent(in), value         :: dir
+      integer(kind=C_INT)                            :: istat
 
     end function cuda_memcpy2d_c
   end interface
