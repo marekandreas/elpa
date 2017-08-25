@@ -307,13 +307,7 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns,  &
-#if REALCASE == 1
-                       MPI_REAL_PRECISION,&
-#endif
-#if COMPLEXCASE == 1
-                             MPI_COMPLEX_PRECISION, &
-#endif
+              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_MATH_DATATYPE_PRECISION,&
            pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 
               call obj%timer%stop("mpi_communication")
@@ -400,13 +394,7 @@
 
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, &
-#if REALCASE == 1
-                             MPI_REAL_PRECISION,        &
-#endif
-#if COMPLEXCASE == 1
-                             MPI_COMPLEX_PRECISION,        &
-#endif
+          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_MATH_DATATYPE_PRECISION, &
                              MPI_SUM, mpi_comm_rows, mpierr)
           call obj%timer%stop("mpi_communication")
 
@@ -652,13 +640,7 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns,      &
-#if REALCASE == 1
-                       MPI_REAL_PRECISION,    &
-#endif
-#if COMPLEXCASE == 1
-                             MPI_COMPLEX_PRECISION, &
-#endif
+              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_MATH_DATATYPE_PRECISION,    &
            pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
 
               call obj%timer%stop("mpi_communication")
@@ -710,13 +692,7 @@
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
 
-              call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw,     &
-#if  REALCASE == 1
-                           MPI_REAL_PRECISION,    &
-#endif
-#if COMPLEXCASE == 1
-                                 MPI_COMPLEX_PRECISION,       &
-#endif
+              call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_MATH_DATATYPE_PRECISION,    &
          MPI_SUM, mpi_comm_rows, mpierr)
               call obj%timer%stop("mpi_communication")
         call obj%timer%start("blas")
@@ -772,16 +748,7 @@
 
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols,  &
-#if REALCASE == 1
-                       MPI_REAL_PRECISION,         &
-#endif
-#if COMPLEXCASE == 1
-                       MPI_COMPLEX_PRECISION,       &
-
-#endif
-           MPI_SUM, mpi_comm_rows ,mpierr)
-
+          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
           call obj%timer%stop("mpi_communication")
 
     call obj%timer%start("blas")
