@@ -343,12 +343,7 @@
 
           if (l_rows>0) then
       call obj%timer%start("cublas")
-#if REALCASE == 1
-            call cublas_PRECISION_GEMM('T', 'N',        &
-#endif
-#if COMPLEXCASE == 1
-            call cublas_PRECISION_GEMM('C', 'N',        &
-#endif
+            call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',        &
                                  n_cols, l_cols, l_rows, ONE, hvm_dev, max_local_rows, &
                                        q_dev, ldq , ZERO, tmp_dev, n_cols)
       call obj%timer%stop("cublas")
@@ -449,12 +444,7 @@
 !#endif /* WITH_MPI */
 
       call obj%timer%start("cublas")
-#if REALCASE == 1
-            call cublas_PRECISION_TRMM('L', 'U', 'T', 'N',       &
-#endif
-#if COMPLEXCASE == 1
-            call cublas_PRECISION_TRMM('L', 'U', 'C', 'N',      &
-#endif
+            call cublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',       &
                                         n_cols, l_cols, ONE, tmat_dev, nbw, tmp_dev, n_cols)
 
             call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, &
@@ -679,12 +669,7 @@
 
             if (i > 1) then
         call obj%timer%start("blas")
-#if REALCASE == 1
-              call PRECISION_GEMM('T', 'N',      &
-#endif
-#if COMPLEXCASE == 1
-              call PRECISION_GEMM('C', 'N',      &
-#endif
+              call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',      &
                            t_rows, t_cols, l_rows, ONE, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                                  max_local_rows, ZERO, t_tmp, cwy_blocking)
 
@@ -731,12 +716,7 @@
           if (l_rows>0) then
             call obj%timer%start("blas")
 
-#if REALCASE == 1
-            call PRECISION_GEMM('T', 'N',         &
-#endif
-#if COMPLEXCASE == 1
-            call PRECISION_GEMM('C', 'N',         &
-#endif
+            call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',         &
                           n_cols, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
                                 q, ldq, ZERO, tmp1, n_cols)
       call obj%timer%stop("blas")
@@ -756,23 +736,13 @@
           if (l_rows>0) then
 #ifdef BAND_TO_FULL_BLOCKING
 
-#if REALCASE == 1
-            call PRECISION_TRMM('L', 'U', 'T', 'N',        &
-#endif
-#if COMPLEXCASE == 1
-            call PRECISION_TRMM('L', 'U', 'C', 'N',        &
-#endif
+            call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                           n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp2, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp2, n_cols, ONE, q, ldq)
 
 #else /* BAND_TO_FULL_BLOCKING */
 
-#if REALCASE == 1
-            call PRECISION_TRMM('L', 'U', 'T', 'N',        &
-#endif
-#if COMPLEXCASE == 1
-            call PRECISION_TRMM('L', 'U', 'C', 'N',        &
-#endif
+            call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                                 n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp2, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
                                 tmp2, n_cols, ONE, q, ldq)
@@ -786,25 +756,12 @@
     call obj%timer%start("blas")
           if (l_rows>0) then
 #ifdef BAND_TO_FULL_BLOCKING
-
-#if REALCASE == 1
-            call PRECISION_TRMM('L', 'U', 'T', 'N',        &
-#endif
-#if COMPLEXCASE == 1
-            call PRECISION_TRMM('L', 'U', 'C', 'N',        &
-#endif
+            call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                                 n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp1, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp1, n_cols, ONE, q, ldq)
-
-
 #else /* BAND_TO_FULL_BLOCKING */
 
-#if REALCASE == 1
-            call PRECISION_TRMM('L', 'U', 'T', 'N',        &
-#endif
-#if COMPLEXCASE == 1
-            call PRECISION_TRMM('L', 'U', 'C', 'N',        &
-#endif
+            call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                                 n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
                                 tmp1, n_cols, ONE, q, ldq)
