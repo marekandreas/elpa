@@ -176,48 +176,48 @@
         allocate(tmp1(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating tmp1 "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating tmp1 "//errorMessage
           stop 1
         endif
 
         allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating tmp2 "//errorMessage
+                   &MATH_DATATYPE&
+                   &: error when allocating tmp2 "//errorMessage
           stop 1
         endif
 
         allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating hvb "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating hvb "//errorMessage
           stop 1
         endif
 
         allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating hvm "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating hvm "//errorMessage
           stop 1
         endif
 
         successCUDA = cuda_malloc(hvm_dev, (max_local_rows)*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error in cudaMalloc"
+                  &MATH_DATATYPE&
+                  &: error in cudaMalloc"
           stop 1
         endif
 
         successCUDA = cuda_malloc(tmp_dev, (max_local_cols)*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error in cudaMalloc"
+                  &MATH_DATATYPE&
+                  &: error in cudaMalloc"
           stop 1
         endif
 
@@ -275,8 +275,8 @@
         successCUDA = cuda_memset(hvm_dev, 0, (max_local_rows)*(nbw)* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error in cudaMalloc"
+                  &MATH_DATATYPE&
+                  &: error in cudaMalloc"
           stop 1
         endif
 
@@ -342,11 +342,11 @@
           ! Q = Q - V * T**T * V**T * Q
 
           if (l_rows>0) then
-      call obj%timer%start("cublas")
+            call obj%timer%start("cublas")
             call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',        &
                                  n_cols, l_cols, l_rows, ONE, hvm_dev, max_local_rows, &
                                        q_dev, ldq , ZERO, tmp_dev, n_cols)
-      call obj%timer%stop("cublas")
+            call obj%timer%stop("cublas")
 
 #if REALCASE == 1
 #ifdef WITH_MPI
@@ -413,8 +413,8 @@
               cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_&
-        &MATH_DATATYPE&
-        &: error in cudaMemcpy"
+                      &MATH_DATATYPE&
+                      &: error in cudaMemcpy"
               stop 1
             endif
 #else /* WITH_MPI */
@@ -430,26 +430,26 @@
 #endif /* WITH_MPI */
 
 !#ifdef WITH_MPI
-           ! IMPORTANT: even though tmat_dev is transfered from the previous rutine, we have to copy from tmat again 
-           ! tmat is 3-dimensional array, while tmat_dev contains only one 2-dimensional slice of it - and here we 
+           ! IMPORTANT: even though tmat_dev is transfered from the previous rutine, we have to copy from tmat again
+           ! tmat is 3-dimensional array, while tmat_dev contains only one 2-dimensional slice of it - and here we
            ! need to upload another slice
            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_datatype, cudaMemcpyHostToDevice)
 
            if (.not.(successCUDA)) then
              print *,"trans_ev_band_to_full_&
-        &MATH_DATATYPE&
-        &: error in cudaMemcpy"
+                     &MATH_DATATYPE&
+                     &: error in cudaMemcpy"
              stop 1
            endif
 !#endif /* WITH_MPI */
 
-      call obj%timer%start("cublas")
+            call obj%timer%start("cublas")
             call cublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',       &
                                         n_cols, l_cols, ONE, tmat_dev, nbw, tmp_dev, n_cols)
 
             call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, &
                                        tmp_dev, n_cols, one, q_dev, ldq)
-      call obj%timer%stop("cublas")
+            call obj%timer%stop("cublas")
 
 #if REALCASE == 1
             ! copy to host maybe this can be avoided
@@ -487,32 +487,32 @@
         allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating tmp1 "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating tmp1 "//errorMessage
           stop 1
         endif
 
         allocate(tmp2(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating tmp2 "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating tmp2 "//errorMessage
           stop 1
         endif
 
         allocate(hvb(max_local_rows*cwy_blocking), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating hvb "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating hvb "//errorMessage
           stop 1
         endif
 
         allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating hvm "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating hvm "//errorMessage
           stop 1
         endif
 
@@ -521,31 +521,31 @@
         allocate(tmp1(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating tmp1 "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating tmp1 "//errorMessage
           stop 1
         endif
 
         allocate(tmp2(max_local_cols*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&: error when allocating tmp2 "//errorMessage
+                  &MATH_DATATYPE&: error when allocating tmp2 "//errorMessage
           stop 1
         endif
 
         allocate(hvb(max_local_rows*nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating hvb "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating hvb "//errorMessage
           stop 1
         endif
 
         allocate(hvm(max_local_rows,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating hvm "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating hvm "//errorMessage
           stop 1
         endif
 #endif /* BAND_TO_FULL_BLOCKING */
@@ -554,22 +554,22 @@
         allocate(tmat_complete(cwy_blocking,cwy_blocking), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating tmat_complete "//errorMessage
+                   &MATH_DATATYPE&
+                   &: error when allocating tmat_complete "//errorMessage
           stop 1
         endif
         allocate(t_tmp(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating t_tmp "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating t_tmp "//errorMessage
           stop 1
         endif
         allocate(t_tmp2(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when allocating t_tmp2 "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating t_tmp2 "//errorMessage
           stop 1
         endif
 #endif
@@ -668,33 +668,33 @@
             tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*t_blocking + i)
 
             if (i > 1) then
-        call obj%timer%start("blas")
+              call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',      &
                            t_rows, t_cols, l_rows, ONE, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
                                  max_local_rows, ZERO, t_tmp, cwy_blocking)
 
-            call obj%timer%stop("blas")
+              call obj%timer%stop("blas")
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
 
               call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_MATH_DATATYPE_PRECISION,    &
-         MPI_SUM, mpi_comm_rows, mpierr)
+                                 MPI_SUM, mpi_comm_rows, mpierr)
               call obj%timer%stop("mpi_communication")
-        call obj%timer%start("blas")
+              call obj%timer%start("blas")
               call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, ONE, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
               call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -ONE, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp2, cwy_blocking)
-             call obj%timer%stop("blas")
+              call obj%timer%stop("blas")
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
 
 #else /* WITH_MPI */
 !              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
-        call obj%timer%start("blas")
+              call obj%timer%start("blas")
               call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, ONE, tmat_complete, cwy_blocking, t_tmp, cwy_blocking)
               call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -ONE, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
                          t_tmp, cwy_blocking)
-        call obj%timer%stop("blas")
+              call obj%timer%stop("blas")
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
 
@@ -719,7 +719,7 @@
             call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',         &
                           n_cols, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
                                 q, ldq, ZERO, tmp1, n_cols)
-      call obj%timer%stop("blas")
+            call obj%timer%stop("blas")
 
           else ! l_rows>0
 
@@ -731,7 +731,7 @@
           call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
           call obj%timer%stop("mpi_communication")
 
-    call obj%timer%start("blas")
+          call obj%timer%start("blas")
 
           if (l_rows>0) then
 #ifdef BAND_TO_FULL_BLOCKING
@@ -750,10 +750,10 @@
 #endif /* BAND_TO_FULL_BLOCKING */
 
           endif
-    call obj%timer%stop("blas")
+          call obj%timer%stop("blas")
 #else /* WITH_MPI */
 !          tmp2 = tmp1
-    call obj%timer%start("blas")
+          call obj%timer%start("blas")
           if (l_rows>0) then
 #ifdef BAND_TO_FULL_BLOCKING
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
@@ -768,7 +768,7 @@
 
 #endif  /* BAND_TO_FULL_BLOCKING */
           endif
-    call obj%timer%stop("blas")
+          call obj%timer%stop("blas")
 #endif /* WITH_MPI */
 
 !          if (l_rows>0) then
@@ -783,8 +783,8 @@
       deallocate(tmp1, tmp2, hvb, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"trans_ev_band_to_full_&
-  &MATH_DATATYPE&
-  &: error when deallocating tmp1 tmp2 hvb "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating tmp1 tmp2 hvb "//errorMessage
         stop 1
       endif
 
@@ -792,24 +792,24 @@
         successCUDA = cuda_free(hvm_dev)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-          &: error in cudaFree"
+                  &MATH_DATATYPE&
+                  &: error in cudaFree"
           stop 1
         endif
 
         successCUDA = cuda_free(tmp_dev)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-          &: error in cudaFree"
+                  &MATH_DATATYPE&
+                  &: error in cudaFree"
           stop 1
         endif
 
         successCUDA = cuda_free(tmat_dev)
         if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-          &: error in cudaFree"
+                  &MATH_DATATYPE&
+                  &: error in cudaFree"
           stop 1
         endif
 
@@ -818,8 +818,8 @@
 
          if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-          &: error in cudamemcpu q_dev"
+                  &MATH_DATATYPE&
+                  &: error in cudamemcpu q_dev"
           stop 1
          endif
 
@@ -828,8 +828,8 @@
          successCUDA = cuda_free(q_dev)
          if (.not.(successCUDA)) then
            print *,"trans_ev_band_to_full_&
-     &MATH_DATATYPE&
-           &: error in cudaFree"
+                   &MATH_DATATYPE&
+                   &: error in cudaFree"
            stop 1
          endif
 
@@ -849,8 +849,8 @@
       deallocate(hvm, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"trans_ev_band_to_full_&
-  &MATH_DATATYPE&
-  &: error when deallocating hvm "//errorMessage
+                &MATH_DATATYPE&
+                &: error when deallocating hvm "//errorMessage
         stop 1
       endif
 
@@ -859,8 +859,8 @@
         deallocate(tmat_complete, t_tmp, t_tmp2, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"trans_ev_band_to_full_&
-    &MATH_DATATYPE&
-    &: error when deallocating tmat_complete, t_tmp, t_tmp2 "//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when deallocating tmat_complete, t_tmp, t_tmp2 "//errorMessage
           stop 1
         endif
       endif
