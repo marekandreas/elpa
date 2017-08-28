@@ -56,8 +56,8 @@ error: define exactly one of TEST_REAL or TEST_COMPLEX
 error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #endif
 
-#if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE) ^ defined(TEST_SCALAPACK_ALL))
-error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE or TEST_SCALAPACK_ALL
+#if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE) ^ defined(TEST_SCALAPACK_ALL) ^ defined(TEST_SCALAPACK_PART))
+error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE or TEST_SCALAPACK_ALL or TEST_SCALAPACK_PART
 #endif
 
 #ifdef TEST_SOLVER_1STAGE
@@ -434,6 +434,8 @@ program test
      call e%timer_start("e%eigenvectors()")
 #ifdef TEST_SCALAPACK_ALL
      call solve_scalapack_all(na, a, sc_desc, ev, z)
+#elif TEST_SCALAPACK_PART
+     call solve_scalapack_part(na, a, sc_desc, nev, ev, z)
 #else
      call e%eigenvectors(a, ev, z, error)
 #endif

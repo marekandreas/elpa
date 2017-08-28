@@ -14,6 +14,7 @@ solver_flag = {
         "1stage" : "-DTEST_SOLVER_1STAGE",
         "2stage" : "-DTEST_SOLVER_2STAGE",
         "scalapack_all" : "-DTEST_SCALAPACK_ALL",
+        "scalapack_part" : "-DTEST_SCALAPACK_PART",
 }
 gpu_flag = {
         0 : "-DTEST_GPU=0",
@@ -50,7 +51,7 @@ for m, g, t, p, d, s, l in product(
     if(m == "analytic" and (g == 1 or t != "eigenvectors")):
         continue
 
-    if(s == "scalapack_all" and (g == 1 or t != "eigenvectors" or m != "analytic")):
+    if(s in ["scalapack_all", "scalapack_part"]  and (g == 1 or t != "eigenvectors" or m != "analytic")):
         continue
 
     if (t == "solve_tridiagonal" and (s == "2stage" or d == "complex")):
@@ -80,7 +81,7 @@ for m, g, t, p, d, s, l in product(
             print("if WITH_MPI")
             endifs += 1
 
-        if (s == "scalapack_all"):
+        if (s in ["scalapack_all", "scalapack_part"]):
             print("if WITH_SCALAPACK_TESTS")
             endifs += 1
 

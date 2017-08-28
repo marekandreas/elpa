@@ -41,6 +41,7 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 
+#include "../Fortran/assert.h"
 #include "config-f90.h"
 
 module test_scalapack
@@ -54,6 +55,17 @@ module test_scalapack
 #endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     module procedure solve_pcheevd
+#endif
+  end interface
+
+  interface solve_scalapack_part
+    module procedure solve_pdsyevr
+    module procedure solve_pzheevr
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure solve_pssyevr
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure solve_pcheevr
 #endif
   end interface
 
