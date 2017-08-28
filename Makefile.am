@@ -670,6 +670,11 @@ EXTRA_DIST += \
   src/elpa1/legacy_interface/elpa_solve_tridi.F90
 endif
 
+if WITH_SCALAPACK_TESTS
+EXTRA_DIST += \
+  test/shared/test_scalapack_template.F90
+endif
+
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool

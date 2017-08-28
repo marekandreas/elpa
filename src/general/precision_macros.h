@@ -3,6 +3,8 @@
 #undef SINGLE_PRECSION_REAL
 #undef  MATH_DATATYPE
 #undef  BLAS_TRANS_OR_CONJ
+#undef  BLAS_CHAR
+#undef  BLAS_CHAR_AND_SY_OR_HE
 #undef  PRECISION
 #undef  SPECIAL_COMPLEX_DATATYPE
 #undef  PRECISION_STR
@@ -65,6 +67,8 @@
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
 #define  REAL_DATATYPE rk8
+#define  BLAS_CHAR D
+#define BLAS_CHAR_AND_SY_OR_HE DSY
 #define  SPECIAL_COMPLEX_DATATYPE ck8
 
 #define  PRECISION_TRTRI DTRTRI
@@ -121,6 +125,8 @@
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
 #define  REAL_DATATYPE rk4
+#define  BLAS_CHAR S
+#define  BLAS_CHAR_AND_SY_OR_HE SSY
 #define  SPECIAL_COMPLEX_DATATYPE ck4
 
 #define  PRECISION_TRTRI STRTRI
@@ -177,6 +183,8 @@
 #undef SINGLE_PRECISION_COMPLEX
 #undef  MATH_DATATYPE
 #undef  BLAS_TRANS_OR_CONJ
+#undef  BLAS_CHAR
+#undef  BLAS_CHAR_AND_SY_OR_HE
 #undef  PRECISION
 #undef COMPLEX_DATATYPE
 /* in the complex case also sometime real valued variables are needed */
@@ -241,7 +249,6 @@
 /* General definitions needed in single and double case */
 #define  MATH_DATATYPE complex
 #define  BLAS_TRANS_OR_CONJ 'C'
-
 #ifdef DOUBLE_PRECISION
 
 #define DOUBLE_PRECISION_COMPLEX
@@ -249,6 +256,8 @@
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
 #define COMPLEX_DATATYPE CK8
+#define BLAS_CHAR Z
+#define BLAS_CHAR_AND_SY_OR_HE ZHE
 #define REAL_DATATYPE RK8
 
 #define  PRECISION_TRTRI ZTRTRI
@@ -311,6 +320,8 @@
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
 #define COMPLEX_DATATYPE CK4
+#define BLAS_CHAR C
+#define BLAS_CHAR_AND_SY_OR_HE CHE
 #define REAL_DATATYPE RK4
 
 #define  PRECISION_TRTRI CTRTRI

@@ -41,59 +41,58 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 
-#include "config-f90.h"
 
-module test_scalapack
-  use test_util
+  subroutine solve_p&
+      &BLAS_CHAR_AND_SY_OR_HE&
+      &evd(na, a, sc_desc, ev, z)
+    implicit none
+#include "../../src/general/precision_kinds.F90"
+    integer(kind=ik), intent(in)     :: na
+    MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:)
+    MATH_DATATYPE(kind=rck), intent(inout)    :: z(:,:)
+    real(kind=rk), intent(inout)    :: ev(:)
+    integer(kind=ik), intent(in)     :: sc_desc(:)
+    integer(kind=ik)                 :: info, lwork, liwork, lrwork
+    MATH_DATATYPE(kind=rck), allocatable      :: work(:)
+    real(kind=rk), allocatable       :: rwork(:)
+    integer, allocatable             :: iwork(:)
 
-  interface solve_scalapack_all
-    module procedure solve_pdsyevd
-    module procedure solve_pzheevd
-#ifdef WANT_SINGLE_PRECISION_REAL
-    module procedure solve_pssyevd
+    allocate(work(1), iwork(1), rwork(1))
+
+    ! query for required workspace
+#ifdef REALCASE
+    call p&
+         &BLAS_CHAR&
+         &syevd('V', 'U', na, a, 1, 1, sc_desc, ev, z, 1, 1, sc_desc, work, -1, iwork, -1, info)
 #endif
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-    module procedure solve_pcheevd
+#ifdef COMPLEXCASE
+    call p&
+         &BLAS_CHAR&
+         &heevd('V', 'U', na, a, 1, 1, sc_desc, ev, z, 1, 1, sc_desc, work, -1, rwork, -1, iwork, -1, info)
 #endif
-  end interface
+    !  write(*,*) "computed sizes", lwork, liwork, "required sizes ", work(1), iwork(1)
+    lwork = work(1)
+    liwork = iwork(1)
+    deallocate(work, iwork)
+    allocate(work(lwork), stat = info)
+    allocate(iwork(liwork), stat = info)
+#ifdef COMPLEXCASE
+    lrwork = rwork(1)
+    deallocate(rwork)
+    allocate(rwork(lrwork), stat = info)
+#endif
+    ! the actuall call to the method
+#ifdef REALCASE
+    call p&
+         &BLAS_CHAR&
+         &syevd('V', 'U', na, a, 1, 1, sc_desc, ev, z, 1, 1, sc_desc, work, lwork, iwork, liwork, info)
+#endif
+#ifdef COMPLEXCASE
+    call p&
+         &BLAS_CHAR&
+         &heevd('V', 'U', na, a, 1, 1, sc_desc, ev, z, 1, 1, sc_desc, work, lwork, rwork, lrwork, iwork, liwork, info)
+#endif
 
-contains
+    deallocate(iwork, work, rwork)
+  end subroutine
 
-#define COMPLEXCASE 1
-#define DOUBLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "test_scalapack_template.F90"
-#undef DOUBLE_PRECISION
-#undef COMPLEXCASE
-
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-
-#define COMPLEXCASE 1
-#define SINGLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "test_scalapack_template.F90"
-#undef SINGLE_PRECISION
-#undef COMPLEXCASE
-
-#endif /* WANT_SINGLE_PRECISION_COMPLEX */
-
-#define REALCASE 1
-#define DOUBLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "test_scalapack_template.F90"
-#undef DOUBLE_PRECISION
-#undef REALCASE
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-
-#define REALCASE 1
-#define SINGLE_PRECISION 1
-#include "../../src/general/precision_macros.h"
-#include "test_scalapack_template.F90"
-#undef SINGLE_PRECISION
-#undef REALCASE
-
-#endif /* WANT_SINGLE_PRECISION_REAL */
-
-
-end module

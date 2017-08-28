@@ -50,7 +50,7 @@ for m, g, t, p, d, s, l in product(
     if(m == "analytic" and (g == 1 or t != "eigenvectors")):
         continue
 
-    if(s == "scalapack_all" and (g == 1 or t != "eigenvectors" or p == "single" or d == "complex" or m != "analytic")):
+    if(s == "scalapack_all" and (g == 1 or t != "eigenvectors" or m != "analytic")):
         continue
 
     if (t == "solve_tridiagonal" and (s == "2stage" or d == "complex")):
