@@ -225,13 +225,6 @@
 #endif
 #endif
 
-#if COMPLEXCASE == 1
-#ifdef WITH_MPI
-      integer(kind=ik), external               :: numroc
-#endif
-      integer(kind=ik)                         :: na_rows, na_cols
-#endif
-
       ! MPI send/recv tags, arbitrary
 
       integer(kind=ik), parameter              :: bottom_recv_tag = 111
@@ -269,10 +262,8 @@
       &PRECISION_SUFFIX &
       )
 
+      n_times = 0
       if (useGPU) then
-#if COMPLEXCASE == 1
-        n_times = 0
-#endif
         unpack_idx = 0
         row_group_size = 0
       endif
@@ -292,27 +283,15 @@
       call MPI_Comm_size(mpi_comm_cols, np_cols, mpierr)
       if (wantDebug) call obj%timer%stop("mpi_communication")
 
-#if COMPLEXCASE == 1
-      if (useGPU) then
-#ifdef WITH_MPI
-        na_rows = numroc(na, nblk, my_prow, 0, np_rows)
-        na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
-#else
-        na_rows = na
-        na_cols = na
-#endif
-      endif
-#endif /* COMPLEXCASE */
-
       if (mod(nbw,nblk)/=0) then
         if (my_prow==0 .and. my_pcol==0) then
           if (wantDebug) then
             write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_&
-      &MATH_DATATYPE&
-      &: ERROR: nbw=',nbw,', nblk=',nblk
+                                &MATH_DATATYPE&
+                                &: ERROR: nbw=',nbw,', nblk=',nblk
             write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_&
-      &MATH_DATATYPE&
-      &: band backtransform works only for nbw==n*nblk'
+                                &MATH_DATATYPE&
+                                &: band backtransform works only for nbw==n*nblk'
           endif
           success = .false.
           return
@@ -338,7 +317,7 @@
 #if WITH_OPENMP
         ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
         ! every primary cache
-  ! Suggested stripe width is 48 - should this be reduced for the complex case ???
+        ! Suggested stripe width is 48 - should this be reduced for the complex case ???
 
         if (useGPU) then
           stripe_width = 256 ! Must be a multiple of 4
@@ -371,7 +350,7 @@
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
           if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
-        kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
               kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
@@ -383,7 +362,7 @@
           endif
 #else
           if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
-        kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
               kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
 
@@ -400,7 +379,7 @@
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
           if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-        kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+              kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
                                             ! (4 * sizeof(double complex) == 64)
@@ -413,7 +392,7 @@
 #else
 
           if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-        kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+              kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                             ! (8 * sizeof(float complex) == 64)
@@ -439,8 +418,7 @@
 
         ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
         ! every primary cache
-  ! Suggested stripe width is 48 - should this be reduced for the complex case ???
-
+        ! Suggested stripe width is 48 - should this be reduced for the complex case ???
 
         if (useGPU) then
           stripe_width = 256 ! Must be a multiple of 4
@@ -472,7 +450,7 @@
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
           if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
-        kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
               kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
@@ -484,7 +462,7 @@
           endif
 #else
           if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
-        kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
               kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
 
 
@@ -502,7 +480,7 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
 
           if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-        kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+              kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
                                             ! (4 * sizeof(double complex) == 64)
@@ -515,7 +493,7 @@
 #else
 
           if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-        kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+              kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
 
             stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                             ! (8 * sizeof(float complex) == 64)
@@ -538,8 +516,8 @@
       allocate(limits(0:np_rows), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"trans_ev_tridi_to_band_&
-  &MATH_DATATYPE&
-  &: error when allocating limits"//errorMessage
+                &MATH_DATATYPE&
+                &: error when allocating limits"//errorMessage
         stop 1
       endif
       call determine_workload(obj,na, nbw, np_rows, limits)
@@ -741,10 +719,10 @@
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-          call unpack_row_&
-&MATH_DATATYPE&
-&_cpu_openmp_&
-&PRECISION &
+                call unpack_row_&
+                     &MATH_DATATYPE&
+                     &_cpu_openmp_&
+                     &PRECISION &
                                   (obj,aIntern, row, i-limits(ip), my_thread, stripe_count, &
                                    thread_width, stripe_width, l_nev)
 
@@ -756,10 +734,10 @@
 #else /* WITH_OPENMP */
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
-    call unpack_and_prepare_row_group_&
-    &MATH_DATATYPE&
-    &_gpu_&
-    &PRECISION &
+                call unpack_and_prepare_row_group_&
+                &MATH_DATATYPE&
+                &_gpu_&
+                &PRECISION &
                               ( &
                               row_group, row_group_dev, aIntern_dev, stripe_count, &
                                           stripe_width, last_stripe_width, a_dim2, l_nev,&
@@ -801,9 +779,9 @@
 #endif /* WITH_MPI */
 
                 call unpack_row_&
-                &MATH_DATATYPE&
-                &_cpu_&
-                &PRECISION &
+                     &MATH_DATATYPE&
+                     &_cpu_&
+                     &PRECISION &
                                 (obj,aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
               endif ! useGPU
 #endif /* WITH_OPENMP */
@@ -817,9 +795,9 @@
 
                  ! An unpacking of the current row group may occur before queuing the next row
                  call unpack_and_prepare_row_group_&
-     &MATH_DATATYPE&
-     &_gpu_&
-     &PRECISION &
+                      &MATH_DATATYPE&
+                      &_gpu_&
+                      &PRECISION &
                   ( &
                                row_group, row_group_dev, aIntern_dev, stripe_count, &
                                stripe_width, last_stripe_width, a_dim2, l_nev,&
@@ -839,11 +817,11 @@
 #if COMPLEXCASE == 1
 ! why is an cuda call in the openmp region?
                 call unpack_and_prepare_row_group_complex_gpu_&
-    &PRECISION&
-    &(row_group, row_group_dev, aIntern_dev, stripe_count, stripe_width, &
-      last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
-      unpack_idx, i - limits(ip),.false.)
-                row_group(:, row_group_size) = q(src_offset, 1:l_nev)
+                     &PRECISION&
+                     &(row_group, row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+                      last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
+                      unpack_idx, i - limits(ip),.false.)
+                      row_group(:, row_group_size) = q(src_offset, 1:l_nev)
 #endif
 
 #endif /* not OpenMP */
@@ -856,10 +834,10 @@
 
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-          call unpack_row_&
-                &MATH_DATATYPE&
-                &_cpu_openmp_&
-                &PRECISION &
+                call unpack_row_&
+                     &MATH_DATATYPE&
+                     &_cpu_openmp_&
+                     &PRECISION &
                                    (obj,aIntern, row, i-limits(ip), my_thread, stripe_count, thread_width, stripe_width, l_nev)
 
               enddo
@@ -872,10 +850,10 @@
               if (useGPU) then
 
               else
-          call unpack_row_&
-                &MATH_DATATYPE&
-                &_cpu_&
-                &PRECISION &
+                call unpack_row_&
+                     &MATH_DATATYPE&
+                     &_cpu_&
+                     &PRECISION &
                                 (obj,aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
               endif
 
@@ -958,10 +936,10 @@
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 !$omp parallel do private(my_thread), schedule(static, 1)
               do my_thread = 1, max_threads
-          call unpack_row_&
-                &MATH_DATATYPE&
-                &_cpu_openmp_&
-                &PRECISION &
+                call unpack_row_&
+                     &MATH_DATATYPE&
+                     &_cpu_openmp_&
+                     &PRECISION &
                                  (obj,aIntern, row, i-limits(my_prow), my_thread, stripe_count, thread_width, stripe_width, l_nev)
               enddo
 !$omp end parallel do
@@ -971,10 +949,10 @@
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
                 call unpack_and_prepare_row_group_&
-    &MATH_DATATYPE&
-    &_gpu_&
-    &PRECISION&
-    &( &
+                     &MATH_DATATYPE&
+                     &_gpu_&
+                     &PRECISION&
+                     &( &
                   row_group, row_group_dev, aIntern_dev, stripe_count,  &
                   stripe_width, last_stripe_width, a_dim2, l_nev,       &
                   row_group_size, nblk, unpack_idx,                     &
@@ -1024,9 +1002,9 @@
 
 #endif
                 call unpack_row_&
-                &MATH_DATATYPE&
-                &_cpu_&
-                &PRECISION &
+                     &MATH_DATATYPE&
+                     &_cpu_&
+                     &PRECISION &
                                 (obj,aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
               endif ! useGPU
 
@@ -1040,10 +1018,10 @@
       if (useGPU) then
         ! Force an unpacking of all remaining rows that haven't been unpacked yet
         call unpack_and_prepare_row_group_&
-  &MATH_DATATYPE&
-  &_gpu_&
-  &PRECISION&
-  &( &
+             &MATH_DATATYPE&
+             &_gpu_&
+             &PRECISION&
+             &( &
           row_group, row_group_dev, aIntern_dev, stripe_count, &
           stripe_width, last_stripe_width, &
           a_dim2, l_nev, row_group_size, nblk, unpack_idx,     &
@@ -1450,9 +1428,9 @@
             endif
 
             call extract_hh_tau_&
-      &MATH_DATATYPE&
-      &_gpu_&
-      &PRECISION &
+                 &MATH_DATATYPE&
+                 &_gpu_&
+                 &PRECISION &
 !#if REALCASE == 1
                           (bcast_buffer_dev, hh_tau_dev, nbw, &
 !#endif
@@ -1461,9 +1439,9 @@
 !#endif
                            current_local_n, .false.)
       call compute_hh_dot_products_&
-      &MATH_DATATYPE&
-      &_gpu_&
-      &PRECISION &
+           &MATH_DATATYPE&
+           &_gpu_&
+           &PRECISION &
                      (bcast_buffer_dev, hh_dot_dev, nbw, &
                             current_local_n)
           endif ! useGPU
@@ -1487,10 +1465,10 @@
             endif
 
             call extract_hh_tau_&
-      &MATH_DATATYPE&
-      &_gpu_&
-      &PRECISION&
-      &( &
+                 &MATH_DATATYPE&
+                 &_gpu_&
+                 &PRECISION&
+                 &( &
         bcast_buffer_dev, hh_tau_dev, &
         nbw, 1, .true.)
           endif ! useGPU
@@ -1549,18 +1527,18 @@
 #endif
 
 #if COMPLEXCASE == 1
-                call obj%timer%start("OpenMP parallel_PRECISION")
+              call obj%timer%start("OpenMP parallel_PRECISION")
 
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-                do my_thread = 1, max_threads
-                  n_off = current_local_n+a_off
-                  b_len = csw*nbw
-                  b_off = (my_thread-1)*b_len
-                  aIntern(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
-                     reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
-                enddo
+              do my_thread = 1, max_threads
+                n_off = current_local_n+a_off
+                b_len = csw*nbw
+                b_off = (my_thread-1)*b_len
+                aIntern(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
+                   reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
+              enddo
 !$omp end parallel do
-                call obj%timer%stop("OpenMP parallel_PRECISION")
+              call obj%timer%stop("OpenMP parallel_PRECISION")
 #endif
 
 #else /* WITH_OPENMP */
@@ -1651,8 +1629,8 @@
 #ifdef WITH_OPENMP
              if (useGPU) then
                print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: not yet implemented"
+                       &MATH_DATATYPE&
+                       &: not yet implemented"
                stop 1
              endif
 #ifdef WITH_MPI
@@ -1678,8 +1656,8 @@
              cudaMemcpyHostToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_&
-     &MATH_DATATYPE&
-     &: error in cudaMemcpy"
+                         &MATH_DATATYPE&
+                         &: error in cudaMemcpy"
                  stop 1
                 endif
              else ! useGPU
@@ -1703,9 +1681,9 @@
              endif
 
        call compute_hh_trafo_&
-       &MATH_DATATYPE&
-       &_openmp_&
-       &PRECISION &
+            &MATH_DATATYPE&
+            &_openmp_&
+            &PRECISION &
                               (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
@@ -1720,9 +1698,9 @@
 #else /* WITH_OPENMP */
 
            call compute_hh_trafo_&
-     &MATH_DATATYPE&
-     &_&
-     &PRECISION&
+                &MATH_DATATYPE&
+                &_&
+                &PRECISION&
      & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
               a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
@@ -1832,13 +1810,13 @@
          endif
          call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
-!$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
+        !$omp parallel do private(my_thread, b_len, b_off), schedule(static, 1)
         do my_thread = 1, max_threads
 
           call compute_hh_trafo_&
-    &MATH_DATATYPE&
-    &_openmp_&
-    &PRECISION&
+               &MATH_DATATYPE&
+               &_openmp_&
+               &PRECISION&
     & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
       nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
@@ -1885,9 +1863,9 @@
 #else /* WITH_OPENMP */
 
         call compute_hh_trafo_&
-  &MATH_DATATYPE&
-  &_&
-  &PRECISION&
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION&
   & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
            a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
@@ -1980,10 +1958,10 @@
 
 !$omp parallel do private(my_thread), schedule(static, 1)
         do my_thread = 1, max_threads
-    call compute_hh_trafo_&
-    &MATH_DATATYPE&
-    &_openmp_&
-    &PRECISION&
+          call compute_hh_trafo_&
+          &MATH_DATATYPE&
+          &_openmp_&
+          &PRECISION&
     & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
        nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
@@ -1999,9 +1977,9 @@
 #else /* WITH_OPENMP */
 
         call compute_hh_trafo_&
-  &MATH_DATATYPE&
-  &_&
-  &PRECISION&
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION&
   & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
            a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
@@ -2053,8 +2031,8 @@
                cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
-        &MATH_DATATYPE&
-        &: error in cudaMemcpy"
+                      &MATH_DATATYPE&
+                      &: error in cudaMemcpy"
               stop 1
             endif
           else
@@ -2077,9 +2055,9 @@
               reshape(top_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, top_msg_length /))
           endif
           call compute_hh_trafo_&
-    &MATH_DATATYPE&
-    &_openmp_&
-    &PRECISION&
+               &MATH_DATATYPE&
+               &_openmp_&
+               &PRECISION&
     & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
        nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
@@ -2094,9 +2072,9 @@
 #else /* WITH_OPENMP */
 
         call compute_hh_trafo_&
-  &MATH_DATATYPE&
-  &_&
-  &PRECISION&
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION&
   & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
            a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
 #if REALCASE == 1
@@ -2215,8 +2193,8 @@
              cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_&
-      &MATH_DATATYPE&
-      &: error in cudaMemcpy"
+                    &MATH_DATATYPE&
+                    &: error in cudaMemcpy"
             stop 1
           endif
 
@@ -2306,9 +2284,9 @@
           if (useGPU) then
             row_group_size = min(na - num_blk*nblk, nblk)
             call pack_row_group_&
-      &MATH_DATATYPE&
-      &_gpu_&
-      &PRECISION&
+                 &MATH_DATATYPE&
+                 &_gpu_&
+                 &PRECISION&
       &( &
               row_group_dev, aIntern_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
               row_group(:, :), j * nblk + a_off, row_group_size)
@@ -2326,7 +2304,7 @@
 #if COMPLEXCASE == 1
               call pack_row_complex_cpu_openmp_&
 #endif
-        &PRECISION&
+                   &PRECISION&
         &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else /* WITH_OPENMP */
 
@@ -2336,7 +2314,7 @@
 #if COMPLEXCASE == 1
               call pack_row_complex_cpu_&
 #endif
-        &PRECISION&
+                   &PRECISION&
         &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif /* WITH_OPENMP */
               q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
@@ -2347,9 +2325,9 @@
 
           if (useGPU) then
       call pack_row_group_&
-      &MATH_DATATYPE&
-      &_gpu_&
-      &PRECISION&
+           &MATH_DATATYPE&
+           &_gpu_&
+           &PRECISION&
       &( &
               row_group_dev, aIntern_dev, stripe_count, stripe_width, &
               last_stripe_width, a_dim2, l_nev, &
@@ -2376,7 +2354,7 @@
 #if COMPLEXCASE == 1
               call pack_row_complex_cpu_&
 #endif
-        &PRECISION&
+                   &PRECISION&
         &(obj, aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif /* WITH_OPENMP */
             enddo
@@ -2478,8 +2456,8 @@
     offset = nbw - top_msg_length
     if (offset<0) then
       if (wantDebug) write(error_unit,*) 'ELPA2_trans_ev_tridi_to_band_&
-      &MATH_DATATYPE&
-      &: internal error, offset for shifting = ',offset
+                                         &MATH_DATATYPE&
+                                         &: internal error, offset for shifting = ',offset
       success = .false.
       return
     endif
@@ -2521,8 +2499,8 @@
                                          stripe_width*this_chunk* size_of_datatype, cudaMemcpyDeviceToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_&
-     &MATH_DATATYPE&
-     &: error cudaMemcpy"
+                         &MATH_DATATYPE&
+                         &: error cudaMemcpy"
                  stop 1
                endif
              enddo
@@ -2585,8 +2563,8 @@
         successCUDA = cuda_malloc(q_dev, ldq*matrixCols* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
-    &MATH_DATATYPE&
-    &: error in cudaMalloc"
+                  &MATH_DATATYPE&
+                  &: error in cudaMalloc"
           stop 1
         endif
 
@@ -2595,8 +2573,8 @@
                   cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_&
-            &MATH_DATATYPE&
-            &: error in cudaMalloc"
+                    &MATH_DATATYPE&
+                    &: error in cudaMalloc"
             stop 1
           endif
 !        endif
@@ -2618,64 +2596,64 @@
      deallocate(row, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating row "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating row "//errorMessage
        stop 1
      endif
 
      deallocate(limits, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating limits"//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating limits"//errorMessage
        stop 1
      endif
 
      deallocate(result_send_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating result_send_request "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating result_send_request "//errorMessage
        stop 1
      endif
 
      deallocate(result_recv_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating result_recv_request "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating result_recv_request "//errorMessage
        stop 1
      endif
 
      deallocate(top_border_send_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating top_border_send_buffer "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating top_border_send_buffer "//errorMessage
        stop 1
      endif
 
      deallocate(top_border_recv_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating top_border_recv_buffer "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating top_border_recv_buffer "//errorMessage
        stop 1
      endif
 
      deallocate(bottom_border_send_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating bottom_border_send_buffer "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating bottom_border_send_buffer "//errorMessage
        stop 1
      endif
 
      deallocate(bottom_border_recv_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating bottom_border_recv_buffer "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating bottom_border_recv_buffer "//errorMessage
        stop 1
      endif
 
@@ -2690,40 +2668,40 @@
      deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating bcast_buffer "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating bcast_buffer "//errorMessage
        stop 1
      endif
 
      deallocate(top_send_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating top_send_request "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating top_send_request "//errorMessage
        stop 1
      endif
 
      deallocate(top_recv_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating top_recv_request "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating top_recv_request "//errorMessage
        stop 1
      endif
 
      deallocate(bottom_send_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating bottom_send_request "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating bottom_send_request "//errorMessage
        stop 1
      endif
 
      deallocate(bottom_recv_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating bottom_recv_request "//errorMessage
+               &MATH_DATATYPE&
+               &: error when deallocating bottom_recv_request "//errorMessage
        stop 1
      endif
 
@@ -2738,58 +2716,58 @@
        successCUDA = cuda_free(hh_dot_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
-   &MATH_DATATYPE&
-   &real: error in cudaFree "//errorMessage
+                 &MATH_DATATYPE&
+                 &real: error in cudaFree "//errorMessage
          stop 1
        endif
 
        successCUDA = cuda_free(hh_tau_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
-   &MATH_DATATYPE&
-   &: error in cudaFree "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error in cudaFree "//errorMessage
          stop 1
        endif
 
        successCUDA = cuda_free(row_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
-   &MATH_DATATYPE&
-   &: error in cudaFree "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error in cudaFree "//errorMessage
          stop 1
        endif
 
        deallocate(row_group, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"trans_ev_tridi_to_band_&
-   &MATH_DATATYPE&
-   &: error when deallocating row_group "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating row_group "//errorMessage
          stop 1
        endif
 
        successCUDA = cuda_free(row_group_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
-   &MATH_DATATYPE&
-   &: error in cudaFree "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error in cudaFree "//errorMessage
          stop 1
        endif
 
        successCUDA =  cuda_free(bcast_buffer_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
-   &MATH_DATATYPE&
-   &: error in cudaFree "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error in cudaFree "//errorMessage
          stop 1
        endif
      endif ! useGPU
 
 
      call obj%timer%stop("trans_ev_tridi_to_band_&
-     &MATH_DATATYPE&
-     &" // &
-     &PRECISION_SUFFIX&
-     )
+                         &MATH_DATATYPE&
+                         &" // &
+                         &PRECISION_SUFFIX&
+                         )
 
      return
 !#if COMPLEXCASE == 1
