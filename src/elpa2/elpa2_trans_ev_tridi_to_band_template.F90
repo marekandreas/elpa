@@ -1323,12 +1323,8 @@
 
               call MPI_Wait(bottom_recv_request(i), MPI_STATUS_IGNORE, mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
-
 #endif
-
-#if REALCASE == 1
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
-
 !$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
               do my_thread = 1, max_threads
                 n_off = current_local_n+a_off
@@ -1339,23 +1335,6 @@
               enddo
 !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-#endif
-
-#if COMPLEXCASE == 1
-              call obj%timer%start("OpenMP parallel_PRECISION")
-
-!$omp parallel do private(my_thread, n_off, b_len, b_off), schedule(static, 1)
-              do my_thread = 1, max_threads
-                n_off = current_local_n+a_off
-                b_len = csw*nbw
-                b_off = (my_thread-1)*b_len
-                aIntern(1:csw,n_off+1:n_off+nbw,i,my_thread) = &
-                   reshape(bottom_border_recv_buffer(b_off+1:b_off+b_len,i), (/ csw, nbw /))
-              enddo
-!$omp end parallel do
-              call obj%timer%stop("OpenMP parallel_PRECISION")
-#endif
-
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
