@@ -97,31 +97,21 @@
       use precision
       use iso_c_binding
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       logical, intent(in)                        :: useGPU
 
       integer(kind=ik), intent(in)               :: kernel
       integer(kind=ik), intent(in)               :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
 
-#if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                   :: q(ldq,*)
+      MATH_DATATYPE(kind=rck)                   :: q(ldq,*)
 #else
-      real(kind=REAL_DATATYPE)                   :: q(ldq,matrixCols)
+      MATH_DATATYPE(kind=rck)                   :: q(ldq,matrixCols)
 #endif
 
-      real(kind=REAL_DATATYPE), intent(in)       :: hh_trans(:,:)
-#endif
+      MATH_DATATYPE(kind=rck), intent(in)       :: hh_trans(:,:)
       integer(kind=c_intptr_t)                   :: q_dev
-
-#if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)             :: q(ldq,*)
-#else
-      complex(kind=COMPLEX_DATATYPE)             :: q(ldq,matrixCols)
-#endif
-      complex(kind=COMPLEX_DATATYPE)             :: hh_trans(:,:)
-#endif
 
       integer(kind=ik)                           :: np_rows, my_prow, np_cols, my_pcol
       integer(kind=ik)                           :: tmp
@@ -139,52 +129,24 @@
       integer(kind=ik)                           :: mpierr, src, src_offset, dst, offset, nfact, num_blk
 
       logical                                    :: flag
-#if REALCASE == 1
 #ifdef WITH_OPENMP
-      real(kind=REAL_DATATYPE), pointer          :: aIntern(:,:,:,:)
+      MATH_DATATYPE(kind=rck), pointer          :: aIntern(:,:,:,:)
 #else
-      real(kind=REAL_DATATYPE), pointer          :: aIntern(:,:,:)
+      MATH_DATATYPE(kind=rck), pointer          :: aIntern(:,:,:)
 #endif
-      real(kind=REAL_DATATYPE)                   :: a_real
-#endif
+      MATH_DATATYPE(kind=rck)                   :: a_var
 
-#if COMPLEXCASE == 1
-#ifdef WITH_OPENMP
-      complex(kind=COMPLEX_DATATYPE), pointer    :: aIntern(:,:,:,:)
-#else
-      complex(kind=COMPLEX_DATATYPE), pointer    :: aIntern(:,:,:)
-#endif
-      complex(kind=COMPLEX_DATATYPE)             :: a_complex
-#endif
       type(c_ptr)                                :: aIntern_ptr
 
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE)   , allocatable   :: row(:)
-      real(kind=REAL_DATATYPE)   , allocatable   :: row_group(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable :: row(:)
-      complex(kind=COMPLEX_DATATYPE), allocatable :: row_group(:,:)
-#endif
+      MATH_DATATYPE(kind=rck)   , allocatable   :: row(:)
+      MATH_DATATYPE(kind=rck)   , allocatable   :: row_group(:,:)
 
-#if REALCASE == 1
 #ifdef WITH_OPENMP
-      real(kind=REAL_DATATYPE), allocatable    :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-      real(kind=REAL_DATATYPE), allocatable    :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable    :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable    :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
 #else
-      real(kind=REAL_DATATYPE), allocatable    :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
-      real(kind=REAL_DATATYPE), allocatable    :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
-#endif
-#endif
-
-#if COMPLEXCASE == 1
-#ifdef WITH_OPENMP
-      complex(kind=COMPLEX_DATATYPE), allocatable :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-      complex(kind=COMPLEX_DATATYPE), allocatable :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
-#else
-      complex(kind=COMPLEX_DATATYPE), allocatable :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
-      complex(kind=COMPLEX_DATATYPE), allocatable :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable    :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable    :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
 #endif
 
       integer(kind=c_intptr_t)                 :: aIntern_dev
@@ -200,15 +162,8 @@
       integer(kind=ik)                         :: n_times
       integer(kind=ik)                         :: top, chunk, this_chunk
 
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable    :: result_buffer(:,:,:)
-      real(kind=REAL_DATATYPE), allocatable    :: bcast_buffer(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable :: result_buffer(:,:,:)
-      complex(kind=COMPLEX_DATATYPE), allocatable :: bcast_buffer(:,:)
-#endif
-
+      MATH_DATATYPE(kind=rck), allocatable    :: result_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable    :: bcast_buffer(:,:)
 
       integer(kind=ik)                         :: n_off
 
@@ -604,10 +559,10 @@
 #ifdef WITH_OPENMP
         if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*max_threads*     &
 #if REALCASE == 1
-               C_SIZEOF(a_real)) /= 0) then
+               C_SIZEOF(a_var)) /= 0) then
 #endif
 #if COMPLEXCASE == 1
-               C_SIZEOF(a_complex)) /= 0) then
+               C_SIZEOF(a_var)) /= 0) then
 #endif
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
@@ -624,10 +579,10 @@
 
         if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*  &
 #if REALCASE == 1
-            C_SIZEOF(a_real)) /= 0) then
+            C_SIZEOF(a_var)) /= 0) then
 #endif
 #if COMPLEXCASE == 1
-            C_SIZEOF(a_complex)) /= 0) then
+            C_SIZEOF(a_var)) /= 0) then
 #endif
           print *,"trans_ev_tridi_to_band_real: error when allocating aIntern"//errorMessage
           stop 1
