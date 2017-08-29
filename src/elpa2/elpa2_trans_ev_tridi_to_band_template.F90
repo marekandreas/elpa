@@ -525,13 +525,7 @@
           stop 1
         endif
 
-#if REALCASE == 1
-        row_group(:, :) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-        row_group(:, :) = CONST_COMPLEX_0_0
-#endif
-
+        row_group(:, :) = 0.0_rck
         num =  (l_nev*nblk)* size_of_datatype
         successCUDA = cuda_malloc(row_group_dev, num)
         if (.not.(successCUDA)) then
@@ -558,12 +552,7 @@
 
 #ifdef WITH_OPENMP
         if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*max_threads*     &
-#if REALCASE == 1
                C_SIZEOF(a_var)) /= 0) then
-#endif
-#if COMPLEXCASE == 1
-               C_SIZEOF(a_var)) /= 0) then
-#endif
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error when allocating aIntern"//errorMessage
@@ -578,12 +567,7 @@
 #else /* WITH_OPENMP */
 
         if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*  &
-#if REALCASE == 1
             C_SIZEOF(a_var)) /= 0) then
-#endif
-#if COMPLEXCASE == 1
-            C_SIZEOF(a_var)) /= 0) then
-#endif
           print *,"trans_ev_tridi_to_band_real: error when allocating aIntern"//errorMessage
           stop 1
         endif
@@ -591,12 +575,7 @@
         call c_f_pointer(aIntern_ptr, aIntern,[stripe_width,a_dim2,stripe_count] )
         !allocate(aIntern(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
 
-#if REALCASE == 1
-        aIntern(:,:,:) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-        aIntern(:,:,:) = 0
-#endif
+        aIntern(:,:,:) = 0.0_rck
 #endif /* WITH_OPENMP */
       endif !useGPU
 
@@ -608,13 +587,7 @@
         stop 1
       endif
 
-#if REALCASE == 1
-      row(:) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-      row(:) = 0
-#endif
-
+      row(:) = 0.0_rck
 
       ! Copy q from a block cyclic distribution into a distribution with contiguous rows,
       ! and transpose the matrix using stripes of given stripe_width for cache blocking.
@@ -630,12 +603,7 @@
       call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
       !$omp parallel do private(my_thread), schedule(static, 1)
       do my_thread = 1, max_threads
-#if REALCASE == 1
-        aIntern(:,:,:,my_thread) = CONST_0_0 ! if possible, do first touch allocation!
-#endif
-#if COMPLEXCASE == 1
-        aIntern(:,:,:,my_thread) = CONST_COMPLEX_0_0 ! if possible, do first touch allocation!
-#endif
+        aIntern(:,:,:,my_thread) = 0.0_rck ! if possible, do first touch allocation!
       enddo
       !$omp end parallel do
 
@@ -759,14 +727,7 @@
                                row_group_size, nblk, unpack_idx, &
                                i - limits(ip), .false.)
 
-#if REALCASE == 1
                 row_group(:, row_group_size) = q(src_offset, 1:l_nev)
-#endif
-
-#if COMPLEXCASE == 1
-                row_group(:, row_group_size) = q(src_offset, 1:l_nev)
-#endif
-
 #else /* WITH_OPENMP */
 
 #if COMPLEXCASE == 1
@@ -1126,18 +1087,10 @@
          stop 1
        endif
 
-#if REALCASE == 1
-      top_border_send_buffer(:,:) = CONST_0_0
-      top_border_recv_buffer(:,:) = CONST_0_0
-      bottom_border_send_buffer(:,:) = CONST_0_0
-      bottom_border_recv_buffer(:,:) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-      top_border_send_buffer(:,:) = CONST_COMPLEX_0_0
-      top_border_recv_buffer(:,:) = CONST_COMPLEX_0_0
-      bottom_border_send_buffer(:,:) = CONST_COMPLEX_0_0
-      bottom_border_recv_buffer(:,:) = CONST_COMPLEX_0_0
-#endif
+      top_border_send_buffer(:,:) = 0.0_rck
+      top_border_recv_buffer(:,:) = 0.0_rck
+      bottom_border_send_buffer(:,:) = 0.0_rck
+      bottom_border_recv_buffer(:,:) = 0.0_rck
       ! Initialize broadcast buffer
 
 #else /* WITH_OPENMP */
@@ -1174,19 +1127,10 @@
          stop 1
        endif
 
-#if REALCASE == 1
-      top_border_send_buffer(:,:,:) = CONST_0_0
-      top_border_recv_buffer(:,:,:) = CONST_0_0
-      bottom_border_send_buffer(:,:,:) = CONST_0_0
-      bottom_border_recv_buffer(:,:,:) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-      top_border_send_buffer(:,:,:) = CONST_COMPLEX_0_0
-      top_border_recv_buffer(:,:,:) = CONST_COMPLEX_0_0
-      bottom_border_send_buffer(:,:,:) = CONST_COMPLEX_0_0
-      bottom_border_recv_buffer(:,:,:) = CONST_COMPLEX_0_0
-#endif
-
+      top_border_send_buffer(:,:,:) = 0.0_rck
+      top_border_recv_buffer(:,:,:) = 0.0_rck
+      bottom_border_send_buffer(:,:,:) = 0.0_rck
+      bottom_border_recv_buffer(:,:,:) = 0.0_rck
 #endif /* WITH_OPENMP */
 
       ! Initialize broadcast buffer
@@ -1199,12 +1143,7 @@
          stop 1
        endif
 
-#if REALCASE == 1
-      bcast_buffer = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-      bcast_buffer = 0
-#endif
+      bcast_buffer = 0.0_rck
       if (useGPU) then
         num =  ( nbw * max_blk_size) * size_of_datatype
         successCUDA = cuda_malloc(bcast_buffer_dev, num)
@@ -1404,12 +1343,7 @@
         else ! (current_local_n > 1) then
 
           ! for current_local_n == 1 the one and only HH Vector is 0 and not stored in hh_trans_real/complex
-#if REALCASE == 1
-          bcast_buffer(:,1) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-          bcast_buffer(:,1) = CONST_COMPLEX_0_0
-#endif
+          bcast_buffer(:,1) = 0.0_rck
           if (useGPU) then
             successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * size_of_datatype)
             if (.not.(successCUDA)) then
