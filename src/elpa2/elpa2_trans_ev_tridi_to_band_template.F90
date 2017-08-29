@@ -2020,8 +2020,7 @@
                  &MATH_DATATYPE&
                  &_gpu_&
                  &PRECISION&
-      &( &
-              row_group_dev, aIntern_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
+      &(row_group_dev, aIntern_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
               row_group(:, :), j * nblk + a_off, row_group_size)
 
             do i = 1, row_group_size
@@ -2031,24 +2030,18 @@
 
             do i = 1, min(na - num_blk*nblk, nblk)
 #ifdef WITH_OPENMP
-#if REALCASE == 1
-              call pack_row_real_cpu_openmp_&
-#endif
-#if COMPLEXCASE == 1
-              call pack_row_complex_cpu_openmp_&
-#endif
+              call pack_row_&
+                   &MATH_DATATYPE&
+                   &_cpu_openmp_&
                    &PRECISION&
         &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else /* WITH_OPENMP */
 
-#if REALCASE == 1
-              call pack_row_real_cpu_&
-#endif
-#if COMPLEXCASE == 1
-              call pack_row_complex_cpu_&
-#endif
+              call pack_row_&
+                   &MATH_DATATYPE&
+                   &_cpu_&
                    &PRECISION&
-        &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+                   &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif /* WITH_OPENMP */
               q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
             enddo
@@ -2061,32 +2054,23 @@
            &MATH_DATATYPE&
            &_gpu_&
            &PRECISION&
-      &( &
-              row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+           &(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
               last_stripe_width, a_dim2, l_nev, &
               result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
 
           else  ! useGPU
             do i = 1, nblk
 #if WITH_OPENMP
-
-#if REALCASE == 1
-              call pack_row_real_cpu_openmp_&
-#endif
-#if COMPLEXCASE == 1
-              call pack_row_complex_cpu_openmp_&
-#endif
-              &PRECISION&
-        &(obj,aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
+              call pack_row_&
+                   &MATH_DATATYPE&
+                   &_cpu_openmp_&
+                   &PRECISION&
+                   &(obj,aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
           max_threads, thread_width, l_nev)
 #else /* WITH_OPENMP */
-
-#if REALCASE == 1
-              call pack_row_real_cpu_&
-#endif
-#if COMPLEXCASE == 1
-              call pack_row_complex_cpu_&
-#endif
+              call pack_row_&
+                   &MATH_DATATYPE&
+                   &_cpu_&
                    &PRECISION&
         &(obj, aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif /* WITH_OPENMP */
