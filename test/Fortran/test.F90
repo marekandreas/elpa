@@ -143,6 +143,8 @@ program test
    ! eigenvalues
    EV_TYPE, allocatable        :: ev(:), ev_analytic(:)
 
+   logical                     :: check_all_evals
+
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_HERMITIAN_MULTIPLY)
    EV_TYPE, allocatable        :: d(:), sd(:), ds(:), sds(:)
    EV_TYPE                     :: diagonalELement, subdiagonalElement
@@ -187,7 +189,7 @@ program test
 #endif
 #endif
 
-
+   check_all_evals = .true.
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
@@ -436,6 +438,7 @@ program test
      call solve_scalapack_all(na, a, sc_desc, ev, z)
 #elif TEST_SCALAPACK_PART
      call solve_scalapack_part(na, a, sc_desc, nev, ev, z)
+     check_all_evals = .false. ! scalapack does not compute all eigenvectors
 #else
      call e%eigenvectors(a, ev, z, error)
 #endif
@@ -498,7 +501,7 @@ program test
 
 #if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
 #ifdef TEST_MATRIX_ANALYTIC
-     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals)
 #else
      if (nev .ge. 1) then
        status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)

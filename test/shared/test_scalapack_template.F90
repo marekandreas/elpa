@@ -41,7 +41,7 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 
-  ! compute all eigenvectores
+  ! compute all eigenvectors
   subroutine solve_p&
       &BLAS_CHAR_AND_SY_OR_HE&
       &evd(na, a, sc_desc, ev, z)
@@ -97,7 +97,7 @@
   end subroutine
 
 
-  ! compute part of eigenvectores
+  ! compute part of eigenvectors
   subroutine solve_p&
       &BLAS_CHAR_AND_SY_OR_HE&
       &evr(na, a, sc_desc, nev, ev, z)
