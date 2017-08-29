@@ -85,13 +85,14 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status)
+    &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals) result(status)
     implicit none
 #include "../../src/general/precision_kinds.F90"
     integer(kind=ik), intent(in)    :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
     integer(kind=ik)                :: status, mpierr
     MATH_DATATYPE(kind=rck), intent(inout)   :: z(:,:)
     real(kind=rk), intent(inout)   :: ev(:)
+    logical, intent(in)            :: check_all_evals
 
     integer(kind=ik) :: globI, globJ, locI, locJ, levels(num_primes)
     real(kind=rk)   :: diff, max_z_diff, max_ev_diff, glob_max_z_diff, max_curr_z_diff 
@@ -109,7 +110,7 @@
     MATH_DATATYPE(kind=rck)   :: computed_z,  expected_z
 
     MATH_DATATYPE(kind=rck)   :: max_value_for_normalization, computed_z_on_max_position, normalization_quotient
-    integer(kind=ik)          :: max_value_idx, rank_with_max, rank_with_max_reduced
+    integer(kind=ik)          :: max_value_idx, rank_with_max, rank_with_max_reduced, num_checked_evals
 
 
     if(.not. decompose(na, levels)) then
@@ -117,10 +118,15 @@
       stop 1
     end if
 
+    if(check_all_evals) then
+        num_checked_evals = na
+    else
+        num_checked_evals = nev
+    endif
     !call print_matrix(myid, na, z, "z")
     max_z_diff = 0.0_rk
     max_ev_diff = 0.0_rk
-    do globJ = 1, na
+    do globJ = 1, num_checked_evals
       computed_ev = ev(globJ)
       expected_ev = analytic_eigenvalues_real_&
               &PRECISION&
