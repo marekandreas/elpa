@@ -156,8 +156,8 @@
       allocate(global_id(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating global_id "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when allocating global_id "//errorMessage
         stop 1
       endif
 
@@ -168,8 +168,8 @@
       allocate(global_id_tmp(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating global_id_tmp "//errorMessage
+                &MATH_DATATYPE&
+                &: error when allocating global_id_tmp "//errorMessage
         stop 1
       endif
 #endif
@@ -184,8 +184,8 @@
       deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when deallocating global_id_tmp "//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating global_id_tmp "//errorMessage
         stop 1
       endif
 #endif /* WITH_OPENMP */
@@ -201,8 +201,8 @@
       allocate(block_limits(0:n_pes), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating block_limits"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when allocating block_limits"//errorMessage
         stop 1
       endif
 
@@ -216,8 +216,8 @@
       allocate(ab(2*nb,(nblocks+1)*nb), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating ab"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when allocating ab"//errorMessage
         stop 1
       endif
 
@@ -239,8 +239,8 @@
       allocate(limits(0:np_rows), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating limits"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when allocating limits"//errorMessage
         stop 1
       endif
 
@@ -280,15 +280,15 @@
       allocate(ireq_hhr(num_chunks), stat=istat, errmsg=errorMessage) ! Recv requests
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating ireq_hhr"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when allocating ireq_hhr"//errorMessage
         stop 1
       endif
       allocate(ireq_hhs(nblocks), stat=istat, errmsg=errorMessage)    ! Send requests
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYEP&
-  &: error when allocating ireq_hhs"//errorMessage
+                 &MATH_DATATYEP&
+                 &: error when allocating ireq_hhs"//errorMessage
         stop 1
       endif
 
@@ -334,16 +334,16 @@
       allocate(hh_gath(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! gathers HH vectors
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating hh_gath"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when allocating hh_gath"//errorMessage
         stop 1
       endif
 
       allocate(hh_send(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! send buffer for HH vectors
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating hh_send"//errorMessage
+                &MATH_DATATYPE&
+                &: error when allocating hh_send"//errorMessage
         stop 1
       endif
 
@@ -355,16 +355,16 @@
       allocate(hh_cnt(nblocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating hh_cnt"//errorMessage
+                &MATH_DATATYPE&
+                &: error when allocating hh_cnt"//errorMessage
         stop 1
       endif
 
       allocate(hh_dst(nblocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating hh_dst"//errorMessage
+                &MATH_DATATYPE&
+                &: error when allocating hh_dst"//errorMessage
         stop 1
       endif
 
@@ -379,8 +379,8 @@
       allocate(snd_limits(0:np_rows,nblocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating snd_limits"//errorMessage
+                &MATH_DATATYPE&
+                &: error when allocating snd_limits"//errorMessage
         stop 1
       endif
       do iblk=1,nblocks
@@ -404,8 +404,8 @@
       allocate(omp_block_limits(0:max_threads), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating omp_block_limits"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when allocating omp_block_limits"//errorMessage
         stop 1
       endif
 
@@ -415,8 +415,8 @@
       allocate(hv_t(nb,max_threads), tau_t(max_threads), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when allocating hv_t, tau_t"//errorMessage
+                &MATH_DATATYPE&
+                &: error when allocating hv_t, tau_t"//errorMessage
         stop 1
       endif
 
@@ -1225,56 +1225,56 @@
       deallocate(ab, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when deallocating ab"//errorMessage
+                &MATH_DATATYPE&
+                &: error when deallocating ab"//errorMessage
         stop 1
       endif
 
       deallocate(ireq_hhr, ireq_hhs, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
-  &MATH_DATATYPE&
-  &: error when deallocating ireq_hhr, ireq_hhs"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating ireq_hhr, ireq_hhs"//errorMessage
         stop 1
       endif
 
       deallocate(hh_cnt, hh_dst, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-   &MATH_DATATYPE&
-   &: error when deallocating hh_cnt, hh_dst"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating hh_cnt, hh_dst"//errorMessage
          stop 1
        endif
 
       deallocate(hh_gath, hh_send, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-   &MATH_DATATYPE&
-   &: error when deallocating hh_gath, hh_send"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating hh_gath, hh_send"//errorMessage
          stop 1
        endif
 
       deallocate(limits, snd_limits, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-   &MATH_DATATYPE&
-   &: error when deallocating limits, send_limits"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating limits, send_limits"//errorMessage
          stop 1
        endif
 
       deallocate(block_limits, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-   &MATH_DATATYPE&
-   &: error when deallocating block_limits"//errorMessage
+                 &MATH_DATATYPE&
+                 &: error when deallocating block_limits"//errorMessage
          stop 1
        endif
 
       deallocate(global_id, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
          print *,"tridiag_band_&
-   &MATH_DATATYPE&
-   &: error when allocating global_id"//errorMessage
+                  &MATH_DATATYPE&
+                  &: error when allocating global_id"//errorMessage
          stop 1
        endif
 
