@@ -1489,22 +1489,6 @@
 #endif
               hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i,          &
               last_stripe_width, kernel)
-!#if COMPLEXCASE == 1
-!           if (useGPU) then
-!             call compute_hh_trafo_complex_gpu_&
-!       &PRECISION&
-!       &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, 0, current_local_n, i, a_off, dev_offset, dev_offset_1, &
-!       dev_offset_2, a_dim2, &
-!             kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
-!           else
-!             call compute_hh_trafo_complex_&
-!       &PRECISION&
-!       &(aIntern, stripe_width, a_dim2, stripe_count,            &
-!                                                    a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
-!                                                    0, current_local_n, i, last_stripe_width,                          &
-!                                                    kernel)
-!           endif
-!#endif /* COMPLEXCASE */
 #endif /* WITH_OPENMP */
 
            !send_b        1
@@ -1586,8 +1570,8 @@
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-    & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
-      nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
+               & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+                 nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
             hh_dot_dev,  &
 #endif
@@ -1629,35 +1613,16 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-  & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
-           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+                      a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
-     hh_dot_dev, &
+            hh_dot_dev, &
 #endif
            hh_tau_dev, kernel_flops, kernel_time, n_times,                 &
            current_local_n - bottom_msg_length, bottom_msg_length, i,             &
            last_stripe_width, kernel)
 
-!#if COMPLEXCASE == 1
-!! the complex case and real case diverged here
-!        if (useGPU) then
-!          call compute_hh_trafo_complex_gpu_&
-!    &PRECISION&
-!    &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, current_local_n -bottom_msg_length, bottom_msg_length, i, a_off, &
-!                                                  dev_offset, dev_offset_1, dev_offset_2, &
-!              a_dim2, &
-!       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
-!        else
-!          call compute_hh_trafo_complex_&
-!    &PRECISION&
-!    &(aIntern, stripe_width, a_dim2, stripe_count,              &
-!                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time, &
-!                                                  current_local_n - bottom_msg_length, bottom_msg_length, i,         &
-!                                                  last_stripe_width, kernel)
-!
-!        endif
-!
-!#endif
+
 
         !send_b
 #ifdef WITH_MPI
@@ -1719,8 +1684,8 @@
           &MATH_DATATYPE&
           &_openmp_&
           &PRECISION&
-    & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
-       nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+          & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
+             nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
              hh_dot_dev, &
 #endif
@@ -1737,31 +1702,15 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-  & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
-           a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+                      a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
-     hh_dot_dev,     &
+            hh_dot_dev,     &
 #endif
            hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,                    &
            current_local_n-top_msg_length-bottom_msg_length, i,                       &
            last_stripe_width, kernel)
-!#if COMPLEXCASE == 1
-!        if (useGPU) then
-!          call compute_hh_trafo_complex_gpu_&
-!    &PRECISION&
-!    &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, top_msg_length,current_local_n-top_msg_length-bottom_msg_length, &
-!                                                 i, a_off, dev_offset, dev_offset_1, dev_offset_2, &
-!             a_dim2, &
-!       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
-!        else
-!          call compute_hh_trafo_complex_&
-!    &PRECISION&
-!    &(aIntern, stripe_width, a_dim2, stripe_count,                  &
-!                                                 a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,   &
-!                                                 top_msg_length, current_local_n-top_msg_length-bottom_msg_length, i, &
-!                                                 last_stripe_width, kernel)
-!        endif
-!#endif /* COMPLEXCASE */
+
 #endif /* WITH_OPENMP */
 
         !wait_t
@@ -1815,8 +1764,8 @@
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-    & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
-       nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
+               & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+                  nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
              hh_dot_dev, &
 #endif
@@ -1832,29 +1781,13 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-  & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
-           a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+                      a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
 #if REALCASE == 1
      hh_dot_dev,     &
 #endif
            hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i,               &
            last_stripe_width, kernel)
-!#if COMPLEXCASE == 1
-!        if (useGPU) then
-!          call compute_hh_trafo_complex_gpu_&
-!    &PRECISION&
-!    &(aIntern_dev, bcast_buffer_dev, hh_tau_dev, 0, top_msg_length, i, a_off, dev_offset, dev_offset_1, dev_offset_2, &
-!    a_dim2, &
-!       kernel_flops, kernel_time, last_stripe_width, n_times, nbw, stripe_count, stripe_width)
-!         else
-!           call compute_hh_trafo_complex_&
-!     &PRECISION&
-!     &(aIntern, stripe_width, a_dim2, stripe_count,               &
-!                                                  a_off, nbw, max_blk_size, bcast_buffer, kernel_flops, kernel_time,  &
-!                                                  0, top_msg_length, i, last_stripe_width,                            &
-!                                                  kernel)
-!         endif
-!#endif
 
 #endif /* WITH_OPENMP */
       endif
@@ -2020,8 +1953,8 @@
                  &MATH_DATATYPE&
                  &_gpu_&
                  &PRECISION&
-      &(row_group_dev, aIntern_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
-              row_group(:, :), j * nblk + a_off, row_group_size)
+                 &(row_group_dev, aIntern_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
+                         row_group(:, :), j * nblk + a_off, row_group_size)
 
             do i = 1, row_group_size
               q((num_blk / np_rows) * nblk + i, 1 : l_nev) = row_group(:, i)
@@ -2034,7 +1967,7 @@
                    &MATH_DATATYPE&
                    &_cpu_openmp_&
                    &PRECISION&
-        &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
+                   &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
 #else /* WITH_OPENMP */
 
               call pack_row_&
@@ -2066,13 +1999,13 @@
                    &_cpu_openmp_&
                    &PRECISION&
                    &(obj,aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
-          max_threads, thread_width, l_nev)
+                   max_threads, thread_width, l_nev)
 #else /* WITH_OPENMP */
               call pack_row_&
                    &MATH_DATATYPE&
                    &_cpu_&
                    &PRECISION&
-        &(obj, aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+                   &(obj, aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif /* WITH_OPENMP */
             enddo
           endif ! useGPU
@@ -2263,7 +2196,6 @@
 #endif /* WITH_MPI */
 
      if (useGPU) then
-!#if REALCASE == 1
      ! copy q to q_dev needed in trans_ev_band_to_full
         successCUDA = cuda_malloc(q_dev, ldq*matrixCols* size_of_datatype)
         if (.not.(successCUDA)) then
@@ -2283,7 +2215,6 @@
             stop 1
           endif
 !        endif
-!#endif
      endif !use GPU
 
      ! deallocate all working space
@@ -2291,11 +2222,6 @@
      if (.not.(useGPU)) then
        nullify(aIntern)
        call free(aIntern_ptr)
-!       deallocate(aIntern, stat=istat, errmsg=errorMessage)
-!       if (istat .ne. 0) then
-!         print *,"trans_ev_tridi_to_band_real: error when deallocating aIntern "//errorMessage
-!         stop 1
-!       endif
      endif
 
      deallocate(row, stat=istat, errmsg=errorMessage)
