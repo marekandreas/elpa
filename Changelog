@@ -1,3 +1,19 @@
+Changelog for ELPA 2017.05.002
+
+Mainly bugfixes for ELPA 2017.05.001:
+- fix memory leak of MPI communicators
+- tests for hermitian_multiply, cholesky decomposition and
+- deal with a problem on Debian (mawk)
+
+Changelog for ELPA 2017.05.001
+
+Final release of ELPA 2017.05.001
+Since rc2 the following changes have been made
+- more extensive tests during "make check"
+- distribute missing C headers
+- introduce analytic tests
+- Fix stack overflow in some kernels
+
 Changelog for ELPA 2017.05.001.rc2
 
 This is the release candidate 2 for the ELPA 2017.05.001 version.

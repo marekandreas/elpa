@@ -6,6 +6,9 @@ Issues which are not mentioned in a newer release are (considered as) solved
 ### ELPA 2017.05.001 release ###
 - at the moment no issues are known
 
+### ELPA 2017.05.001 release ###
+- accidently a memory leak has been introduced
+
 ### ELPA 2017.05.001.rc2 release ###
 - compilation with Intel Compiler 2018 beta does not work
   (see https://gitlab.mpcdf.mpg.de/elpa/elpa/issues/54)

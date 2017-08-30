@@ -67,4 +67,9 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
   However, a new, more general API has been published, which will in the long run
   completely replace the "legacy" interface.
 
-  The state of release 2017.05.001.rc1 defines this interface
+  The state of release 2017.05.001 defines this interface
+
+- 10
+  NO incompatible API changes w.r.t. to the previous version. Only some functions have
+  been added. The state of release 2017.05.001 defines this interface
+

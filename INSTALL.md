@@ -2,7 +2,7 @@
 
 ## Preamle ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2017.05.001**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2017.05.002**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library
 

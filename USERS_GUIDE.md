@@ -9,14 +9,13 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program which prints all
 the available kernels.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2017.05.001/html/index.html)
+Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2017.05.002/html/index.html)
 for each *ELPA* release is available.
 
 
 ## API of the *ELPA* library ##
 
-With release 2017.05.001.rc1 of the *ELPA* library the interface has been rewritten substantially, in order to have a more
-generic interface and to avoid future interface changes.
+With release 2017.05.001 of the *ELPA* library the interface has been rewritten substantially, in order to have a more generic interface and to avoid future interface changes.
 
 For compatibility reasons the interface defined in the previous release 2016.11.001 is also still available
 IF AND ONLY IF *ELPA* has been build with support of this legacy interface.
@@ -24,7 +23,7 @@ IF AND ONLY IF *ELPA* has been build with support of this legacy interface.
 If you want to use the legacy interface, please look to section "B) Using the legacy API of the *ELPA* library.
 
 The legacy API defines all the functionallity as it has been defined in *ELPA* release 2016.11.011. Note, however,
-that all future features of *ELPA* will only be accessible via the new API defined in release 2017.05.001.rc1 or later.
+that all future features of *ELPA* will only be accessible via the new API defined in release 2017.05.001 or later.
 
 ## A) Using the final API definition of the *ELPA* library ##
 
