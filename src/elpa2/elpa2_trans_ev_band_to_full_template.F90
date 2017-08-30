@@ -122,7 +122,7 @@
       integer(kind=ik)                       :: l_cols, l_rows, l_colh, n_cols
       integer(kind=ik)                       :: istep, lc, ncol, nrow, nb, ns
 
-      MATH_DATATYPE(kind=rck), allocatable  :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+      MATH_DATATYPE(kind=rck), allocatable   :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
       ! hvm_dev is fist used and set in this routine
       ! q is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
       ! tmp_dev is first used in this routine
@@ -132,22 +132,27 @@
       integer(kind=ik)                       :: i
 
 #ifdef BAND_TO_FULL_BLOCKING
-      MATH_DATATYPE(kind=rck), allocatable  :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
+      MATH_DATATYPE(kind=rck), allocatable   :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
       integer(kind=ik)                       :: cwy_blocking, t_blocking, t_cols, t_rows
 #endif
 
       integer(kind=ik)                       :: istat
       character(200)                         :: errorMessage
       logical                                :: successCUDA
-      integer(kind=c_intptr_t), parameter      :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t), parameter    :: size_of_datatype = size_of_&
                                                                    &PRECISION&
                                                                    &_&
                                                                    &MATH_DATATYPE
+      integer                                :: blocking_factor
       call obj%timer%start("trans_ev_band_to_full_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX &
       )
+#ifdef BAND_TO_FULL_BLOCKING
+      call obj%get("blocking_in_band_to_full",blocking_factor)
+      print *,"Blocking factor: ", blocking_factor
+#endif
       call obj%timer%start("mpi_communication")
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -432,7 +437,7 @@
 
 #ifdef BAND_TO_FULL_BLOCKING
         ! t_blocking was formerly 2; 3 is a better choice
-        t_blocking = 3 ! number of matrices T (tmat) which are aggregated into a new (larger) T matrix (tmat_complete) and applied at once
+        t_blocking = blocking_factor ! number of matrices T (tmat) which are aggregated into a new (larger) T matrix (tmat_complete) and applied at once
 
         ! we only use the t_blocking if we could call it fully, this is might be better but needs to benchmarked.
 !       if ( na >= ((t_blocking+1)*nbw) ) then

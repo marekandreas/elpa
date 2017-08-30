@@ -132,7 +132,6 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition", NULL),
         INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition", NULL),
         INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", bw_is_valid),
-
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication"),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator"),
@@ -144,6 +143,8 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, \
                         number_of_complex_kernels, complex_kernel_enumerate, \
                         complex_kernel_is_valid, complex_kernel_name),
+
+	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, NULL, NULL, NULL, NULL),
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0),
         BOOL_ENTRY("gpu", "Use GPU acceleration", 0),
         BOOL_ENTRY("timings", "Enable time measurement", 0),
