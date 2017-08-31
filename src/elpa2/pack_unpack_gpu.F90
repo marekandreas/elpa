@@ -63,7 +63,7 @@
       real(kind=C_DATATYPE_KIND)   :: rows(:,:)
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND)   :: rows(:,:)
+      complex(kind=C_DATATYPE_KIND):: rows(:,:)
 #endif
       integer(kind=ik)             :: max_idx
       logical                      :: successCUDA
@@ -97,7 +97,6 @@
         &: error in cudaMemcpy"
         stop 1
       endif
-      !write(*,*) cudaGetErrorString(istat)
 
     end subroutine
 
@@ -133,8 +132,6 @@
       ! Issue one single transfer call for all rows (host to device)
 !      row_group_dev(:, 1 : row_count) = rows(:, 1 : row_count)
 
-       !istat =  cuda_memcpy( row_group_dev , loc(rows(:, 1: row_count)),row_count * l_nev * size_of_double_real_datatype , &
-       !      cudaMemcpyHostToDevice)
 
       successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev * &
                                  size_of_&
@@ -150,7 +147,6 @@
         &: error in cudaMemcpy"
         stop 1
       endif
-      !write(*,*) cudaGetErrorString(istat)
 
       ! Use one kernel call to pack the entire row group
       !        call my_unpack_kernel<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, row_group_dev, a_dev)
@@ -178,10 +174,10 @@
       use precision
       implicit none
 #if REALCASE == 1
-      real(kind=C_DATATYPE_KIND)                   :: row_group(:,:)
+      real(kind=C_DATATYPE_KIND)      :: row_group(:,:)
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND)                   :: row_group(:,:)
+      complex(kind=C_DATATYPE_KIND)   :: row_group(:,:)
 #endif
       integer(kind=c_intptr_t)        :: row_group_dev, a_dev
       integer(kind=ik), intent(in)    :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev
