@@ -1,0 +1,21 @@
+#! /bin/bash
+echo nodes total bandred tridiag solve trans_ev_to_band trans_ev_to_full
+for f in *.txt 
+do
+    #echo "processing $f... "
+    S=`grep " node = " $f | awk '{print $5}'`
+     
+    TOTAL=`grep "|_ ELPA_2STAGE_" $f  | awk '{print $3}'`
+    if [[ -z "$TOTAL" ]]; then
+        continue
+    fi
+    S+=" "$TOTAL 
+
+    S+=" "`grep "|_ bandred " $f | awk '{print $3}'`
+    S+=" "`grep "|_ tridiag " $f | awk '{print $3}'`
+    S+=" "`grep "|_ solve " $f | awk '{print $3}'`
+    S+=" "`grep "|_ trans_ev_to_band " $f | awk '{print $3}'`
+    S+=" "`grep "|_ trans_ev_to_full " $f | awk '{print $3}'`
+
+    echo $S
+done
