@@ -105,12 +105,12 @@
       integer(kind=ik), intent(in)               :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
 
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck)                   :: q(ldq,*)
+      MATH_DATATYPE(kind=rck)                    :: q(ldq,*)
 #else
-      MATH_DATATYPE(kind=rck)                   :: q(ldq,matrixCols)
+      MATH_DATATYPE(kind=rck)                    :: q(ldq,matrixCols)
 #endif
 
-      MATH_DATATYPE(kind=rck), intent(in)       :: hh_trans(:,:)
+      MATH_DATATYPE(kind=rck), intent(in)        :: hh_trans(:,:)
       integer(kind=c_intptr_t)                   :: q_dev
 
       integer(kind=ik)                           :: np_rows, my_prow, np_cols, my_pcol
@@ -130,86 +130,75 @@
 
       logical                                    :: flag
 #ifdef WITH_OPENMP
-      MATH_DATATYPE(kind=rck), pointer          :: aIntern(:,:,:,:)
+      MATH_DATATYPE(kind=rck), pointer           :: aIntern(:,:,:,:)
 #else
-      MATH_DATATYPE(kind=rck), pointer          :: aIntern(:,:,:)
+      MATH_DATATYPE(kind=rck), pointer           :: aIntern(:,:,:)
 #endif
-      MATH_DATATYPE(kind=rck)                   :: a_var
+      MATH_DATATYPE(kind=rck)                    :: a_var
 
       type(c_ptr)                                :: aIntern_ptr
 
-      MATH_DATATYPE(kind=rck)   , allocatable   :: row(:)
-      MATH_DATATYPE(kind=rck)   , allocatable   :: row_group(:,:)
+      MATH_DATATYPE(kind=rck)   , allocatable    :: row(:)
+      MATH_DATATYPE(kind=rck)   , allocatable    :: row_group(:,:)
 
 #ifdef WITH_OPENMP
-      MATH_DATATYPE(kind=rck), allocatable    :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-      MATH_DATATYPE(kind=rck), allocatable    :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
 #else
-      MATH_DATATYPE(kind=rck), allocatable    :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
-      MATH_DATATYPE(kind=rck), allocatable    :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
 #endif
 
-      integer(kind=c_intptr_t)                 :: aIntern_dev
-      integer(kind=c_intptr_t)                 :: bcast_buffer_dev
+      integer(kind=c_intptr_t)                   :: aIntern_dev
+      integer(kind=c_intptr_t)                   :: bcast_buffer_dev
       integer(kind=c_intptr_t)                   :: num
       integer(kind=c_intptr_t)                   :: dev_offset, dev_offset_1, dev_offset_2
-      integer(kind=c_intptr_t)                 :: row_dev
-      integer(kind=c_intptr_t)                 :: row_group_dev
-      integer(kind=c_intptr_t)                 :: hh_tau_dev
-      integer(kind=c_intptr_t)                 :: hh_dot_dev
-      integer(kind=ik)                         :: row_group_size, unpack_idx
+      integer(kind=c_intptr_t)                   :: row_dev
+      integer(kind=c_intptr_t)                   :: row_group_dev
+      integer(kind=c_intptr_t)                   :: hh_tau_dev
+      integer(kind=c_intptr_t)                   :: hh_dot_dev
+      integer(kind=ik)                           :: row_group_size, unpack_idx
 
-      integer(kind=ik)                         :: n_times
-      integer(kind=ik)                         :: top, chunk, this_chunk
+      integer(kind=ik)                           :: n_times
+      integer(kind=ik)                           :: top, chunk, this_chunk
 
-      MATH_DATATYPE(kind=rck), allocatable    :: result_buffer(:,:,:)
-      MATH_DATATYPE(kind=rck), allocatable    :: bcast_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: result_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: bcast_buffer(:,:)
 
-      integer(kind=ik)                         :: n_off
+      integer(kind=ik)                           :: n_off
 
-      integer(kind=ik), allocatable            :: result_send_request(:), result_recv_request(:), limits(:)
-      integer(kind=ik), allocatable            :: top_send_request(:), bottom_send_request(:)
-      integer(kind=ik), allocatable            :: top_recv_request(:), bottom_recv_request(:)
-#ifdef WITH_OPENMP
-!      integer(kind=ik), allocatable           :: mpi_statuses(:,:)
-#endif
-
-#ifdef WITH_OPENMP
-#ifdef WITH_MPI
-!      integer(kind=ik)                        :: my_MPI_STATUS_(MPI_STATUS_SIZE)
-#endif
-#endif
+      integer(kind=ik), allocatable              :: result_send_request(:), result_recv_request(:), limits(:)
+      integer(kind=ik), allocatable              :: top_send_request(:), bottom_send_request(:)
+      integer(kind=ik), allocatable              :: top_recv_request(:), bottom_recv_request(:)
 
       ! MPI send/recv tags, arbitrary
 
-      integer(kind=ik), parameter              :: bottom_recv_tag = 111
-      integer(kind=ik), parameter              :: top_recv_tag    = 222
-      integer(kind=ik), parameter              :: result_recv_tag = 333
+      integer(kind=ik), parameter                :: bottom_recv_tag = 111
+      integer(kind=ik), parameter                :: top_recv_tag    = 222
+      integer(kind=ik), parameter                :: result_recv_tag = 333
 #ifdef WITH_OPENMP
-      integer(kind=ik)                         :: max_threads, my_thread
-      integer(kind=ik)                         :: omp_get_max_threads
+      integer(kind=ik)                           :: max_threads, my_thread
+      integer(kind=ik)                           :: omp_get_max_threads
 #endif
 
 
       ! Just for measuring the kernel performance
-      real(kind=c_double)                      :: kernel_time, kernel_time_recv ! MPI_WTIME always needs double
+      real(kind=c_double)                        :: kernel_time, kernel_time_recv ! MPI_WTIME always needs double
       ! long integer
-      integer(kind=lik)                        :: kernel_flops, kernel_flops_recv
+      integer(kind=lik)                          :: kernel_flops, kernel_flops_recv
 
-
-
-      logical, intent(in)                      :: wantDebug
-      logical                                  :: success
-      integer(kind=ik)                         :: istat, print_flops
-      character(200)                           :: errorMessage
-      logical                                  :: successCUDA
+      logical, intent(in)                        :: wantDebug
+      logical                                    :: success
+      integer(kind=ik)                           :: istat, print_flops
+      character(200)                             :: errorMessage
+      logical                                    :: successCUDA
 #ifndef WITH_MPI
-      integer(kind=ik)                         :: j1
+      integer(kind=ik)                           :: j1
 #endif
-      integer(kind=c_intptr_t), parameter      :: size_of_datatype = size_of_&
-                                                                   &PRECISION&
-                                                                   &_&
-                                                                   &MATH_DATATYPE
+      integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
+                                                                     &PRECISION&
+                                                                     &_&
+                                                                     &MATH_DATATYPE
 
       call obj%timer%start("trans_ev_tridi_to_band_&
       &MATH_DATATYPE&
@@ -1434,7 +1423,7 @@
                !             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
                successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , loc(top_border_recv_buffer(1,1,i)),  &
                                            stripe_width*top_msg_length* size_of_datatype,      &
-             cudaMemcpyHostToDevice)
+                                           cudaMemcpyHostToDevice)
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_&
                          &MATH_DATATYPE&
@@ -1485,7 +1474,7 @@
      & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
               a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
-        hh_dot_dev, &
+              hh_dot_dev, &
 #endif
               hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i,          &
               last_stripe_width, kernel)
@@ -1784,7 +1773,7 @@
              & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
                       a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
 #if REALCASE == 1
-     hh_dot_dev,     &
+               hh_dot_dev,     &
 #endif
            hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i,               &
            last_stripe_width, kernel)
@@ -1862,7 +1851,7 @@
           dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
           successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), aIntern_dev + dev_offset, &
                                      stripe_width*nbw * size_of_datatype, &
-             cudaMemcpyDeviceToHost)
+                                     cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_&
                     &MATH_DATATYPE&
@@ -1983,13 +1972,13 @@
         else ! (dst == 0)
 
           if (useGPU) then
-      call pack_row_group_&
-           &MATH_DATATYPE&
-           &_gpu_&
-           &PRECISION&
-           &(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
-              last_stripe_width, a_dim2, l_nev, &
-              result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
+            call pack_row_group_&
+                 &MATH_DATATYPE&
+                 &_gpu_&
+                 &PRECISION&
+                 &(row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+                   last_stripe_width, a_dim2, l_nev, &
+                   result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
 
           else  ! useGPU
             do i = 1, nblk
@@ -2338,6 +2327,7 @@
 
      if (useGPU) then
 #if COMPLEXCASE == 1
+       ! should this not hbe done always?
        successCUDA = cuda_free(aIntern_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
