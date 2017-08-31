@@ -159,9 +159,9 @@
 #endif
       integer(kind=ik)                            :: ierr
       integer(kind=ik)                            :: cur_l_rows, cur_l_cols, vmr_size, umc_size
-      integer(kind=c_intptr_t)                      :: lc_start, lc_end
+      integer(kind=c_intptr_t)                    :: lc_start, lc_end
 #if COMPLEXCASE == 1
-      integer(kind=c_intptr_t)                      :: lce_1, lcs_1, lre_1
+      integer(kind=c_intptr_t)                    :: lce_1, lcs_1, lre_1
 #endif
       integer(kind=ik)                            :: lr_end
       integer(kind=ik)                            :: na_cols
@@ -179,17 +179,32 @@
       logical, intent(in)                         :: useQR
 #endif
       integer(kind=ik)                            :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
-                                                    ii, pp
+                                                    ii, pp, transformChunkSize
       integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
                                                                         &PRECISION&
                                                                         &_&
                                                                         &MATH_DATATYPE
+
+      logical                                     :: useGPU_reduction_lower_block_to_tridiagonal
+
 
       call obj%timer%start("bandred_&
       &MATH_DATATYPE&
       &" // &
       &PRECISION_SUFFIX &
       )
+
+      if (useGPU) then
+        useGPU_reduction_lower_block_to_tridiagonal = .true.
+#if REALCASE == 1
+        if (useQR) then
+          !in this case switch off GPU usage for step "reduce current block to lower triangular form"
+          ! since this is done by QR decomposition
+          useGPU_reduction_lower_block_to_tridiagonal = .false.
+        endif
+#endif
+      endif
+
       if (wantDebug) call obj%timer%start("mpi_communication")
 
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -206,18 +221,18 @@
         if (my_prow==0 .and. my_pcol==0) then
           if (wantDebug) then
             write(error_unit,*) 'ELPA2_bandred_&
-      &MATH_DATATYPE&
-      &: ERROR: nbw=',nbw,', nblk=',nblk
+                                 &MATH_DATATYPE&
+                                 &: ERROR: nbw=',nbw,', nblk=',nblk
             write(error_unit,*) 'ELPA2_bandred_&
-      &MATH_DATATYPE&
-      &: ELPA2 works only for nbw==n*nblk'
+                                 &MATH_DATATYPE&
+                                 &: ELPA2 works only for nbw==n*nblk'
           endif
           success = .false.
           return
         endif
       endif
 
-! na_rows in used nowhere; only na_cols
+      ! na_rows in used nowhere; only na_cols
       if (useGPU) then
 #ifdef WITH_MPI
 #if COMPLEXCASE == 1
@@ -267,11 +282,6 @@
 
 #if REALCASE == 1
       if (useQR) then
-
-        if (useGPU) then
-          print *,"qr decomposition at the moment not supported with GPU"
-          stop 1
-        endif
 
         if (which_qr_decomposition == 1) then
           call qr_pqrparam_init(obj,pqrparam(1:11),    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
@@ -533,6 +543,10 @@
         ! Reduce current block to lower triangular form
 #if REALCASE == 1
         if (useQR) then
+          if (useGPU) then
+ !            vmrCPU(1:cur_l_rows,1:n_cols) = vmrCUDA(1 : cur_l_rows * n_cols)
+          endif
+
           if (which_qr_decomposition == 1) then
             vmrCols = 2*n_cols
 #ifdef USE_ASSUMED_SIZE_QR
@@ -637,7 +651,7 @@
 
 #endif /* WITH_MPI */
 
-           if (useGPU) then
+           if (useGPU_reduction_lower_block_to_tridiagonal) then
              vmrCUDA(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
            else
              vmrCPU(1:lr,lc) = vr(1:lr)
@@ -815,7 +829,7 @@
 #endif /* WITH_OPENMP */
          enddo ! lc
 
-         if (useGPU) then
+         if (useGPU_reduction_lower_block_to_tridiagonal) then
            ! store column tiles back to GPU
            cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
            if (my_pcol == cur_pcol) then
@@ -841,7 +855,7 @@
 
          vav = 0
          call obj%timer%start("blas")
-         if (useGPU) then
+         if (useGPU_reduction_lower_block_to_tridiagonal) then
            if (l_rows>0) &
 #if REALCASE == 1
              call PRECISION_SYRK('U', 'T',            &
@@ -853,7 +867,7 @@
                            vmrCUDA, cur_l_rows, &
                            ZERO, vav, ubound(vav,dim=1))
 
-         else ! useGPU
+         else ! useGPU_reduction_to_tridiagonal
            if (l_rows>0) &
 #if REALCASE == 1
              call PRECISION_SYRK('U', 'T',           &
@@ -892,6 +906,33 @@
 #if REALCASE == 1
        endif !useQR
 #endif
+
+#if REALCASE == 1
+       if (useGPU .and. useQR) then
+         ! copy the data for furhter usage
+         ! qr worked on *CPU arrarys
+         !vmrCUDA(1:cur_l_rows * n_cols) = vmrCPU(1:cur_l_rows,1:n_cols)
+         cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
+         if (my_pcol == cur_pcol) then
+           successCUDA = cuda_memcpy2d((a_dev+        &
+                                       int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)),    &
+                                       int(lda*size_of_datatype,kind=c_intptr_t), loc(a(1,lc_start)), &
+                                       int(lda*size_of_datatype,kind=c_intptr_t),           &
+                                       int(lr_end*size_of_datatype,kind=c_intptr_t),        &
+                                       int((lc_end - lc_start+1),kind=c_intptr_t), &
+                                       int(cudaMemcpyHostToDevice,kind=c_int))
+
+           if (.not.(successCUDA)) then
+             print *, "bandred_&
+                      &MATH_DATATYPE&
+                      &: cuda memcpy a_dev  failed ", istat
+             stop 1
+           endif
+         endif
+
+       endif
+#endif
+
        ! Transpose vmr -> vmc (stored in umc, second half)
        if (useGPU) then
          call elpa_transpose_vectors_&
@@ -1517,7 +1558,7 @@
          endif
        endif !useGPU
 
-     enddo ! istep
+     enddo ! istep - loop
 
      if (useGPU) then
        successCUDA = cuda_free(vav_dev)
