@@ -834,17 +834,7 @@
                if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
-#if REALCASE == 1
                row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
-#endif
-#if COMPLEXCASE == 1
-! todo: what of this is correct? Was different for double/single precision
-#ifdef DOUBLE_PRECISION_COMPLEX
-                row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
-#else
-                row_group(1:l_nev,row_group_size) = row_group(1:l_nev,row_group_size) ! is this correct
-#endif
-#endif
 #endif /* WITH_MPI */
 
               else ! useGPU
