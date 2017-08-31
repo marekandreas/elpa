@@ -712,15 +712,15 @@
                 row_group(:, row_group_size) = q(src_offset, 1:l_nev)
 #else /* WITH_OPENMP */
 
-#if COMPLEXCASE == 1
-! why is an cuda call in the openmp region?
-                call unpack_and_prepare_row_group_complex_gpu_&
-                     &PRECISION&
-                     &(row_group, row_group_dev, aIntern_dev, stripe_count, stripe_width, &
-                      last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
-                      unpack_idx, i - limits(ip),.false.)
-                      row_group(:, row_group_size) = q(src_offset, 1:l_nev)
-#endif
+!#if COMPLEXCASE == 1
+!! why is an cuda call in the openmp region?
+!                call unpack_and_prepare_row_group_complex_gpu_&
+!                     &PRECISION&
+!                     &(row_group, row_group_dev, aIntern_dev, stripe_count, stripe_width, &
+!                      last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
+!                      unpack_idx, i - limits(ip),.false.)
+!                      row_group(:, row_group_size) = q(src_offset, 1:l_nev)
+!#endif
 
 #endif /* not OpenMP */
               else
