@@ -146,6 +146,8 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-jobs:
 
 # gfortran double precision mpi noomp AVX/SSE COVERAGE
 gfortran-double-precision-mpi-noomp-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -161,6 +163,8 @@ gfortran-double-precision-mpi-noomp-coverage-avx-jobs:
       - coverage_data
 
 gfortran-single-precision-mpi-noomp-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -177,6 +181,8 @@ gfortran-single-precision-mpi-noomp-coverage-avx-jobs:
 
 # gfortran double precision mpi noomp AVX/SSE, no assumed size COVERAGE
 gfortran-double-precision-mpi-noomp-no-assumed-size-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -193,6 +199,8 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-coverage-avx-jobs:
 
 # gfortran single precision mpi noomp AVX/SSE no assumed size COVERAGE
 gfortran-singe-precision-mpi-noomp-no-assumed-size-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -350,6 +358,8 @@ gfortran-single-precision-mpi-omp-no-assumed-size-jobs:
 
 # gfortran double precision mpi omp AVX/SSE COVERAGE
 gfortran-double-precision-mpi-omp-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -367,6 +377,8 @@ gfortran-double-precision-mpi-omp-coverage-avx-jobs:
 
 # gfortran single precision mpi omp AVX/SSE COVERAGE
 gfortran-single-precision-mpi-omp-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -384,6 +396,8 @@ gfortran-single-precision-mpi-omp-coverage-avx-jobs:
 
 # gfortran double precision mpi omp AVX/SSE, no assumed size COVERAGE
 gfortran-double-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -401,6 +415,8 @@ gfortran-double-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
 
 # gfortran single precision mpi omp AVX/SSE no assumed size COVERAGE
 gfortran-single-precision-mpi-omp-no-assumed-size-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -511,6 +527,8 @@ gfortran-single-precision-nompi-noomp-no-assumed-size-jobs:
 
 # gfortran double precision nompi noomp AVX/SSE COVERAGE
 gfortran-double-precision-nompi-noomp-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -527,6 +545,8 @@ gfortran-double-precision-nompi-noomp-coverage-avx-jobs:
 
 # gfortran single precision nompi noomp AVX/SSE COVERAGE
 gfortran-single-precision-nompi-noomp-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -543,6 +563,8 @@ gfortran-single-precision-nompi-noomp-coverage-avx-jobs:
 
 # gfortran double precision nompi noomp AVX/SSE, no assumed size COVERAGE
 gfortran-double-precision-nompi-noomp-no-assumed-size-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -559,6 +581,8 @@ gfortran-double-precision-nompi-noomp-no-assumed-size-coverage-avx-jobs:
 
 # gfortran single precision nompi noomp AVX/SSE no assumed size COVERAGE
 gfortran-single-precision-nompi-noomp-no-assumed-size-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -716,6 +740,8 @@ gfortran-single-precision-nompi-omp-no-assumed-size-jobs:
 
 # gfortran double precision nompi omp AVX/SSE COVERAGE
 gfortran-double-precision-nompi-omp-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -733,6 +759,8 @@ gfortran-double-precision-nompi-omp-coverage-avx-jobs:
 
 # gfortran single precision nompi omp AVX/SSE COVERAGE
 gfortran-single-precision-nompi-omp-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -750,6 +778,8 @@ gfortran-single-precision-nompi-omp-coverage-avx-jobs:
 
 # gfortran double precision nompi omp AVX/SSE, no assumed size COVERAGE
 gfortran-double-precision-nompi-omp-no-assumed-size-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -767,6 +797,8 @@ gfortran-double-precision-nompi-omp-no-assumed-size-coverage-avx-jobs:
 
 # gfortran single precision nompi omp AVX/SSE no assumed size COVERAGE
 gfortran-single-precision-nompi-omp-no-assumed-size-coverage-avx-jobs:
+  only:
+    - /.*master.*/
   tags:
     - coverage
   script:
@@ -877,6 +909,8 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-avx2-jobs:
 
 # gfortran double precision mpi noomp AVX2 coverage
 gfortran-double-precision-mpi-noomp-avx2-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2-coverage
   script:
@@ -894,6 +928,8 @@ gfortran-double-precision-mpi-noomp-avx2-coverage-jobs:
 
 # gfortran single precision mpi noomp AVX2 coverage
 gfortran-single-precision-mpi-noomp-avx2-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2-coverage
   script:
@@ -1537,6 +1573,8 @@ gfortran-single-precision-nompi-omp-no-assumed-size-avx2-jobs:
 ########################################################################################
 
 gfortran-double-precision-mpi-noomp-gpu-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - gpu-coverage
   script:
@@ -1557,6 +1595,8 @@ gfortran-double-precision-mpi-noomp-gpu-coverage-jobs:
       - coverage_data
 
 gfortran-single-precision-mpi-noomp-gpu-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - gpu-coverage
   script:
@@ -1595,6 +1635,8 @@ intel-double-precision-mpi-noomp-cuda-jobs-blocksize-32:
 
 
 gfortran-double-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
+  only:
+    - /.*master.*/
   tags:
     - gpu-coverage
   script:
@@ -1615,6 +1657,8 @@ gfortran-double-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
       - coverage_data
 
 gfortran-single-precision-mpi-noomp-gpu-coverage-blocksize-32-jobs:
+  only:
+    - /.*master.*/
   tags:
     - gpu-coverage
   script:
@@ -1653,6 +1697,8 @@ intel-double-precision-mpi-noomp-cuda-jobs-blocksize-16:
 
 
 gfortran-double-precision-nompi-noomp-gpu-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - gpu-coverage
   script:
@@ -1673,6 +1719,8 @@ gfortran-double-precision-nompi-noomp-gpu-coverage-jobs:
       - coverage_data
 
 gfortran-single-precision-nompi-noomp-gpu-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - gpu-coverage
   script:
@@ -1691,6 +1739,7 @@ gfortran-single-precision-nompi-noomp-gpu-coverage-jobs:
   artifacts:
     paths:
       - coverage_data
+
 intel-double-precision-nompi-noomp-cuda-jobs:
   tags:
     - gpu
@@ -2521,6 +2570,8 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-jobs:
 
 # gfortran double precision mpi noomp skylake, no assumed size coveravge
 gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - skylake-coverage
   script:
@@ -2540,6 +2591,8 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
 
 # gfortran single precision mpi noomp skylake, no assumed size coveravge
 gfortran-single-precision-mpi-noomp-no-assumed-size-skylake-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - skylake-coverage
   script:
@@ -2694,6 +2747,8 @@ gfortran-double-precision-mpi-omp-skylake-jobs:
 
 # gfortran double precision mpi omp skylake
 gfortran-double-precision-mpi-omp-skylake-coverage-jobs:
+  only:
+    - /.*master.*/
   tags:
     - skylake-coverage
   script:
@@ -3379,6 +3434,8 @@ minsky-pure-gnu:
 
 # print coverage results
 total_coverage:
+  only:
+    - /.*master.*/
   stage: coverage
   tags:
     - coverage
