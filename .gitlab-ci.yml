@@ -3538,6 +3538,7 @@ test_project_2stage_intel_legacy_api:
    - rm -rf installdest
 
 minsky:
+  allow_failure: true
   tags:
     - miy
   script:
