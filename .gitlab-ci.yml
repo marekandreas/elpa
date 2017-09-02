@@ -3555,7 +3555,7 @@ minsky-pure-gnu:
     - miy
   script:
     - module purge
-    - module load gcc/5.4 ompi/pgi/17.5/1.10.2 essl/5.5 cuda/8.0
+    - module load gcc/5.4 ompi/pgi/17.7/1.10.2 essl/5.5 cuda/8.0
     - module list
     - export OMPI_CC=gcc
     - export OMPI_FC=gfortran
