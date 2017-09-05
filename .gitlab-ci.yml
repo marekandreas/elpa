@@ -3426,6 +3426,32 @@ distcheck:
     # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
     - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2" TASKS=2 TEST_FLAGS='150 50 16' || { chmod u+rwX -R . ; exit 1 ; }
 
+# test test_project
+test_project:
+  tags:
+    - buildtest
+  script:
+    - mkdir build
+    - pushd build
+    - ../autogen.sh
+    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
+    - make -j 8
+    - make install
+    - popd
+    - mkdir test_project/build
+    - pushd test_project/build
+    - ../autogen.sh
+    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - ./test_real
+    - make distclean
+    - popd
+    - pushd build
+    - make distclean
+    - rm -rf installdest
+    - popd
+
 # test test_project_legacy_api
 test_project_legacy_api:
   tags:
@@ -3445,6 +3471,32 @@ test_project_legacy_api:
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - ./test_real
+    - make distclean
+    - popd
+    - pushd build
+    - make distclean
+    - rm -rf installdest
+    - popd
+
+# test test_project_2stage
+test_project_2stage:
+  tags:
+    - buildtest
+  script:
+    - mkdir build
+    - pushd build
+    - ../autogen.sh
+    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
+    - make -j 8
+    - make install
+    - popd
+    - mkdir test_project_2stage/build
+    - pushd test_project_2stage/build
+    - ../autogen.sh
+    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - ./test_real2
     - make distclean
     - popd
     - pushd build
@@ -3479,6 +3531,29 @@ test_project_2stage_legacy_api:
     - rm -rf installdest
     - popd
 
+test_project_intel:
+  tags:
+    - buildtest
+  script:
+    - mkdir build
+    - pushd build
+    - ../autogen.sh
+    - ../configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - make -j 8
+    - make install
+    - popd
+    - mkdir test_project/build
+    - pushd test_project/build
+    - ../autogen.sh
+    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - ./test_real
+    - make distclean
+    - popd
+    - pushd build
+    - make distclean
+    - rm -rf installdest
 
 test_project_intel_legacy_api:
   tags:
@@ -3503,6 +3578,30 @@ test_project_intel_legacy_api:
     - pushd build
     - make distclean
     - rm -rf installdest
+
+test_project_2stage_intel:
+ tags:
+   - buildtest
+ script:
+   - mkdir build
+   - pushd build
+   - ../autogen.sh
+   - ../configure --enable-option-checking=fatal SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }
+   - make -j 8
+   - make install
+   - popd
+   - mkdir test_project_2stage/build
+   - pushd test_project_2stage/build
+   - ../autogen.sh
+   - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
+   - make -j 8
+   - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+   - ./test_real2
+   - make distclean
+   - popd
+   - pushd build
+   - make distclean
+   - rm -rf installdest
 
 
 test_project_2stage_intel_legacy_api:

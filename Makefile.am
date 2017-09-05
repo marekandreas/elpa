@@ -649,7 +649,13 @@ EXTRA_DIST = \
   test_project/configure.ac \
   test_project/fdep \
   test_project/m4 \
-  test_project/src/test_real.F90
+  test_project/src/test_real.F90 \
+  test_project_2stage/Makefile.am \
+  test_project_2stage/autogen.sh \
+  test_project_2stage/configure.ac \
+  test_project_2stage/fdep \
+  test_project_2stage/m4 \
+  test_project_2stage/src/test_real2.F90
 
 if ENABLE_LEGACY
 EXTRA_DIST += \

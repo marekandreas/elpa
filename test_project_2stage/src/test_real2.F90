@@ -209,7 +209,7 @@ program test_real_example
 
    success = e%setup()
 
-   call e%set("solver", elpa_solver_1stage, success)
+   call e%set("solver", elpa_solver_2stage, success)
 
 
    ! Calculate eigenvalues/eigenvectors
