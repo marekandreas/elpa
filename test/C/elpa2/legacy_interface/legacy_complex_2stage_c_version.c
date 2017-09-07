@@ -197,9 +197,9 @@ int main(int argc, char** argv) {
    ev = malloc(na*sizeof(float));
 #endif
 #ifdef DOUBLE_PRECISION_COMPLEX
-   prepare_matrix_complex_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_complex_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 #else
-   prepare_matrix_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 #endif
 
    if (myid == 0) {

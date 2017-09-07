@@ -44,28 +44,28 @@
 
 module test_prepare_matrix
 
-  interface prepare_matrix
-    module procedure prepare_matrix_complex_double
-    module procedure prepare_matrix_real_double
+  interface prepare_matrix_random
+    module procedure prepare_matrix_random_complex_double
+    module procedure prepare_matrix_random_real_double
 #ifdef WANT_SINGLE_PRECISION_REAL
-    module procedure prepare_matrix_real_single
+    module procedure prepare_matrix_random_real_single
 #endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    module procedure prepare_matrix_complex_single
+    module procedure prepare_matrix_random_complex_single
 #endif
    end interface
 
 
-  interface prepare_toeplitz_matrix
-    module procedure prepare_toeplitz_matrix_complex_double
-    module procedure prepare_toeplitz_matrix_real_double
-    module procedure prepare_toeplitz_matrix_mixed_complex_complex_double
+  interface prepare_matrix_toeplitz
+    module procedure prepare_matrix_toeplitz_complex_double
+    module procedure prepare_matrix_toeplitz_real_double
+    module procedure prepare_matrix_toeplitz_mixed_complex_complex_double
 #ifdef WANT_SINGLE_PRECISION_REAL
-    module procedure prepare_toeplitz_matrix_real_single
+    module procedure prepare_matrix_toeplitz_real_single
 #endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    module procedure prepare_toeplitz_matrix_complex_single
-    module procedure prepare_toeplitz_matrix_mixed_complex_complex_single
+    module procedure prepare_matrix_toeplitz_complex_single
+    module procedure prepare_matrix_toeplitz_mixed_complex_complex_single
 #endif
    end interface
 

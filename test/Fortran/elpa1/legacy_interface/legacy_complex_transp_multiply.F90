@@ -166,7 +166,7 @@ program test_transpose_multiply
    allocate(as(na_rows,na_cols))
 
    allocate(ev(na))
-   call prepare_matrix(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_random(na, myid, sc_desc, a, z, as)
    b(:,:) = 2.0_ck8 * a(:,:)
    c(:,:) = 0.0_ck8
 

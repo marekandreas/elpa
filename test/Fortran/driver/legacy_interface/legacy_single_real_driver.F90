@@ -196,7 +196,7 @@ program test_real2
    allocate(as(na_rows,na_cols))
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_random(na, myid, sc_desc, a, z, as)
 
    ! set print flag in elpa1
    elpa_print_times = .true.

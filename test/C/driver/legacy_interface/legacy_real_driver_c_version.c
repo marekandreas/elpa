@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
    as = malloc(na_rows*na_cols*sizeof(double));
    ev = malloc(na*sizeof(double));
 
-   prepare_matrix_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 
    if (myid == 0) {
      printf("\n");

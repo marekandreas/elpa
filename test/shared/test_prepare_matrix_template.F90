@@ -41,7 +41,7 @@
 !
 ! Author: A. Marek, MPCDF
 
-    subroutine prepare_matrix_&
+    subroutine prepare_matrix_random_&
     &MATH_DATATYPE&
     &_&
     &PRECISION&
@@ -149,11 +149,11 @@
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-    !c> void prepare_matrix_real_double_f(int na, int myid, int na_rows, int na_cols,
+    !c> void prepare_matrix_random_real_double_f(int na, int myid, int na_rows, int na_cols,
     !c>                                       int sc_desc[9],
     !c>                                       double *a, double *z, double *as);
 #else
-    !c> void prepare_matrix_real_single_f(int na, int myid, int na_rows, int na_cols,
+    !c> void prepare_matrix_random_real_single_f(int na, int myid, int na_rows, int na_cols,
     !c>                                       int sc_desc[9],
     !c>                                       float *a, float *z, float *as);
 #endif
@@ -161,22 +161,22 @@
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void prepare_matrix_complex_double_f(int na, int myid, int na_rows, int na_cols,
+    !c> void prepare_matrix_random_complex_double_f(int na, int myid, int na_rows, int na_cols,
     !c>                                       int sc_desc[9],
     !c>                                       complex double *a, complex double *z, complex double *as);
 #else
-    !c> void prepare_matrix_complex_single_f(int na, int myid, int na_rows, int na_cols,
+    !c> void prepare_matrix_random_complex_single_f(int na, int myid, int na_rows, int na_cols,
     !c>                                       int sc_desc[9],
     !c>                                       complex float *a, complex float *z, complex float *as);
 #endif
 #endif /* COMPLEXCASE */
 
-subroutine prepare_matrix_&
+subroutine prepare_matrix_random_&
 &MATH_DATATYPE&
 &_wrapper_&
 &PRECISION&
 & (na, myid, na_rows, na_cols, sc_desc, a, z, as) &
-   bind(C, name="prepare_matrix_&
+   bind(C, name="prepare_matrix_random_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
@@ -198,7 +198,7 @@ subroutine prepare_matrix_&
                                        as(1:na_rows,1:na_cols)
 #endif
 
-      call prepare_matrix_&
+      call prepare_matrix_random_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
@@ -206,7 +206,7 @@ subroutine prepare_matrix_&
     end subroutine
 
 
-   subroutine prepare_toeplitz_matrix_&
+   subroutine prepare_matrix_toeplitz_&
    &MATH_DATATYPE&
    &_&
    &PRECISION&
@@ -264,7 +264,7 @@ subroutine prepare_matrix_&
      as = a
    end subroutine
 
-   subroutine prepare_toeplitz_matrix_mixed_complex&
+   subroutine prepare_matrix_toeplitz_mixed_complex&
    &_&
    &MATH_DATATYPE&
    &_&

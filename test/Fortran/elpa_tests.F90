@@ -259,7 +259,7 @@ program test_all_real
    endif
 
    if (input_options%datatype .eq. 1) then
-     call prepare_matrix(na, myid, sc_desc, a_real, z_real, as_real)
+     call prepare_matrix_random(na, myid, sc_desc, a_real, z_real, as_real)
 
      if (input_options%doInvertTrm) then
        b_real(:,:) = a_real(:,:)
@@ -267,7 +267,7 @@ program test_all_real
      endif
    endif
    if (input_options%datatype .eq. 2) then
-     call prepare_matrix(na, myid, sc_desc, a_complex, z_complex, as_complex)
+     call prepare_matrix_random(na, myid, sc_desc, a_complex, z_complex, as_complex)
      if (input_options%doInvertTrm) then
        b_complex(:,:) = a_complex(:,:)
        bs_complex(:,:) = a_complex(:,:)
@@ -901,10 +901,10 @@ program test_all_real
     endif ! input_options%doTransposeMultiply
 
 !   if (input_options%datatype .eq. 0) then
-!     call prepare_matrix(na, myid, sc_desc, a_real, z_real, as_real)
+!     call prepare_matrix_random(na, myid, sc_desc, a_real, z_real, as_real)
 !   endif
 !   if (input_options%datatype .eq. 1) then
-!     call prepare_matrix(na, myid, sc_desc, a_complex, z_complex, as_complex)
+!     call prepare_matrix_random(na, myid, sc_desc, a_complex, z_complex, as_complex)
 !   endif
 
    if (input_options%do1stage) then

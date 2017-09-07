@@ -263,7 +263,7 @@ program test_real2_default_kernel_qr_decomposition_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_random(na, myid, sc_desc, a, z, as)
 
    ! set print flag in elpa1
    elpa_print_times = .true.

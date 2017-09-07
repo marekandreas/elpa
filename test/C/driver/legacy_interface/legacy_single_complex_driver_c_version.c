@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
    as = malloc(na_rows*na_cols*sizeof(complex float));
    ev = malloc(na*sizeof(float));
 
-   prepare_matrix_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 
    if (myid == 0) {
      printf("\n");

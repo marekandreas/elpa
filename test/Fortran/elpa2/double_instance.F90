@@ -116,7 +116,7 @@ program test_interface
    z1(:,:) = 0.0
    ev1(:) = 0.0
 
-   call prepare_matrix(na, myid, sc_desc, a1, z1, as1)
+   call prepare_matrix_random(na, myid, sc_desc, a1, z1, as1)
    allocate(a2 (na_rows,na_cols), as2(na_rows,na_cols))
    allocate(z2 (na_rows,na_cols))
    allocate(ev2(na))
@@ -125,7 +125,7 @@ program test_interface
    z2(:,:) = 0.0
    ev2(:) = 0.0
 
-   call prepare_matrix(na, myid, sc_desc, a2, z2, as2)
+   call prepare_matrix_random(na, myid, sc_desc, a2, z2, as2)
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"

@@ -202,7 +202,7 @@ program test_real_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_random(na, myid, sc_desc, a, z, as)
 
    elpa_print_times = .true.
    !-------------------------------------------------------------------------------

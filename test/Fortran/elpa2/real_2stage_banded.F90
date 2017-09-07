@@ -191,7 +191,7 @@ program test_real2_double_banded
 
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_random(na, myid, sc_desc, a, z, as)
 
    ! set values outside of the bandwidth to zero
    bandwidth = nblk

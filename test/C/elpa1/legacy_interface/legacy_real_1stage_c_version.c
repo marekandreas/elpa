@@ -195,9 +195,9 @@ int main(int argc, char** argv) {
 #endif
 
 #ifdef DOUBLE_PRECISION_REAL
-   prepare_matrix_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 #else
-   prepare_matrix_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 #endif
    if (myid == 0) {
      printf("\n");

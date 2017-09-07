@@ -285,7 +285,7 @@ program test
    as(:,:) = a
 #else
    if (nev .ge. 1) then
-     call prepare_matrix(na, myid, sc_desc, a, z, as)
+     call prepare_matrix_random(na, myid, sc_desc, a, z, as)
    else
      ! zero eigenvectors and not analytic test => toeplitz matrix
 #ifdef TEST_SINGLE
@@ -295,7 +295,7 @@ program test
      diagonalElement = 0.45_c_double
      subdiagonalElement =  0.78_c_double
 #endif
-     call prepare_toeplitz_matrix(na, diagonalElement, subdiagonalElement, &
+     call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                                   d, sd, ds, sds, a, as, nblk, np_rows, &
                                   np_cols, my_prow, my_pcol)
    endif
@@ -339,7 +339,7 @@ program test
    diagonalElement = 0.45_c_double
    subdiagonalElement =  0.78_c_double
 #endif
-   call prepare_toeplitz_matrix(na, diagonalElement, subdiagonalElement, &
+   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
 #endif /* EIGENVALUES OR TRIDIAGONAL */
@@ -353,7 +353,7 @@ program test
    diagonalElement = (2.546_c_double, 0.0_c_double)
    subdiagonalElement =  (0.0_c_double, 0.0_c_double)
 #endif
-   call prepare_toeplitz_matrix(na, diagonalElement, subdiagonalElement, &
+   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
 

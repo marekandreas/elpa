@@ -223,7 +223,7 @@ program test_real2_gpu_version_double_precision
 
    allocate(ev(na))
 
-   call prepare_matrix(na, myid, sc_desc, a, z, as)
+   call prepare_matrix_random(na, myid, sc_desc, a, z, as)
 
    ! set print flag in elpa1
    elpa_print_times = .true.
