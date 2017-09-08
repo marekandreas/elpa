@@ -794,11 +794,12 @@ function check_correctness_evp_numeric_residuals_&
 #endif
 
 #endif /* REALCASE */
+
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-      tmp1(:,:) = 0.0_ck8
+      tmp1(:,:) = (0.0_c_double, 0.0_c_double)
 #else
-      tmp1(:,:) = 0.0_ck4
+      tmp1(:,:) = (0.0_c_float, 0.0_c_float)
 #endif
 #endif /* COMPLEXCASE */
 
@@ -912,7 +913,6 @@ function check_correctness_evp_numeric_residuals_&
 
 #ifdef WITH_MPI
 #ifdef DOUBLE_PRECISION_COMPLEX
-
       norm = pzlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
 #else
       norm = pclange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
