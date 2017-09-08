@@ -187,7 +187,7 @@
 #else /* WITH_MPI */
       errmax = err
 #endif /* WITH_MPI */
-
+      if (myid==0) print *,'Results of numerical residual checks:'
       if (myid==0) print *,'Error Residual     :',errmax
 #if REALCASE == 1
       if (nev .ge. 2) then

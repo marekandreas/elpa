@@ -501,7 +501,15 @@ program test
 
 #if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
 #ifdef TEST_MATRIX_ANALYTIC
+!
+!#if defined(TEST_MATRIX_ANALYTIC)
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals)
+     call check_status(status, myid)
+     if (.true.) then
+       ! also check residuals
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+       call check_status(status, myid)
+     endif
 #else
 !#elif defined(TEST_MATRIX_FRANK)
 !     status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
@@ -513,9 +521,12 @@ program test
        status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
          subdiagonalElement, ev, z, myid)
      endif
-#endif
      call check_status(status, myid)
+!#else
+!#error "MATRIX TYPE"
+!#endif
 #endif
+#endif /* defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) */
 
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
      status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
