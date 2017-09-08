@@ -327,7 +327,7 @@ program test_solve_tridi
    endif
 
    ! Test correctness of result (using plain scalapack routines)
-   status = check_correctness(na, nev, as, a, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+   status = check_correctness_evp_numeric_residuals(na, nev, as, a, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
    deallocate(a)
 

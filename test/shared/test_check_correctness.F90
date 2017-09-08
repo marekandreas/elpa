@@ -45,14 +45,14 @@
 module test_check_correctness
   use test_util
 
-  interface check_correctness
-    module procedure check_correctness_complex_double
-    module procedure check_correctness_real_double
+  interface check_correctness_evp_numeric_residuals
+    module procedure check_correctness_evp_numeric_residuals_complex_double
+    module procedure check_correctness_evp_numeric_residuals_real_double
 #ifdef WANT_SINGLE_PRECISION_REAL
-    module procedure check_correctness_real_single
+    module procedure check_correctness_evp_numeric_residuals_real_single
 #endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    module procedure check_correctness_complex_single
+    module procedure check_correctness_evp_numeric_residuals_complex_single
 #endif
   end interface
 

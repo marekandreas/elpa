@@ -1013,10 +1013,10 @@ program test_all_real
 
 
      if (input_options%datatype .eq. 1) then
-       status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
+       status = check_correctness_evp_numeric_residuals(na, nev, as_real, z_real, ev, sc_desc, myid)
      endif
      if (input_options%datatype .eq. 2) then
-       status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
+       status = check_correctness_evp_numeric_residuals(na, nev, as_complex, z_complex, ev, sc_desc, myid)
      endif
 
      if (status .eq. 1) then
@@ -1099,7 +1099,7 @@ program test_all_real
                         elpa_int_value_to_string("real_kernel", ELPA_2STAGE_REAL_DEFAULT),' default kernel:',tEnd - tStart
          if (myid == 0) print *," "
 
-         status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
+         status = check_correctness_evp_numeric_residuals(na, nev, as_real, z_real, ev, sc_desc, myid)
          if (myid == 0) print *," "
 
          if (status .eq. 1) then
@@ -1189,7 +1189,7 @@ program test_all_real
                             trim(elpa_real_kernel_name(this_kernel)),' kernel:',tEnd - tStart
              if (myid == 0) print *," "
 
-             status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
+             status = check_correctness_evp_numeric_residuals(na, nev, as_real, z_real, ev, sc_desc, myid)
              if (myid == 0) print *," "
 
              if (status .eq. 1) then
@@ -1283,7 +1283,7 @@ program test_all_real
                           trim(elpa_real_kernel_name(input_options%this_real_kernel)),' kernel:',tEnd - tStart
            if (myid == 0) print *," "
 
-           status = check_correctness(na, nev, as_real, z_real, ev, sc_desc, myid)
+           status = check_correctness_evp_numeric_residuals(na, nev, as_real, z_real, ev, sc_desc, myid)
            if (myid == 0) print *," "
 
            if (status .eq. 1) then
@@ -1380,7 +1380,7 @@ program test_all_real
                         elpa_int_value_to_string("complex_kernel", ELPA_2STAGE_COMPLEX_DEFAULT),' default kernel:',tEnd - tStart
          if (myid == 0) print *," "
 
-         status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
+         status = check_correctness_evp_numeric_residuals(na, nev, as_complex, z_complex, ev, sc_desc, myid)
          if (myid == 0) print *," "
 
          if (status .eq. 1) then
@@ -1471,7 +1471,7 @@ program test_all_real
                               trim(elpa_complex_kernel_name(this_kernel)),' kernel:',tEnd - tStart
              if (myid == 0) print *," "
 
-             status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
+             status = check_correctness_evp_numeric_residuals(na, nev, as_complex, z_complex, ev, sc_desc, myid)
              if (myid == 0) print *," "
 
              if (status .eq. 1) then
@@ -1568,7 +1568,7 @@ program test_all_real
                           trim(elpa_complex_kernel_name(input_options%this_complex_kernel)),' kernel:',tEnd - tStart
            if (myid == 0) print *," "
 
-           status = check_correctness(na, nev, as_complex, z_complex, ev, sc_desc, myid)
+           status = check_correctness_evp_numeric_residuals(na, nev, as_complex, z_complex, ev, sc_desc, myid)
            if (myid == 0) print *," "
 
            if (status .eq. 1) then

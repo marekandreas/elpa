@@ -193,14 +193,14 @@ program test_interface
    call elpa_deallocate(e2)
    call elpa_uninit()
 
-   status = check_correctness(na, nev, as1, z1, ev1, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+   status = check_correctness_evp_numeric_residuals(na, nev, as1, z1, ev1, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
    deallocate(a1)
    deallocate(as1)
    deallocate(z1)
    deallocate(ev1)
 
-   status = check_correctness(na, nev, as2, z2, ev2, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+   status = check_correctness_evp_numeric_residuals(na, nev, as2, z2, ev2, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
    deallocate(a2)
    deallocate(as2)

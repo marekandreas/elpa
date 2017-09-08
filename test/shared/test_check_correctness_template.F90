@@ -41,7 +41,7 @@
 !
 ! Author: A. Marek, MPCDF
 
-    function check_correctness_&
+    function check_correctness_evp_numeric_residuals_&
     &MATH_DATATYPE&
     &_&
     &PRECISION&
@@ -323,11 +323,11 @@
 #if REALCASE == 1
 
 #ifdef DOUBLE_PRECISION_REAL
-    !c> int check_correctness_real_double_f(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_evp_numeric_residuals_real_double_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         double *as, double *z, double *ev,
     !c>                                         int sc_desc[9], int myid);
 #else
-    !c> int check_correctness_real_single_f(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_evp_numeric_residuals_real_single_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         float *as, float *z, float *ev,
     !c>                                         int sc_desc[9], int myid);
 #endif
@@ -336,22 +336,22 @@
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> int check_correctness_complex_double_f(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_evp_numeric_residuals_complex_double_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         complex double *as, complex double *z, double *ev,
     !c>                                         int sc_desc[9], int myid);
 #else
-    !c> int check_correctness_complex_single_f(int na, int nev, int na_rows, int na_cols,
+    !c> int check_correctness_evp_numeric_residuals_complex_single_f(int na, int nev, int na_rows, int na_cols,
     !c>                                         complex float *as, complex float *z, float *ev,
     !c>                                         int sc_desc[9], int myid);
 #endif
 #endif /* COMPLEXCASE */
 
-function check_correctness_&
+function check_correctness_evp_numeric_residuals_&
 &MATH_DATATYPE&
 &_&
 &PRECISION&
 &_f (na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid) result(status) &
-      bind(C,name="check_correctness_&
+      bind(C,name="check_correctness_evp_numeric_residuals_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
@@ -371,7 +371,7 @@ function check_correctness_&
       ! TODO: I did not want to add all the variables to the C interface as well
       ! TODO: I think that we should find a better way to pass this information
       ! TODO: to all the functions anyway (get it from sc_desc, pass elpa_t, etc..)
-      status = check_correctness_&
+      status = check_correctness_evp_numeric_residuals_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&

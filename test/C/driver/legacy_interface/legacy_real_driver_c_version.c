@@ -278,7 +278,7 @@ int main(int argc, char** argv) {
 
 
    /* check the results */
-   status = check_correctness_real_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+   status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
 
    if (status !=0){
      printf("The computed EVs are not correct !\n");

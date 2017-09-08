@@ -503,8 +503,11 @@ program test
 #ifdef TEST_MATRIX_ANALYTIC
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals)
 #else
+!#elif defined(TEST_MATRIX_FRANK)
+!     status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+!#elif defined(TEST_MATRIX_RANDOM)
      if (nev .ge. 1) then
-       status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
      else
        ! zero eigenvectors and no analytic test => toeplitz
        status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
@@ -521,7 +524,7 @@ program test
 
 #ifdef TEST_SOLVE_TRIDIAGONAL
      ! check eigenvectors
-     status = check_correctness(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+     status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
      call check_status(status, myid)
 #endif
 #endif

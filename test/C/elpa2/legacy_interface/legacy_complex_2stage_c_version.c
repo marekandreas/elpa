@@ -236,9 +236,9 @@ int main(int argc, char** argv) {
 
    /* check the results */
 #ifdef DOUBLE_PRECISION_COMPLEX
-   status = check_correctness_complex_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+   status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
 #else
-   status = check_correctness_complex_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+   status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
 #endif
    if (status !=0){
      printf("The computed EVs are not correct !\n");
