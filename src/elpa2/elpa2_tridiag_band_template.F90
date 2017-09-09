@@ -110,7 +110,7 @@
       MATH_DATATYPE(kind=rck)                     :: hv(nb), tau, x, h(nb), ab_s(1+nb), hv_s(nb), hv_new(nb), tau_new, hf
       MATH_DATATYPE(kind=rck)                     :: hd(nb), hs(nb)
 
-      integer(kind=ik)                             :: i, j, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
+      integer(kind=ik)                             :: i, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
       integer(kind=ik)                             :: my_pe, n_pes, mpierr
       integer(kind=ik)                             :: my_prow, np_rows, my_pcol, np_cols
       integer(kind=ik)                             :: ireq_ab, ireq_hv

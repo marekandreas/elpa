@@ -142,7 +142,7 @@
       integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                              :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
       integer(kind=ik)                              :: l_cols, l_rows, l_colh, nstor
-      integer(kind=ik)                              :: istep, i, n, nc, ic, ics, ice, nb, cur_pcol
+      integer(kind=ik)                              :: istep, n, nc, ic, ics, ice, nb, cur_pcol
       integer(kind=ik)                              :: hvn_ubnd, hvm_ubnd
 
 #if REALCASE == 1

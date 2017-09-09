@@ -81,7 +81,7 @@
     complex(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:nb)
 #endif
     integer(kind=ik)                :: i
-    complex(kind=C_DATATYPE_KIND)                :: h1, tau1, x(nq)
+    complex(kind=C_DATATYPE_KIND)                :: tau1, x(nq)
 
     !call obj%timer%start("kernel_&
     !&MATH_DATATYPE&

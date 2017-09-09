@@ -69,11 +69,8 @@
    logical                                                            :: useGPU
 #if REALCASE == 1
    logical                                                            :: useQR
-#endif
    logical                                                            :: useQRActual
-
-   integer(kind=c_int)                                                :: bandwidth
-
+#endif
    integer(kind=c_int)                                                :: kernel
 
 #ifdef USE_ASSUMED_SIZE
@@ -87,7 +84,10 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: hh_trans(:,:)
 
    integer(kind=c_int)                                                :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
-   integer(kind=c_int)                                                :: l_cols, l_rows, l_cols_nev, nbw, num_blocks
+   integer(kind=c_int)                                                :: nbw, num_blocks
+#if COMPLEXCASE == 1
+   integer(kind=c_int)                                                :: l_cols_nev, l_rows, l_cols
+#endif
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: tmat(:,:,:)
    real(kind=C_DATATYPE_KIND), allocatable                            :: e(:)
 #if COMPLEXCASE == 1

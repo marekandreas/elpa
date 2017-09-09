@@ -586,7 +586,7 @@ subroutine solve_tridi_&
      real(kind=REAL_DATATYPE), allocatable    :: work(:), qtmp(:), ds(:), es(:)
      real(kind=REAL_DATATYPE)                 :: dtmp
 
-     integer(kind=ik)              :: i, j, lwork, liwork, info, mpierr
+     integer(kind=ik)              :: i, j, lwork, liwork, info
      integer(kind=ik), allocatable :: iwork(:)
 
      logical, intent(in)           :: wantDebug

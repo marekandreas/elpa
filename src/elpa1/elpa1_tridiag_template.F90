@@ -134,7 +134,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       logical,          parameter                   :: mat_vec_as_one_block = .true.
 
       ! id in processor row and column and total numbers of processor rows and columns
-      integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols, my_rank
+      integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols
       integer(kind=ik)                              :: mpierr
       integer(kind=ik)                              :: totalblocks, max_loc_block_rows, max_loc_block_cols, max_local_rows, &
                                                        max_local_cols

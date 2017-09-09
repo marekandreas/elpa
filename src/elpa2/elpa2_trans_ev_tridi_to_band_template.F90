@@ -114,8 +114,6 @@
       integer(kind=c_intptr_t)                   :: q_dev
 
       integer(kind=ik)                           :: np_rows, my_prow, np_cols, my_pcol
-      integer(kind=ik)                           :: tmp
-
       integer(kind=ik)                           :: i, j, ip, sweep, nbuf, l_nev, a_dim2
       integer(kind=ik)                           :: current_n, current_local_n, current_n_start, current_n_end
       integer(kind=ik)                           :: next_n, next_local_n, next_n_start, next_n_end
@@ -152,7 +150,7 @@
       integer(kind=c_intptr_t)                   :: aIntern_dev
       integer(kind=c_intptr_t)                   :: bcast_buffer_dev
       integer(kind=c_intptr_t)                   :: num
-      integer(kind=c_intptr_t)                   :: dev_offset, dev_offset_1, dev_offset_2
+      integer(kind=c_intptr_t)                   :: dev_offset, dev_offset_1
       integer(kind=c_intptr_t)                   :: row_dev
       integer(kind=c_intptr_t)                   :: row_group_dev
       integer(kind=c_intptr_t)                   :: hh_tau_dev

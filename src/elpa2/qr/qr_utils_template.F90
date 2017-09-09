@@ -127,7 +127,7 @@ subroutine reverse_matrix_local_&
     real(kind=C_DATATYPE_KIND)    :: a(lda,*),work(*)
 
     ! local scalars
-    real(kind=C_DATATYPE_KIND)    :: temp, dworksize(1)
+    real(kind=C_DATATYPE_KIND)    :: dworksize(1)
     integer(kind=ik)              :: incx
     integer(kind=ik)              :: dimsize
     integer(kind=ik)              :: i

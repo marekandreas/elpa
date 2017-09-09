@@ -58,7 +58,7 @@ module mod_check_for_gpu
       integer(kind=ik), intent(out) :: numberOfDevices
       integer(kind=ik)              :: deviceNumber, mpierr, maxNumberOfDevices
       logical                       :: gpuAvailable
-      character(len=1024)           :: envname
+      !character(len=1024)           :: envname
 
       gpuAvailable = .false.
 

@@ -836,7 +836,7 @@ module cuda_c_kernel
       use iso_c_binding
 
       implicit none
-      integer(kind=c_int)     :: nev, nb, ldq, off, ncols
+      integer(kind=c_int)       :: nev, nb, ldq, off, ncols
       integer(kind=c_intptr_t)  :: q
       integer(kind=c_intptr_t)  :: hh_dot
       integer(c_intptr_t)       :: hh_tau ,hh

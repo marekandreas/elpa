@@ -147,9 +147,6 @@
 #endif
 #endif /* COMPLEXCASE == 1 */
 
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE)                    :: eps
-#endif
       logical, intent(in)                         :: useGPU
 
       integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -157,8 +154,10 @@
 #if REALCASE == 1
       integer(kind=ik)                            :: vmrCols
 #endif
-      integer(kind=ik)                            :: mynlc
-      integer(kind=ik)                            :: i, j, lcs, lce, lrs, lre, lc, lr, cur_pcol, n_cols, nrow
+#ifdef WITH_OPENMP
+      integer(kind=ik)                            :: mynlc, lrs, transformChunkSize
+#endif
+      integer(kind=ik)                            :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
       integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc
       integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
@@ -216,7 +215,7 @@
       logical, intent(in)                         :: useQR
 #endif
       integer(kind=ik)                            :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
-                                                    ii, pp, transformChunkSize
+                                                    ii, pp
       integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
                                                                         &PRECISION&
                                                                         &_&

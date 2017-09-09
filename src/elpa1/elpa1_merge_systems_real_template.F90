@@ -95,9 +95,6 @@
                                        l_cols_qreorg, np, l_idx, nqcols1, nqcols2
       integer(kind=ik)              :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
                                        np_cols, mpierr
-#ifdef WITH_MPI
-      integer(kind=ik)              :: my_mpi_status(mpi_status_size)
-#endif
       integer(kind=ik)              :: np_next, np_prev, np_rem
       integer(kind=ik)              :: idx(na), idx1(na), idx2(na)
       integer(kind=ik)              :: coltyp(na), idxq1(na), idxq2(na)
