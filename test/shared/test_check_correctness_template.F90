@@ -400,7 +400,7 @@ function check_correctness_evp_numeric_residuals_&
       real(kind=rck), parameter   :: pi = 3.1415926535897932_c_float
 #endif
       real(kind=rck)              :: tmp, maxerr
-      integer                                 :: loctmp
+      integer                     :: loctmp
       status = 0
 
      ! analytic solution
@@ -443,9 +443,9 @@ function check_correctness_evp_numeric_residuals_&
      maxerr = maxval( (ev(:) - ev_analytic(:))/ev_analytic(:) , 1)
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-     if (maxerr .gt. 8.e-13_c_double) then
+     if (maxerr .gt. 8.e-13_c_double .or. maxerr .eq. 0.0_c_double) then
 #else
-     if (maxerr .gt. 8.e-4_c_float) then
+     if (maxerr .gt. 8.e-4_c_float .or. maxerr .eq. 0.0_c_float) then
 #endif
        status = 1
        if (myid .eq. 0) then
@@ -689,11 +689,13 @@ function check_correctness_evp_numeric_residuals_&
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
+!      if (normmax .gt. 5e-12_rk8 .or. normmax .eq. 0.0_rk8) then
       if (normmax .gt. 5e-12_rk8) then
         status = 1
       endif
 #else
-      if (normmax .gt. 5e-4_rk4) then
+!      if (normmax .gt. 5e-4_rk4 .or. normmax .eq. 0.0_rk4) then
+      if (normmax .gt. 5e-4_rk4 ) then
         status = 1
       endif
 #endif
@@ -701,10 +703,12 @@ function check_correctness_evp_numeric_residuals_&
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (normmax .gt. 5e-11_rk8) then
+!      if (normmax .gt. 5e-11_rk8 .or. normmax .eq. 0.0_rk8) then
+      if (normmax .gt. 5e-11_rk8 ) then
         status = 1
       endif
 #else
+!      if (normmax .gt. 5e-3_rk4 .or. normmax .eq. 0.0_rk4) then
       if (normmax .gt. 5e-3_rk4) then
         status = 1
       endif
@@ -942,15 +946,24 @@ function check_correctness_evp_numeric_residuals_&
       endif
 
 #ifdef DOUBLE_PRECISION_REAL
-      if (normmax .gt. 5e-11_rk8) then
+      if (normmax .gt. 5e-11_rk8 ) then
         status = 1
       endif
 #else
-      if (normmax .gt. 5e-3_rk4) then
+      if (normmax .gt. 5e-3_rk4 ) then
         status = 1
       endif
 #endif
 
+#ifdef DOUBLE_PRECISION_COMPLEX
+      if (normmax .gt. 5e-11_rk8 ) then
+        status = 1
+      endif
+#else
+      if (normmax .gt. 5e-3_rk4 ) then
+        status = 1
+      endif
+#endif
     end function
 
 

@@ -305,10 +305,10 @@ program test
 
 #ifdef TEST_DOUBLE
    b(:,:) = 2.0_c_double * a(:,:)
-   c(:,:) = 0.0_c_double
+   c(:,:) = 1.0_c_double
 #else
    b(:,:) = 2.0_c_float * a(:,:)
-   c(:,:) = 0.0_c_float
+   c(:,:) = 1.0_c_float
 #endif
 
 #endif
@@ -317,10 +317,10 @@ program test
 
 #ifdef TEST_DOUBLE
    b(:,:) = 2.0_c_double * a(:,:)
-   c(:,:) = (0.0_c_double, 0.0_c_double)
+   c(:,:) = (1.0_c_double, 0.0_c_double)
 #else
    b(:,:) = 2.0_c_float * a(:,:)
-   c(:,:) = (0.0_c_float, 0.0_c_float)
+   c(:,:) = (1.0_c_float, 0.0_c_float)
 #endif
 
 #endif
@@ -551,6 +551,7 @@ program test
      status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
      call check_status(status, myid)
 #endif
+
 #ifdef TEST_COMPLEX
    status = 0
 
@@ -619,9 +620,9 @@ program test
    endif
 
 #ifdef TEST_DOUBLE
-   if (normmax .gt. 5e-11_rk8) then
+   if (normmax .gt. 5e-11_c_double) then
 #else
-   if (normmax .gt. 5e-3_rk4) then
+   if (normmax .gt. 5e-3_c_float ) then
 #endif
         print *,"norm= ",normmax
         status = 1
