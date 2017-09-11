@@ -5,7 +5,7 @@ do
     #echo "processing $f... "
     S=`grep " node = " $f | awk '{print $5}'`
     
-    TOTAL=`grep "Time (SYSTEM_CLOCK)" $f | awk '{print $7}'`
+    TOTAL=`grep "e%eigenvectors()" $f | awk '{print $3}'`
     if [[ -z "$TOTAL" ]]; then
         continue
     fi

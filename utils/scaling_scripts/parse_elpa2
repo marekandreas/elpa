@@ -5,7 +5,7 @@ do
     #echo "processing $f... "
     S=`grep " node = " $f | awk '{print $5}'`
      
-    TOTAL=`grep "|_ ELPA_2STAGE_" $f  | awk '{print $3}'`
+    TOTAL=`grep "e%eigenvectors()" $f  | awk '{print $3}'`
     if [[ -z "$TOTAL" ]]; then
         continue
     fi
