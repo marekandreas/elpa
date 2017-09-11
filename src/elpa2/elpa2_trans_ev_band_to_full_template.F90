@@ -151,7 +151,6 @@
       )
 #ifdef BAND_TO_FULL_BLOCKING
       call obj%get("blocking_in_band_to_full",blocking_factor)
-      print *,"Blocking factor: ", blocking_factor
 #endif
       call obj%timer%start("mpi_communication")
 
