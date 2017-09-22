@@ -1,0 +1,18 @@
+#! /bin/bash
+echo nodes total tridiag solve trans_ev
+for f in *.txt 
+do
+    #echo "processing $f... "
+    S=`grep " node = " $f | awk '{print $5}'`
+     
+    TOTAL=`grep "e%eigenvectors()" $f  | awk '{print $3}'`
+    if [[ -z "$TOTAL" ]]; then
+        continue
+    fi
+    S+=" "$TOTAL 
+
+    S+=" "`grep "|_ tridiag_" $f | awk '{print $3}'`
+    S+=" "`grep "|_ solve  " $f | awk '{print $3}'`
+    S+=" "`grep "|_ trans_ev" $f | awk '{print $3}'`
+    echo $S
+done

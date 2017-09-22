@@ -1,0 +1,12 @@
+#!/bin/bash
+column=${1:-2}
+read x
+echo set terminal dumb
+echo set logscale xy 
+echo plot \"-\" u 1:$column with lines title \""`echo $x | awk '{print $"'"$column"'"}'`"\"
+echo "#" $x
+
+while read x;
+do echo $x;
+done
+

@@ -103,17 +103,17 @@
       use elpa2_workload
       use precision
       implicit none
-
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik), intent(in)             :: na, nb, nbCol, nb2, nb2Col, communicator
-      real(kind=REAL_DATATYPE), intent(inout)  :: ab(2*nb,nbCol) ! removed assumed size
-      real(kind=REAL_DATATYPE), intent(inout)  :: ab2(2*nb2,nb2Col) ! removed assumed size
-      real(kind=REAL_DATATYPE), intent(out)    :: d(na), e(na) ! set only on PE 0
+      integer(kind=ik), intent(in)               :: na, nb, nbCol, nb2, nb2Col, communicator
+      real(kind=rk), intent(inout)               :: ab(2*nb,nbCol) ! removed assumed size
+      real(kind=rk), intent(inout)               :: ab2(2*nb2,nb2Col) ! removed assumed size
+      real(kind=rk), intent(out)                 :: d(na), e(na) ! set only on PE 0
 
-      real(kind=REAL_DATATYPE)                 :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
+      real(kind=rk)                              :: hv(nb,nb2), w(nb,nb2), w_new(nb,nb2), tau(nb2), hv_new(nb,nb2), &
                                                   tau_new(nb2), ab_s(1+nb,nb2), ab_r(1+nb,nb2), ab_s2(2*nb2,nb2), hv_s(nb,nb2)
 
-      real(kind=REAL_DATATYPE)                 :: work(nb*nb2), work2(nb2*nb2)
+      real(kind=rk)                              :: work(nb*nb2), work2(nb2*nb2)
       integer(kind=ik)                         :: lwork, info
 
       integer(kind=ik)                         :: istep, i, n, dest
@@ -223,8 +223,8 @@
         if (my_pe==0) then
 
           n = MIN(na-na_s-nb2+1,nb) ! number of rows to be reduced
-          hv(:,:) = CONST_0_0
-          tau(:) = CONST_0_0
+          hv(:,:) = 0.0_rk
+          tau(:) = 0.0_rk
 
           ! The last step (istep=na-1) is only needed for sending the last HH vectors.
           ! We don't want the sign of the last element flipped (analogous to the other sweeps)
@@ -236,9 +236,9 @@
       call obj%timer%stop("blas")
 
             do i=1,nb2
-              hv(i,i) = CONST_1_0
+              hv(i,i) = 1.0_rk
               hv(i+1:n,i) = ab(1+nb2+1:1+nb2+n-i,na_s-n_off+i-1)
-              ab(1+nb2+1:2*nb,na_s-n_off+i-1) = CONST_0_0
+              ab(1+nb2+1:2*nb,na_s-n_off+i-1) = 0.0_rk
             enddo
 
           endif
@@ -247,10 +247,10 @@
             d(istep) = ab(1,na_s-n_off)
             e(istep) = ab(2,na_s-n_off)
             if (istep == na) then
-              e(na) = CONST_0_0
+              e(na) = 0.0_rk
             endif
           else
-            ab_s2 = CONST_0_0
+            ab_s2 = 0.0_rk
             ab_s2(:,:) = ab(1:nb2+1,na_s-n_off:na_s-n_off+nb2-1)
             if (block_limits2(dest+1)<istep) then
               dest = dest+1
@@ -285,7 +285,7 @@
 
             do i=1,nb2
               tau(i) = hv(i,i)
-              hv(i,i) = CONST_1_0
+              hv(i,i) = 1.0_rk
             enddo
           endif
         endif
@@ -293,7 +293,7 @@
         na_s = na_s+nb2
         if (na_s-n_off > nb) then
           ab(:,1:nblocks*nb) = ab(:,nb+1:(nblocks+1)*nb)
-          ab(:,nblocks*nb+1:(nblocks+1)*nb) = CONST_0_0
+          ab(:,nblocks*nb+1:(nblocks+1)*nb) = 0.0_rk
           n_off = n_off + nb
         endif
 
@@ -324,8 +324,8 @@
                 ab(1:nb+1,ne+i-1) = ab_r(:,i)
               enddo
             endif
-            hv_new(:,:) = CONST_0_0 ! Needed, last rows must be 0 for nr < nb
-            tau_new(:) = CONST_0_0
+            hv_new(:,:) = 0.0_rk ! Needed, last rows must be 0 for nr < nb
+            tau_new(:) = 0.0_rk
 
             if (nr>0) then
               call wy_right_&
@@ -335,9 +335,9 @@
               call PRECISION_GEQRF(nr, nb2, ab(nb+1,ns), 2*nb-1, tau_new, work, lwork, info)
         call obj%timer%stop("blas")
               do i=1,nb2
-                hv_new(i,i) = CONST_1_0
+                hv_new(i,i) = 1.0_rk
                 hv_new(i+1:,i) = ab(nb+2:2*nb-i+1,ns+i-1)
-                ab(nb+2:,ns+i-1) = CONST_0_0
+                ab(nb+2:,ns+i-1) = 0.0_rk
               enddo
 
               !send hh-Vector
@@ -458,16 +458,17 @@
       use elpa_abstract_impl
       use precision
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)            :: n      !length of householder-vectors
       integer(kind=ik), intent(in)            :: nb     !number of householder-vectors
       integer(kind=ik), intent(in)            :: lda        !leading dimension of Y and W
-      real(kind=REAL_DATATYPE), intent(in)    :: Y(lda,nb)  !matrix containing nb householder-vectors of length b
-      real(kind=REAL_DATATYPE), intent(in)    :: tau(nb)    !tau values
-      real(kind=REAL_DATATYPE), intent(out)   :: W(lda,nb)  !output matrix W
-      real(kind=REAL_DATATYPE), intent(in)    :: mem(nb)    !memory for a temporary matrix of size nb
+      real(kind=rk), intent(in)               :: Y(lda,nb)  !matrix containing nb householder-vectors of length b
+      real(kind=rk), intent(in)               :: tau(nb)    !tau values
+      real(kind=rk), intent(out)              :: W(lda,nb)  !output matrix W
+      real(kind=rk), intent(in)               :: mem(nb)    !memory for a temporary matrix of size nb
 
-      integer(kind=ik)             :: i
+      integer(kind=ik)                        :: i
 
    call obj%timer%start("wy_gen" // PRECISION_SUFFIX)
 
@@ -475,8 +476,8 @@
    do i=2,nb
      W(1:n,i) = tau(i)*Y(1:n,i)
      call obj%timer%start("blas")
-     call PRECISION_GEMV('T', n, i-1,  CONST_1_0, Y, lda, W(1,i), 1, CONST_0_0, mem,1)
-     call PRECISION_GEMV('N', n, i-1, -CONST_1_0, W, lda, mem, 1, CONST_1_0, W(1,i),1)
+     call PRECISION_GEMV('T', n, i-1,  1.0_rk, Y, lda, W(1,i), 1, 0.0_rk, mem,1)
+     call PRECISION_GEMV('N', n, i-1, -1.0_rk, W, lda, mem, 1, 1.0_rk, W(1,i),1)
      call obj%timer%stop("blas")
    enddo
    call obj%timer%stop("wy_gen" // PRECISION_SUFFIX)
@@ -489,21 +490,22 @@
       use precision
       use elpa_abstract_impl
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)            :: n      !width of the matrix A
       integer(kind=ik), intent(in)            :: m      !length of matrix W and Y
       integer(kind=ik), intent(in)            :: nb     !width of matrix W and Y
       integer(kind=ik), intent(in)            :: lda        !leading dimension of A
       integer(kind=ik), intent(in)            :: lda2       !leading dimension of W and Y
-      real(kind=REAL_DATATYPE), intent(inout) :: A(lda,*)   !matrix to be transformed   ! remove assumed size
-      real(kind=REAL_DATATYPE), intent(in)    :: W(m,nb)    !blocked transformation matrix W
-      real(kind=REAL_DATATYPE), intent(in)    :: Y(m,nb)    !blocked transformation matrix Y
-      real(kind=REAL_DATATYPE), intent(inout) :: mem(n,nb)  !memory for a temporary matrix of size n x nb
+      real(kind=rk), intent(inout)            :: A(lda,*)   !matrix to be transformed   ! remove assumed size
+      real(kind=rk), intent(in)               :: W(m,nb)    !blocked transformation matrix W
+      real(kind=rk), intent(in)               :: Y(m,nb)    !blocked transformation matrix Y
+      real(kind=rk), intent(inout)            :: mem(n,nb)  !memory for a temporary matrix of size n x nb
 
    call obj%timer%start("wy_left" // PRECISION_SUFFIX)
    call obj%timer%start("blas")
-   call PRECISION_GEMM('T', 'N', nb, n, m, CONST_1_0, W, lda2, A, lda, CONST_0_0, mem, nb)
-   call PRECISION_GEMM('N', 'N', m, n, nb, -CONST_1_0, Y, lda2, mem, nb, CONST_1_0, A, lda)
+   call PRECISION_GEMM('T', 'N', nb, n, m, 1.0_rk, W, lda2, A, lda, 0.0_rk, mem, nb)
+   call PRECISION_GEMM('N', 'N', m, n, nb, -1.0_rk, Y, lda2, mem, nb, 1.0_rk, A, lda)
    call obj%timer%stop("blas")
    call obj%timer%stop("wy_left" // PRECISION_SUFFIX)
     end subroutine
@@ -515,22 +517,23 @@
       use precision
       use elpa_abstract_impl
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)            :: n      !height of the matrix A
       integer(kind=ik), intent(in)            :: m      !length of matrix W and Y
       integer(kind=ik), intent(in)            :: nb     !width of matrix W and Y
       integer(kind=ik), intent(in)            :: lda        !leading dimension of A
       integer(kind=ik), intent(in)            :: lda2       !leading dimension of W and Y
-      real(kind=REAL_DATATYPE), intent(inout) :: A(lda,*)   !matrix to be transformed  ! remove assumed size
-      real(kind=REAL_DATATYPE), intent(in)    :: W(m,nb)    !blocked transformation matrix W
-      real(kind=REAL_DATATYPE), intent(in)    :: Y(m,nb)    !blocked transformation matrix Y
-      real(kind=REAL_DATATYPE), intent(inout) :: mem(n,nb)  !memory for a temporary matrix of size n x nb
+      real(kind=rk), intent(inout)            :: A(lda,*)   !matrix to be transformed  ! remove assumed size
+      real(kind=rk), intent(in)               :: W(m,nb)    !blocked transformation matrix W
+      real(kind=rk), intent(in)               :: Y(m,nb)    !blocked transformation matrix Y
+      real(kind=rk), intent(inout)            :: mem(n,nb)  !memory for a temporary matrix of size n x nb
 
 
       call obj%timer%start("wy_right" // PRECISION_SUFFIX)
       call obj%timer%start("blas")
-      call PRECISION_GEMM('N', 'N', n, nb, m, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
-      call PRECISION_GEMM('N', 'T', n, m, nb, -CONST_1_0, mem, n, Y, lda2, CONST_1_0, A, lda)
+      call PRECISION_GEMM('N', 'N', n, nb, m, 1.0_rk, A, lda, W, lda2, 0.0_rk, mem, n)
+      call PRECISION_GEMM('N', 'T', n, m, nb, -1.0_rk, mem, n, Y, lda2, 1.0_rk, A, lda)
       call obj%timer%stop("blas")
       call obj%timer%stop("wy_right" // PRECISION_SUFFIX)
 
@@ -543,23 +546,24 @@
       use elpa_abstract_impl
       use precision
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)            :: n      !width/heigth of the matrix A; length of matrix W and Y
       integer(kind=ik), intent(in)            :: nb     !width of matrix W and Y
       integer(kind=ik), intent(in)            :: lda        !leading dimension of A
       integer(kind=ik), intent(in)            :: lda2       !leading dimension of W and Y
-      real(kind=REAL_DATATYPE), intent(inout) :: A(lda,*)   !matrix to be transformed  ! remove assumed size
-      real(kind=REAL_DATATYPE), intent(in)    :: W(n,nb)    !blocked transformation matrix W
-      real(kind=REAL_DATATYPE), intent(in)    :: Y(n,nb)    !blocked transformation matrix Y
-      real(kind=REAL_DATATYPE)                :: mem(n,nb)  !memory for a temporary matrix of size n x nb
-      real(kind=REAL_DATATYPE)                :: mem2(nb,nb)    !memory for a temporary matrix of size nb x nb
+      real(kind=rk), intent(inout)            :: A(lda,*)   !matrix to be transformed  ! remove assumed size
+      real(kind=rk), intent(in)               :: W(n,nb)    !blocked transformation matrix W
+      real(kind=rk), intent(in)               :: Y(n,nb)    !blocked transformation matrix Y
+      real(kind=rk)                           :: mem(n,nb)  !memory for a temporary matrix of size n x nb
+      real(kind=rk)                           :: mem2(nb,nb)    !memory for a temporary matrix of size nb x nb
 
       call obj%timer%start("wy_symm" // PRECISION_SUFFIX)
       call obj%timer%start("blas")
-      call PRECISION_SYMM('L', 'L', n, nb, CONST_1_0, A, lda, W, lda2, CONST_0_0, mem, n)
-      call PRECISION_GEMM('T', 'N', nb, nb, n, CONST_1_0, mem, n, W, lda2, CONST_0_0, mem2, nb)
-      call PRECISION_GEMM('N', 'N', n, nb, nb, -CONST_0_5, Y, lda2, mem2, nb, CONST_1_0, mem, n)
-      call PRECISION_SYR2K('L', 'N', n, nb, -CONST_1_0, Y, lda2, mem, n, CONST_1_0, A, lda)
+      call PRECISION_SYMM('L', 'L', n, nb, 1.0_rk, A, lda, W, lda2, 0.0_rk, mem, n)
+      call PRECISION_GEMM('T', 'N', nb, nb, n, 1.0_rk, mem, n, W, lda2, 0.0_rk, mem2, nb)
+      call PRECISION_GEMM('N', 'N', n, nb, nb, -0.5_rk, Y, lda2, mem2, nb, 1.0_rk, mem, n)
+      call PRECISION_SYR2K('L', 'N', n, nb, -1.0_rk, Y, lda2, mem, n, 1.0_rk, A, lda)
       call obj%timer%stop("blas")
       call obj%timer%stop("wy_symm" // PRECISION_SUFFIX)
 

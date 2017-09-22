@@ -111,42 +111,19 @@
       use precision
       use elpa_abstract_impl
       implicit none
-
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)                            :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 
-#if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)                    :: a(lda,*), tmat(nbw,nbw,*)
+      MATH_DATATYPE(kind=rck)                    :: a(lda,*), tmat(nbw,nbw,*)
 #else
-      real(kind=REAL_DATATYPE)                    :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      MATH_DATATYPE(kind=rck)                    :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
 #endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE)              :: a(lda,*), tmat(nbw,nbw,*)
-#else
-      complex(kind=COMPLEX_DATATYPE)              :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
-#endif
-#endif /* COMPLEXCASE */
 
 #if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-      real(kind=REAL_DATATYPE), parameter         :: ZERO = 0.0_rk8, ONE = 1.0_rk8
-
-#else
-      real(kind=REAL_DATATYPE), parameter         :: ZERO = 0.0_rk4, ONE = 1.0_rk4
+      real(kind=rk)                               :: eps
 #endif
-#endif
-
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=COMPLEX_DATATYPE), parameter   :: ZERO = (0.0_rk8, 0.0_rk8), ONE = (1.0_rk8, 0.0_rk8)
-#else
-      complex(kind=COMPLEX_DATATYPE), parameter   :: ZERO = (0.0_rk4, 0.0_rk4), ONE = (1.0_rk4, 0.0_rk4)
-#endif
-#endif /* COMPLEXCASE == 1 */
-
       logical, intent(in)                         :: useGPU
 
       integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -161,32 +138,19 @@
       integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc
       integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
-      real(kind=REAL_DATATYPE)                    :: vnorm2
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE)                    :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE)              :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
-#endif
+      real(kind=rk)                    :: vnorm2
+      MATH_DATATYPE(kind=rck)                    :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
-#if COMPLEXCASE == 1
 !      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCUDA(:,:), vmrCUDA(:,:), umcCUDA(:,:) ! note the different dimension in real case
-      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
-      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
-      complex(kind=COMPLEX_DATATYPE), allocatable :: vr(:)
-#endif
-
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable       :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
-      real(kind=REAL_DATATYPE), allocatable       :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
-      real(kind=REAL_DATATYPE), allocatable       :: vr(:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
+      MATH_DATATYPE(kind=rck), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
+      MATH_DATATYPE(kind=rck), allocatable :: vr(:)
 
 #if REALCASE == 1
       ! needed for blocked QR decomposition
       integer(kind=ik)                            :: PQRPARAM(11), work_size
-      real(kind=REAL_DATATYPE)                    :: dwork_size(1)
-      real(kind=REAL_DATATYPE), allocatable       :: work_blocked(:), tauvector(:), blockheuristic(:)
+      real(kind=rk)                    :: dwork_size(1)
+      real(kind=rk), allocatable       :: work_blocked(:), tauvector(:), blockheuristic(:)
 #endif
       ! a_dev is passed from bandred_real to trans_ev_band
       integer(kind=C_intptr_T)                    :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
