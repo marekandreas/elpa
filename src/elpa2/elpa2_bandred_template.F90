@@ -318,7 +318,7 @@
             print *,"bandred_real: error when allocating work_blocked "//errorMessage
             stop 1
           endif
-          work_blocked = CONST_0_0
+          work_blocked = 0.0_rk
           deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_real: error when deallocating vmrCPU "//errorMessage
@@ -492,32 +492,16 @@
         endif ! use GPU
 
         if (useGPU) then
-#if REALCASE == 1
-          vmrCUDA(1 : cur_l_rows * n_cols) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-          vmrCUDA(1: cur_l_rows * n_cols) = CONST_COMPLEX_0_0
-#endif
+          vmrCUDA(1 : cur_l_rows * n_cols) = 0.0_rck
         else
-#if REALCASE == 1
-          vmrCPU(1:l_rows,1:n_cols) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-          vmrCPU(1:l_rows,1:n_cols) = CONST_COMPLEX_0_0
-#endif
+          vmrCPU(1:l_rows,1:n_cols) = 0.0_rck
         endif ! useGPU
 
-#if REALCASE == 1
-        vr(:) = CONST_0_0
-        tmat(:,:,istep) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-        vr(:) = CONST_COMPLEX_0_0
-        tmat(:,:,istep) = CONST_COMPLEX_0_0
-#endif
+        vr(:) = 0.0_rck
+        tmat(:,:,istep) = 0.0_rck
         if (useGPU) then
 #if REALCASE == 1
-          umcCUDA(1 : umc_size) = CONST_0_0
+          umcCUDA(1 : umc_size) = 0.0_rck
 #endif
           lc_start = local_index(istep*nbw+1, my_pcol, np_cols, nblk, -1)
           lc_end   = local_index(istep*nbw+n_cols, my_pcol, np_cols, nblk, -1)
@@ -602,12 +586,7 @@
                aux1(2) = vr(lr)
              else
                aux1(1) = dot_product(vr(1:lr),vr(1:lr))
-#if REALCASE == 1
-               aux1(2) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-               aux1(2) = CONST_COMPLEX_0_0
-#endif
+               aux1(2) = 0.0_rck
              endif
 
 #ifdef WITH_MPI
@@ -644,12 +623,7 @@
              if (my_prow==prow(nrow, nblk, np_rows)) then
                a(1:lr-1,lch) = vr(1:lr-1)
                a(lr,lch) = vrl
-#if REALCASE == 1
-               vr(lr) = CONST_1_0
-#endif
-#if COMPLEXCASE == 1
-               vr(lr) = CONST_COMPLEX_1_0
-#endif
+               vr(lr) = 1.0_rck
              else
                a(1:lr,lch) = vr(1:lr)
              endif
@@ -689,12 +663,7 @@
            ! Transform remaining columns in current block with Householder Vector
            ! Local dot product
 
-#if REALCASE == 1
-           aux1 = 0
-#endif
-#if COMPLEXCASE == 1
-          aux1 = CONST_COMPLEX_0_0
-#endif
+           aux1 = 0.0_rck
 
 #ifdef WITH_OPENMP
 #if 0
@@ -977,8 +946,8 @@
 
 #if 0
        ! original complex implemetation check for performance
-       umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-       vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
+       umcCPU(1:l_cols,1:n_cols) = 0.0_rck
+       vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0.0_rck
 
        if (l_cols>0 .and. l_rows>0) then
          do i=0,(istep*nbw-1)/tile_size
@@ -1021,24 +990,14 @@
          !$omp do
 #endif
          do i=1,min(l_cols_tile, l_cols)
-#if REALCASE == 1
-           umcCPU(i,1:n_cols) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-           umcCPU(i,1:n_cols) = CONST_COMPLEX_0_0
-#endif
+           umcCPU(i,1:n_cols) = 0.0_rck
          enddo
 
 #if REALCASE == 1
          !$omp do
 #endif
          do i=1,l_rows
-#if REALCASE == 1
-           vmrCPU(i,n_cols+1:2*n_cols) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-           vmrCPU(i,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
-#endif
+           vmrCPU(i,n_cols+1:2*n_cols) = 0.0_rck
          enddo
 
          if (l_cols>0 .and. l_rows>0) then
@@ -1100,23 +1059,11 @@
 #endif /* WITH_OPENMP */
 
         if (useGPU) then
-#if REALCASE == 1
-          umcCUDA(1 : l_cols * n_cols) = CONST_0_0
-          vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-          umcCUDA(1 : l_cols * n_cols) = CONST_COMPLEX_0_0
-          vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = CONST_COMPLEX_0_0
-#endif
+          umcCUDA(1 : l_cols * n_cols) = 0.0_rck
+          vmrCUDA(cur_l_rows * n_cols + 1 : cur_l_rows * n_cols * 2) = 0.0_rck
         else ! useGPU
-#if REALCASE == 1
-          umcCPU(1:l_cols,1:n_cols) = CONST_0_0
-          vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_0_0
-#endif
-#if COMPLEXCASE == 1
-          umcCPU(1:l_cols,1:n_cols) = CONST_COMPLEX_0_0
-          vmrCPU(1:l_rows,n_cols+1:2*n_cols) = CONST_COMPLEX_0_0
-#endif
+          umcCPU(1:l_cols,1:n_cols) = 0.0_rck
+          vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0.0_rck
         endif ! useGPU
 
         if (l_cols>0 .and. l_rows>0) then
@@ -1466,10 +1413,10 @@
 
          call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
-                                    -CONST_0_5,                      &
+                                    -0.5_rk,                      &
 #endif
 #if COMPLEXCASE == 1
-                                    CONST_COMPLEX_PAIR_NEGATIVE_0_5, &
+                                    (-0.5_rk, 0.0_rk), &
 #endif
                                     (umc_dev+(cur_l_cols * n_cols )* &
                                     size_of_datatype),   &
@@ -1520,10 +1467,10 @@
          call obj%timer%start("blas")
          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
 #if REALCASE == 1
-                       -CONST_0_5,                           &
+                       -0.5_rk,                           &
 #endif
 #if COMPLEXCASE == 1
-                              CONST_COMPLEX_PAIR_NEGATIVE_0_5,     &
+                              (-0.5_rk, 0.0_rk),     &
 #endif
             umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
                               ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
@@ -1573,9 +1520,9 @@
          if ( myend-mystart+1 < 1) cycle
          call obj%timer%start("blas")
 #if REALCASE == 1
-         call PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -CONST_1_0, &
+         call PRECISION_GEMM('N', 'T', myend-mystart+1, lce-lcs+1, 2*n_cols, -ONE, &
                     vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
-                     CONST_1_0, a(mystart,lcs), ubound(a,1))
+                     ONE, a(mystart,lcs), ubound(a,1))
 #endif
 #if COMPLEXCASE == 1
          call PRECISION_GEMM('N', 'C', myend-mystart+1, lce-lcs+1, 2*n_cols, -ONE, &
