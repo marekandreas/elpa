@@ -91,6 +91,7 @@ subroutine reverse_vector_local_&
      (n,x,incx,work,lwork)
     use precision
     implicit none
+#include "../../general/precision_kinds.F90"
 
     ! input
     integer(kind=ik)              :: incx, n, lwork
@@ -101,7 +102,7 @@ subroutine reverse_vector_local_&
     integer(kind=ik)              :: srcoffset, destoffset, ientry
 
     if (lwork .eq. -1) then
-        work(1) = CONST_0_0
+        work(1) = 0.0_rk
         return
     end if
 

@@ -243,10 +243,10 @@
       !TODO either we will not have this part of test at all, or it will be improved
       if(nblk > 0) then
         ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
-        err = CONST_REAL_0_0
+        err = 0.0_rk
         do i=1, nev
           if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-             err = max(err, abs(tmp1(rowLocal,colLocal) - CONST_REAL_1_0))
+             err = max(err, abs(tmp1(rowLocal,colLocal) - 1.0_rk))
            endif
         end do
 #ifdef WITH_MPI

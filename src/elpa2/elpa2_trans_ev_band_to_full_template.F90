@@ -659,8 +659,8 @@
 
 #endif /* WITH_MPI */
 
-!              call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, CONST_1_0, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
-!              call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -CONST_1_0, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
+!              call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, ONE, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
+!              call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -ONE, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
 !                         t_tmp2, cwy_blocking)
 
 !              tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
@@ -731,8 +731,8 @@
 #endif /* WITH_MPI */
 
 !          if (l_rows>0) then
-!            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, CONST_1_0, tmat_complete, cwy_blocking, tmp2, n_cols)
-!            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -CONST_1_0, hvm, ubound(hvm,dim=1), tmp2, n_cols, CONST_1_0, q, ldq)
+!            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp2, n_cols)
+!            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp2, n_cols, ONE, q, ldq)
 !          endif
 
         enddo ! istep

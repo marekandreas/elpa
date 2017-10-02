@@ -65,6 +65,7 @@
    use mod_check_for_gpu
    use iso_c_binding
    implicit none
+#include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
    logical                                                            :: useGPU
 #if REALCASE == 1
@@ -142,16 +143,13 @@
    if (na .eq. 1) then
 #if REALCASE == 1
      ev(1) = a(1,1)
-     if (.not.(obj%eigenvalues_only)) then
-       q(1,1) = CONST_REAL_1_0
-     endif
 #endif
 #if COMPLEXCASE == 1
      ev(1) = real(a(1,1))
-     if (.not.(obj%eigenvalues_only)) then
-       q(1,1) = CONST_COMPLEX_PAIR_1_0
-     endif
 #endif
+     if (.not.(obj%eigenvalues_only)) then
+       q(1,1) = ONE
+     endif
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&
      &_2stage_&

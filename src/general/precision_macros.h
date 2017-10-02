@@ -44,13 +44,6 @@
 #undef  scal_PRECISION_LASET
 #undef  PRECISION_SUFFIX
 
-#undef  CONST_0_0
-#undef  CONST_REAL_0_0
-#undef  CONST_0_5
-#undef  CONST_1_0
-#undef  CONST_REAL_1_0
-#undef  CONST_2_0
-#undef  CONST_8_0
 #undef  MPI_REAL_PRECISION
 #undef  MPI_MATH_DATATYPE_PRECISION
 #undef  MPI_MATH_DATATYPE_PRECISION_EXPL
@@ -104,13 +97,6 @@
 #define  scal_PRECISION_GEMM PDGEMM
 #define  scal_PRECISION_NRM2 PDNRM2
 #define  scal_PRECISION_LASET PDLASET
-#define  CONST_0_0 0.0_rk8
-#define  CONST_REAL_0_0 0.0_rk8
-#define  CONST_0_5 0.5_rk8
-#define  CONST_1_0 1.0_rk8
-#define  CONST_REAL_1_0 1.0_rk8
-#define  CONST_2_0 2.0_rk8
-#define  CONST_8_0 8.0_rk8
 #define  MPI_REAL_PRECISION MPI_REAL8
 #define  MPI_MATH_DATATYPE_PRECISION MPI_REAL8
 #define  MPI_MATH_DATATYPE_PRECISION_EXPL MPI_REAL8
@@ -163,13 +149,6 @@
 #define  scal_PRECISION_GEMM PSGEMM
 #define  scal_PRECISION_NRM2 PSNRM2
 #define  scal_PRECISION_LASET PSLASET
-#define  CONST_0_0 0.0_rk4
-#define  CONST_REAL_0_0 0.0_rk4
-#define  CONST_0_5 0.5_rk4
-#define  CONST_1_0 1.0_rk4
-#define  CONST_REAL_1_0 1.0_rk4
-#define  CONST_2_0 2.0_rk4
-#define  CONST_8_0 8.0_rk4
 #define  MPI_REAL_PRECISION MPI_REAL4
 #define  MPI_MATH_DATATYPE_PRECISION MPI_REAL4
 #define  MPI_MATH_DATATYPE_PRECISION_EXPL MPI_REAL4
@@ -236,15 +215,6 @@
 #undef  PRECISION_CMPLX
 #undef  PRECISION_IMAG
 #undef  PRECISION_REAL
-#undef  CONST_REAL_0_0
-#undef  CONST_REAL_1_0
-#undef  CONST_REAL_0_5
-#undef  CONST_COMPLEX_PAIR_0_0
-#undef  CONST_COMPLEX_PAIR_1_0
-#undef  CONST_COMPLEX_PAIR_NEGATIVE_1_0
-#undef  CONST_COMPLEX_PAIR_NEGATIVE_0_5
-#undef  CONST_COMPLEX_0_0
-#undef  CONST_COMPLEX_1_0
 #undef  C_DATATYPE_KIND
 
 
@@ -305,15 +275,6 @@
 #define  PRECISION_CMPLX DCMPLX
 #define  PRECISION_IMAG DIMAG
 #define  PRECISION_REAL DREAL
-#define  CONST_REAL_0_0 0.0_rk8
-#define  CONST_REAL_1_0 1.0_rk8
-#define  CONST_REAL_0_5 0.5_rk8
-#define  CONST_COMPLEX_PAIR_0_0 (0.0_rk8,0.0_rk8)
-#define  CONST_COMPLEX_PAIR_1_0 (1.0_rk8,0.0_rk8)
-#define  CONST_COMPLEX_PAIR_NEGATIVE_1_0 (-1.0_rk8,0.0_rk8)
-#define  CONST_COMPLEX_PAIR_NEGATIVE_0_5 (-0.5_rk8,0.0_rk8)
-#define  CONST_COMPLEX_0_0 0.0_ck8
-#define  CONST_COMPLEX_1_0 1.0_ck8
 #define  C_DATATYPE_KIND c_double
 
 #define THRESHOLD 1e-11_rk8
@@ -370,15 +331,6 @@
 #define  PRECISION_CMPLX CMPLX
 #define  PRECISION_IMAG AIMAG
 #define  PRECISION_REAL REAL
-#define  CONST_REAL_0_0 0.0_rk4
-#define  CONST_REAL_1_0 1.0_rk4
-#define  CONST_REAL_0_5 0.5_rk4
-#define  CONST_COMPLEX_PAIR_0_0 (0.0_rk4,0.0_rk4)
-#define  CONST_COMPLEX_PAIR_1_0 (1.0_rk4,0.0_rk4)
-#define  CONST_COMPLEX_PAIR_NEGATIVE_1_0 (-1.0_rk4,0.0_rk4)
-#define  CONST_COMPLEX_PAIR_NEGATIVE_0_5 (-0.5_rk4,0.0_rk4)
-#define  CONST_COMPLEX_0_0 0.0_ck4
-#define  CONST_COMPLEX_1_0 1.0_ck4
 #define  C_DATATYPE_KIND c_float
 
 #define THRESHOLD 1e-4_rk4
