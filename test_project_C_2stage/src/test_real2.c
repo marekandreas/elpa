@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include <math.h>
+#include <string.h>
 
 #include <elpa/elpa.h>
 #include <assert.h>
