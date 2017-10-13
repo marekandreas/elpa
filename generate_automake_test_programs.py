@@ -2,70 +2,7 @@
 from __future__ import print_function
 from itertools import product
 
-domain_flag = {
-        "real"   : "-DTEST_REAL",
-        "complex": "-DTEST_COMPLEX",
-}
-prec_flag = {
-        "double" : "-DTEST_DOUBLE",
-        "single" : "-DTEST_SINGLE",
-}
-solver_flag = {
-        "1stage" : "-DTEST_SOLVER_1STAGE",
-        "2stage" : "-DTEST_SOLVER_2STAGE",
-        "scalapack_all" : "-DTEST_SCALAPACK_ALL",
-        "scalapack_part" : "-DTEST_SCALAPACK_PART",
-}
-gpu_flag = {
-        0 : "-DTEST_GPU=0",
-        1 : "-DTEST_GPU=1",
-}
-matrix_flag = {
-        "random" : "-DTEST_MATRIX_RANDOM",
-        "analytic" : "-DTEST_MATRIX_ANALYTIC",
-}
-
-test_type_flag = {
-        "eigenvectors" : "-DTEST_EIGENVECTORS",
-        "eigenvalues"  : "-DTEST_EIGENVALUES",
-        "solve_tridiagonal"  : "-DTEST_SOLVE_TRIDIAGONAL",
-        "cholesky"  : "-DTEST_CHOLESKY",
-        "hermitian_multiply"  : "-DTEST_HERMITIAN_MULTIPLY",
-        "qr"  : "-DTEST_QR_DECOMPOSITION",
-}
-
-layout_flag = {
-        "all_layouts" : "-DTEST_ALL_LAYOUTS",
-        "square" : ""
-}
-
-for m, g, t, p, d, s, l in product(
-                             sorted(matrix_flag.keys()),
-                             sorted(gpu_flag.keys()),
-                             sorted(test_type_flag.keys()),
-                             sorted(prec_flag.keys()),
-                             sorted(domain_flag.keys()),
-                             sorted(solver_flag.keys()),
-                             sorted(layout_flag.keys())):
-
-    if(m == "analytic" and (g == 1 or t != "eigenvectors")):
-        continue
-
-    if(s in ["scalapack_all", "scalapack_part"]  and (g == 1 or t != "eigenvectors" or m != "analytic")):
-        continue
-
-    if (t == "solve_tridiagonal" and (s == "2stage" or d == "complex")):
-        continue
-
-    if (t == "cholesky" and (s == "2stage")):
-        continue
-
-    if (t == "hermitian_multiply" and (s == "2stage")):
-        continue
-
-    if (t == "qr" and (s == "1stage" or d == "complex")):
-        continue
-
+def create_test(m, g, t, p, d, s, l, language) :
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
         endifs = 0
         extra_flags = []
@@ -102,17 +39,25 @@ for m, g, t, p, d, s, l in product(
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "test_{0}_{1}_{2}_{3}{4}{5}{6}{7}".format(
+        name = "test_{0}_{1}_{2}_{3}{4}{5}{6}{7}{8}".format(
                     d, p, t, s,
                     "" if kernel == "nokernel" else "_" + kernel,
+                    "" if language == "fortran" else "_fromC",
                     "_gpu" if g else "",
                     "_analytic" if m == "analytic" else "",
                     "_all_layouts" if l == "all_layouts" else "")
         print("noinst_PROGRAMS += " + name)
         print("check_SCRIPTS += " + name + ".sh")
-        print(name + "_SOURCES = test/Fortran/test.F90")
-        print(name + "_LDADD = $(test_program_ldadd)")
-        print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+        if(language == "fortran"):
+            print(name + "_SOURCES = test/Fortran/test.F90")
+            print(name + "_LDADD = $(test_program_ldadd)")
+            print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+        elif(language == "c"):
+            print(name + "_SOURCES = test/C/test.c")
+            print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+            print(name + "_CFLAGS = $(test_program_cflags) \\")
+        else:
+            raise Exception("Oh no, unknown language!")
         print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
         print("  " + " \\\n  ".join([
             domain_flag[d],
@@ -123,3 +68,122 @@ for m, g, t, p, d, s, l in product(
             matrix_flag[m]] + extra_flags))
 
         print("endif\n" * endifs)
+
+# generate Fortran tests
+domain_flag = {
+        "real"   : "-DTEST_REAL",
+        "complex": "-DTEST_COMPLEX",
+}
+prec_flag = {
+        "double" : "-DTEST_DOUBLE",
+        "single" : "-DTEST_SINGLE",
+}
+solver_flag = {
+        "1stage" : "-DTEST_SOLVER_1STAGE",
+        "2stage" : "-DTEST_SOLVER_2STAGE",
+        "scalapack_all" : "-DTEST_SCALAPACK_ALL",
+        "scalapack_part" : "-DTEST_SCALAPACK_PART",
+}
+gpu_flag = {
+        0 : "-DTEST_GPU=0",
+        1 : "-DTEST_GPU=1",
+}
+matrix_flag = {
+        "random" : "-DTEST_MATRIX_RANDOM",
+        "analytic" : "-DTEST_MATRIX_ANALYTIC",
+}
+
+test_type_flag = {
+        "eigenvectors" : "-DTEST_EIGENVECTORS",
+        "eigenvalues"  : "-DTEST_EIGENVALUES",
+        "solve_tridiagonal"  : "-DTEST_SOLVE_TRIDIAGONAL",
+        "cholesky"  : "-DTEST_CHOLESKY",
+        "hermitian_multiply"  : "-DTEST_HERMITIAN_MULTIPLY",
+        "qr"  : "-DTEST_QR_DECOMPOSITION",
+}
+
+layout_flag = {
+        "all_layouts" : "-DTEST_ALL_LAYOUTS",
+        "square" : ""
+}
+for m, g, t, p, d, s, l in product(
+                             sorted(matrix_flag.keys()),
+                             sorted(gpu_flag.keys()),
+                             sorted(test_type_flag.keys()),
+                             sorted(prec_flag.keys()),
+                             sorted(domain_flag.keys()),
+                             sorted(solver_flag.keys()),
+                             sorted(layout_flag.keys())):
+    if(m == "analytic" and (g == 1 or t != "eigenvectors")):
+        continue
+
+    if(s in ["scalapack_all", "scalapack_part"]  and (g == 1 or t != "eigenvectors" or m != "analytic")):
+        continue
+
+    if (t == "solve_tridiagonal" and (s == "2stage" or d == "complex")):
+        continue
+
+    if (t == "cholesky" and (s == "2stage")):
+        continue
+
+    if (t == "hermitian_multiply" and (s == "2stage")):
+        continue
+
+    if (t == "qr" and (s == "1stage" or d == "complex")):
+        continue
+
+    create_test(m, g, t, p, d, s, l, "fortran")
+
+
+# generate C tests
+domain_flag = {
+        "real"   : "-DTEST_REAL",
+        "complex": "-DTEST_COMPLEX",
+}
+prec_flag = {
+        "double" : "-DTEST_DOUBLE",
+        "single" : "-DTEST_SINGLE",
+}
+solver_flag = {
+        "1stage" : "-DTEST_SOLVER_1STAGE",
+        "2stage" : "-DTEST_SOLVER_2STAGE",
+#        "scalapack_all" : "-DTEST_SCALAPACK_ALL",
+#        "scalapack_part" : "-DTEST_SCALAPACK_PART",
+}
+gpu_flag = {
+        0 : "-DTEST_GPU=0",
+#        1 : "-DTEST_GPU=1",
+}
+matrix_flag = {
+        "random" : "-DTEST_MATRIX_RANDOM",
+#        "analytic" : "-DTEST_MATRIX_ANALYTIC",
+}
+
+test_type_flag = {
+        "eigenvectors" : "-DTEST_EIGENVECTORS",
+#        "eigenvalues"  : "-DTEST_EIGENVALUES",
+#        "solve_tridiagonal"  : "-DTEST_SOLVE_TRIDIAGONAL",
+#        "cholesky"  : "-DTEST_CHOLESKY",
+#        "hermitian_multiply"  : "-DTEST_HERMITIAN_MULTIPLY",
+#        "qr"  : "-DTEST_QR_DECOMPOSITION",
+}
+
+layout_flag = {
+#        "all_layouts" : "-DTEST_ALL_LAYOUTS",
+        "square" : ""
+}
+for m, g, t, p, d, s, l in product(
+                             sorted(matrix_flag.keys()),
+                             sorted(gpu_flag.keys()),
+                             sorted(test_type_flag.keys()),
+                             sorted(prec_flag.keys()),
+                             sorted(domain_flag.keys()),
+                             sorted(solver_flag.keys()),
+                             sorted(layout_flag.keys())):
+
+    create_test(m, g, t, p, d, s, l, "c")
+
+
+
+
+

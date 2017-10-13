@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
    /* set up blacs */
    /* convert communicators before */
    mpi_comm = MPI_Comm_c2f(MPI_COMM_WORLD);
-   set_up_blacsgrid_f(mpi_comm, np_rows, np_cols, 'R', &my_blacs_ctxt, &my_prow, &my_pcol);
+   set_up_blacsgrid_f(mpi_comm, np_rows, np_cols, 'C', &my_blacs_ctxt, &my_prow, &my_pcol);
    set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info);
 
    /* allocate the matrices needed for elpa */
