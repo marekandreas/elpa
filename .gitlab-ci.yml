@@ -32,7 +32,7 @@ intel-double-precision-mpi-noomp-jobs:
   only:
     - /.*master.*/
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 || { cat config.log; exit 1; }
@@ -46,7 +46,7 @@ intel-double-precision-mpi-noomp-large-jobs:
   only:
     - /.*master.*/
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 || { cat config.log; exit 1; }
@@ -58,7 +58,7 @@ intel-double-precision-mpi-noomp-large-jobs:
 # intel single precision mpi noomp AVX/SSE
 intel-single-precision-mpi-noomp-jobs:
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-single-precision --disable-avx2 || { cat config.log; exit 1; }
@@ -72,7 +72,7 @@ gfortran-double-precision-mpi-noomp-avx-jobs:
   only:
     - /.*master.*/
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx -fsanitize=address" FCFLAGS="-O3 -mavx -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 FC=mpif90 || { cat config.log; exit 1; }
@@ -86,7 +86,7 @@ gfortran-single-precision-mpi-noomp-jobs:
   only:
     - /.*master.*/
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 FC=mpif90 --enable-single-precision || { cat config.log; exit 1; }
@@ -98,7 +98,7 @@ gfortran-single-precision-mpi-noomp-jobs:
 # gfortran single precision mpi noomp AVX/SSE no legacy
 gfortran-single-precision-mpi-noomp-no-legacy-jobs:
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx -fsanitize=address" FCFLAGS="-O3 -mavx -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --disable-legacy || { cat config.log; exit 1; }
@@ -110,7 +110,7 @@ gfortran-single-precision-mpi-noomp-no-legacy-jobs:
 # gfortran single precision mpi noomp AVX/SSE qr
 gfortran-single-precision-mpi-noomp-qr-jobs:
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx -fsanitize=address" FCFLAGS="-O3 -mavx -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 FC=mpif90 --enable-single-precision || { cat config.log; exit 1; }
@@ -124,7 +124,7 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-jobs:
   only:
     - /.*master.*/
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx -fsanitize=address" FCFLAGS="-O3 -mavx -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 FC=mpif90  --disable-assumed-size || { cat config.log; exit 1; }
@@ -136,7 +136,7 @@ gfortran-double-precision-mpi-noomp-no-assumed-size-jobs:
 # gfortran single precision mpi noomp AVX/SSE, no assumed size
 gfortran-single-precision-mpi-noomp-no-assumed-size-jobs:
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx -fsanitize=address" FCFLAGS="-O3 -mavx -fsanitize=address" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 FC=mpif90 --enable-single-precision --disable-assumed-size || { cat config.log; exit 1; }
@@ -149,7 +149,7 @@ gfortran-single-precision-mpi-noomp-no-assumed-size-jobs:
 
 static-build:
   tags:
-    - cpu
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2 || { cat config.log; exit 1; }
@@ -161,7 +161,7 @@ static-build:
 # test distcheck
 distcheck:
   tags:
-    - buildtest
+    - avx
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }
@@ -171,7 +171,7 @@ distcheck:
 # test test_project
 test_project:
   tags:
-    - buildtest
+    - avx
   script:
     - mkdir build
     - pushd build
@@ -197,7 +197,7 @@ test_project:
 # test test_project_legacy_api
 test_project_legacy_api:
   tags:
-    - buildtest
+    - avx
   script:
     - mkdir build
     - pushd build
@@ -223,7 +223,7 @@ test_project_legacy_api:
 # test test_project_2stage
 test_project_2stage:
   tags:
-    - buildtest
+    - avx
   script:
     - mkdir build
     - pushd build
@@ -250,7 +250,7 @@ test_project_2stage:
 # test test_project_2stage_legacy_api
 test_project_2stage_legacy_api:
   tags:
-    - buildtest
+    - avx
   script:
     - mkdir build
     - pushd build
@@ -275,7 +275,7 @@ test_project_2stage_legacy_api:
 
 test_project_intel:
   tags:
-    - buildtest
+    - avx
   script:
     - mkdir build
     - pushd build
@@ -299,7 +299,7 @@ test_project_intel:
 
 test_project_intel_legacy_api:
   tags:
-    - buildtest
+    - avx
   script:
     - mkdir build
     - pushd build
@@ -323,7 +323,7 @@ test_project_intel_legacy_api:
 
 test_project_2stage_intel:
  tags:
-   - buildtest
+   - avx
  script:
    - mkdir build
    - pushd build
@@ -348,7 +348,7 @@ test_project_2stage_intel:
 
 test_project_2stage_intel_legacy_api:
  tags:
-   - buildtest
+   - avx
  script:
    - mkdir build
    - pushd build
@@ -373,7 +373,7 @@ test_project_2stage_intel_legacy_api:
 # test test_project_C
 test_project_C:
   tags:
-    - buildtest
+    - avx
   script:
     - mkdir build
     - pushd build
@@ -399,7 +399,7 @@ test_project_C:
 # test test_project_C_2stage
 test_project_C_2stage:
   tags:
-    - buildtest
+    - avx
   script:
     - mkdir build
     - pushd build
