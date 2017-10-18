@@ -354,7 +354,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -396,7 +396,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -450,7 +450,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-w
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -504,7 +504,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -546,7 +546,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -588,7 +588,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -642,7 +642,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-w
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -696,9 +696,8 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -739,9 +738,8 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -808,9 +806,8 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -851,9 +848,8 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -894,9 +890,8 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -963,7 +958,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1005,7 +1000,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1059,7 +1054,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1113,7 +1108,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1155,7 +1150,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1197,7 +1192,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1251,7 +1246,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1305,9 +1300,8 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1348,9 +1342,8 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1417,9 +1410,8 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1460,9 +1452,8 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1503,9 +1494,8 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1572,7 +1562,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1614,7 +1604,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1668,7 +1658,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1722,7 +1712,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1764,7 +1754,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1806,7 +1796,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1860,7 +1850,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1914,9 +1904,8 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1957,9 +1946,8 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2026,9 +2014,8 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2069,9 +2056,8 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2112,9 +2098,8 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2181,7 +2166,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2223,7 +2208,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2277,7 +2262,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2331,7 +2316,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2373,7 +2358,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2415,7 +2400,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2469,7 +2454,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2523,9 +2508,8 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2566,9 +2550,8 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2635,9 +2618,8 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2678,9 +2660,8 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2721,9 +2702,8 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2790,7 +2770,7 @@ intel-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2832,7 +2812,7 @@ intel-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2898,7 +2878,7 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2940,7 +2920,7 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2982,7 +2962,7 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3048,9 +3028,8 @@ intel-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3091,9 +3070,8 @@ intel-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3160,9 +3138,8 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3203,9 +3180,8 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3246,9 +3222,8 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3315,7 +3290,7 @@ intel-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-bloc
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3357,7 +3332,7 @@ intel-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-bloc
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3423,7 +3398,7 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-bloc
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3465,7 +3440,7 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-bloc
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3507,7 +3482,7 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-bloc
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 1  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3573,9 +3548,8 @@ intel-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3616,9 +3590,8 @@ intel-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3685,9 +3658,8 @@ intel-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3728,9 +3700,8 @@ intel-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -3771,9 +3742,8 @@ intel-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
     - sleep 10
-    - export OMP_NUM_THREADS=2
     - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
+    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 2  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
