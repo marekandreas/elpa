@@ -758,49 +758,6 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
 
 
 
-# gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize
-gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize-jobs:
-  tags:
-    - gpu
-  script:
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="skylake"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl";  fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2"  ; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\" SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
-    - sleep 10
-    - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
-    - sleep 10
-    - export OMP_NUM_THREADS=2
-    - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
-
-
-
 # gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-no-address-sanitize
 gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-no-address-sanitize-jobs:
   tags:
@@ -953,49 +910,6 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-
-
-
-# gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize
-gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize-jobs:
-  tags:
-    - gpu
-  script:
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="skylake"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl";  fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2"  ; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\" SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
-    - sleep 10
-    - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
-    - sleep 10
-    - export OMP_NUM_THREADS=2
-    - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -1453,49 +1367,6 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
 
 
 
-# gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize
-gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize-jobs:
-  tags:
-    - gpu
-  script:
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="skylake"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl";  fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2"  ; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\" SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
-    - sleep 10
-    - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
-    - sleep 10
-    - export OMP_NUM_THREADS=2
-    - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
-
-
-
 # gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-no-address-sanitize
 gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-no-address-sanitize-jobs:
   tags:
@@ -1648,49 +1519,6 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-
-
-
-# gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize
-gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize-jobs:
-  tags:
-    - gpu
-  script:
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="skylake"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl";  fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2"  ; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\" SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
-    - sleep 10
-    - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
-    - sleep 10
-    - export OMP_NUM_THREADS=2
-    - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2148,49 +1976,6 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
 
 
 
-# gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize
-gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize-jobs:
-  tags:
-    - gpu
-  script:
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="skylake"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl";  fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2"  ; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpiifort\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\" SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
-    - sleep 10
-    - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
-    - sleep 10
-    - export OMP_NUM_THREADS=2
-    - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
-
-
-
 # gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-no-address-sanitize
 gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-no-address-sanitize-jobs:
   tags:
@@ -2343,49 +2128,6 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-
-
-
-# gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize
-gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize-jobs:
-  tags:
-    - gpu
-  script:
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="skylake"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl";  fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2"  ; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpiifort\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\" SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
-    - sleep 10
-    - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
-    - sleep 10
-    - export OMP_NUM_THREADS=2
-    - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
@@ -2843,49 +2585,6 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
 
 
 
-# gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize
-gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize-jobs:
-  tags:
-    - gpu
-  script:
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="skylake"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl";  fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2"  ; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx\" FC=\"ifort\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\" SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
-    - sleep 10
-    - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
-    - sleep 10
-    - export OMP_NUM_THREADS=2
-    - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
-
-
-
 # gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-no-address-sanitize
 gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-no-address-sanitize-jobs:
   tags:
@@ -3038,49 +2737,6 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export OMP_NUM_THREADS=2
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-
-
-
-# gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize
-gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-avx-no-address-sanitize-jobs:
-  tags:
-    - gpu
-  script:
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="skylake"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl";  fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS="knl"; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2"  ; fi
-
-
-    - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx\" FC=\"ifort\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\" SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
-    - sleep 10
-    - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
-    - sleep 10
-    - export OMP_NUM_THREADS=2
-    - echo " srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN" 
-    - srun -n 1 -c 8 $SRUN_COMMANDLINE_RUN                                          /scratch/elpa/bin/run_elpa.sh 2 $OMP_NUM_THREADS  " TEST_FLAGS=\"150 150 16\"  || { cat test-suite.log; exit 1; }"
 
 
 
