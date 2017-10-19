@@ -644,12 +644,12 @@ EXTRA_DIST = \
   test/shared/test_check_correctness_template.F90 \
   test/shared/test_prepare_matrix_template.F90 \
   test/shared/test_analytic_template.F90 \
-  test_project/Makefile.am \
-  test_project/autogen.sh \
-  test_project/configure.ac \
-  test_project/fdep \
-  test_project/m4 \
-  test_project/src/test_real.F90 \
+  test_project_1stage/Makefile.am \
+  test_project_1stage/autogen.sh \
+  test_project_1stage/configure.ac \
+  test_project_1stage/fdep \
+  test_project_1stage/m4 \
+  test_project_1stage/src/test_real.F90 \
   test_project_2stage/Makefile.am \
   test_project_2stage/autogen.sh \
   test_project_2stage/configure.ac \
