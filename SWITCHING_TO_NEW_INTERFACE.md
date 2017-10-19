@@ -124,8 +124,6 @@ the user application):
 
    "debug"    can be one of { 0 | 1 }, will give more information case of an error if set to 1
 
-   "eigenvalues_only" can be one of { 0 | 1 }, if set to 1 solve will only compute the eigenvalues
-
 
 6. do the desired task with the *ELPA* library, which could be
    a) e%eigenvectors                  ! solve EV problem with solver as set by "set" method; computes eigenvalues AND eigenvectors
