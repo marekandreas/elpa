@@ -693,6 +693,8 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
 
 # gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize
 gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2
   script:
@@ -791,6 +793,8 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
 
 # gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize
 gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx512
   script:
@@ -1404,6 +1408,8 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
 
 # gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize
 gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2
   script:
@@ -1502,6 +1508,8 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
 
 # gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize
 gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx512
   script:
@@ -2063,6 +2071,8 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
 
 # gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize
 gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2
   script:
@@ -2161,6 +2171,8 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
 
 # gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize
 gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx512
   script:
@@ -2724,6 +2736,8 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
 
 # gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize
 gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2
   script:
@@ -2822,6 +2836,8 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
 
 # gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize
 gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx512
   script:
@@ -3383,6 +3399,8 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
 
 # gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize
 gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2
   script:
@@ -3481,6 +3499,8 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
 
 # gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize
 gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx512
   script:
@@ -4044,6 +4064,8 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
 
 # gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize
 gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2
   script:
@@ -4142,6 +4164,8 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
 
 # gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize
 gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx512
   script:
@@ -4703,6 +4727,8 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
 
 # gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize
 gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2
   script:
@@ -4801,6 +4827,8 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
 
 # gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize
 gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx512
   script:
@@ -5364,6 +5392,8 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
 
 # gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize
 gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx2-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx2
   script:
@@ -5462,6 +5492,8 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
 
 # gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize
 gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx512-address-sanitize-jobs:
+  only:
+    - /.*master.*/
   tags:
     - avx512
   script:
