@@ -657,7 +657,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -1106,7 +1106,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -5760,7 +5760,7 @@ gnu-pgi-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -5810,7 +5810,7 @@ gnu-pgi-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
