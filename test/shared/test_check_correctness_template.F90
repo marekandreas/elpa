@@ -462,71 +462,21 @@ function check_correctness_evp_numeric_residuals_&
       ! compare tmp2 with original matrix
       tmp2(:,:) = tmp2(:,:) - as(:,:)
 
-#if REALCASE == 1
-
 #ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_REAL
-
-      norm = pdlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
-#else
-      norm = pslange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
-#endif
-
+      norm = p&
+              &BLAS_CHAR&
+              &lange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
 #else /* WITH_MPI */
-#ifdef DOUBLE_PRECISION_REAL
-      norm = dlange("M", na, na, tmp2, na_rows, tmp1)
-#else
-      norm = slange("M", na, na, tmp2, na_rows, tmp1)
-
-#endif
+      norm = BLAS_CHAR&
+             &lange("M", na, na, tmp2, na_rows, tmp1)
 #endif /* WITH_MPI */
 
 
 #ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_REAL
-      call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
-#else
-      call mpi_allreduce(norm,normmax,1,MPI_REAL4,MPI_MAX,MPI_COMM_WORLD,mpierr)
-#endif
+      call mpi_allreduce(norm,normmax,1,MPI_REAL_PRECISION,MPI_MAX,MPI_COMM_WORLD,mpierr)
 #else /* WITH_MPI */
       normmax = norm
 #endif /* WITH_MPI */
-
-
-#endif /* REALCASE == 1 */
-
-#if COMPLEXCASE == 1
-
-#ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_COMPLEX
-
-      norm = pzlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
-#else
-      norm = pclange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
-#endif
-
-#else /* WITH_MPI */
-#ifdef DOUBLE_PRECISION_COMPLEX
-      norm = zlange("M", na, na, tmp2, na_rows, tmp1)
-#else
-      norm = clange("M", na, na, tmp2, na_rows, tmp1)
-
-#endif
-#endif /* WITH_MPI */
-
-
-#ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
-#else
-      call mpi_allreduce(norm,normmax,1,MPI_REAL4,MPI_MAX,MPI_COMM_WORLD,mpierr)
-#endif
-#else /* WITH_MPI */
-      normmax = norm
-#endif /* WITH_MPI */
-
-
-#endif /* COMPLEXCASE == 1 */
 
       if (myid .eq. 0) then
         print *," Maximum error of result: ", normmax
