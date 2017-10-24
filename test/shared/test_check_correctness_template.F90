@@ -352,15 +352,9 @@ function check_correctness_evp_numeric_residuals_&
 
      ! analytic solution
      do ii=1, na
-#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-       ev_analytic(ii) = diagonalElement + 2.0_c_double * &
-                         subdiagonalElement *cos( pi*real(ii,kind=c_double)/ &
-			 real(na+1,kind=c_double) )
-#else
-       ev_analytic(ii) = diagonalElement + 2.0_c_float * &
-                         subdiagonalElement *cos( pi*real(ii,kind=c_float)/ &
-                         real(na+1,kind=c_float) )
-#endif
+       ev_analytic(ii) = diagonalElement + 2.0_rk * &
+                         subdiagonalElement *cos( pi*real(ii,kind=rk)/ &
+                         real(na+1,kind=rk) )
      enddo
 
      ! sort analytic solution:
@@ -410,156 +404,60 @@ function check_correctness_evp_numeric_residuals_&
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, myid, na_rows
-#if REALCASE == 1
-      real(kind=rck), intent(in)       :: a(:,:), as(:,:)
-      real(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      real(kind=rck)                   :: norm, normmax
+
+      MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:), as(:,:)
+      MATH_DATATYPE(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      real(kind=rk)                   :: norm, normmax
 
 #ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_REAL
-      real(kind=rck)                   :: pdlange
-#else
-      real(kind=rck)                   :: pslange
-#endif
-
+      real(kind=rck)                   :: p&
+                                           &BLAS_CHAR&
+                                           &lange
 #else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_REAL
-      real(kind=rck)                   :: dlange
-#else
-      real(kind=rck)                   :: slange
-#endif
-
+      real(kind=rck)                   :: BLAS_CHAR&
+                                          &lange
 #endif /* WITH_MPI */
-
-#endif /* REALCASE */
-
-#if COMPLEXCASE == 1
-      complex(kind=rck), intent(in)    :: a(:,:), as(:,:)
-      complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      real(kind=rck)                :: norm, normmax
-#ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=ck8), parameter   :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
-#else
-      complex(kind=ck4), parameter   :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk8)
-#endif
-
-#ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_COMPLEX
-      real(kind=rck)                   :: pzlange
-#else
-      real(kind=rck)                   :: pclange
-#endif
-
-#else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      real(kind=rck)                   :: zlange
-#else
-      real(kind=rck)                   :: clange
-#endif
-
-#endif /* WITH_MPI */
-#endif /* COMPLEXCASE */
 
       integer(kind=ik)                 :: sc_desc(:)
-
       real(kind=rck)                   :: err, errmax
-
       integer :: mpierr
 
       status = 0
-
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-      tmp1(:,:) = 0.0_rk8
-#else
-      tmp1(:,:) = 0.0_rk4
-#endif
-#endif /* REALCASE */
-
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-      tmp1(:,:) = 0.0_ck8
-#else
-      tmp1(:,:) = 0.0_ck4
-#endif
-#endif /* COMPLEXCASE */
+      tmp1(:,:) = 0.0_rck
 
 
 #if REALCASE == 1
       ! tmp1 = a**T
 #ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_REAL
-      call pdtran(na, na, 1.0_rk8, a, 1, 1, sc_desc, 0.0_rk8, tmp1, 1, 1, sc_desc)
-#else
-
-      call pstran(na, na, 1.0_rk4, a, 1, 1, sc_desc, 0.0_rk4, tmp1, 1, 1, sc_desc)
-#endif
-
+      call p&
+          &BLAS_CHAR&
+          &tran(na, na, 1.0_rck, a, 1, 1, sc_desc, 0.0_rck, tmp1, 1, 1, sc_desc)
 #else /* WITH_MPI */
       tmp1 = transpose(a)
 #endif /* WITH_MPI */
-
-      ! tmp2 = a * a**T
-#ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_REAL
-      call pdgemm("N","N", na, na, na, 1.0_rk8, a, 1, 1, sc_desc, tmp1, 1, 1, &
-               sc_desc, 0.0_rk8, tmp2, 1, 1, sc_desc)
-#else
-      call psgemm("N","N", na, na, na, 1.0_rk4, a, 1, 1, sc_desc, tmp1, 1, 1, &
-               sc_desc, 0.0_rk4, tmp2, 1, 1, sc_desc)
-
-#endif
-
-#else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_REAL
-      call dgemm("N","N", na, na, na, 1.0_rk8, a, na, tmp1, na, 0.0_rk8, tmp2, na)
-#else
-      call sgemm("N","N", na, na, na, 1.0_rk4, a, na, tmp1, na, 0.0_rk4, tmp2, na)
-#endif
-#endif /* WITH_MPI */
-
-
 #endif /* REALCASE == 1 */
 
 #if COMPLEXCASE == 1
       ! tmp1 = a**H
 #ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call pztranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
-#else
-
-      call pctranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
-#endif
-
+      call p&
+            &BLAS_CHAR&
+            &tranc(na, na, ONE, a, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
 #else /* WITH_MPI */
       tmp1 = transpose(conjg(a))
 #endif /* WITH_MPI */
+#endif /* COMPLEXCASE == 1 */
 
       ! tmp2 = a * a**T
 #ifdef WITH_MPI
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call pzgemm("N","N", na, na, na, CONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
-               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
-#else
-      call pcgemm("N","N", na, na, na, CONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
-               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
-
-#endif
-
+      call p&
+            &BLAS_CHAR&
+            &gemm("N","N", na, na, na, ONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
+               sc_desc, ZERO, tmp2, 1, 1, sc_desc)
 #else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call zgemm("N","N", na, na, na, CONE, a, na, tmp1, na, CZERO, tmp2, na)
-#else
-      call cgemm("N","N", na, na, na, CONE, a, na, tmp1, na, CZERO, tmp2, na)
-#endif
+      call BLAS_CHAR&
+                    &gemm("N","N", na, na, na, ONE, a, na, tmp1, na, ZERO, tmp2, na)
 #endif /* WITH_MPI */
-
-
-#endif /* COMPLEXCASE == 1 */
 
       ! compare tmp2 with original matrix
       tmp2(:,:) = tmp2(:,:) - as(:,:)
