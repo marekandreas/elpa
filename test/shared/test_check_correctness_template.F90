@@ -89,45 +89,14 @@
       tmp2(:,:) = z(:,:)
       do i=1,nev
         xc = ev(i)
-#if REALCASE == 1
 #ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-        call pdscal(na, xc, tmp2, 1, i, sc_desc, 1)
-#else
-        call psscal(na, xc, tmp2, 1, i, sc_desc, 1)
-#endif
-
+        call p&
+            &BLAS_CHAR&
+            &scal(na, xc, tmp2, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_REAL
-        call dscal(na,xc,tmp2(:,i),1)
-#else
-        call sscal(na,xc,tmp2(:,i),1)
-#endif
-
+        call BLAS_CHAR&
+            &scal(na,xc,tmp2(:,i),1)
 #endif /* WITH_MPI */
-#endif /* REALCASE */
-
-#if COMPLEXCASE == 1
-#ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-        call pzscal(na, xc, tmp2, 1, i, sc_desc, 1)
-#else
-        call pcscal(na, xc, tmp2, 1, i, sc_desc, 1)
-#endif
-
-#else /* WITH_MPI */
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-        call zscal(na,xc,tmp2(:,i),1)
-#else
-        call cscal(na,xc,tmp2(:,i),1)
-#endif
-
-#endif /* WITH_MPI */
-#endif /* COMPLEXCASE */
       enddo
 
       !  tmp1 = A*Zi - Zi*EVi
