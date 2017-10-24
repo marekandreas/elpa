@@ -50,41 +50,19 @@
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+      MATH_DATATYPE(kind=rck), intent(in)     :: as(:,:), z(:,:)
+      real(kind=rk)                 :: ev(:)
+      MATH_DATATYPE(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      MATH_DATATYPE(kind=rck)                :: xc
+
+#ifndef WITH_MPI
 #if REALCASE == 1
-      real(kind=rck), intent(in)     :: as(:,:), z(:,:)
-      real(kind=rck)                 :: ev(:)
-      real(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      real(kind=rck)                :: xc
-
-#ifndef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-      real(kind=rck)                 :: dnrm2
-#else
-      real(kind=rck)                 :: snrm2
+      real(kind=rck)                   :: dnrm2, snrm2
 #endif
-
-#endif
-#endif /* REALCASE */
-
 #if COMPLEXCASE == 1
-      complex(kind=rck), intent(in)    :: as(:,:), z(:,:)
-      real(kind=rck)                   :: ev(:)
-      complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      complex(kind=rck)                :: xc
-#ifdef DOUBLE_PRECISION_COMPLEX
-#ifndef WITH_MPI
       complex(kind=rck)                :: zdotc, cdotc
-#endif
-
-#else /* DOUBLE_PRECISION_COMPLEX */
-#ifndef WITH_MPI
-      complex(kind=rck)                :: zdotc, cdotc
-#endif
-
-#endif /* DOUBLE_PRECISION_COMPLEX */
-
 #endif /* COMPLEXCASE */
+#endif
 
       integer(kind=ik)                 :: sc_desc(:)
 

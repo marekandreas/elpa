@@ -41,6 +41,20 @@ intel-double-precision-mpi-noomp-jobs:
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
 
+# intel double precision nompi noomp AVX/SSE
+intel-double-precision-nompi-noomp-jobs:
+  only:
+    - /.*master.*/
+  tags:
+    - avx
+  script:
+    - ./autogen.sh
+    - ./configure FC=ifort --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 --with-mpi=no || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
 # intel double precision mpi noomp AVX/SSE large
 intel-double-precision-mpi-noomp-large-jobs:
   only:
@@ -90,6 +104,20 @@ gfortran-single-precision-mpi-noomp-jobs:
   script:
     - ./autogen.sh
     - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" --disable-avx2 FC=mpif90 --enable-single-precision || { cat config.log; exit 1; }
+    - make -j 8
+    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
+    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
+    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+
+# gfortran single precision nompi noomp AVX/SSE
+gfortran-single-precision-mpi-noomp-jobs:
+  only:
+    - /.*master.*/
+  tags:
+    - avx
+  script:
+    - ./autogen.sh
+    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -mavx" SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --disable-avx2 FC=gfortran --enable-single-precision --with-mpi=no || { cat config.log; exit 1; }
     - make -j 8
     - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
     - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
