@@ -121,9 +121,9 @@
 #else /* WITH_MPI */
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-        call zscal(na,xc,tmp2(1,i),1)
+        call zscal(na,xc,tmp2(:,i),1)
 #else
-        call cscal(na,xc,tmp2(1,i),1)
+        call cscal(na,xc,tmp2(:,i),1)
 #endif
 
 #endif /* WITH_MPI */
