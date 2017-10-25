@@ -229,7 +229,7 @@ program test
      call mpi_finalize(mpierr)
 #endif
      stop 77
-#endif
+#endif /* TEST_GPU */
    if (nblk .lt. 64) then
      if (myid .eq. 0) then
        print *,"At the moment QR decomposition need blocksize of at least 64"
@@ -243,75 +243,13 @@ program test
 #endif
      stop 77
    endif
-#endif
+#endif /* TEST_QR_DECOMPOSITION */
 
    call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
-
-   allocate(a (na_rows,na_cols))
-   allocate(as(na_rows,na_cols))
-   allocate(z (na_rows,na_cols))
-   allocate(ev(na))
-
-#ifdef TEST_HERMITIAN_MULTIPLY
-   allocate(b (na_rows,na_cols))
-   allocate(c (na_rows,na_cols))
-#endif
-
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_CHOLESKY)
-   allocate(d (na), ds(na))
-   allocate(sd (na), sds(na))
-   allocate(ev_analytic(na))
-#endif
-
-   a(:,:) = 0.0
-   z(:,:) = 0.0
-   ev(:) = 0.0
-
-#if defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION)
-#ifdef TEST_MATRIX_ANALYTIC
-   call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
-   as(:,:) = a
-#else
-   if (nev .ge. 1) then
-     call prepare_matrix_random(na, myid, sc_desc, a, z, as)
-   else
-     ! zero eigenvectors and not analytic test => toeplitz matrix
-     diagonalElement = 0.45_rk
-     subdiagonalElement =  0.78_rk
-     call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
-                                  d, sd, ds, sds, a, as, nblk, np_rows, &
-                                  np_cols, my_prow, my_pcol)
-   endif
-
-#ifdef TEST_HERMITIAN_MULTIPLY
-   b(:,:) = 2.0_rk * a(:,:)
-   c(:,:) = ONE
-#endif /* TEST_HERMITIAN_MULTIPLY */
-
-#endif /* TEST_MATRIX_ANALYTIC */
-#endif /* defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION) */
-
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
-   diagonalElement = 0.45_rk
-   subdiagonalElement =  0.78_rk
-   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
-                                d, sd, ds, sds, a, as, nblk, np_rows, &
-                                np_cols, my_prow, my_pcol)
-#endif /* EIGENVALUES OR TRIDIAGONAL */
-
-#if defined(TEST_CHOLESKY)
-   diagonalElement = (2.546_rk, 0.0_rk)
-   subdiagonalElement =  (0.0_rk, 0.0_rk)
-   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
-                                d, sd, ds, sds, a, as, nblk, np_rows, &
-                                np_cols, my_prow, my_pcol)
-
-
-#endif /* TEST_CHOLESKY */
 
    e => elpa_allocate()
 
@@ -356,6 +294,76 @@ program test
 
    if (myid == 0) print *, ""
 
+   ! allocate matrices
+   allocate(a (na_rows,na_cols))
+   allocate(as(na_rows,na_cols))
+   allocate(z (na_rows,na_cols))
+   allocate(ev(na))
+
+#ifdef TEST_HERMITIAN_MULTIPLY
+   allocate(b (na_rows,na_cols))
+   allocate(c (na_rows,na_cols))
+#endif
+
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_CHOLESKY)
+   allocate(d (na), ds(na))
+   allocate(sd (na), sds(na))
+   allocate(ev_analytic(na))
+#endif
+
+   ! prepare matrices
+   call e%timer_start("e%prepare_matrices()")
+   a(:,:) = 0.0
+   z(:,:) = 0.0
+   ev(:) = 0.0
+
+#if defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION)
+#ifdef TEST_MATRIX_ANALYTIC
+   call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+   as(:,:) = a
+#else
+   if (nev .ge. 1) then
+     call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+   else
+     ! zero eigenvectors and not analytic test => toeplitz matrix
+     diagonalElement = 0.45_rk
+     subdiagonalElement =  0.78_rk
+     call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
+                                  d, sd, ds, sds, a, as, nblk, np_rows, &
+                                  np_cols, my_prow, my_pcol)
+   endif
+
+#ifdef TEST_HERMITIAN_MULTIPLY
+   b(:,:) = 2.0_rk * a(:,:)
+   c(:,:) = ONE
+#endif /* TEST_HERMITIAN_MULTIPLY */
+
+#endif /* TEST_MATRIX_ANALYTIC */
+#endif /* defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION) */
+
+#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
+   diagonalElement = 0.45_rk
+   subdiagonalElement =  0.78_rk
+   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
+                                d, sd, ds, sds, a, as, nblk, np_rows, &
+                                np_cols, my_prow, my_pcol)
+#endif /* EIGENVALUES OR TRIDIAGONAL */
+
+#if defined(TEST_CHOLESKY)
+   diagonalElement = (2.546_rk, 0.0_rk)
+   subdiagonalElement =  (0.0_rk, 0.0_rk)
+   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
+                                d, sd, ds, sds, a, as, nblk, np_rows, &
+                                np_cols, my_prow, my_pcol)
+#endif /* TEST_CHOLESKY */
+   call e%timer_stop("e%prepare_matrices()")
+   if (myid == 0) then
+     print *, ""
+     call e%print_times("e%prepare_matrices()")
+     print *, ""
+   endif
+
+   ! solve the problem
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
      kernel = elpa_option_enumerate(KERNEL_KEY, i)
@@ -452,6 +460,8 @@ program test
 #endif /* TEST_ALL_KERNELS */
      endif
 
+     ! check the results
+     call e%timer_start("e%check_correctness()")
 #if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
 #ifdef TEST_MATRIX_ANALYTIC
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals)
@@ -494,6 +504,7 @@ program test
      status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
      call check_status(status, myid)
 #endif
+     call e%timer_stop("e%check_correctness()")
 
      if (myid == 0) then
        print *, ""
@@ -507,6 +518,12 @@ program test
 #endif
    end do ! kernels
 #endif
+
+     if (myid == 0) then
+       print *, ""
+       call e%print_times("e%check_correctness()")
+       print *, ""
+     endif
 
    call elpa_deallocate(e)
 
