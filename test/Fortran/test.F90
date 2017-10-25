@@ -75,27 +75,23 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #endif
 #endif
 
-
 #ifdef TEST_SINGLE
-#  define EV_TYPE real(kind=C_FLOAT)
-#  ifdef TEST_REAL
-#    define MATRIX_TYPE real(kind=C_FLOAT)
-#  else
-#    define MATRIX_TYPE complex(kind=C_FLOAT_COMPLEX)
-#  endif
+#  define SINGLE_PRECISION 1
+#  undef  DOUBLE_PRECISION
 #else
-#  define EV_TYPE real(kind=C_DOUBLE)
-#  ifdef TEST_REAL
-#    define MATRIX_TYPE real(kind=C_DOUBLE)
-#  else
-#    define MATRIX_TYPE complex(kind=C_DOUBLE_COMPLEX)
-#  endif
+#  define DOUBLE_PRECISION 1
+#  undef  SINGLE_PRECISION
 #endif
 
 #ifdef TEST_REAL
+#  define REALCASE 1
+#  undef  COMPLEXCASE
+#  define MATH_DATATYPE real
 #define KERNEL_KEY "real_kernel"
-#endif
-#ifdef TEST_COMPLEX
+#else
+#  define COMPLEXCASE 1
+#  undef  REALCASE
+#  define MATH_DATATYPE complex
 #define KERNEL_KEY "complex_kernel"
 #endif
 
@@ -119,6 +115,11 @@ program test
    use test_redirect
 #endif
    implicit none
+
+#include "../../src/general/precision_kinds.F90"
+
+#define EV_TYPE real(kind=rk)
+#define MATRIX_TYPE MATH_DATATYPE(kind=rck)
 
    ! matrix dimensions
    integer                     :: na, nev, nblk
@@ -279,71 +280,32 @@ program test
      call prepare_matrix_random(na, myid, sc_desc, a, z, as)
    else
      ! zero eigenvectors and not analytic test => toeplitz matrix
-#ifdef TEST_SINGLE
-     diagonalElement = 0.45_c_float
-     subdiagonalElement =  0.78_c_float
-#else
-     diagonalElement = 0.45_c_double
-     subdiagonalElement =  0.78_c_double
-#endif
+     diagonalElement = 0.45_rk
+     subdiagonalElement =  0.78_rk
      call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                                   d, sd, ds, sds, a, as, nblk, np_rows, &
                                   np_cols, my_prow, my_pcol)
    endif
 
 #ifdef TEST_HERMITIAN_MULTIPLY
-#ifdef TEST_REAL
-
-#ifdef TEST_DOUBLE
-   b(:,:) = 2.0_c_double * a(:,:)
-   c(:,:) = 1.0_c_double
-#else
-   b(:,:) = 2.0_c_float * a(:,:)
-   c(:,:) = 1.0_c_float
-#endif
-
-#endif
-
-#ifdef TEST_COMPLEX
-
-#ifdef TEST_DOUBLE
-   b(:,:) = 2.0_c_double * a(:,:)
-   c(:,:) = (1.0_c_double, 0.0_c_double)
-#else
-   b(:,:) = 2.0_c_float * a(:,:)
-   c(:,:) = (1.0_c_float, 0.0_c_float)
-#endif
-
-#endif
-
+   b(:,:) = 2.0_rk * a(:,:)
+   c(:,:) = ONE
 #endif /* TEST_HERMITIAN_MULTIPLY */
 
 #endif /* TEST_MATRIX_ANALYTIC */
 #endif /* defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION) */
 
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
-
-#ifdef TEST_SINGLE
-   diagonalElement = 0.45_c_float
-   subdiagonalElement =  0.78_c_float
-#else
-   diagonalElement = 0.45_c_double
-   subdiagonalElement =  0.78_c_double
-#endif
+   diagonalElement = 0.45_rk
+   subdiagonalElement =  0.78_rk
    call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
 #endif /* EIGENVALUES OR TRIDIAGONAL */
 
 #if defined(TEST_CHOLESKY)
-
-#ifdef TEST_SINGLE
-   diagonalElement = (2.546_c_float, 0.0_c_float)
-   subdiagonalElement =  (0.0_c_float, 0.0_c_float)
-#else
-   diagonalElement = (2.546_c_double, 0.0_c_double)
-   subdiagonalElement =  (0.0_c_double, 0.0_c_double)
-#endif
+   diagonalElement = (2.546_rk, 0.0_rk)
+   subdiagonalElement =  (0.0_rk, 0.0_rk)
    call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
