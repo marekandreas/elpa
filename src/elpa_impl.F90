@@ -49,7 +49,18 @@
 
 !> \brief Fortran module which provides the actual implementation of the API. Do not use directly! Use the module "elpa"
 module elpa_impl
+  use precision
+  use elpa2_impl
+  use elpa1_impl
+  use elpa1_auxiliary_impl
+#ifdef WITH_MPI
+  use elpa_mpi
+#endif
+  use elpa_generated_fortran_interfaces
+  use elpa_utilities, only : error_unit
+
   use elpa_abstract_impl
+  use elpa_autotune_impl
   use, intrinsic :: iso_c_binding
   implicit none
 
@@ -130,10 +141,6 @@ module elpa_impl
     !> \param   error      integer, optional to get an error code
     !> \result  obj        class(elpa_impl_t) allocated ELPA object
     function elpa_impl_allocate(error) result(obj)
-      use precision
-      use elpa_utilities, only : error_unit
-      use elpa_generated_fortran_interfaces
-
       type(elpa_impl_t), pointer   :: obj
       integer, optional            :: error
 
@@ -198,10 +205,6 @@ module elpa_impl
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
-      use elpa_utilities, only : error_unit
-#ifdef WITH_MPI
-      use elpa_mpi
-#endif
       class(elpa_impl_t), intent(inout)   :: self
       integer                             :: error, timings
 
@@ -344,8 +347,6 @@ module elpa_impl
     !> \param   name       string, the key
     !> \result  state      integer, the state of the key/value pair
     function elpa_is_set(self, name) result(state)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t)       :: self
       character(*), intent(in) :: name
       integer                  :: state
@@ -360,8 +361,6 @@ module elpa_impl
     !> \param   value      integer, value
     !> \result  error      integer, error code
     function elpa_can_set(self, name, value) result(error)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t)       :: self
       character(*), intent(in) :: name
       integer(kind=c_int), intent(in) :: value
@@ -372,7 +371,6 @@ module elpa_impl
 
 
     function elpa_value_to_string(self, option_name, error) result(string)
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
       type(c_ptr) :: ptr
@@ -450,9 +448,6 @@ module elpa_impl
 
 
     function elpa_associate_int(self, name) result(value)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
-      use elpa_utilities, only : error_unit
       class(elpa_impl_t)             :: self
       character(*), intent(in)       :: name
       integer(kind=c_int), pointer   :: value
@@ -534,10 +529,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_d(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 
 #ifdef USE_ASSUMED_SIZE
@@ -617,10 +608,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_f(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)  :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -704,10 +691,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_dc(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)             :: self
 
 #ifdef USE_ASSUMED_SIZE
@@ -788,11 +771,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_fc(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-
-      use iso_c_binding
       class(elpa_impl_t)            :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -874,12 +852,7 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_d(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
-
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double) :: a(self%local_nrows, *)
 #else
@@ -951,10 +924,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_f(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)  :: a(self%local_nrows, *)
@@ -1032,12 +1001,7 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_dc(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)             :: self
-
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_double_complex) :: a(self%local_nrows, *)
 #else
@@ -1110,11 +1074,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_fc(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-
-      use iso_c_binding
       class(elpa_impl_t)            :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex) :: a(self%local_nrows, *)
@@ -1210,8 +1169,6 @@ module elpa_impl
     !> \param error                 optional argument, error code which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_d (self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1297,8 +1254,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1388,8 +1343,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1476,8 +1429,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1551,9 +1502,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_d (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=rk8)                  :: a(self%local_nrows,*)
@@ -1608,9 +1556,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_f(self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=rk4)                  :: a(self%local_nrows,*)
@@ -1670,9 +1615,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_dc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=ck8)               :: a(self%local_nrows,*)
@@ -1727,8 +1669,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_fc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex)   :: a(self%local_nrows,*)
@@ -1788,8 +1728,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_d (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double)             :: a(self%local_nrows,*)
@@ -1844,8 +1782,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_f (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)              :: a(self%local_nrows,*)
@@ -1905,9 +1841,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_dc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=ck8)               :: a(self%local_nrows,*)
@@ -1962,8 +1895,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_fc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex)   :: a(self%local_nrows,*)
@@ -2024,9 +1955,6 @@ module elpa_impl
     !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
     subroutine elpa_solve_tridiagonal_d (self, d, e, q, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       real(kind=rk8)                  :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE
@@ -2069,9 +1997,6 @@ module elpa_impl
     !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
     subroutine elpa_solve_tridiagonal_f (self, d, e, q, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       real(kind=rk4)                  :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE
@@ -2102,7 +2027,6 @@ module elpa_impl
 
 
     subroutine elpa_destroy(self)
-      use elpa_generated_fortran_interfaces
 #ifdef WITH_MPI
       integer :: mpi_comm_rows, mpi_comm_cols, mpierr
 #endif
