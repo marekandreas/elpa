@@ -67,16 +67,21 @@ static int complex_kernel_enumerate(int i);
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value);
 static const char *complex_kernel_name(int kernel);
 
+static int band_to_full_cardinality();
+static int band_to_full_enumerate(int i);
+static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
+
 static int na_is_valid(elpa_index_t index, int n, int new_value);
 static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
+static int gpu_is_valid(elpa_index_t index, int n, int new_value);
 
 static int is_positive(elpa_index_t index, int n, int new_value);
 
 static int elpa_double_string_to_value(char *name, char *string, double *value);
 static int elpa_double_value_to_string(char *name, double value, const char **string);
 
-#define BASE_ENTRY(option_name, option_description, once_value, readonly_value, private_value) \
+#define BASE_ENTRY(option_name, option_description, once_value, readonly_value) \
                 .base = { \
                         .name = option_name, \
                         .description = option_description, \
@@ -84,28 +89,31 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
                         .readonly = readonly_value, \
                         .env_default = "ELPA_DEFAULT_" option_name, \
                         .env_force = "ELPA_FORCE_" option_name, \
-                        .private = private_value, \
                 }
 
 #define INT_PARAMETER_ENTRY(option_name, option_description, valid_func) \
         { \
-                BASE_ENTRY(option_name, option_description, 1, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 1, 0), \
                 .valid = valid_func, \
         }
 
-#define BOOL_ENTRY(option_name, option_description, default) \
+#define BOOL_ENTRY(option_name, option_description, default, tune_level, tune_domain) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0), \
                 .default_value = default, \
+                .autotune_level = tune_level, \
+                .autotune_domain = tune_domain, \
                 .cardinality = cardinality_bool, \
                 .enumerate = enumerate_identity, \
                 .valid = valid_bool, \
         }
 
-#define INT_ENTRY(option_name, option_description, default, card_func, enumerate_func, valid_func, to_string_func) \
+#define INT_ENTRY(option_name, option_description, default, tune_level, tune_domain, card_func, enumerate_func, valid_func, to_string_func) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0), \
                 .default_value = default, \
+                .autotune_level = tune_level, \
+                .autotune_domain = tune_domain, \
                 .cardinality = card_func, \
                 .enumerate = enumerate_func, \
                 .valid = valid_func, \
@@ -114,15 +122,11 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
 
 #define INT_ANY_ENTRY(option_name, option_description) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0), \
         }
 
-#define PRIVATE_INT_ENTRY(option_name, default) \
-        { \
-                BASE_ENTRY(option_name, NULL, 0, 0, 1), \
-		.default_value = default, \
-        }
-
+/* The order here is important! Tunable options that are dependent on other
+ * tunable options must appear later in the list than their prerequisites */
 static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("na", "Global matrix has size (na * na)", na_is_valid),
         INT_PARAMETER_ENTRY("nev", "Number of eigenvectors to be computed, 0 <= nev <= na", nev_is_valid),
@@ -135,22 +139,23 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication"),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator"),
-        INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, \
+        INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name),
-        INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, \
+        INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        cardinality_bool, enumerate_identity, gpu_is_valid, NULL),
+        INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
                         number_of_real_kernels, real_kernel_enumerate, \
                         real_kernel_is_valid, real_kernel_name),
-        INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, \
+        INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
                         number_of_complex_kernels, complex_kernel_enumerate, \
                         complex_kernel_is_valid, complex_kernel_name),
 
-	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, NULL, NULL, NULL, NULL),
-        BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0),
-        BOOL_ENTRY("gpu", "Use GPU acceleration", 0),
-        BOOL_ENTRY("timings", "Enable time measurement", 0),
-        BOOL_ENTRY("debug", "Emit verbose debugging messages", 0),
-        BOOL_ENTRY("print_flops", "Print FLOP rates on task 0", 0),
-        BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0),
+	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
+        BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL),
+        BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
+        BOOL_ENTRY("debug", "Emit verbose debugging messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
+        BOOL_ENTRY("print_flops", "Print FLOP rates on task 0", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
+        BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
 };
 
 #define READONLY_DOUBLE_ENTRY(option_name, option_description) \
@@ -277,7 +282,7 @@ FOR_ALL_TYPES(IMPLEMENT_LOC_FUNCTION)
 
 
 #define IMPLEMENT_SET_FUNCTION(TYPE, PRINTF_SPEC, ...) \
-        int elpa_index_set_##TYPE##_value(elpa_index_t index, char *name, TYPE value, int force_writable) { \
+        int elpa_index_set_##TYPE##_value(elpa_index_t index, char *name, TYPE value) { \
                 if (sizeof(TYPE##_entries) == 0) { \
                         return ELPA_ERROR_ENTRY_NOT_FOUND; \
                 } \
@@ -293,7 +298,7 @@ FOR_ALL_TYPES(IMPLEMENT_LOC_FUNCTION)
                 if (TYPE##_entries[n].base.once & index->TYPE##_options.is_set[n]) { \
                         return ELPA_ERROR_ENTRY_ALREADY_SET; \
                 } \
-                if (TYPE##_entries[n].base.readonly & !force_writable) { \
+                if (TYPE##_entries[n].base.readonly) { \
                         return ELPA_ERROR_ENTRY_READONLY; \
                 } \
                 index->TYPE##_options.values[n] = value; \
@@ -336,36 +341,6 @@ int elpa_index_value_is_set(elpa_index_t index, char *name) {
         fprintf(stderr, "ELPA Error: Could not find entry '%s'\n", name);
         return res;
 }
-
-#define IMPLEMENT_IS_PRIVATE_FUNCTION(TYPE, ...) \
-        int elpa_index_##TYPE##_is_private(char *name) { \
-                if (sizeof(TYPE##_entries) == 0) { \
-                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
-                } \
-                int n = find_##TYPE##_entry(name); \
-                if (n >= 0) { \
-                        return TYPE##_entries[n].base.private; \
-                } else { \
-                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
-                } \
-        }
-FOR_ALL_TYPES(IMPLEMENT_IS_PRIVATE_FUNCTION)
-
-
-int elpa_index_is_private(char *name) {
-        int res = ELPA_ERROR;
-
-#define RET_IF_PRIVATE(TYPE, ...) \
-        res = elpa_index_##TYPE##_is_private(name); \
-        if (res >= 0) { \
-                return res; \
-        }
-        FOR_ALL_TYPES(RET_IF_PRIVATE);
-
-        fprintf(stderr, "ELPA Error: Could not find entry '%s'\n", name);
-        return res;
-}
-
 
 int elpa_index_int_is_valid(elpa_index_t index, char *name, int new_value) {
         int n = find_int_entry(name); \
@@ -569,6 +544,10 @@ static const char *real_kernel_name(int kernel) {
         kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
 
 static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
+        int solver = elpa_index_get_int_value(index, "solver", NULL);
+        if (solver == ELPA_SOLVER_1STAGE) {
+                return new_value == ELPA_2STAGE_REAL_DEFAULT;
+        }
         int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
         switch(new_value) {
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
@@ -604,6 +583,10 @@ static const char *complex_kernel_name(int kernel) {
         kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
 
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
+        int solver = elpa_index_get_int_value(index, "solver", NULL);
+        if (solver == ELPA_SOLVER_1STAGE) {
+                return new_value == ELPA_2STAGE_COMPLEX_DEFAULT;
+        }
         int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
         switch(new_value) {
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
@@ -637,6 +620,28 @@ static int bw_is_valid(elpa_index_t index, int n, int new_value) {
         return (0 <= new_value) && (new_value < na);
 }
 
+static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
+        return new_value == 0 || new_value == 1;
+}
+
+static int band_to_full_cardinality() {
+        /* TODO */
+        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
+        abort();
+}
+
+static int band_to_full_enumerate(int i) {
+        /* TODO */
+        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
+        abort();
+}
+
+static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
+        /* TODO */
+        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
+        abort();
+}
+
 elpa_index_t elpa_index_instance() {
         elpa_index_t index = (elpa_index_t) calloc(1, sizeof(struct elpa_index_struct));
 
@@ -657,3 +662,52 @@ elpa_index_t elpa_index_instance() {
         return index;
 }
 
+static int is_tunable(elpa_index_t index, int i, int autotune_level, int autotune_domain) {
+        return (int_entries[i].autotune_level != 0) &&
+               (int_entries[i].autotune_level <= autotune_level) &&
+               (int_entries[i].autotune_domain & autotune_domain) &&
+               (!index->int_options.is_set[i]);
+}
+
+int elpa_index_autotune_cardinality(elpa_index_t index, int autotune_level, int autotune_domain) {
+        int N = 1;
+
+        for (int i = 0; i < nelements(int_entries); i++) { \
+                if (is_tunable(index, i, autotune_level, autotune_domain)) {
+                        N *= int_entries[i].cardinality();
+                }
+        }
+        return N;
+}
+
+int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n) {
+        int debug = elpa_index_get_int_value(index, "debug", NULL);
+        for (int i = 0; i < nelements(int_entries); i++) {
+                if (is_tunable(index, i, autotune_level, autotune_domain)) {
+                        int value = int_entries[i].enumerate(n % int_entries[i].cardinality());
+                        /* Try to set option i to that value */
+                        if (int_entries[i].valid(index, i, value)) {
+                                index->int_options.values[i] = value;
+                        } else {
+                                return 0;
+                        }
+                        n /= int_entries[i].cardinality();
+                }
+        }
+        if (debug == 1) {
+                for (int i = 0; i < nelements(int_entries); i++) {
+                        if (is_tunable(index, i, autotune_level, autotune_domain)) {
+                                fprintf(stderr, "%s = ", int_entries[i].base.name);
+                                if (int_entries[i].to_string) {
+                                        fprintf(stderr, "%s\n", int_entries[i].to_string(index->int_options.values[i]));
+                                } else {
+                                        fprintf(stderr, "%d\n", index->int_options.values[i]);
+                                }
+                        }
+                }
+                fprintf(stderr, "\n");
+        }
+
+        /* Could set all values */
+        return 1;
+}

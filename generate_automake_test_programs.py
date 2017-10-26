@@ -123,3 +123,28 @@ for m, g, t, p, d, s, l in product(
             matrix_flag[m]] + extra_flags))
 
         print("endif\n" * endifs)
+
+
+for p, d in product(sorted(prec_flag.keys()), sorted(domain_flag.keys())):
+    endifs = 0
+    if (p == "single"):
+        if (d == "real"):
+            print("if WANT_SINGLE_PRECISION_REAL")
+        elif (d == "complex"):
+            print("if WANT_SINGLE_PRECISION_COMPLEX")
+        else:
+            raise Exception("Oh no!")
+        endifs += 1
+
+    name = "test_autotune_{0}_{1}".format(d, p)
+
+    print("noinst_PROGRAMS += " + name)
+    print("check_SCRIPTS += " + name + ".sh")
+    print(name + "_SOURCES = test/Fortran/test_autotune.F90")
+    print(name + "_LDADD = $(test_program_ldadd)")
+    print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+    print("  " + " \\\n  ".join([
+            domain_flag[d],
+            prec_flag[p]]))
+
+    print("endif\n" * endifs)

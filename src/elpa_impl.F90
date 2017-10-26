@@ -129,8 +129,11 @@ module elpa_impl
 
      procedure, public :: associate_int => elpa_associate_int  !< public method to set some pointers
 
-  end type elpa_impl_t
+     procedure, public :: autotune_setup => elpa_autotune_setup
+     procedure, public :: autotune_step => elpa_autotune_step
+     procedure, public :: autotune_set_best => elpa_autotune_set_best
 
+  end type elpa_impl_t
 
   !> \brief the implementation of the generic methods
   contains
@@ -545,10 +548,15 @@ module elpa_impl
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -623,10 +631,15 @@ module elpa_impl
 
       call self%get("solver",solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -706,10 +719,15 @@ module elpa_impl
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -786,10 +804,15 @@ module elpa_impl
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -867,10 +890,15 @@ module elpa_impl
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -939,10 +967,15 @@ module elpa_impl
 
       call self%get("solver",solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -1015,10 +1048,15 @@ module elpa_impl
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -1089,10 +1127,15 @@ module elpa_impl
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -2043,9 +2086,88 @@ module elpa_impl
 #endif
 
       call timer_free(self%timer)
+      call timer_free(self%autotune_timer)
       call elpa_index_free_c(self%index)
 
     end subroutine
 
+    function elpa_autotune_setup(self, level, domain) result(tune_state)
+      class(elpa_impl_t), intent(inout), target :: self
+      integer, intent(in) :: level, domain
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+      class(elpa_autotune_t), pointer :: tune_state
+
+      allocate(ts_impl)
+      ts_impl%parent => self
+      ts_impl%level = level
+      ts_impl%domain = domain
+
+      ts_impl%i = -1
+      ts_impl%min_loc = -1
+      ts_impl%N = elpa_index_autotune_cardinality_c(self%index, level, domain)
+
+      tune_state => ts_impl
+
+      call self%autotune_timer%enable()
+    end function
+
+
+    function elpa_autotune_step(self, tune_state) result(unfinished)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(inout), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+      logical :: unfinished
+      integer :: i
+      real(kind=C_DOUBLE) :: time_spent
+
+      select type(tune_state)
+        class is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      unfinished = .false.
+
+      if (ts_impl%i >= 0) then
+        time_spent = self%autotune_timer%get("accumulator")
+        print *, time_spent
+        if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
+          ts_impl%min_val = time_spent
+          ts_impl%min_loc = ts_impl%i
+        end if
+        call self%autotune_timer%free()
+      endif
+
+      do while (ts_impl%i < ts_impl%N)
+        ts_impl%i = ts_impl%i + 1
+        if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%i) == 1) then
+          unfinished = .true.
+          return
+        end if
+      end do
+
+    end function
+
+
+    subroutine elpa_autotune_set_best(self, tune_state)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+
+      select type(tune_state)
+        class is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      print *, "set best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
+      if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
+        stop "This should not happen (in elpa_autotune_set_best())"
+      endif
+    end subroutine
 
 end module

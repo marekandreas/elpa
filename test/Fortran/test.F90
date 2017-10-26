@@ -503,9 +503,6 @@ program test
 #ifdef TEST_MATRIX_ANALYTIC
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals)
 #else
-!#elif defined(TEST_MATRIX_FRANK)
-!     status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
-!#elif defined(TEST_MATRIX_RANDOM)
      if (nev .ge. 1) then
        status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
      else
@@ -514,9 +511,6 @@ program test
          subdiagonalElement, ev, z, myid)
      endif
      call check_status(status, myid)
-!#else
-!#error "MATRIX TYPE"
-!#endif
 #endif
 #endif /* defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) */
 
@@ -541,89 +535,6 @@ program test
      status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
      call check_status(status, myid)
 #endif
-
-!#ifdef TEST_COMPLEX
-!   status = 0
-!
-!   !-------------------------------------------------------------------------------
-!   ! Test correctness of result (using plain scalapack routines)
-!   allocate(tmp1(na_rows,na_cols))
-!   allocate(tmp2(na_rows,na_cols))
-!#ifdef TEST_DOUBLE
-!   tmp1(:,:) = (0.0_c_double, 0.0_c_double)
-!#else
-!   tmp1(:,:) = (0.0_c_float, 0.0_c_float)
-!#endif
-!   ! tmp1 = a**T
-!#ifdef WITH_MPI
-!#ifdef TEST_DOUBLE
-!   call pztranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
-!#else
-!   call pctranc(na, na, CONE, a, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
-!#endif
-!#else
-!   tmp1 = transpose(conjg(a))
-!#endif
-!   ! tmp2 = tmp1 * b
-!#ifdef TEST_DOUBLE
-!#ifdef WITH_MPI
-!   call pzgemm("N","N", na, na, na, CONE, tmp1, 1, 1, sc_desc, b, 1, 1, &
-!               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
-!#else
-!   call zgemm("N","N", na, na, na, CONE, tmp1, na, b, na, CZERO, tmp2, na)
-!#endif
-!#else
-!#ifdef WITH_MPI
-!   call pcgemm("N","N", na, na, na, CONE, tmp1, 1, 1, sc_desc, b, 1, 1, &
-!               sc_desc, CZERO, tmp2, 1, 1, sc_desc)
-!#else
-!   call cgemm("N","N", na, na, na, CONE, tmp1, na, b, na, CZERO, tmp2, na)
-!#endif
-!#endif
-!
-!   ! compare tmp2 with c
-!   tmp2(:,:) = tmp2(:,:) - c(:,:)
-!#ifdef TEST_DOUBLE
-!#ifdef WITH_MPI
-!   norm = pzlange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
-!#else
-!   norm = zlange("M",na, na, tmp2, na_rows, tmp1)
-!#endif
-!#else
-!#ifdef WITH_MPI
-!   norm = pclange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
-!#else
-!   norm = clange("M",na, na, tmp2, na_rows, tmp1)
-!#endif
-!#endif
-!#ifdef WITH_MPI
-!#ifdef TEST_DOUBLE
-!   call mpi_allreduce(norm,normmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr)
-!#else
-!   call mpi_allreduce(norm,normmax,1,MPI_REAL4,MPI_MAX,MPI_COMM_WORLD,mpierr)
-!#endif
-!#else
-!   normmax = norm
-!#endif
-!   if (myid .eq. 0) then
-!     print *," Maximum error of result: ", normmax
-!   endif
-!
-!#ifdef TEST_DOUBLE
-!   if (normmax .gt. 5e-11_c_double .or. normmax .eq. 0.0_c_double) then
-!#else
-!   if (normmax .gt. 5e-3_c_float .or. normmax .eq. 0.0_c_float) then
-!#endif
-!        print *,"norm= ",normmax
-!        status = 1
-!   endif
-!
-!   deallocate(tmp1)
-!   deallocate(tmp2)
-!
-!#endif
-!#endif /* TEST_HERMITIAN_MULTIPLY */
-
 
      if (myid == 0) then
        print *, ""

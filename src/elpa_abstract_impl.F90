@@ -72,6 +72,7 @@ module elpa_abstract_impl
   type, abstract, extends(elpa_t) :: elpa_abstract_impl_t
 #ifdef HAVE_DETAILED_TIMINGS
     type(timer_t) :: timer
+    type(timer_t) :: autotune_timer
 #else
     type(timer_dummy_t) :: timer
 #endif
@@ -79,21 +80,6 @@ module elpa_abstract_impl
 
     logical             :: eigenvalues_only
     contains
-      ! set private fields in the index
-      generic, public :: set_private => &
-        elpa_set_private_integer, &
-        elpa_set_private_double
-
-      generic, public :: get_private => &
-        elpa_get_private_integer, &
-        elpa_get_private_double
-
-      procedure, private :: elpa_set_private_integer
-      procedure, private :: elpa_set_private_double
-
-      procedure, private :: elpa_get_private_integer
-      procedure, private :: elpa_get_private_double
-
       procedure, public :: elpa_set_integer                      !< private methods to implement the setting of an integer/double key/value pair
       procedure, public :: elpa_set_double
 
@@ -110,7 +96,7 @@ module elpa_abstract_impl
     !> \param   name       string, the key
     !> \param   value      integer, the value to be set
     !> \result  error      integer, the error code
-    subroutine elpa_set_private_integer(self, name, value, error)
+    subroutine elpa_set_integer(self, name, value, error)
       use iso_c_binding
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
@@ -118,7 +104,7 @@ module elpa_abstract_impl
       integer, optional               :: error
       integer                         :: actual_error
 
-      actual_error = elpa_index_set_int_value_c(self%index, name // c_null_char, value, 0)
+      actual_error = elpa_index_set_int_value_c(self%index, name // c_null_char, value)
 
       if (present(error)) then
         error = actual_error
@@ -135,7 +121,7 @@ module elpa_abstract_impl
     !> \param   name       string, the key
     !> \param   value      integer, the value of the key/vaue pair
     !> \param   error      integer, optional, to store an error code
-    subroutine elpa_get_private_integer(self, name, value, error)
+    subroutine elpa_get_integer(self, name, value, error)
       use iso_c_binding
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
@@ -158,7 +144,7 @@ module elpa_abstract_impl
     !> \param   name       string, the key
     !> \param   value      double, the value to be set
     !> \result  error      integer, the error code
-    subroutine elpa_set_private_double(self, name, value, error)
+    subroutine elpa_set_double(self, name, value, error)
       use iso_c_binding
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
@@ -166,7 +152,7 @@ module elpa_abstract_impl
       integer, optional               :: error
       integer                         :: actual_error
 
-      actual_error = elpa_index_set_double_value_c(self%index, name // c_null_char, value, 0)
+      actual_error = elpa_index_set_double_value_c(self%index, name // c_null_char, value)
 
       if (present(error)) then
         error = actual_error
@@ -182,7 +168,7 @@ module elpa_abstract_impl
     !> \param   name       string, the key
     !> \param   value      double, the value of the key/vaue pair
     !> \param   error      integer, optional, to store an error code
-    subroutine elpa_get_private_double(self, name, value, error)
+    subroutine elpa_get_double(self, name, value, error)
       use iso_c_binding
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
@@ -197,130 +183,6 @@ module elpa_abstract_impl
         write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
-    end subroutine
-
-
-    subroutine elpa_set_integer(self, name, value, error)
-      use iso_c_binding
-      class(elpa_abstract_impl_t)     :: self
-      character(*), intent(in)        :: name
-      integer(kind=c_int), intent(in) :: value
-      integer, optional               :: error
-      integer                         :: actual_error
-      integer                         :: is_private
-
-      is_private = elpa_index_int_is_private_c(name // C_NULL_CHAR)
-
-      if (is_private == 0) then
-        call self%set_private(name, value, error)
-
-      else
-        if (is_private == 1) then
-          actual_error = ELPA_ERROR_ENTRY_NOT_FOUND
-        else
-          actual_error = is_private
-        endif
-
-        if (present(error)) then
-          error = actual_error
-        else
-          write(error_unit,'(a)') "ELPA: Error setting option '" // name // "'" // &
-                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
-        endif
-      endif
-    end subroutine
-
-
-    subroutine elpa_set_double(self, name, value, error)
-      use iso_c_binding
-      class(elpa_abstract_impl_t)     :: self
-      character(*), intent(in)        :: name
-      real(kind=c_double), intent(in) :: value
-      integer, optional               :: error
-      integer                         :: actual_error
-      integer                         :: is_private
-
-      is_private = elpa_index_double_is_private_c(name // C_NULL_CHAR)
-
-      if (is_private == 0) then
-        call self%set_private(name, value, error)
-
-      else
-        if (is_private == 1) then
-          actual_error = ELPA_ERROR_ENTRY_NOT_FOUND
-        else
-          actual_error = is_private
-        endif
-
-        if (present(error)) then
-          error = actual_error
-        else
-          write(error_unit,'(a)') "ELPA: Error setting option '" // name // "'" // &
-                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
-        endif
-      endif
-    end subroutine
-
-
-    subroutine elpa_get_integer(self, name, value, error)
-      use iso_c_binding
-      class(elpa_abstract_impl_t)    :: self
-      character(*), intent(in)       :: name
-      integer(kind=c_int)            :: value
-      integer, intent(out), optional :: error
-      integer                        :: actual_error
-      integer                        :: is_private
-
-      is_private = elpa_index_int_is_private_c(name // C_NULL_CHAR)
-
-      if (is_private == 0) then
-        call self%get_private(name, value, error)
-
-      else
-        if (is_private == 1) then
-          actual_error = ELPA_ERROR_ENTRY_NOT_FOUND
-        else
-          actual_error = is_private
-        endif
-
-        if (present(error)) then
-          error = actual_error
-        else
-          write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
-                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
-        endif
-      endif
-    end subroutine
-
-
-    subroutine elpa_get_double(self, name, value, error)
-      use iso_c_binding
-      class(elpa_abstract_impl_t)    :: self
-      character(*), intent(in)       :: name
-      real(kind=c_double)            :: value
-      integer, intent(out), optional :: error
-      integer                        :: actual_error
-      integer                        :: is_private
-
-      is_private = elpa_index_double_is_private_c(name // C_NULL_CHAR)
-
-      if (is_private == 0) then
-        call self%get_private(name, value, error)
-
-      else
-        if (is_private == 1) then
-          actual_error = ELPA_ERROR_ENTRY_NOT_FOUND
-        else
-          actual_error = is_private
-        endif
-
-        if (present(error)) then
-          error = actual_error
-        else
-          write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
-                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
-        endif
-      endif
     end subroutine
 
 end module

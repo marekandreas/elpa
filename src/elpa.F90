@@ -218,4 +218,10 @@ module elpa
       deallocate(obj)
     end subroutine
 
+    subroutine elpa_autotune_deallocate(obj)
+      class(elpa_autotune_t), pointer :: obj
+      call obj%destroy()
+      deallocate(obj)
+    end subroutine
+
 end module

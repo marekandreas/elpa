@@ -89,13 +89,14 @@ typedef struct {
         char *env_force;
         int once;
         int readonly;
-        int private;
 } elpa_index_entry_t;
 
 
 typedef struct {
         elpa_index_entry_t base;
         int default_value;
+        int autotune_level;
+        int autotune_domain;
         elpa_index_valid_int_t valid;
         elpa_index_cardinality_t cardinality;
         elpa_index_enumerate_int_option_t enumerate;
@@ -164,18 +165,17 @@ int elpa_index_get_int_value(elpa_index_t index, char *name, int *success);
 
 /*
  !f> interface
- !f>   function elpa_index_set_int_value_c(index, name, value, force_writable) result(success) &
+ !f>   function elpa_index_set_int_value_c(index, name, value) result(success) &
  !f>       bind(C, name="elpa_index_set_int_value")
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
  !f>     integer(kind=c_int),intent(in), value :: value
- !f>     integer(kind=c_int),intent(in), value :: force_writable
  !f>     integer(kind=c_int)                   :: success
  !f>   end function
  !f> end interface
  */
-int elpa_index_set_int_value(elpa_index_t index, char *name, int value, int force_writable);
+int elpa_index_set_int_value(elpa_index_t index, char *name, int value);
 
 
 /*
@@ -189,30 +189,6 @@ int elpa_index_set_int_value(elpa_index_t index, char *name, int value, int forc
  !f> end interface
  */
 int elpa_index_int_value_is_set(elpa_index_t index, char *name);
-
-
-/*
- !f> interface
- !f>   function elpa_index_int_is_private_c(name) result(success) bind(C, name="elpa_index_int_is_private")
- !f>     import c_int, c_char
- !f>     character(kind=c_char), intent(in)    :: name(*)
- !f>     integer(kind=c_int)                   :: success
- !f>   end function
- !f> end interface
- */
-int elpa_index_int_is_private(char *name);
-
-
-/*
- !f> interface
- !f>   function elpa_index_double_is_private_c(name) result(success) bind(C, name="elpa_index_double_is_private")
- !f>     import c_int, c_char
- !f>     character(kind=c_char), intent(in)    :: name(*)
- !f>     integer(kind=c_int)                   :: success
- !f>   end function
- !f> end interface
- */
-int elpa_index_double_is_private(char *name);
 
 
 /*
@@ -244,18 +220,17 @@ double elpa_index_get_double_value(elpa_index_t index, char *name, int *success)
 
 /*
  !f> interface
- !f>   function elpa_index_set_double_value_c(index, name, value, force_writable) result(success) &
+ !f>   function elpa_index_set_double_value_c(index, name, value) result(success) &
  !f>       bind(C, name="elpa_index_set_double_value")
  !f>     import c_ptr, c_int, c_double, c_char
  !f>     type(c_ptr), value                    :: index
  !f>     character(kind=c_char), intent(in)    :: name(*)
  !f>     real(kind=c_double),intent(in), value :: value
- !f>     integer(kind=c_int),intent(in), value :: force_writable
  !f>     integer(kind=c_int)                   :: success
  !f>   end function
  !f> end interface
  */
-int elpa_index_set_double_value(elpa_index_t index, char *name, double value, int force_writable);
+int elpa_index_set_double_value(elpa_index_t index, char *name, double value);
 
 
 /*
@@ -387,7 +362,8 @@ int elpa_option_enumerate(char *name, int i);
 
 /*
  !f> interface
- !f>   function elpa_index_int_is_valid_c(index, name, new_value) result(success) bind(C, name="elpa_index_int_is_valid")
+ !f>   function elpa_index_int_is_valid_c(index, name, new_value) result(success) &
+ !f>       bind(C, name="elpa_index_int_is_valid")
  !f>     import c_int, c_ptr, c_char
  !f>     type(c_ptr), intent(in), value :: index
  !f>     character(kind=c_char), intent(in) :: name(*)
@@ -398,3 +374,33 @@ int elpa_option_enumerate(char *name, int i);
  !f>
  */
 int elpa_index_int_is_valid(elpa_index_t index, char *name, int new_value);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_autotune_cardinality_c(index, autotune_level, autotune_domain) result(n) &
+ !f>       bind(C, name="elpa_index_autotune_cardinality")
+ !f>     import c_int, c_ptr, c_char
+ !f>     type(c_ptr), intent(in), value :: index
+ !f>     integer(kind=c_int), intent(in), value :: autotune_level, autotune_domain
+ !f>     integer(kind=c_int) :: n
+ !f>   end function
+ !f> end interface
+ !f>
+ */
+int elpa_index_autotune_cardinality(elpa_index_t index, int autotune_level, int autotune_domain);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_set_autotune_parameters_c(index, autotune_level, autotune_domain, n) result(success) &
+ !f>       bind(C, name="elpa_index_set_autotune_parameters")
+ !f>     import c_int, c_ptr, c_char
+ !f>     type(c_ptr), intent(in), value :: index
+ !f>     integer(kind=c_int), intent(in), value :: autotune_level, autotune_domain, n
+ !f>     integer(kind=c_int) :: success
+ !f>   end function
+ !f> end interface
+ !f>
+ */
+int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n);

@@ -35,6 +35,7 @@ noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_impl.F90 \
+  src/elpa_autotune_impl.F90 \
   src/elpa_abstract_impl.F90 \
   src/helpers/mod_precision.F90 \
   src/helpers/mod_mpi.F90 \
