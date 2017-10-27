@@ -225,7 +225,7 @@
            do i=1,nb
 #ifdef WITH_MPI
              call obj%timer%start("mpi_communication")
-             call MPI_Bcast(tmat2(1,i), l_row1-1, MPI_MATH_DATATYPE_PRECISION, &
+             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_MATH_DATATYPE_PRECISION, &
                              pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 
              call obj%timer%stop("mpi_communication")
