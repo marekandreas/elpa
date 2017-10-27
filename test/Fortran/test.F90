@@ -87,12 +87,22 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #  define REALCASE 1
 #  undef  COMPLEXCASE
 #  define MATH_DATATYPE real
-#define KERNEL_KEY "real_kernel"
+#  define KERNEL_KEY "real_kernel"
+#  ifdef TEST_SINGLE
+#    define BLAS_CHAR S
+#  else
+#    define BLAS_CHAR D
+#  endif
 #else
 #  define COMPLEXCASE 1
 #  undef  REALCASE
 #  define MATH_DATATYPE complex
-#define KERNEL_KEY "complex_kernel"
+#  define KERNEL_KEY "complex_kernel"
+#  ifdef TEST_SINGLE
+#    define BLAS_CHAR C
+#  else
+#    define BLAS_CHAR Z
+#  endif
 #endif
 
 #include "assert.h"
@@ -139,6 +149,9 @@ program test
 #if defined(TEST_HERMITIAN_MULTIPLY)
    MATRIX_TYPE, allocatable    :: b(:,:), c(:,:)
 #endif
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+   MATRIX_TYPE, allocatable    :: b(:,:), bs(:,:)
+#endif
    ! eigenvectors
    MATRIX_TYPE, allocatable    :: z(:,:)
    ! eigenvalues
@@ -146,14 +159,8 @@ program test
 
    logical                     :: check_all_evals
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_HERMITIAN_MULTIPLY)
    EV_TYPE, allocatable        :: d(:), sd(:), ds(:), sds(:)
    EV_TYPE                     :: diagonalELement, subdiagonalElement
-#endif
-#if defined(TEST_CHOLESKY)
-   MATRIX_TYPE, allocatable    :: d(:), sd(:), ds(:), sds(:)
-   MATRIX_TYPE                 :: diagonalELement, subdiagonalElement
-#endif
 
    integer                     :: error, status
 
@@ -274,6 +281,7 @@ program test
 #endif
 
    call e%set("timings",1)
+   call e%set("debug", 1)
 
    assert_elpa_ok(e%setup())
 
@@ -305,6 +313,14 @@ program test
    allocate(c (na_rows,na_cols))
 #endif
 
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+   allocate(b (na_rows,na_cols))
+   allocate(bs (na_rows,na_cols))
+   ! todo: only temporarily, before we start using random SPD matrix for B
+   allocate(d (na), ds(na))
+   allocate(sd (na), sds(na))
+#endif
+
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_CHOLESKY)
    allocate(d (na), ds(na))
    allocate(sd (na), sds(na))
@@ -312,18 +328,28 @@ program test
 #endif
 
    ! prepare matrices
-   call e%timer_start("e%prepare_matrices()")
+   call e%timer_start("prepare_matrices")
    a(:,:) = 0.0
    z(:,:) = 0.0
    ev(:) = 0.0
 
-#if defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION)
+#if defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_GENERALIZED_EIGENPROBLEM)
 #ifdef TEST_MATRIX_ANALYTIC
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
    as(:,:) = a
-#else
+#else  /* TEST_MATRIX_ANALYTIC */
    if (nev .ge. 1) then
      call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+     !call prepare_matrix_random(na, myid, sc_desc, b, z, bs)
+     ! TODO create random SPD matrix
+     !diagonalElement = (2.546_rk, 0.0_rk)
+     diagonalElement = ONE
+     subdiagonalElement =  (0.0_rk, 0.0_rk)
+     call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
+                                  d, sd, ds, sds, b, bs, nblk, np_rows, &
+                                  np_cols, my_prow, my_pcol)
+#endif
    else
      ! zero eigenvectors and not analytic test => toeplitz matrix
      diagonalElement = 0.45_rk
@@ -338,7 +364,7 @@ program test
    c(:,:) = ONE
 #endif /* TEST_HERMITIAN_MULTIPLY */
 
-#endif /* TEST_MATRIX_ANALYTIC */
+#endif /* (not) TEST_MATRIX_ANALYTIC */
 #endif /* defined(TEST_EIGENVECTORS) || defined(TEST_HERMITIAN_MULTIPLY) || defined(TEST_QR_DECOMPOSITION) */
 
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
@@ -356,10 +382,10 @@ program test
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)
 #endif /* TEST_CHOLESKY */
-   call e%timer_stop("e%prepare_matrices()")
+   call e%timer_stop("prepare_matrices")
    if (myid == 0) then
      print *, ""
-     call e%print_times("e%prepare_matrices()")
+     call e%print_times("prepare_matrices")
      print *, ""
    endif
 
@@ -392,19 +418,41 @@ program test
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #endif
 
+!#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+!     call e%timer_start("generalized_eigenproblem")
+!     call e%timer_start("e%cholesky()")
+!     call e%cholesky(b, error)
+!     assert_elpa_ok(error)
+!     call e%timer_stop("e%cholesky()")
+!     call e%timer_start("e%invert_triangular")
+!     call e%invert_triangular(b, error)
+!     assert_elpa_ok(error)
+!     call e%timer_stop("e%invert_triangular")
+!#ifdef WITH_MPI
+!     
+!#endif
+!#endif
+
      ! The actual solve step
-#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
+#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_GENERALIZED_EIGENPROBLEM)
      call e%timer_start("e%eigenvectors()")
 #ifdef TEST_SCALAPACK_ALL
      call solve_scalapack_all(na, a, sc_desc, ev, z)
 #elif TEST_SCALAPACK_PART
      call solve_scalapack_part(na, a, sc_desc, nev, ev, z)
      check_all_evals = .false. ! scalapack does not compute all eigenvectors
+#elif TEST_GENERALIZED_EIGENPROBLEM
+     call e%generalized_eigenvectors(a, b, ev, z, sc_desc, error)
 #else
      call e%eigenvectors(a, ev, z, error)
 #endif
      call e%timer_stop("e%eigenvectors()")
 #endif /* TEST_EIGENVECTORS || defined(TEST_QR_DECOMPOSITION) */
+
+!#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+!     ! todo...
+!     call e%timer_stop("generalized_eigenproblem")
+!#endif
 
 #ifdef TEST_EIGENVALUES
      call e%timer_start("e%eigenvalues()")
@@ -442,7 +490,7 @@ program test
        call e%print_times(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #else /* TEST_ALL_KERNELS */
 
-#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
+#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_GENERALIZED_EIGENPROBLEM)
        call e%print_times("e%eigenvectors()")
 #endif
 #ifdef TEST_EIGENVALUES
@@ -461,8 +509,8 @@ program test
      endif
 
      ! check the results
-     call e%timer_start("e%check_correctness()")
-#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION)
+     call e%timer_start("check_correctness")
+#if defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_GENERALIZED_EIGENPROBLEM)
 #ifdef TEST_MATRIX_ANALYTIC
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals)
 #else
@@ -504,7 +552,7 @@ program test
      status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
      call check_status(status, myid)
 #endif
-     call e%timer_stop("e%check_correctness()")
+     call e%timer_stop("check_correctness")
 
      if (myid == 0) then
        print *, ""
@@ -521,7 +569,7 @@ program test
 
      if (myid == 0) then
        print *, ""
-       call e%print_times("e%check_correctness()")
+       call e%print_times("check_correctness")
        print *, ""
      endif
 
@@ -541,6 +589,14 @@ program test
    deallocate(d, ds)
    deallocate(sd, sds)
    deallocate(ev_analytic)
+#endif
+
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+   deallocate(b)
+   deallocate(bs)
+   ! todo: only temporarily, before we start using random SPD matrix for B
+   deallocate(d, ds)
+   deallocate(sd, sds)
 #endif
 
 #ifdef TEST_ALL_LAYOUTS

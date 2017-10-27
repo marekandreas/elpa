@@ -100,6 +100,7 @@ test_type_flag = {
         "cholesky"  : "-DTEST_CHOLESKY",
         "hermitian_multiply"  : "-DTEST_HERMITIAN_MULTIPLY",
         "qr"  : "-DTEST_QR_DECOMPOSITION",
+        "generalized"  : "-DTEST_GENERALIZED_EIGENPROBLEM",
 }
 
 layout_flag = {

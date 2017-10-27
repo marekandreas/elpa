@@ -43,6 +43,7 @@
 #undef  scal_PRECISION_NRM2
 #undef  scal_PRECISION_LASET
 #undef  PRECISION_SUFFIX
+#undef  ELPA_IMPL_SUFFIX
 
 #undef  MPI_REAL_PRECISION
 #undef  MPI_MATH_DATATYPE_PRECISION
@@ -60,6 +61,7 @@
 #define  PRECISION double
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
+#define  ELPA_IMPL_SUFFIX d
 #define  REAL_DATATYPE rk8
 #define  BLAS_CHAR D
 #define BLAS_CHAR_AND_SY_OR_HE DSY
@@ -112,6 +114,7 @@
 #define  PRECISION single
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
+#define  ELPA_IMPL_SUFFIX f
 #define  REAL_DATATYPE rk4
 #define  BLAS_CHAR S
 #define  BLAS_CHAR_AND_SY_OR_HE SSY
@@ -206,6 +209,7 @@
 #undef  scal_PRECISION_DOTC
 #undef  scal_PRECISION_LASET
 #undef  PRECISION_SUFFIX
+#undef  ELPA_IMPL_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
 #undef  MPI_MATH_DATATYPE_PRECISION
 #undef  MPI_MATH_DATATYPE_PRECISION_EXPL
@@ -229,6 +233,7 @@
 #define  PRECISION double
 #define  PRECISION_STR 'double'
 #define  PRECISION_SUFFIX "_double"
+#define  ELPA_IMPL_SUFFIX dc
 #define COMPLEX_DATATYPE CK8
 #define BLAS_CHAR Z
 #define BLAS_CHAR_AND_SY_OR_HE ZHE
@@ -285,6 +290,7 @@
 #define  PRECISION single
 #define  PRECISION_STR 'single'
 #define  PRECISION_SUFFIX "_single"
+#define  ELPA_IMPL_SUFFIX fc
 #define COMPLEX_DATATYPE CK4
 #define BLAS_CHAR C
 #define BLAS_CHAR_AND_SY_OR_HE CHE

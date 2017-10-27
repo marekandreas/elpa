@@ -83,6 +83,7 @@ endif
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa_reduce_add_vectors.F90 \
   src/elpa1/elpa_transpose_vectors.F90 \
+  src/elpa_impl_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -582,6 +583,7 @@ EXTRA_DIST = \
   manual_cpp \
   nvcc_wrap \
   src/GPU/cuUtils_template.cu \
+  src/elpa_impl_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa1/elpa1_merge_systems_real_template.F90 \
   src/elpa1/elpa1_solve_tridi_real_template.F90 \

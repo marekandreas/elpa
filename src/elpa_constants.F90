@@ -49,5 +49,8 @@ module elpa_constants
   use, intrinsic :: iso_c_binding, only : C_INT
   implicit none
   public
+
+  integer(kind=C_INT),  parameter          :: SC_DESC_LEN = 9
+
 #include "src/fortran_constants.F90"
 end module
