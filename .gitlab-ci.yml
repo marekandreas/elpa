@@ -87,7 +87,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -135,7 +135,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -190,7 +190,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -471,7 +471,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -519,7 +519,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -574,7 +574,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -890,7 +890,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-gp
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -946,7 +946,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-gp
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpifort\" FCFLAGS=\" --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include --coverage -O0\" FC=\"mpifort\" FCFLAGS=\"-O2 --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -1105,7 +1105,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -1161,7 +1161,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpifort\" FCFLAGS=\" --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include --coverage -O0\" FC=\"mpifort\" FCFLAGS=\"-O2 --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -1285,7 +1285,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1333,7 +1333,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -1388,7 +1388,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -1669,7 +1669,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -1717,7 +1717,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -1772,7 +1772,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -2088,7 +2088,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -2144,7 +2144,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpifort\" FCFLAGS=\" --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include --coverage -O0\" FC=\"mpifort\" FCFLAGS=\"-O2 --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -2303,7 +2303,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -2359,7 +2359,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpifort\" FCFLAGS=\" --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include --coverage -O0\" FC=\"mpifort\" FCFLAGS=\"-O2 --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -2483,7 +2483,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -2531,7 +2531,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -2586,7 +2586,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -2957,7 +2957,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3005,7 +3005,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -3060,7 +3060,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -3466,7 +3466,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-gp
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -3522,7 +3522,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-gp
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpifort\" FCFLAGS=\" --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include --coverage -O0\" FC=\"mpifort\" FCFLAGS=\"-O2 --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -3677,7 +3677,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -3733,7 +3733,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpifort\" FCFLAGS=\" --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include --coverage -O0\" FC=\"mpifort\" FCFLAGS=\"-O2 --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -3853,7 +3853,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -3901,7 +3901,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -3956,7 +3956,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -4327,7 +4327,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -4375,7 +4375,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -4430,7 +4430,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -4836,7 +4836,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -4892,7 +4892,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpifort\" FCFLAGS=\" --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include --coverage -O0\" FC=\"mpifort\" FCFLAGS=\"-O2 --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -5047,7 +5047,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -5103,7 +5103,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpifort\" FCFLAGS=\" --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include --coverage -O0\" FC=\"mpifort\" FCFLAGS=\"-O2 --coverage -O0\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 "
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -5223,7 +5223,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-co
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -5272,7 +5272,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -5327,7 +5327,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -5612,7 +5612,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -5661,7 +5661,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -5716,7 +5716,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -6001,7 +6001,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -6050,7 +6050,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -6105,7 +6105,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -6390,7 +6390,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -6439,7 +6439,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -6494,7 +6494,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -6779,7 +6779,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-co
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -6828,7 +6828,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -6883,7 +6883,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -7258,7 +7258,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -7307,7 +7307,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -7362,7 +7362,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -7737,7 +7737,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -7786,7 +7786,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -7841,7 +7841,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -8216,7 +8216,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - coverage
   script:
-    - ./configure  CC="mpicc" CFLAGS=" --coverage -O0" FC="mpif90" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="mpicc" CFLAGS="-O3 -mavx --coverage -O0" FC="mpif90" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP " --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -8265,7 +8265,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -8320,7 +8320,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\" --coverage -O0\" FC=\"mpif90\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=1 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -8695,7 +8695,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -8743,7 +8743,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -8798,7 +8798,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -9079,7 +9079,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -9127,7 +9127,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -9182,7 +9182,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -9498,7 +9498,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -9605,7 +9605,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-wi
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -9677,7 +9677,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -9725,7 +9725,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -9780,7 +9780,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -10061,7 +10061,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -10109,7 +10109,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -10164,7 +10164,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -10480,7 +10480,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-wi
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -10587,7 +10587,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -10659,7 +10659,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -10707,7 +10707,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -10762,7 +10762,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -11133,7 +11133,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -11181,7 +11181,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -11236,7 +11236,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -11642,7 +11642,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -11747,7 +11747,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-wi
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -11817,7 +11817,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -11865,7 +11865,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -11920,7 +11920,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -12291,7 +12291,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
     - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -12339,7 +12339,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -12394,7 +12394,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -12800,7 +12800,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-wi
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -12905,7 +12905,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -12975,7 +12975,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -13024,7 +13024,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -13079,7 +13079,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -13364,7 +13364,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -13413,7 +13413,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -13468,7 +13468,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -13753,7 +13753,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -13802,7 +13802,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -13857,7 +13857,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -14142,7 +14142,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -14191,7 +14191,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -14246,7 +14246,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -14531,7 +14531,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -14580,7 +14580,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -14635,7 +14635,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -15010,7 +15010,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -15059,7 +15059,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -15114,7 +15114,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -15489,7 +15489,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -15538,7 +15538,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -15593,7 +15593,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -15968,7 +15968,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - coverage
   script:
-    - ./configure  CC="gcc" CFLAGS=" --coverage -O0" FC="gfortran" FCFLAGS=" --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
+    - ./configure  CC="gcc" CFLAGS="-O3 -mavx --coverage -O0" FC="gfortran" FCFLAGS="-O3 -mavx --coverage -O0"    SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP "  SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP " --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx --disable-avx2 || { cat config.log; exit 1; }
     - make -j 8
     - export OMP_NUM_THREADS=1
     - make check TASKS=2 TEST_FLAGS="150 150 16" || { cat test-suite.log; exit 1; }
@@ -16017,7 +16017,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
@@ -16072,7 +16072,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS " 
     - echo "srun -n 1 $SRUN_COMMANDLINE_CONFIGURE" 
-    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\" --coverage -O0\" FC=\"gfortran\" FCFLAGS=\" --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
+    - srun -n 1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512 --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=0 --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512"
     - sleep 10
     - echo "srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD" 
     - srun -n 1 -c 8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh
