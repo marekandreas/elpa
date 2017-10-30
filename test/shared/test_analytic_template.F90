@@ -52,6 +52,11 @@
 
     integer(kind=ik) :: globI, globJ, locI, locJ, levels(num_primes)
 
+    type(timer_t)    :: timer
+
+    call timer%enable()
+    call timer%start("prepare_matrix_analytic")
+
     ! for debug only, do it systematicaly somehow ... unit tests
     call check_module_sanity_&
             &MATH_DATATYPE&
@@ -66,19 +71,28 @@
       end if
     end if
 
+    call timer%start("loop")
     do globI = 1, na
       do globJ = 1, na
         if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
                  nblk, np_rows, np_cols, my_prow, my_pcol)) then
+           call timer%start("evaluation")
            a(locI, locJ) = analytic_matrix_&
               &MATH_DATATYPE&
               &_&
               &PRECISION&
               &(na, globI, globJ)
+          call timer%stop("evaluation")
         end if
       end do
     end do
+    call timer%stop("loop")
 
+    call timer%stop("prepare_matrix_analytic")
+    if(myid == 0) then
+      call timer%print("prepare_matrix_analytic")
+    end if
+    call timer%free()
   end subroutine
 
   function check_correctness_analytic_&
@@ -112,6 +126,11 @@
     MATH_DATATYPE(kind=rck)   :: max_value_for_normalization, computed_z_on_max_position, normalization_quotient
     integer(kind=ik)          :: max_value_idx, rank_with_max, rank_with_max_reduced, num_checked_evals
 
+    type(timer_t)    :: timer
+
+    call timer%enable()
+    call timer%start("check_correctness_analytic")
+
 
     if(.not. decompose(na, levels)) then
       print *, "can not decomopse matrix size"
@@ -126,15 +145,20 @@
     !call print_matrix(myid, na, z, "z")
     max_z_diff = 0.0_rk
     max_ev_diff = 0.0_rk
+    call timer%start("loop")
     do globJ = 1, num_checked_evals
       computed_ev = ev(globJ)
+      call timer%start("evaluation")
       expected_ev = analytic_eigenvalues_real_&
               &PRECISION&
               &(na, globJ)
+      call timer%stop("evaluation")
       diff = abs(computed_ev - expected_ev)
       max_ev_diff = max(diff, max_ev_diff)
     end do
+    call timer%stop("loop")
 
+    call timer%start("loop")
     do globJ = 1, nev
       max_curr_z_diff = 0.0_rk
 
@@ -145,11 +169,13 @@
       max_value_for_normalization = 0.0_rk
       max_value_idx = -1
       do globI = 1, na
+        call timer%start("evaluation")
         expected_z = analytic_eigenvectors_&
               &MATH_DATATYPE&
               &_&
               &PRECISION&
               &(na, globI, globJ)
+        call timer%stop("evaluation")
         if(abs(expected_z) > abs(max_value_for_normalization)) then
           max_value_for_normalization = expected_z
           max_value_idx = globI
@@ -175,17 +201,20 @@
         if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
                  nblk, np_rows, np_cols, my_prow, my_pcol)) then
            computed_z = z(locI, locJ)
+           call timer%start("evaluation")
            expected_z = analytic_eigenvectors_&
               &MATH_DATATYPE&
               &_&
               &PRECISION&
               &(na, globI, globJ)
+           call timer%stop("evaluation")
            max_curr_z_diff = max(abs(normalization_quotient * computed_z - expected_z), max_curr_z_diff)
         end if
       end do
       ! we have max difference of one of the eigenvectors, update global
       max_z_diff = max(max_z_diff, max_curr_z_diff)
-    end do
+    end do !globJ
+    call timer%stop("loop")
 
 #ifdef WITH_MPI
     call mpi_allreduce(max_z_diff, glob_max_z_diff, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
@@ -202,6 +231,12 @@
       if (max_ev_diff .gt. tol_eigenvalues) status = 1
       if (glob_max_z_diff .gt. tol_eigenvectors) status = 1
     endif
+
+    call timer%stop("check_correctness_analytic")
+    if(myid == 0) then
+      call timer%print("check_correctness_analytic")
+    end if
+    call timer%free()
   end function
 
 

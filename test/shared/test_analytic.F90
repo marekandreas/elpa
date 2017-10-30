@@ -47,6 +47,7 @@
 module test_analytic
 
   use test_util
+  use ftimings
   interface prepare_matrix_analytic
     module procedure prepare_matrix_analytic_complex_double
     module procedure prepare_matrix_analytic_real_double
