@@ -50,22 +50,12 @@
 
       use test_util
       implicit none
-
+#include "../../src/general/precision_kinds.F90"
       integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
-#if REALCASE == 1
-      real(kind=C_DATATYPE_KIND), intent(inout)     :: z(:,:), a(:,:), as(:,:)
-#endif /* REALCASE */
+      MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
 
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND), intent(inout) :: z(:,:), a(:,:), as(:,:)
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      complex(kind=C_DATATYPE_KIND), parameter     :: CONE = (1.0_rk8, 0.0_rk8)
-#else
-      complex(kind=C_DATATYPE_KIND), parameter     :: CONE = (1.0_rk4, 0.0_rk4)
-#endif
-
-      real(kind=C_DATATYPE_KIND) :: xr(size(a,dim=1), size(a,dim=2))
+      real(kind=rk) :: xr(size(a,dim=1), size(a,dim=2))
 #endif /* COMPLEXCASE */
 
 
@@ -93,11 +83,7 @@
 
       z(:,:) = xr(:,:)
       call RANDOM_NUMBER(xr)
-#ifdef DOUBLE_PRECISION_COMPLEX
-      z(:,:) = z(:,:) + (0.0_rk8,1.0_rk8)*xr(:,:)
-#else
-      z(:,:) = z(:,:) + (0.0_rk4,1.0_rk4)*xr(:,:)
-#endif
+      z(:,:) = z(:,:) + (0.0_rk,1.0_rk)*xr(:,:)
       a(:,:) = z(:,:)
 #endif /* COMPLEXCASE */
 
@@ -107,13 +93,9 @@
 
 #if REALCASE == 1
 #ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_REAL
-      call pdtran(na, na, 1.0_rk8, z, 1, 1, sc_desc, 1.0_rk8, a, 1, 1, sc_desc) ! A = A + Z**T
-#else
-      call pstran(na, na, 1.0_rk4, z, 1, 1, sc_desc, 1.0_rk4, a, 1, 1, sc_desc) ! A = A + Z**T
-#endif
-
+      call p&
+          &BLAS_CHAR&
+          &tran(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**T
 #else /* WITH_MPI */
       a = a + transpose(z)
 #endif /* WITH_MPI */
@@ -121,17 +103,12 @@
 
 #if COMPLEXCASE == 1
 #ifdef WITH_MPI
-
-#ifdef DOUBLE_PRECISION_COMPLEX
-      call pztranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-#else
-      call pctranc(na, na, CONE, z, 1, 1, sc_desc, CONE, a, 1, 1, sc_desc) ! A = A + Z**H
-#endif
-
+      call p&
+          &BLAS_CHAR&
+          &tranc(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**H
 #else /* WITH_MPI */
       a = a + transpose(conjg(z))
 #endif /* WITH_MPI */
-
 #endif /* COMPLEXCASE */
 
 
@@ -184,20 +161,12 @@ subroutine prepare_matrix_random_&
       use iso_c_binding
 
       implicit none
+#include "../../src/general/precision_kinds.F90"
 
       integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
       integer(kind=c_int)           :: sc_desc(1:9)
-#if REALCASE == 1
-      real(kind=C_DATATYPE_KIND)    :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
+      MATH_DATATYPE(kind=rck)    :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                        as(1:na_rows,1:na_cols)
-#endif
-
-#if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND)        :: &
-                                       z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
-#endif
-
       call prepare_matrix_random_&
       &MATH_DATATYPE&
       &_&
@@ -214,39 +183,18 @@ subroutine prepare_matrix_random_&
       nblk, np_rows, np_cols, my_prow, my_pcol)
      use test_util
      implicit none
+#include "../../src/general/precision_kinds.F90"
 
      integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
-#if REALCASE == 1
-     real(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
-
-     real(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
-#endif
-
-#if COMPLEXCASE == 1
-     complex(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
-
-     complex(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
-#endif
-
-
-#if REALCASE == 1
-     real(kind=C_DATATYPE_KIND) :: a(:,:), as(:,:)
-#endif
-#if COMPLEXCASE == 1
-     complex(kind=C_DATATYPE_KIND) :: a(:,:), as(:,:)
-#endif
+     MATH_DATATYPE(kind=rck) :: diagonalElement, subdiagonalElement
+     MATH_DATATYPE(kind=rck) :: d(:), sd(:), ds(:), sds(:)
+     MATH_DATATYPE(kind=rck) :: a(:,:), as(:,:)
 
      integer                    :: ii, rowLocal, colLocal
 
      d(:) = diagonalElement
      sd(:) = subdiagonalElement
-
-#if REALCASE == 1
-     a(:,:) = 0.0
-#endif
-#if COMPLEXCASE == 1
-     a(:,:) = (0.0, 0.0)
-#endif
+     a(:,:) = ZERO
 
      ! set up the diagonal and subdiagonals (for general solver test)
      do ii=1, na ! for diagonal elements
