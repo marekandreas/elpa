@@ -241,6 +241,13 @@ subroutine prepare_matrix_random_&
      d(:) = diagonalElement
      sd(:) = subdiagonalElement
 
+#if REALCASE == 1
+     a(:,:) = 0.0
+#endif
+#if COMPLEXCASE == 1
+     a(:,:) = (0.0, 0.0)
+#endif
+
      ! set up the diagonal and subdiagonals (for general solver test)
      do ii=1, na ! for diagonal elements
        if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
