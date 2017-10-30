@@ -124,6 +124,8 @@
     MATH_DATATYPE(kind=rck)   :: computed_z,  expected_z
 
     MATH_DATATYPE(kind=rck)   :: max_value_for_normalization, computed_z_on_max_position, normalization_quotient
+    MATH_DATATYPE(kind=rck)   :: max_values_array(np_rows * np_cols), corresponding_exact_value
+    integer(kind=ik)          :: max_idx_array(np_rows * np_cols), rank
     integer(kind=ik)          :: max_value_idx, rank_with_max, rank_with_max_reduced, num_checked_evals
 
     type(timer_t)    :: timer
@@ -145,7 +147,7 @@
     !call print_matrix(myid, na, z, "z")
     max_z_diff = 0.0_rk
     max_ev_diff = 0.0_rk
-    call timer%start("loop")
+    call timer%start("loop_eigenvalues")
     do globJ = 1, num_checked_evals
       computed_ev = ev(globJ)
       call timer%start("evaluation")
@@ -156,47 +158,69 @@
       diff = abs(computed_ev - expected_ev)
       max_ev_diff = max(diff, max_ev_diff)
     end do
-    call timer%stop("loop")
+    call timer%stop("loop_eigenvalues")
 
-    call timer%start("loop")
+    call timer%start("loop_eigenvectors")
     do globJ = 1, nev
       max_curr_z_diff = 0.0_rk
 
       ! eigenvectors are unique up to multiplication by scalar (complex in complex case)
       ! to be able to compare them with analytic, we have to normalize them somehow
-      ! we will find a value in analytic eigenvector with highest absolut value and enforce
+      ! we will find a value in computed eigenvector with highest absolut value and enforce
       ! such multiple of computed eigenvector, that the value on corresponding position is the same
+      ! as an corresponding value in the analytical eigenvector
+
+      ! find the maximal value in the local part of given eigenvector (with index globJ)
       max_value_for_normalization = 0.0_rk
       max_value_idx = -1
       do globI = 1, na
-        call timer%start("evaluation")
-        expected_z = analytic_eigenvectors_&
-              &MATH_DATATYPE&
-              &_&
-              &PRECISION&
-              &(na, globI, globJ)
-        call timer%stop("evaluation")
-        if(abs(expected_z) > abs(max_value_for_normalization)) then
-          max_value_for_normalization = expected_z
-          max_value_idx = globI
+        if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
+                 nblk, np_rows, np_cols, my_prow, my_pcol)) then
+          computed_z = z(locI, locJ)
+          if(abs(computed_z) > abs(max_value_for_normalization)) then
+            max_value_for_normalization = computed_z
+            max_value_idx = globI
+          end if
         end if
       end do
 
-      assert(max_value_idx >= 0)
-      if(map_global_array_index_to_local_index(max_value_idx, globJ, locI, locJ, &
-               nblk, np_rows, np_cols, my_prow, my_pcol)) then
-        rank_with_max = myid
-        computed_z_on_max_position = z(locI, locJ)
-      else
-        rank_with_max = -1
-      end if
-
+      ! find the global maximum and its position. From technical reasons (looking for a 
+      ! maximum of complex number), it is not so easy to do it nicely. Therefore we 
+      ! communicate local maxima to mpi rank 0 and resolve there. If we wanted to do
+      ! it without this, it would be tricky.. question of uniquness - two complex numbers
+      ! with the same absolut values, but completely different... 
 #ifdef WITH_MPI
-      call MPI_Allreduce(rank_with_max, rank_with_max_reduced, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD, mpierr)
-      call MPI_Bcast(computed_z_on_max_position, 1, MPI_MATH_DATATYPE_PRECISION, rank_with_max_reduced, MPI_COMM_WORLD, mpierr)
+      call MPI_Gather(max_value_for_normalization, 1, MPI_MATH_DATATYPE_PRECISION, &
+                     max_values_array, 1, MPI_MATH_DATATYPE_PRECISION, 0, MPI_COMM_WORLD, mpierr)
+      call MPI_Gather(max_value_idx, 1, MPI_INT, max_idx_array, 1, MPI_INT, 0, MPI_COMM_WORLD, mpierr)
+      max_value_for_normalization = 0.0_rk
+      max_value_idx = -1
+      do rank = 1, np_cols * np_rows 
+        if(abs(max_values_array(rank)) > abs(max_value_for_normalization)) then
+          max_value_for_normalization = max_values_array(rank)
+          max_value_idx = max_idx_array(rank)
+        end if
+      end do
+      call MPI_Bcast(max_value_for_normalization, 1, MPI_MATH_DATATYPE_PRECISION, 0, MPI_COMM_WORLD, mpierr)
+      call MPI_Bcast(max_value_idx, 1, MPI_INT, 0, MPI_COMM_WORLD, mpierr)
 #endif
-      !write(*,*) computed_z_on_max_position, max_value_for_normalization
-      normalization_quotient = max_value_for_normalization / computed_z_on_max_position
+      ! we decided what the maximum computed value is. Calculate expected value on the same 
+      if(abs(max_value_for_normalization) < 0.0001_rk) then 
+        if(myid == 0) print *, 'Maximal value in eigenvector too small     :', max_value_for_normalization
+        status =1
+        return
+      end if
+      call timer%start("evaluation_helper")
+      corresponding_exact_value  = analytic_eigenvectors_&
+                                       &MATH_DATATYPE&
+                                       &_&
+                                       &PRECISION&
+                                       &(na, max_value_idx, globJ)
+      call timer%stop("evaluation_helper")
+      normalization_quotient = corresponding_exact_value / max_value_for_normalization
+      ! write(*,*) "normalization q", normalization_quotient
+
+      ! compare computed and expected eigenvector values, but take into account normalization quotient
       do globI = 1, na
         if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
                  nblk, np_rows, np_cols, my_prow, my_pcol)) then
@@ -214,7 +238,7 @@
       ! we have max difference of one of the eigenvectors, update global
       max_z_diff = max(max_z_diff, max_curr_z_diff)
     end do !globJ
-    call timer%stop("loop")
+    call timer%stop("loop_eigenvectors")
 
 #ifdef WITH_MPI
     call mpi_allreduce(max_z_diff, glob_max_z_diff, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
