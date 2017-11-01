@@ -27,7 +27,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [10:0:2])
+AC_SUBST([ELPA_SO_VERSION], [10:1:2])
 
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
@@ -1035,7 +1035,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 
 #echo " "
 #echo "***********************************************************************"
-#echo "*  This is a the release of ELPA 2017.05.002                          *"
+#echo "*  This is a the release of ELPA 2017.05.003                          *"
 #echo "*  It mainly contains bugfixes to ELPA 2017.05.001                    *"
 #echo "***********************************************************************"
 #echo " "

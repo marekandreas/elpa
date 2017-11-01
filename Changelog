@@ -1,3 +1,8 @@
+Changelog for ELPA 2017.05.003
+
+- remove bug in invert_triangular, which had been introduced
+  in ELPA 2017.05.002
+
 Changelog for ELPA 2017.05.002
 
 Mainly bugfixes for ELPA 2017.05.001:
