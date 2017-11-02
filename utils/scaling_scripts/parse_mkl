@@ -1,5 +1,5 @@
 #! /bin/bash
-echo nodes total
+echo nodes total file
 for f in *.txt 
 do
     #echo "processing $f... "
@@ -10,5 +10,6 @@ do
         continue
     fi
     S+=" "$TOTAL 
+    S+=" "`echo $f`
     echo $S
 done

@@ -1,5 +1,5 @@
 #! /bin/bash
-echo nodes total tridiag solve trans_ev
+echo nodes total tridiag solve trans_ev file
 for f in *.txt 
 do
     #echo "processing $f... "
@@ -14,5 +14,6 @@ do
     S+=" "`grep "|_ tridiag_" $f | awk '{print $3}'`
     S+=" "`grep "|_ solve  " $f | awk '{print $3}'`
     S+=" "`grep "|_ trans_ev" $f | awk '{print $3}'`
+    S+=" "`echo $f`
     echo $S
 done

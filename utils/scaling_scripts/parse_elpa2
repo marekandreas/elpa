@@ -1,5 +1,5 @@
 #! /bin/bash
-echo nodes total bandred tridiag solve trans_ev_to_band trans_ev_to_full
+echo nodes total bandred tridiag solve trans_ev_to_band trans_ev_to_full file
 for f in *.txt 
 do
     #echo "processing $f... "
@@ -16,6 +16,7 @@ do
     S+=" "`grep "|_ solve " $f | awk '{print $3}'`
     S+=" "`grep "|_ trans_ev_to_band " $f | awk '{print $3}'`
     S+=" "`grep "|_ trans_ev_to_full " $f | awk '{print $3}'`
+    S+=" "`echo $f`
 
     echo $S
 done
