@@ -1,7 +1,19 @@
 #! /usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 import os
+
+#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+results_filename = "results/2017_08/results_sorted.txt"
+cores_per_node = 20
+num_type = "real"
+prec = "double"
+mat_size = 20000
+#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+
 
 print("PLOTING ...")
 group_colors = [['red', 'firebrick', 'indianred', 'tomato', 'maroon', 'salmon'],
@@ -14,11 +26,21 @@ group_symbols = ['o', 's', '*', 'D', 'x', 'H']
 elpa1_subtimes = ["tridiag", "solve", "trans_ev"]
 elpa2_subtimes = ["bandred", "tridiag", "solve", "trans_ev_to_band", "trans_ev_to_full"]
 
-cores_per_node = 20
-base_paths = ["results", "results2"]
-num_type = "real"
-prec = "double"
-mat_size = 5000
+def get_from_sorted(filename, mathtype, precision, na, nev, method):
+    if(method == "pdsyevd"):
+        method = "scalapack_all"
+    if(method == "pdsyevr"):
+        method = "scalapack_part"
+    what = " ".join([mathtype, precision, str(na), str(nev), method])
+    regex = r"(.|\n)*" + what + r"( |\n)*-+\n(?P<section>[a-zA-Z_0-9\.\n ]*)\n-+(.|\n)*"
+    p = re.compile(regex)
+    with open(filename, "r") as f:
+        m = p.match(f.read())
+    section = m.groupdict()['section']
+    lines = section.split("\n")
+    ll = [l.split() for l in lines]
+    oposite = [[ll[x][y] for x in range(len(ll))] for y in range(len(ll[0]))]
+    return {oposite[i][0]:oposite[i][1:] for i in range(len(oposite))}
 
 def scalapack_name(num, pr, all_ev):
     if(num_type == "real"):
@@ -39,28 +61,11 @@ def scalapack_name(num, pr, all_ev):
 
 
 def line(what, mat_size, proc_evec, method, label, color, style):
-    data_line_res = []
-    nodes_res = []
-    for base_path in base_paths:
-        path = "/".join([base_path,num_type,prec,str(mat_size),str(mat_size*proc_evec//100),method,"tab.txt"])
-        #print(path)
-        if not os.path.isfile(path):
-            continue
-        data = np.genfromtxt(path, names=True)
-        nodes = data['nodes']
-        data_line = data[what]
-        #print("data_line", data_line, "data_line_res", data_line_res)
-        if(nodes_res == []):
-            assert(data_line_res == [])
-            nodes_res = nodes
-            data_line_res = data_line
-        else:
-            assert(all(nodes == nodes_res))
-            data_line_res = np.minimum(data_line_res, data_line)
-
-    cores = cores_per_node * nodes_res
-    #print(cores, data_line_res)
-    plt.plot(cores,data_line_res, style, label=label, color=color, linewidth=2)
+    data = get_from_sorted(results_filename, num_type, prec, mat_size, mat_size*proc_evec//100, method)
+    nodes = data['nodes']
+    cores = [cores_per_node * int(n) for n in nodes]
+    data_line = data[what]
+    plt.plot(cores,data_line, style, label=label, color=color, linewidth=2)
 
 def plot1():
     line("total", mat_size, 100, "pdsyevd", "MKL 2017, " + scalapack_name(num_type, prec, True), "black", "x-")
