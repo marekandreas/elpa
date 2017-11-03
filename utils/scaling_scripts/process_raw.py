@@ -2,6 +2,30 @@
 from collections import namedtuple
 from subprocess import Popen, PIPE, STDOUT
 
+def find_minima(lines):
+  minimized = {}
+  num_values = len(lines[0]) - 2
+  for l in lines:
+    if (len(l) != num_values + 2):
+      raise("Different sizes")
+    if(not int(l[0]) in minimized.keys()):
+        minimized[int(l[0])] = [1e1000] * num_values
+  for l in lines:
+    for i in range(num_values):
+      minimized[int(l[0])][i] = min(minimized[int(l[0])][i], float(l[i+1]))
+
+  minimized_list = [[str(key)] + [str(num) for num in minimized[key]] for key in minimized.keys()]
+  return minimized_list
+
+
+def print_list_of_lists(f, header, lines_to_write):
+  group_string = " ".join(str(x) for x in header) + "\n"
+  for lw in lines_to_write:
+    group_string += " ".join(lw) + "\n"
+  p = Popen(['column', '-t'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+  stdout_data = p.communicate(input=group_string.encode())[0]
+  f.write(stdout_data.decode())
+
 EntryType = namedtuple("EntryType", "directory run dir_raw header lines")
 with open("results_raw.txt", "r") as rawfile:
   expect = "directory"
@@ -31,6 +55,7 @@ with open("results_raw.txt", "r") as rawfile:
       elif (expect == "entry"):
         entry.lines.append(line.split())
 
+num_stars = 130
 
 entries.sort(key = lambda entry: entry.run)
 entries.sort(key = lambda entry: entry.run[0], reverse=True)
@@ -49,16 +74,19 @@ with open("results_sorted.txt", "w") as sortedfile:
 
     if(idx == len(entries) - 1 or e.run != entries[idx+1].run):
       if(e.run != entries[0].run):
-        sortedfile.write("\n")
+        sortedfile.write("\n\n")
+      sortedfile.write("*"*num_stars + "\n")
+      sortedfile.write("-"*num_stars + "\n")
       sortedfile.write(" ".join(str(x) for x in e.run) + "\n")
-      group_string = " ".join(str(x) for x in e.header) + "\n"
+      sortedfile.write("-"*num_stars + "\n")
       lines_to_write.sort(key = lambda line: int(line[0]))
-      for lw in lines_to_write:
-        group_string += " ".join(lw) + "\n"
-
-      p = Popen(['column', '-t'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
-      stdout_data = p.communicate(input=group_string.encode())[0]
-      sortedfile.write(stdout_data.decode())
+      minima = find_minima(lines_to_write)
+      minima.sort(key = lambda line: int(line[0]))
+      print_list_of_lists(sortedfile, e.header[:-1], minima)
+      sortedfile.write("-"*num_stars + "\n")
+      print_list_of_lists(sortedfile, e.header, lines_to_write)
+      sortedfile.write("-"*num_stars + "\n")
+      sortedfile.write("*"*num_stars + "\n")
 
       lines_to_write = []
 
