@@ -3,14 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 import os
+from itertools import product
 
 #---------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------
 results_filename = "results/2017_08/results_sorted.txt"
 cores_per_node = 20
-num_type = "real"
-prec = "double"
-mat_size = 20000
 #---------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------
 
@@ -42,7 +40,7 @@ def get_from_sorted(filename, mathtype, precision, na, nev, method):
     oposite = [[ll[x][y] for x in range(len(ll))] for y in range(len(ll[0]))]
     return {oposite[i][0]:oposite[i][1:] for i in range(len(oposite))}
 
-def scalapack_name(num, pr, all_ev):
+def scalapack_name(num_type, pr, all_ev):
     if(num_type == "real"):
         if(pr == "single"):
             name = "pssyev"
@@ -60,77 +58,81 @@ def scalapack_name(num, pr, all_ev):
     return name
 
 
-def line(what, mat_size, proc_evec, method, label, color, style):
+def line(what, num_type, prec, mat_size, proc_evec, method, label, color, style):
     data = get_from_sorted(results_filename, num_type, prec, mat_size, mat_size*proc_evec//100, method)
     nodes = data['nodes']
     cores = [cores_per_node * int(n) for n in nodes]
     data_line = data[what]
     plt.plot(cores,data_line, style, label=label, color=color, linewidth=2)
 
-def plot1():
-    line("total", mat_size, 100, "pdsyevd", "MKL 2017, " + scalapack_name(num_type, prec, True), "black", "x-")
+def plot1(num_type, prec, mat_size):
+    line("total", num_type, prec, mat_size, 100, "pdsyevd", "MKL 2017, " + scalapack_name(num_type, prec, True), "black", "x-")
 
-    line("total", mat_size, 100, "pdsyevr", "MKL 2017, " + scalapack_name(num_type, prec, True) + ", 100% EVs", "blue", "x-")
-    line("total", mat_size, 50, "pdsyevr", "MKL 2017, " + scalapack_name(num_type, prec, True) + ", 50% EVs", "green", "x-")
-    line("total", mat_size, 10, "pdsyevr", "MKL 2017, " + scalapack_name(num_type, prec, True) + ", 10% EVs", "red", "x-")
+    line("total", num_type, prec, mat_size, 100, "pdsyevr", "MKL 2017, " + scalapack_name(num_type, prec, True) + ", 100% EVs", "blue", "x-")
+    line("total", num_type, prec, mat_size, 50, "pdsyevr", "MKL 2017, " + scalapack_name(num_type, prec, True) + ", 50% EVs", "green", "x-")
+    line("total", num_type, prec, mat_size, 10, "pdsyevr", "MKL 2017, " + scalapack_name(num_type, prec, True) + ", 10% EVs", "red", "x-")
 
-    line("total", mat_size, 100, "elpa1", "ELPA 1, 100% EVs", "blue", "*--")
-    line("total", mat_size, 50, "elpa1", "ELPA 1, 50% EVs", "green", "*--")
-    line("total", mat_size, 10, "elpa1", "ELPA 1, 10% EVs", "red", "*--")
+    line("total", num_type, prec, mat_size, 100, "elpa1", "ELPA 1, 100% EVs", "blue", "*--")
+    line("total", num_type, prec, mat_size, 50, "elpa1", "ELPA 1, 50% EVs", "green", "*--")
+    line("total", num_type, prec, mat_size, 10, "elpa1", "ELPA 1, 10% EVs", "red", "*--")
 
-    line("total", mat_size, 100, "elpa2", "ELPA 2, 100% EVs", "blue", "o:")
-    line("total", mat_size, 50, "elpa2", "ELPA 2, 50% EVs", "green", "o:")
-    line("total", mat_size, 10, "elpa2", "ELPA 2, 10% EVs", "red", "o:")
+    line("total", num_type, prec, mat_size, 100, "elpa2", "ELPA 2, 100% EVs", "blue", "o:")
+    line("total", num_type, prec, mat_size, 50, "elpa2", "ELPA 2, 50% EVs", "green", "o:")
+    line("total", num_type, prec, mat_size, 10, "elpa2", "ELPA 2, 10% EVs", "red", "o:")
 
-def details(proc_ev):
+def details(num_type, prec, mat_size, proc_ev):
     for i in range(len(elpa1_subtimes)):
-        line(elpa1_subtimes[i], mat_size, proc_ev, "elpa1", "ELPA1 - " + elpa1_subtimes[i], group_colors[0][i], group_symbols[2*i] + '-') 
+        line(elpa1_subtimes[i], num_type, prec, mat_size, proc_ev, "elpa1", "ELPA1 - " + elpa1_subtimes[i], group_colors[0][i], group_symbols[2*i] + '-') 
 
     for i in range(len(elpa2_subtimes)):
-        line(elpa2_subtimes[i], mat_size, proc_ev, "elpa2", "ELPA2 - " + elpa2_subtimes[i], group_colors[1][i], group_symbols[i] + '-') 
+        line(elpa2_subtimes[i], num_type, prec, mat_size, proc_ev, "elpa2", "ELPA2 - " + elpa2_subtimes[i], group_colors[1][i], group_symbols[i] + '-') 
 
 
+def plot(num_type, prec, mat_size, filename):
+    fig = plt.figure(figsize=(15, 10))
+    ax = fig.add_subplot(111)
+    ax.tick_params(labelright='on')
 
-fig = plt.figure(figsize=(15, 10))
-ax = fig.add_subplot(111)
-ax.tick_params(labelright='on')
+    plot1(num_type, prec, mat_size)
+    #details(num_type, prec, mat_size, 100)
 
-plot1()
-#details(100)
+    #plt.title('Num CPUs ' + str(num_cpus) + ' and ' + str(eigenvectors_percent) + '% eigenvectors, ' + numtype)
+    #plt.title('Num CPUs ')
+    plt.title("Matrix " + str(mat_size//1000) + "k, " + num_type + ", " + prec)
+    plt.grid()
+    plt.legend(loc=1)
+    plt.xlabel('Number of cores')
+    plt.ylabel('Execution time [s]')
+    plt.xscale('log')
+    plt.yscale('log')
+    ax.xaxis.grid(b=True, which='major', color='black', linestyle=':')
+    ax.yaxis.grid(b=True, which='major', color='black', linestyle='--')
+    ax.yaxis.grid(b=True, which='minor', color='black', linestyle=':')
+    ticks = [20* 2**i for i in range(0,12)]
+    ax.xaxis.set_ticks(ticks)
+    ax.xaxis.set_ticklabels(ticks)
 
-#plt.title('Num CPUs ' + str(num_cpus) + ' and ' + str(eigenvectors_percent) + '% eigenvectors, ' + numtype)
-#plt.title('Num CPUs ')
-plt.title("Matrix " + str(mat_size//1000) + "k, " + num_type + ", " + prec)
-plt.grid()
-plt.legend(loc=1)
-plt.xlabel('Number of cores')
-plt.ylabel('Execution time [s]')
-plt.xscale('log')
-plt.yscale('log')
-ax.xaxis.grid(b=True, which='major', color='black', linestyle=':')
-ax.yaxis.grid(b=True, which='major', color='black', linestyle='--')
-ax.yaxis.grid(b=True, which='minor', color='black', linestyle=':')
-ticks = [20* 2**i for i in range(0,12)]
-ax.xaxis.set_ticks(ticks)
-ax.xaxis.set_ticklabels(ticks)
+    if(mat_size < 10000):
+        y_max = 50
+        y_min = 0.3
+    else:
+        y_max = 500
+        y_min = 3
 
-if(mat_size < 10000):
-  y_min = 0.1
-  y_max = 50
-else:
-  y_min = 5
-  y_max = 500
+    yticks_major = [1,10,100,1000, y_min, y_max]
+    ax.yaxis.set_ticks(yticks_major)
+    ax.yaxis.set_ticklabels(yticks_major)
+    #    yticks_minor = [2, 5, 20, 50, 200, 500]
+    #    ax.yaxis.set_ticks(yticks_minor, minor=True)
+    #    ax.yaxis.set_ticklabels(yticks_minor, minor=True)
+    plt.ylim([y_min, y_max])
+    plt.xlim([20, 41000])
+    plt.savefig(filename)
+    #if show:
+    plt.show()
+    #plt.close()
 
-yticks_major = [1,10,100,1000, y_min, y_max]
-ax.yaxis.set_ticks(yticks_major)
-ax.yaxis.set_ticklabels(yticks_major)
-#    yticks_minor = [2, 5, 20, 50, 200, 500]
-#    ax.yaxis.set_ticks(yticks_minor, minor=True)
-#    ax.yaxis.set_ticklabels(yticks_minor, minor=True)
-plt.ylim([y_min, y_max])
-plt.xlim([20, 41000])
-plt.savefig('plot.pdf')
-#if show:
-plt.show()
-#plt.close()
-
+#plot("double", "real", 20000, 'plot.pdf')
+for n, p, m in product(['real', 'complex'], ['double', 'single'], [5000, 20000]):
+    name = "_".join(["plot", n, p, str(m)]) + ".pdf"
+    plot(n, p, m, name)
