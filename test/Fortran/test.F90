@@ -565,6 +565,9 @@ program test
 
 #ifdef TEST_ALL_KERNELS
      a(:,:) = as(:,:)
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+     b(:,:) = bs(:,:)
+#endif
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || defined(TEST_QR_DECOMPOSITION) || defined(TEST_CHOLESKY)
      d = ds
      sd = sds

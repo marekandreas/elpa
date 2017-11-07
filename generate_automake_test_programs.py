@@ -134,8 +134,12 @@ for m, g, t, p, d, s, l in product(
         continue
 
     #TODO: this does not work at the moment
-    if(t == "generalized" and (l == "all_layouts" or s == "2stage")):
+    if(t == "generalized" and l == "all_layouts"):
         continue
+
+    #might be considered to tackle combinatorial explosion
+    #if(t == "generalized" and s == "2stage"):
+    #    continue
 
     create_test(m, g, t, p, d, s, l, "fortran")
 
