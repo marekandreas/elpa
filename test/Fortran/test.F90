@@ -376,8 +376,8 @@ program test
 #endif /* EIGENVALUES OR TRIDIAGONAL */
 
 #if defined(TEST_CHOLESKY)
-   diagonalElement = (2.546_rk, 0.0_rk)
-   subdiagonalElement =  (0.0_rk, 0.0_rk)
+   diagonalElement = 2.0_rk * ONE
+   subdiagonalElement = -1.0_rk * ONE
    call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                                 d, sd, ds, sds, a, as, nblk, np_rows, &
                                 np_cols, my_prow, my_pcol)

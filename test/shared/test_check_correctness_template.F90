@@ -407,15 +407,15 @@ function check_correctness_evp_numeric_residuals_&
 #endif /* WITH_MPI */
 #endif /* COMPLEXCASE == 1 */
 
-      ! tmp2 = a * a**T
+      ! tmp2 = a**T * a
 #ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
-            &gemm("N","N", na, na, na, ONE, a, 1, 1, sc_desc, tmp1, 1, 1, &
+            &gemm("N","N", na, na, na, ONE, tmp1, 1, 1, sc_desc, a, 1, 1, &
                sc_desc, ZERO, tmp2, 1, 1, sc_desc)
 #else /* WITH_MPI */
       call BLAS_CHAR&
-                    &gemm("N","N", na, na, na, ONE, a, na, tmp1, na, ZERO, tmp2, na)
+                    &gemm("N","N", na, na, na, ONE, tmp1, na, a, na, ZERO, tmp2, na)
 #endif /* WITH_MPI */
 
       ! compare tmp2 with original matrix
