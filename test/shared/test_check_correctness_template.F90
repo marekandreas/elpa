@@ -71,6 +71,25 @@
 
       integer :: mpierr
 
+      ! tolerance for the residual test for different math type/precision setups
+      real(kind=rk), parameter       :: tol_res_real_double      = 5e-12_rk
+      real(kind=rk), parameter       :: tol_res_real_single      = 3e-3_rk
+      real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
+      real(kind=rk), parameter       :: tol_res_complex_single   = 3e-3_rk
+      real(kind=rk), parameter       :: tol_res                  = tol_res_&
+                                                                          &MATH_DATATYPE&
+                                                                          &_&
+                                                                          &PRECISION
+      ! tolerance for the orthogonality test for different math type/precision setups
+      real(kind=rk), parameter       :: tol_orth_real_double     = 5e-12_rk
+      real(kind=rk), parameter       :: tol_orth_real_single     = 9e-4_rk
+      real(kind=rk), parameter       :: tol_orth_complex_double  = 5e-12_rk
+      real(kind=rk), parameter       :: tol_orth_complex_single  = 9e-4_rk
+      real(kind=rk), parameter       :: tol_orth                 = tol_orth_&
+                                                                          &MATH_DATATYPE&
+                                                                          &_&
+                                                                          &PRECISION
+
       status = 0
 
       ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
@@ -136,44 +155,15 @@
 #endif /* WITH_MPI */
       if (myid==0) print *,'Results of numerical residual checks:'
       if (myid==0) print *,'Error Residual     :',errmax
-#if REALCASE == 1
       if (nev .ge. 2) then
-#ifdef DOUBLE_PRECISION_REAL
-        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
-#else
-        if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
-#endif
+        if (errmax .gt. tol_res .or. errmax .eq. 0.0_rk) then
           status = 1
         endif
       else
-#ifdef DOUBLE_PRECISION_REAL
-        if (errmax .gt. 5e-12_rk8) then
-#else
-        if (errmax .gt. 3e-3_rk4) then
-#endif
+        if (errmax .gt. tol_res) then
           status = 1
         endif
       endif
-#endif
-#if COMPLEXCASE == 1
-      if (nev .gt. 2) then
-#ifdef DOUBLE_PRECISION_COMPLEX
-        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
-#else
-        if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
-#endif
-          status =1
-        endif
-      else
-#ifdef DOUBLE_PRECISION_COMPLEX
-        if (errmax .gt. 5e-12_rk8) then
-#else
-        if (errmax .gt. 3e-3_rk4) then
-#endif
-          status = 1
-        endif
-      endif
-#endif
 
       ! 2. Eigenvector orthogonality
 
@@ -223,47 +213,16 @@
 #else /* WITH_MPI */
       errmax = err
 #endif /* WITH_MPI */
-
       if (myid==0) print *,'Error Orthogonality:',errmax
-#if REALCASE == 1
       if (nev .ge. 2) then
-#ifdef DOUBLE_PRECISION_REAL
-        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
-#else
-        if (errmax .gt. 9e-4_rk4 .or. errmax .eq. 0.0_rk4) then
-#endif
+        if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
           status = 1
         endif
       else
-#ifdef DOUBLE_PRECISION_REAL
-        if (errmax .gt. 5e-12_rk8) then
-#else
-        if (errmax .gt. 9e-4_rk4) then
-#endif
+        if (errmax .gt. tol_orth) then
           status = 1
         endif
       endif
-#endif
-#if COMPLEXCASE == 1
-      if (nev .ge. 2) then
-#ifdef DOUBLE_PRECISION_COMPLEX
-        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
-#else
-        if (errmax .gt. 9e-4_rk4 .or. errmax .eq. 0.0_rk4) then
-#endif
-          status = 1
-        endif
-      else
-#ifdef DOUBLE_PRECISION_COMPLEX
-        if (errmax .gt. 5e-12_rk8) then
-#else
-        if (errmax .gt. 9e-4_rk4) then
-#endif
-          status = 1
-        endif
-      endif
-#endif
-
     end function
 
 
