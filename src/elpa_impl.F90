@@ -125,12 +125,16 @@ module elpa_impl
      procedure, public :: associate_int => elpa_associate_int  !< public method to set some pointers
 
      procedure, private :: elpa_transform_generalized_d
+     procedure, private :: elpa_transform_back_generalized_d
      procedure, private :: elpa_transform_generalized_dc
+     procedure, private :: elpa_transform_back_generalized_dc
 #ifdef WANT_SINGLE_PRECISION_REAL
      procedure, private :: elpa_transform_generalized_f
+     procedure, private :: elpa_transform_back_generalized_f
 #endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
      procedure, private :: elpa_transform_generalized_fc
+     procedure, private :: elpa_transform_back_generalized_fc
 #endif
   end type elpa_impl_t
 
@@ -1236,6 +1240,11 @@ module elpa_impl
       logical             :: success_l
 
       call self%elpa_transform_generalized_d(a, b, sc_desc, error_l)
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
+      endif
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -1256,6 +1265,13 @@ module elpa_impl
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+
+      call self%elpa_transform_back_generalized_d(b, q, sc_desc, error_l)
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_back_generalized() and you did not check for errors!"
       endif
     end subroutine
 
@@ -1321,9 +1337,17 @@ module elpa_impl
       integer             :: sc_desc(SC_DESC_LEN)
 
       integer, optional   :: error
+      integer             :: error_l
       integer(kind=c_int) :: solver
 #ifdef WANT_SINGLE_PRECISION_REAL
       logical             :: success_l
+
+      call self%elpa_transform_generalized_f(a, b, sc_desc, error_l)
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
+      endif
 
       call self%get("solver",solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -1344,6 +1368,13 @@ module elpa_impl
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+
+      call self%elpa_transform_back_generalized_f(b, q, sc_desc, error_l)
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_back_generalized() and you did not check for errors!"
       endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
@@ -1415,8 +1446,16 @@ module elpa_impl
       integer                        :: sc_desc(SC_DESC_LEN)
 
       integer, optional              :: error
+      integer                        :: error_l
       integer(kind=c_int)            :: solver
       logical                        :: success_l
+
+      call self%elpa_transform_generalized_dc(a, b, sc_desc, error_l)
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
+      endif
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -1437,6 +1476,13 @@ module elpa_impl
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+
+      call self%elpa_transform_back_generalized_dc(b, q, sc_desc, error_l)
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_back_generalized() and you did not check for errors!"
       endif
     end subroutine
 
@@ -1505,9 +1551,17 @@ module elpa_impl
       integer                       :: sc_desc(SC_DESC_LEN)
 
       integer, optional             :: error
+      integer                       :: error_l
       integer(kind=c_int)           :: solver
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
       logical                       :: success_l
+
+      call self%elpa_transform_generalized_fc(a, b, sc_desc, error_l)
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
+      endif
 
       call self%get("solver", solver)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -1528,6 +1582,13 @@ module elpa_impl
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+
+      call self%elpa_transform_back_generalized_fc(b, q, sc_desc, error_l)
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_back_generalized() and you did not check for errors!"
       endif
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"

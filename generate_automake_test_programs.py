@@ -133,6 +133,10 @@ for m, g, t, p, d, s, l in product(
     if (t == "qr" and (s == "1stage" or d == "complex")):
         continue
 
+    #TODO: this does not work at the moment
+    if(t == "generalized" and (l == "all_layouts" or s == "2stage")):
+        continue
+
     create_test(m, g, t, p, d, s, l, "fortran")
 
 

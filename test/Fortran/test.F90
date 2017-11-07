@@ -344,8 +344,8 @@ program test
      !call prepare_matrix_random(na, myid, sc_desc, b, z, bs)
      ! TODO create random SPD matrix
      !diagonalElement = (2.546_rk, 0.0_rk)
-     diagonalElement = ONE
-     subdiagonalElement =  (0.0_rk, 0.0_rk)
+     diagonalElement = 2.546_rk * ONE
+     subdiagonalElement = ZERO
      call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                                   d, sd, ds, sds, b, bs, nblk, np_rows, &
                                   np_cols, my_prow, my_pcol)
@@ -518,7 +518,12 @@ program test
 !     status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
 !#elif defined(TEST_MATRIX_RANDOM)
      if (nev .ge. 1) then
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, &
+                                                        my_pcol, bs)
+#else
        status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+#endif
      else
        ! zero eigenvectors and no analytic test => toeplitz
        status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &

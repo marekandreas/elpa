@@ -45,12 +45,13 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status)
+    & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs) result(status)
       implicit none
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-      MATH_DATATYPE(kind=rck), intent(in)     :: as(:,:), z(:,:)
+      MATH_DATATYPE(kind=rck), intent(in)           :: as(:,:), z(:,:)
+      MATH_DATATYPE(kind=rck), intent(in), optional :: bs(:,:)
       real(kind=rk)                 :: ev(:)
       MATH_DATATYPE(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
       MATH_DATATYPE(kind=rck)                :: xc
@@ -76,10 +77,13 @@
       real(kind=rk), parameter       :: tol_res_real_single      = 3e-3_rk
       real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
       real(kind=rk), parameter       :: tol_res_complex_single   = 3e-3_rk
-      real(kind=rk), parameter       :: tol_res                  = tol_res_&
+      real(kind=rk)                  :: tol_res                  = tol_res_&
                                                                           &MATH_DATATYPE&
                                                                           &_&
                                                                           &PRECISION
+      ! precision of generalized problem is lower
+      real(kind=rk), parameter       :: generalized_penalty = 10.0_rk
+
       ! tolerance for the orthogonality test for different math type/precision setups
       real(kind=rk), parameter       :: tol_orth_real_double     = 5e-12_rk
       real(kind=rk), parameter       :: tol_orth_real_single     = 9e-4_rk
@@ -90,33 +94,49 @@
                                                                           &_&
                                                                           &PRECISION
 
+      if(present(bs)) then
+          tol_res = generalized_penalty * tol_res
+      endif
       status = 0
 
       ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
+
+      ! tmp1 = Zi*EVi
+      tmp1(:,:) = z(:,:)
+      do i=1,nev
+        xc = ev(i)
+#ifdef WITH_MPI
+        call p&
+            &BLAS_CHAR&
+            &scal(na, xc, tmp1, 1, i, sc_desc, 1)
+#else /* WITH_MPI */
+        call BLAS_CHAR&
+            &scal(na,xc,tmp1(:,i),1)
+#endif /* WITH_MPI */
+      enddo
+
+      ! for generalized EV problem, multiply by bs as well
+      ! tmp2 = B * tmp1
+      if(present(bs)) then
+#ifdef WITH_MPI
+      call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, sc_desc, &
+                  tmp1, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
+#else /* WITH_MPI */
+      call PRECISION_GEMM('N','N',na,nev,na,ONE,bs,na,tmp1,na,ZERO,tmp2,na)
+#endif /* WITH_MPI */
+      else
+        ! normal eigenvalue problem .. no need to multiply
+        tmp2(:,:) = tmp1(:,:)
+      end if
+
       ! tmp1 =  A * Z
       ! as is original stored matrix, Z are the EVs
-
 #ifdef WITH_MPI
       call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, as, 1, 1, sc_desc, &
                   z, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
 #else /* WITH_MPI */
       call PRECISION_GEMM('N','N',na,nev,na,ONE,as,na,z,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
-
-
-      ! tmp2 = Zi*EVi
-      tmp2(:,:) = z(:,:)
-      do i=1,nev
-        xc = ev(i)
-#ifdef WITH_MPI
-        call p&
-            &BLAS_CHAR&
-            &scal(na, xc, tmp2, 1, i, sc_desc, 1)
-#else /* WITH_MPI */
-        call BLAS_CHAR&
-            &scal(na,xc,tmp2(:,i),1)
-#endif /* WITH_MPI */
-      enddo
 
       !  tmp1 = A*Zi - Zi*EVi
       tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
@@ -166,7 +186,9 @@
       endif
 
       ! 2. Eigenvector orthogonality
-
+      !TODO for the generalized eigenvector problem, the orthogonality test has to be altered
+      !TODO at the moment, it is skipped
+      if(.not. present(bs)) then
       ! tmp1 = Z**T * Z
       tmp1 = 0
 #ifdef WITH_MPI
@@ -223,6 +245,8 @@
           status = 1
         endif
       endif
+
+      endif  ! skiping test of orthogonality for generalized eigenproblem
     end function
 
 
