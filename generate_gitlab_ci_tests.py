@@ -332,8 +332,8 @@ fortran_compiler = {
         "pgi"   : "pgfortran",
 }
 mpi = {
-        "mpi"   : "--with-mpi=1",
-        "nompi" : "--with-mpi=0 --disable-mpi-module",
+        "mpi"   : "--with-mpi=yes",
+        "nompi" : "--with-mpi=no --disable-mpi-module",
 }
 
 openmp = {
