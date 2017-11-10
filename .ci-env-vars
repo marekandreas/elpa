@@ -53,5 +53,7 @@ export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI
 
 export ASAN_OPTIONS=suppressions=no_asan_for_mpi.supp,fast_unwind_on_malloc=0
 export LSAN_OPTIONS=suppressions=no_lsan_for_mpi.supp
+
+export I_MPI_DEBUG=5
 fi
 module list
