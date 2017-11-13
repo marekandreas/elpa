@@ -12,12 +12,12 @@ def set_number_of_cores(mpi_tasks, o):
     return cores
 
 def set_requested_memory(na):
-    memory="1Gb"
-    if (na <= 150):
+    memory="None"
+    if (na == "150"):
             memory="1Gb"
-    elif (na > 150 and na <= 1500):
+    elif (na > "150" and na <= "1500"):
         memory="4Gb"
-    elif (na > 1500 and na < 5000):
+    elif (na > "1500" and na < "5000"):
         memory="8Gb"
     else:
         memory="10Gb"
@@ -402,6 +402,20 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
                              sorted(matrix_size.keys())):
 
 
+#for m, o, a, instr, na in product(
+#                             sorted(mpi.keys()),
+#                             sorted(openmp.keys()),
+#                             sorted(assumed_size.keys()),
+#                             sorted(instruction_set.keys()),
+#                             sorted(matrix_size.keys())):
+#
+#    cc="gnu"
+#    fc="gnu"
+#    p="single-precision"
+#    b="band-to-full-blocking" 
+#    cov="no-coverage"
+#    addr="no-address-sanitize"
+
     nev = 150
     nblk = 16
     g = "no-gpu"
@@ -543,16 +557,16 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
 
     memory = set_requested_memory(matrix_size[na])
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-1\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+ " ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-2\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-3\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-4\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-5\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-6\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+ " ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-7\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-8\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-9\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
-        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-10\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-1\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+ " ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-2\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-3\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-4\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-5\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-6\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+ " ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-7\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-8\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-9\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
+        print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-10\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" && export REQUESTED_MEMORY="+memory+" ; fi")
         print("\n")
         print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-1\" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS=\"knl\" export REQUESTED_MEMORY="+memory+" ;  fi")
         print("    - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-2\" ]; then export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=40 && export RUNTIME=40 && export CONTSTRAINTS=\"knl\" export REQUESTED_MEMORY="+memory+" ;  fi")
@@ -610,7 +624,7 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
             print("    - export SRUN_COMMANDLINE_BUILD=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
             print("    - export SRUN_COMMANDLINE_RUN=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
         print("    - echo \"srun --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE\" ")
-        print("    - srun --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
+        print("    - srun --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
             + " /scratch/elpa/bin/configure_elpa.sh" \
             + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
             + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
@@ -625,7 +639,7 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
         print("    - make -j 8")
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
         print("    - echo \"srun --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD\" ")
-        print("    - srun --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
+        print("    - srun --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
 
     # do the test
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
@@ -649,7 +663,7 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
         for na in sorted(matrix_size.keys(),reverse=True):
             cores = set_number_of_cores(MPI_TASKS, o)
             print("    - echo \" srun --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
-            print("    - srun --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
+            print("    - srun --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
                                          /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\""+ matrix_size[na] + " "+ str(nev)+" "+str(nblk)+"\\\"  || { cat test-suite.log; exit 1; }\"")
 
         if (cov == "coverage"):
