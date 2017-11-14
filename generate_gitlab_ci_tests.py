@@ -623,6 +623,7 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
             print("    - export SRUN_COMMANDLINE_CONFIGURE=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY\" ")
             print("    - export SRUN_COMMANDLINE_BUILD=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
             print("    - export SRUN_COMMANDLINE_RUN=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
+        print("    - date")
         print("    - echo \"srun --cpu_bind=cores --hint=nomultithread --ntasks=1  --threads-per-core=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE\" ")
         print("    - srun  --cpu_bind=cores --hint=nomultithread --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
             + " /scratch/elpa/bin/configure_elpa.sh" \
@@ -638,6 +639,7 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
         print("    - make -j 8")
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
+        print("    - date")
         print("    - echo \"srun  --cpu_bind=cores --hint=nomultithread --threads-per-core=1  --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD\" ")
         print("    - srun  --cpu_bind=cores --hint=nomultithread --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
 
@@ -661,6 +663,7 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
         else:
             openmp_threads=" 1 "
         for na in sorted(matrix_size.keys(),reverse=True):
+            print("    - date")
             cores = set_number_of_cores(MPI_TASKS, o)
             print("    - echo \" srun  --cpu_bind=cores --hint=nomultithread  --threads-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
             print("    - srun  --cpu_bind=cores --hint=nomultithread --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
