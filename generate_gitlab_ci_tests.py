@@ -473,6 +473,8 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
         continue
     if (g == "with-gpu" and addr == "address-sanitize"):
         continue
+    if (instr == "knl" and addr == "address-sanitize"):
+        continue
 
     if (addr == "address-sanitize" and (cc == "gnu" and fc == "gnu")):
         CFLAGS += " -fsanitize=address"
