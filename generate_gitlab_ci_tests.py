@@ -212,55 +212,55 @@ print("  - chmod u+w -R .")
 print("\n\n")
 
 
-#define the total coverage phase
-print("# print coverage results")
-print("total_coverage:")
-print("  only:")
-print("    - /.*master.*/")
-print("  stage: coverage")
-print("  tags:")
-print("    - coverage")
-print("  script:")
-print("    - echo \"Generating coverage report\"")
-print("    - ./ci_coverage_summary")
-print("  artifacts:")
-print("    paths:")
-print("      - public")
-print("\n\n")
-
-print("pages:")
-print("  stage: deploy")
-print("  tags:")
-print("    - coverage")
-print("  script:")
-print("    - echo \"Publishing pages\"")
-print("  artifacts:")
-print("    paths:")
-print("      - public")
-print("  only:")
-print("    - master")
-print("\n\n")
-
-print("static-build:")
-print("  tags:")
-print("    - avx")
-print("  script:")
-print("    - ./configure --enable-option-checking=fatal CFLAGS=\"-O3 -mavx\" FCFLAGS=\"-O3 -axAVX\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2 || { cat config.log; exit 1; }")
-print("    - make -j 8")
-print("    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH")
-print("    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }")
-print("    - grep -i \"Expected %stop\" test-suite.log && exit 1 || true ;")
-print("\n\n")
-
-print("# test distcheck")
-print("distcheck:")
-print("  tags:")
-print("    - buildtest")
-print("  script:")
-print("    - ./configure --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }")
-print("    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove")
-print("    - make distcheck DISTCHECK_CONFIGURE_FLAGS=\"--with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2\" TASKS=2 TEST_FLAGS=\"150 50 16\" || { chmod u+rwX -R . ; exit 1 ; }")
-print("\n\n")
+##define the total coverage phase
+#print("# print coverage results")
+#print("total_coverage:")
+#print("  only:")
+#print("    - /.*master.*/")
+#print("  stage: coverage")
+#print("  tags:")
+#print("    - coverage")
+#print("  script:")
+#print("    - echo \"Generating coverage report\"")
+#print("    - ./ci_coverage_summary")
+#print("  artifacts:")
+#print("    paths:")
+#print("      - public")
+#print("\n\n")
+#
+#print("pages:")
+#print("  stage: deploy")
+#print("  tags:")
+#print("    - coverage")
+#print("  script:")
+#print("    - echo \"Publishing pages\"")
+#print("  artifacts:")
+#print("    paths:")
+#print("      - public")
+#print("  only:")
+#print("    - master")
+#print("\n\n")
+#
+#print("static-build:")
+#print("  tags:")
+#print("    - avx")
+#print("  script:")
+#print("    - ./configure --enable-option-checking=fatal CFLAGS=\"-O3 -mavx\" FCFLAGS=\"-O3 -axAVX\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2 || { cat config.log; exit 1; }")
+#print("    - make -j 8")
+#print("    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH")
+#print("    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }")
+#print("    - grep -i \"Expected %stop\" test-suite.log && exit 1 || true ;")
+#print("\n\n")
+#
+#print("# test distcheck")
+#print("distcheck:")
+#print("  tags:")
+#print("    - buildtest")
+#print("  script:")
+#print("    - ./configure --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }")
+#print("    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove")
+#print("    - make distcheck DISTCHECK_CONFIGURE_FLAGS=\"--with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2\" TASKS=2 TEST_FLAGS=\"150 50 16\" || { chmod u+rwX -R . ; exit 1 ; }")
+#print("\n\n")
 
 
 # construct the builds of the "test_projects"
@@ -366,12 +366,13 @@ coverage = {
         "no-coverage": "no-coverage",
 }
 
+#disable avx at the moment
+#disable avx512 at the moment
+#disable knl at the moment
+
 instruction_set = {
         "sse" : " --enable-sse --enable-sse-assembly",
-        "avx" : " --enable-avx",
         "avx2" : " --enable-avx2",
-        "avx512" : " --enable-avx512",
-        "knl" : " --enable-avx512",
         "power8" : " --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
 }
 
