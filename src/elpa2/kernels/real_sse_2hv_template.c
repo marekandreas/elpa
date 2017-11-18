@@ -45,9 +45,16 @@
 // Author: Andreas Marek, MPCDF, based on the double precision case of A. Heinecke
 //
 
+#ifdef HAVE_SSE_INTRINSICS
 #include <x86intrin.h>
+#endif
+#ifdef HAVE_SPARC64_SSE
+#include <fjmfunc.h>
+#include <emmintrin.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
+
 
 #define __forceinline __attribute__((always_inline)) static
 #ifdef DOUBLE_PRECISION_REAL
@@ -102,6 +109,33 @@ void double_hh_trafo_real_sse_2hv_single_(float* q, float* hh, int* pnb, int* pn
 #endif
 
 /*
+!f>#ifdef HAVE_SPARC64_SSE
+!f> interface
+!f>   subroutine double_hh_trafo_real_sparc64_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>				bind(C, name="double_hh_trafo_real_sparc64_2hv_double")
+!f>	use, intrinsic :: iso_c_binding
+!f>	integer(kind=c_int) :: pnb, pnq, pldq, pldh
+!f>	type(c_ptr), value  :: q
+!f>	real(kind=c_double) :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#ifdef HAVE_SPARC64_SSE
+!f> interface
+!f>   subroutine double_hh_trafo_real_sparc64_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>				bind(C, name="double_hh_trafo_real_sparc64_2hv_single")
+!f>	use, intrinsic :: iso_c_binding
+!f>	integer(kind=c_int)	:: pnb, pnq, pldq, pldh
+!f>	type(c_ptr), value	:: q
+!f>	real(kind=c_float)	:: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+/*
 !f>#ifdef HAVE_SSE_INTRINSICS
 !f> interface
 !f>   subroutine double_hh_trafo_real_sse_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
@@ -153,7 +187,10 @@ void double_hh_trafo_real_sse_2hv_single(float* q, float* hh, int* pnb, int* pnq
 #ifdef SINGLE_PRECISION_REAL
 	float s = hh[(ldh)+1]*1.0;
 #endif
+
+#ifdef HAVE_SSE_INTRINSICS
 	#pragma ivdep
+#endif
 	for (i = 2; i < nb; i++)
 	{
 		s += hh[i-1] * hh[(i+ldh)];
@@ -292,12 +329,14 @@ void double_hh_trafo_real_sse_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	// hh contains two householder vectors, with offset 1
 	/////////////////////////////////////////////////////
 	int i;
+#ifdef HAVE_SSE_INTRINSICS
 	// Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-__SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+        __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+#endif
 #endif
 
 	__SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
@@ -307,12 +346,23 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE x5 = _SSE_LOAD(&q[ldq+4*offset]);
 	__SSE_DATATYPE x6 = _SSE_LOAD(&q[ldq+5*offset]);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
+#endif
+
 	__SSE_DATATYPE h2;
 
 	__SSE_DATATYPE q1 = _SSE_LOAD(q);
@@ -329,6 +379,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE y6 = _SSE_ADD(q6, _SSE_MUL(x6, h1));
 	for(i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -337,7 +388,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
 #endif
-
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
+#endif
+#endif
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
 		x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
@@ -358,12 +419,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
 		y6 = _SSE_ADD(y6, _SSE_MUL(q6,h2));
 	}
-
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -381,6 +451,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [12 x nb+1]
 	/////////////////////////////////////////////////////
+#ifdef  HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 	__SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
@@ -391,15 +462,38 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]);
 	__SSE_DATATYPE vs = _mm_set1_ps(s);
 #endif
+#endif
+#ifdef  HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_pd(s, s);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_ps(s, s);
+#endif
+#endif
 
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau1, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau1);
+#endif
 	x1 = _SSE_MUL(x1, h1);
 	x2 = _SSE_MUL(x2, h1);
 	x3 = _SSE_MUL(x3, h1);
 	x4 = _SSE_MUL(x4, h1);
 	x5 = _SSE_MUL(x5, h1);
 	x6 = _SSE_MUL(x6, h1);
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau2, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau2);
+#endif
 	h2 = _SSE_MUL(h1, vs);
 
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
@@ -427,11 +521,22 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	q6 = _SSE_ADD(q6, y6);
 	_SSE_STORE(&q[5*offset],q6);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h2 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h2 = _mm_set1_ps(hh[ldh+1]);
+#endif
+#endif
+
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq]);
@@ -455,6 +560,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 
 	for (i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -462,6 +568,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 #ifdef SINGLE_PRECISION_REAL
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
+#endif
 #endif
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
@@ -483,12 +600,24 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		q6 = _SSE_ADD(q6, _SSE_ADD(_SSE_MUL(x6,h1), _SSE_MUL(y6, h2)));
 		_SSE_STORE(&q[(i*ldq)+5*offset],q6);
 	}
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
+#endif
+
+
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	_SSE_STORE(&q[nb*ldq],q1);
@@ -534,12 +663,14 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	// hh contains two householder vectors, with offset 1
 	/////////////////////////////////////////////////////
 	int i;
+#ifdef HAVE_SSE_INTRINSICS
 	// Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-__SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+        __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+#endif
 #endif
 
 	__SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
@@ -548,12 +679,23 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE x4 = _SSE_LOAD(&q[ldq+3*offset]);
 	__SSE_DATATYPE x5 = _SSE_LOAD(&q[ldq+4*offset]);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
+#endif
+
 	__SSE_DATATYPE h2;
 
 	__SSE_DATATYPE q1 = _SSE_LOAD(q);
@@ -568,6 +710,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE y5 = _SSE_ADD(q5, _SSE_MUL(x5, h1));
 	for(i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -575,6 +718,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 #ifdef SINGLE_PRECISION_REAL
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
+#endif
 #endif
 
 
@@ -595,11 +749,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
 	}
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -615,6 +779,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [12 x nb+1]
 	/////////////////////////////////////////////////////
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 	__SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
@@ -626,14 +791,38 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE vs = _mm_set1_ps(s);
 
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_pd(s, s);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_ps(s, s);
 
+#endif
+#endif
+
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau1, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau1);
+#endif
 	x1 = _SSE_MUL(x1, h1);
 	x2 = _SSE_MUL(x2, h1);
 	x3 = _SSE_MUL(x3, h1);
 	x4 = _SSE_MUL(x4, h1);
 	x5 = _SSE_MUL(x5, h1);
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau2, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau2);
+#endif
 	h2 = _SSE_MUL(h1, vs);
 
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
@@ -657,11 +846,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	q5 = _SSE_ADD(q5, y5);
 	_SSE_STORE(&q[4*offset],q5);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h2 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h2 = _mm_set1_ps(hh[ldh+1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq]);
@@ -682,6 +881,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 
 	for (i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -689,6 +889,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 #ifdef SINGLE_PRECISION_REAL
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
+#endif
 #endif
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
@@ -707,12 +918,23 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		q5 = _SSE_ADD(q5, _SSE_ADD(_SSE_MUL(x5,h1), _SSE_MUL(y5, h2)));
 		_SSE_STORE(&q[(i*ldq)+4*offset],q5);
 	}
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
+#endif
+
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	_SSE_STORE(&q[nb*ldq],q1);
@@ -753,25 +975,38 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	// hh contains two householder vectors, with offset 1
 	/////////////////////////////////////////////////////
 	int i;
+
+#ifdef HAVE_SSE_INTRINSICS
 	// Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-__SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+        __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 #endif
-
+#endif
 	__SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
 	__SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
 	__SSE_DATATYPE x3 = _SSE_LOAD(&q[ldq+2*offset]);
 	__SSE_DATATYPE x4 = _SSE_LOAD(&q[ldq+3*offset]);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
+#endif
+
 	__SSE_DATATYPE h2;
 
 	__SSE_DATATYPE q1 = _SSE_LOAD(q);
@@ -784,6 +1019,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE y4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
 	for(i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -791,6 +1027,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 #ifdef SINGLE_PRECISION_REAL
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
+#endif
 #endif
 
 
@@ -807,14 +1054,22 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
 		y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
 	}
-
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
 #endif
-
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
+#endif
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 	q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
@@ -826,6 +1081,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [12 x nb+1]
 	/////////////////////////////////////////////////////
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 	__SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
@@ -837,13 +1093,37 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE vs = _mm_set1_ps(s);
 
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_pd(s, s);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_ps(s, s);
 
+#endif
+#endif
+
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau1, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau1);
+#endif
 	x1 = _SSE_MUL(x1, h1);
 	x2 = _SSE_MUL(x2, h1);
 	x3 = _SSE_MUL(x3, h1);
 	x4 = _SSE_MUL(x4, h1);
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau2, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau2);
+#endif
 	h2 = _SSE_MUL(h1, vs);
 
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
@@ -863,11 +1143,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	q4 = _SSE_ADD(q4, y4);
 	_SSE_STORE(&q[3*offset],q4);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h2 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h2 = _mm_set1_ps(hh[ldh+1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq]);
@@ -885,6 +1175,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 
 	for (i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -893,6 +1184,18 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set1_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set1_ps(hh[ldh+i], hh[ldh+i]);
+#endif
+#endif
+
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
 		q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
@@ -907,12 +1210,23 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		q4 = _SSE_ADD(q4, _SSE_ADD(_SSE_MUL(x4,h1), _SSE_MUL(y4, h2)));
 		_SSE_STORE(&q[(i*ldq)+3*offset],q4);
 	}
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
+#endif
+
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	_SSE_STORE(&q[nb*ldq],q1);
@@ -950,23 +1264,35 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	// hh contains two householder vectors, with offset 1
 	/////////////////////////////////////////////////////
 	int i;
+#ifdef HAVE_SSE_INTRINSICS
 	// Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-__SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+        __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+#endif
 #endif
 
 	__SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
 	__SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
 	__SSE_DATATYPE x3 = _SSE_LOAD(&q[ldq+2*offset]);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
 #endif
 	__SSE_DATATYPE h2;
 
@@ -978,6 +1304,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE y3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
 	for(i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -985,6 +1312,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 #ifdef SINGLE_PRECISION_REAL
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set1_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set1_ps(hh[ldh+i], hh[ldh+i]);
+#endif
 #endif
 
 
@@ -998,12 +1336,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
 		y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
 	}
-
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1015,6 +1362,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [12 x nb+1]
 	/////////////////////////////////////////////////////
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 	__SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
@@ -1026,12 +1374,37 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE vs = _mm_set1_ps(s);
 
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_pd(s, s);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set1_ps(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set1_ps(s, s);
 
+#endif
+#endif
+
+
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau1, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau1);
+#endif
 	x1 = _SSE_MUL(x1, h1);
 	x2 = _SSE_MUL(x2, h1);
 	x3 = _SSE_MUL(x3, h1);
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau2, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau2);
+#endif
 	h2 = _SSE_MUL(h1, vs);
 
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
@@ -1047,12 +1420,24 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	q3 = _SSE_ADD(q3, y3);
 	_SSE_STORE(&q[2*offset],q3);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h2 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h2 = _mm_set1_ps(hh[ldh+1]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
+#endif
+
+
 
 	q1 = _SSE_LOAD(&q[ldq]);
 	q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
@@ -1066,6 +1451,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 
 	for (i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -1073,6 +1459,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 #ifdef SINGLE_PRECISION_REAL
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set1_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set1_ps(hh[ldh+i], hh[ldh+i]);
+#endif
 #endif
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
@@ -1085,11 +1482,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
 		_SSE_STORE(&q[(i*ldq)+2*offset],q3);
 	}
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
@@ -1126,22 +1533,34 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	// hh contains two householder vectors, with offset 1
 	/////////////////////////////////////////////////////
 	int i;
+#ifdef HAVE_SSE_INTRINSICS
 	// Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-__SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+        __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+#endif
 #endif
 
 	__SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
 	__SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
 #endif
 	__SSE_DATATYPE h2;
 
@@ -1151,6 +1570,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
 	for(i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -1159,7 +1579,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
 #endif
-
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
+#endif
+#endif
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
 		x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
@@ -1169,11 +1599,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 	}
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1183,6 +1623,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [12 x nb+1]
 	/////////////////////////////////////////////////////
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 	__SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
@@ -1194,11 +1635,35 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE vs = _mm_set1_ps(s);
 
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_pd(s, s);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_ps(s, s);
 
+#endif
+#endif
+
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau1, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau1);
+#endif
 	x1 = _SSE_MUL(x1, h1);
 	x2 = _SSE_MUL(x2, h1);
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau2, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau2);
+#endif
 	h2 = _SSE_MUL(h1, vs);
 
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
@@ -1210,11 +1675,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	q2 = _SSE_ADD(q2, y2);
 	_SSE_STORE(&q[offset],q2);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h2 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h2 = _mm_set1_ps(hh[ldh+1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq]);
@@ -1226,6 +1701,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 
 	for (i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -1233,6 +1709,17 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 #ifdef SINGLE_PRECISION_REAL
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
+#endif
 #endif
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
@@ -1242,11 +1729,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
 		_SSE_STORE(&q[(i*ldq)+offset],q2);
 	}
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
@@ -1280,21 +1777,33 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	// hh contains two householder vectors, with offset 1
 	/////////////////////////////////////////////////////
 	int i;
+#ifdef HAVE_SSE_INTRINSICS
 	// Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-__SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+        __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+#endif
 #endif
 
 	__SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	__SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
 #endif
 	__SSE_DATATYPE h2;
 
@@ -1302,6 +1811,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	for(i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -1310,25 +1820,47 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
 #endif
-
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
+#endif
+#endif
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
 		x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 		y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 	}
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
+#endif
+
 
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 	/////////////////////////////////////////////////////
 	// Rank-2 update of Q [12 x nb+1]
 	/////////////////////////////////////////////////////
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 	__SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
@@ -1340,10 +1872,34 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	__SSE_DATATYPE vs = _mm_set1_ps(s);
 
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_pd(s,s );
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	__SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
+	__SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
+	__SSE_DATATYPE vs = _mm_set_ps(s, s);
 
+#endif
+#endif
+
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau1, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau1);
+#endif
 	x1 = _SSE_MUL(x1, h1);
+#ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau2, sign);
+#endif
+#ifdef HAVE_SPARC64_SSE
+	h1 = _fjsp_neg_v2r8(tau2);
+#endif
 	h2 = _SSE_MUL(h1, vs);
 
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
@@ -1351,11 +1907,21 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 	q1 = _SSE_ADD(q1, y1);
 	_SSE_STORE(q,q1);
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h2 = _mm_set1_pd(hh[ldh+1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h2 = _mm_set1_ps(hh[ldh+1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
+#endif
 #endif
 
 	q1 = _SSE_LOAD(&q[ldq]);
@@ -1364,6 +1930,7 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 
 	for (i = 2; i < nb; i++)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = _mm_set1_pd(hh[i-1]);
 		h2 = _mm_set1_pd(hh[ldh+i]);
@@ -1372,16 +1939,37 @@ __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x8
 		h1 = _mm_set1_ps(hh[i-1]);
 		h2 = _mm_set1_ps(hh[ldh+i]);
 #endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+		h1 = _mm_set_pd(hh[i-1], hh[i-1]);
+		h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+		h1 = _mm_set_ps(hh[i-1], hh[i-1]);
+		h2 = _mm_set_ps(hh[ldh+i]), hh[ldh+i];
+#endif
+#endif
 
 		q1 = _SSE_LOAD(&q[i*ldq]);
 		q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
 		_SSE_STORE(&q[i*ldq],q1);
 	}
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = _mm_set1_pd(hh[nb-1]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	h1 = _mm_set1_ps(hh[nb-1]);
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+	h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+	h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 	q1 = _SSE_LOAD(&q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
