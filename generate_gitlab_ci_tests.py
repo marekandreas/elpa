@@ -367,13 +367,11 @@ coverage = {
 }
 
 #disable avx2 at the moment
-#disable avx512 at the moment
-#disable knl at the moment
-
+#disable avx512
 instruction_set = {
         "sse" : " --enable-sse --enable-sse-assembly",
         "avx" : " --enable-avx",
-        "avx512" : "--enable-avx512",
+        "knl" : "--enable-avx512",
         "power8" : " --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
 }
 
@@ -395,7 +393,9 @@ matrix_size = {
 
 MPI_TASKS=2
 
-for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
+#                             sorted(gpu.keys()),
+#for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
+for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
                              sorted(c_compiler.keys()),
                              sorted(fortran_compiler.keys()),
                              sorted(mpi.keys()),
@@ -403,7 +403,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
                              sorted(precision.keys()),
                              sorted(assumed_size.keys()),
                              sorted(band_to_full_blocking.keys()),
-                             sorted(gpu.keys()),
                              sorted(coverage.keys()),
                              sorted(instruction_set.keys()),
                              sorted(address_sanitize_flag.keys()),
@@ -412,6 +411,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     nev = 150
     nblk = 16
+    g = "no-gpu"
 
     # do not all combinations with all compilers
     # especially - use pgi only on minskys for now
