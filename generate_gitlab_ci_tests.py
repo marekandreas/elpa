@@ -367,13 +367,11 @@ coverage = {
 }
 
 #disable avx2 at the moment
-#disable avx512 at the moment
-#disable knl at the moment
-
+#disable avx512
 instruction_set = {
         "sse" : " --enable-sse --enable-sse-assembly",
         "avx" : " --enable-avx",
-        "avx512" : "--enable-avx512",
+        "knl" : "--enable-avx512",
         "power8" : " --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
 }
 
