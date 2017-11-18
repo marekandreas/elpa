@@ -14,13 +14,13 @@ def set_number_of_cores(mpi_tasks, o):
 def set_requested_memory(na):
     memory="None"
     if (na == "150"):
-            memory="1Gb"
+            memory="2Gb"
     elif (na > "150" and na <= "1500"):
-        memory="4Gb"
+        memory="6Gb"
     elif (na > "1500" and na < "5000"):
-        memory="8Gb"
+        memory="12Gb"
     else:
-        memory="10Gb"
+        memory="16Gb"
     return memory
 
 def set_compiler_wrappers(mpi, fc, cc, instr, fortran_compiler, c_compiler):
