@@ -14,13 +14,13 @@ def set_number_of_cores(mpi_tasks, o):
 def set_requested_memory(na):
     memory="None"
     if (na == "150"):
-            memory="1Gb"
+            memory="2Gb"
     elif (na > "150" and na <= "1500"):
-        memory="4Gb"
+        memory="6Gb"
     elif (na > "1500" and na < "5000"):
-        memory="8Gb"
+        memory="12Gb"
     else:
-        memory="10Gb"
+        memory="16Gb"
     return memory
 
 def set_compiler_wrappers(mpi, fc, cc, instr, fortran_compiler, c_compiler):
@@ -368,10 +368,11 @@ coverage = {
 
 #disable avx2 at the moment
 #disable avx512
+        #"knl" : "--enable-avx512",
 instruction_set = {
         "sse" : " --enable-sse --enable-sse-assembly",
         "avx" : " --enable-avx",
-        "knl" : "--enable-avx512",
+        "avx2" : " --enable-avx2",
         "power8" : " --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
 }
 
@@ -393,7 +394,9 @@ matrix_size = {
 
 MPI_TASKS=2
 
-for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
+#                             sorted(gpu.keys()),
+#for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
+for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
                              sorted(c_compiler.keys()),
                              sorted(fortran_compiler.keys()),
                              sorted(mpi.keys()),
@@ -401,7 +404,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
                              sorted(precision.keys()),
                              sorted(assumed_size.keys()),
                              sorted(band_to_full_blocking.keys()),
-                             sorted(gpu.keys()),
                              sorted(coverage.keys()),
                              sorted(instruction_set.keys()),
                              sorted(address_sanitize_flag.keys()),
@@ -410,6 +412,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     nev = 150
     nblk = 16
+    g = "no-gpu"
 
     # do not all combinations with all compilers
     # especially - use pgi only on minskys for now
