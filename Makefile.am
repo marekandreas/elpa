@@ -204,16 +204,16 @@ endif
 
 if WITH_REAL_SPARC64_BLOCK2_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_2hv_double_precision.c
-if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_2hv_single_precision.c
-endif
+#if WANT_SINGLE_PRECISION_REAL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_2hv_single_precision.c
+#endif
 endif
 
 if WITH_REAL_VSX_BLOCK2_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_2hv_double_precision.c
-if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_2hv_single_precision.c
-endif
+#if WANT_SINGLE_PRECISION_REAL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_2hv_single_precision.c
+#endif
 endif
 
 if WITH_REAL_SSE_BLOCK2_KERNEL
@@ -686,6 +686,7 @@ EXTRA_DIST = \
   src/elpa2/kernels/real_avx512_2hv_template.c \
   src/elpa2/kernels/real_avx512_4hv_template.c \
   src/elpa2/kernels/real_avx512_6hv_template.c \
+  src/elpa2/kernels/real_vsx_2hv_template.c \
   src/elpa2/kernels/real_sse_2hv_template.c \
   src/elpa2/kernels/real_sse_4hv_template.c \
   src/elpa2/kernels/real_sse_6hv_template.c \

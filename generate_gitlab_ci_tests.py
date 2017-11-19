@@ -394,9 +394,7 @@ matrix_size = {
 
 MPI_TASKS=2
 
-#                             sorted(gpu.keys()),
-#for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
-for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
+for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
                              sorted(c_compiler.keys()),
                              sorted(fortran_compiler.keys()),
                              sorted(mpi.keys()),
@@ -404,6 +402,7 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
                              sorted(precision.keys()),
                              sorted(assumed_size.keys()),
                              sorted(band_to_full_blocking.keys()),
+                             sorted(gpu.keys()),
                              sorted(coverage.keys()),
                              sorted(instruction_set.keys()),
                              sorted(address_sanitize_flag.keys()),
@@ -412,7 +411,9 @@ for cc, fc, m, o, p, a, b, cov, instr, addr, na in product(
 
     nev = 150
     nblk = 16
-    g = "no-gpu"
+
+    if (instr != "power8" and g == "with-gpu"):
+        continue
 
     # do not all combinations with all compilers
     # especially - use pgi only on minskys for now
