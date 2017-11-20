@@ -58,7 +58,6 @@
 #define _SSE_LOAD (__vector double) vec_ld
 #define _SSE_ADD vec_add
 #define _SSE_MUL vec_mul
-#define _SSE_NEG vec_neg
 #define _SSE_STORE vec_st
 #define offset 2
 #endif
@@ -68,7 +67,6 @@
 #define _SSE_LOAD  (__vector float) vec_ld
 #define _SSE_ADD vec_add
 #define _SSE_MUL vec_mul
-#define _SSE_NEG vec_neg
 #define _SSE_STORE vec_st
 #define offset 4
 #endif
@@ -468,7 +466,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 #ifdef HAVE_SSE_INTRINSICS
 	h1 = _SSE_XOR(tau2, sign);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#ifdef HAVE_VSX_SSE
 	//h1 = vec_neg(tau2);
 	h1 = vec_mul(vec_splats(mone), tau2);
 #endif

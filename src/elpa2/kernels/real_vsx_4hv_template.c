@@ -111,7 +111,7 @@ void quad_hh_trafo_real_vsx_4hv_single(float* q, float* hh, int* pnb, int* pnq, 
 !f>#ifdef HAVE_VSX_SSE
 !f> interface
 !f>   subroutine quad_hh_trafo_real_vsx_4hv_double(q, hh, pnb, pnq, pldq, pldh) &
-!f>				bind(C, name="quad_hh_trafo_real_sse_4hv_double")
+!f>				bind(C, name="quad_hh_trafo_real_vsx_4hv_double")
 !f>	use, intrinsic :: iso_c_binding
 !f>	integer(kind=c_int)	:: pnb, pnq, pldq, pldh
 !f>	type(c_ptr), value	:: q
@@ -125,7 +125,7 @@ void quad_hh_trafo_real_vsx_4hv_single(float* q, float* hh, int* pnb, int* pnq, 
 !f>#ifdef HAVE_VSX_SSE
 !f> interface
 !f>   subroutine quad_hh_trafo_real_vsx_4hv_single(q, hh, pnb, pnq, pldq, pldh) &
-!f>				bind(C, name="quad_hh_trafo_real_sse_4hv_single")
+!f>				bind(C, name="quad_hh_trafo_real_vsx_4hv_single")
 !f>	use, intrinsic :: iso_c_binding
 !f>	integer(kind=c_int)	:: pnb, pnq, pldq, pldh
 !f>	type(c_ptr), value	:: q
