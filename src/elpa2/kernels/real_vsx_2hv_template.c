@@ -299,10 +299,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	/////////////////////////////////////////////////////
 	int i;
 #ifdef DOUBLE_PRECISION_REAL
-	double mone = 1.0;
+	double mone = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	float mone = 1.0;
+	float mone = -1.0;
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -642,10 +642,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	/////////////////////////////////////////////////////
 	int i;
 #ifdef DOUBLE_PRECISION_REAL
-	double mone = 1.0;
+	double mone = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	float mone = 1.0;
+	float mone = -1.0;
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -964,10 +964,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	int i;
 
 #ifdef DOUBLE_PRECISION_REAL
-	double mone = 1.0;
+	double mone = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	float mone = 1.0;
+	float mone = -1.0;
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -1261,10 +1261,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	/////////////////////////////////////////////////////
 	int i;
 #ifdef DOUBLE_PRECISION_REAL
-	double mone = 1.0;
+	double mone = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	float mone = 1.0;
+	float mone = -1.0;
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -1539,10 +1539,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	/////////////////////////////////////////////////////
 	int i;
 #ifdef DOUBLE_PRECISION_REAL
-	double mone = 1.0;
+	double mone = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	float mone = 1.0;
+	float mone = -1.0;
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -1792,10 +1792,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	/////////////////////////////////////////////////////
 	int i;
 #ifdef DOUBLE_PRECISION_REAL
-	double mone = 1.0;
+	double mone = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	float mone = 1.0;
+	float mone = -1.0;
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
