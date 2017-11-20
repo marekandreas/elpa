@@ -163,11 +163,21 @@ void double_hh_trafo_real_sse_2hv_single_(float* q, float* hh, int* pnb, int* pn
 !f>#endif
 */
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 void double_hh_trafo_real_sse_2hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 #endif
 #ifdef SINGLE_PRECISION_REAL
 void double_hh_trafo_real_sse_2hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+void double_hh_trafo_real_sparc64_2hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
+#endif
 #endif
 {
 	int i;
