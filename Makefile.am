@@ -250,13 +250,13 @@ endif
 #  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_4hv_single_precision.c
 #endif
 #endif
-#
-#if WITH_REAL_VSX_BLOCK4_KERNEL
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_double_precision.c
-#if WANT_SINGLE_PRECISION_REAL
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_single_precision.c
-#endif
-#endif
+
+if WITH_REAL_VSX_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_single_precision.c
+endif
+endif
 
 if WITH_REAL_SSE_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_4hv_double_precision.c
@@ -286,19 +286,19 @@ if WANT_SINGLE_PRECISION_REAL
 endif
 endif
 
-#if WITH_REAL_SPARC64_BLOCK6_KERNEL
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_double_precision.c
-#if WANT_SINGLE_PRECISION_REAL
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_single_precision.c
-#endif
-#endif
-#
-#if WITH_REAL_VSX_BLOCK6_KERNEL
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_6hv_double_precision.c
-#if WANT_SINGLE_PRECISION_REAL
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_6hv_single_precision.c
-#endif
-#endif
+if WITH_REAL_SPARC64_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_single_precision.c
+endif
+endif
+
+if WITH_REAL_VSX_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_6hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_6hv_single_precision.c
+endif
+endif
 
 if WITH_REAL_SSE_BLOCK6_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_6hv_double_precision.c

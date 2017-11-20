@@ -823,7 +823,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *)  &q[offset]);
 	q3 = _SSE_LOAD(0, (unsigned long int *)  &q[2*offset]);
 	q3 = _SSE_ADD(q3, y3);
-	_SSE_STORE((__vector unsigned int) q3,0, (unsigned int *)  &q[2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *)  &q[2*offset]);
 	q4 = _SSE_LOAD(0, (unsigned long int *)  &q[3*offset]);
 	q4 = _SSE_ADD(q4, y4);
 	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *)  &q[3*offset]);
