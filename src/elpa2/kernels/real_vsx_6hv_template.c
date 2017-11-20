@@ -71,7 +71,7 @@
 
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 2
-#define __SSE_DATATYPE  __vector double
+#define __SSE_DATATYPE __vector double
 #define _SSE_LOAD (__vector double) vec_ld
 #define _SSE_ADD vec_add
 #define _SSE_SUB vec_sub
@@ -94,16 +94,16 @@
 
 #ifdef DOUBLE_PRECISION_REAL
 //Forward declaration
-static void hh_trafo_kernel_2_vsx_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
-static void hh_trafo_kernel_4_vsx_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
+static void hh_trafo_kernel_2_VSX_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
+static void hh_trafo_kernel_4_VSX_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods);
 void hexa_hh_trafo_real_vsx_6hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 
 #ifdef SINGLE_PRECISION_REAL
-static void hh_trafo_kernel_4_vsx_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
-static void hh_trafo_kernel_8_vsx_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
+static void hh_trafo_kernel_4_VSX_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
+static void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods);
 
-void hexa_hh_trafo_real_vsx_6hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+void hexa_hh_trafo_real_vsx_6hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 
 #ifdef DOUBLE_PRECISION_REAL
@@ -323,12 +323,12 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	/////////////////////////////////////////////////////
 	int i;
 
-	__SSE_DATATYPE a1_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*5]);
-	__SSE_DATATYPE a2_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*4]);
-	__SSE_DATATYPE a3_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*3]);
-	__SSE_DATATYPE a4_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*2]);
-	__SSE_DATATYPE a5_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq]);
-	__SSE_DATATYPE a6_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[0]);
+	__SSE_DATATYPE a1_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*5]);
+	__SSE_DATATYPE a2_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*4]);
+	__SSE_DATATYPE a3_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*3]);
+	__SSE_DATATYPE a4_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*2]);
+	__SSE_DATATYPE a5_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq]);
+	__SSE_DATATYPE a6_1 = _SSE_LOAD(0, (unsigned long int *) &q[0]);
 
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE h_6_5 = vec_splats(hh[(ldh*5)+1]);
@@ -402,12 +402,12 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 
 	register __SSE_DATATYPE x1 = a1_1;
 
-	__SSE_DATATYPE a1_2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq*5)+offset]);
-	__SSE_DATATYPE a2_2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq*4)+offset]);
-	__SSE_DATATYPE a3_2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq*3)+offset]);
-	__SSE_DATATYPE a4_2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq*2)+offset]);
-	__SSE_DATATYPE a5_2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq)+offset]);
-	__SSE_DATATYPE a6_2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[offset]);
+	__SSE_DATATYPE a1_2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq*5)+offset]);
+	__SSE_DATATYPE a2_2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq*4)+offset]);
+	__SSE_DATATYPE a3_2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq*3)+offset]);
+	__SSE_DATATYPE a4_2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq*2)+offset]);
+	__SSE_DATATYPE a5_2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq)+offset]);
+	__SSE_DATATYPE a6_2 = _SSE_LOAD(0, (unsigned long int *) &q[offset]);
 
 	register __SSE_DATATYPE t2 = _SSE_ADD(a6_2, _SSE_MUL(a5_2, h_6_5));
 	t2 = _SSE_ADD(t2, _SSE_MUL(a4_2, h_6_4));
@@ -445,8 +445,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 #ifdef SINGLE_PRECISION_REAL
 		h1 = vec_splats(hh[i-5] );
 #endif
-		q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[i*ldq]);
-		q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(i*ldq)+offset]);
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q[i*ldq]);
+		q2 = _SSE_LOAD(0, (unsigned long int *) &q[(i*ldq)+offset]);
 
 		x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 		x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
@@ -503,8 +503,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 #ifdef SINGLE_PRECISION_REAL
 	h1 = vec_splats(hh[nb-5] );
 #endif
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[nb*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[nb*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[(nb*ldq)+offset]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
@@ -552,8 +552,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 #ifdef SINGLE_PRECISION_REAL
 	h1 = vec_splats(hh[nb-4] );
 #endif
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+1)*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[((nb+1)*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+1)*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[((nb+1)*ldq)+offset]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
@@ -595,8 +595,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-3] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+2)*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[((nb+2)*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+2)*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[((nb+2)*ldq)+offset]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
@@ -628,8 +628,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-2] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+3)*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[((nb+3)*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+3)*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[((nb+3)*ldq)+offset]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
@@ -652,8 +652,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-1] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+4)*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[((nb+4)*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+4)*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[((nb+4)*ldq)+offset]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 	x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
@@ -790,8 +790,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	// Rank-1 update of Q [4 x nb+3]
 	/////////////////////////////////////////////////////
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[0]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[0]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[offset]);
 	q1 = _SSE_SUB(q1, t1);
 	q2 = _SSE_SUB(q2, t2);
 	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[0]);
@@ -806,16 +806,16 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 #endif
 
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq+offset)]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq+offset)]);
 	q1 = _SSE_SUB(q1, v1);
 	q2 = _SSE_SUB(q2, v2);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
 	q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
 
-	_SSE_STORE((__vector unsigned int), 0, (unsigned int *) &q[ldq]);
-	_SSE_STORE((__vector unsingen int), 0, (unsinged int *) &q[(ldq+offset)]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(ldq+offset)]);
 
 #ifdef DOUBLE_PRECISION_REAL
 	h5 = vec_splats(hh[(ldh*4)+1]);
@@ -823,8 +823,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 #ifdef SINGLE_PRECISION_REAL
 	h5 = vec_splats(hh[(ldh*4)+1] );
 #endif
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*2]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq*2)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*2]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq*2)+offset]);
 	q1 = _SSE_SUB(q1, w1);
 	q2 = _SSE_SUB(q2, w2);
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
@@ -850,8 +850,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h4 = vec_splats(hh[(ldh*3)+1] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*3]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq*3)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*3]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq*3)+offset]);
 	q1 = _SSE_SUB(q1, z1);
 	q2 = _SSE_SUB(q2, z2);
 
@@ -879,7 +879,7 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
 
 	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq*3]);
-	_SSE_STORE((__vector unsinged int) q2, 0, (unsigned int *) &q[(ldq*3)+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(ldq*3)+offset]);
 
 #ifdef DOUBLE_PRECISION_REAL
 	h3 = vec_splats(hh[(ldh*2)+1]);
@@ -888,8 +888,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h3 = vec_splats(hh[(ldh*2)+1] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*4]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq*4)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*4]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq*4)+offset]);
 	q1 = _SSE_SUB(q1, y1);
 	q2 = _SSE_SUB(q2, y2);
 
@@ -936,8 +936,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h2 = vec_splats(hh[(ldh)+1] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*5]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(ldq*5)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*5]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[(ldq*5)+offset]);
 	q1 = _SSE_SUB(q1, x1);
 	q2 = _SSE_SUB(q2, x2);
 
@@ -989,8 +989,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 
 	for (i = 6; i < nb; i++)
 	{
-		q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[i*ldq]);
-		q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(i*ldq)+offset]);
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q[i*ldq]);
+		q2 = _SSE_LOAD(0, (unsigned long int *) &q[(i*ldq)+offset]);
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = vec_splats(hh[i-5]);
 #endif
@@ -1062,8 +1062,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-5] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[nb*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[nb*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[(nb*ldq)+offset]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
@@ -1118,8 +1118,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-4] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+1)*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[((nb+1)*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+1)*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[((nb+1)*ldq)+offset]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
@@ -1164,8 +1164,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-3] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+2)*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[((nb+2)*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+2)*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[((nb+2)*ldq)+offset]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
@@ -1200,8 +1200,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-2] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+3)*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[((nb+3)*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+3)*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[((nb+3)*ldq)+offset]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
@@ -1226,8 +1226,8 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-1] );
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+4)*ldq]);
-	q2 = _SSE_LOAD(0, (unsigned long int *)  0, &q[((nb+4)*ldq)+offset]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+4)*ldq]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q[((nb+4)*ldq)+offset]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
@@ -1247,10 +1247,10 @@ __forceinline void hh_trafo_kernel_8_VSX_6hv_single(float* q, float* hh, int nb,
  * vectors + a rank 1 update is performed
  */
 #ifdef DOUBLE_PRECISION_REAL
-__forceinline void hh_trafo_kernel_2_SSE_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
+__forceinline void hh_trafo_kernel_2_VSX_6hv_double(double* q, double* hh, int nb, int ldq, int ldh, double* scalarprods)
 #endif
 #ifdef SINGLE_PRECISION_REAL
-__forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods)
+__forceinline void hh_trafo_kernel_4_VSX_6hv_single(float* q, float* hh, int nb, int ldq, int ldh, float* scalarprods)
 #endif
 {
 	/////////////////////////////////////////////////////
@@ -1259,12 +1259,12 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	/////////////////////////////////////////////////////
 	int i;
 
-	__SSE_DATATYPE a1_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*5]);
-	__SSE_DATATYPE a2_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*4]);
-	__SSE_DATATYPE a3_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*3]);
-	__SSE_DATATYPE a4_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*2]);
-	__SSE_DATATYPE a5_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq]);
-	__SSE_DATATYPE a6_1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[0]);
+	__SSE_DATATYPE a1_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*5]);
+	__SSE_DATATYPE a2_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*4]);
+	__SSE_DATATYPE a3_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*3]);
+	__SSE_DATATYPE a4_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*2]);
+	__SSE_DATATYPE a5_1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq]);
+	__SSE_DATATYPE a6_1 = _SSE_LOAD(0, (unsigned long int *) &q[0]);
 
 #ifdef DOUBLE_PRECISION_REAL
 	__SSE_DATATYPE h_6_5 = vec_splats(hh[(ldh*5)+1]);
@@ -1353,7 +1353,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 #ifdef SINGLE_PRECISION_REAL
 		h1 = vec_splats(hh[i-5]) ;
 #endif
-		q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[i*ldq]);
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q[i*ldq]);
 
 		x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
@@ -1411,7 +1411,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-5]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[nb*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[nb*ldq]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
@@ -1459,7 +1459,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-4]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+1)*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+1)*ldq]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
@@ -1497,7 +1497,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-3]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+2)*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+2)*ldq]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
@@ -1526,7 +1526,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-2]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+3)*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+3)*ldq]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
@@ -1546,7 +1546,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-1]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+4)*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+4)*ldq]);
 
 	x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 
@@ -1675,7 +1675,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	// Rank-1 update of Q [2 x nb+3]
 	/////////////////////////////////////////////////////
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[0]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[0]);
 	q1 = _SSE_SUB(q1, t1);
 	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[0]);
 
@@ -1686,12 +1686,12 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h6 = vec_splats(hh[(ldh*5)+1]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq]);
 	q1 = _SSE_SUB(q1, v1);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
 
-	_SSE_STORE((__vector unsigned int), q1, 0, (unsigned int *) &q[ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq]);
 
 #ifdef DOUBLE_PRECISION_REAL
 	h5 = vec_splats(hh[(ldh*4)+1]);
@@ -1699,7 +1699,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 #ifdef SINGLE_PRECISION_REAL
 	h5 = vec_splats(hh[(ldh*4)+1]) ;
 #endif
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*2]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*2]);
 	q1 = _SSE_SUB(q1, w1);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
@@ -1722,7 +1722,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h4 = vec_splats(hh[(ldh*3)+1]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*3]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*3]);
 	q1 = _SSE_SUB(q1, z1);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
@@ -1754,7 +1754,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h3 = vec_splats(hh[(ldh*2)+1]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*4]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*4]);
 	q1 = _SSE_SUB(q1, y1);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
@@ -1795,7 +1795,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h2 = vec_splats(hh[(ldh)+1]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[ldq*5]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[ldq*5]);
 	q1 = _SSE_SUB(q1, x1);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
@@ -1840,7 +1840,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 
 	for (i = 6; i < nb; i++)
 	{
-		q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[i*ldq]);
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q[i*ldq]);
 #ifdef DOUBLE_PRECISION_REAL
 		h1 = vec_splats(hh[i-5]);
 #endif
@@ -1905,7 +1905,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-5]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[nb*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[nb*ldq]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
@@ -1954,7 +1954,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-4]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+1)*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+1)*ldq]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
@@ -1985,7 +1985,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 
-	_SSE_STORE((__vector unsigned int), q1, 0, (unsigned int *)&q[(nb+1)*ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *)&q[(nb+1)*ldq]);
 
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = vec_splats(hh[nb-3]);
@@ -1994,7 +1994,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-3]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+2)*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+2)*ldq]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
@@ -2016,7 +2016,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 
-	_SSE_STORE((__vector unsigned int) q1, 0, &(unsigned int *) q[(nb+2)*ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[(nb+2)*ldq]);
 
 #ifdef DOUBLE_PRECISION_REAL
 	h1 = vec_splats(hh[nb-2]);
@@ -2025,7 +2025,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-2]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+3)*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+3)*ldq]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
@@ -2047,7 +2047,7 @@ __forceinline void hh_trafo_kernel_4_SSE_6hv_single(float* q, float* hh, int nb,
 	h1 = vec_splats(hh[nb-1]) ;
 #endif
 
-	q1 = _SSE_LOAD(0, (unsigned long int *)  0, &q[(nb+4)*ldq]);
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q[(nb+4)*ldq]);
 
 	q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 
