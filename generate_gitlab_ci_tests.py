@@ -373,7 +373,7 @@ instruction_set = {
         "sse" : " --enable-sse --enable-sse-assembly",
         "avx" : " --enable-avx",
         "avx2" : " --enable-avx2",
-        "power8" : " --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
+        "power8" : " --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
 }
 
 

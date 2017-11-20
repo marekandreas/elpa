@@ -544,7 +544,7 @@
                     &_generic_simple_&
                     &PRECISION&
                     & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,j+off), &
-		       nbw, nl, stripe_width)
+                       nbw, nl, stripe_width)
 #endif
 
 #endif /* WITH_OPENMP */
@@ -876,6 +876,43 @@
 #endif /* WITH_REAL_VSX_BLOCK2_KERNEL */
 
 #endif /* REALCASE == 1 */
+
+#if REALCASE == 1
+! implementation of sse block 2 real case
+#if defined(WITH_REAL_SSE_BLOCK2_KERNEL)
+
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (kernel .eq. ELPA_2STAGE_REAL_SSE_BLOCK2) then
+
+#endif /* not WITH_FIXED_REAL_KERNEL */
+
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL) && !defined(WITH_REAL_SSE_BLOCK4_KERNEL))
+             do j = ncols, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_sse_2hv_&
+                    &PRECISION &
+                    & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_sse_2hv_&
+                    &PRECISION &
+                    & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_SSE_BLOCK6_KERNEL) && !defined(WITH_REAL_SSE_BLOCK4_KERNEL)) */
+
+#ifndef WITH_FIXED_REAL_KERNEL
+           endif
+#endif /* not WITH_FIXED_REAL_KERNEL */
+#endif /* WITH_REAL_SSE_BLOCK2_KERNEL */
+
+#endif /* REALCASE == 1 */
+
 
 #if COMPLEXCASE == 1
 ! implementation of sparc64 block 2 complex case
