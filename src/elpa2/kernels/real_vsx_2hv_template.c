@@ -45,7 +45,7 @@
 // Author: Andreas Marek, MPCDF, based on the double precision case of A. Heinecke
 //
 
-#ifdef HAVE_VSX
+#ifdef HAVE_VSX_SSE
 #include <altivec.h>
 #endif
 #include <stdio.h>
