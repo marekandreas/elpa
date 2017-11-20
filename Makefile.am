@@ -251,12 +251,12 @@ endif
 #endif
 #endif
 #
-if WITH_REAL_VSX_BLOCK4_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_double_precision.c
-if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_single_precision.c
-endif
-endif
+#if WITH_REAL_VSX_BLOCK4_KERNEL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_double_precision.c
+#if WANT_SINGLE_PRECISION_REAL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_single_precision.c
+#endif
+#endif
 
 if WITH_REAL_SSE_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_4hv_double_precision.c
