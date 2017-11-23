@@ -51,5 +51,5 @@
 #include "../../general/precision_macros.h"
 #include "real_sse_6hv_template.c"
 #undef REALCASE
-#undef SINGLE__PRECISION
+#undef SINGLE_PRECISION
 
