@@ -44,6 +44,7 @@
 //
 // Author: Andreas Marek, MPCDF, based on the double precision case of A. Heinecke
 //
+#include "config-f90.h"
 
 #ifdef HAVE_SSE_INTRINSICS
 #include <x86intrin.h>
@@ -82,6 +83,7 @@
 #undef __AVX__
 #endif
 
+#ifdef HAVE_SSE_INTRINSICS
 //Forward declaration
 #ifdef DOUBLE_PRECISION_REAL
 __forceinline void hh_trafo_kernel_2_SSE_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
@@ -99,13 +101,45 @@ __forceinline void hh_trafo_kernel_16_SSE_2hv_single(float* q, float* hh, int nb
 __forceinline void hh_trafo_kernel_20_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
 __forceinline void hh_trafo_kernel_24_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
 #endif
+#endif
+
+#ifdef HAVE_SPARC64_SSE
+//Forward declaration
+#ifdef DOUBLE_PRECISION_REAL
+__forceinline void hh_trafo_kernel_2_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_4_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_6_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_8_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_10_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+__forceinline void hh_trafo_kernel_12_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+__forceinline void hh_trafo_kernel_4_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+__forceinline void hh_trafo_kernel_8_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+__forceinline void hh_trafo_kernel_12_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+__forceinline void hh_trafo_kernel_16_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+__forceinline void hh_trafo_kernel_20_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+__forceinline void hh_trafo_kernel_24_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s);
+#endif
+#endif
 
 
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 void double_hh_trafo_real_sse_2hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
 #endif
 #ifdef SINGLE_PRECISION_REAL
 void double_hh_trafo_real_sse_2hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+#endif
+#endif
+
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+void double_hh_trafo_real_sparc64_2hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+void double_hh_trafo_real_sparc64_2hv_single_(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh);
+#endif
 #endif
 
 /*
@@ -210,14 +244,24 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef DOUBLE_PRECISION_REAL
 	for (i = 0; i < nq-10; i+=12)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_12_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_12_SPARC64_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 12;
 	}
 #endif
 #ifdef SINGLE_PRECISION_REAL
 	for (i = 0; i < nq-20; i+=24)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_24_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_24_SPARC64_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 24;
 	}
 #endif
@@ -230,7 +274,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef DOUBLE_PRECISION_REAL
 	if (nq-i == 10)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_10_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_10_SPARC64_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 10;
 	}
 #endif
@@ -238,7 +287,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef SINGLE_PRECISION_REAL
 	if (nq-i == 20)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_20_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_20_SPARC64_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 20;
 	}
 #endif
@@ -246,7 +300,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef DOUBLE_PRECISION_REAL
 	if (nq-i == 8)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_8_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_8_SPARC64_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 8;
 	}
 #endif
@@ -254,7 +313,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef SINGLE_PRECISION_REAL
 	if (nq-i == 16)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_16_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_16_SPARC64_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 16;
 	}
 #endif
@@ -263,7 +327,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef DOUBLE_PRECISION_REAL
 	if (nq-i == 6)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_6_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_6_SPARC64_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 6;
 	}
 #endif
@@ -271,7 +340,13 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef SINGLE_PRECISION_REAL
 	if (nq-i == 12)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_12_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_12_SPARC64_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
+
 		worked_on += 12;
 	}
 #endif
@@ -279,7 +354,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef DOUBLE_PRECISION_REAL
 	if (nq-i == 4)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_4_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_4_SPARC64_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 4;
 	}
 #endif
@@ -287,7 +367,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef SINGLE_PRECISION_REAL
 	if (nq-i == 8)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_8_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_8_SPARC64_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 8;
 	}
 #endif
@@ -295,7 +380,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef DOUBLE_PRECISION_REAL
 	if (nq-i == 2)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_2_SSE_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_2_SPARC64_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+#endif
 		worked_on += 2;
 	}
 #endif
@@ -303,14 +393,26 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
 #ifdef SINGLE_PRECISION_REAL
 	if (nq-i == 4)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		hh_trafo_kernel_4_SSE_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		hh_trafo_kernel_4_SPARC64_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+#endif
+
 		worked_on += 4;
 	}
 #endif
 #ifdef WITH_DEBUG
 	if (worked_on != nq)
 	{
+#ifdef HAVE_SSE_INTRINSICS
 		printf("Error in real SSE BLOCK2 kernel %d %d\n", worked_on, nq);
+#endif
+#ifdef HAVE_SPARC64_SSE
+		printf("Error in real SPARC64 BLOCK2 kernel %d %d\n", worked_on, nq);
+#endif
+
 		abort();
 	}
 #endif
@@ -327,11 +429,21 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
  * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_12_SSE_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 #endif
 #ifdef SINGLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_24_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_12_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_24_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
 #endif
 {
 	/////////////////////////////////////////////////////
@@ -661,11 +773,22 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
  * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_10_SSE_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 #endif
 #ifdef SINGLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_20_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_10_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_20_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+
 #endif
 {
 	/////////////////////////////////////////////////////
@@ -973,11 +1096,22 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
  * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_8_SSE_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 #endif
 #ifdef SINGLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_16_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_8_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_16_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+
 #endif
 {
 	/////////////////////////////////////////////////////
@@ -1262,11 +1396,22 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
  * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_6_SSE_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 #endif
 #ifdef SINGLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_12_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_6_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_12_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+
 #endif
 {
 	/////////////////////////////////////////////////////
@@ -1531,11 +1676,22 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
  * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_4_SSE_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 #endif
 #ifdef SINGLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_8_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_4_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_8_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+
 #endif
 {
 	/////////////////////////////////////////////////////
@@ -1775,11 +1931,22 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
  * matrix Vector product with two householder
  * vectors + a rank 2 update is performed
  */
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_2_SSE_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
 #endif
 #ifdef SINGLE_PRECISION_REAL
  __forceinline void hh_trafo_kernel_4_SSE_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+#endif
+#ifdef HAVE_SPARC64_SSE
+#ifdef DOUBLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_2_SPARC64_2hv_double(double* q, double* hh, int nb, int ldq, int ldh, double s)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+ __forceinline void hh_trafo_kernel_4_SPARC64_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
+#endif
+
 #endif
 {
 	/////////////////////////////////////////////////////

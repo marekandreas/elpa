@@ -470,8 +470,6 @@ m4_define(elpa_m4_sparc64_kernels, [
         real_sparc64_block2
         real_sparc64_block4
         real_sparc64_block6
-        complex_sparc64_block1
-        complex_sparc64_block2
 ])
 
 m4_define(elpa_m4_vsx_kernels, [

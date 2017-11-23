@@ -192,6 +192,14 @@
         write(error_unit,*) "The GENERIC kernel will be used at the moment"
         kernel = ELPA_2STAGE_REAL_GENERIC
     endif
+    ! special case at the moment NO single precision kernels on SPARC64 -> set GENERIC for now
+    if (kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK2 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK4 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK6        ) then
+        write(error_unit,*) "ELPA: At the moment there exist no specific SINGLE precision kernels for SPARC64"
+        write(error_unit,*) "The GENERIC kernel will be used at the moment"
+        kernel = ELPA_2STAGE_REAL_GENERIC
+    endif
 #endif
 
 #endif

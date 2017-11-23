@@ -759,7 +759,7 @@ __forceinline void hh_trafo_kernel_12_SPARC64_4hv_single(float* q, float* hh, in
 	h1 = tau1;
 	x1 = _SSE_MUL(x1, h1);
 	x2 = _SSE_MUL(x2, h1);
-	x3 = _SSE_MUL(x3, h1)
+	x3 = _SSE_MUL(x3, h1);
 
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -944,7 +944,7 @@ __forceinline void hh_trafo_kernel_12_SPARC64_4hv_single(float* q, float* hh, in
 #endif
 #endif
 
-#ifdef HAVE_SPARC64_INTRINSICS
+#ifdef HAVE_SPARC64_SSE
 #ifdef DOUBLE_PRECISION_REAL
 	h3 = _mm_set_pd(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
@@ -1164,7 +1164,7 @@ __forceinline void hh_trafo_kernel_12_SPARC64_4hv_single(float* q, float* hh, in
 	q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 	q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
 
-#ifdef HAVE_SSE_INTRINSCS
+#ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
 	h2 = _mm_set1_pd(hh[ldh+nb-2]);
 #endif
@@ -2248,7 +2248,7 @@ __forceinline void hh_trafo_kernel_4_SPARC64_4hv_single(float* q, float* hh, int
 #endif
 #endif
 
-#ifdef HAVE_SPARC64
+#ifdef HAVE_SPARC64_SSE
 #ifdef DOUBLE_PRECISION_REAL
 	h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
 	h3 = _mm_set_pd(hh[(ldh*2)+2], hh[(ldh*2)+2]);

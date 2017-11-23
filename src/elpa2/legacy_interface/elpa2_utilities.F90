@@ -57,7 +57,7 @@ module elpa2_utilities
   public
 
   integer(kind=c_int), parameter :: number_of_real_kernels = ELPA_2STAGE_NUMBER_OF_REAL_KERNELS - 6
-  integer(kind=c_int), parameter :: number_of_complex_kernels = ELPA_2STAGE_NUMBER_OF_COMPLEX_KERNELS - 4
+  integer(kind=c_int), parameter :: number_of_complex_kernels = ELPA_2STAGE_NUMBER_OF_COMPLEX_KERNELS
 
 #ifdef WITH_REAL_GENERIC_KERNEL
   integer(kind=c_int), parameter :: REAL_ELPA_KERNEL_GENERIC = ELPA_2STAGE_REAL_GENERIC
