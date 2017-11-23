@@ -172,7 +172,7 @@
     if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-	write(error_unit,*) "The compute kernel will be executed on CPUs!"
+        write(error_unit,*) "The compute kernel will be executed on CPUs!"
       else if (nblk .ne. 128) then
         kernel = ELPA_2STAGE_REAL_GENERIC
       endif
@@ -182,6 +182,18 @@
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
       endif
     endif
+
+#ifdef SINGLE_PRECISION_REAL
+    ! special case at the moment NO single precision kernels on POWER 8 -> set GENERIC for now
+    if (kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK2 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK4 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK6        ) then
+        write(error_unit,*) "ELPA: At the moment there exist no specific SINGLE precision kernels for POWER8"
+        write(error_unit,*) "The GENERIC kernel will be used at the moment"
+        kernel = ELPA_2STAGE_REAL_GENERIC
+    endif
+#endif
+
 #endif
 
 #if COMPLEXCASE == 1
@@ -191,7 +203,7 @@
     if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-	write(error_unit,*) "The compute kernel will be executed on CPUs!"
+        write(error_unit,*) "The compute kernel will be executed on CPUs!"
       else if (nblk .ne. 128) then
         kernel = ELPA_2STAGE_COMPLEX_GENERIC
       endif

@@ -478,8 +478,6 @@ m4_define(elpa_m4_vsx_kernels, [
         real_vsx_block2
         real_vsx_block4
         real_vsx_block6
-        complex_vsx_block1
-        complex_vsx_block2
 ])
 
 m4_define(elpa_m4_avx_kernels, [
