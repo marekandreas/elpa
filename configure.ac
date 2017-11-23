@@ -27,7 +27,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [10:0:2])
+AC_SUBST([ELPA_SO_VERSION], [10:1:2])
 
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
@@ -142,7 +142,7 @@ fi
 
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
-  AC_CHECK_PROGS([MPI_BINARY], [srun mpiexec.hydra mpiexec mpirun poe runjob], [no])
+  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun], [no])
   if test x"$MPI_BINARY" = x"no"; then
     AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun])
   fi
@@ -466,6 +466,18 @@ m4_define(elpa_m4_sse_kernels, [
         complex_sse_block2
 ])
 
+m4_define(elpa_m4_sparc64_kernels, [
+        real_sparc64_block2
+        real_sparc64_block4
+        real_sparc64_block6
+])
+
+m4_define(elpa_m4_vsx_kernels, [
+        real_vsx_block2
+        real_vsx_block4
+        real_vsx_block6
+])
+
 m4_define(elpa_m4_avx_kernels, [
         real_avx_block2
         real_avx_block4
@@ -505,7 +517,7 @@ m4_define(elpa_m4_gpu_kernels, [
         complex_gpu
 ])
 
-m4_define(elpa_m4_kernel_types, [generic sse sse_assembly avx avx2 avx512 bgp bgq gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 vsx sse sse_assembly avx avx2 avx512 bgp bgq gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -538,6 +550,8 @@ AC_DEFUN([ELPA_SELECT_KERNELS], [
 
 dnl Modify list of kernels with configure arguments
 ELPA_SELECT_KERNELS([generic],[enable])
+ELPA_SELECT_KERNELS([sparc64],[disable])
+ELPA_SELECT_KERNELS([vsx],[disable])
 ELPA_SELECT_KERNELS([sse],[enable])
 ELPA_SELECT_KERNELS([sse_assembly],[enable])
 ELPA_SELECT_KERNELS([avx],[enable])
@@ -552,7 +566,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 ])
 
 if test x"${enable_bgp}" = x"yes" -o x"$enable_bgq" = x"yes"; then
-        m4_foreach_w([elpa_m4_kernel], elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels, [
+        m4_foreach_w([elpa_m4_kernel], elpa_m4_sparc64_kernels elpa_m4_vsx_kernels elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels, [
                 if x"$use_[]elpa_m4_kernel[]" = x"yes" ; then
                         echo "Disabling elpa_m4_kernel due to BGP/BGQ option"
                 fi
@@ -612,7 +626,7 @@ AC_DEFUN([ELPA_KERNEL_DEPENDS],[
                   ])
           fi
 ])
-m4_foreach_w([elpa_m4_arch],[sse avx avx2 avx512],[
+m4_foreach_w([elpa_m4_arch],[sparc64 vsx sse avx avx2 avx512],[
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block6], [real_]elpa_m4_arch[_block4 real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block4], [real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([complex_]elpa_m4_arch[_block2], [complex_]elpa_m4_arch[_block1])
@@ -646,7 +660,7 @@ dnl choosing a default kernel
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_generic_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sparc64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -664,7 +678,55 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kind)[_DEFAULT])
 ])
 
+dnl #include <fjmfunc.h>
+dnl #include <emmintrin.h>
+dnl int main(int argc, char **argv) {
+dnl   __m128d q;
+dnl   __m128d h1 = _fjsp_neg_v2r8(q);
+dnl   return 0;
+dnl }
 AC_LANG_PUSH([C])
+
+if test x"${need_vsx}" = x"yes"; then
+  AC_MSG_CHECKING(whether we can compile Altivec VSX with intrinsics in C)
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#include <altivec.h>
+int main(int argc, char **argv) {
+  __vector double a, b, c;
+  c = vec_add(a,b);
+  return 0;
+}
+    ])],
+    [can_compile_vsx=yes],
+    [can_compile_vsx=no]
+  )
+  AC_MSG_RESULT([${can_compile_vsx}])
+  if test x"$can_compile_vsx" != x"yes"; then
+    AC_MSG_ERROR([Could not compile test program, try with --disable-vsx, or adjust the C compiler or CFLAGS])
+  fi
+  AC_DEFINE([HAVE_VSX_SSE],[1],[Altivec VSX intrinsics are supported on this CPU])
+fi
+
+
+if test x"${need_sparc64}" = x"yes"; then
+  AC_MSG_CHECKING(whether we can compile SPARC64 with intrinsics in C)
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#include <x86intrin.h>
+int main(int argc, char **argv) {
+  double* q;
+  __m128d h1 = _mm_loaddup_pd(q);
+  return 0;
+}
+    ])],
+    [can_compile_sparc64=yes],
+    [can_compile_sparc64=no]
+  )
+  AC_MSG_RESULT([${can_compile_sparc64}])
+  if test x"$can_compile_sparc64" != x"yes"; then
+    AC_MSG_ERROR([Could not compile test program, try with --disable-sparc64, or adjust the C compiler or CFLAGS])
+  fi
+  AC_DEFINE([HAVE_SPARC64_SSE],[1],[SPARC64 intrinsics are supported on this CPU])
+fi
 
 if test x"${need_sse}" = x"yes"; then
   AC_MSG_CHECKING(whether we can compile SSE3 with gcc intrinsics in C)
@@ -1035,7 +1097,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 
 #echo " "
 #echo "***********************************************************************"
-#echo "*  This is a the release of ELPA 2017.05.002                          *"
+#echo "*  This is a the release of ELPA 2017.05.003                          *"
 #echo "*  It mainly contains bugfixes to ELPA 2017.05.001                    *"
 #echo "***********************************************************************"
 #echo " "

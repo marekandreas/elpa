@@ -1,19 +1,19 @@
-if [ "$(hostname)" = "buildtest-rzg" ]; then module load impi/5.1.3 intel/16.0 gcc/6.3 mkl/11.3 autotools pkg-config; fi
+if [ "$(hostname)" == "buildtest-rzg" ]; then module load impi/5.1.3 intel/16.0 gcc/6.3 mkl/11.3 autotools pkg-config; fi
 
-if [ "$(hostname)" = "knl1" -o "$(hostname)" = "knl2" -o "$(hostname)" = "knl3" -o "$(hostname)" = "knl4" ] ; then module load impi/5.1.3 intel/16.0 gcc/7.2 mkl/11.3 pkg-config; fi
-if [ "$(hostname)" == "maik" ]; then module load impi/5.1.3 intel intel/17.0 gcc/7.2 mkl/2017 pkg-config/0.29.1; fi
+if [ "$(hostname)" == "knl1" -o "$(hostname)" == "knl2" -o "$(hostname)" == "knl3" -o "$(hostname)" == "knl4" ] ; then module load impi/2017.4 intel/17.0 gcc/7.2 mkl/2017 pkg-config; fi
+if [ "$(hostname)" == "maik" ]; then module load impi/5.1.3 intel intel/17.0 gcc/6.3 mkl/2017 pkg-config/0.29.1; fi
 
-if [ "$(hostname)" = "gp02" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config; fi
+if [ "$(hostname)" == "gp02" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config; fi
 
-if [ "$(hostname)" = "amarek-elpa-gitlab-runner-1" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
-if [ "$(hostname)" = "amarek-elpa-gitlab-runner-2" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
-if [ "$(hostname)" = "amarek-elpa-gitlab-runner-3" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
-if [ "$(hostname)" = "amarek-elpa-gitlab-runner-4" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
+if [ "$(hostname)" == "amarek-elpa-gitlab-runner-1" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
+if [ "$(hostname)" == "amarek-elpa-gitlab-runner-2" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
+if [ "$(hostname)" == "amarek-elpa-gitlab-runner-3" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
+if [ "$(hostname)" == "amarek-elpa-gitlab-runner-4" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
 
-if [ "$(hostname)" = "dvl01" ]; then module load intel/17.0 gcc/5.4 mkl/2017 impi/2017.2 gcc/5.4 cuda/8.0; fi
-if [ "$(hostname)" = "dvl02" ]; then module load intel/17.0 gcc/5.4 mkl/2017 impi/2017.2 gcc/5.4 cuda/8.0; fi
+if [ "$(hostname)" == "dvl01" ]; then module load intel/17.0 gcc/5.4 mkl/2017 impi/2017.2 gcc/5.4 cuda/8.0; fi
+if [ "$(hostname)" == "dvl02" ]; then module load intel/17.0 gcc/5.4 mkl/2017 impi/2017.2 gcc/5.4 cuda/8.0; fi
 
-if [ "$(hostname)" == "miy01" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
+if [ "$(hostname)" == "miy01" ]; then module purge && module load gcc/5.4 smpi essl/5.5 cuda pgi/17.9 && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH && export OMPI_CC=gcc && export OMPI_FC=gfortran; fi
 if [ "$(hostname)" == "miy02" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
 if [ "$(hostname)" == "miy03" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
 
@@ -53,5 +53,9 @@ export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI
 
 export ASAN_OPTIONS=suppressions=no_asan_for_mpi.supp,fast_unwind_on_malloc=0
 export LSAN_OPTIONS=suppressions=no_lsan_for_mpi.supp
+
 fi
+
+if [ "$(hostname)" != "knl1" -a "$(hostname)" != "knl2" -a "$(hostname)" != "knl3" -a "$(hostname)" != "knl4" -a  "$(hostname)" != "maik" ] ; then export I_MPI_DEBUG=5; fi
+
 module list
