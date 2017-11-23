@@ -689,9 +689,6 @@ EXTRA_DIST = \
   src/elpa2/kernels/real_vsx_2hv_template.c \
   src/elpa2/kernels/real_vsx_4hv_template.c \
   src/elpa2/kernels/real_vsx_6hv_template.c \
-  src/elpa2/kernels/real_sparc64_2hv_template.c \
-  src/elpa2/kernels/real_sparc64_4hv_template.c \
-  src/elpa2/kernels/real_sparc64_6hv_template.c \
   src/elpa2/kernels/real_sse_2hv_template.c \
   src/elpa2/kernels/real_sse_4hv_template.c \
   src/elpa2/kernels/real_sse_6hv_template.c \
