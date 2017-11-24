@@ -20,14 +20,18 @@ module elpa_autotune_impl
 
   contains
 
-
+    !> \brief function to print the autotuning
+    !> Parameters
+    !> \param   self  class(elpa_autotune_impl_t) the allocated ELPA autotune object
     subroutine elpa_autotune_print(self)
       implicit none
       class(elpa_autotune_impl_t), intent(in) :: self
-      print *, "Print me"
+      !print *, "Print me"
     end subroutine
 
-
+    !> \brief function to destroy an elpa autotune object
+    !> Parameters
+    !> \param   self  class(elpa_autotune_impl_t) the allocated ELPA autotune object
     subroutine elpa_autotune_destroy(self)
       implicit none
       class(elpa_autotune_impl_t), intent(inout) :: self

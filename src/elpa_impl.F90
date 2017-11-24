@@ -203,6 +203,22 @@ module elpa_impl
     end subroutine
 
 
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_deallocate method
+    !c> *
+    !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
+    !c> *  \result void
+    !c> */
+    !c> void elpa_autotune_deallocate(elpa_t handle);
+    subroutine elpa_autotune_impl_deallocate_c(handle) bind(C, name="elpa_autotune_deallocate")
+      type(c_ptr), value :: handle
+      type(elpa_impl_t), pointer :: self
+
+      call c_f_pointer(handle, self)
+      call self%destroy()
+      deallocate(self)
+    end subroutine
+
+
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
@@ -2154,6 +2170,30 @@ module elpa_impl
 
       call self%autotune_timer%enable()
     end function
+
+
+    !!c> /*! \brief C interface for the implementation of the elpa_autotune_setup method
+    !!c> *
+    !!c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !!c> *  \param  int              level:  "thoroughness" of autotuning
+    !!c> *  \param  int              domain: real/complex autotuning
+    !!c> *  \result elpa_autotune_t  handle:  on the autotune object
+    !!c> */
+    !!c> elpa_autotune_t elpa_autotune_setup(elpa_t handle, int level, int domain);
+    !function elpa_autotune_setup_c(handle ,level, domain) result(ptr) bind(C, name="elpa_autotune_setup")
+    !  type(c_ptr), intent(in), value :: handle
+    !  type(elpa_impl_t), pointer :: self
+    !  class(elpa_autotune_impl_t), pointer :: obj
+    !  integer(kind=c_int) :: error
+    !  integer(kind=c_int) :: level
+    !  integer(kind=c_int) :: domain
+    !  type(c_ptr) :: ptr
+
+    !  call c_f_pointer(handle, self)
+    !  obj => self%autotune_setup(level, domain) 
+    !  ptr = c_loc(obj)
+
+    !end function
 
 
     !> \brief function to do an autotunig step
