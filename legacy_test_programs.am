@@ -1,4 +1,5 @@
 noinst_PROGRAMS += \
+  real_2stage_c_version@SUFFIX@ \
   legacy_real_1stage@SUFFIX@ \
   legacy_complex_1stage@SUFFIX@ \
   legacy_real_2stage@SUFFIX@ \
@@ -71,6 +72,11 @@ noinst_PROGRAMS += \
   legacy_single_complex_2stage_gpu@SUFFIX@
 endif
 endif
+
+real_2stage_c_version@SUFFIX@_SOURCES = test/C/real_2stage_c_version.c
+real_2stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+real_2stage_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
+EXTRA_real_2stage_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.F90
 
 legacy_real_1stage_c_version@SUFFIX@_SOURCES = test/C/elpa1/legacy_interface/legacy_real_1stage_c_version.c
 legacy_real_1stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)

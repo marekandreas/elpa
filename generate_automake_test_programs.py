@@ -2,6 +2,11 @@
 from __future__ import print_function
 from itertools import product
 
+language_flag = { 
+        "Fortran" : "Fortran",
+        "C" : "C",
+}
+
 domain_flag = {
         "real"   : "-DTEST_REAL",
         "complex": "-DTEST_COMPLEX",
@@ -39,7 +44,8 @@ layout_flag = {
         "square" : ""
 }
 
-for m, g, t, p, d, s, l in product(
+for lang, m, g, t, p, d, s, l in product(
+                             sorted(language_flag.keys()),
                              sorted(matrix_flag.keys()),
                              sorted(gpu_flag.keys()),
                              sorted(test_type_flag.keys()),
@@ -47,6 +53,11 @@ for m, g, t, p, d, s, l in product(
                              sorted(domain_flag.keys()),
                              sorted(solver_flag.keys()),
                              sorted(layout_flag.keys())):
+
+    if (lang == "C"):
+        continue
+    if (lang == "C" and ( m == "analytic" or l == "all_layouts")):
+        continue
 
     if(m == "analytic" and (g == 1 or t != "eigenvectors")):
         continue
@@ -102,28 +113,53 @@ for m, g, t, p, d, s, l in product(
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "test_{0}_{1}_{2}_{3}{4}{5}{6}{7}".format(
-                    d, p, t, s,
-                    "" if kernel == "nokernel" else "_" + kernel,
-                    "_gpu" if g else "",
-                    "_analytic" if m == "analytic" else "",
-                    "_all_layouts" if l == "all_layouts" else "")
-        print("noinst_PROGRAMS += " + name)
-        print("check_SCRIPTS += " + name + ".sh")
-        print(name + "_SOURCES = test/Fortran/test.F90")
-        print(name + "_LDADD = $(test_program_ldadd)")
-        print(name + "_FCFLAGS = $(test_program_fcflags) \\")
-        print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
-        print("  " + " \\\n  ".join([
-            domain_flag[d],
-            prec_flag[p],
-            test_type_flag[t],
-            solver_flag[s],
-            gpu_flag[g],
-            matrix_flag[m]] + extra_flags))
+        if (lang == "Fortran"):
 
-        print("endif\n" * endifs)
+            name = "test_{0}_{1}_{2}_{3}{4}{5}{6}{7}".format(
+                        d, p, t, s,
+                        "" if kernel == "nokernel" else "_" + kernel,
+                        "_gpu" if g else "",
+                        "_analytic" if m == "analytic" else "",
+                        "_all_layouts" if l == "all_layouts" else "")
+            print("noinst_PROGRAMS += " + name)
+            print("check_SCRIPTS += " + name + ".sh")
+            print(name + "_SOURCES = test/Fortran/test.F90")
+            print(name + "_LDADD = $(test_program_ldadd)")
+            print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+            print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
+            print("  " + " \\\n  ".join([
+                domain_flag[d],
+                prec_flag[p],
+                test_type_flag[t],
+                solver_flag[s],
+                gpu_flag[g],
+                matrix_flag[m]] + extra_flags))
 
+            print("endif\n" * endifs)
+
+        if (lang == "C"):
+
+            name = "test_c_version_{0}_{1}_{2}_{3}{4}{5}{6}{7}".format(
+                        d, p, t, s,
+                        "" if kernel == "nokernel" else "_" + kernel,
+                        "_gpu" if g else "",
+                        "_analytic" if m == "analytic" else "",
+                        "_all_layouts" if l == "all_layouts" else "")
+            print("noinst_PROGRAMS += " + name)
+            print("check_SCRIPTS += " + name + ".sh")
+            print(name + "_SOURCES = test/C/test.c")
+            print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+            print(name + "_CFLAGS = $(test_program_fcflags) \\")
+            print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
+            print("  " + " \\\n  ".join([
+                domain_flag[d],
+                prec_flag[p],
+                test_type_flag[t],
+                solver_flag[s],
+                gpu_flag[g],
+                matrix_flag[m]] + extra_flags))
+
+            print("endif\n" * endifs)
 
 for p, d in product(sorted(prec_flag.keys()), sorted(domain_flag.keys())):
     endifs = 0
