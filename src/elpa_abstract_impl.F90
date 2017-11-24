@@ -77,7 +77,7 @@ module elpa_abstract_impl
     type(timer_dummy_t) :: timer
 #endif
     type(c_ptr)         :: index = C_NULL_PTR
-
+    logical             :: eigenvalues_only
     contains
       procedure, public :: elpa_set_integer                      !< private methods to implement the setting of an integer/double key/value pair
       procedure, public :: elpa_set_double
