@@ -96,10 +96,10 @@ module elpa_api
       procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
 
       ! Timer
-      procedure(elpa_get_time_i), deferred, public :: get_time
-      procedure(elpa_print_times_i), deferred, public :: print_times
-      procedure(elpa_timer_start_i), deferred, public :: timer_start
-      procedure(elpa_timer_stop_i), deferred, public :: timer_stop
+      procedure(elpa_get_time_i), deferred, public :: get_time        !< method to get the times from the timer object
+      procedure(elpa_print_times_i), deferred, public :: print_times  !< method to print the timings tree
+      procedure(elpa_timer_start_i), deferred, public :: timer_start  !< method to start a time measurement
+      procedure(elpa_timer_stop_i), deferred, public :: timer_stop    !< method to stop a time measurement
 
       ! Actual math routines
       generic, public :: eigenvectors => &                          !< method eigenvectors for solving the full eigenvalue problem
@@ -132,14 +132,14 @@ module elpa_api
           elpa_invert_trm_dc, &
           elpa_invert_trm_fc
 
-      generic, public :: solve_tridiagonal => &                           !< method to solve the eigenvalue problem for a tridiagonal
-          elpa_solve_tridiagonal_d, &                                     !< matrix
+      generic, public :: solve_tridiagonal => &                      !< method to solve the eigenvalue problem for a tridiagonal
+          elpa_solve_tridiagonal_d, &                                !< matrix
           elpa_solve_tridiagonal_f
 
       ! Auto-tune
-      procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup
-      procedure(elpa_autotune_step_i), deferred, public :: autotune_step
-      procedure(elpa_autotune_set_best_i), deferred, public :: autotune_set_best
+      procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
+      procedure(elpa_autotune_step_i), deferred, public :: autotune_step         !< method to do an autotuning step
+      procedure(elpa_autotune_set_best_i), deferred, public :: autotune_set_best !< method to set the best options
 
       !> \brief These method have to be public, in order to be overrideable in the extension types
       procedure(elpa_set_integer_i), deferred, public :: elpa_set_integer
@@ -177,6 +177,8 @@ module elpa_api
       procedure(elpa_solve_tridiagonal_f_i), deferred, public :: elpa_solve_tridiagonal_f
   end type elpa_t
 
+
+  !> \brief Abstract definition of the elpa_autotunet type
   type, abstract :: elpa_autotune_t
     private
     contains
@@ -200,7 +202,7 @@ module elpa_api
   end interface
 
 
-  !> \brief abstract definition of setup method
+  !> \brief abstract definition of the ELPA setup method
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
@@ -215,6 +217,13 @@ module elpa_api
   end interface
 
 
+  !> \brief abstract definition of the autotune setup method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   level       integer: the level of "thoroughness" of the tuning steps
+  !> \param   domain      integer: domain (real/complex) which should be tuned
+  !> \result  tune_state  class(elpa_autotune_t): the autotuning object
   abstract interface
     function elpa_autotune_setup_i(self, level, domain) result(tune_state)
       import elpa_t, elpa_autotune_t
@@ -226,6 +235,12 @@ module elpa_api
   end interface
 
 
+  !> \brief abstract definition of the autotune step method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   unfinished  logical: state whether tuning is unfinished or not
   abstract interface
     function elpa_autotune_step_i(self, tune_state) result(unfinished)
       import elpa_t, elpa_autotune_t
@@ -236,7 +251,13 @@ module elpa_api
     end function
   end interface
 
-
+  
+  !> \brief abstract definition of the autotune set_best method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> Sets the best combination of ELPA options
   abstract interface
     subroutine elpa_autotune_set_best_i(self, tune_state)
       import elpa_t, elpa_autotune_t
@@ -1214,7 +1235,10 @@ module elpa_api
     end subroutine
   end interface
 
-
+ 
+  !> \brief abstract definition of interface to print the autotuning state
+  !> Parameters
+  !> \param   self        class(elpa_autotune_t): the ELPA autotune object
   abstract interface
     subroutine elpa_autotune_print_i(self)
       import elpa_autotune_t
@@ -1223,7 +1247,10 @@ module elpa_api
     end subroutine
   end interface
 
-
+ 
+  !> \brief abstract definition of interface to destroy the autotuning state
+  !> Parameters
+  !> \param   self        class(elpa_autotune_t): the ELPA autotune object
   abstract interface
     subroutine elpa_autotune_destroy_i(self)
       import elpa_autotune_t

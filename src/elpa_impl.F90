@@ -373,6 +373,12 @@ module elpa_impl
     end function
 
 
+    !> \brief function to convert a value to an human readable string
+    !> Parameters
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
+    !> \param   option_name string: the name of the options, whose value should be converted
+    !> \param   error       integer: errpr code
+    !> \result  string      string: the humanreadable string   
     function elpa_value_to_string(self, option_name, error) result(string)
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
@@ -448,8 +454,13 @@ module elpa_impl
       call c_f_pointer(name_p, name)
       call elpa_get_double(self, name, value, error)
     end subroutine
+ 
 
-
+    !> \brief function to associate a pointer with an integer value
+    !> Parameters
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
+    !> \param   name        string: the name of the entry
+    !> \result  value       integer, pointer: the value for the entry
     function elpa_associate_int(self, name) result(value)
       class(elpa_impl_t)             :: self
       character(*), intent(in)       :: name
@@ -465,6 +476,13 @@ module elpa_impl
     end function
 
 
+    !> \brief function to querry the timing information at a certain level
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name1 .. name6  string: the string identifier for the timer region.
+    !>                                  at the moment 6 nested levels can be queried
+    !> \result  s               double: the timer metric for the region. Might be seconds,
+    !>                                  or any other supported metric
     function elpa_get_time(self, name1, name2, name3, name4, name5, name6) result(s)
       class(elpa_impl_t), intent(in) :: self
       ! this is clunky, but what can you do..
@@ -479,6 +497,11 @@ module elpa_impl
     end function
 
 
+    !> \brief function to print the timing tree below at a certain level
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name1 .. name6  string: the string identifier for the timer region.
+    !>                                  at the moment 4 nested levels can be specified
     subroutine elpa_print_times(self, name1, name2, name3, name4)
       class(elpa_impl_t), intent(in) :: self
       character(len=*), intent(in), optional :: name1, name2, name3, name4
@@ -488,6 +511,10 @@ module elpa_impl
     end subroutine
 
 
+    !> \brief function to start the timing of a code region
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name            string: a chosen identifier name for the code region
     subroutine elpa_timer_start(self, name)
       class(elpa_impl_t), intent(inout) :: self
       character(len=*), intent(in) :: name
@@ -497,6 +524,10 @@ module elpa_impl
     end subroutine
 
 
+    !> \brief function to stop the timing of a code region
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name            string: identifier name for the code region to stop
     subroutine elpa_timer_stop(self, name)
       class(elpa_impl_t), intent(inout) :: self
       character(len=*), intent(in) :: name
@@ -1349,6 +1380,8 @@ module elpa_impl
       call elpa_hermitian_multiply_f(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
                                      ncols_b, c, nrows_c, ncols_c, error)
     end subroutine
+
+ 
     !> \brief  elpa_hermitian_multiply_dc: class method to perform C : = A**H * B for double complex matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
     !>                 B is a (self%na,ncb) matrix
@@ -1434,6 +1467,7 @@ module elpa_impl
       call elpa_hermitian_multiply_dc(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
                                      ncols_b, c, nrows_c, ncols_c, error)
     end subroutine
+
 
     !> \brief  elpa_hermitian_multiply_fc: class method to perform C : = A**H * B for float complex matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
@@ -2069,6 +2103,9 @@ module elpa_impl
     end subroutine
 
 
+    !> \brief function to destroy an elpa object
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
     subroutine elpa_destroy(self)
 #ifdef WITH_MPI
       integer :: mpi_comm_rows, mpi_comm_cols, mpierr
@@ -2091,6 +2128,13 @@ module elpa_impl
 
     end subroutine
 
+
+    !> \brief function to setup the ELPA autotuning and create the autotune object
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   level           integer: the "thoroughness" of the planed autotuning
+    !> \param   domain          integer: the domain (real/complex) which should be tuned
+    !> \result  tune_state      class(elpa_autotune_t): the created autotuning object
     function elpa_autotune_setup(self, level, domain) result(tune_state)
       class(elpa_impl_t), intent(inout), target :: self
       integer, intent(in) :: level, domain
@@ -2112,6 +2156,11 @@ module elpa_impl
     end function
 
 
+    !> \brief function to do an autotunig step
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
+    !> \result  unfinished      logical: describes the state of the autotuning (completed/uncompleted)
     function elpa_autotune_step(self, tune_state) result(unfinished)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
@@ -2151,6 +2200,10 @@ module elpa_impl
     end function
 
 
+    !> \brief function to set the up-to-know best options of the autotuning
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
     subroutine elpa_autotune_set_best(self, tune_state)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
