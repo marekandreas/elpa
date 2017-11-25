@@ -175,7 +175,8 @@ for p, d in product(sorted(prec_flag.keys()), sorted(domain_flag.keys())):
     name = "test_autotune_{0}_{1}".format(d, p)
 
     print("noinst_PROGRAMS += " + name)
-    print("check_SCRIPTS += " + name + ".sh")
+    if (p != "single"):
+        print("check_SCRIPTS += " + name + ".sh")
     print(name + "_SOURCES = test/Fortran/test_autotune.F90")
     print(name + "_LDADD = $(test_program_ldadd)")
     print(name + "_FCFLAGS = $(test_program_fcflags) \\")
