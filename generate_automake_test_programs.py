@@ -23,6 +23,13 @@ gpu_flag = {
 matrix_flag = {
         "random" : "-DTEST_MATRIX_RANDOM",
         "analytic" : "-DTEST_MATRIX_ANALYTIC",
+        "toeplitz" : "-DTEST_MATRIX_TOEPLITZ",
+        "frank" : "-DTEST_MATRIX_FRANK",
+}
+
+qr_flag = {
+        0 : "-DTEST_QR_DECOMPOSITION=0",
+        1 : "-DTEST_QR_DECOMPOSITION=1",
 }
 
 test_type_flag = {
@@ -31,7 +38,6 @@ test_type_flag = {
         "solve_tridiagonal"  : "-DTEST_SOLVE_TRIDIAGONAL",
         "cholesky"  : "-DTEST_CHOLESKY",
         "hermitian_multiply"  : "-DTEST_HERMITIAN_MULTIPLY",
-        "qr"  : "-DTEST_QR_DECOMPOSITION",
 }
 
 layout_flag = {
@@ -39,31 +45,49 @@ layout_flag = {
         "square" : ""
 }
 
-for m, g, t, p, d, s, l in product(
+for m, g, q, t, p, d, s, l in product(
                              sorted(matrix_flag.keys()),
                              sorted(gpu_flag.keys()),
+                             sorted(qr_flag.keys()),
                              sorted(test_type_flag.keys()),
                              sorted(prec_flag.keys()),
                              sorted(domain_flag.keys()),
                              sorted(solver_flag.keys()),
                              sorted(layout_flag.keys())):
 
+    # exclude some test combinations
+
+    # analytic tests only for "eigenvectors" and not on GPU
     if(m == "analytic" and (g == 1 or t != "eigenvectors")):
+        continue
+
+    # Frank tests only for "eigenvectors" and eigenvalues and real double precision case
+    if(m == "frank" and ((t != "eigenvectors"  or t != "eigenvalues") and (d !="real" or p !="double"))):
         continue
 
     if(s in ["scalapack_all", "scalapack_part"]  and (g == 1 or t != "eigenvectors" or m != "analytic")):
         continue
 
-    if (t == "solve_tridiagonal" and (s == "2stage" or d == "complex")):
+    # solve tridiagonal only for real toeplitz matrix in 1stage
+    if (t == "solve_tridiagonal" and (s != "1stage" or d !="real" or m != "toeplitz")):
         continue
 
-    if (t == "cholesky" and (s == "2stage")):
+
+    # cholesky tests only 1stage and teoplitz matrix
+    if (t == "cholesky" and (m != "toeplitz" or s == "2stage")):
+        continue
+
+    if (t == "eigenvalues" and (m == "random")):
         continue
 
     if (t == "hermitian_multiply" and (s == "2stage")):
         continue
 
-    if (t == "qr" and (s == "1stage" or d == "complex")):
+    if (t == "hermitian_multiply" and (m == "toeplitz")):
+        continue
+
+    # qr only for 2stage real
+    if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == 1 or m != "random")):
         continue
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
@@ -102,13 +126,18 @@ for m, g, t, p, d, s, l in product(
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "test_{0}_{1}_{2}_{3}{4}{5}{6}{7}".format(
+        name = "test_{0}_{1}_{2}_{3}{4}_{5}{6}{7}{8}".format(
                     d, p, t, s,
                     "" if kernel == "nokernel" else "_" + kernel,
-                    "_gpu" if g else "",
-                    "_analytic" if m == "analytic" else "",
+                    "gpu_" if g else "",
+                    "qr_" if q else "",
+                    m,
                     "_all_layouts" if l == "all_layouts" else "")
+        print("if BUILD_KCOMPUTER")
+        print("bin_PROGRAMS += " + name)
+        print("else")
         print("noinst_PROGRAMS += " + name)
+        print("endif")
         print("check_SCRIPTS += " + name + ".sh")
         print(name + "_SOURCES = test/Fortran/test.F90")
         print(name + "_LDADD = $(test_program_ldadd)")
@@ -120,6 +149,7 @@ for m, g, t, p, d, s, l in product(
             test_type_flag[t],
             solver_flag[s],
             gpu_flag[g],
+            qr_flag[q],
             matrix_flag[m]] + extra_flags))
 
         print("endif\n" * endifs)
