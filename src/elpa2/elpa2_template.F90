@@ -541,7 +541,7 @@
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
 #endif
-       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU, wantDebug, success)
        call obj%timer%stop("solve")
        if (.not.(success)) return
      endif ! do_solve_tridi

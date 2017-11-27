@@ -314,7 +314,7 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
         q_real, l_rows,  &
 #endif
-        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU, wantDebug, success)
      call obj%timer%stop("solve")
      if (.not.(success)) return
    endif !do_solve

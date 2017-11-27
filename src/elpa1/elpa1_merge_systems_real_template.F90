@@ -57,7 +57,7 @@
     subroutine merge_systems_&
     &PRECISION &
                          (obj, na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, wantDebug, success)
+                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success)
 
       use precision
       use elpa_abstract_impl
@@ -73,7 +73,7 @@
 #else
       real(kind=REAL_DATATYPE), intent(inout)     :: q(ldq,matrixCols)
 #endif
-      logical, intent(in)           :: wantDebug
+      logical, intent(in)           :: useGPU, wantDebug
       logical, intent(out)          :: success
 
       integer(kind=ik), parameter   :: max_strip=128
@@ -729,9 +729,14 @@
 !                            1.d0,qtmp2(1,1),ubound(qtmp2,1))
 !       else
               call obj%timer%start("blas")
+              call obj%timer%start("gemm-first")
               if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
-                  call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu, 1.0_rk, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
-                             1.0_rk, qtmp2(1,1), ubound(qtmp2,dim=1))
+                  !write(*,*) "merging-first", l_rnm, ncnt, nnzu
+                  call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
+                                      1.0_rk, qtmp1, ubound(qtmp1,dim=1),    &
+                                      ev, ubound(ev,dim=1), &
+                                      1.0_rk, qtmp2(1,1), ubound(qtmp2,dim=1))
+              call obj%timer%stop("gemm-first")
               call obj%timer%stop("blas")
 !            endif ! useGPU
             ! Compute eigenvectors of the rank-1 modified matrix.
@@ -756,9 +761,14 @@
 !                            1.d0,qtmp2(l_rnm+1,1),ubound(qtmp2,1))
 !       else
               call obj%timer%start("blas")
+              call obj%timer%start("gemm")
               if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-                 call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl, 1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
-                            ubound(ev,dim=1), 1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+                 !write(*,*) "merging ", l_rows-l_rnm, ncnt, nnzl
+                 call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
+                                     1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1),    &
+                                     ev,  ubound(ev,dim=1),   &
+                                     1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+              call obj%timer%stop("gemm")
               call obj%timer%stop("blas")
 !            endif ! useGPU
              ! Put partial result into (output) Q
@@ -767,8 +777,8 @@
                q(l_rqs:l_rqe,l_col_out(idxq1(i+ns))) = qtmp2(1:l_rows,i)
              enddo
 
-           enddo
-        enddo
+           enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
+        enddo    !do np = 1, npc_n
 
         deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then

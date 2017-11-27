@@ -57,7 +57,7 @@
 subroutine solve_tridi_&
 &PRECISION_AND_SUFFIX &
     ( obj, na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                           mpi_comm_cols, wantDebug, success )
+                                           mpi_comm_cols, useGPU, wantDebug, success )
 
       use precision
       use elpa_abstract_impl
@@ -71,7 +71,7 @@ subroutine solve_tridi_&
 #else
       real(kind=REAL_DATATYPE), intent(inout)   :: q(ldq,matrixCols)
 #endif
-      logical, intent(in)           :: wantDebug
+      logical, intent(in)           :: useGPU, wantDebug
       logical, intent(out)          :: success
 
       integer(kind=ik)              :: i, j, n, np, nc, nev1, l_cols, l_rows
@@ -145,7 +145,7 @@ subroutine solve_tridi_&
       call solve_tridi_col_&
            &PRECISION_AND_SUFFIX &
              (obj, l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
-                        matrixCols, mpi_comm_rows, wantDebug, success)
+                        matrixCols, mpi_comm_rows, useGPU, wantDebug, success)
       if (.not.(success)) then
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
@@ -220,7 +220,7 @@ subroutine solve_tridi_&
       ! Recursively merge sub problems
       call merge_recursive_&
            &PRECISION &
-           (obj, 0, np_cols, wantDebug, success)
+           (obj, 0, np_cols, useGPU, wantDebug, success)
       if (.not.(success)) then
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
@@ -238,7 +238,7 @@ subroutine solve_tridi_&
       contains
         recursive subroutine merge_recursive_&
                   &PRECISION &
-           (obj, np_off, nprocs, wantDebug, success)
+           (obj, np_off, nprocs, useGPU, wantDebug, success)
            use precision
            use elpa_abstract_impl
            implicit none
@@ -252,7 +252,7 @@ subroutine solve_tridi_&
 #ifdef WITH_MPI
 !           integer(kind=ik)     :: my_mpi_status(mpi_status_size)
 #endif
-           logical, intent(in)  :: wantDebug
+           logical, intent(in)  :: useGPU, wantDebug
            logical, intent(out) :: success
 
            success = .true.
@@ -270,11 +270,11 @@ subroutine solve_tridi_&
 
            if (np1 > 1) call merge_recursive_&
                         &PRECISION &
-           (obj, np_off, np1, wantDebug, success)
+           (obj, np_off, np1, useGPU, wantDebug, success)
            if (.not.(success)) return
            if (np2 > 1) call merge_recursive_&
                         &PRECISION &
-           (obj, np_off+np1, np2, wantDebug, success)
+           (obj, np_off+np1, np2, useGPU, wantDebug, success)
            if (.not.(success)) return
 
            noff = limits(np_off)
@@ -328,7 +328,7 @@ subroutine solve_tridi_&
                   &PRECISION &
                                  (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
-                                 l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success )
+                                 l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success )
              if (.not.(success)) return
            else
              ! Not last merge, leave dense column distribution
@@ -336,7 +336,7 @@ subroutine solve_tridi_&
                   &PRECISION &
                                 (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
-                                 l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success )
+                                 l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success )
              if (.not.(success)) return
            endif
        end subroutine merge_recursive_&
@@ -347,7 +347,7 @@ subroutine solve_tridi_&
 
     subroutine solve_tridi_col_&
     &PRECISION_AND_SUFFIX &
-      ( obj, na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success )
+      ( obj, na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, useGPU, wantDebug, success )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -373,7 +373,7 @@ subroutine solve_tridi_&
       integer(kind=ik)              :: my_prow, np_rows, mpierr
 
       integer(kind=ik), allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
-      logical, intent(in)           :: wantDebug
+      logical, intent(in)           :: useGPU, wantDebug
       logical, intent(out)          :: success
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
@@ -550,7 +550,7 @@ subroutine solve_tridi_&
           &PRECISION &
                               (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                                matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
-                               l_col(noff+1), p_col_o(noff+1), 0, 1, wantDebug, success)
+                               l_col(noff+1), p_col_o(noff+1), 0, 1, useGPU, wantDebug, success)
           if (.not.(success)) return
 
         enddo
