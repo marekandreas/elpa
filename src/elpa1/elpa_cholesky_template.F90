@@ -66,7 +66,7 @@
       MATH_DATATYPE(kind=rck), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
       logical                       :: wantDebug
       logical                       :: success
-      integer(kind=ik)              :: istat, debug
+      integer(kind=ik)              :: istat, debug, error
       character(200)                :: errorMessage
 
       call obj%timer%start("elpa_cholesky_&
@@ -80,10 +80,22 @@
       nblk       = obj%nblk
       matrixCols = obj%local_ncols
 
-      call obj%get("mpi_comm_rows",mpi_comm_rows )
-      call obj%get("mpi_comm_cols",mpi_comm_cols)
+      call obj%get("mpi_comm_rows",mpi_comm_rows,error )
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
 
-      call obj%get("debug",debug)
+      call obj%get("debug",debug,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
       if (debug == 1) then
         wantDebug = .true.
       else

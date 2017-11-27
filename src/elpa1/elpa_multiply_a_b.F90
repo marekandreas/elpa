@@ -84,7 +84,7 @@
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
       logical                       :: success
-      integer(kind=ik)              :: nblk, mpi_comm_rows, mpi_comm_cols, lda, ldaCols
+      integer(kind=ik)              :: nblk, mpi_comm_rows, mpi_comm_cols, lda, ldaCols, error
 
       call obj%timer%start("elpa_mult_at_b_&
       &MATH_DATATYPE&
@@ -98,8 +98,18 @@
       ldaCols  = obj%local_ncols
 
 
-      call obj%get("mpi_comm_rows",mpi_comm_rows)
-      call obj%get("mpi_comm_cols",mpi_comm_cols)
+      call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+
+
       success = .true.
 
       call obj%timer%start("mpi_communication")

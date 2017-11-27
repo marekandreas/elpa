@@ -115,11 +115,16 @@ module elpa_abstract_impl
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       integer                         :: actual_error
 
       actual_error = elpa_index_set_int_value_c(self%index, name // c_null_char, value, 0)
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = actual_error
 
@@ -127,6 +132,9 @@ module elpa_abstract_impl
         write(error_unit,'(a,i0,a)') "ELPA: Error setting option '" // name // "' to value ", value, &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
+#else
+      error = actual_error
+#endif
     end subroutine
 
     !> \brief internal subroutine to get an integer key/value pair
@@ -140,16 +148,25 @@ module elpa_abstract_impl
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
+#ifdef USE_FORTRAN2008
       integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
       integer                        :: actual_error
 
       value = elpa_index_get_int_value_c(self%index, name // c_null_char, actual_error)
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
-        error = actual_error
+       error = actual_error
       else if (actual_error /= ELPA_OK) then
         write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
+#else
+      error = actual_error
+#endif
     end subroutine
 
     !> \brief internal subroutine to set a double key/value pair
@@ -163,17 +180,24 @@ module elpa_abstract_impl
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
       real(kind=c_double), intent(in) :: value
-      integer, optional               :: error
       integer                         :: actual_error
-
+#ifdef USE_FORTRAN2008
+      integer,              optional  :: error
+#else
+      integer                         :: error
+#endif
       actual_error = elpa_index_set_double_value_c(self%index, name // c_null_char, value, 0)
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
-        error = actual_error
+       error = actual_error
       else if (actual_error /= ELPA_OK) then
         write(error_unit,'(a,es12.5,a)') "ELPA: Error setting option '" // name // "' to value ", value, &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
+#else
+      error = actual_error
+#endif
     end subroutine
 
     !> \brief internal subroutine to get an double key/value pair
@@ -187,16 +211,24 @@ module elpa_abstract_impl
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value
+#ifdef USE_FORTRAN2008
       integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
       integer                        :: actual_error
 
       value = elpa_index_get_double_value_c(self%index, name // c_null_char, actual_error)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
-        error = actual_error
+       error = actual_error
       else if (actual_error /= ELPA_OK) then
         write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
       end if
+#else
+      error = actual_error
+#endif
     end subroutine
 
 
@@ -205,7 +237,11 @@ module elpa_abstract_impl
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       integer                         :: actual_error
       integer                         :: is_private
 
@@ -221,12 +257,16 @@ module elpa_abstract_impl
           actual_error = is_private
         endif
 
+#ifdef USE_FORTRAN2008
         if (present(error)) then
-          error = actual_error
+         error = actual_error
         else
           write(error_unit,'(a)') "ELPA: Error setting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
         endif
+#else
+        error = actual_error
+#endif
       endif
     end subroutine
 
@@ -236,7 +276,11 @@ module elpa_abstract_impl
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
       real(kind=c_double), intent(in) :: value
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       integer                         :: actual_error
       integer                         :: is_private
 
@@ -252,12 +296,16 @@ module elpa_abstract_impl
           actual_error = is_private
         endif
 
+#ifdef USE_FORTRAN2008
         if (present(error)) then
-          error = actual_error
+         error = actual_error
         else
           write(error_unit,'(a)') "ELPA: Error setting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
         endif
+#else
+        error = actual_error
+#endif
       endif
     end subroutine
 
@@ -267,7 +315,11 @@ module elpa_abstract_impl
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
-      integer, intent(out), optional :: error
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
       integer                        :: actual_error
       integer                        :: is_private
 
@@ -283,12 +335,16 @@ module elpa_abstract_impl
           actual_error = is_private
         endif
 
+#ifdef USE_FORTRAN2008
         if (present(error)) then
-          error = actual_error
+         error = actual_error
         else
           write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
         endif
+#else
+        error = actual_error
+#endif
       endif
     end subroutine
 
@@ -298,7 +354,11 @@ module elpa_abstract_impl
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value
+#ifdef USE_FORTRAN2008
       integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
       integer                        :: actual_error
       integer                        :: is_private
 
@@ -314,12 +374,16 @@ module elpa_abstract_impl
           actual_error = is_private
         endif
 
+#ifdef USE_FORTRAN2008
         if (present(error)) then
-          error = actual_error
+         error = actual_error
         else
           write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
                 " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
         endif
+#else
+        error = actual_error
+#endif
       endif
     end subroutine
 

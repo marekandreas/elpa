@@ -54,6 +54,7 @@
 #include <search.h>
 #include <math.h>
 
+#include "config.h"
 #include <elpa/elpa.h>
 
 #define nelements(x) (sizeof(x)/sizeof(x[0]))
@@ -154,7 +155,11 @@ void elpa_index_free(elpa_index_t index);
  !f>     import c_ptr, c_int, c_char
  !f>     type(c_ptr), value                         :: index
  !f>     character(kind=c_char), intent(in)         :: name(*)
- !f>     integer(kind=c_int), intent(out), optional :: success
+ !f>#ifdef USE_FORTRAN2008
+ !f>     integer(kind=c_int), optional, intent(out) :: success
+ !f>#else
+ !f>     integer(kind=c_int), intent(out)           :: success
+ !f>#endif
  !f>     integer(kind=c_int)                        :: value
  !f>   end function
  !f> end interface
@@ -234,7 +239,11 @@ int* elpa_index_get_int_loc(elpa_index_t index, char *name);
  !f>     import c_ptr, c_int, c_double, c_char
  !f>     type(c_ptr), value                              :: index
  !f>     character(kind=c_char), intent(in)              :: name(*)
+ !f>#ifdef USE_FORTRAN2008
  !f>     integer(kind=c_int), intent(out), optional      :: success
+ !f>#else
+ !f>     integer(kind=c_int), intent(out)                :: success
+ !f>#endif
  !f>     real(kind=c_double)                             :: value
  !f>   end function
  !f> end interface

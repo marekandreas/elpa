@@ -89,14 +89,42 @@
 
       obj => elpa_allocate()
 
-      call obj%set("na", na)
-      call obj%set("nev", nev)
-      call obj%set("local_nrows", ldq)
-      call obj%set("local_ncols", matrixCols)
-      call obj%set("nblk", nblk)
+      call obj%set("na", na, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call obj%set("nev", nev, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call obj%set("local_nrows", ldq, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call obj%set("local_ncols", matrixCols, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call obj%set("nblk", nblk, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
 
-      call obj%set("mpi_comm_rows", mpi_comm_rows)
-      call obj%set("mpi_comm_cols", mpi_comm_cols)
+      call obj%set("mpi_comm_rows", mpi_comm_rows, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call obj%set("mpi_comm_cols", mpi_comm_cols, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
 
       if (obj%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
@@ -105,7 +133,11 @@
       endif
 
       if (wantDebug) then
-        call obj%set("debug",1)
+        call obj%set("debug",1, error)
+        if (error .ne. ELPA_OK) then
+           print *,"Problem setting option. Aborting..."
+           stop
+        endif
       endif
 
       call obj%solve_tridiagonal(d, e, q(1:ldq,1:matrixCols), error)

@@ -89,7 +89,7 @@
    integer(kind=c_int)                       :: my_prow, my_pcol, mpierr
    logical                                   :: success
 
-   integer(kind=c_int)                       :: successInternal
+   integer(kind=c_int)                       :: successInternal,error
    class(elpa_t), pointer                    :: e
 
     call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -104,17 +104,53 @@
 
     e => elpa_allocate()
 
-    call e%set("na", na)
-    call e%set("nev", nev)
-    call e%set("local_nrows", lda)
-    call e%set("local_ncols", matrixCols)
-    call e%set("nblk", nblk)
+    call e%set("na", na,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("nev", nev,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("local_nrows", lda,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("local_ncols", matrixCols,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("nblk", nblk,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
 
-    call e%set("mpi_comm_parent", mpi_comm_all)
-    call e%set("mpi_comm_rows", mpi_comm_rows)
-    call e%set("mpi_comm_cols", mpi_comm_cols)
+    call e%set("mpi_comm_parent", mpi_comm_all,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("mpi_comm_rows", mpi_comm_rows,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("mpi_comm_cols", mpi_comm_cols,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
 
-    call e%set("timings",1)
+    call e%set("timings",1,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
 
     if (e%setup() .ne. ELPA_OK) then
       print *, "Cannot setup ELPA instance"
@@ -195,7 +231,11 @@
       success = .false.
       return
     endif
-    call e%set("timings", 1)
+    call e%set("timings", 1,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
 
     call e%eigenvectors(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
     if (successInternal .ne. ELPA_OK) then

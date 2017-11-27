@@ -112,7 +112,7 @@
                                                                                             &MATH_DATATYPE
     integer(kind=ik)                                                  :: na, nev, lda, ldq, nblk, matrixCols, &
                                                                          mpi_comm_rows, mpi_comm_cols,        &
-					                                 mpi_comm_all, check_pd
+                                                                         mpi_comm_all, check_pd, error
 
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
@@ -166,9 +166,17 @@
    endif
 
 #if REALCASE == 1
-    call obj%get("real_kernel",kernel)
+    call obj%get("real_kernel",kernel,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     ! check consistency between request for GPUs and defined kernel
-    call obj%get("gpu", gpu)
+    call obj%get("gpu", gpu,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
@@ -205,9 +213,17 @@
 #endif
 
 #if COMPLEXCASE == 1
-    call obj%get("complex_kernel",kernel)
+    call obj%get("complex_kernel",kernel,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     ! check consistency between request for GPUs and defined kernel
-    call obj%get("gpu", gpu)
+    call obj%get("gpu", gpu,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
@@ -223,9 +239,21 @@
     endif
 
 #endif
-    call obj%get("mpi_comm_rows",mpi_comm_rows)
-    call obj%get("mpi_comm_cols",mpi_comm_cols)
-    call obj%get("mpi_comm_parent",mpi_comm_all)
+    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    call obj%get("mpi_comm_parent",mpi_comm_all,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
 
     if (gpu .eq. 1) then
       useGPU = .true.
@@ -234,7 +262,11 @@
     endif
 
 #if REALCASE == 1
-    call obj%get("qr",qr)
+    call obj%get("qr",qr,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     if (qr .eq. 1) then
       useQR = .true.
     else
@@ -252,7 +284,11 @@
     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
     call obj%timer%stop("mpi_communication")
 
-    call obj%get("debug",debug)
+    call obj%get("debug",debug,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     wantDebug = debug == 1
 
     do_useGPU      = .false.
@@ -295,7 +331,11 @@
       endif
     else
       ! check whether set by environment variable
-      call obj%get("gpu",gpu)
+      call obj%get("gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
       do_useGPU = gpu == 1
       if (do_useGPU) then
         if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
@@ -357,7 +397,7 @@
     endif
 
     if (obj%is_set("bandwidth") == 1) then
-      call obj%get("bandwidth",nbw)
+      call obj%get("bandwidth",nbw,error)
       if (nbw == 0) then
         if (wantDebug) then
           write(error_unit,*) "Specified bandwidth = 0; ELPA refuses to solve the eigenvalue problem ", &
@@ -519,7 +559,11 @@
        do_trans_to_full = .false.
      else
 
-       call obj%get("check_pd",check_pd)
+       call obj%get("check_pd",check_pd,error)
+       if (error .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+       endif
        if (check_pd .eq. 1) then
          check_pd = 0
          do i = 1, na
