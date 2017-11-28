@@ -1,0 +1,51 @@
+.TH "elpa_autotune_set_best" 3 "Tue Nov 28 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_autotune_set_best \- Sets the tunable parameters to the up-to-know best solution
+.br
+
+Before the autotuning options can be set, an autotuning step has to be done \fBelpa_autotune_step\fP(3)
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+class(elpa_autotune_t), pointer :: tune_state
+.br
+
+.RI  "call\fBelpa%autotune_set_best\fP (tune_state)"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.RI "type(elpa_autotune_t) :: \fBtune_state\fP  !  the ELPA autotuning object, created with \fBelpa_autotune_setup\fP(3)
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+elpa_autotune_t autotune_handle;
+
+.br
+.RI "void \fBelpa_autotune_set_best\fP (\fBelpa_t\fP handle, \fBelpa_autotune_t\fP autotune_handle);"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.br
+.RI "elpa_t \fBhandle\fP;  // the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
+.br
+.RI "elpa_autotune_t \fBautotune_handle\fP;  // the handle of an ELPA object, obtained before with \fBelpa_autotune_setup\fP(3)"
+
+.SH DESCRIPTION
+Sets the up-to-know best options for ELPA tunable parameters. \fIPrior\fP to calling the elpa_autotune_set_best method, an ELPA autotuning step must have been performed. See \fBelpa_autotune_set_best\fP(3)
+.SH "SEE ALSO"
+.br
+\fBelpa_autotune_step\fP(3) \fBelpa_autotune_setup\fP(3) \fBelpa_autotune_deallocate\fp(3)
+
