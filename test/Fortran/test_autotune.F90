@@ -208,7 +208,7 @@ program test
    do while (e%autotune_step(tune_state))
      call e%eigenvectors(a, ev, z, error)
      assert_elpa_ok(error)
-     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, .true.)
+     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, .true., .true.)
      a(:,:) = as(:,:)
      print *, ""
    end do
@@ -219,7 +219,7 @@ program test
 
    call e%eigenvectors(a, ev, z, error)
    assert_elpa_ok(error)
-   status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, .true.)
+   status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, .true., .true.)
 
 
    call elpa_deallocate(e)

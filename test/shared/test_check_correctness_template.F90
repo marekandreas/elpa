@@ -192,17 +192,17 @@
 #if REALCASE == 1
       if (nev .ge. 2) then
 #ifdef DOUBLE_PRECISION_REAL
-        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
+        if (errmax .gt. 5e-11_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-        if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
+        if (errmax .gt. 3e-2_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
           status = 1
         endif
       else
 #ifdef DOUBLE_PRECISION_REAL
-        if (errmax .gt. 5e-12_rk8) then
+        if (errmax .gt. 5e-11_rk8) then
 #else
-        if (errmax .gt. 3e-3_rk4) then
+        if (errmax .gt. 2e-2_rk4) then
 #endif
           status = 1
         endif
@@ -211,17 +211,17 @@
 #if COMPLEXCASE == 1
       if (nev .gt. 2) then
 #ifdef DOUBLE_PRECISION_COMPLEX
-        if (errmax .gt. 5e-12_rk8 .or. errmax .eq. 0.0_rk8) then
+        if (errmax .gt. 5e-11_rk8 .or. errmax .eq. 0.0_rk8) then
 #else
-        if (errmax .gt. 3e-3_rk4 .or. errmax .eq. 0.0_rk4) then
+        if (errmax .gt. 3e-2_rk4 .or. errmax .eq. 0.0_rk4) then
 #endif
           status =1
         endif
       else
 #ifdef DOUBLE_PRECISION_COMPLEX
-        if (errmax .gt. 5e-12_rk8) then
+        if (errmax .gt. 5e-11_rk8) then
 #else
-        if (errmax .gt. 3e-3_rk4) then
+        if (errmax .gt. 3e-2_rk4) then
 #endif
           status = 1
         endif
@@ -289,9 +289,9 @@
         endif
       else
 #ifdef DOUBLE_PRECISION_REAL
-        if (errmax .gt. 5e-12_rk8) then
+        if (errmax .gt. 5e-11_rk8) then
 #else
-        if (errmax .gt. 9e-4_rk4) then
+        if (errmax .gt. 9e-2_rk4) then
 #endif
           status = 1
         endif
@@ -308,9 +308,9 @@
         endif
       else
 #ifdef DOUBLE_PRECISION_COMPLEX
-        if (errmax .gt. 5e-12_rk8) then
+        if (errmax .gt. 5e-11_rk8) then
 #else
-        if (errmax .gt. 9e-4_rk4) then
+        if (errmax .gt. 9e-3_rk4) then
 #endif
           status = 1
         endif
@@ -449,6 +449,7 @@ function check_correctness_evp_numeric_residuals_&
 #endif
        status = 1
        if (myid .eq. 0) then
+         print *,"Result of Toeplitz matrix test: "
          print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
        endif
      endif
@@ -756,7 +757,7 @@ function check_correctness_evp_numeric_residuals_&
 #ifdef DOUBLE_PRECISION_COMPLEX
       complex(kind=ck8), parameter   :: CZERO = (0.0_rk8,0.0_rk8), CONE = (1.0_rk8,0.0_rk8)
 #else
-      complex(kind=ck4), parameter   :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk8)
+      complex(kind=ck4), parameter   :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk4)
 #endif
 
 #ifdef WITH_MPI
@@ -966,7 +967,80 @@ function check_correctness_evp_numeric_residuals_&
 #endif
     end function
 
+    function check_correctness_eigenvalues_frank_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (na, ev, z, myid) result(status)
+      use iso_c_binding
+      implicit none
+#include "../../src/general/precision_kinds.F90"
 
+      integer                   :: status, i, j, myid
+      integer, intent(in)       :: na
+      real(kind=rck)            :: ev_analytic(na), ev(na)
+      MATH_DATATYPE(kind=rck)   :: z(:,:)
 
+#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
+      real(kind=rck), parameter :: pi = 3.141592653589793238462643383279_c_double
+#else
+      real(kind=rck), parameter :: pi = 3.1415926535897932_c_float
+#endif
+      real(kind=rck)            :: tmp, maxerr
+      integer                   :: loctmp
+      status = 0
+
+     ! analytic solution
+     do i = 1, na
+       j = na - i
+#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
+       ev_analytic(i) = pi * (2.0_c_double * real(j,kind=c_double) + 1.0_c_double) / &
+           (2.0_c_double * real(na,kind=c_double) + 1.0_c_double)
+       ev_analytic(i) = 0.5_c_double / (1.0_c_double - cos(ev_analytic(i)))
+#else
+       ev_analytic(i) = pi * (2.0_c_float * real(j,kind=c_float) + 1.0_c_float) / &
+           (2.0_c_float * real(na,kind=c_float) + 1.0_c_float)
+       ev_analytic(i) = 0.5_c_float / (1.0_c_float - cos(ev_analytic(i)))
+#endif
+     enddo
+
+     ! sort analytic solution:
+
+     ! this hack is neither elegant, nor optimized: for huge matrixes it might be expensive
+     ! a proper sorting algorithmus might be implemented here
+
+     tmp    = minval(ev_analytic)
+     loctmp = minloc(ev_analytic, 1)
+
+     ev_analytic(loctmp) = ev_analytic(1)
+     ev_analytic(1) = tmp
+     do i=2, na
+       tmp = ev_analytic(i)
+       do j= i, na
+         if (ev_analytic(j) .lt. tmp) then
+           tmp    = ev_analytic(j)
+           loctmp = j
+         endif
+       enddo
+       ev_analytic(loctmp) = ev_analytic(i)
+       ev_analytic(i) = tmp
+     enddo
+
+     ! compute a simple error max of eigenvalues
+     maxerr = 0.0
+     maxerr = maxval( (ev(:) - ev_analytic(:))/ev_analytic(:) , 1)
+
+#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
+     if (maxerr .gt. 8.e-13_c_double) then
+#else
+     if (maxerr .gt. 8.e-4_c_float) then
+#endif
+       status = 1
+       if (myid .eq. 0) then
+         print *,"Result of Frank matrix test: "
+         print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+       endif
+     endif
+    end function
 
 ! vim: syntax=fortran

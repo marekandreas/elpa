@@ -125,7 +125,7 @@ of a simple example program can be found in ./test_project/src.
 
 
    ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in get_elpa_communicators
+   ! rows or columns of processes, these are set in elpa_get_communicators
 
    success = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                     mpi_comm_rows, mpi_comm_cols)
@@ -216,8 +216,8 @@ SYNOPSIS
        integer, intent(in)    ldq:           leading dimension of matrix q which stores the eigenvectors
        integer, intent(in)    nblk:          blocksize of block cyclic distributin, must be the same in both directions
        integer, intent(in)    matrixCols:    number of columns of locally distributed matrices a and q
-       integer, intent(in)    mpi_comm_rows: communicator for communication in rows. Constructed with get_elpa_communicators(3)
-       integer, intent(in)    mpi_comm_cols: communicator for communication in colums. Constructed with get_elpa_communicators(3)
+       integer, intent(in)    mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
+       integer, intent(in)    mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
 
        logical                success:       return value indicating success or failure
 
@@ -238,14 +238,14 @@ SYNOPSIS
        int     ldq:           leading dimension of matrix q which stores the eigenvectors
        int     nblk:          blocksize of block cyclic distributin, must be the same in both directions
        int     matrixCols:    number of columns of locally distributed matrices a and q
-       int     mpi_comm_rows: communicator for communication in rows. Constructed with get_elpa_communicators(3)
-       int     mpi_comm_cols: communicator for communication in colums. Constructed with get_elpa_communicators(3)
+       int     mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
+       int     mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
 
        int     success:       return value indicating success (1) or failure (0)
 
 DESCRIPTION
        Solve the real eigenvalue problem with the 1-stage solver. The ELPA communicators mpi_comm_rows and mpi_comm_cols are obtained with the
-       get_elpa_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
+       elpa_get_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
        The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues
        will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
 
@@ -265,8 +265,8 @@ DESCRIPTION
        integer,     intent(in)    ldq:           leading dimension of matrix q which stores the eigenvectors
        integer,     intent(in)    nblk:          blocksize of block cyclic distributin, must be the same in both directions
        integer,     intent(in)    matrixCols:    number of columns of locally distributed matrices a and q
-       integer,     intent(in)    mpi_comm_rows: communicator for communication in rows. Constructed with get_elpa_communicators(3)
-       integer, intent(in)        mpi_comm_cols: communicator for communication in colums. Constructed with get_elpa_communicators(3)
+       integer,     intent(in)    mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
+       integer, intent(in)        mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
 
        logical                    success:       return value indicating success or failure
 
@@ -288,14 +288,14 @@ DESCRIPTION
        int             ldq:           leading dimension of matrix q which stores the eigenvectors
        int             nblk:          blocksize of block cyclic distributin, must be the same in both directions
        int             matrixCols:    number of columns of locally distributed matrices a and q
-       int             mpi_comm_rows: communicator for communication in rows. Constructed with get_elpa_communicators(3)
-       int             mpi_comm_cols: communicator for communication in colums. Constructed with get_elpa_communicators(3)
+       int             mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
+       int             mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
 
        int             success:       return value indicating success (1) or failure (0)
 
 DESCRIPTION
        Solve the complex eigenvalue problem with the 1-stage solver. The ELPA communicators mpi_comm_rows and mpi_comm_cols are obtained with the
-       get_elpa_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
+       elpa_get_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
        The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues
        will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
 
@@ -357,8 +357,8 @@ SYNOPSIS
        integer, intent(in)            ldq:           leading dimension of matrix q which stores the eigenvectors
        integer, intent(in)            nblk:          blocksize of block cyclic distributin, must be the same in both directions
        integer, intent(in)            matrixCols:    number of columns of locally distributed matrices a and q
-       integer, intent(in)            mpi_comm_rows: communicator for communication in rows. Constructed with get_elpa_communicators(3)
-       integer, intent(in)            mpi_comm_cols: communicator for communication in colums. Constructed with get_elpa_communicators(3)
+       integer, intent(in)            mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
+       integer, intent(in)            mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
        integer, intent(in)            mpi_comm_all:  communicator for all processes in the processor set involved in ELPA
        logical, intent(in), optional: useQR:         optional argument; switches to QR-decomposition if set to .true.
        logical, intent(in), optional: useGPU:        decide whether GPUs should be used ore not
@@ -382,8 +382,8 @@ SYNOPSIS
        int     ldq:           leading dimension of matrix q which stores the eigenvectors
        int     nblk:          blocksize of block cyclic distributin, must be the same in both directions
        int     matrixCols:    number of columns of locally distributed matrices a and q
-       int     mpi_comm_rows: communicator for communication in rows. Constructed with get_elpa_communicators(3)
-       int     mpi_comm_cols: communicator for communication in colums. Constructed with get_elpa_communicators(3)
+       int     mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
+       int     mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
        int     mpi_comm_all:  communicator for all processes in the processor set involved in ELPA
        int     useQR:         if set to 1 switch to QR-decomposition
        int     useGPU:        decide whether the GPU version should be used or not
@@ -393,7 +393,7 @@ SYNOPSIS
 
 DESCRIPTION
        Solve the real eigenvalue problem with the 2-stage solver. The ELPA communicators mpi_comm_rows and mpi_comm_cols are obtained with the
-       get_elpa_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
+       elpa_get_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
        The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues
        will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
 

@@ -88,7 +88,7 @@
        logical, intent(in)          :: wantDebug
        logical                      :: success
 
-       integer(kind=iK)            :: successInternal
+       integer(kind=iK)            :: successInternal, error
        class(elpa_t), pointer      :: e
 
        !call timer%start("elpa_invert_trm_&
@@ -107,13 +107,37 @@
 
        e => elpa_allocate()
 
-       call e%set("na", na)
-       call e%set("local_nrows", lda)
-       call e%set("local_ncols", matrixCols)
-       call e%set("nblk", nblk)
+       call e%set("na", na, error)
+       if (error .ne. ELPA_OK) then
+          print *,"Problem setting option. Aborting..."
+          stop
+       endif
+       call e%set("local_nrows", lda, error)
+       if (error .ne. ELPA_OK) then
+          print *,"Problem setting option. Aborting..."
+          stop
+       endif
+       call e%set("local_ncols", matrixCols, error)
+       if (error .ne. ELPA_OK) then
+          print *,"Problem setting option. Aborting..."
+          stop
+       endif
+       call e%set("nblk", nblk, error)
+       if (error .ne. ELPA_OK) then
+          print *,"Problem setting option. Aborting..."
+          stop
+       endif
 
-       call e%set("mpi_comm_rows", mpi_comm_rows)
-       call e%set("mpi_comm_cols", mpi_comm_cols)
+       call e%set("mpi_comm_rows", mpi_comm_rows, error)
+       if (error .ne. ELPA_OK) then
+          print *,"Problem setting option. Aborting..."
+          stop
+       endif
+       call e%set("mpi_comm_cols", mpi_comm_cols, error)
+       if (error .ne. ELPA_OK) then
+          print *,"Problem setting option. Aborting..."
+          stop
+       endif
 
        if (e%setup() .ne. ELPA_OK) then
          print *, "Cannot setup ELPA instance"
@@ -122,7 +146,11 @@
        endif
 
        if (wantDebug) then
-         call e%set("debug",1)
+         call e%set("debug",1, error)
+         if (error .ne. ELPA_OK) then
+            print *,"Problem setting option. Aborting..."
+            stop
+         endif
        endif
 
        call e%invert_triangular(a(1:lda,1:matrixCols), successInternal)

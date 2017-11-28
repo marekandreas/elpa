@@ -1,0 +1,56 @@
+.TH "elpa_autotune_step" 3 "Tue Nov 28 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_autotune_step \- do one ELPA autotuning step
+.br
+
+Before the autotuning step can be done, an instance of the ELPA autotune object has to be created, see \fBelpa_autotune_setup\fP(3)
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+class(elpa_autotune_t), pointer :: tune_state
+.br
+
+.RI  "unfinished = \fBelpa%autotune_step\fP (tune_state)"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.RI "type(elpa_autotune_t) :: \fBtune_state\fP  !  the ELPA autotuning object, created with \fBelpa_autotune_setup\fP(3)
+.br
+.RI "logical :: \fBunfinished\fP  !  logical, specifying whether autotuning has finined (.false.) or not (.true.)
+.br
+
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+elpa_autotune_t autotune_handle;
+
+.br
+.RI "\fBint\fP unfinished = \fBelpa_autotune_step\fP (\fBelpa_t\fP handle, \fBelpa_autotune_t\fP autotune_handle);"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.br
+.RI "elpa_t \fBhandle\fP;  // the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
+.br
+.RI "elpa_autotune_t \fBautotune_handle\fP;  // the handle of the autotuning object, created with \fBelpa_autotune_setup\fP(3)
+.br
+.RI "int \fBunfinished\fP;      // int, specifying whether autotuning has finined (0) or not (1)
+
+.SH DESCRIPTION
+Does an ELPA autotuning step. \fIPrior\fP to calling  the autotune_step, an ELPA autotune object must have been created. See \fBelpa_autotune_setup\fP(3)
+.SH "SEE ALSO"
+.br
+\fBelpa_autotune_setup\fP(3) \fBelpa_autotune_set_best\fP(3) \fBelpa_autotune_deallocate\fp(3)
+

@@ -60,7 +60,6 @@ module elpa_driver
 
   implicit none
 
-  public  :: elpa_solve_evp_real, elpa_solve_evp_complex
   public  :: elpa_solve_evp_real_double, elpa_solve_evp_complex_double
 #ifdef WANT_SINGLE_PRECISION_REAL
   public  :: elpa_solve_evp_real_single
@@ -69,103 +68,6 @@ module elpa_driver
   public  :: elpa_solve_evp_complex_single
 #endif
 
-!-------------------------------------------------------------------------------
-!>  \brief solve_evp_real: Old, deprecated interface. Better use solve_evp_real_double
-!>
-!>  Parameters
-!>
-!>  \param na                                   Order of matrix a
-!>
-!>  \param nev                                  Number of eigenvalues needed
-!>
-!>  \param a(lda,matrixCols)                    Distributed matrix for which eigenvalues are to be computed.
-!>                                              Distribution is like in Scalapack.
-!>                                              The full matrix must be set (not only one half like in scalapack).
-!>                                              Destroyed on exit (upper and lower half).
-!>
-!>  \param lda                                  Leading dimension of a
-!>
-!>  \param ev(na)                               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)                    On output: Eigenvectors of a
-!>                                              Distribution is like in Scalapack.
-!>                                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                                  Leading dimension of q
-!>
-!>  \param nblk                                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols                           local columns of matrix a and q
-!>
-!>  \param mpi_comm_rows                        MPI communicator for rows
-!>  \param mpi_comm_cols                        MPI communicator for columns
-!>  \param mpi_comm_all                         MPI communicator for the total processor set
-!>
-!>  \param THIS_REAL_ELPA_KERNEL_API (optional) specify used ELPA 2stage
-!>                                              kernel via API (only evalulated if 2 stage solver is used_
-!>
-!>  \param use_qr (optional)                    use QR decomposition in the ELPA 2stage solver
-!>  \param useGPU (optional)                    use GPU version of ELPA 1stage
-!>
-!>  \param method                               choose whether to use ELPA 1stage or 2stage solver
-!>                                              possible values: "1stage" => use ELPA 1stage solver
-!>                                                               "2stage" => use ELPA 2stage solver
-!>                                                               "auto"   => (at the moment) use ELPA 2stage solver
-!>
-!>  \result success                             logical, false if error occured
-!-------------------------------------------------------------------------------
-  interface elpa_solve_evp_real
-    module procedure elpa_solve_evp_real_double
-  end interface
-
-!-------------------------------------------------------------------------------
-!>  \brief solve_evp_complex: Old, deprecated interface, better use solve_evp_complex_double
-!>
-!>  Parameters
-!>
-!>  \param na                                      Order of matrix a
-!>
-!>  \param nev                                     Number of eigenvalues needed
-!>
-!>  \param a(lda,matrixCols)                       Distributed matrix for which eigenvalues are to be computed.
-!>                                                 Distribution is like in Scalapack.
-!>                                                 The full matrix must be set (not only one half like in scalapack).
-!>                                                 Destroyed on exit (upper and lower half).
-!>
-!>  \param lda                                     Leading dimension of a
-!>
-!>  \param ev(na)                                  On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)                       On output: Eigenvectors of a
-!>                                                 Distribution is like in Scalapack.
-!>                                                 Must be always dimensioned to the full size (corresponding to (na,na))
-!>                                                 even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                                     Leading dimension of q
-!>
-!>  \param nblk                                    blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols                              local columns of matrix a and q
-!>
-!>  \param mpi_comm_rows                           MPI communicator for rows
-!>  \param mpi_comm_cols                           MPI communicator for columns
-!>  \param mpi_comm_all                            MPI communicator for the total processor set
-!>
-!>  \param THIS_REAL_COMPLEX_KERNEL_API (optional) specify used ELPA 2stage
-!>                                                 kernel via API (only evalulated if 2 stage solver is used
-!>  \param useGPU (optional)                    use GPU version of ELPA 1stage
-!>
-!>  \param method                                  choose whether to use ELPA 1stage or 2stage solver
-!>                                                 possible values: "1stage" => use ELPA 1stage solver
-!>                                                                  "2stage" => use ELPA 2stage solver
-!>                                                                  "auto"   => (at the moment) use ELPA 2stage solver
-!>
-!>  \result success                                logical, false if error occured
-!-------------------------------------------------------------------------------
-  interface elpa_solve_evp_complex
-    module procedure elpa_solve_evp_complex_double
-  end interface
 
   contains
 !-------------------------------------------------------------------------------

@@ -45,9 +45,9 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-#include "config-f90.h"
 !> \brief Fortran module which provides the definition of the ELPA API. Do not use directly! Use the module "elpa"
 
+#include "config-f90.h"
 
 module elpa_api
   use elpa_constants
@@ -100,6 +100,7 @@ module elpa_api
       procedure(elpa_print_times_i), deferred, public :: print_times  !< method to print the timings tree
       procedure(elpa_timer_start_i), deferred, public :: timer_start  !< method to start a time measurement
       procedure(elpa_timer_stop_i), deferred, public :: timer_stop    !< method to stop a time measurement
+
 
       ! Actual math routines
       generic, public :: eigenvectors => &                          !< method eigenvectors for solving the full eigenvalue problem
@@ -283,7 +284,11 @@ module elpa_api
       class(elpa_t)                   :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -303,7 +308,11 @@ module elpa_api
       class(elpa_t)                  :: self
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
+#ifdef USE_FORTRAN2008
       integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
   end interface
 
@@ -361,7 +370,11 @@ module elpa_api
       class(elpa_t)                   :: self
       character(*), intent(in)        :: name
       real(kind=c_double), intent(in) :: value
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -381,7 +394,11 @@ module elpa_api
       class(elpa_t)                  :: self
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value
+#ifdef USE_FORTRAN2008
       integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
   end interface
 
@@ -467,7 +484,6 @@ module elpa_api
     end subroutine
   end interface
 
-
   ! Actual math routines
 
   !> \brief abstract definition of interface to solve double real eigenvalue problem
@@ -493,13 +509,17 @@ module elpa_api
       implicit none
       class(elpa_t)       :: self
 #ifdef USE_ASSUMED_SIZE
-      real(kind=c_double) :: a(self%local_nrows, *), q(self%local_nrows, *)
+      real(kind=c_double) :: a(self%local_nrows, *), q(self%local_nrows,*)
 #else
       real(kind=c_double) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double) :: ev(self%na)
 
+#ifdef USE_FORTRAN2008
       integer, optional   :: error
+#else
+      integer             :: error
+#endif
     end subroutine
   end interface
 
@@ -532,8 +552,11 @@ module elpa_api
       real(kind=c_float)  :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)  :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional   :: error
+#else
+      integer             :: error
+#endif
     end subroutine
   end interface
 
@@ -567,8 +590,11 @@ module elpa_api
       complex(kind=c_double_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double)            :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional              :: error
+#else
+      integer                        :: error
+#endif
     end subroutine
   end interface
 
@@ -601,8 +627,11 @@ module elpa_api
       complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)            :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional             :: error
+#else
+      integer                       :: error
+#endif
     end subroutine
   end interface
 
@@ -634,8 +663,11 @@ module elpa_api
       real(kind=c_double) :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double) :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional   :: error
+#else
+      integer             :: error
+#endif
     end subroutine
   end interface
 
@@ -667,8 +699,11 @@ module elpa_api
       real(kind=c_float)  :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)  :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional   :: error
+#else
+      integer             :: error
+#endif
     end subroutine
   end interface
 
@@ -701,8 +736,11 @@ module elpa_api
       complex(kind=c_double_complex) :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double)            :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional              :: error
+#else
+      integer                        :: error
+#endif
     end subroutine
   end interface
 
@@ -734,8 +772,11 @@ module elpa_api
       complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)            :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional             :: error
+#else
+      integer                       :: error
+#endif
     end subroutine
   end interface
 
@@ -789,7 +830,11 @@ module elpa_api
 #else
       real(kind=c_double)             :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -843,7 +888,11 @@ module elpa_api
 #else
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -897,7 +946,11 @@ module elpa_api
 #else
       complex(kind=c_double_complex)  :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -951,7 +1004,11 @@ module elpa_api
 #else
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -977,7 +1034,11 @@ module elpa_api
 #else
       real(kind=c_double)             :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -987,7 +1048,7 @@ module elpa_api
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
-  !> 
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single real matrix: the matrix to be decomposed
@@ -1003,7 +1064,11 @@ module elpa_api
 #else
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -1013,7 +1078,7 @@ module elpa_api
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
-  !> 
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           double complex matrix: the matrix to be decomposed
@@ -1029,7 +1094,11 @@ module elpa_api
 #else
       complex(kind=c_double_complex)  :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -1039,7 +1108,7 @@ module elpa_api
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
-  !> 
+  !>
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
   !> \param   a           single complex matrix: the matrix to be decomposed
@@ -1055,7 +1124,11 @@ module elpa_api
 #else
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -1081,7 +1154,11 @@ module elpa_api
 #else
       real(kind=c_double)             :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -1107,7 +1184,11 @@ module elpa_api
 #else
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -1133,7 +1214,11 @@ module elpa_api
 #else
       complex(kind=c_double_complex)  :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -1159,7 +1244,11 @@ module elpa_api
 #else
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -1189,7 +1278,11 @@ module elpa_api
 #else
       real(kind=c_double)             :: q(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 
@@ -1219,7 +1312,11 @@ module elpa_api
 #else
       real(kind=c_float)              :: q(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
     end subroutine
   end interface
 

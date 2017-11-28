@@ -456,9 +456,7 @@ dist_man_MANS = \
 
 if ENABLE_LEGACY
 dist_man_MANS += \
-  man/solve_evp_real.3 \
   man/solve_evp_real_1stage_double.3 \
-  man/solve_evp_complex.3 \
   man/solve_evp_complex_1stage_double.3 \
   man/solve_evp_real_2stage_double.3 \
   man/solve_evp_complex_2stage_double.3 \
@@ -466,8 +464,7 @@ dist_man_MANS += \
   man/elpa_solve_evp_complex_1stage_double.3 \
   man/elpa_solve_evp_real_2stage_double.3 \
   man/elpa_solve_evp_complex_2stage_double.3 \
-  man/get_elpa_row_col_comms.3 \
-  man/get_elpa_communicators.3 \
+  man/elpa_get_communicators.3 \
   man/elpa_mult_at_b_real_double.3 \
   man/elpa_mult_at_b_real_single.3 \
   man/elpa_mult_ah_b_complex_double.3 \
@@ -479,7 +476,11 @@ dist_man_MANS += \
   man/elpa_solve_evp_real_double.3 \
   man/elpa_solve_evp_real_single.3 \
   man/elpa_solve_evp_complex_double.3 \
-  man/elpa_solve_evp_complex_single.3
+  man/elpa_solve_evp_complex_single.3 \
+  man/elpa_autotune_setup.3 \
+  man/elpa_autotune_step.3 \
+  man/elpa_autotune_set_best.3 \
+  man/elpa_autotune_deallocate.3
 endif
 
 

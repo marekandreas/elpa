@@ -95,7 +95,7 @@
 !      integer(kind=ik)                            :: istat
 !      character(200)                              :: errorMessage
       logical                                     :: success
-      integer(kind=ik)                            :: successInternal
+      integer(kind=ik)                            :: successInternal, error
       class(elpa_t), pointer                      :: e
 
       !call timer%start("elpa_mult_at_b_&
@@ -122,13 +122,37 @@
 
       e => elpa_allocate()
 
-      call e%set("na", na)
-      call e%set("local_nrows", lda)
-      call e%set("local_ncols", ldaCols)
-      call e%set("nblk", nblk)
+      call e%set("na", na, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call e%set("local_nrows", lda, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call e%set("local_ncols", ldaCols, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call e%set("nblk", nblk, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
 
-      call e%set("mpi_comm_rows", mpi_comm_rows)
-      call e%set("mpi_comm_cols", mpi_comm_cols)
+      call e%set("mpi_comm_rows", mpi_comm_rows, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call e%set("mpi_comm_cols", mpi_comm_cols, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
 
       if (e%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
