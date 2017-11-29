@@ -411,9 +411,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
     nev = 150
     nblk = 16
 
-    if (instr != "power8" and g == "with-gpu"):
-        continue
-
     # do not all combinations with all compilers
     # especially - use pgi only on minskys for now
     #            - do not allow to use FC=gfortran but CC=intel
