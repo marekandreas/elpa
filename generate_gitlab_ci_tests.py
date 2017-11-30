@@ -366,13 +366,12 @@ coverage = {
         "no-coverage": "no-coverage",
 }
 
-#disable avx2 at the moment
-#disable avx512
-        #"knl" : "--enable-avx512",
 instruction_set = {
         "sse" : " --enable-sse --enable-sse-assembly",
         "avx" : " --enable-avx",
         "avx2" : " --enable-avx2",
+        "avx512" : "--enable-avx512",
+        "knl" : "--enable-avx512",
         "power8" : " --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
 }
 
@@ -411,9 +410,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     nev = 150
     nblk = 16
-
-    if (instr != "power8" and g == "with-gpu"):
-        continue
 
     # do not all combinations with all compilers
     # especially - use pgi only on minskys for now
@@ -623,8 +619,8 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
             print("    - export SRUN_COMMANDLINE_CONFIGURE=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY\" ")
             print("    - export SRUN_COMMANDLINE_BUILD=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
             print("    - export SRUN_COMMANDLINE_RUN=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
-        print("    - echo \"srun --cpu_bind=cores --hint=nomultithread --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE\" ")
-        print("    - srun --cpu_bind=cores --hint=nomultithread --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
+        print("    - echo \"srun --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE\" ")
+        print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
             + " /scratch/elpa/bin/configure_elpa.sh" \
             + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
             + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
@@ -638,8 +634,8 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
         print("    - make -j 8")
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
-        print("    - echo \"srun --cpu_bind=cores --hint=nomultithread --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD\" ")
-        print("    - srun --cpu_bind=cores --hint=nomultithread --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
+        print("    - echo \"srun --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD\" ")
+        print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
 
     # do the test
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
@@ -662,8 +658,8 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
             openmp_threads=" 1 "
         for na in sorted(matrix_size.keys(),reverse=True):
             cores = set_number_of_cores(MPI_TASKS, o)
-            print("    - echo \" srun --cpu_bind=cores --hint=nomultithread --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
-            print("    - srun --cpu_bind=cores --hint=nomultithread --threads-per-core=1 --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
+            print("    - echo \" srun  --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
+            print("    - srun --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
                                          /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\""+ matrix_size[na] + " "+ str(nev)+" "+str(nblk)+"\\\"  || { cat test-suite.log; exit 1; }\"")
 
         if (cov == "coverage"):
