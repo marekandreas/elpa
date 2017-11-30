@@ -129,7 +129,7 @@ module elpa_impl
 
      procedure, public :: associate_int => elpa_associate_int  !< public method to set some pointers
 
-     procedure, public :: autotune_setup => elpa_autotune_impl_setup
+     procedure, public :: autotune_setup => elpa_autotune_setup
      procedure, public :: autotune_step => elpa_autotune_step
      procedure, public :: autotune_set_best => elpa_autotune_set_best
 
@@ -208,12 +208,13 @@ module elpa_impl
     !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
     !c> *  \result void
     !c> */
-    !c> void elpa_autotune_deallocate(elpa_t handle);
-    subroutine elpa_autotune_impl_deallocate_c(handle) bind(C, name="elpa_autotune_deallocate")
-      type(c_ptr), value :: handle
-      type(elpa_impl_t), pointer :: self
+    !c> void elpa_autotune_deallocate(elpa_autotune_t handle);
+    subroutine elpa_autotune_impl_deallocate_c( autotune_handle) bind(C, name="elpa_autotune_deallocate")
+      type(c_ptr), value                  :: autotune_handle
 
-      call c_f_pointer(handle, self)
+      type(elpa_autotune_impl_t), pointer :: self
+
+      call c_f_pointer(autotune_handle, self)
       call self%destroy()
       deallocate(self)
     end subroutine
@@ -2602,40 +2603,13 @@ module elpa_impl
     end subroutine
 
 
-    !!> \brief function to setup the ELPA autotuning and create the autotune object
-    !!> Parameters
-    !!> \param   self            class(elpa_impl_t) the allocated ELPA object
-    !!> \param   level           integer: the "thoroughness" of the planed autotuning
-    !!> \param   domain          integer: the domain (real/complex) which should be tuned
-    !!> \result  tune_state      class(elpa_autotune_t): the created autotuning object
-    !function elpa_autotune_setup(self, level, domain) result(tune_state)
-    !  class(elpa_impl_t), intent(inout), target :: self
-    !  integer, intent(in)                       :: level, domain
-    !  type(elpa_autotune_impl_t), pointer       :: ts_impl
-    !  class(elpa_autotune_t), pointer           :: tune_state
-
-    !  allocate(ts_impl)
-    !  ts_impl%parent => self
-    !  ts_impl%level = level
-    !  ts_impl%domain = domain
-
-    !  ts_impl%i = -1
-    !  ts_impl%min_loc = -1
-    !  ts_impl%N = elpa_index_autotune_cardinality_c(self%index, level, domain)
-
-    !  tune_state => ts_impl
-
-    !  call self%autotune_timer%enable()
-    !end function
-
-
     !> \brief function to setup the ELPA autotuning and create the autotune object
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   level           integer: the "thoroughness" of the planed autotuning
     !> \param   domain          integer: the domain (real/complex) which should be tuned
     !> \result  tune_state      class(elpa_autotune_t): the created autotuning object
-    function elpa_autotune_impl_setup(self, level, domain) result(tune_state)
+    function elpa_autotune_setup(self, level, domain) result(tune_state)
       class(elpa_impl_t), intent(inout), target :: self
       integer, intent(in)                       :: level, domain
       type(elpa_autotune_impl_t), pointer       :: ts_impl
@@ -2657,27 +2631,40 @@ module elpa_impl
 
 
 
-    !!c> /*! \brief C interface for the implementation of the elpa_autotune_setup method
-    !!c> *
-    !!c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
-    !!c> *  \param  int              level:  "thoroughness" of autotuning
-    !!c> *  \param  int              domain: real/complex autotuning
-    !!c> *  \result elpa_autotune_t  handle:  on the autotune object
-    !!c> */
-    !!c> elpa_autotune_t elpa_autotune_setup(elpa_t handle, int level, int domain);
-    !function elpa_autotune_impl_setup_c(handle ,level, domain) result(ptr) bind(C, name="elpa_autotune_setup")
-    !  type(c_ptr), intent(in), value       :: handle
-    !  type(elpa_impl_t), pointer           :: self
-    !  type(elpa_autotune_impl_t), pointer  :: obj
-    !  integer(kind=c_int), intent(in)      :: level
-    !  integer(kind=c_int), intent(in)      :: domain
-    !  type(c_ptr) :: ptr
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_setup method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  int              level:  "thoroughness" of autotuning
+    !c> *  \param  int              domain: real/complex autotuning
+    !c> *  \result elpa_autotune_t  handle:  on the autotune object
+    !c> */
+    !c> elpa_autotune_t elpa_autotune_setup(elpa_t handle, int level, int domain);
+    function elpa_autotune_setup_c(handle ,level, domain) result(ptr) bind(C, name="elpa_autotune_setup")
+      type(c_ptr), intent(in), value         :: handle
+      type(elpa_impl_t), pointer             :: self
+      class(elpa_autotune_t), pointer        :: tune_state
+      type(elpa_autotune_impl_t), pointer    :: obj        
+      integer(kind=c_int), intent(in), value :: level
+      integer(kind=c_int), intent(in), value :: domain
+      type(c_ptr)                            :: ptr
 
-    !  call c_f_pointer(handle, self)
-    !  obj => self%autotune_setup(level, domain) 
-    !  ptr = c_loc(obj)
 
-    !end function
+      print *,"Calling c_f_pointer handle"
+      call c_f_pointer(handle, self)
+
+      print *,"Calling setup"
+      print *,level,domain
+      tune_state => self%autotune_setup(level, domain)
+      print *,"After setup"
+      select type(tune_state)
+        class is (elpa_autotune_impl_t)
+          obj => tune_state
+        class default
+          print *, "This should not happen"
+      end select                
+      ptr = c_loc(obj)
+
+    end function
 
 
     !> \brief function to do an autotunig step
@@ -2705,7 +2692,7 @@ module elpa_impl
 
       if (ts_impl%i >= 0) then
         time_spent = self%autotune_timer%get("accumulator")
-        print *, time_spent
+        !print *, time_spent
         if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
           ts_impl%min_val = time_spent
           ts_impl%min_loc = ts_impl%i
@@ -2722,6 +2709,36 @@ module elpa_impl
       end do
 
     end function
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_step method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \result int              unfinished:  describes whether autotuning finished (0) or not (1)
+    !c> */
+    !c> int elpa_autotune_step(elpa_t handle, elpa_autotune_t autotune_handle);
+    function elpa_autotune_step_c(handle, autotune_handle) result(unfinished) bind(C, name="elpa_autotune_step")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      logical                              :: unfinished_f
+      integer(kind=c_int)                  :: unfinished
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      unfinished_f = self%autotune_step(tune_state)
+      if (unfinished_f) then
+        unfinished = 1
+      else
+        unfinished = 0
+      endif
+
+    end function
+
 
 
     !> \brief function to set the up-to-know best options of the autotuning
@@ -2746,5 +2763,29 @@ module elpa_impl
         stop "This should not happen (in elpa_autotune_set_best())"
       endif
     end subroutine
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_set_best(elpa_t handle, elpa_autotune_t autotune_handle);
+    subroutine elpa_autotune_set_best_c(handle, autotune_handle) bind(C, name="elpa_autotune_set_best")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_set_best(tune_state)
+
+    end subroutine
+
+
 
 end module

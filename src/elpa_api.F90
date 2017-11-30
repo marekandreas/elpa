@@ -179,7 +179,7 @@ module elpa_api
   end type elpa_t
 
 
-  !> \brief Abstract definition of the elpa_autotunet type
+  !> \brief Abstract definition of the elpa_autotune type
   type, abstract :: elpa_autotune_t
     private
     contains

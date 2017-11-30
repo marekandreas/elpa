@@ -223,7 +223,7 @@ module elpa
     !> \brief function to deallocate an ELPA autotune instance
     !> Parameters
     !> \details
-    !> \param  obj        class(elpa_autotune_t), pointer : pointer to then autotune object to be destroyed and deallocated   
+    !> \param  obj        class(elpa_autotune_t), pointer : pointer to the autotune object to be destroyed and deallocated   
     subroutine elpa_autotune_deallocate(obj)
       class(elpa_autotune_t), pointer :: obj
       call obj%destroy()

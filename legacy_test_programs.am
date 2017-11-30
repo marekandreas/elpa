@@ -1,5 +1,6 @@
 noinst_PROGRAMS += \
   real_2stage_c_version@SUFFIX@ \
+  autotune_c_version@SUFFIX@ \
   legacy_real_1stage@SUFFIX@ \
   legacy_complex_1stage@SUFFIX@ \
   legacy_real_2stage@SUFFIX@ \
@@ -76,7 +77,10 @@ endif
 real_2stage_c_version@SUFFIX@_SOURCES = test/C/real_2stage_c_version.c
 real_2stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
 real_2stage_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
-EXTRA_real_2stage_c_version@SUFFIX@_DEPENDENCIES = test/Fortran/elpa_print_headers.F90
+
+autotune_c_version@SUFFIX@_SOURCES = test/C/autotune_c_version.c
+autotune_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+autotune_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 
 legacy_real_1stage_c_version@SUFFIX@_SOURCES = test/C/elpa1/legacy_interface/legacy_real_1stage_c_version.c
 legacy_real_1stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
