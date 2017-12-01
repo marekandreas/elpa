@@ -32,7 +32,8 @@ AC_SUBST([ELPA_SO_VERSION], [11:0:0])
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 AC_DEFINE([CURRENT_API_VERSION], [20171201], [Current ELPA API version])
-
+# Autotune Version
+AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then

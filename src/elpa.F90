@@ -109,7 +109,7 @@
 !>  class(elpa_t), pointer :: elpa
 !>  integer :: success
 !>
-!>  if (elpa_init(20170403) /= ELPA_OK) then
+!>  if (elpa_init(20171201) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
 !>     stop
 !>   endif
@@ -153,7 +153,7 @@
 !>   elpa_t handle;
 !>   int error;
 !>
-!>   if (elpa_init(20170403) != ELPA_OK) {
+!>   if (elpa_init(20171201) != ELPA_OK) {
 !>     fprintf(stderr, "Error: ELPA API version not supported");
 !>     exit(1);
 !>   }

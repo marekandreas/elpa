@@ -2615,6 +2615,12 @@ module elpa_impl
       type(elpa_autotune_impl_t), pointer       :: ts_impl
       class(elpa_autotune_t), pointer           :: tune_state
 
+
+      if (elpa_get_api_version() < EARLIEST_AUTOTUNE_VERSION) then
+        write(error_unit, "(a,i0,a)") "ELPA: Error API version: Autotuning does not support", elpa_get_api_version()
+        stop
+      endif
+
       allocate(ts_impl)
       ts_impl%parent => self
       ts_impl%level = level

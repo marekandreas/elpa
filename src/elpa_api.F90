@@ -60,7 +60,10 @@ module elpa_api
                                                                              !< with the current release
   integer, private, parameter :: current_api_version  = CURRENT_API_VERSION  !< Definition of the current API version
 
-  logical, private :: initDone = .false.
+  integer, private, parameter :: earliest_autotune_version = EARLIEST_AUTOTUNE_VERSION !< Definition of the earliest API version
+                                                                                       !< which supports autotuning
+  integer, private            :: api_version_set
+  logical, private            :: initDone = .false.
 
   public :: elpa_t, &
       c_int, &
@@ -70,6 +73,7 @@ module elpa_api
   !> \brief Abstract definition of the elpa_t type
   type, abstract :: elpa_t
     private
+
 
     !< these have to be public for proper bounds checking, sadly
     integer(kind=c_int), public, pointer :: na => NULL()
@@ -1374,6 +1378,7 @@ module elpa_api
 
       if (earliest_api_version <= api_version .and. api_version <= current_api_version) then
         initDone = .true.
+        api_version_set = api_version
         error = ELPA_OK
       else
         write(error_unit, "(a,i0,a)") "ELPA: Error API version ", api_version," is not supported by this library"
@@ -1392,6 +1397,12 @@ module elpa_api
       else
         state = ELPA_ERROR
       endif
+    end function
+
+    function elpa_get_api_version() result(api_version)
+       integer :: api_version
+
+       api_version = api_version_set
     end function
 
 
