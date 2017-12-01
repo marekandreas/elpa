@@ -230,12 +230,17 @@ module elpa_api
   !> \param   domain      integer: domain (real/complex) which should be tuned
   !> \result  tune_state  class(elpa_autotune_t): the autotuning object
   abstract interface
-    function elpa_autotune_setup_i(self, level, domain) result(tune_state)
+    function elpa_autotune_setup_i(self, level, domain, error) result(tune_state)
       import elpa_t, elpa_autotune_t
       implicit none
       class(elpa_t), intent(inout), target :: self
-      integer, intent(in) :: level, domain
-      class(elpa_autotune_t), pointer :: tune_state
+      integer, intent(in)                  :: level, domain
+      class(elpa_autotune_t), pointer      :: tune_state
+#ifdef USE_FORTRAN2008
+      integer , optional                   :: error
+#else
+      integer                              :: error
+#endif
     end function
   end interface
 
