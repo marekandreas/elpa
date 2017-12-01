@@ -18,11 +18,11 @@ In order to unfiy the namespace of the *ELPA* public interfaces, several interfa
 have been replaced by new names. The old interfaces will be removed
 
 Deprecated interface             Replacement                            Comment
-================================================================================
-get_elpa_row_col_coms            elpa_get_communicators                (removed)
-get_elpa_communicators           elpa_get_communicators                (removed)
-solve_evp_real                   elpa_solve_evp_real_1stage_double     (removed)
-solve_evp_complex                elpa_solve_evp_complex_1stage_double  (removed)
+==================================================================================================
+get_elpa_row_col_coms            elpa_get_communicators                (removed since 2017.11.001)
+get_elpa_communicators           elpa_get_communicators                (removed since 2017.11.001)
+solve_evp_real                   elpa_solve_evp_real_1stage_double     (removed since 2017.11.001)
+solve_evp_complex                elpa_solve_evp_complex_1stage_double  (removed since 2017.11.001)
 solve_evp_real_1stage            elpa_solve_evp_real_1stage_double
 solve_evp_complex_1stage         elpa_solve_evp_complex_1stage_double
 solve_evp_real_2stage            elpa_solve_evp_real_2stage_double

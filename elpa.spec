@@ -32,7 +32,7 @@
 %endif
 
 Name:           elpa
-Version:        2017.05.003
+Version:        2017.11.001.rc1
 Release:        1
 Summary:        A massively parallel eigenvector solver
 License:        LGPL-3.0
