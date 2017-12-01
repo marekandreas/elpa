@@ -49,7 +49,18 @@
 
 !> \brief Fortran module which provides the actual implementation of the API. Do not use directly! Use the module "elpa"
 module elpa_impl
+  use precision
+  use elpa2_impl
+  use elpa1_impl
+  use elpa1_auxiliary_impl
+#ifdef WITH_MPI
+  use elpa_mpi
+#endif
+  use elpa_generated_fortran_interfaces
+  use elpa_utilities, only : error_unit
+
   use elpa_abstract_impl
+  use elpa_autotune_impl
   use, intrinsic :: iso_c_binding
   implicit none
 
@@ -118,8 +129,11 @@ module elpa_impl
 
      procedure, public :: associate_int => elpa_associate_int  !< public method to set some pointers
 
-  end type elpa_impl_t
+     procedure, public :: autotune_setup => elpa_autotune_setup
+     procedure, public :: autotune_step => elpa_autotune_step
+     procedure, public :: autotune_set_best => elpa_autotune_set_best
 
+  end type elpa_impl_t
 
   !> \brief the implementation of the generic methods
   contains
@@ -130,10 +144,6 @@ module elpa_impl
     !> \param   error      integer, optional to get an error code
     !> \result  obj        class(elpa_impl_t) allocated ELPA object
     function elpa_impl_allocate(error) result(obj)
-      use precision
-      use elpa_utilities, only : error_unit
-      use elpa_generated_fortran_interfaces
-
       type(elpa_impl_t), pointer   :: obj
       integer, optional            :: error
 
@@ -193,15 +203,28 @@ module elpa_impl
     end subroutine
 
 
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_deallocate method
+    !c> *
+    !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
+    !c> *  \result void
+    !c> */
+    !c> void elpa_autotune_deallocate(elpa_autotune_t handle);
+    subroutine elpa_autotune_impl_deallocate_c( autotune_handle) bind(C, name="elpa_autotune_deallocate")
+      type(c_ptr), value                  :: autotune_handle
+
+      type(elpa_autotune_impl_t), pointer :: self
+
+      call c_f_pointer(autotune_handle, self)
+      call self%destroy()
+      deallocate(self)
+    end subroutine
+
+
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
-      use elpa_utilities, only : error_unit
-#ifdef WITH_MPI
-      use elpa_mpi
-#endif
       class(elpa_impl_t), intent(inout)   :: self
       integer                             :: error, timings
 
@@ -360,8 +383,6 @@ module elpa_impl
     !> \param   name       string, the key
     !> \result  state      integer, the state of the key/value pair
     function elpa_is_set(self, name) result(state)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t)       :: self
       character(*), intent(in) :: name
       integer                  :: state
@@ -376,8 +397,6 @@ module elpa_impl
     !> \param   value      integer, value
     !> \result  error      integer, error code
     function elpa_can_set(self, name, value) result(error)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t)       :: self
       character(*), intent(in) :: name
       integer(kind=c_int), intent(in) :: value
@@ -387,8 +406,13 @@ module elpa_impl
     end function
 
 
+    !> \brief function to convert a value to an human readable string
+    !> Parameters
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
+    !> \param   option_name string: the name of the options, whose value should be converted
+    !> \param   error       integer: errpr code
+    !> \result  string      string: the humanreadable string   
     function elpa_value_to_string(self, option_name, error) result(string)
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
       type(c_ptr) :: ptr
@@ -469,12 +493,14 @@ module elpa_impl
       call c_f_pointer(name_p, name)
       call elpa_get_double(self, name, value, error)
     end subroutine
+ 
 
-
+    !> \brief function to associate a pointer with an integer value
+    !> Parameters
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
+    !> \param   name        string: the name of the entry
+    !> \result  value       integer, pointer: the value for the entry
     function elpa_associate_int(self, name) result(value)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
-      use elpa_utilities, only : error_unit
       class(elpa_impl_t)             :: self
       character(*), intent(in)       :: name
       integer(kind=c_int), pointer   :: value
@@ -489,6 +515,13 @@ module elpa_impl
     end function
 
 
+    !> \brief function to querry the timing information at a certain level
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name1 .. name6  string: the string identifier for the timer region.
+    !>                                  at the moment 6 nested levels can be queried
+    !> \result  s               double: the timer metric for the region. Might be seconds,
+    !>                                  or any other supported metric
     function elpa_get_time(self, name1, name2, name3, name4, name5, name6) result(s)
       class(elpa_impl_t), intent(in) :: self
       ! this is clunky, but what can you do..
@@ -503,6 +536,11 @@ module elpa_impl
     end function
 
 
+    !> \brief function to print the timing tree below at a certain level
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name1 .. name6  string: the string identifier for the timer region.
+    !>                                  at the moment 4 nested levels can be specified
     subroutine elpa_print_times(self, name1, name2, name3, name4)
       class(elpa_impl_t), intent(in) :: self
       character(len=*), intent(in), optional :: name1, name2, name3, name4
@@ -512,6 +550,10 @@ module elpa_impl
     end subroutine
 
 
+    !> \brief function to start the timing of a code region
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name            string: a chosen identifier name for the code region
     subroutine elpa_timer_start(self, name)
       class(elpa_impl_t), intent(inout) :: self
       character(len=*), intent(in) :: name
@@ -521,6 +563,10 @@ module elpa_impl
     end subroutine
 
 
+    !> \brief function to stop the timing of a code region
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name            string: identifier name for the code region to stop
     subroutine elpa_timer_stop(self, name)
       class(elpa_impl_t), intent(inout) :: self
       character(len=*), intent(in) :: name
@@ -556,10 +602,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_d(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 
 #ifdef USE_ASSUMED_SIZE
@@ -592,10 +634,15 @@ module elpa_impl
       error = error2
 #endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -667,10 +714,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_f(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)  :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -702,10 +745,15 @@ module elpa_impl
       error  = error2
 #endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -783,10 +831,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_dc(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)             :: self
 
 #ifdef USE_ASSUMED_SIZE
@@ -818,10 +862,15 @@ module elpa_impl
 #endif
 
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -895,11 +944,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_fc(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-
-      use iso_c_binding
       class(elpa_impl_t)            :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -930,10 +974,15 @@ module elpa_impl
       error = error2
 #endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -1006,12 +1055,7 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_d(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
-
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double) :: a(self%local_nrows, *)
 #else
@@ -1041,10 +1085,15 @@ module elpa_impl
       error = error2
 #endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -1106,10 +1155,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_f(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)  :: a(self%local_nrows, *)
@@ -1140,10 +1185,15 @@ module elpa_impl
       error = error2
 #endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -1214,12 +1264,7 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_dc(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)             :: self
-
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_double_complex) :: a(self%local_nrows, *)
 #else
@@ -1249,10 +1294,15 @@ module elpa_impl
       error = error2
 #endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -1319,11 +1369,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_fc(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-
-      use iso_c_binding
       class(elpa_impl_t)            :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex) :: a(self%local_nrows, *)
@@ -1355,10 +1400,15 @@ module elpa_impl
       error = error2
 #endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
@@ -1447,8 +1497,6 @@ module elpa_impl
     !> \param error                 optional argument, error code which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_d (self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1550,8 +1598,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1622,6 +1668,8 @@ module elpa_impl
       call elpa_hermitian_multiply_f(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
                                      ncols_b, c, nrows_c, ncols_c, error)
     end subroutine
+
+ 
     !> \brief  elpa_hermitian_multiply_dc: class method to perform C : = A**H * B for double complex matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
     !>                 B is a (self%na,ncb) matrix
@@ -1659,8 +1707,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1727,6 +1773,7 @@ module elpa_impl
                                      ncols_b, c, nrows_c, ncols_c, error)
     end subroutine
 
+
     !> \brief  elpa_hermitian_multiply_fc: class method to perform C : = A**H * B for float complex matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
     !>                 B is a (self%na,ncb) matrix
@@ -1764,8 +1811,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1856,9 +1901,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_d (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=rk8)                  :: a(self%local_nrows,*)
@@ -1928,9 +1970,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_f(self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=rk4)                  :: a(self%local_nrows,*)
@@ -2005,9 +2044,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_dc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=ck8)               :: a(self%local_nrows,*)
@@ -2077,8 +2113,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_fc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex)   :: a(self%local_nrows,*)
@@ -2153,8 +2187,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_d (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double)             :: a(self%local_nrows,*)
@@ -2224,8 +2256,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_f (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)              :: a(self%local_nrows,*)
@@ -2301,9 +2331,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_dc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=ck8)               :: a(self%local_nrows,*)
@@ -2373,8 +2400,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_fc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex)   :: a(self%local_nrows,*)
@@ -2450,9 +2475,6 @@ module elpa_impl
     !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
     subroutine elpa_solve_tridiagonal_d (self, d, e, q, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       real(kind=rk8)                  :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE
@@ -2506,9 +2528,6 @@ module elpa_impl
     !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
     subroutine elpa_solve_tridiagonal_f (self, d, e, q, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       real(kind=rk4)                  :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE
@@ -2550,8 +2569,10 @@ module elpa_impl
     end subroutine
 
 
+    !> \brief function to destroy an elpa object
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
     subroutine elpa_destroy(self)
-      use elpa_generated_fortran_interfaces
 #ifdef WITH_MPI
       integer :: mpi_comm_rows, mpi_comm_cols, mpierr, error
 #endif
@@ -2576,9 +2597,195 @@ module elpa_impl
 #endif
 
       call timer_free(self%timer)
+      call timer_free(self%autotune_timer)
       call elpa_index_free_c(self%index)
 
     end subroutine
+
+
+    !> \brief function to setup the ELPA autotuning and create the autotune object
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   level           integer: the "thoroughness" of the planed autotuning
+    !> \param   domain          integer: the domain (real/complex) which should be tuned
+    !> \result  tune_state      class(elpa_autotune_t): the created autotuning object
+    function elpa_autotune_setup(self, level, domain) result(tune_state)
+      class(elpa_impl_t), intent(inout), target :: self
+      integer, intent(in)                       :: level, domain
+      type(elpa_autotune_impl_t), pointer       :: ts_impl
+      class(elpa_autotune_t), pointer           :: tune_state
+
+      allocate(ts_impl)
+      ts_impl%parent => self
+      ts_impl%level = level
+      ts_impl%domain = domain
+
+      ts_impl%i = -1
+      ts_impl%min_loc = -1
+      ts_impl%N = elpa_index_autotune_cardinality_c(self%index, level, domain)
+
+      tune_state => ts_impl
+
+      call self%autotune_timer%enable()
+    end function
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_setup method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  int              level:  "thoroughness" of autotuning
+    !c> *  \param  int              domain: real/complex autotuning
+    !c> *  \result elpa_autotune_t  handle:  on the autotune object
+    !c> */
+    !c> elpa_autotune_t elpa_autotune_setup(elpa_t handle, int level, int domain);
+    function elpa_autotune_setup_c(handle ,level, domain) result(ptr) bind(C, name="elpa_autotune_setup")
+      type(c_ptr), intent(in), value         :: handle
+      type(elpa_impl_t), pointer             :: self
+      class(elpa_autotune_t), pointer        :: tune_state
+      type(elpa_autotune_impl_t), pointer    :: obj        
+      integer(kind=c_int), intent(in), value :: level
+      integer(kind=c_int), intent(in), value :: domain
+      type(c_ptr)                            :: ptr
+
+
+      print *,"Calling c_f_pointer handle"
+      call c_f_pointer(handle, self)
+
+      print *,"Calling setup"
+      print *,level,domain
+      tune_state => self%autotune_setup(level, domain)
+      print *,"After setup"
+      select type(tune_state)
+        class is (elpa_autotune_impl_t)
+          obj => tune_state
+        class default
+          print *, "This should not happen"
+      end select                
+      ptr = c_loc(obj)
+
+    end function
+
+
+    !> \brief function to do an autotunig step
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
+    !> \result  unfinished      logical: describes the state of the autotuning (completed/uncompleted)
+    function elpa_autotune_step(self, tune_state) result(unfinished)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(inout), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+      logical :: unfinished
+      integer :: i
+      real(kind=C_DOUBLE) :: time_spent
+
+      select type(tune_state)
+        class is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      unfinished = .false.
+
+      if (ts_impl%i >= 0) then
+        time_spent = self%autotune_timer%get("accumulator")
+        !print *, time_spent
+        if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
+          ts_impl%min_val = time_spent
+          ts_impl%min_loc = ts_impl%i
+        end if
+        call self%autotune_timer%free()
+      endif
+
+      do while (ts_impl%i < ts_impl%N)
+        ts_impl%i = ts_impl%i + 1
+        if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%i) == 1) then
+          unfinished = .true.
+          return
+        end if
+      end do
+
+    end function
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_step method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \result int              unfinished:  describes whether autotuning finished (0) or not (1)
+    !c> */
+    !c> int elpa_autotune_step(elpa_t handle, elpa_autotune_t autotune_handle);
+    function elpa_autotune_step_c(handle, autotune_handle) result(unfinished) bind(C, name="elpa_autotune_step")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      logical                              :: unfinished_f
+      integer(kind=c_int)                  :: unfinished
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      unfinished_f = self%autotune_step(tune_state)
+      if (unfinished_f) then
+        unfinished = 1
+      else
+        unfinished = 0
+      endif
+
+    end function
+
+
+
+    !> \brief function to set the up-to-know best options of the autotuning
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
+    subroutine elpa_autotune_set_best(self, tune_state)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+
+      select type(tune_state)
+        class is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      print *, "set best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
+      if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
+        stop "This should not happen (in elpa_autotune_set_best())"
+      endif
+    end subroutine
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_set_best(elpa_t handle, elpa_autotune_t autotune_handle);
+    subroutine elpa_autotune_set_best_c(handle, autotune_handle) bind(C, name="elpa_autotune_set_best")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_set_best(tune_state)
+
+    end subroutine
+
 
 
 end module

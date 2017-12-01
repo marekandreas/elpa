@@ -2,6 +2,11 @@
 from __future__ import print_function
 from itertools import product
 
+language_flag = { 
+        "Fortran" : "Fortran",
+        "C" : "C",
+}
+
 domain_flag = {
         "real"   : "-DTEST_REAL",
         "complex": "-DTEST_COMPLEX",
@@ -45,7 +50,8 @@ layout_flag = {
         "square" : ""
 }
 
-for m, g, q, t, p, d, s, l in product(
+for lang, m, g, q, t, p, d, s, l in product(
+                             sorted(language_flag.keys()),
                              sorted(matrix_flag.keys()),
                              sorted(gpu_flag.keys()),
                              sorted(qr_flag.keys()),
@@ -54,6 +60,11 @@ for m, g, q, t, p, d, s, l in product(
                              sorted(domain_flag.keys()),
                              sorted(solver_flag.keys()),
                              sorted(layout_flag.keys())):
+
+    if (lang == "C"):
+        continue
+    if (lang == "C" and ( m == "analytic" or l == "all_layouts")):
+        continue
 
     # exclude some test combinations
 
@@ -126,30 +137,86 @@ for m, g, q, t, p, d, s, l in product(
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "test_{0}_{1}_{2}_{3}{4}_{5}{6}{7}{8}".format(
-                    d, p, t, s,
-                    "" if kernel == "nokernel" else "_" + kernel,
-                    "gpu_" if g else "",
-                    "qr_" if q else "",
-                    m,
-                    "_all_layouts" if l == "all_layouts" else "")
-        print("if BUILD_KCOMPUTER")
-        print("bin_PROGRAMS += " + name)
-        print("else")
-        print("noinst_PROGRAMS += " + name)
-        print("endif")
-        print("check_SCRIPTS += " + name + ".sh")
-        print(name + "_SOURCES = test/Fortran/test.F90")
-        print(name + "_LDADD = $(test_program_ldadd)")
-        print(name + "_FCFLAGS = $(test_program_fcflags) \\")
-        print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
-        print("  " + " \\\n  ".join([
-            domain_flag[d],
-            prec_flag[p],
-            test_type_flag[t],
-            solver_flag[s],
-            gpu_flag[g],
-            qr_flag[q],
-            matrix_flag[m]] + extra_flags))
+        if (lang == "Fortran"):
 
-        print("endif\n" * endifs)
+            name = "test_{0}_{1}_{2}_{3}{4}_{5}{6}{7}{8}".format(
+                        d, p, t, s,
+                        "" if kernel == "nokernel" else "_" + kernel,
+                        "gpu_" if g else "",
+                        "qr_" if q else "",
+                        m,
+                        "_all_layouts" if l == "all_layouts" else "")
+            print("if BUILD_KCOMPUTER")
+            print("bin_PROGRAMS += " + name)
+            print("else")
+            print("noinst_PROGRAMS += " + name)
+            print("endif")
+            print("check_SCRIPTS += " + name + ".sh")
+            print(name + "_SOURCES = test/Fortran/test.F90")
+            print(name + "_LDADD = $(test_program_ldadd)")
+            print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+            print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
+            print("  " + " \\\n  ".join([
+                domain_flag[d],
+                prec_flag[p],
+                test_type_flag[t],
+                solver_flag[s],
+                gpu_flag[g],
+                qr_flag[q],
+                matrix_flag[m]] + extra_flags))
+
+            print("endif\n" * endifs)
+
+        if (lang == "C"):
+
+            name = "test_c_version_{0}_{1}_{2}_{3}{4}_{5}{6}{7}{8}".format(
+                        d, p, t, s,
+                        "" if kernel == "nokernel" else "_" + kernel,
+                        "gpu_" if g else "",
+                        "qr_" if q else "",
+                        m,
+                        "_all_layouts" if l == "all_layouts" else "")
+            print("if BUILD_KCOMPUTER")
+            print("bin_PROGRAMS += " + name)
+            print("else")
+            print("noinst_PROGRAMS += " + name)
+            print("endif")
+            print("check_SCRIPTS += " + name + ".sh")
+            print(name + "_SOURCES = test/C/test.c")
+            print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+            print(name + "_CFLAGS = $(test_program_fcflags) \\")
+            print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
+            print("  " + " \\\n  ".join([
+                domain_flag[d],
+                prec_flag[p],
+                test_type_flag[t],
+                solver_flag[s],
+                gpu_flag[g],
+                qr_flag[q],
+                matrix_flag[m]] + extra_flags))
+
+            print("endif\n" * endifs)
+
+for p, d in product(sorted(prec_flag.keys()), sorted(domain_flag.keys())):
+    endifs = 0
+    if (p == "single"):
+        if (d == "real"):
+            print("if WANT_SINGLE_PRECISION_REAL")
+        elif (d == "complex"):
+            print("if WANT_SINGLE_PRECISION_COMPLEX")
+        else:
+            raise Exception("Oh no!")
+        endifs += 1
+
+    name = "test_autotune_{0}_{1}".format(d, p)
+
+    print("noinst_PROGRAMS += " + name)
+    #if (p != "single"):
+    #    print("check_SCRIPTS += " + name + ".sh")
+    print(name + "_SOURCES = test/Fortran/test_autotune.F90")
+    print(name + "_LDADD = $(test_program_ldadd)")
+    print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+    print("  " + " \\\n  ".join([
+            domain_flag[d],
+            prec_flag[p]]))
+    print("endif\n" * endifs)

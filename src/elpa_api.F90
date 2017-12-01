@@ -96,10 +96,10 @@ module elpa_api
       procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
 
       ! Timer
-      procedure(elpa_get_time_i), deferred, public :: get_time
-      procedure(elpa_print_times_i), deferred, public :: print_times
-      procedure(elpa_timer_start_i), deferred, public :: timer_start
-      procedure(elpa_timer_stop_i), deferred, public :: timer_stop
+      procedure(elpa_get_time_i), deferred, public :: get_time        !< method to get the times from the timer object
+      procedure(elpa_print_times_i), deferred, public :: print_times  !< method to print the timings tree
+      procedure(elpa_timer_start_i), deferred, public :: timer_start  !< method to start a time measurement
+      procedure(elpa_timer_stop_i), deferred, public :: timer_stop    !< method to stop a time measurement
 
 
       ! Actual math routines
@@ -133,10 +133,14 @@ module elpa_api
           elpa_invert_trm_dc, &
           elpa_invert_trm_fc
 
-      generic, public :: solve_tridiagonal => &                           !< method to solve the eigenvalue problem for a tridiagonal
-          elpa_solve_tridiagonal_d, &                                     !< matrix
+      generic, public :: solve_tridiagonal => &                      !< method to solve the eigenvalue problem for a tridiagonal
+          elpa_solve_tridiagonal_d, &                                !< matrix
           elpa_solve_tridiagonal_f
 
+      ! Auto-tune
+      procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
+      procedure(elpa_autotune_step_i), deferred, public :: autotune_step         !< method to do an autotuning step
+      procedure(elpa_autotune_set_best_i), deferred, public :: autotune_set_best !< method to set the best options
 
       !> \brief These method have to be public, in order to be overrideable in the extension types
       procedure(elpa_set_integer_i), deferred, public :: elpa_set_integer
@@ -175,6 +179,15 @@ module elpa_api
   end type elpa_t
 
 
+  !> \brief Abstract definition of the elpa_autotune type
+  type, abstract :: elpa_autotune_t
+    private
+    contains
+      procedure(elpa_autotune_destroy_i), deferred, public :: destroy
+      procedure(elpa_autotune_print_i), deferred, public :: print
+  end type
+
+
   !> \brief definition of helper function to get C strlen
   !> Parameters
   !> \details
@@ -189,7 +202,8 @@ module elpa_api
     end function
   end interface
 
-  !> \brief abstract definition of setup method
+
+  !> \brief abstract definition of the ELPA setup method
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
@@ -202,6 +216,58 @@ module elpa_api
       integer :: error
     end function
   end interface
+
+
+  !> \brief abstract definition of the autotune setup method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   level       integer: the level of "thoroughness" of the tuning steps
+  !> \param   domain      integer: domain (real/complex) which should be tuned
+  !> \result  tune_state  class(elpa_autotune_t): the autotuning object
+  abstract interface
+    function elpa_autotune_setup_i(self, level, domain) result(tune_state)
+      import elpa_t, elpa_autotune_t
+      implicit none
+      class(elpa_t), intent(inout), target :: self
+      integer, intent(in) :: level, domain
+      class(elpa_autotune_t), pointer :: tune_state
+    end function
+  end interface
+
+
+  !> \brief abstract definition of the autotune step method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   unfinished  logical: state whether tuning is unfinished or not
+  abstract interface
+    function elpa_autotune_step_i(self, tune_state) result(unfinished)
+      import elpa_t, elpa_autotune_t
+      implicit none
+      class(elpa_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(inout), target :: tune_state
+      logical :: unfinished
+    end function
+  end interface
+
+  
+  !> \brief abstract definition of the autotune set_best method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> Sets the best combination of ELPA options
+  abstract interface
+    subroutine elpa_autotune_set_best_i(self, tune_state)
+      import elpa_t, elpa_autotune_t
+      implicit none
+      class(elpa_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+    end subroutine
+  end interface
+
 
   !> \brief abstract definition of set method for integer values
   !> Parameters
@@ -226,6 +292,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of get method for integer values
   !> Parameters
   !> \details
@@ -249,6 +316,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of is_set method for integer values
   !> Parameters
   !> \details
@@ -265,6 +333,7 @@ module elpa_api
       integer                  :: state
     end function
   end interface
+
 
   !> \brief abstract definition of can_set method for integer values
   !> Parameters
@@ -284,6 +353,7 @@ module elpa_api
       integer                         :: state
     end function
   end interface
+
 
   !> \brief abstract definition of set method for double values
   !> Parameters
@@ -308,6 +378,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of get method for double values
   !> Parameters
   !> \details
@@ -330,6 +401,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of associate method for integer pointers
   !> Parameters
@@ -368,6 +440,7 @@ module elpa_api
     end function
   end interface
 
+
   !> \brief abstract definition of print method for timer
   !> Parameters
   !> \details
@@ -380,6 +453,7 @@ module elpa_api
       character(len=*), intent(in), optional :: name1, name2, name3, name4
     end subroutine
   end interface
+
 
   !> \brief abstract definition of the start method for timer
   !> Parameters
@@ -395,12 +469,12 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of the stop method for timer
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   name        character(len=*) the name of the entry int the timer tree
-
   abstract interface
     subroutine elpa_timer_stop_i(self, name)
       import elpa_t
@@ -449,6 +523,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to solve single real eigenvalue problem
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
@@ -484,6 +559,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to solve double complex eigenvalue problem
   !>
@@ -521,6 +597,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to solve single complex eigenvalue problem
   !>
@@ -594,6 +671,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to solve single real eigenvalue problem
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
@@ -628,6 +706,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to solve double complex eigenvalue problem
   !>
@@ -665,6 +744,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to solve single complex eigenvalue problem
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
@@ -699,6 +779,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to compute C : = A**T * B for double real matrices
   !>         where   A is a square matrix (self%a,self%na) which is optionally upper or lower triangular
@@ -757,6 +838,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to compute C : = A**T * B
   !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
   !>                 B is a (self%na,ncb) matrix
@@ -813,6 +895,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to compute C : = A**H * B
   !>         where   A is a square matrix (self%na,self%a) which is optionally upper or lower triangular
@@ -871,6 +954,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to compute C : = A**H * B
   !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
   !>                 B is a (self%na,ncb) matrix
@@ -928,6 +1012,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to do a cholesky decomposition of a double real matrix
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
@@ -956,6 +1041,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to do a cholesky decomposition of a single real matrix
   !>
@@ -986,6 +1072,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to do a cholesky decomposition of a double complex matrix
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
@@ -1014,6 +1101,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to do a cholesky decomposition of a single complex matrix
   !>
@@ -1044,6 +1132,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to invert a triangular double real matrix
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
@@ -1072,6 +1161,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to invert a triangular single real matrix
   !> Parameters
@@ -1102,6 +1192,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to invert a triangular double complex matrix
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
@@ -1131,6 +1222,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to invert a triangular single complex matrix
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
@@ -1159,6 +1251,7 @@ module elpa_api
 #endif
     end subroutine
   end interface
+
 
   !> \brief abstract definition of interface to solve the eigenvalue problem for a double-precision real valued tridiangular matrix
   !>
@@ -1193,6 +1286,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to solve the eigenvalue problem for a single-precision real valued tridiangular matrix
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
@@ -1226,6 +1320,7 @@ module elpa_api
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to destroy an ELPA object
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
@@ -1237,7 +1332,33 @@ module elpa_api
     end subroutine
   end interface
 
+ 
+  !> \brief abstract definition of interface to print the autotuning state
+  !> Parameters
+  !> \param   self        class(elpa_autotune_t): the ELPA autotune object
+  abstract interface
+    subroutine elpa_autotune_print_i(self)
+      import elpa_autotune_t
+      implicit none
+      class(elpa_autotune_t), intent(in) :: self
+    end subroutine
+  end interface
+
+ 
+  !> \brief abstract definition of interface to destroy the autotuning state
+  !> Parameters
+  !> \param   self        class(elpa_autotune_t): the ELPA autotune object
+  abstract interface
+    subroutine elpa_autotune_destroy_i(self)
+      import elpa_autotune_t
+      implicit none
+      class(elpa_autotune_t), intent(inout) :: self
+    end subroutine
+  end interface
+
+
   contains
+
 
     !> \brief function to intialize the ELPA library
     !> Parameters
@@ -1260,6 +1381,7 @@ module elpa_api
       endif
     end function
 
+
     !> \brief function to check whether the ELPA library has been correctly initialised
     !> Parameters
     !> \result  state      integer: state is either ELPA_OK or ELPA_ERROR, which can be queried with elpa_strerr
@@ -1272,11 +1394,13 @@ module elpa_api
       endif
     end function
 
+
     !> \brief subroutine to uninit the ELPA library. Does nothing at the moment. Might do sth. later
     !
     !c> void elpa_uninit(void);
     subroutine elpa_uninit() bind(C, name="elpa_uninit")
     end subroutine
+
 
     !> \brief helper function for error strings
     !> Parameters
@@ -1288,6 +1412,7 @@ module elpa_api
       call c_f_pointer(elpa_strerr_c(elpa_error), string)
     end function
 
+
     !> \brief helper function for c strings
     !> Parameters
     !> \param   ptr         type(c_ptr)
@@ -1298,6 +1423,7 @@ module elpa_api
       character(kind=c_char, len=elpa_strlen_c(ptr)), pointer :: string
       call c_f_pointer(ptr, string)
     end function
+
 
     !> \brief function to convert an integer in its string representation
     !> Parameters
@@ -1346,6 +1472,7 @@ module elpa_api
       endif
     end function
 
+
     !> \brief function to convert a string in its integer representation:
     !> Parameters
     !> \param   name        string: the key
@@ -1373,6 +1500,7 @@ module elpa_api
       endif
     end function
 
+
     !> \brief function to get the number of possible choices for an option
     !> Parameters
     !> \param   option_name string:   the option
@@ -1383,6 +1511,7 @@ module elpa_api
       integer                                   :: number
       number = elpa_option_cardinality_c(option_name // C_NULL_CHAR)
     end function
+
 
     !> \brief function to enumerate an option
     !> Parameters
