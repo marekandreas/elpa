@@ -117,9 +117,15 @@ int main(int argc, char** argv) {
    myid = 0;
 #endif
 
-   na = 1000;
-   nev = 500;
-   nblk = 16;
+   if (argc == 4) {
+     na = atoi(argv[1]);
+     nev = atoi(argv[2]);
+     nblk = atoi(argv[3]);
+   } else {
+     na = 1000;
+     nev = 500;
+     nblk = 16;
+   }
 
    for (np_cols = (int) sqrt((double) nprocs); np_cols > 1; np_cols--) {
      if (nprocs % np_cols == 0) {
