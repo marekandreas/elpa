@@ -71,7 +71,7 @@
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE float
 #  else
-#    define MATRIX_TYPE complex
+#    define MATRIX_TYPE complex float
 #  endif
 #else
 #  define EV_TYPE double
