@@ -1,5 +1,4 @@
 noinst_PROGRAMS += \
-  autotune_c_version@SUFFIX@ \
   legacy_real_1stage@SUFFIX@ \
   legacy_complex_1stage@SUFFIX@ \
   legacy_real_2stage@SUFFIX@ \
@@ -72,10 +71,6 @@ noinst_PROGRAMS += \
   legacy_single_complex_2stage_gpu@SUFFIX@
 endif
 endif
-
-autotune_c_version@SUFFIX@_SOURCES = test/C/autotune_c_version.c
-autotune_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-autotune_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 
 legacy_real_1stage_c_version@SUFFIX@_SOURCES = test/C/elpa1/legacy_interface/legacy_real_1stage_c_version.c
 legacy_real_1stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)

@@ -173,7 +173,7 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
 
         print("endif\n" * endifs)
 
-for p, d in product(sorted(prec_flag.keys()), sorted(domain_flag.keys())):
+for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys()), sorted(domain_flag.keys())):
     endifs = 0
     if (p == "single"):
         if (d == "real"):
@@ -184,12 +184,20 @@ for p, d in product(sorted(prec_flag.keys()), sorted(domain_flag.keys())):
             raise Exception("Oh no!")
         endifs += 1
 
-    name = "test_autotune_{0}_{1}".format(d, p)
+    name = "test_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
 
+    print("check_SCRIPTS += " + name + ".sh")
     print("noinst_PROGRAMS += " + name)
-    print(name + "_SOURCES = test/Fortran/test_autotune.F90")
-    print(name + "_LDADD = $(test_program_ldadd)")
-    print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+    if lang == "Fortran":    
+        print(name + "_SOURCES = test/Fortran/test_autotune.F90")
+        print(name + "_LDADD = $(test_program_ldadd)")
+        print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+
+    elif lang == "C":
+        print(name + "_SOURCES = test/C/test_autotune.c")
+        print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+        print(name + "_CFLAGS = $(test_program_fcflags) \\")
+
     print("  " + " \\\n  ".join([
         domain_flag[d],
         prec_flag[p]]))
