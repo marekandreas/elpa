@@ -666,8 +666,6 @@
         np_rem = my_pcol
 
         do np = 1, npc_n
-          write(*,*) "outer loop ", 1, npc_n
-
           ! Do a ring send of qtmp1
 
           if (np>1) then
@@ -727,7 +725,6 @@
           enddo
 
           do ns = 0, nqcols1-1, max_strip ! strimining loop
-            write(*, *) "inner loop ", 0, nqcols1-1, max_strip 
 
             ncnt = MIN(max_strip,nqcols1-ns) ! number of columns in this strip
 
@@ -769,7 +766,6 @@
             ! Multiply old Q with eigenvectors (upper half)
 
             if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
-              write(*,*) "merging-first", l_rnm, ncnt, nnzu
               if (useGPU) then
                 call obj%timer%start("cublas")
                 call cublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
@@ -792,9 +788,15 @@
             if(useGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
               !TODO: actually this will be done after the second mutiplication
-              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
-                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
-              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
+
+              !TODO or actually maybe I should copy the half of the qtmp2 array
+              !here and the rest after the next gemm
+              !TODO either copy only half of the matrix here, and half after the
+              !second gemm, or copy whole array after the next gemm
+
+!              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
+!                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
+!              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
             endif
 
             ! Compute eigenvectors of the rank-1 modified matrix.
@@ -813,31 +815,51 @@
             enddo
             call obj%timer%stop("strange_loop")
 
+            if(useGPU) then
+              !TODO the previous loop could be possible to do on device and thus
+              !copy less
+              successCUDA = cuda_memcpy(ev_dev, loc(ev(1,1)), &
+                                 gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
+              check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
+            endif
+
             ! Multiply old Q with eigenvectors (lower half)
 
-!            if (useGPU) then
-!              if(l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-!                 call dgemm('N','N',l_rows-l_rnm,ncnt,nnzl,1.d0,qtmp1_dev(l_rnm+1,1),ubound(qtmp1_dev,1),ev,ubound(ev,1), &
-!                            1.d0,qtmp2(l_rnm+1,1),ubound(qtmp2,1))
-!       else
-              call obj%timer%start("blas")
-              call obj%timer%start("gemm")
-              if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-                 !write(*,*) "merging ", l_rows-l_rnm, ncnt, nnzl
-                 call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
+            if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) then
+              if (useGPU) then
+                call obj%timer%start("cublas")
+                call cublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
+                                    1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
+                                    ev_dev, ubound(ev,dim=1), &
+                                    1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1))
+                call obj%timer%stop("cublas")
+              else
+                call obj%timer%start("blas")
+                call obj%timer%start("gemm")
+                call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
                                      1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1),    &
                                      ev,  ubound(ev,dim=1),   &
                                      1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
-              call obj%timer%stop("gemm")
-              call obj%timer%stop("blas")
-!            endif ! useGPU
+                call obj%timer%stop("gemm")
+                call obj%timer%stop("blas")
+              endif ! useGPU
+            endif
+
+            if(useGPU) then
+              !TODO either copy only half of the matrix here, and get rid of the
+              !previous copy or copy whole array here
+              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
+                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
+              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
+            endif
+
              ! Put partial result into (output) Q
 
-             do i = 1, ncnt
-               q(l_rqs:l_rqe,l_col_out(idxq1(i+ns))) = qtmp2(1:l_rows,i)
-             enddo
+            do i = 1, ncnt
+              q(l_rqs:l_rqe,l_col_out(idxq1(i+ns))) = qtmp2(1:l_rows,i)
+            enddo
 
-           enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
+          enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
         enddo    !do np = 1, npc_n
 
         deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
