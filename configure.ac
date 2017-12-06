@@ -27,12 +27,13 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [10:1:2])
+AC_SUBST([ELPA_SO_VERSION], [11:0:0])
 
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
-AC_DEFINE([CURRENT_API_VERSION], [20170403], [Current ELPA API version])
-
+AC_DEFINE([CURRENT_API_VERSION], [20171201], [Current ELPA API version])
+# Autotune Version
+AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -1138,12 +1139,13 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         ])
 ])
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is a the release of ELPA 2017.05.003                          *"
-#echo "*  It mainly contains bugfixes to ELPA 2017.05.001                    *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is a the first release  candidate of ELPA 2017.11.001         *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2017.11.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

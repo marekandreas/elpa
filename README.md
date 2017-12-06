@@ -2,10 +2,19 @@
 
 ## Current Release ##
 
-The current release is ELPA 2017.05.003. The current supported API version
-is 20170403. This release supports the earliest API version 20170403.
+The current release is ELPA 2017.11.001.rc1. The current supported API version
+is 20171201. This release supports the earliest API version 20170403.
 
-## About *ELPA*
+[![Build 
+status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)
+
+[![Code 
+coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](http://elpa.pages.mpcdf.de/elpa/coverage_summary
+
+[![License: LGPL v3][license-badge]](LICENSE)
+[license-badge]: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
+
+## About *ELPA* ##
 
 The computation of selected or all eigenvalues and eigenvectors of a symmetric
 (Hermitian) matrix has high relevance for various scientific disciplines.

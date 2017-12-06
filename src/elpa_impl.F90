@@ -2609,11 +2609,35 @@ module elpa_impl
     !> \param   level           integer: the "thoroughness" of the planed autotuning
     !> \param   domain          integer: the domain (real/complex) which should be tuned
     !> \result  tune_state      class(elpa_autotune_t): the created autotuning object
-    function elpa_autotune_setup(self, level, domain) result(tune_state)
+    function elpa_autotune_setup(self, level, domain, error) result(tune_state)
       class(elpa_impl_t), intent(inout), target :: self
       integer, intent(in)                       :: level, domain
       type(elpa_autotune_impl_t), pointer       :: ts_impl
       class(elpa_autotune_t), pointer           :: tune_state
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional             :: error
+#else
+      integer(kind=c_int)                       :: error
+#endif
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
+      if (elpa_get_api_version() < EARLIEST_AUTOTUNE_VERSION) then
+        write(error_unit, "(a,i0,a)") "ELPA: Error API version: Autotuning does not support ", elpa_get_api_version()
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
+#else
+        error = ELPA_ERROR
+#endif
+        return
+      endif
 
       allocate(ts_impl)
       ts_impl%parent => self
@@ -2638,8 +2662,8 @@ module elpa_impl
     !c> *  \param  int              domain: real/complex autotuning
     !c> *  \result elpa_autotune_t  handle:  on the autotune object
     !c> */
-    !c> elpa_autotune_t elpa_autotune_setup(elpa_t handle, int level, int domain);
-    function elpa_autotune_setup_c(handle ,level, domain) result(ptr) bind(C, name="elpa_autotune_setup")
+    !c> elpa_autotune_t elpa_autotune_setup(elpa_t handle, int level, int domain, int *error);
+    function elpa_autotune_setup_c(handle ,level, domain, error) result(ptr) bind(C, name="elpa_autotune_setup")
       type(c_ptr), intent(in), value         :: handle
       type(elpa_impl_t), pointer             :: self
       class(elpa_autotune_t), pointer        :: tune_state
@@ -2647,14 +2671,18 @@ module elpa_impl
       integer(kind=c_int), intent(in), value :: level
       integer(kind=c_int), intent(in), value :: domain
       type(c_ptr)                            :: ptr
-
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int) , intent(in), optional    :: error
+#else
+      integer(kind=c_int) , intent(in)              :: error
+#endif
 
       print *,"Calling c_f_pointer handle"
       call c_f_pointer(handle, self)
 
       print *,"Calling setup"
       print *,level,domain
-      tune_state => self%autotune_setup(level, domain)
+      tune_state => self%autotune_setup(level, domain, error)
       print *,"After setup"
       select type(tune_state)
         class is (elpa_autotune_impl_t)

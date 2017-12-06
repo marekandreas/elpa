@@ -1,3 +1,9 @@
+Changelog for ELPA 2017.11.001.rc1
+
+- added new compute kernels for IBM Power8 and Fujistu Sparc64
+  processors
+- a first implementation of autotuning capability
+
 Changelog for ELPA 2017.05.003
 
 - remove bug in invert_triangular, which had been introduced

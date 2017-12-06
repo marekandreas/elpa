@@ -197,13 +197,14 @@ program test
    assert_elpa_ok(error)
 #endif
    call e%set("timings",1)
-   call e%set("debug",1)
+   !call e%set("debug",1)
 
    assert_elpa_ok(e%setup())
 
    if (myid == 0) print *, ""
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN)
+   tune_state => e%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error)
+   assert_elpa_ok(error)
 
    do while (e%autotune_step(tune_state))
      call e%eigenvectors(a, ev, z, error)

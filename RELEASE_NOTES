@@ -1,20 +1,24 @@
-This file contains the release notes for the ELPA 2017.05.003 version
+This file contains the release notes for the ELPA 2017.11.001.rc1 version
 
 What is new?
 -------------
-For detailed information about changes since release ELPA 2017.05.002 please have a look at the Changelog file
+For detailed information about changes since release ELPA 2017.05.03 please have a look at the Changelog file
 
-- This release contains a fix for a bug introduced in ELPA 2017.05.002
+- This release contains new compute kernels for IBM Power 8 and Fujistu Sparc64 processors
+- A first version of autotuning has been implemented
 
 
 ABI change
 ---------------------
 
-Since release 2017.05.001 the ABI has not changed.
+Since release 2017.05.003 the ABI has changed.
 
 Any incompatibilities to previous version?
 ---------------------------------------
 
-As mentioned before, the ABI of ELPA was not changed; There is no
-incompatibility with the previous version ELPA 2017.05.002.
+As mentioned before, the ABI of ELPA was changed; 
+This change only affectes the  old "lecgacy interface", since as 
+anounced some deprecated function aliases have been removed.
+For the current interface there is no incompatibility with the
+previous version ELPA 2017.05.003.
 
