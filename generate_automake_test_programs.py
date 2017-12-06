@@ -149,7 +149,12 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
         print("noinst_PROGRAMS += " + name)
         print("endif")
 
-        print("check_SCRIPTS += " + name + ".sh")
+        if lay == "square":
+            print("check_SCRIPTS += " + name + "_default.sh")
+        elif lay == "all_layouts":
+            print("check_SCRIPTS += " + name + "_extended.sh")
+        else:
+            raise Exception("Unknown layout {0}".format(lay))
 
         if lang == "Fortran":
             print(name + "_SOURCES = test/Fortran/test.F90")
@@ -186,7 +191,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
 
     name = "test_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
 
-    print("check_SCRIPTS += " + name + ".sh")
+    print("check_SCRIPTS += " + name + "_default.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":    
         print(name + "_SOURCES = test/Fortran/test_autotune.F90")
