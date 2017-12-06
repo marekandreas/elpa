@@ -213,7 +213,8 @@ int main(int argc, char** argv) {
    elpa_set(handle, "gpu", 0, &error);
    assert_elpa_ok(error);
  
-   autotune_handle = elpa_autotune_setup(handle, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL);
+   autotune_handle = elpa_autotune_setup(handle, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error);
+   assert_elpa_ok(error);
    /* mimic 20 scf steps */
 
    for (i=0; i < 20; i++) {
