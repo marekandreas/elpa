@@ -61,7 +61,7 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
                                               sorted(solver_flag.keys()),
                                               sorted(layout_flag.keys())):
 
-    if lang == "C" and (m == "analytic" or lay == "all_layouts"):
+    if lang == "C" and (m == "analytic" or m == "toeplitz" or m == "frank" or lay == "all_layouts"):
         continue
 
     # exclude some test combinations
@@ -103,6 +103,9 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
         extra_flags = []
 
         if (t == "eigenvalues" and kernel == "all_kernels"):
+            continue
+
+        if (lang == "C" and kernel == "all_kernels"):
             continue
 
         if (g == 1):
