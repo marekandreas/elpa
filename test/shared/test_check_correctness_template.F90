@@ -453,6 +453,13 @@ function check_correctness_evp_numeric_residuals_&
          print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
        endif
      endif
+
+    if (status .eq. 0) then
+       if (myid .eq. 0) then
+         print *,"Result of Toeplitz matrix test: test passed"
+         print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+       endif
+    endif
     end function
 
     function check_correctness_cholesky_&
