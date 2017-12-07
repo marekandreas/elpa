@@ -164,7 +164,7 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
         elif lang == "C":
             print(name + "_SOURCES = test/C/test.c")
             print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-            print(name + "_CFLAGS = $(test_program_fcflags) \\")
+            print(name + "_CFLAGS = $(test_program_cflags) \\")
 
         print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
         print("  " + " \\\n  ".join([
@@ -201,7 +201,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
     elif lang == "C":
         print(name + "_SOURCES = test/C/test_autotune.c")
         print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-        print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+        print(name + "_CFLAGS = $(test_program_cflags) \\")
 
     print("  " + " \\\n  ".join([
         domain_flag[d],
