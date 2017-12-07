@@ -55,15 +55,15 @@
 #include "test/shared/generated.h"
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
-//#error "define exactly one of TEST_REAL or TEST_COMPLEX"
+#error "define exactly one of TEST_REAL or TEST_COMPLEX"
 #endif
 
 #if !(defined(TEST_SINGLE) ^ defined(TEST_DOUBLE))
-//#error "define exactly one of TEST_SINGLE or TEST_DOUBLE"
+#error "define exactly one of TEST_SINGLE or TEST_DOUBLE"
 #endif
 
 #if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE))
-//#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
+#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
 #ifdef TEST_SINGLE
