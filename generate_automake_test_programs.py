@@ -194,7 +194,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
 
     name = "test_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
 
-    print("check_SCRIPTS += " + name + "_default.sh")
+    print("check_SCRIPTS += " + name + "_extended.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":    
         print(name + "_SOURCES = test/Fortran/test_autotune.F90")
