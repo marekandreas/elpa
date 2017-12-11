@@ -16,7 +16,7 @@ def set_requested_memory(na):
     if (na == "150"):
             memory="2Gb"
     elif (na > "150" and na <= "1500"):
-        memory="6Gb"
+        memory="12Gb"
     elif (na > "1500" and na < "5000"):
         memory="12Gb"
     else:
@@ -250,6 +250,9 @@ print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-miy01\" ]; then export SLU
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-miy02\" ]; then export SLURMHOST=miy02 && export SLURMPARTITION=minsky && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"power8&gpu0&gpu1&gpu2&gpu3\" && export GEOMETRYRESERVATION=\"gpu:4\" ; fi")
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-miy03\" ]; then export SLURMHOST=miy03 && export SLURMPARTITION=minsky && export CONFIGURETIME=5 && export BUILDTIME=20 && export RUNTIME=20 && export CONTSTRAINTS=\"power8&gpu0&gpu1&gpu2&gpu3\" && export GEOMETRYRESERVATION=\"gpu:4\" ; fi")
 print("\n")
+print("  - export MATRIX_SIZE=150")
+print("  - export NUMBER_OF_EIGENVECTORS=150")
+print("  - export BLOCK_SIZE=16")
 print("  - ./autogen.sh")
 print("\n\n")
 
@@ -565,6 +568,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     print("# " + cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" + a + "-" + b + "-" +g + "-" + cov + "-" + instr + "-" + addr)
     print(cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" +a + "-" +b + "-" +g + "-" + cov + "-" + instr + "-" + addr + "-jobs:")
+    print("  retry: 2")
     if (MasterOnly):
         print("  only:")
         print("    - /.*master.*/")
@@ -645,7 +649,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
         if (o == "openmp" and cov == "coverage"):
             print("    - export OMP_NUM_THREADS=1")
         for na in sorted(matrix_size.keys(),reverse=True):
-            print("    - make check TASKS="+str(MPI_TASKS) + " TEST_FLAGS=\"" + matrix_size[na] + " "+ str(nev)+" "+str(nblk)+"\" || { cat test-suite.log; exit 1; }")
+            print("    - make check TASKS="+str(MPI_TASKS) + " TEST_FLAGS=\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " + "\" || { cat test-suite.log; exit 1; }")
             print("    - grep -i \"Expected %stop\" test-suite.log && exit 1 || true ;")
 
     if ( instr == "avx2" or instr == "avx512" or instr == "knl"  or g == "with-gpu"):
@@ -661,7 +665,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
             cores = set_number_of_cores(MPI_TASKS, o)
             #print("    - echo \" srun  --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
             print("    - srun --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
-                                         /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\""+ matrix_size[na] + " "+ str(nev)+" "+str(nblk)+"\\\"  || { cat test-suite.log; exit 1; }\"")
+                                         /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " +"\\\"  || { cat test-suite.log; exit 1; }\"")
 
         if (cov == "coverage"):
             print("    - ./ci_coverage_collect")
