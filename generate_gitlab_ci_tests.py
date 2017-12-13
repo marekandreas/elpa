@@ -253,9 +253,10 @@ print("\n")
 print("  - export MATRIX_SIZE=150")
 print("  - export NUMBER_OF_EIGENVECTORS=150")
 print("  - export BLOCK_SIZE=16")
-print("  - if [ \"$MEDIUM_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=1500; fi")
-print("  - echo \"This test will run with matrix size $matrix_size, compute $NUMBER_OF_EIGENVECTORS, on a blacs grid with blocksize $BLOCK_SIZE \" ")
-print("  - env")
+print("  - if [ \"$MEDIUM_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=1500 && export NUMBER_OF_EIGENVECTORS=750; fi")
+print("  - if [ \"$LARGE_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=5000 && export NUMBER_OF_EIGENVECTORS=500; fi")
+print("  - if [ \"$GPU_BLOCKSIZE\" = \"yes\" ]; then export BLOCK_SIZE=128 ; fi")
+print("  - echo \"This test will run with matrix size na = $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS, on a blacs grid with blocksize nblk= $BLOCK_SIZE \" ")
 print("  - ./autogen.sh")
 print("\n\n")
 
@@ -667,7 +668,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
         for na in sorted(matrix_size.keys(),reverse=True):
             cores = set_number_of_cores(MPI_TASKS, o)
             #print("    - echo \" srun  --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
-            print("    -  echo \"na= $matrix_size, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE\" ")
+            print("    -  echo \"na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE\" ")
             print("    - srun --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
                                          /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " +"\\\"  || { cat test-suite.log; exit 1; }\"")
 
