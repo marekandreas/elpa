@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
    int np_cols, np_rows;
    int my_prow, my_pcol;
    int mpi_comm;
+   int provided_mpi_thread_level;
 
    /* blacs */
    int my_blacs_ctxt, sc_desc[9], info;
@@ -109,9 +110,21 @@ int main(int argc, char** argv) {
 
    int value;
 #ifdef WITH_MPI
+#ifndef WITH_OPENMP
    MPI_Init(&argc, &argv);
+#else
+   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided_mpi_thread_level);
+
+   if (provided_mpi_thread_level != MPI_THREAD_MULTIPLE) {
+     fprintf(stderr, "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system\n");
+     MPI_Finalize();
+     exit(77);
+   }
+#endif
+
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+
 #else
    nprocs = 1;
    myid = 0;
