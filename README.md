@@ -14,7 +14,7 @@ coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](http://e
 [![License: LGPL v3][license-badge]](LICENSE)
 [license-badge]: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
 
-aa About *ELPA*
+## About *ELPA* ##
 
 The computation of selected or all eigenvalues and eigenvectors of a symmetric
 (Hermitian) matrix has high relevance for various scientific disciplines.

@@ -42,6 +42,7 @@
 
 #include "config.h"
 
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef WITH_MPI
@@ -55,15 +56,15 @@
 #include "test/shared/generated.h"
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
-#error "define exactly one of TEST_REAL or TEST_COMPLEX"
+//#error "define exactly one of TEST_REAL or TEST_COMPLEX"
 #endif
 
 #if !(defined(TEST_SINGLE) ^ defined(TEST_DOUBLE))
-#error "define exactly one of TEST_SINGLE or TEST_DOUBLE"
+//#error "define exactly one of TEST_SINGLE or TEST_DOUBLE"
 #endif
 
 #if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE))
-#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
+//#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
 #ifdef TEST_SINGLE
@@ -95,7 +96,6 @@ int main(int argc, char** argv) {
    int np_cols, np_rows;
    int my_prow, my_pcol;
    int mpi_comm;
-   int provided_mpi_thread_level;
 
    /* blacs */
    int my_blacs_ctxt, sc_desc[9], info;
@@ -108,23 +108,14 @@ int main(int argc, char** argv) {
 
    elpa_t handle;
 
+   elpa_autotune_t autotune_handle;
+   int i, unfinished;
+
    int value;
 #ifdef WITH_MPI
-#ifndef WITH_OPENMP
    MPI_Init(&argc, &argv);
-#else
-   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided_mpi_thread_level);
-
-   if (provided_mpi_thread_level != MPI_THREAD_MULTIPLE) {
-     fprintf(stderr, "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system\n");
-     MPI_Finalize();
-     exit(77);
-   }
-#endif
-
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-
 #else
    nprocs = 1;
    myid = 0;
@@ -219,58 +210,77 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
 
-   /* Set tunables */
-#ifdef TEST_SOLVER_1STAGE
-   elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &error);
+   elpa_set(handle, "gpu", 0, &error);
+   assert_elpa_ok(error);
+ 
+   autotune_handle = elpa_autotune_setup(handle, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error);
+   assert_elpa_ok(error);
+   /* mimic 20 scf steps */
+
+   for (i=0; i < 20; i++) {
+
+      unfinished = elpa_autotune_step(handle, autotune_handle);
+
+      if (unfinished == 0) {
+        if (myid == 0) {
+       	  printf("ELPA autotuning finished in the %d th scf step \n",i);
+        }
+	break;
+      }
+      /* Solve EV problem */
+      elpa_eigenvectors(handle, a, ev, z, &error);
+      assert_elpa_ok(error);
+
+      /* check the results */
+#ifdef TEST_REAL
+#ifdef TEST_DOUBLE
+      status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+      memcpy(a, as, na_rows*na_cols*sizeof(double));
+
 #else
-   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
+      status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+      memcpy(a, as, na_rows*na_cols*sizeof(float));
 #endif
-   assert_elpa_ok(error);
-
-   elpa_set(handle, "gpu", TEST_GPU, &error);
-   assert_elpa_ok(error);
-
-#if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)
-# ifdef TEST_COMPLEX
-   elpa_set(handle, "complex_kernel", TEST_KERNEL, &error);
-# else
-   elpa_set(handle, "real_kernel", TEST_KERNEL, &error);
-# endif
-   assert_elpa_ok(error);
+#else
+#ifdef TEST_DOUBLE
+      status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+      memcpy(a, as, na_rows*na_cols*sizeof(complex double));
+#else
+      status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+      memcpy(a, as, na_rows*na_cols*sizeof(complex float));
+#endif
 #endif
 
-   elpa_get(handle, "solver", &value, &error);
-   if (myid == 0) {
-     printf("Solver is set to %d \n", value);
+      if (status !=0){
+        printf("The computed EVs are not correct !\n");
+	break;
+      }
+      printf("hier %d \n",myid);
    }
-   /* Solve EV problem */
-   elpa_eigenvectors(handle, a, ev, z, &error);
-   assert_elpa_ok(error);
 
+   if (unfinished == 1) {
+     if (myid == 0) {
+        printf("ELPA autotuning did not finished during %d scf cycles\n",i);
+
+     }	     
+
+   }
+   elpa_autotune_set_best(handle, autotune_handle);
+
+   elpa_autotune_deallocate(autotune_handle);
    elpa_deallocate(handle);
    elpa_uninit();
 
-
-   /* check the results */
-#ifdef TEST_REAL
-#ifdef TEST_DOUBLE
-   status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
-#else
-   status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
-#endif
-#else
-#ifdef TEST_DOUBLE
-   status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
-#else
-   status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
-#endif
-#endif
-
-   if (status !=0){
-     printf("The computed EVs are not correct !\n");
+   if (myid == 0) {
+     printf("\n");
+     printf("2stage ELPA real solver complete\n");
+     printf("\n");
    }
+
    if (status ==0){
-     printf("All ok!\n");
+     if (myid ==0) {
+       printf("All ok!\n");
+     }
    }
 
    free(a);

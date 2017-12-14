@@ -1,6 +1,4 @@
 noinst_PROGRAMS += \
-  real_2stage_c_version@SUFFIX@ \
-  autotune_c_version@SUFFIX@ \
   legacy_real_1stage@SUFFIX@ \
   legacy_complex_1stage@SUFFIX@ \
   legacy_real_2stage@SUFFIX@ \
@@ -73,14 +71,6 @@ noinst_PROGRAMS += \
   legacy_single_complex_2stage_gpu@SUFFIX@
 endif
 endif
-
-real_2stage_c_version@SUFFIX@_SOURCES = test/C/real_2stage_c_version.c
-real_2stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-real_2stage_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
-
-autotune_c_version@SUFFIX@_SOURCES = test/C/autotune_c_version.c
-autotune_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-autotune_c_version@SUFFIX@_FCFLAGS = $(test_program_fcflags)
 
 legacy_real_1stage_c_version@SUFFIX@_SOURCES = test/C/elpa1/legacy_interface/legacy_real_1stage_c_version.c
 legacy_real_1stage_c_version@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
@@ -355,73 +345,73 @@ endif
 endif
 
 check_SCRIPTS += \
-  legacy_real_1stage@SUFFIX@.sh \
-  legacy_real_2stage@SUFFIX@.sh \
-  legacy_real_2stage_default@SUFFIX@.sh \
-  legacy_complex_1stage@SUFFIX@.sh \
-  legacy_complex_2stage@SUFFIX@.sh \
-  legacy_real_2stage_qr@SUFFIX@.sh \
-  legacy_complex_2stage_default@SUFFIX@.sh \
-  legacy_real_2stage_api@SUFFIX@.sh \
-  legacy_complex_2stage_api@SUFFIX@.sh \
-  legacy_real_driver@SUFFIX@.sh \
-  legacy_complex_driver@SUFFIX@.sh \
-  legacy_real_toeplitz@SUFFIX@.sh \
-  legacy_real_cholesky@SUFFIX@.sh \
-  legacy_real_invert_trm@SUFFIX@.sh \
-  legacy_real_transpose_multiply@SUFFIX@.sh \
-  legacy_complex_cholesky@SUFFIX@.sh \
-  legacy_complex_invert_trm@SUFFIX@.sh \
-  legacy_complex_transpose_multiply@SUFFIX@.sh \
-  legacy_real_1stage_c_version@SUFFIX@.sh \
-  legacy_complex_1stage_c_version@SUFFIX@.sh \
-  legacy_real_2stage_c_version@SUFFIX@.sh \
-  legacy_complex_2stage_c_version@SUFFIX@.sh \
-  legacy_real_driver_c_version@SUFFIX@.sh \
-  legacy_complex_driver_c_version@SUFFIX@.sh
+  legacy_real_1stage@SUFFIX@_default.sh \
+  legacy_real_2stage@SUFFIX@_default.sh \
+  legacy_real_2stage_default@SUFFIX@_default.sh \
+  legacy_complex_1stage@SUFFIX@_default.sh \
+  legacy_complex_2stage@SUFFIX@_default.sh \
+  legacy_real_2stage_qr@SUFFIX@_default.sh \
+  legacy_complex_2stage_default@SUFFIX@_default.sh \
+  legacy_real_2stage_api@SUFFIX@_default.sh \
+  legacy_complex_2stage_api@SUFFIX@_default.sh \
+  legacy_real_driver@SUFFIX@_default.sh \
+  legacy_complex_driver@SUFFIX@_default.sh \
+  legacy_real_toeplitz@SUFFIX@_default.sh \
+  legacy_real_cholesky@SUFFIX@_default.sh \
+  legacy_real_invert_trm@SUFFIX@_default.sh \
+  legacy_real_transpose_multiply@SUFFIX@_default.sh \
+  legacy_complex_cholesky@SUFFIX@_default.sh \
+  legacy_complex_invert_trm@SUFFIX@_default.sh \
+  legacy_complex_transpose_multiply@SUFFIX@_default.sh \
+  legacy_real_1stage_c_version@SUFFIX@_default.sh \
+  legacy_complex_1stage_c_version@SUFFIX@_default.sh \
+  legacy_real_2stage_c_version@SUFFIX@_default.sh \
+  legacy_complex_2stage_c_version@SUFFIX@_default.sh \
+  legacy_real_driver_c_version@SUFFIX@_default.sh \
+  legacy_complex_driver_c_version@SUFFIX@_default.sh
 
 if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
-  legacy_single_real_1stage@SUFFIX@.sh \
-  legacy_single_real_2stage@SUFFIX@.sh \
-  legacy_single_real_2stage_default@SUFFIX@.sh \
-  legacy_single_real_2stage_qr@SUFFIX@.sh \
-  legacy_single_real_driver@SUFFIX@.sh \
-  legacy_single_real_cholesky@SUFFIX@.sh \
-  legacy_single_real_invert_trm@SUFFIX@.sh \
-  legacy_single_real_transpose_multiply@SUFFIX@.sh \
-  legacy_single_real_2stage_api@SUFFIX@.sh \
-  legacy_single_real_driver_c_version@SUFFIX@.sh
+  legacy_single_real_1stage@SUFFIX@_default.sh \
+  legacy_single_real_2stage@SUFFIX@_default.sh \
+  legacy_single_real_2stage_default@SUFFIX@_default.sh \
+  legacy_single_real_2stage_qr@SUFFIX@_default.sh \
+  legacy_single_real_driver@SUFFIX@_default.sh \
+  legacy_single_real_cholesky@SUFFIX@_default.sh \
+  legacy_single_real_invert_trm@SUFFIX@_default.sh \
+  legacy_single_real_transpose_multiply@SUFFIX@_default.sh \
+  legacy_single_real_2stage_api@SUFFIX@_default.sh \
+  legacy_single_real_driver_c_version@SUFFIX@_default.sh
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 check_SCRIPTS += \
-  legacy_single_complex_1stage@SUFFIX@.sh \
-  legacy_single_complex_2stage@SUFFIX@.sh \
-  legacy_single_complex_2stage_default@SUFFIX@.sh \
-  legacy_single_complex_cholesky@SUFFIX@.sh \
-  legacy_single_complex_driver@SUFFIX@.sh \
-  legacy_single_complex_invert_trm@SUFFIX@.sh \
-  legacy_single_complex_transpose_multiply@SUFFIX@.sh \
-  legacy_single_complex_2stage_api@SUFFIX@.sh \
-  legacy_single_complex_driver_c_version@SUFFIX@.sh
+  legacy_single_complex_1stage@SUFFIX@_default.sh \
+  legacy_single_complex_2stage@SUFFIX@_default.sh \
+  legacy_single_complex_2stage_default@SUFFIX@_default.sh \
+  legacy_single_complex_cholesky@SUFFIX@_default.sh \
+  legacy_single_complex_driver@SUFFIX@_default.sh \
+  legacy_single_complex_invert_trm@SUFFIX@_default.sh \
+  legacy_single_complex_transpose_multiply@SUFFIX@_default.sh \
+  legacy_single_complex_2stage_api@SUFFIX@_default.sh \
+  legacy_single_complex_driver_c_version@SUFFIX@_default.sh
 endif
 
 if WITH_GPU_VERSION
 check_SCRIPTS += \
-  legacy_real_1stage_gpu@SUFFIX@.sh \
-  legacy_complex_1stage_gpu@SUFFIX@.sh \
-  legacy_real_2stage_gpu@SUFFIX@.sh \
-  legacy_complex_2stage_gpu@SUFFIX@.sh
+  legacy_real_1stage_gpu@SUFFIX@_default.sh \
+  legacy_complex_1stage_gpu@SUFFIX@_default.sh \
+  legacy_real_2stage_gpu@SUFFIX@_default.sh \
+  legacy_complex_2stage_gpu@SUFFIX@_default.sh
 
 if WANT_SINGLE_PRECISION_REAL
 check_SCRIPTS += \
-  legacy_single_real_1stage_gpu@SUFFIX@.sh \
-  legacy_single_real_2stage_gpu@SUFFIX@.sh
+  legacy_single_real_1stage_gpu@SUFFIX@_default.sh \
+  legacy_single_real_2stage_gpu@SUFFIX@_default.sh
 endif
 if WANT_SINGLE_PRECISION_COMPLEX
 check_SCRIPTS += \
-  legacy_single_complex_1stage_gpu@SUFFIX@.sh \
-  legacy_single_complex_2stage_gpu@SUFFIX@.sh
+  legacy_single_complex_1stage_gpu@SUFFIX@_default.sh \
+  legacy_single_complex_2stage_gpu@SUFFIX@_default.sh
 endif
 endif

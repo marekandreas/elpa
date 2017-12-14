@@ -556,26 +556,26 @@ include legacy_test_programs.am
 endif
 
 noinst_PROGRAMS += double_instance@SUFFIX@
-check_SCRIPTS += double_instance@SUFFIX@.sh
+check_SCRIPTS += double_instance@SUFFIX@_default.sh
 double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
 double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
 double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 noinst_PROGRAMS += real_2stage_banded@SUFFIX@
-check_SCRIPTS += real_2stage_banded@SUFFIX@.sh
+check_SCRIPTS += real_2stage_banded@SUFFIX@_default.sh
 real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
 real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 noinst_PROGRAMS += complex_2stage_banded@SUFFIX@
-check_SCRIPTS += complex_2stage_banded@SUFFIX@.sh
+check_SCRIPTS += complex_2stage_banded@SUFFIX@_default.sh
 complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
 complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 if WANT_SINGLE_PRECISION_REAL
 noinst_PROGRAMS += single_real_2stage_banded@SUFFIX@
-check_SCRIPTS += single_real_2stage_banded@SUFFIX@.sh
+check_SCRIPTS += single_real_2stage_banded@SUFFIX@_default.sh
 single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
 single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
@@ -583,14 +583,14 @@ endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += single_complex_2stage_banded@SUFFIX@
-check_SCRIPTS += single_complex_2stage_banded@SUFFIX@.sh
+check_SCRIPTS += single_complex_2stage_banded@SUFFIX@_default.sh
 single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
 single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 endif
 
 
-# test scriptsT
+# test scripts
 TASKS ?= 2
 if WITH_MPI
   wrapper=$(MPI_BINARY) -n $${TASKS:-$(TASKS)}
@@ -598,7 +598,12 @@ else
   wrapper=
 endif
 TESTS = $(check_SCRIPTS)
-%.sh: %
+%_extended.sh: %
+	@echo "#!/bin/bash" > $@
+	@echo 'if [ "$$CHECK_LEVEL" = "extended" ] ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
+	@chmod +x $@
+
+%_default.sh: %
 	@echo "#!/bin/bash" > $@
 	@echo '$(wrapper)' ./$^ '$$TEST_FLAGS' >> $@
 	@chmod +x $@
