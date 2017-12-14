@@ -172,6 +172,7 @@
          real(kind=c_double)                        :: ttt ! MPI_WTIME always needs double
 
 
+         j = -99
 
          if (wantDebug) then
            if (useGPU .and. &
