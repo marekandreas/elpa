@@ -1,7 +1,7 @@
 #
 # spec file for package elpa
 #
-# Copyright (c) 2015 Lorenz Hüdepohl
+# Copyright (c) 2015 Lorenz Huedepohl
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
