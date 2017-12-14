@@ -500,10 +500,23 @@
 #if REALCASE == 1
           endif
 #endif
+
+#if REALCASE == 1
           d(istep) = ab(1,na_s-n_off)
           e(istep) = ab(2,na_s-n_off)
+#endif
+#if COMPLEXCASE == 1
+          d(istep) = real(ab(1,na_s-n_off), kind=rk)
+          e(istep) = real(ab(2,na_s-n_off), kind=rk)
+#endif
+
           if (istep == na-1) then
+#if REALCASE == 1
             d(na) = ab(1,na_s+1-n_off)
+#endif
+#if COMPLEXCASE == 1
+            d(na) = real(ab(1,na_s+1-n_off),kind=rk)
+#endif
             e(na) = 0.0_rck
           endif
         else

@@ -140,7 +140,7 @@
       temptau_offset = 1
       temptau_size = total_cols
       broadcast_offset = temptau_offset + temptau_size
-      broadcast_size = dbroadcast_size(1) + dtmat_bcast_size(1)
+      broadcast_size = int(dbroadcast_size(1) + dtmat_bcast_size(1))
       work_offset = broadcast_offset + broadcast_size
 
       if (lwork .eq. -1) then
@@ -239,7 +239,7 @@
               &PRECISION &
               (obj,v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,&
                                       0,mpicomm_rows)
-          broadcast_size = dbroadcast_size(1)
+          broadcast_size = int(dbroadcast_size(1))
 
           !if (mpirank_rows .eq. 0) then
           ! pack tmatrix into broadcast buffer and calculate new size
@@ -250,7 +250,7 @@
           call qr_pdgeqrf_pack_unpack_tmatrix_&
               &PRECISION &
               (obj,tau(offset),t(voffset,voffset),ldt,dtmat_bcast_size(1),-1,lcols,0)
-          broadcast_size = broadcast_size + dtmat_bcast_size(1)
+          broadcast_size = broadcast_size + int(dtmat_bcast_size(1))
           !end if
 
           ! initiate broadcast (send part)
@@ -276,7 +276,7 @@
           call qr_pdgeqrf_pack_unpack_&
               &PRECISION &
               (obj,v(1,voffset),ldv,dbroadcast_size(1),-1,m,lcols,mb,rowidx,idx,rev,1,mpicomm_rows)
-          broadcast_size = dbroadcast_size(1)
+          broadcast_size = int(dbroadcast_size(1))
 
           call qr_pdgeqrf_pack_unpack_tmatrix_&
               &PRECISION &
@@ -309,8 +309,8 @@
               mb,rowidx,idx,rev,1,mpicomm_rows)
 
           ! now send t matrix to other processes in our process column
-          broadcast_size = dbroadcast_size(1)
-          tmat_bcast_size = dtmat_bcast_size(1)
+          broadcast_size = int(dbroadcast_size(1))
+          tmat_bcast_size = int(dtmat_bcast_size(1))
 
           ! t matrix should now be available on all processes => unpack
           call qr_pdgeqrf_pack_unpack_tmatrix_&
@@ -1139,7 +1139,7 @@
       call qr_pdlarfg2_1dcomm_seed_&
 &PRECISION &
 (obj,a,lda,dseedwork_size(1),-1,work,m,mb,idx,rev,mpicomm)
-      seedwork_size = dseedwork_size(1)
+      seedwork_size = int(dseedwork_size(1))
       seed_size = seedwork_size
 
       if (lwork .eq. -1) then
@@ -1516,6 +1516,9 @@
       if (mpirank .eq. mpirank_top) then
         topidx = local_index(idx,mpirank_top,mpiprocs,nb,0)
         top = 1+(topidx-1)*incx
+      else
+        top = -99
+        stop
       end if
 
       alpha = seed(id*5+1)

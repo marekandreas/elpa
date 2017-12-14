@@ -338,8 +338,14 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a_mat
       l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a_mat
+
       if (my_prow == prow(na, nblk, np_rows) .and. my_pcol == pcol(na, nblk, np_cols)) &
+#if COMPLEXCASE == 1
+        d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
+#endif
+#if REALCASE == 1
         d_vec(na) = a_mat(l_rows,l_cols)
+#endif
 
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
@@ -415,7 +421,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #else /* WITH_MPI */
           aux2 = aux1
 #endif /* WITH_MPI */
+
+#if REALCASE == 1
           vnorm2 = aux2(1)
+#endif
+#if COMPLEXCASE == 1
+          vnorm2 = real(aux2(1),kind=rk)
+#endif
           vrl    = aux2(2)
 
           ! Householder transformation
@@ -434,7 +446,12 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             v_row(l_rows) = 1.
 
             ! vrl is newly computed off-diagonal element of the final tridiagonal matrix
+#if REALCASE == 1
             e_vec(istep-1) = vrl
+#endif
+#if COMPLEXCASE == 1
+            e_vec(istep-1) = real(vrl,kind=rk)
+#endif
           endif
 
           ! store Householder Vector for back transformation
@@ -836,7 +853,12 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
                         + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
           end if
+#if REALCASE == 1
           d_vec(istep-1) = a_mat(l_rows,l_cols)
+#endif
+#if COMPLEXCASE == 1
+          d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
+#endif
 
           if (useGPU) then
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
@@ -868,7 +890,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           call hh_transform_complex_&
                                     &PRECISION &
                                     (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
+#if REALCASE == 1
           e_vec(1) = vrl
+#endif
+#if COMPLEXCASE == 1
+          e_vec(1) = real(vrl,kind=rk)
+#endif
+
 
           a_mat(1,l_cols) = 1. ! for consistency only
         endif
