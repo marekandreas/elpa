@@ -191,6 +191,10 @@ that use %{name}_openmp.
 %if %{defined fedora}
 module load mpi/openmpi-%{_arch}
 %endif
+%if %{defined suse_version}
+. %{_libdir}/mpi/gcc/openmpi/bin/mpivars.sh
+%endif
+
 if [ ! -e configure ] ; then
         # It is possible to use the Open Build Server to automatically
         # checkout from git directly, extract this spec file and set the
@@ -284,6 +288,9 @@ popd
 %check
 %if %{defined fedora}
 module load mpi/openmpi-%{_arch}
+%endif
+%if %{defined suse_version}
+. %{_libdir}/mpi/gcc/openmpi/bin/mpivars.sh
 %endif
 
 pushd build
