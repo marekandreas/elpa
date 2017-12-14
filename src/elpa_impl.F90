@@ -2605,10 +2605,10 @@ module elpa_impl
 
     !> \brief function to setup the ELPA autotuning and create the autotune object
     !> Parameters
-    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   self            the allocated ELPA object
     !> \param   level           integer: the "thoroughness" of the planed autotuning
     !> \param   domain          integer: the domain (real/complex) which should be tuned
-    !> \result  tune_state      class(elpa_autotune_t): the created autotuning object
+    !> \result  tune_state      the created autotuning object
     function elpa_autotune_setup(self, level, domain, error) result(tune_state)
       class(elpa_impl_t), intent(inout), target :: self
       integer, intent(in)                       :: level, domain
@@ -2677,18 +2677,15 @@ module elpa_impl
       integer(kind=c_int) , intent(in)              :: error
 #endif
 
-      print *,"Calling c_f_pointer handle"
       call c_f_pointer(handle, self)
 
-      print *,"Calling setup"
-      print *,level,domain
       tune_state => self%autotune_setup(level, domain, error)
-      print *,"After setup"
       select type(tune_state)
         class is (elpa_autotune_impl_t)
           obj => tune_state
         class default
           print *, "This should not happen"
+          stop
       end select                
       ptr = c_loc(obj)
 
