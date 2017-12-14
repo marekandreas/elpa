@@ -28,7 +28,7 @@ for the documentation how to proceed.
 *ELPA* can be installed with the build steps
 - configure
 - make
-- make check
+- make check   | or make check CHECK_LEVEL=extended
 - make install
 
 Please look at configure --help for all available options.
