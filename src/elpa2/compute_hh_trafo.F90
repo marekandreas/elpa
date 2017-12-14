@@ -109,7 +109,7 @@
 
          implicit none
          class(elpa_abstract_impl_t), intent(inout) :: obj
-	 logical, intent(in)                        :: useGPU, wantDebug
+         logical, intent(in)                        :: useGPU, wantDebug
          real(kind=c_double), intent(inout)         :: kernel_time  ! MPI_WTIME always needs double
          integer(kind=lik)                          :: kernel_flops
          integer(kind=ik), intent(in)               :: nbw, max_blk_size
@@ -182,8 +182,8 @@
              ( kernel .ne. ELPA_2STAGE_COMPLEX_GPU)) then
 #endif
              print *,"ERROR: useGPU is set in conpute_hh_trafo but not GPU kernel!"
-	     stop
-	   endif
+             stop
+           endif
          endif
 
 #if REALCASE == 1
@@ -194,11 +194,11 @@
 #endif
            ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
            if (ncols < 1) then
-	     if (wantDebug) then
-	       print *, "Returning early from compute_hh_trafo"
-	     endif
-	     return
-	   endif
+             if (wantDebug) then
+               print *, "Returning early from compute_hh_trafo"
+             endif
+             return
+           endif
          endif
 
          if (wantDebug) call obj%timer%start("compute_hh_trafo_&
@@ -268,9 +268,9 @@
 #if REALCASE == 1
 ! GPU kernel real
          if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
-	   if (wantDebug) then
-	     call obj%timer%start("compute_hh_trafo: GPU")
-	   endif
+           if (wantDebug) then
+             call obj%timer%start("compute_hh_trafo: GPU")
+           endif
            dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_&
                   &PRECISION&
                   &_&
@@ -285,9 +285,9 @@
 #if COMPLEXCASE == 1
 ! GPU kernel complex
          if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
-	   if (wantDebug) then
-	     call obj%timer%start("compute_hh_trafo: GPU")
-	   endif
+           if (wantDebug) then
+             call obj%timer%start("compute_hh_trafo: GPU")
+           endif
 
            dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * size_of_&
                   &PRECISION&
@@ -421,7 +421,7 @@
                    &_generic_&
                    &PRECISION&
                    & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), &
-		     bcast_buffer(1:nbw,j+off), nbw, nl, stripe_width)
+                     bcast_buffer(1:nbw,j+off), nbw, nl, stripe_width)
 #endif
 
 #else /* WITH_OPENMP */
@@ -438,7 +438,7 @@
                    &_generic_&
                    &PRECISION&
                    & (a(1:stripe_width,j+off+a_off:j+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,j+off), &
-		      nbw, nl, stripe_width)
+                      nbw, nl, stripe_width)
 #endif
 #endif /* WITH_OPENMP */
 
@@ -527,7 +527,7 @@
                     &_generic_simple_&
                     &PRECISION&
                     & (a(1:stripe_width, j+off+a_off:j+off+a_off+nbw-1,istripe,my_thread), bcast_buffer(1:nbw,j+off), &
-		       nbw, nl, stripe_width)
+                       nbw, nl, stripe_width)
 #endif
 
 #else /* WITH_OPENMP */
@@ -2120,9 +2120,9 @@
 !no avx512 block6 complex kernel
 #endif /* COMPLEXCASE */
 
-	   if (wantDebug) then
-	     call obj%timer%stop("compute_hh_trafo: CPU")
-	   endif
+           if (wantDebug) then
+             call obj%timer%stop("compute_hh_trafo: CPU")
+           endif
          endif ! GPU_KERNEL
 
 #ifdef WITH_OPENMP

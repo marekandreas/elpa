@@ -368,9 +368,9 @@
         if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
 #endif
           do_useGPU_trans_ev_tridi = .true.
-	else
+        else
           do_useGPU_trans_ev_tridi = .false.
-	endif
+        endif
       endif
     endif
 
@@ -401,31 +401,31 @@
       if (nbw == 0) then
         if (wantDebug) then
           write(error_unit,*) "Specified bandwidth = 0; ELPA refuses to solve the eigenvalue problem ", &
-	                      "for a diagonal matrix! This is too simple"
-	  endif
+                              "for a diagonal matrix! This is too simple"
+          endif
         print *, "Specified bandwidth = 0; ELPA refuses to solve the eigenvalue problem ", &
-	         "for a diagonal matrix! This is too simple"
+                 "for a diagonal matrix! This is too simple"
         success = .false.
         return
       endif
       if (mod(nbw, nblk) .ne. 0) then
         ! treat matrix with an effective bandwidth slightly bigger than specified bandwidth
-	! such that effective bandwidth is a multiply of nblk. which is a prerequiste for ELPA
+        ! such that effective bandwidth is a multiply of nblk. which is a prerequiste for ELPA
         nbw = nblk * ceiling(real(nbw,kind=c_double)/real(nblk,kind=c_double))
 
         ! just check that effective bandwidth is NOT larger than matrix size
-	if (nbw .gt. na) then
+        if (nbw .gt. na) then
           if (wantDebug) then
             write(error_unit,*) "Specified bandwidth ",nbw," leads internaly to a computed bandwidth ", &
-	                        "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
-				"solve your problem by not specifing a bandwidth"
-	  endif
+                                "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
+                                "solve your problem by not specifing a bandwidth"
+          endif
           print *, "Specified bandwidth ",nbw," leads internaly to a computed bandwidth ", &
-	                        "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
-				"solve your problem by not specifing a bandwidth"
+                                "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
+                                "solve your problem by not specifing a bandwidth"
           success = .false.
           return
-	endif
+        endif
       endif
       do_bandred       = .false. ! we already have a banded matrix
       do_solve_tridi   = .true.  ! we also have to solve something :-)
@@ -575,7 +575,7 @@
            ! not positiv definite => eigenvectors needed
            do_trans_to_band = .true.
            do_trans_to_full = .true.
-	 else
+         else
            do_trans_to_band = .false.
            do_trans_to_full = .false.
          endif

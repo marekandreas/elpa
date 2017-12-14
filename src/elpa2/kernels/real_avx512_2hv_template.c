@@ -148,97 +148,97 @@ void double_hh_trafo_real_avx512_2hv_double(double* q, double* hh, int* pnb, int
 void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 #endif
 {
-	int i;
-	int nb = *pnb;
-	int nq = *pldq;
-	int ldq = *pldq;
-	int ldh = *pldh;
-	int worked_on;
+        int i;
+        int nb = *pnb;
+        int nq = *pldq;
+        int ldq = *pldq;
+        int ldh = *pldh;
+        int worked_on;
 
-	worked_on = 0;
+        worked_on = 0;
 
-	// calculating scalar product to compute
-	// 2 householder vectors simultaneously
+        // calculating scalar product to compute
+        // 2 householder vectors simultaneously
 #ifdef DOUBLE_PRECISION_REAL
-	double s = hh[(ldh)+1]*1.0;
+        double s = hh[(ldh)+1]*1.0;
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	float s = hh[(ldh)+1]*1.0f;
+        float s = hh[(ldh)+1]*1.0f;
 #endif
-	#pragma ivdep
-	for (i = 2; i < nb; i++)
-	{
-		s += hh[i-1] * hh[(i+ldh)];
-	}
+        #pragma ivdep
+        for (i = 2; i < nb; i++)
+        {
+                s += hh[i-1] * hh[(i+ldh)];
+        }
 
-	// Production level kernel calls with padding
+        // Production level kernel calls with padding
 #ifdef DOUBLE_PRECISION_REAL
-	for (i = 0; i < nq-24; i+=32)
-	{
-		hh_trafo_kernel_32_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += 32;
-	}
+        for (i = 0; i < nq-24; i+=32)
+        {
+                hh_trafo_kernel_32_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+                worked_on += 32;
+        }
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	for (i = 0; i < nq-48; i+=64)
-	{
-		hh_trafo_kernel_64_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += 64;
-	}
+        for (i = 0; i < nq-48; i+=64)
+        {
+                hh_trafo_kernel_64_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+                worked_on += 64;
+        }
 #endif
-	if (nq == i)
-	{
-		return;
-	}
+        if (nq == i)
+        {
+                return;
+        }
 #ifdef DOUBLE_PRECISION_REAL
         if (nq-i == 24)
-	{
-		hh_trafo_kernel_24_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += 24;
-	}
+        {
+                hh_trafo_kernel_24_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+                worked_on += 24;
+        }
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	if (nq-i == 48)
-	{
-		hh_trafo_kernel_48_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += 48;
-	}
+        if (nq-i == 48)
+        {
+                hh_trafo_kernel_48_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+                worked_on += 48;
+        }
 #endif
 #ifdef DOUBLE_PRECISION_REAL
-	if (nq-i == 16)
-	{
-		hh_trafo_kernel_16_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += 16;
-	}
+        if (nq-i == 16)
+        {
+                hh_trafo_kernel_16_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+                worked_on += 16;
+        }
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	if (nq-i == 32)
-	{
-		hh_trafo_kernel_32_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += 32;
-	}
+        if (nq-i == 32)
+        {
+                hh_trafo_kernel_32_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+                worked_on += 32;
+        }
 #endif
 #ifdef DOUBLE_PRECISION_REAL
-	if (nq-i == 8)
-	{
-		hh_trafo_kernel_8_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += 8;
-	}
+        if (nq-i == 8)
+        {
+                hh_trafo_kernel_8_AVX512_2hv_double(&q[i], hh, nb, ldq, ldh, s);
+                worked_on += 8;
+        }
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	if (nq-i == 16)
-	{
-		hh_trafo_kernel_16_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
-		worked_on += 16;
-	}
+        if (nq-i == 16)
+        {
+                hh_trafo_kernel_16_AVX512_2hv_single(&q[i], hh, nb, ldq, ldh, s);
+                worked_on += 16;
+        }
 #endif
 
 #ifdef WITH_DEBUG
         if (worked_on != nq)
-	{
-		 printf("Error in AVX512 real BLOCK 2 kernel \n");
-		 abort();
-	}
+        {
+                 printf("Error in AVX512 real BLOCK 2 kernel \n");
+                 abort();
+        }
 #endif
 }
 
@@ -261,12 +261,12 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
  __forceinline void hh_trafo_kernel_64_AVX512_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
 #endif
 {
-	/////////////////////////////////////////////////////
-	// Matrix Vector Multiplication, Q [24 x nb+1] * hh
-	// hh contains two householder vectors, with offset 1
-	/////////////////////////////////////////////////////
-	int i;
-	// Needed bit mask for floating point sign flip
+        /////////////////////////////////////////////////////
+        // Matrix Vector Multiplication, Q [24 x nb+1] * hh
+        // hh contains two householder vectors, with offset 1
+        /////////////////////////////////////////////////////
+        int i;
+        // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
         __AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
@@ -274,154 +274,154 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
         __AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
 
-	__AVX512_DATATYPE x1 = _AVX512_LOAD(&q[ldq]);
-	__AVX512_DATATYPE x2 = _AVX512_LOAD(&q[ldq+offset]);
-	__AVX512_DATATYPE x3 = _AVX512_LOAD(&q[ldq+2*offset]);
-	__AVX512_DATATYPE x4 = _AVX512_LOAD(&q[ldq+3*offset]);
+        __AVX512_DATATYPE x1 = _AVX512_LOAD(&q[ldq]);
+        __AVX512_DATATYPE x2 = _AVX512_LOAD(&q[ldq+offset]);
+        __AVX512_DATATYPE x3 = _AVX512_LOAD(&q[ldq+2*offset]);
+        __AVX512_DATATYPE x4 = _AVX512_LOAD(&q[ldq+3*offset]);
 
 
-	__AVX512_DATATYPE h1 = _AVX512_SET1(hh[ldh+1]);
-	__AVX512_DATATYPE h2;
+        __AVX512_DATATYPE h1 = _AVX512_SET1(hh[ldh+1]);
+        __AVX512_DATATYPE h2;
 
-	__AVX512_DATATYPE q1 = _AVX512_LOAD(q);
-	__AVX512_DATATYPE y1 = _AVX512_FMA(x1, h1, q1);
-	__AVX512_DATATYPE q2 = _AVX512_LOAD(&q[offset]);
-	__AVX512_DATATYPE y2 = _AVX512_FMA(x2, h1, q2);
-	__AVX512_DATATYPE q3 = _AVX512_LOAD(&q[2*offset]);
-	__AVX512_DATATYPE y3 = _AVX512_FMA(x3, h1, q3);
-	__AVX512_DATATYPE q4 = _AVX512_LOAD(&q[3*offset]);
-	__AVX512_DATATYPE y4 = _AVX512_FMA(x4, h1, q4);
+        __AVX512_DATATYPE q1 = _AVX512_LOAD(q);
+        __AVX512_DATATYPE y1 = _AVX512_FMA(x1, h1, q1);
+        __AVX512_DATATYPE q2 = _AVX512_LOAD(&q[offset]);
+        __AVX512_DATATYPE y2 = _AVX512_FMA(x2, h1, q2);
+        __AVX512_DATATYPE q3 = _AVX512_LOAD(&q[2*offset]);
+        __AVX512_DATATYPE y3 = _AVX512_FMA(x3, h1, q3);
+        __AVX512_DATATYPE q4 = _AVX512_LOAD(&q[3*offset]);
+        __AVX512_DATATYPE y4 = _AVX512_FMA(x4, h1, q4);
 
-	for(i = 2; i < nb; i++)
-	{
-		h1 = _AVX512_SET1(hh[i-1]);
-		h2 = _AVX512_SET1(hh[ldh+i]);
+        for(i = 2; i < nb; i++)
+        {
+                h1 = _AVX512_SET1(hh[i-1]);
+                h2 = _AVX512_SET1(hh[ldh+i]);
 
-		q1 = _AVX512_LOAD(&q[i*ldq]);
-		x1 = _AVX512_FMA(q1, h1, x1);
-		y1 = _AVX512_FMA(q1, h2, y1);
-		q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
-		x2 = _AVX512_FMA(q2, h1, x2);
-		y2 = _AVX512_FMA(q2, h2, y2);
-		q3 = _AVX512_LOAD(&q[(i*ldq)+2*offset]);
-		x3 = _AVX512_FMA(q3, h1, x3);
-		y3 = _AVX512_FMA(q3, h2, y3);
-		q4 = _AVX512_LOAD(&q[(i*ldq)+3*offset]);
-		x4 = _AVX512_FMA(q4, h1, x4);
-		y4 = _AVX512_FMA(q4, h2, y4);
+                q1 = _AVX512_LOAD(&q[i*ldq]);
+                x1 = _AVX512_FMA(q1, h1, x1);
+                y1 = _AVX512_FMA(q1, h2, y1);
+                q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
+                x2 = _AVX512_FMA(q2, h1, x2);
+                y2 = _AVX512_FMA(q2, h2, y2);
+                q3 = _AVX512_LOAD(&q[(i*ldq)+2*offset]);
+                x3 = _AVX512_FMA(q3, h1, x3);
+                y3 = _AVX512_FMA(q3, h2, y3);
+                q4 = _AVX512_LOAD(&q[(i*ldq)+3*offset]);
+                x4 = _AVX512_FMA(q4, h1, x4);
+                y4 = _AVX512_FMA(q4, h2, y4);
 
-	}
+        }
 
-	h1 = _AVX512_SET1(hh[nb-1]);
+        h1 = _AVX512_SET1(hh[nb-1]);
 
-	q1 = _AVX512_LOAD(&q[nb*ldq]);
-	x1 = _AVX512_FMA(q1, h1, x1);
-	q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
-	x2 = _AVX512_FMA(q2, h1, x2);
-	q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
-	x3 = _AVX512_FMA(q3, h1, x3);
-	q4 = _AVX512_LOAD(&q[(nb*ldq)+3*offset]);
-	x4 = _AVX512_FMA(q4, h1, x4);
+        q1 = _AVX512_LOAD(&q[nb*ldq]);
+        x1 = _AVX512_FMA(q1, h1, x1);
+        q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
+        x2 = _AVX512_FMA(q2, h1, x2);
+        q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
+        x3 = _AVX512_FMA(q3, h1, x3);
+        q4 = _AVX512_LOAD(&q[(nb*ldq)+3*offset]);
+        x4 = _AVX512_FMA(q4, h1, x4);
 
 
-	/////////////////////////////////////////////////////
-	// Rank-2 update of Q [24 x nb+1]
-	/////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////
+        // Rank-2 update of Q [24 x nb+1]
+        /////////////////////////////////////////////////////
 
-	__AVX512_DATATYPE tau1 = _AVX512_SET1(hh[0]);
-	__AVX512_DATATYPE tau2 = _AVX512_SET1(hh[ldh]);
-	__AVX512_DATATYPE vs = _AVX512_SET1(s);
+        __AVX512_DATATYPE tau1 = _AVX512_SET1(hh[0]);
+        __AVX512_DATATYPE tau2 = _AVX512_SET1(hh[ldh]);
+        __AVX512_DATATYPE vs = _AVX512_SET1(s);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
 #endif
-	x1 = _AVX512_MUL(x1, h1);
-	x2 = _AVX512_MUL(x2, h1);
-	x3 = _AVX512_MUL(x3, h1);
-	x4 = _AVX512_MUL(x4, h1);
+        x1 = _AVX512_MUL(x1, h1);
+        x2 = _AVX512_MUL(x2, h1);
+        x3 = _AVX512_MUL(x3, h1);
+        x4 = _AVX512_MUL(x4, h1);
 
         // check ofr xor_pd on skylake
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
 #endif
-	h2 = _AVX512_MUL(h1, vs);
-	y1 = _AVX512_FMA(y1, h1, _AVX512_MUL(x1,h2));
-	y2 = _AVX512_FMA(y2, h1, _AVX512_MUL(x2,h2));
-	y3 = _AVX512_FMA(y3, h1, _AVX512_MUL(x3,h2));
-	y4 = _AVX512_FMA(y4, h1, _AVX512_MUL(x4,h2));
+        h2 = _AVX512_MUL(h1, vs);
+        y1 = _AVX512_FMA(y1, h1, _AVX512_MUL(x1,h2));
+        y2 = _AVX512_FMA(y2, h1, _AVX512_MUL(x2,h2));
+        y3 = _AVX512_FMA(y3, h1, _AVX512_MUL(x3,h2));
+        y4 = _AVX512_FMA(y4, h1, _AVX512_MUL(x4,h2));
 
-	q1 = _AVX512_LOAD(q);
-	q1 = _AVX512_ADD(q1, y1);
-	_AVX512_STORE(q,q1);
-	q2 = _AVX512_LOAD(&q[offset]);
-	q2 = _AVX512_ADD(q2, y2);
-	_AVX512_STORE(&q[offset],q2);
-	q3 = _AVX512_LOAD(&q[2*offset]);
-	q3 = _AVX512_ADD(q3, y3);
-	_AVX512_STORE(&q[2*offset],q3);
-	q4 = _AVX512_LOAD(&q[3*offset]);
-	q4 = _AVX512_ADD(q4, y4);
-	_AVX512_STORE(&q[3*offset],q4);
+        q1 = _AVX512_LOAD(q);
+        q1 = _AVX512_ADD(q1, y1);
+        _AVX512_STORE(q,q1);
+        q2 = _AVX512_LOAD(&q[offset]);
+        q2 = _AVX512_ADD(q2, y2);
+        _AVX512_STORE(&q[offset],q2);
+        q3 = _AVX512_LOAD(&q[2*offset]);
+        q3 = _AVX512_ADD(q3, y3);
+        _AVX512_STORE(&q[2*offset],q3);
+        q4 = _AVX512_LOAD(&q[3*offset]);
+        q4 = _AVX512_ADD(q4, y4);
+        _AVX512_STORE(&q[3*offset],q4);
 
-	h2 = _AVX512_SET1(hh[ldh+1]);
+        h2 = _AVX512_SET1(hh[ldh+1]);
 
-	q1 = _AVX512_LOAD(&q[ldq]);
-	q1 = _AVX512_ADD(q1, _AVX512_FMA(y1, h2, x1));
-	_AVX512_STORE(&q[ldq],q1);
-	q2 = _AVX512_LOAD(&q[ldq+offset]);
-	q2 = _AVX512_ADD(q2, _AVX512_FMA(y2, h2, x2));
-	_AVX512_STORE(&q[ldq+offset],q2);
-	q3 = _AVX512_LOAD(&q[ldq+2*offset]);
-	q3 = _AVX512_ADD(q3, _AVX512_FMA(y3, h2, x3));
-	_AVX512_STORE(&q[ldq+2*offset],q3);
-	q4 = _AVX512_LOAD(&q[ldq+3*offset]);
-	q4 = _AVX512_ADD(q4, _AVX512_FMA(y4, h2, x4));
-	_AVX512_STORE(&q[ldq+3*offset],q4);
+        q1 = _AVX512_LOAD(&q[ldq]);
+        q1 = _AVX512_ADD(q1, _AVX512_FMA(y1, h2, x1));
+        _AVX512_STORE(&q[ldq],q1);
+        q2 = _AVX512_LOAD(&q[ldq+offset]);
+        q2 = _AVX512_ADD(q2, _AVX512_FMA(y2, h2, x2));
+        _AVX512_STORE(&q[ldq+offset],q2);
+        q3 = _AVX512_LOAD(&q[ldq+2*offset]);
+        q3 = _AVX512_ADD(q3, _AVX512_FMA(y3, h2, x3));
+        _AVX512_STORE(&q[ldq+2*offset],q3);
+        q4 = _AVX512_LOAD(&q[ldq+3*offset]);
+        q4 = _AVX512_ADD(q4, _AVX512_FMA(y4, h2, x4));
+        _AVX512_STORE(&q[ldq+3*offset],q4);
 
-	for (i = 2; i < nb; i++)
-	{
-		h1 = _AVX512_SET1(hh[i-1]);
-		h2 = _AVX512_SET1(hh[ldh+i]);
+        for (i = 2; i < nb; i++)
+        {
+                h1 = _AVX512_SET1(hh[i-1]);
+                h2 = _AVX512_SET1(hh[ldh+i]);
 
-		q1 = _AVX512_LOAD(&q[i*ldq]);
-		q1 = _AVX512_FMA(x1, h1, q1);
-		q1 = _AVX512_FMA(y1, h2, q1);
-		_AVX512_STORE(&q[i*ldq],q1);
-		q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
-		q2 = _AVX512_FMA(x2, h1, q2);
-		q2 = _AVX512_FMA(y2, h2, q2);
-		_AVX512_STORE(&q[(i*ldq)+offset],q2);
-		q3 = _AVX512_LOAD(&q[(i*ldq)+2*offset]);
-		q3 = _AVX512_FMA(x3, h1, q3);
-		q3 = _AVX512_FMA(y3, h2, q3);
-		_AVX512_STORE(&q[(i*ldq)+2*offset],q3);
-		q4 = _AVX512_LOAD(&q[(i*ldq)+3*offset]);
-		q4 = _AVX512_FMA(x4, h1, q4);
-		q4 = _AVX512_FMA(y4, h2, q4);
-		_AVX512_STORE(&q[(i*ldq)+3*offset],q4);
+                q1 = _AVX512_LOAD(&q[i*ldq]);
+                q1 = _AVX512_FMA(x1, h1, q1);
+                q1 = _AVX512_FMA(y1, h2, q1);
+                _AVX512_STORE(&q[i*ldq],q1);
+                q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
+                q2 = _AVX512_FMA(x2, h1, q2);
+                q2 = _AVX512_FMA(y2, h2, q2);
+                _AVX512_STORE(&q[(i*ldq)+offset],q2);
+                q3 = _AVX512_LOAD(&q[(i*ldq)+2*offset]);
+                q3 = _AVX512_FMA(x3, h1, q3);
+                q3 = _AVX512_FMA(y3, h2, q3);
+                _AVX512_STORE(&q[(i*ldq)+2*offset],q3);
+                q4 = _AVX512_LOAD(&q[(i*ldq)+3*offset]);
+                q4 = _AVX512_FMA(x4, h1, q4);
+                q4 = _AVX512_FMA(y4, h2, q4);
+                _AVX512_STORE(&q[(i*ldq)+3*offset],q4);
 
-	}
+        }
 
-	h1 = _AVX512_SET1(hh[nb-1]);
+        h1 = _AVX512_SET1(hh[nb-1]);
 
-	q1 = _AVX512_LOAD(&q[nb*ldq]);
-	q1 = _AVX512_FMA(x1, h1, q1);
-	_AVX512_STORE(&q[nb*ldq],q1);
-	q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
-	q2 = _AVX512_FMA(x2, h1, q2);
-	_AVX512_STORE(&q[(nb*ldq)+offset],q2);
-	q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
-	q3 = _AVX512_FMA(x3, h1, q3);
-	_AVX512_STORE(&q[(nb*ldq)+2*offset],q3);
-	q4 = _AVX512_LOAD(&q[(nb*ldq)+3*offset]);
-	q4 = _AVX512_FMA(x4, h1, q4);
-	_AVX512_STORE(&q[(nb*ldq)+3*offset],q4);
+        q1 = _AVX512_LOAD(&q[nb*ldq]);
+        q1 = _AVX512_FMA(x1, h1, q1);
+        _AVX512_STORE(&q[nb*ldq],q1);
+        q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
+        q2 = _AVX512_FMA(x2, h1, q2);
+        _AVX512_STORE(&q[(nb*ldq)+offset],q2);
+        q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
+        q3 = _AVX512_FMA(x3, h1, q3);
+        _AVX512_STORE(&q[(nb*ldq)+2*offset],q3);
+        q4 = _AVX512_LOAD(&q[(nb*ldq)+3*offset]);
+        q4 = _AVX512_FMA(x4, h1, q4);
+        _AVX512_STORE(&q[(nb*ldq)+3*offset],q4);
 
 }
 
@@ -444,140 +444,140 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
  __forceinline void hh_trafo_kernel_48_AVX512_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
 #endif
 {
-	/////////////////////////////////////////////////////
-	// Matrix Vector Multiplication, Q [24 x nb+1] * hh
-	// hh contains two householder vectors, with offset 1
-	/////////////////////////////////////////////////////
-	int i;
-	// Needed bit mask for floating point sign flip
+        /////////////////////////////////////////////////////
+        // Matrix Vector Multiplication, Q [24 x nb+1] * hh
+        // hh contains two householder vectors, with offset 1
+        /////////////////////////////////////////////////////
+        int i;
+        // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
         __AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
-	__AVX512_DATATYPE x1 = _AVX512_LOAD(&q[ldq]);
-	__AVX512_DATATYPE x2 = _AVX512_LOAD(&q[ldq+offset]);
-	__AVX512_DATATYPE x3 = _AVX512_LOAD(&q[ldq+2*offset]);
+        __AVX512_DATATYPE x1 = _AVX512_LOAD(&q[ldq]);
+        __AVX512_DATATYPE x2 = _AVX512_LOAD(&q[ldq+offset]);
+        __AVX512_DATATYPE x3 = _AVX512_LOAD(&q[ldq+2*offset]);
 
-	__AVX512_DATATYPE h1 = _AVX512_SET1(hh[ldh+1]);
-	__AVX512_DATATYPE h2;
+        __AVX512_DATATYPE h1 = _AVX512_SET1(hh[ldh+1]);
+        __AVX512_DATATYPE h2;
 
-	__AVX512_DATATYPE q1 = _AVX512_LOAD(q);
-	__AVX512_DATATYPE y1 = _AVX512_FMA(x1, h1, q1);
-	__AVX512_DATATYPE q2 = _AVX512_LOAD(&q[offset]);
-	__AVX512_DATATYPE y2 = _AVX512_FMA(x2, h1, q2);
-	__AVX512_DATATYPE q3 = _AVX512_LOAD(&q[2*offset]);
-	__AVX512_DATATYPE y3 = _AVX512_FMA(x3, h1, q3);
+        __AVX512_DATATYPE q1 = _AVX512_LOAD(q);
+        __AVX512_DATATYPE y1 = _AVX512_FMA(x1, h1, q1);
+        __AVX512_DATATYPE q2 = _AVX512_LOAD(&q[offset]);
+        __AVX512_DATATYPE y2 = _AVX512_FMA(x2, h1, q2);
+        __AVX512_DATATYPE q3 = _AVX512_LOAD(&q[2*offset]);
+        __AVX512_DATATYPE y3 = _AVX512_FMA(x3, h1, q3);
 
-	for(i = 2; i < nb; i++)
-	{
-		h1 = _AVX512_SET1(hh[i-1]);
-		h2 = _AVX512_SET1(hh[ldh+i]);
+        for(i = 2; i < nb; i++)
+        {
+                h1 = _AVX512_SET1(hh[i-1]);
+                h2 = _AVX512_SET1(hh[ldh+i]);
 
-		q1 = _AVX512_LOAD(&q[i*ldq]);
-		x1 = _AVX512_FMA(q1, h1, x1);
-		y1 = _AVX512_FMA(q1, h2, y1);
-		q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
-		x2 = _AVX512_FMA(q2, h1, x2);
-		y2 = _AVX512_FMA(q2, h2, y2);
-		q3 = _AVX512_LOAD(&q[(i*ldq)+2*offset]);
-		x3 = _AVX512_FMA(q3, h1, x3);
-		y3 = _AVX512_FMA(q3, h2, y3);
-	}
+                q1 = _AVX512_LOAD(&q[i*ldq]);
+                x1 = _AVX512_FMA(q1, h1, x1);
+                y1 = _AVX512_FMA(q1, h2, y1);
+                q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
+                x2 = _AVX512_FMA(q2, h1, x2);
+                y2 = _AVX512_FMA(q2, h2, y2);
+                q3 = _AVX512_LOAD(&q[(i*ldq)+2*offset]);
+                x3 = _AVX512_FMA(q3, h1, x3);
+                y3 = _AVX512_FMA(q3, h2, y3);
+        }
 
-	h1 = _AVX512_SET1(hh[nb-1]);
+        h1 = _AVX512_SET1(hh[nb-1]);
 
-	q1 = _AVX512_LOAD(&q[nb*ldq]);
-	x1 = _AVX512_FMA(q1, h1, x1);
-	q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
-	x2 = _AVX512_FMA(q2, h1, x2);
-	q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
-	x3 = _AVX512_FMA(q3, h1, x3);
+        q1 = _AVX512_LOAD(&q[nb*ldq]);
+        x1 = _AVX512_FMA(q1, h1, x1);
+        q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
+        x2 = _AVX512_FMA(q2, h1, x2);
+        q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
+        x3 = _AVX512_FMA(q3, h1, x3);
 
-	/////////////////////////////////////////////////////
-	// Rank-2 update of Q [24 x nb+1]
-	/////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////
+        // Rank-2 update of Q [24 x nb+1]
+        /////////////////////////////////////////////////////
 
-	__AVX512_DATATYPE tau1 = _AVX512_SET1(hh[0]);
-	__AVX512_DATATYPE tau2 = _AVX512_SET1(hh[ldh]);
-	__AVX512_DATATYPE vs = _AVX512_SET1(s);
+        __AVX512_DATATYPE tau1 = _AVX512_SET1(hh[0]);
+        __AVX512_DATATYPE tau2 = _AVX512_SET1(hh[ldh]);
+        __AVX512_DATATYPE vs = _AVX512_SET1(s);
 
         // check for xor_pd on skylake
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
 #endif
-	x1 = _AVX512_MUL(x1, h1);
-	x2 = _AVX512_MUL(x2, h1);
-	x3 = _AVX512_MUL(x3, h1);
+        x1 = _AVX512_MUL(x1, h1);
+        x2 = _AVX512_MUL(x2, h1);
+        x3 = _AVX512_MUL(x3, h1);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
 #endif
-	h2 = _AVX512_MUL(h1, vs);
-	y1 = _AVX512_FMA(y1, h1, _AVX512_MUL(x1,h2));
-	y2 = _AVX512_FMA(y2, h1, _AVX512_MUL(x2,h2));
-	y3 = _AVX512_FMA(y3, h1, _AVX512_MUL(x3,h2));
+        h2 = _AVX512_MUL(h1, vs);
+        y1 = _AVX512_FMA(y1, h1, _AVX512_MUL(x1,h2));
+        y2 = _AVX512_FMA(y2, h1, _AVX512_MUL(x2,h2));
+        y3 = _AVX512_FMA(y3, h1, _AVX512_MUL(x3,h2));
 
-	q1 = _AVX512_LOAD(q);
-	q1 = _AVX512_ADD(q1, y1);
-	_AVX512_STORE(q,q1);
-	q2 = _AVX512_LOAD(&q[offset]);
-	q2 = _AVX512_ADD(q2, y2);
-	_AVX512_STORE(&q[offset],q2);
-	q3 = _AVX512_LOAD(&q[2*offset]);
-	q3 = _AVX512_ADD(q3, y3);
-	_AVX512_STORE(&q[2*offset],q3);
+        q1 = _AVX512_LOAD(q);
+        q1 = _AVX512_ADD(q1, y1);
+        _AVX512_STORE(q,q1);
+        q2 = _AVX512_LOAD(&q[offset]);
+        q2 = _AVX512_ADD(q2, y2);
+        _AVX512_STORE(&q[offset],q2);
+        q3 = _AVX512_LOAD(&q[2*offset]);
+        q3 = _AVX512_ADD(q3, y3);
+        _AVX512_STORE(&q[2*offset],q3);
 
-	h2 = _AVX512_SET1(hh[ldh+1]);
+        h2 = _AVX512_SET1(hh[ldh+1]);
 
-	q1 = _AVX512_LOAD(&q[ldq]);
-	q1 = _AVX512_ADD(q1, _AVX512_FMA(y1, h2, x1));
-	_AVX512_STORE(&q[ldq],q1);
-	q2 = _AVX512_LOAD(&q[ldq+offset]);
-	q2 = _AVX512_ADD(q2, _AVX512_FMA(y2, h2, x2));
-	_AVX512_STORE(&q[ldq+offset],q2);
-	q3 = _AVX512_LOAD(&q[ldq+2*offset]);
-	q3 = _AVX512_ADD(q3, _AVX512_FMA(y3, h2, x3));
-	_AVX512_STORE(&q[ldq+2*offset],q3);
+        q1 = _AVX512_LOAD(&q[ldq]);
+        q1 = _AVX512_ADD(q1, _AVX512_FMA(y1, h2, x1));
+        _AVX512_STORE(&q[ldq],q1);
+        q2 = _AVX512_LOAD(&q[ldq+offset]);
+        q2 = _AVX512_ADD(q2, _AVX512_FMA(y2, h2, x2));
+        _AVX512_STORE(&q[ldq+offset],q2);
+        q3 = _AVX512_LOAD(&q[ldq+2*offset]);
+        q3 = _AVX512_ADD(q3, _AVX512_FMA(y3, h2, x3));
+        _AVX512_STORE(&q[ldq+2*offset],q3);
 
-	for (i = 2; i < nb; i++)
-	{
-		h1 = _AVX512_SET1(hh[i-1]);
-		h2 = _AVX512_SET1(hh[ldh+i]);
+        for (i = 2; i < nb; i++)
+        {
+                h1 = _AVX512_SET1(hh[i-1]);
+                h2 = _AVX512_SET1(hh[ldh+i]);
 
-		q1 = _AVX512_LOAD(&q[i*ldq]);
-		q1 = _AVX512_FMA(x1, h1, q1);
-		q1 = _AVX512_FMA(y1, h2, q1);
-		_AVX512_STORE(&q[i*ldq],q1);
-		q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
-		q2 = _AVX512_FMA(x2, h1, q2);
-		q2 = _AVX512_FMA(y2, h2, q2);
-		_AVX512_STORE(&q[(i*ldq)+offset],q2);
-		q3 = _AVX512_LOAD(&q[(i*ldq)+2*offset]);
-		q3 = _AVX512_FMA(x3, h1, q3);
-		q3 = _AVX512_FMA(y3, h2, q3);
-		_AVX512_STORE(&q[(i*ldq)+2*offset],q3);
+                q1 = _AVX512_LOAD(&q[i*ldq]);
+                q1 = _AVX512_FMA(x1, h1, q1);
+                q1 = _AVX512_FMA(y1, h2, q1);
+                _AVX512_STORE(&q[i*ldq],q1);
+                q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
+                q2 = _AVX512_FMA(x2, h1, q2);
+                q2 = _AVX512_FMA(y2, h2, q2);
+                _AVX512_STORE(&q[(i*ldq)+offset],q2);
+                q3 = _AVX512_LOAD(&q[(i*ldq)+2*offset]);
+                q3 = _AVX512_FMA(x3, h1, q3);
+                q3 = _AVX512_FMA(y3, h2, q3);
+                _AVX512_STORE(&q[(i*ldq)+2*offset],q3);
 
-	}
+        }
 
-	h1 = _AVX512_SET1(hh[nb-1]);
+        h1 = _AVX512_SET1(hh[nb-1]);
 
-	q1 = _AVX512_LOAD(&q[nb*ldq]);
-	q1 = _AVX512_FMA(x1, h1, q1);
-	_AVX512_STORE(&q[nb*ldq],q1);
-	q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
-	q2 = _AVX512_FMA(x2, h1, q2);
-	_AVX512_STORE(&q[(nb*ldq)+offset],q2);
-	q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
-	q3 = _AVX512_FMA(x3, h1, q3);
-	_AVX512_STORE(&q[(nb*ldq)+2*offset],q3);
+        q1 = _AVX512_LOAD(&q[nb*ldq]);
+        q1 = _AVX512_FMA(x1, h1, q1);
+        _AVX512_STORE(&q[nb*ldq],q1);
+        q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
+        q2 = _AVX512_FMA(x2, h1, q2);
+        _AVX512_STORE(&q[(nb*ldq)+offset],q2);
+        q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
+        q3 = _AVX512_FMA(x3, h1, q3);
+        _AVX512_STORE(&q[(nb*ldq)+2*offset],q3);
 
 }
 
@@ -599,115 +599,115 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
  __forceinline void hh_trafo_kernel_32_AVX512_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
 #endif
 {
-	/////////////////////////////////////////////////////
-	// Matrix Vector Multiplication, Q [16 x nb+1] * hh
-	// hh contains two householder vectors, with offset 1
-	/////////////////////////////////////////////////////
-	int i;
-	// Needed bit mask for floating point sign flip
+        /////////////////////////////////////////////////////
+        // Matrix Vector Multiplication, Q [16 x nb+1] * hh
+        // hh contains two householder vectors, with offset 1
+        /////////////////////////////////////////////////////
+        int i;
+        // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
         __AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
-	__AVX512_DATATYPE x1 = _AVX512_LOAD(&q[ldq]);
-	__AVX512_DATATYPE x2 = _AVX512_LOAD(&q[ldq+offset]);
+        __AVX512_DATATYPE x1 = _AVX512_LOAD(&q[ldq]);
+        __AVX512_DATATYPE x2 = _AVX512_LOAD(&q[ldq+offset]);
 
-	__AVX512_DATATYPE h1 = _AVX512_SET1(hh[ldh+1]);
-	__AVX512_DATATYPE h2;
+        __AVX512_DATATYPE h1 = _AVX512_SET1(hh[ldh+1]);
+        __AVX512_DATATYPE h2;
 
-	__AVX512_DATATYPE q1 = _AVX512_LOAD(q);
-	__AVX512_DATATYPE y1 = _AVX512_FMA(x1, h1, q1);
-	__AVX512_DATATYPE q2 = _AVX512_LOAD(&q[offset]);
-	__AVX512_DATATYPE y2 = _AVX512_FMA(x2, h1, q2);
+        __AVX512_DATATYPE q1 = _AVX512_LOAD(q);
+        __AVX512_DATATYPE y1 = _AVX512_FMA(x1, h1, q1);
+        __AVX512_DATATYPE q2 = _AVX512_LOAD(&q[offset]);
+        __AVX512_DATATYPE y2 = _AVX512_FMA(x2, h1, q2);
 
-	for(i = 2; i < nb; i++)
-	{
-		h1 = _AVX512_SET1(hh[i-1]);
-		h2 = _AVX512_SET1(hh[ldh+i]);
+        for(i = 2; i < nb; i++)
+        {
+                h1 = _AVX512_SET1(hh[i-1]);
+                h2 = _AVX512_SET1(hh[ldh+i]);
 
-		q1 = _AVX512_LOAD(&q[i*ldq]);
-		x1 = _AVX512_FMA(q1, h1, x1);
-		y1 = _AVX512_FMA(q1, h2, y1);
-		q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
-		x2 = _AVX512_FMA(q2, h1, x2);
-		y2 = _AVX512_FMA(q2, h2, y2);
-	}
+                q1 = _AVX512_LOAD(&q[i*ldq]);
+                x1 = _AVX512_FMA(q1, h1, x1);
+                y1 = _AVX512_FMA(q1, h2, y1);
+                q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
+                x2 = _AVX512_FMA(q2, h1, x2);
+                y2 = _AVX512_FMA(q2, h2, y2);
+        }
 
-	h1 = _AVX512_SET1(hh[nb-1]);
+        h1 = _AVX512_SET1(hh[nb-1]);
 
-	q1 = _AVX512_LOAD(&q[nb*ldq]);
-	x1 = _AVX512_FMA(q1, h1, x1);
-	q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
-	x2 = _AVX512_FMA(q2, h1, x2);
+        q1 = _AVX512_LOAD(&q[nb*ldq]);
+        x1 = _AVX512_FMA(q1, h1, x1);
+        q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
+        x2 = _AVX512_FMA(q2, h1, x2);
 
-	/////////////////////////////////////////////////////
-	// Rank-2 update of Q [16 x nb+1]
-	/////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////
+        // Rank-2 update of Q [16 x nb+1]
+        /////////////////////////////////////////////////////
 
-	__AVX512_DATATYPE tau1 = _AVX512_SET1(hh[0]);
-	__AVX512_DATATYPE tau2 = _AVX512_SET1(hh[ldh]);
-	__AVX512_DATATYPE vs = _AVX512_SET1(s);
+        __AVX512_DATATYPE tau1 = _AVX512_SET1(hh[0]);
+        __AVX512_DATATYPE tau2 = _AVX512_SET1(hh[ldh]);
+        __AVX512_DATATYPE vs = _AVX512_SET1(s);
         // check for xor_pd on skylake
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
 #endif
-	x1 = _AVX512_MUL(x1, h1);
-	x2 = _AVX512_MUL(x2, h1);
+        x1 = _AVX512_MUL(x1, h1);
+        x2 = _AVX512_MUL(x2, h1);
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
 #endif
-	h2 = _AVX512_MUL(h1, vs);
+        h2 = _AVX512_MUL(h1, vs);
 
-	y1 = _AVX512_FMA(y1, h1, _AVX512_MUL(x1,h2));
-	y2 = _AVX512_FMA(y2, h1, _AVX512_MUL(x2,h2));
+        y1 = _AVX512_FMA(y1, h1, _AVX512_MUL(x1,h2));
+        y2 = _AVX512_FMA(y2, h1, _AVX512_MUL(x2,h2));
 
-	q1 = _AVX512_LOAD(q);
-	q1 = _AVX512_ADD(q1, y1);
-	_AVX512_STORE(q,q1);
-	q2 = _AVX512_LOAD(&q[offset]);
-	q2 = _AVX512_ADD(q2, y2);
-	_AVX512_STORE(&q[offset],q2);
+        q1 = _AVX512_LOAD(q);
+        q1 = _AVX512_ADD(q1, y1);
+        _AVX512_STORE(q,q1);
+        q2 = _AVX512_LOAD(&q[offset]);
+        q2 = _AVX512_ADD(q2, y2);
+        _AVX512_STORE(&q[offset],q2);
 
-	h2 = _AVX512_SET1(hh[ldh+1]);
+        h2 = _AVX512_SET1(hh[ldh+1]);
 
-	q1 = _AVX512_LOAD(&q[ldq]);
-	q1 = _AVX512_ADD(q1, _AVX512_FMA(y1, h2, x1));
-	_AVX512_STORE(&q[ldq],q1);
-	q2 = _AVX512_LOAD(&q[ldq+offset]);
-	q2 = _AVX512_ADD(q2, _AVX512_FMA(y2, h2, x2));
-	_AVX512_STORE(&q[ldq+offset],q2);
+        q1 = _AVX512_LOAD(&q[ldq]);
+        q1 = _AVX512_ADD(q1, _AVX512_FMA(y1, h2, x1));
+        _AVX512_STORE(&q[ldq],q1);
+        q2 = _AVX512_LOAD(&q[ldq+offset]);
+        q2 = _AVX512_ADD(q2, _AVX512_FMA(y2, h2, x2));
+        _AVX512_STORE(&q[ldq+offset],q2);
 
-	for (i = 2; i < nb; i++)
-	{
-		h1 = _AVX512_SET1(hh[i-1]);
-		h2 = _AVX512_SET1(hh[ldh+i]);
+        for (i = 2; i < nb; i++)
+        {
+                h1 = _AVX512_SET1(hh[i-1]);
+                h2 = _AVX512_SET1(hh[ldh+i]);
 
-		q1 = _AVX512_LOAD(&q[i*ldq]);
-		q1 = _AVX512_FMA(x1, h1, q1);
-		q1 = _AVX512_FMA(y1, h2, q1);
-		_AVX512_STORE(&q[i*ldq],q1);
-		q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
-		q2 = _AVX512_FMA(x2, h1, q2);
-		q2 = _AVX512_FMA(y2, h2, q2);
-		_AVX512_STORE(&q[(i*ldq)+offset],q2);
-	}
+                q1 = _AVX512_LOAD(&q[i*ldq]);
+                q1 = _AVX512_FMA(x1, h1, q1);
+                q1 = _AVX512_FMA(y1, h2, q1);
+                _AVX512_STORE(&q[i*ldq],q1);
+                q2 = _AVX512_LOAD(&q[(i*ldq)+offset]);
+                q2 = _AVX512_FMA(x2, h1, q2);
+                q2 = _AVX512_FMA(y2, h2, q2);
+                _AVX512_STORE(&q[(i*ldq)+offset],q2);
+        }
 
-	h1 = _AVX512_SET1(hh[nb-1]);
+        h1 = _AVX512_SET1(hh[nb-1]);
 
-	q1 = _AVX512_LOAD(&q[nb*ldq]);
-	q1 = _AVX512_FMA(x1, h1, q1);
-	_AVX512_STORE(&q[nb*ldq],q1);
-	q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
-	q2 = _AVX512_FMA(x2, h1, q2);
-	_AVX512_STORE(&q[(nb*ldq)+offset],q2);
+        q1 = _AVX512_LOAD(&q[nb*ldq]);
+        q1 = _AVX512_FMA(x1, h1, q1);
+        _AVX512_STORE(&q[nb*ldq],q1);
+        q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
+        q2 = _AVX512_FMA(x2, h1, q2);
+        _AVX512_STORE(&q[(nb*ldq)+offset],q2);
 
 }
 
@@ -729,95 +729,95 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
  __forceinline void hh_trafo_kernel_16_AVX512_2hv_single(float* q, float* hh, int nb, int ldq, int ldh, float s)
 #endif
 {
-	/////////////////////////////////////////////////////
-	// Matrix Vector Multiplication, Q [8 x nb+1] * hh
-	// hh contains two householder vectors, with offset 1
-	/////////////////////////////////////////////////////
-	int i;
-	// Needed bit mask for floating point sign flip
+        /////////////////////////////////////////////////////
+        // Matrix Vector Multiplication, Q [8 x nb+1] * hh
+        // hh contains two householder vectors, with offset 1
+        /////////////////////////////////////////////////////
+        int i;
+        // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
         __AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __AVX512_DATATYPE sign = (__AVX512_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
-	__AVX512_DATATYPE x1 = _AVX512_LOAD(&q[ldq]);
+        __AVX512_DATATYPE x1 = _AVX512_LOAD(&q[ldq]);
 
-	__AVX512_DATATYPE h1 = _AVX512_SET1(hh[ldh+1]);
-	__AVX512_DATATYPE h2;
+        __AVX512_DATATYPE h1 = _AVX512_SET1(hh[ldh+1]);
+        __AVX512_DATATYPE h2;
 
-	__AVX512_DATATYPE q1 = _AVX512_LOAD(q);
-	__AVX512_DATATYPE y1 = _AVX512_FMA(x1, h1, q1);
+        __AVX512_DATATYPE q1 = _AVX512_LOAD(q);
+        __AVX512_DATATYPE y1 = _AVX512_FMA(x1, h1, q1);
 
-	for(i = 2; i < nb; i++)
-	{
-		h1 = _AVX512_SET1(hh[i-1]);
-		h2 = _AVX512_SET1(hh[ldh+i]);
+        for(i = 2; i < nb; i++)
+        {
+                h1 = _AVX512_SET1(hh[i-1]);
+                h2 = _AVX512_SET1(hh[ldh+i]);
 
-		q1 = _AVX512_LOAD(&q[i*ldq]);
-		x1 = _AVX512_FMA(q1, h1, x1);
-		y1 = _AVX512_FMA(q1, h2, y1);
-	}
+                q1 = _AVX512_LOAD(&q[i*ldq]);
+                x1 = _AVX512_FMA(q1, h1, x1);
+                y1 = _AVX512_FMA(q1, h2, y1);
+        }
 
-	h1 = _AVX512_SET1(hh[nb-1]);
+        h1 = _AVX512_SET1(hh[nb-1]);
 
-	q1 = _AVX512_LOAD(&q[nb*ldq]);
-	x1 = _AVX512_FMA(q1, h1, x1);
+        q1 = _AVX512_LOAD(&q[nb*ldq]);
+        x1 = _AVX512_FMA(q1, h1, x1);
 
-	/////////////////////////////////////////////////////
-	// Rank-2 update of Q [8 x nb+1]
-	/////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////
+        // Rank-2 update of Q [8 x nb+1]
+        /////////////////////////////////////////////////////
 
-	__AVX512_DATATYPE tau1 = _AVX512_SET1(hh[0]);
-	__AVX512_DATATYPE tau2 = _AVX512_SET1(hh[ldh]);
-	__AVX512_DATATYPE vs = _AVX512_SET1(s);
-
-#ifdef DOUBLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
-#endif
-
-	x1 = _AVX512_MUL(x1, h1);
+        __AVX512_DATATYPE tau1 = _AVX512_SET1(hh[0]);
+        __AVX512_DATATYPE tau2 = _AVX512_SET1(hh[ldh]);
+        __AVX512_DATATYPE vs = _AVX512_SET1(s);
 
 #ifdef DOUBLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
 #endif
 
-	h2 = _AVX512_MUL(h1, vs);
+        x1 = _AVX512_MUL(x1, h1);
 
-	y1 = _AVX512_FMA(y1, h1, _AVX512_MUL(x1,h2));
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+#endif
 
-	q1 = _AVX512_LOAD(q);
-	q1 = _AVX512_ADD(q1, y1);
-	_AVX512_STORE(q,q1);
+        h2 = _AVX512_MUL(h1, vs);
 
-	h2 = _AVX512_SET1(hh[ldh+1]);
+        y1 = _AVX512_FMA(y1, h1, _AVX512_MUL(x1,h2));
 
-	q1 = _AVX512_LOAD(&q[ldq]);
-	q1 = _AVX512_ADD(q1, _AVX512_FMA(y1, h2, x1));
-	_AVX512_STORE(&q[ldq],q1);
+        q1 = _AVX512_LOAD(q);
+        q1 = _AVX512_ADD(q1, y1);
+        _AVX512_STORE(q,q1);
 
-	for (i = 2; i < nb; i++)
-	{
-		h1 = _AVX512_SET1(hh[i-1]);
-		h2 = _AVX512_SET1(hh[ldh+i]);
+        h2 = _AVX512_SET1(hh[ldh+1]);
 
-		q1 = _AVX512_LOAD(&q[i*ldq]);
-		q1 = _AVX512_FMA(x1, h1, q1);
-		q1 = _AVX512_FMA(y1, h2, q1);
-		_AVX512_STORE(&q[i*ldq],q1);
-	}
+        q1 = _AVX512_LOAD(&q[ldq]);
+        q1 = _AVX512_ADD(q1, _AVX512_FMA(y1, h2, x1));
+        _AVX512_STORE(&q[ldq],q1);
 
-	h1 = _AVX512_SET1(hh[nb-1]);
+        for (i = 2; i < nb; i++)
+        {
+                h1 = _AVX512_SET1(hh[i-1]);
+                h2 = _AVX512_SET1(hh[ldh+i]);
 
-	q1 = _AVX512_LOAD(&q[nb*ldq]);
-	q1 = _AVX512_FMA(x1, h1, q1);
-	_AVX512_STORE(&q[nb*ldq],q1);
+                q1 = _AVX512_LOAD(&q[i*ldq]);
+                q1 = _AVX512_FMA(x1, h1, q1);
+                q1 = _AVX512_FMA(y1, h2, q1);
+                _AVX512_STORE(&q[i*ldq],q1);
+        }
+
+        h1 = _AVX512_SET1(hh[nb-1]);
+
+        q1 = _AVX512_LOAD(&q[nb*ldq]);
+        q1 = _AVX512_FMA(x1, h1, q1);
+        _AVX512_STORE(&q[nb*ldq],q1);
 
 }
 
