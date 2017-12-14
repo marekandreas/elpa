@@ -2681,7 +2681,7 @@ module elpa_impl
 
       tune_state => self%autotune_setup(level, domain, error)
       select type(tune_state)
-        class is (elpa_autotune_impl_t)
+        type is (elpa_autotune_impl_t)
           obj => tune_state
         class default
           print *, "This should not happen"
@@ -2707,7 +2707,7 @@ module elpa_impl
       real(kind=C_DOUBLE) :: time_spent
 
       select type(tune_state)
-        class is (elpa_autotune_impl_t)
+        type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
@@ -2777,7 +2777,7 @@ module elpa_impl
       type(elpa_autotune_impl_t), pointer :: ts_impl
 
       select type(tune_state)
-        class is (elpa_autotune_impl_t)
+        type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
