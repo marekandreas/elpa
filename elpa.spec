@@ -1,7 +1,7 @@
 #
 # spec file for package elpa
 #
-# Copyright (c) 2015 Lorenz Hüdepohl
+# Copyright (c) 2015 Lorenz Huedepohl
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -15,21 +15,8 @@
 %define so_version 8
 
 # OpenMP support requires an MPI implementation with MPI_THREAD_MULTIPLE support,
-# which is only available for a sufficiently configured openmpi >= 1.8
-# Set to 0 to disable
-%define with_openmp 1
-
-# Logic to figure out if we are on SLES-11-SP4, which need special
-# treatment (custom compiler package name, old RPM macros)
-%if 0%{suse_version} > 0
-%if 0%{suse_version} <= 1110
-%define sle_11_sp4 1
-%else
-%define sle_11_sp4 0
-%endif
-%else
-%define sle_11_sp4 0
-%endif
+# which is currently not provided at OpenSUSE
+%define with_openmp 0
 
 Name:           elpa
 Version:        2017.11.001.rc1
@@ -40,12 +27,7 @@ Group:          System/Libraries
 Url:            https://elpa.rzg.mpg.de/
 Source0:        https://elpa.mpcdf.mpg.de/html/Releases/%{version}/%{name}-%{version}.tar.gz
 BuildRequires:  c_compiler
-# For SLE_11_SP4:
-%if %{sle_11_sp4} == 1
-BuildRequires:  gcc48-fortran
-%else
 BuildRequires:  gcc-fortran >= 4.8
-%endif
 BuildRequires:  openmpi-devel
 Requires:       openmpi
 BuildRequires:  blas-devel
@@ -191,6 +173,10 @@ that use %{name}_openmp.
 %if %{defined fedora}
 module load mpi/openmpi-%{_arch}
 %endif
+%if %{defined suse_version}
+. %{_libdir}/mpi/gcc/openmpi/bin/mpivars.sh
+%endif
+
 if [ ! -e configure ] ; then
         # It is possible to use the Open Build Server to automatically
         # checkout from git directly, extract this spec file and set the
@@ -204,34 +190,15 @@ if [ ! -e configure ] ; then
         ./autogen.sh
 fi
 
-# Set-up compilers for SLE_11_SP4
-%if %{sle_11_sp4} == 1
-mkdir compilers
-pushd compilers
-ln -s /usr/bin/gfortran-4.8 gfortran
-ln -s /usr/bin/gcc-4.8 gcc
-export PATH=$PWD:$PATH
-pushd
-%endif
-
 # Normal build
 mkdir build
 pushd build
 %define _configure ../configure
 
-# ancient SLE_11_SP4 cannot deal with configure in sub-directory
-# via _configure macro
-%if %{sle_11_sp4} == 1
-ln -s ../configure .
-%endif
-
 %configure \
 %ifarch i386 i486 i586 i686 x86_64
         CFLAGS="$CFLAGS -msse4.2" \
         FCFLAGS="$FFLAGS $FCFLAGS -msse4.2" \
-%endif
-%if %{sle_11_sp4} == 1
-        --disable-mpi-module \
 %endif
 %ifnarch i386 i486 i586 i686 x86_64
         --disable-sse \
@@ -251,19 +218,10 @@ popd
 mkdir build_openmp
 pushd build_openmp
 
-# ancient SLE_11_SP4 cannot deal with configure in sub-directory
-# via _configure macro
-%if %{?suse_version:%{suse_version}}%{!?suse_version:1200} <= 1110
-ln -s ../configure .
-%endif
-
 %configure \
 %ifarch i386 i486 i586 i686 x86_64
         CFLAGS="$CFLAGS -msse4.2" \
         FCFLAGS="$FFLAGS $FCFLAGS -msse4.2" \
-%endif
-%if %{sle_11_sp4} == 1
-        --disable-mpi-module \
 %endif
 %ifnarch i386 i486 i586 i686 x86_64
         --disable-sse \
@@ -284,6 +242,9 @@ popd
 %check
 %if %{defined fedora}
 module load mpi/openmpi-%{_arch}
+%endif
+%if %{defined suse_version}
+. %{_libdir}/mpi/gcc/openmpi/bin/mpivars.sh
 %endif
 
 pushd build
