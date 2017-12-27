@@ -189,6 +189,7 @@ fi
 AM_CONDITIONAL([HAVE_DETAILED_TIMINGS], [test x"$enable_timings" = x"yes"])
 
 dnl PAPI for ftimings
+AC_LANG_PUSH([C])
 AC_ARG_WITH([papi],
             [AS_HELP_STRING([--with-papi],
                             [Use PAPI to also measure flop count in the detailed timing (--enable-timing), disabled by default])],
@@ -203,6 +204,7 @@ if test x"${enable_timings}" = x"yes"; then
     AC_DEFINE([HAVE_LIBPAPI], [1], [Use the PAPI library])
   fi
 fi
+AC_LANG_POP([C])
 
 save_FCFLAGS=$FCFLAGS
 save_LDFLAGS=$LDFLAGS
