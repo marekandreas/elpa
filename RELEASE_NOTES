@@ -1,29 +1,24 @@
-This file contains the release notes for the ELPA 2017.05.002 version
+This file contains the release notes for the ELPA 2017.11.001 version
 
 What is new?
 -------------
-For detailed information about changes since release ELPA 2016.11.001 please have a look at the Changelog file
-Highlights are:
+For detailed information about changes since release ELPA 2017.05.03 please have a look at the Changelog file
 
-- a more generic and more flexible API, which allows easy implementation of upcoming features
-- faster GPU implementation, especially for ELPA 1stage
-- the restriction of the block-cyclic distribution blocksize = 128 in the GPU
-  case is relaxed
-- Faster CPU implementation due to better blocking
-- support of already banded matrices (new API only!)
-- improved KNL support
+- This release contains new compute kernels for IBM Power 8 and Fujistu Sparc64 processors
+- A first version of autotuning has been implemented
 
 
 ABI change
 ---------------------
 
-Since release 2016.05.001 the ABI has not changed. Only additional interfaces habe been added, please have also a look
-at the DEPRECTATED_FEATURES file
-
+Since release 2017.05.003 the ABI has changed.
 
 Any incompatibilities to previous version?
 ---------------------------------------
 
-As mentioned before, the ABI of ELPA was not changed; There is no
-incompatibility with the previous version ELPA 2016.11.001.
+As mentioned before, the ABI of ELPA was changed; 
+This change only affectes the  old "lecgacy interface", since as 
+anounced some deprecated function aliases have been removed.
+For the current interface there is no incompatibility with the
+previous version ELPA 2017.05.003.
 

@@ -1,3 +1,16 @@
+Changelog for ELPA 2017.11.001
+
+- added new compute kernels for IBM Power8 and Fujistu Sparc64
+  processors
+- a first implementation of autotuning capability
+- correct some type statements in Fortran
+- correct detection of PAPI in configure step
+
+Changelog for ELPA 2017.05.003
+
+- remove bug in invert_triangular, which had been introduced
+  in ELPA 2017.05.002
+
 Changelog for ELPA 2017.05.002
 
 Mainly bugfixes for ELPA 2017.05.001:

@@ -1,8 +1,8 @@
 # Installation guide for the *ELPA* library#
 
-## Preamle ##
+## Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2017.05.002**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2017.11.001**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library
 
@@ -28,7 +28,7 @@ for the documentation how to proceed.
 *ELPA* can be installed with the build steps
 - configure
 - make
-- make check
+- make check   | or make check CHECK_LEVEL=extended
 - make install
 
 Please look at configure --help for all available options.

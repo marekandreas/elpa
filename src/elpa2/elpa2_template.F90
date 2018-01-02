@@ -113,7 +113,7 @@
                                                                                             &MATH_DATATYPE
     integer(kind=ik)                                                  :: na, nev, lda, ldq, nblk, matrixCols, &
                                                                          mpi_comm_rows, mpi_comm_cols,        &
-					                                 mpi_comm_all, check_pd
+                                                                         mpi_comm_all, check_pd, error
 
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
@@ -164,13 +164,21 @@
    endif
 
 #if REALCASE == 1
-    call obj%get("real_kernel",kernel)
+    call obj%get("real_kernel",kernel,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     ! check consistency between request for GPUs and defined kernel
-    call obj%get("gpu", gpu)
+    call obj%get("gpu", gpu,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-	write(error_unit,*) "The compute kernel will be executed on CPUs!"
+        write(error_unit,*) "The compute kernel will be executed on CPUs!"
       else if (nblk .ne. 128) then
         kernel = ELPA_2STAGE_REAL_GENERIC
       endif
@@ -180,16 +188,44 @@
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
       endif
     endif
+
+#ifdef SINGLE_PRECISION_REAL
+    ! special case at the moment NO single precision kernels on POWER 8 -> set GENERIC for now
+    if (kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK2 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK4 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK6        ) then
+        write(error_unit,*) "ELPA: At the moment there exist no specific SINGLE precision kernels for POWER8"
+        write(error_unit,*) "The GENERIC kernel will be used at the moment"
+        kernel = ELPA_2STAGE_REAL_GENERIC
+    endif
+    ! special case at the moment NO single precision kernels on SPARC64 -> set GENERIC for now
+    if (kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK2 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK4 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK6        ) then
+        write(error_unit,*) "ELPA: At the moment there exist no specific SINGLE precision kernels for SPARC64"
+        write(error_unit,*) "The GENERIC kernel will be used at the moment"
+        kernel = ELPA_2STAGE_REAL_GENERIC
+    endif
+#endif
+
 #endif
 
 #if COMPLEXCASE == 1
-    call obj%get("complex_kernel",kernel)
+    call obj%get("complex_kernel",kernel,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     ! check consistency between request for GPUs and defined kernel
-    call obj%get("gpu", gpu)
+    call obj%get("gpu", gpu,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     if (gpu == 1) then
       if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-	write(error_unit,*) "The compute kernel will be executed on CPUs!"
+        write(error_unit,*) "The compute kernel will be executed on CPUs!"
       else if (nblk .ne. 128) then
         kernel = ELPA_2STAGE_COMPLEX_GENERIC
       endif
@@ -201,9 +237,21 @@
     endif
 
 #endif
-    call obj%get("mpi_comm_rows",mpi_comm_rows)
-    call obj%get("mpi_comm_cols",mpi_comm_cols)
-    call obj%get("mpi_comm_parent",mpi_comm_all)
+    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    call obj%get("mpi_comm_parent",mpi_comm_all,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
 
     if (gpu .eq. 1) then
       useGPU = .true.
@@ -212,7 +260,11 @@
     endif
 
 #if REALCASE == 1
-    call obj%get("qr",qr)
+    call obj%get("qr",qr,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     if (qr .eq. 1) then
       useQR = .true.
     else
@@ -230,7 +282,11 @@
     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
     call obj%timer%stop("mpi_communication")
 
-    call obj%get("debug",debug)
+    call obj%get("debug",debug,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
     wantDebug = debug == 1
 
     do_useGPU      = .false.
@@ -273,7 +329,11 @@
       endif
     else
       ! check whether set by environment variable
-      call obj%get("gpu",gpu)
+      call obj%get("gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
       do_useGPU = gpu == 1
       if (do_useGPU) then
         if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
@@ -306,9 +366,9 @@
         if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
 #endif
           do_useGPU_trans_ev_tridi = .true.
-	else
+        else
           do_useGPU_trans_ev_tridi = .false.
-	endif
+        endif
       endif
     endif
 
@@ -335,35 +395,35 @@
     endif
 
     if (obj%is_set("bandwidth") == 1) then
-      call obj%get("bandwidth",nbw)
+      call obj%get("bandwidth",nbw,error)
       if (nbw == 0) then
         if (wantDebug) then
           write(error_unit,*) "Specified bandwidth = 0; ELPA refuses to solve the eigenvalue problem ", &
-	                      "for a diagonal matrix! This is too simple"
-	  endif
+                              "for a diagonal matrix! This is too simple"
+          endif
         print *, "Specified bandwidth = 0; ELPA refuses to solve the eigenvalue problem ", &
-	         "for a diagonal matrix! This is too simple"
+                 "for a diagonal matrix! This is too simple"
         success = .false.
         return
       endif
       if (mod(nbw, nblk) .ne. 0) then
         ! treat matrix with an effective bandwidth slightly bigger than specified bandwidth
-	! such that effective bandwidth is a multiply of nblk. which is a prerequiste for ELPA
+        ! such that effective bandwidth is a multiply of nblk. which is a prerequiste for ELPA
         nbw = nblk * ceiling(real(nbw,kind=c_double)/real(nblk,kind=c_double))
 
         ! just check that effective bandwidth is NOT larger than matrix size
-	if (nbw .gt. na) then
+        if (nbw .gt. na) then
           if (wantDebug) then
             write(error_unit,*) "Specified bandwidth ",nbw," leads internaly to a computed bandwidth ", &
-	                        "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
-				"solve your problem by not specifing a bandwidth"
-	  endif
+                                "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
+                                "solve your problem by not specifing a bandwidth"
+          endif
           print *, "Specified bandwidth ",nbw," leads internaly to a computed bandwidth ", &
-	                        "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
-				"solve your problem by not specifing a bandwidth"
+                                "which is larger than the matrix size ",na," ! ELPA will abort! Try to", &
+                                "solve your problem by not specifing a bandwidth"
           success = .false.
           return
-	endif
+        endif
       endif
       do_bandred       = .false. ! we already have a banded matrix
       do_solve_tridi   = .true.  ! we also have to solve something :-)
@@ -497,7 +557,11 @@
        do_trans_to_full = .false.
      else
 
-       call obj%get("check_pd",check_pd)
+       call obj%get("check_pd",check_pd,error)
+       if (error .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+       endif
        if (check_pd .eq. 1) then
          check_pd = 0
          do i = 1, na
@@ -509,7 +573,7 @@
            ! not positiv definite => eigenvectors needed
            do_trans_to_band = .true.
            do_trans_to_full = .true.
-	 else
+         else
            do_trans_to_band = .false.
            do_trans_to_full = .false.
          endif

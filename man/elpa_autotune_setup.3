@@ -1,0 +1,57 @@
+.TH "elpa_autotune_setup" 3 "Tue Nov 28 2017" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_autotune_setup \- create an instance for autotuning of the ELPA library
+.br
+
+Before the autotuning object can be created, an instance of the ELPA library has to be setup, see e.g. \fBelpa_setup\fP(3)
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+class(elpa_autotune_t), pointer :: tune_state
+.br
+
+.RI  "tune_state= \fBelpa%autotune_setup\fP (level, domain)"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.RI "integer :: \fBlevel\fP  !  the level of the autotuning, at the moment ELPA_AUTOTUNE_FAST is supported"
+.br
+.RI "integer :: \fBdomain\fP  !  the domain (real or complex) of the autotuning, can be either ELPA_AUTOTUNE_DOMAIN_REAL or ELPA_AUTOTUNE_DOMAIN_COMPLEX"
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+elpa_autotune_t autotune_handle;
+
+.br
+.RI "\fBelpa_autotune_t\fP autotune_handle = \fBelpa_autotune_setup\fP (\fBelpa_t\fP handle, int level, int domain);"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.br
+.RI "elpa_t \fBhandle\fP;  // the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
+.br
+.RI "int \fBlevel\fP;      // the level of the autotuning, at the moment "ELPA_AUTOTUNE_FAST" is supported
+.br
+.RI "int \fBdomain\fP;      // the domain (real or complex) of the autotuning, can be either "ELPA_AUTOTUNE_DOMAIN_REAL"  and "ELPA_AUTOTUNE_DOMAIN_COMPLEX"
+.br
+.RI "elpa_autotune_t \fBautotune_handel\fP;    // the created handle of the autotune object
+
+.SH DESCRIPTION
+Creates an ELPA autotuning object. \fIPrior\fP to calling  the autotune_setup, an ELPA object must have been created. See \fBelpa_setup\fP(3)
+.SH "SEE ALSO"
+.br
+\fBelpa_autotune_step\fP(3) \fBelpa_autotune_set_best\fP(3) \fBelpa_autotune_deallocate\fp(3)
+

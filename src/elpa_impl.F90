@@ -49,7 +49,18 @@
 
 !> \brief Fortran module which provides the actual implementation of the API. Do not use directly! Use the module "elpa"
 module elpa_impl
+  use precision
+  use elpa2_impl
+  use elpa1_impl
+  use elpa1_auxiliary_impl
+#ifdef WITH_MPI
+  use elpa_mpi
+#endif
+  use elpa_generated_fortran_interfaces
+  use elpa_utilities, only : error_unit
+
   use elpa_abstract_impl
+  use elpa_autotune_impl
   use, intrinsic :: iso_c_binding
   implicit none
 
@@ -136,8 +147,12 @@ module elpa_impl
      procedure, private :: elpa_transform_generalized_fc
      procedure, private :: elpa_transform_back_generalized_fc
 #endif
-  end type elpa_impl_t
 
+     procedure, public :: autotune_setup => elpa_autotune_setup
+     procedure, public :: autotune_step => elpa_autotune_step
+     procedure, public :: autotune_set_best => elpa_autotune_set_best
+
+  end type elpa_impl_t
 
   !> \brief the implementation of the generic methods
   contains
@@ -148,10 +163,6 @@ module elpa_impl
     !> \param   error      integer, optional to get an error code
     !> \result  obj        class(elpa_impl_t) allocated ELPA object
     function elpa_impl_allocate(error) result(obj)
-      use precision
-      use elpa_utilities, only : error_unit
-      use elpa_generated_fortran_interfaces
-
       type(elpa_impl_t), pointer   :: obj
       integer, optional            :: error
 
@@ -211,15 +222,28 @@ module elpa_impl
     end subroutine
 
 
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_deallocate method
+    !c> *
+    !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
+    !c> *  \result void
+    !c> */
+    !c> void elpa_autotune_deallocate(elpa_autotune_t handle);
+    subroutine elpa_autotune_impl_deallocate_c( autotune_handle) bind(C, name="elpa_autotune_deallocate")
+      type(c_ptr), value                  :: autotune_handle
+
+      type(elpa_autotune_impl_t), pointer :: self
+
+      call c_f_pointer(autotune_handle, self)
+      call self%destroy()
+      deallocate(self)
+    end subroutine
+
+
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
-      use elpa_utilities, only : error_unit
-#ifdef WITH_MPI
-      use elpa_mpi
-#endif
       class(elpa_impl_t), intent(inout)   :: self
       integer                             :: error, timings
 
@@ -230,7 +254,7 @@ module elpa_impl
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
-      call self%get("timings",timings)
+      call self%get("timings",timings, error)
       if (timings == 1) then
         call self%timer%enable()
       endif
@@ -244,9 +268,9 @@ module elpa_impl
           self%is_set("process_row") == 1 .and. &
           self%is_set("process_col") == 1) then
 
-        call self%get("mpi_comm_parent", mpi_comm_parent)
-        call self%get("process_row", process_row)
-        call self%get("process_col", process_col)
+        call self%get("mpi_comm_parent", mpi_comm_parent, error)
+        call self%get("process_row", process_row, error)
+        call self%get("process_col", process_col, error)
 
         ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
         ! having the same column coordinate share one mpi_comm_rows.
@@ -268,8 +292,16 @@ module elpa_impl
           return
         endif
 
-        call self%set("mpi_comm_rows", mpi_comm_rows)
-        call self%set("mpi_comm_cols", mpi_comm_cols)
+        call self%set("mpi_comm_rows", mpi_comm_rows,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem setting option. Aborting..."
+          stop
+        endif
+        call self%set("mpi_comm_cols", mpi_comm_cols,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem setting option. Aborting..."
+          stop
+        endif
 
         ! remember that we created those communicators and we need to free them later
         self%communicators_owned = 1
@@ -319,12 +351,17 @@ module elpa_impl
     !c> */
     !c> void elpa_set_integer(elpa_t handle, const char *name, int value, int *error);
     subroutine elpa_set_integer_c(handle, name_p, value, error) bind(C, name="elpa_set_integer")
-      type(c_ptr), intent(in), value :: handle
-      type(elpa_impl_t), pointer :: self
-      type(c_ptr), intent(in), value :: name_p
+      type(c_ptr), intent(in), value                :: handle
+      type(elpa_impl_t), pointer                    :: self
+      type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
-      integer(kind=c_int), intent(in), value :: value
-      integer(kind=c_int), optional, intent(in) :: error
+      integer(kind=c_int), intent(in), value        :: value
+
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int) , intent(in), optional    :: error
+#else
+      integer(kind=c_int) , intent(in)              :: error
+#endif
 
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
@@ -343,13 +380,16 @@ module elpa_impl
     !c> */
     !c> void elpa_get_integer(elpa_t handle, const char *name, int *value, int *error);
     subroutine elpa_get_integer_c(handle, name_p, value, error) bind(C, name="elpa_get_integer")
-      type(c_ptr), intent(in), value :: handle
-      type(elpa_impl_t), pointer :: self
-      type(c_ptr), intent(in), value :: name_p
+      type(c_ptr), intent(in), value                :: handle
+      type(elpa_impl_t), pointer                    :: self
+      type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
-      integer(kind=c_int)  :: value
-      integer(kind=c_int), optional, intent(inout) :: error
-
+      integer(kind=c_int)                           :: value
+#ifdef ISE_FORTRAN2008
+      integer(kind=c_int), intent(inout), optional  :: error
+#else
+      integer(kind=c_int), intent(inout)            :: error
+#endif
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_get_integer(self, name, value, error)
@@ -362,8 +402,6 @@ module elpa_impl
     !> \param   name       string, the key
     !> \result  state      integer, the state of the key/value pair
     function elpa_is_set(self, name) result(state)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t)       :: self
       character(*), intent(in) :: name
       integer                  :: state
@@ -378,8 +416,6 @@ module elpa_impl
     !> \param   value      integer, value
     !> \result  error      integer, error code
     function elpa_can_set(self, name, value) result(error)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t)       :: self
       character(*), intent(in) :: name
       integer(kind=c_int), intent(in) :: value
@@ -389,8 +425,13 @@ module elpa_impl
     end function
 
 
+    !> \brief function to convert a value to an human readable string
+    !> Parameters
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
+    !> \param   option_name string: the name of the options, whose value should be converted
+    !> \param   error       integer: errpr code
+    !> \result  string      string: the humanreadable string   
     function elpa_value_to_string(self, option_name, error) result(string)
-      use elpa_generated_fortran_interfaces
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
       type(c_ptr) :: ptr
@@ -430,13 +471,16 @@ module elpa_impl
     !c> */
     !c> void elpa_set_double(elpa_t handle, const char *name, double value, int *error);
     subroutine elpa_set_double_c(handle, name_p, value, error) bind(C, name="elpa_set_double")
-      type(c_ptr), intent(in), value :: handle
-      type(elpa_impl_t), pointer :: self
-      type(c_ptr), intent(in), value :: name_p
+      type(c_ptr), intent(in), value                :: handle
+      type(elpa_impl_t), pointer                    :: self
+      type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
-      real(kind=c_double), intent(in), value :: value
-      integer(kind=c_int), optional, intent(in) :: error
-
+      real(kind=c_double), intent(in), value        :: value
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), intent(in), optional     :: error
+#else
+      integer(kind=c_int), intent(in)               :: error
+#endif
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_set_double(self, name, value, error)
@@ -454,23 +498,28 @@ module elpa_impl
     !c> */
     !c> void elpa_get_double(elpa_t handle, const char *name, double *value, int *error);
     subroutine elpa_get_double_c(handle, name_p, value, error) bind(C, name="elpa_get_double")
-      type(c_ptr), intent(in), value :: handle
-      type(elpa_impl_t), pointer :: self
-      type(c_ptr), intent(in), value :: name_p
+      type(c_ptr), intent(in), value                :: handle
+      type(elpa_impl_t), pointer                    :: self
+      type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
-      real(kind=c_double)  :: value
-      integer(kind=c_int), optional, intent(inout) :: error
-
+      real(kind=c_double)                           :: value
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), intent(inout), optional  :: error
+#else
+      integer(kind=c_int), intent(inout)            :: error
+#endif
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_get_double(self, name, value, error)
     end subroutine
+ 
 
-
+    !> \brief function to associate a pointer with an integer value
+    !> Parameters
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
+    !> \param   name        string: the name of the entry
+    !> \result  value       integer, pointer: the value for the entry
     function elpa_associate_int(self, name) result(value)
-      use iso_c_binding
-      use elpa_generated_fortran_interfaces
-      use elpa_utilities, only : error_unit
       class(elpa_impl_t)             :: self
       character(*), intent(in)       :: name
       integer(kind=c_int), pointer   :: value
@@ -485,6 +534,13 @@ module elpa_impl
     end function
 
 
+    !> \brief function to querry the timing information at a certain level
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name1 .. name6  string: the string identifier for the timer region.
+    !>                                  at the moment 6 nested levels can be queried
+    !> \result  s               double: the timer metric for the region. Might be seconds,
+    !>                                  or any other supported metric
     function elpa_get_time(self, name1, name2, name3, name4, name5, name6) result(s)
       class(elpa_impl_t), intent(in) :: self
       ! this is clunky, but what can you do..
@@ -499,6 +555,11 @@ module elpa_impl
     end function
 
 
+    !> \brief function to print the timing tree below at a certain level
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name1 .. name6  string: the string identifier for the timer region.
+    !>                                  at the moment 4 nested levels can be specified
     subroutine elpa_print_times(self, name1, name2, name3, name4)
       class(elpa_impl_t), intent(in) :: self
       character(len=*), intent(in), optional :: name1, name2, name3, name4
@@ -508,6 +569,10 @@ module elpa_impl
     end subroutine
 
 
+    !> \brief function to start the timing of a code region
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name            string: a chosen identifier name for the code region
     subroutine elpa_timer_start(self, name)
       class(elpa_impl_t), intent(inout) :: self
       character(len=*), intent(in) :: name
@@ -517,6 +582,10 @@ module elpa_impl
     end subroutine
 
 
+    !> \brief function to stop the timing of a code region
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   name            string: identifier name for the code region to stop
     subroutine elpa_timer_stop(self, name)
       class(elpa_impl_t), intent(inout) :: self
       character(len=*), intent(in) :: name
@@ -552,10 +621,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_d(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 
 #ifdef USE_ASSUMED_SIZE
@@ -565,22 +630,44 @@ module elpa_impl
 #endif
       real(kind=c_double) :: ev(self%na)
 
+#ifdef USE_FORTRAN2008
       integer, optional   :: error
+#else
+      integer             :: error
+#endif
+      integer             :: error2
       integer(kind=c_int) :: solver
       logical             :: success_l
 
 
-      call self%get("solver", solver)
+      call self%get("solver", solver,error2)
+      if (error2 .ne. ELPA_OK) then
+        print *,"Problem setting option. Aborting..."
+        stop
+      endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = error2
+      endif
+#else
+      error = error2
+#endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -590,15 +677,26 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
     !c> void elpa_eigenvectors_d(elpa_t handle, double *a, double *ev, double *q, int *error);
     subroutine elpa_eigenvectors_d_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_eigenvectors_d")
-      type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
+      type(c_ptr), intent(in), value            :: handle, a_p, ev_p, q_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
 
-      real(kind=c_double), pointer :: a(:, :), q(:, :), ev(:)
-      type(elpa_impl_t), pointer  :: self
+      real(kind=c_double), pointer              :: a(:, :), q(:, :), ev(:)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -635,10 +733,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_f(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)  :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -647,22 +741,44 @@ module elpa_impl
 #endif
       real(kind=c_float)  :: ev(self%na)
 
+#ifdef USE_FORTRAN2008
       integer, optional   :: error
+#else
+      integer             :: error
+#endif
+      integer             :: error2
       integer(kind=c_int) :: solver
 #ifdef WANT_SINGLE_PRECISION_REAL
       logical             :: success_l
 
-      call self%get("solver",solver)
+      call self%get("solver",solver, error2)
+      if (error2 .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+      endif
+#if USE_FORTRAN2008                   
+      if (present(error)) then        
+        error  = error2               
+      endif
+#else
+      error  = error2
+#endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -673,6 +789,14 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 #else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+
+#else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
@@ -681,11 +805,15 @@ module elpa_impl
 
     !c> void elpa_eigenvectors_f(elpa_t handle, float *a, float *ev, float *q, int *error);
     subroutine elpa_eigenvectors_f_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_eigenvectors_f")
-      type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
+      type(c_ptr), intent(in), value            :: handle, a_p, ev_p, q_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
 
-      real(kind=c_float), pointer :: a(:, :), q(:, :), ev(:)
-      type(elpa_impl_t), pointer  :: self
+      real(kind=c_float), pointer               :: a(:, :), q(:, :), ev(:)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -722,10 +850,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_dc(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)             :: self
 
 #ifdef USE_ASSUMED_SIZE
@@ -734,22 +858,44 @@ module elpa_impl
       complex(kind=c_double_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double)            :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional              :: error
+#else
+      integer                        :: error
+#endif
+      integer                        :: error2
       integer(kind=c_int)            :: solver
       logical                        :: success_l
 
-      call self%get("solver", solver)
+      call self%get("solver", solver,error2)
+      if (error2 .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+      endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = error2
+      endif
+#else
+      error = error2
+#endif
+
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -759,17 +905,28 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
 
     !c> void elpa_eigenvectors_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
     subroutine elpa_eigenvectors_dc_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_eigenvectors_dc")
-      type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
+      type(c_ptr), intent(in), value            :: handle, a_p, ev_p, q_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
 
-      complex(kind=c_double_complex), pointer :: a(:, :), q(:, :)
-      real(kind=c_double), pointer :: ev(:)
-      type(elpa_impl_t), pointer  :: self
+      complex(kind=c_double_complex), pointer   :: a(:, :), q(:, :)
+      real(kind=c_double), pointer              :: ev(:)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -806,11 +963,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvectors_fc(self, a, ev, q, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-
-      use iso_c_binding
       class(elpa_impl_t)            :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex) :: a(self%local_nrows, *), q(self%local_nrows, *)
@@ -818,32 +970,60 @@ module elpa_impl
       complex(kind=c_float_complex) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)            :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional             :: error
+#else
+      integer                       :: error
+#endif
+      integer                       :: error2
       integer(kind=c_int)           :: solver
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
       logical                       :: success_l
 
-      call self%get("solver", solver)
+      call self%get("solver", solver,error2)
+      if (error2 .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+      endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = error2
+      endif
+#else
+      error = error2
+#endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev, q)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev, q)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
       endif
-
+#ifdef USE_FORTRAN2008
       if (present(error)) then
-        if (success_l) then
-          error = ELPA_OK
-        else
-          error = ELPA_ERROR
-        endif
+       if (success_l) then
+         error = ELPA_OK
+       else
+         error = ELPA_ERROR
+       endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
@@ -853,12 +1033,15 @@ module elpa_impl
 
     !c> void elpa_eigenvectors_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
     subroutine elpa_eigenvectors_fc_c(handle, a_p, ev_p, q_p, error) bind(C, name="elpa_eigenvectors_fc")
-      type(c_ptr), intent(in), value :: handle, a_p, ev_p, q_p
+      type(c_ptr), intent(in), value            :: handle, a_p, ev_p, q_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      complex(kind=c_float_complex), pointer :: a(:, :), q(:, :)
-      real(kind=c_float), pointer :: ev(:)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      complex(kind=c_float_complex), pointer    :: a(:, :), q(:, :)
+      real(kind=c_float), pointer               :: ev(:)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -867,7 +1050,6 @@ module elpa_impl
 
       call elpa_eigenvectors_fc(self, a, ev, q, error)
     end subroutine
-
 
 
 
@@ -892,35 +1074,51 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_d(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
-
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double) :: a(self%local_nrows, *)
 #else
       real(kind=c_double) :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double) :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional   :: error
+#else
+      integer             :: error
+#endif
+      integer             :: error2
       integer(kind=c_int) :: solver
       logical             :: success_l
 
 
-      call self%get("solver", solver)
+      call self%get("solver", solver,error2)
+      if (error2 .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+      endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = error2
+      endif
+#else
+      error = error2
+#endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -930,12 +1128,19 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
     !c> void elpa_eigenvalues_d(elpa_t handle, double *a, double *ev, int *error);
     subroutine elpa_eigenvalues_d_c(handle, a_p, ev_p, error) bind(C, name="elpa_eigenvalues_d")
       type(c_ptr), intent(in), value :: handle, a_p, ev_p
-      integer(kind=c_int), optional, intent(in) :: error
+      integer(kind=c_int), intent(in) :: error
 
       real(kind=c_double), pointer :: a(:, :), ev(:)
       type(elpa_impl_t), pointer  :: self
@@ -969,10 +1174,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_f(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)  :: a(self%local_nrows, *)
@@ -980,23 +1181,44 @@ module elpa_impl
       real(kind=c_float)  :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)  :: ev(self%na)
-
+#ifdef USE_FORTRAN2008
       integer, optional   :: error
+#else
+      integer             :: error
+#endif
+      integer             :: error2
       integer(kind=c_int) :: solver
 #ifdef WANT_SINGLE_PRECISION_REAL
       logical             :: success_l
 
-      call self%get("solver",solver)
+      call self%get("solver",solver,error2)
+      if (error2 .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+      endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = error2
+      endif
+#else
+      error = error2
+#endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_1stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_real_2stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1007,6 +1229,14 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 #else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+
+#else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
@@ -1015,11 +1245,14 @@ module elpa_impl
 
     !c> void elpa_eigenvalues_f(elpa_t handle, float *a, float *ev, int *error);
     subroutine elpa_eigenvalues_f_c(handle, a_p, ev_p,  error) bind(C, name="elpa_eigenvalues_f")
-      type(c_ptr), intent(in), value :: handle, a_p, ev_p
-      integer(kind=c_int), optional, intent(in) :: error
-
-      real(kind=c_float), pointer :: a(:, :), ev(:)
-      type(elpa_impl_t), pointer  :: self
+      type(c_ptr), intent(in), value            :: handle, a_p, ev_p
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), intent(in), optional :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      real(kind=c_float), pointer               :: a(:, :), ev(:)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -1050,12 +1283,7 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_dc(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-      use iso_c_binding
       class(elpa_impl_t)             :: self
-
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_double_complex) :: a(self%local_nrows, *)
 #else
@@ -1063,21 +1291,43 @@ module elpa_impl
 #endif
       real(kind=c_double)            :: ev(self%na)
 
+#ifdef USE_FORTRAN2008
       integer, optional              :: error
+#else
+      integer                        :: error
+#endif
+      integer                        :: error2
       integer(kind=c_int)            :: solver
       logical                        :: success_l
 
-      call self%get("solver", solver)
+      call self%get("solver", solver,error2)
+      if (error2 .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+      endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = error2
+      endif
+#else
+      error = error2
+#endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_double_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_double_impl(self,  a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1087,17 +1337,27 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
 
     !c> void elpa_eigenvalues_dc(elpa_t handle, double complex *a, double *ev, int *error);
     subroutine elpa_eigenvalues_dc_c(handle, a_p, ev_p, error) bind(C, name="elpa_eigenvalues_dc")
-      type(c_ptr), intent(in), value :: handle, a_p, ev_p
+      type(c_ptr), intent(in), value            :: handle, a_p, ev_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      complex(kind=c_double_complex), pointer :: a(:, :)
-      real(kind=c_double), pointer :: ev(:)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      complex(kind=c_double_complex), pointer   :: a(:, :)
+      real(kind=c_double), pointer              :: ev(:)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -1128,11 +1388,6 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_eigenvalues_fc(self, a, ev, error)
-      use elpa2_impl
-      use elpa1_impl
-      use elpa_utilities, only : error_unit
-
-      use iso_c_binding
       class(elpa_impl_t)            :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex) :: a(self%local_nrows, *)
@@ -1141,22 +1396,44 @@ module elpa_impl
 #endif
       real(kind=c_float)            :: ev(self%na)
 
+#ifdef USE_FORTRAN2008
       integer, optional             :: error
+#else
+      integer                       :: error
+#endif
+      integer                       :: error2
       integer(kind=c_int)           :: solver
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
       logical                       :: success_l
 
-      call self%get("solver", solver)
+      call self%get("solver", solver,error2)
+      if (error2 .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+         stop
+      endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = error2
+      endif
+#else
+      error = error2
+#endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_1stage_single_impl(self, a, ev)
+        call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
         success_l = elpa_solve_evp_complex_2stage_single_impl(self,  a, ev)
+        call self%autotune_timer%stop("accumulator")
+
       else
         print *,"unknown solver"
         stop
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1167,6 +1444,14 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 #else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+
+#else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
@@ -1175,12 +1460,15 @@ module elpa_impl
 
     !c> void elpa_eigenvalues_fc(elpa_t handle, float complex *a, float *ev, int *error);
     subroutine elpa_eigenvalues_fc_c(handle, a_p, ev_p, error) bind(C, name="elpa_eigenvalues_fc")
-      type(c_ptr), intent(in), value :: handle, a_p, ev_p
+      type(c_ptr), intent(in), value            :: handle, a_p, ev_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      complex(kind=c_float_complex), pointer :: a(:, :)
-      real(kind=c_float), pointer :: ev(:)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      complex(kind=c_float_complex), pointer    :: a(:, :)
+      real(kind=c_float), pointer               :: ev(:)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -1662,8 +1950,6 @@ module elpa_impl
     !> \param error                 optional argument, error code which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_d (self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1672,11 +1958,17 @@ module elpa_impl
 #else
       real(kind=c_double)             :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       logical                         :: success_l
 
       success_l = elpa_mult_at_b_real_double_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                   c, nrows_c, ncols_c)
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1686,6 +1978,13 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in hermitian_multiply() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
     !c> void elpa_hermitian_multiply_d(elpa_t handle, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
@@ -1695,8 +1994,11 @@ module elpa_impl
       type(c_ptr), intent(in), value            :: handle, a_p
       character(1,C_CHAR), value                :: uplo_a, uplo_c
       integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
       real(kind=c_double), pointer              :: a(:, :)
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double)                       :: b(nrows_b,*), c(nrows_c,*)
@@ -1749,8 +2051,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_f (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1759,12 +2059,18 @@ module elpa_impl
 #else
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
+
 #ifdef WANT_SINGLE_PRECISION_REAL
       logical                         :: success_l
 
       success_l = elpa_mult_at_b_real_single_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                   c, nrows_c, ncols_c)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1774,6 +2080,14 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in hermitian_multiply() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
@@ -1787,7 +2101,11 @@ module elpa_impl
       type(c_ptr), intent(in), value            :: handle, a_p
       character(1,C_CHAR), value                :: uplo_a, uplo_c
       integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
 
       real(kind=c_float), pointer               :: a(:, :)
 #ifdef USE_ASSUMED_SIZE
@@ -1803,6 +2121,8 @@ module elpa_impl
       call elpa_hermitian_multiply_f(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
                                      ncols_b, c, nrows_c, ncols_c, error)
     end subroutine
+
+ 
     !> \brief  elpa_hermitian_multiply_dc: class method to perform C : = A**H * B for double complex matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
     !>                 B is a (self%na,ncb) matrix
@@ -1840,8 +2160,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_dc (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1850,11 +2168,17 @@ module elpa_impl
 #else
       complex(kind=c_double_complex)  :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       logical                         :: success_l
 
       success_l = elpa_mult_ah_b_complex_double_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                      c, nrows_c, ncols_c)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1864,6 +2188,13 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in hermitian_multiply() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
 
@@ -1874,7 +2205,11 @@ module elpa_impl
       type(c_ptr), intent(in), value            :: handle, a_p
       character(1,C_CHAR), value                :: uplo_a, uplo_c
       integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
-      integer(kind=c_int), optional, intent(in) :: error
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), intent(in), optional :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
 
       complex(kind=c_double_complex), pointer   :: a(:, :)
 #ifdef USE_ASSUMED_SIZE
@@ -1890,6 +2225,7 @@ module elpa_impl
       call elpa_hermitian_multiply_dc(self, uplo_a, uplo_c, ncb, a, b, nrows_b, &
                                      ncols_b, c, nrows_c, ncols_c, error)
     end subroutine
+
 
     !> \brief  elpa_hermitian_multiply_fc: class method to perform C : = A**H * B for float complex matrices
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
@@ -1928,8 +2264,6 @@ module elpa_impl
     !> \param error                 optional argument, returns an error code, which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_fc (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
       character*1                     :: uplo_a, uplo_c
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
@@ -1938,12 +2272,17 @@ module elpa_impl
 #else
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
       logical                         :: success_l
 
       success_l = elpa_mult_ah_b_complex_single_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                      c, nrows_c, ncols_c)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -1953,6 +2292,14 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in hermitian_multiply() and you did not check for errors!"
       endif
+#else
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+#endif
+
 #else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
@@ -1967,7 +2314,11 @@ module elpa_impl
       type(c_ptr), intent(in), value            :: handle, a_p
       character(1,C_CHAR), value                :: uplo_a, uplo_c
       integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
 
       complex(kind=c_float_complex), pointer    :: a(:, :)
 #ifdef USE_ASSUMED_SIZE
@@ -2003,19 +2354,21 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_d (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=rk8)                  :: a(self%local_nrows,*)
 #else
       real(kind=rk8)                  :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       logical                         :: success_l
 
       success_l = elpa_cholesky_real_double_impl (self, a)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2025,16 +2378,26 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
 
     !c> void elpa_cholesky_d(elpa_t handle, double *a, int *error);
     subroutine elpa_choleksy_d_c(handle, a_p, error) bind(C, name="elpa_cholesky_d")
-      type(c_ptr), intent(in), value :: handle, a_p
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      real(kind=c_double), pointer :: a(:, :)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      real(kind=c_double), pointer              :: a(:, :)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -2060,20 +2423,22 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_f(self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=rk4)                  :: a(self%local_nrows,*)
 #else
       real(kind=rk4)                  :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
 #if WANT_SINGLE_PRECISION_REAL
       logical                         :: success_l
 
       success_l = elpa_cholesky_real_single_impl (self, a)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2084,6 +2449,13 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
 #else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+#else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
@@ -2092,11 +2464,14 @@ module elpa_impl
 
     !c> void elpa_cholesky_f(elpa_t handle, float *a, int *error);
     subroutine elpa_choleksy_f_c(handle, a_p, error) bind(C, name="elpa_cholesky_f")
-      type(c_ptr), intent(in), value :: handle, a_p
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      real(kind=c_float), pointer :: a(:, :)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      real(kind=c_float), pointer               :: a(:, :)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -2122,19 +2497,21 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_dc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=ck8)               :: a(self%local_nrows,*)
 #else
       complex(kind=ck8)               :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       logical                         :: success_l
 
       success_l = elpa_cholesky_complex_double_impl (self, a)
+#if USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2144,16 +2521,26 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
 
     !c> void elpa_cholesky_dc(elpa_t handle, double complex *a, int *error);
     subroutine elpa_choleksy_dc_c(handle, a_p, error) bind(C, name="elpa_cholesky_dc")
-      type(c_ptr), intent(in), value :: handle, a_p
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      complex(kind=c_double_complex), pointer :: a(:, :)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      complex(kind=c_double_complex), pointer   :: a(:, :)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -2179,19 +2566,22 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_fc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex)   :: a(self%local_nrows,*)
 #else
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
 #if WANT_SINGLE_PRECISION_COMPLEX
       logical                         :: success_l
 
       success_l = elpa_cholesky_complex_single_impl (self, a)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2202,6 +2592,13 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in cholesky() and you did not check for errors!"
       endif
 #else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+#else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
@@ -2210,11 +2607,14 @@ module elpa_impl
 
     !c> void elpa_cholesky_fc(elpa_t handle, float complex *a, int *error);
     subroutine elpa_choleksy_fc_c(handle, a_p, error) bind(C, name="elpa_cholesky_fc")
-      type(c_ptr), intent(in), value :: handle, a_p
-      integer(kind=c_int), optional, intent(in) :: error
-
-      complex(kind=c_float_complex), pointer :: a(:, :)
-      type(elpa_impl_t), pointer  :: self
+      type(c_ptr), intent(in), value             :: handle, a_p
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional,  intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)            :: error
+#endif
+      complex(kind=c_float_complex), pointer     :: a(:, :)
+      type(elpa_impl_t), pointer                 :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -2240,18 +2640,21 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_d (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_double)             :: a(self%local_nrows,*)
 #else
       real(kind=c_double)             :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       logical                         :: success_l
 
       success_l = elpa_invert_trm_real_double_impl (self, a)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2261,16 +2664,26 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
 
     !c> void elpa_invert_trm_d(elpa_t handle, double *a, int *error);
     subroutine elpa_invert_trm_d_c(handle, a_p, error) bind(C, name="elpa_invert_trm_d")
-      type(c_ptr), intent(in), value :: handle, a_p
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      real(kind=c_double), pointer :: a(:, :)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      real(kind=c_double), pointer              :: a(:, :)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -2296,19 +2709,22 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_f (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       real(kind=c_float)              :: a(self%local_nrows,*)
 #else
       real(kind=c_float)              :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
 #if WANT_SINGLE_PRECISION_REAL
       logical                         :: success_l
 
       success_l = elpa_invert_trm_real_single_impl (self, a)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2319,6 +2735,14 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
 #else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+
+#else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
@@ -2327,11 +2751,14 @@ module elpa_impl
 
     !c> void elpa_invert_trm_f(elpa_t handle, float *a, int *error);
     subroutine elpa_invert_trm_f_c(handle, a_p, error) bind(C, name="elpa_invert_trm_f")
-      type(c_ptr), intent(in), value :: handle, a_p
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      real(kind=c_float), pointer :: a(:, :)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      real(kind=c_float), pointer               :: a(:, :)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -2357,19 +2784,21 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_dc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=ck8)               :: a(self%local_nrows,*)
 #else
       complex(kind=ck8)               :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       logical                         :: success_l
 
       success_l = elpa_invert_trm_complex_double_impl (self, a)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2379,16 +2808,26 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
 
     !c> void elpa_invert_trm_dc(elpa_t handle, double complex *a, int *error);
     subroutine elpa_invert_trm_dc_c(handle, a_p, error) bind(C, name="elpa_invert_trm_dc")
-      type(c_ptr), intent(in), value :: handle, a_p
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      complex(kind=c_double_complex), pointer :: a(:, :)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      complex(kind=c_double_complex), pointer   :: a(:, :)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -2414,19 +2853,22 @@ module elpa_impl
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_invert_trm_fc (self, a, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
       class(elpa_impl_t)              :: self
 #ifdef USE_ASSUMED_SIZE
       complex(kind=c_float_complex)   :: a(self%local_nrows,*)
 #else
       complex(kind=c_float_complex)   :: a(self%local_nrows,self%local_ncols)
 #endif
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
 #if WANT_SINGLE_PRECISION_COMPLEX
       logical                         :: success_l
 
       success_l = elpa_invert_trm_complex_single_impl (self, a)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2437,6 +2879,13 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
       endif
 #else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+#else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
@@ -2445,11 +2894,14 @@ module elpa_impl
 
     !c> void elpa_invert_trm_fc(elpa_t handle, float complex *a, int *error);
     subroutine elpa_invert_trm_fc_c(handle, a_p, error) bind(C, name="elpa_invert_trm_fc")
-      type(c_ptr), intent(in), value :: handle, a_p
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
-      complex(kind=c_float_complex), pointer :: a(:, :)
-      type(elpa_impl_t), pointer  :: self
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      complex(kind=c_float_complex), pointer    :: a(:, :)
+      type(elpa_impl_t), pointer                :: self
 
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
@@ -2476,9 +2928,6 @@ module elpa_impl
     !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
     subroutine elpa_solve_tridiagonal_d (self, d, e, q, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       real(kind=rk8)                  :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE
@@ -2486,11 +2935,15 @@ module elpa_impl
 #else
       real(kind=rk8)                  :: q(self%local_nrows,self%local_ncols)
 #endif
-
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
       logical                         :: success_l
 
       success_l = elpa_solve_tridi_double_impl(self, d, e, q)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2500,6 +2953,13 @@ module elpa_impl
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in solve_tridiagonal() and you did not check for errors!"
       endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
     end subroutine
 
 
@@ -2521,9 +2981,6 @@ module elpa_impl
     !>  \param error    integer, optional: returns an error code, which can be queried with elpa_strerr
     !> \todo e should have dimension (na - 1)
     subroutine elpa_solve_tridiagonal_f (self, d, e, q, error)
-      use iso_c_binding
-      use elpa1_auxiliary_impl
-      use precision
       class(elpa_impl_t)              :: self
       real(kind=rk4)                  :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE
@@ -2532,11 +2989,16 @@ module elpa_impl
       real(kind=rk4)                  :: q(self%local_nrows,self%local_ncols)
 #endif
 
+#ifdef USE_FORTRAN2008
       integer, optional               :: error
+#else
+      integer                         :: error
+#endif
 #ifdef WANT_SINGLE_PRECISION_REAL
       logical                         :: success_l
 
       success_l = elpa_solve_tridi_single_impl(self, d, e, q)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         if (success_l) then
           error = ELPA_OK
@@ -2547,23 +3009,40 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve_tridiagonal() and you did not check for errors!"
       endif
 #else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+#else
       print *,"This installation of the ELPA library has not been build with single-precision support"
       error = ELPA_ERROR
 #endif
     end subroutine
 
 
+    !> \brief function to destroy an elpa object
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
     subroutine elpa_destroy(self)
-      use elpa_generated_fortran_interfaces
 #ifdef WITH_MPI
-      integer :: mpi_comm_rows, mpi_comm_cols, mpierr
+      integer :: mpi_comm_rows, mpi_comm_cols, mpierr, error
 #endif
       class(elpa_impl_t) :: self
 
 #ifdef WITH_MPI
       if (self%communicators_owned == 1) then
-        call self%get("mpi_comm_rows", mpi_comm_rows)
-        call self%get("mpi_comm_cols", mpi_comm_cols)
+        call self%get("mpi_comm_rows", mpi_comm_rows,error)
+        if (error .ne. ELPA_OK) then
+           print *,"Problem getting option. Aborting..."
+           stop
+        endif
+        call self%get("mpi_comm_cols", mpi_comm_cols,error)
+        if (error .ne. ELPA_OK) then
+           print *,"Problem getting option. Aborting..."
+           stop
+        endif
 
         call mpi_comm_free(mpi_comm_rows, mpierr)
         call mpi_comm_free(mpi_comm_cols, mpierr)
@@ -2571,6 +3050,7 @@ module elpa_impl
 #endif
 
       call timer_free(self%timer)
+      call timer_free(self%autotune_timer)
       call elpa_index_free_c(self%index)
 
     end subroutine
@@ -2606,5 +3086,215 @@ module elpa_impl
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+    !> \brief function to setup the ELPA autotuning and create the autotune object
+    !> Parameters
+    !> \param   self            the allocated ELPA object
+    !> \param   level           integer: the "thoroughness" of the planed autotuning
+    !> \param   domain          integer: the domain (real/complex) which should be tuned
+    !> \result  tune_state      the created autotuning object
+    function elpa_autotune_setup(self, level, domain, error) result(tune_state)
+      class(elpa_impl_t), intent(inout), target :: self
+      integer, intent(in)                       :: level, domain
+      type(elpa_autotune_impl_t), pointer       :: ts_impl
+      class(elpa_autotune_t), pointer           :: tune_state
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional             :: error
+#else
+      integer(kind=c_int)                       :: error
+#endif
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
+      if (elpa_get_api_version() < EARLIEST_AUTOTUNE_VERSION) then
+        write(error_unit, "(a,i0,a)") "ELPA: Error API version: Autotuning does not support ", elpa_get_api_version()
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
+#else
+        error = ELPA_ERROR
+#endif
+        return
+      endif
+
+      allocate(ts_impl)
+      ts_impl%parent => self
+      ts_impl%level = level
+      ts_impl%domain = domain
+
+      ts_impl%i = -1
+      ts_impl%min_loc = -1
+      ts_impl%N = elpa_index_autotune_cardinality_c(self%index, level, domain)
+
+      tune_state => ts_impl
+
+      call self%autotune_timer%enable()
+    end function
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_setup method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  int              level:  "thoroughness" of autotuning
+    !c> *  \param  int              domain: real/complex autotuning
+    !c> *  \result elpa_autotune_t  handle:  on the autotune object
+    !c> */
+    !c> elpa_autotune_t elpa_autotune_setup(elpa_t handle, int level, int domain, int *error);
+    function elpa_autotune_setup_c(handle ,level, domain, error) result(ptr) bind(C, name="elpa_autotune_setup")
+      type(c_ptr), intent(in), value         :: handle
+      type(elpa_impl_t), pointer             :: self
+      class(elpa_autotune_t), pointer        :: tune_state
+      type(elpa_autotune_impl_t), pointer    :: obj        
+      integer(kind=c_int), intent(in), value :: level
+      integer(kind=c_int), intent(in), value :: domain
+      type(c_ptr)                            :: ptr
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int) , intent(in), optional    :: error
+#else
+      integer(kind=c_int) , intent(in)              :: error
+#endif
+
+      call c_f_pointer(handle, self)
+
+      tune_state => self%autotune_setup(level, domain, error)
+      select type(tune_state)
+        type is (elpa_autotune_impl_t)
+          obj => tune_state
+        class default
+          print *, "This should not happen"
+          stop
+      end select                
+      ptr = c_loc(obj)
+
+    end function
+
+
+    !> \brief function to do an autotunig step
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
+    !> \result  unfinished      logical: describes the state of the autotuning (completed/uncompleted)
+    function elpa_autotune_step(self, tune_state) result(unfinished)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(inout), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+      logical :: unfinished
+      integer :: i
+      real(kind=C_DOUBLE) :: time_spent
+
+      select type(tune_state)
+        type is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      unfinished = .false.
+
+      if (ts_impl%i >= 0) then
+        time_spent = self%autotune_timer%get("accumulator")
+        !print *, time_spent
+        if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
+          ts_impl%min_val = time_spent
+          ts_impl%min_loc = ts_impl%i
+        end if
+        call self%autotune_timer%free()
+      endif
+
+      do while (ts_impl%i < ts_impl%N)
+        ts_impl%i = ts_impl%i + 1
+        if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%i) == 1) then
+          unfinished = .true.
+          return
+        end if
+      end do
+
+    end function
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_step method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \result int              unfinished:  describes whether autotuning finished (0) or not (1)
+    !c> */
+    !c> int elpa_autotune_step(elpa_t handle, elpa_autotune_t autotune_handle);
+    function elpa_autotune_step_c(handle, autotune_handle) result(unfinished) bind(C, name="elpa_autotune_step")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      logical                              :: unfinished_f
+      integer(kind=c_int)                  :: unfinished
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      unfinished_f = self%autotune_step(tune_state)
+      if (unfinished_f) then
+        unfinished = 1
+      else
+        unfinished = 0
+      endif
+
+    end function
+
+
+
+    !> \brief function to set the up-to-know best options of the autotuning
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
+    subroutine elpa_autotune_set_best(self, tune_state)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+
+      select type(tune_state)
+        type is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      print *, "set best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
+      if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
+        stop "This should not happen (in elpa_autotune_set_best())"
+      endif
+    end subroutine
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_set_best(elpa_t handle, elpa_autotune_t autotune_handle);
+    subroutine elpa_autotune_set_best_c(handle, autotune_handle) bind(C, name="elpa_autotune_set_best")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_set_best(tune_state)
+
+    end subroutine
+
+
 
 end module

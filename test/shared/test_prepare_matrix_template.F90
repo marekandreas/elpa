@@ -275,6 +275,41 @@ subroutine prepare_matrix_random_&
 #endif
    end subroutine
 
+   subroutine prepare_matrix_frank_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   & (na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
+     use test_util
+     implicit none
+
+     integer, intent(in)           :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+
+#if REALCASE == 1
+     real(kind=C_DATATYPE_KIND)    :: a(:,:), z(:,:), as(:,:)
+#endif
+#if COMPLEXCASE == 1
+     complex(kind=C_DATATYPE_KIND) :: a(:,:), z(:,:), as(:,:)
+#endif
+
+     integer                       :: i, j, rowLocal, colLocal
+
+     do i = 1, na
+       do j = 1, na
+         if (map_global_array_index_to_local_index(i, j, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+           if (j .le. i) then
+             a(rowLocal,colLocal) = real((na+1-i), kind=C_DATATYPE_KIND) / real(na, kind=C_DATATYPE_KIND)
+           else
+             a(rowLocal,colLocal) = real((na+1-j), kind=C_DATATYPE_KIND) / real(na, kind=C_DATATYPE_KIND)
+           endif
+         endif
+       enddo
+     enddo
+
+     z(:,:)  = a(:,:)
+     as(:,:) = a(:,:)
+
+   end subroutine
 
 
 ! vim: syntax=fortran

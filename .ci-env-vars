@@ -1,11 +1,24 @@
-if [ "$HOST" = "buildtest-rzg" ]; then module load impi/5.1.3 intel/16.0 gcc/6.3 mkl/11.3 autotools pkg-config; fi
-if [ "$HOST" = "knl1" -o "$HOST" = "knl2" -o "$HOST" = "knl3" -o "$HOST" = "knl4" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config; fi
-if [ "$HOST" = "gp02" ] ; then module load impi/2017.2 intel/17.0 gcc/6.3 mkl/2017 pkg-config; fi
-if [ "$HOST" != "hydra03" -a "$HOST" != "hydra04" -a "$HOST" != "hydra05"  -a "$HOST" != "hydra06"  -a "$HOST" != "hydra07"  -a "$HOST" != "knl1" -a "$HOST" != "knl2" -a "$HOST" != "knl3" -a "$HOST" != "knl4" -a "$HOST" != "gp02" -a "$HOST" != "draco01" -a "$HOST" != "draco02" -a "$HOST" != "draco03" -a "$HOST" != "draco04"  ] ; then module load impi/5.1.3 intel/16.0 gcc/6.4 mkl/11.3 autotools pkg-config; fi
-if [ "$HOST" = "draco01" -o "$HOST" = "draco02" -o "$HOST" = "draco03" -o "$HOST" = "draco04" ] ; then module load impi/2017.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config; fi
-module list
-if [ "$HOST" != "buildtest-rzg" ]; then  pushd $HOME/bin/reserve_timeslot && git pull && popd ; fi
+if [ "$(hostname)" == "buildtest-rzg" ]; then module load impi/5.1.3 intel/16.0 gcc/6.3 mkl/11.3 autotools pkg-config; fi
 
+if [ "$(hostname)" == "knl1" -o "$(hostname)" == "knl2" -o "$(hostname)" == "knl3" -o "$(hostname)" == "knl4" ] ; then module load impi/2017.4 intel/17.0 gcc/7.2 mkl/2017 pkg-config; fi
+if [ "$(hostname)" == "maik" ]; then module load impi/5.1.3 intel intel/17.0 gcc/6.3 mkl/2017 pkg-config/0.29.1; fi
+
+if [ "$(hostname)" == "gp02" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config; fi
+
+if [ "$(hostname)" == "amarek-elpa-gitlab-runner-1" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
+if [ "$(hostname)" == "amarek-elpa-gitlab-runner-2" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
+if [ "$(hostname)" == "amarek-elpa-gitlab-runner-3" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
+if [ "$(hostname)" == "amarek-elpa-gitlab-runner-4" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
+
+if [ "$(hostname)" == "dvl01" ]; then module load intel/17.0 gcc/5.4 mkl/2017 impi/2017.2 gcc/5.4 cuda/8.0; fi
+if [ "$(hostname)" == "dvl02" ]; then module load intel/17.0 gcc/5.4 mkl/2017 impi/2017.2 gcc/5.4 cuda/8.0; fi
+
+if [ "$(hostname)" == "miy01" ]; then module purge && module load gcc/5.4 smpi essl/5.5 cuda pgi/17.9 && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH && export OMPI_CC=gcc && export OMPI_FC=gfortran; fi
+if [ "$(hostname)" == "miy02" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
+if [ "$(hostname)" == "miy03" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
+
+
+if [ "$(hostname)" != "miy01" -a "$(hostname)" != "miy02" -a "$(hostname)" != "miy03" ]; then
 export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread"
 export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKL_HOME/include/intel64/lp64"
 export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
@@ -40,3 +53,9 @@ export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI
 
 export ASAN_OPTIONS=suppressions=no_asan_for_mpi.supp,fast_unwind_on_malloc=0
 export LSAN_OPTIONS=suppressions=no_lsan_for_mpi.supp
+
+fi
+
+if [ "$(hostname)" != "knl1" -a "$(hostname)" != "knl2" -a "$(hostname)" != "knl3" -a "$(hostname)" != "knl4" -a  "$(hostname)" != "maik" ] ; then export I_MPI_DEBUG=5; fi
+
+module list

@@ -69,6 +69,19 @@ module test_prepare_matrix
 #endif
    end interface
 
+  interface prepare_matrix_frank
+    module procedure prepare_matrix_frank_complex_double
+    module procedure prepare_matrix_frank_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_frank_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_frank_complex_single
+#endif
+   end interface
+
+
+
    private prows, pcols, map_global_array_index_to_local_index
 
   contains

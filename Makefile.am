@@ -35,6 +35,7 @@ noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_impl.F90 \
+  src/elpa_autotune_impl.F90 \
   src/elpa_abstract_impl.F90 \
   src/helpers/mod_precision.F90 \
   src/helpers/mod_mpi.F90 \
@@ -203,6 +204,20 @@ endif
 endif
 endif
 
+if WITH_REAL_SPARC64_BLOCK2_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_2hv_double_precision.c
+#if WANT_SINGLE_PRECISION_REAL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_2hv_single_precision.c
+#endif
+endif
+
+if WITH_REAL_VSX_BLOCK2_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_2hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_2hv_single_precision.c
+endif
+endif
+
 if WITH_REAL_SSE_BLOCK2_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
@@ -231,6 +246,19 @@ if WANT_SINGLE_PRECISION_REAL
 endif
 endif
 
+if WITH_REAL_SPARC64_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_4hv_double_precision.c
+#if WANT_SINGLE_PRECISION_REAL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_4hv_single_precision.c
+#endif
+endif
+
+if WITH_REAL_VSX_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_single_precision.c
+endif
+endif
 
 if WITH_REAL_SSE_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_4hv_double_precision.c
@@ -260,7 +288,19 @@ if WANT_SINGLE_PRECISION_REAL
 endif
 endif
 
+if WITH_REAL_SPARC64_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_double_precision.c
+#if WANT_SINGLE_PRECISION_REAL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_single_precision.c
+#endif
+endif
 
+if WITH_REAL_VSX_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_6hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_6hv_single_precision.c
+endif
+endif
 
 if WITH_REAL_SSE_BLOCK6_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sse_6hv_double_precision.c
@@ -290,6 +330,19 @@ if WANT_SINGLE_PRECISION_REAL
 endif
 endif
 
+#if WITH_COMPLEX_SPARC64_BLOCK1_KERNEL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sparc64_1hv_double_precision.c
+#if WANT_SINGLE_PRECISION_COMPLEX
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sparc64_1hv_single_precision.c
+#endif
+#endif
+#
+#if WITH_COMPLEX_VSX_BLOCK1_KERNEL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_vsx_1hv_double_precision.c
+#if WANT_SINGLE_PRECISION_COMPLEX
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_vsx_1hv_single_precision.c
+#endif
+#endif
 
 if WITH_COMPLEX_SSE_BLOCK1_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sse_1hv_double_precision.c
@@ -319,6 +372,20 @@ if WANT_SINGLE_PRECISION_COMPLEX
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx512_1hv_single_precision.c
 endif
 endif
+
+#if WITH_COMPLEX_SPARC64_BLOCK2_KERNEL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sparc64_2hv_double_precision.c
+#if WANT_SINGLE_PRECISION_COMPLEX
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sparc64_2hv_single_precision.c
+#endif
+#endif
+#
+#if WITH_COMPLEX_VSX_BLOCK2_KERNEL
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_vsx_2hv_double_precision.c
+#if WANT_SINGLE_PRECISION_COMPLEX
+#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_vsx_2hv_single_precision.c
+#endif
+#endif
 
 if WITH_COMPLEX_SSE_BLOCK2_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_sse_2hv_double_precision.c
@@ -390,9 +457,7 @@ dist_man_MANS = \
 
 if ENABLE_LEGACY
 dist_man_MANS += \
-  man/solve_evp_real.3 \
   man/solve_evp_real_1stage_double.3 \
-  man/solve_evp_complex.3 \
   man/solve_evp_complex_1stage_double.3 \
   man/solve_evp_real_2stage_double.3 \
   man/solve_evp_complex_2stage_double.3 \
@@ -400,8 +465,7 @@ dist_man_MANS += \
   man/elpa_solve_evp_complex_1stage_double.3 \
   man/elpa_solve_evp_real_2stage_double.3 \
   man/elpa_solve_evp_complex_2stage_double.3 \
-  man/get_elpa_row_col_comms.3 \
-  man/get_elpa_communicators.3 \
+  man/elpa_get_communicators.3 \
   man/elpa_mult_at_b_real_double.3 \
   man/elpa_mult_at_b_real_single.3 \
   man/elpa_mult_ah_b_complex_double.3 \
@@ -413,7 +477,11 @@ dist_man_MANS += \
   man/elpa_solve_evp_real_double.3 \
   man/elpa_solve_evp_real_single.3 \
   man/elpa_solve_evp_complex_double.3 \
-  man/elpa_solve_evp_complex_single.3
+  man/elpa_solve_evp_complex_single.3 \
+  man/elpa_autotune_setup.3 \
+  man/elpa_autotune_step.3 \
+  man/elpa_autotune_set_best.3 \
+  man/elpa_autotune_deallocate.3
 endif
 
 
@@ -489,26 +557,26 @@ include legacy_test_programs.am
 endif
 
 noinst_PROGRAMS += double_instance@SUFFIX@
-check_SCRIPTS += double_instance@SUFFIX@.sh
+check_SCRIPTS += double_instance@SUFFIX@_default.sh
 double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
 double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
 double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 noinst_PROGRAMS += real_2stage_banded@SUFFIX@
-check_SCRIPTS += real_2stage_banded@SUFFIX@.sh
+check_SCRIPTS += real_2stage_banded@SUFFIX@_default.sh
 real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
 real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 noinst_PROGRAMS += complex_2stage_banded@SUFFIX@
-check_SCRIPTS += complex_2stage_banded@SUFFIX@.sh
+check_SCRIPTS += complex_2stage_banded@SUFFIX@_default.sh
 complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
 complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 if WANT_SINGLE_PRECISION_REAL
 noinst_PROGRAMS += single_real_2stage_banded@SUFFIX@
-check_SCRIPTS += single_real_2stage_banded@SUFFIX@.sh
+check_SCRIPTS += single_real_2stage_banded@SUFFIX@_default.sh
 single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
 single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
@@ -516,14 +584,14 @@ endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
 noinst_PROGRAMS += single_complex_2stage_banded@SUFFIX@
-check_SCRIPTS += single_complex_2stage_banded@SUFFIX@.sh
+check_SCRIPTS += single_complex_2stage_banded@SUFFIX@_default.sh
 single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
 single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 endif
 
 
-# test scriptsT
+# test scripts
 TASKS ?= 2
 if WITH_MPI
   wrapper=$(MPI_BINARY) -n $${TASKS:-$(TASKS)}
@@ -531,7 +599,12 @@ else
   wrapper=
 endif
 TESTS = $(check_SCRIPTS)
-%.sh: %
+%_extended.sh: %
+	@echo "#!/bin/bash" > $@
+	@echo 'if [ "$$CHECK_LEVEL" = "extended" ] ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
+	@chmod +x $@
+
+%_default.sh: %
 	@echo "#!/bin/bash" > $@
 	@echo '$(wrapper)' ./$^ '$$TEST_FLAGS' >> $@
 	@chmod +x $@
@@ -622,6 +695,9 @@ EXTRA_DIST = \
   src/elpa2/kernels/real_avx512_2hv_template.c \
   src/elpa2/kernels/real_avx512_4hv_template.c \
   src/elpa2/kernels/real_avx512_6hv_template.c \
+  src/elpa2/kernels/real_vsx_2hv_template.c \
+  src/elpa2/kernels/real_vsx_4hv_template.c \
+  src/elpa2/kernels/real_vsx_6hv_template.c \
   src/elpa2/kernels/real_sse_2hv_template.c \
   src/elpa2/kernels/real_sse_4hv_template.c \
   src/elpa2/kernels/real_sse_6hv_template.c \
@@ -646,12 +722,12 @@ EXTRA_DIST = \
   test/shared/test_check_correctness_template.F90 \
   test/shared/test_prepare_matrix_template.F90 \
   test/shared/test_analytic_template.F90 \
-  test_project/Makefile.am \
-  test_project/autogen.sh \
-  test_project/configure.ac \
-  test_project/fdep \
-  test_project/m4 \
-  test_project/src/test_real.F90 \
+  test_project_1stage/Makefile.am \
+  test_project_1stage/autogen.sh \
+  test_project_1stage/configure.ac \
+  test_project_1stage/fdep \
+  test_project_1stage/m4 \
+  test_project_1stage/src/test_real.F90 \
   test_project_2stage/Makefile.am \
   test_project_2stage/autogen.sh \
   test_project_2stage/configure.ac \
@@ -664,7 +740,19 @@ EXTRA_DIST = \
   test_project_C/fdep \
   test_project_C/m4 \
   test_project_C/src/test_real.c \
-  test_project_C/src/test_blacs_infrastructure.F90
+  test_project_C/src/test_blacs_infrastructure.F90\
+  test_project_1stage_legacy_api/Makefile.am \
+  test_project_1stage_legacy_api/autogen.sh \
+  test_project_1stage_legacy_api/configure.ac \
+  test_project_1stage_legacy_api/fdep \
+  test_project_1stage_legacy_api/m4 \
+  test_project_1stage_legacy_api/src/test_real.F90 \
+  test_project_2stage_legacy_api/Makefile.am \
+  test_project_2stage_legacy_api/autogen.sh \
+  test_project_2stage_legacy_api/configure.ac \
+  test_project_2stage_legacy_api/fdep \
+  test_project_2stage_legacy_api/m4 \
+  test_project_2stage_legacy_api/src/test_real2.F90
 
 if ENABLE_LEGACY
 EXTRA_DIST += \

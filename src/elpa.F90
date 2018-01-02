@@ -109,7 +109,7 @@
 !>  class(elpa_t), pointer :: elpa
 !>  integer :: success
 !>
-!>  if (elpa_init(20170403) /= ELPA_OK) then
+!>  if (elpa_init(20171201) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
 !>     stop
 !>   endif
@@ -153,7 +153,7 @@
 !>   elpa_t handle;
 !>   int error;
 !>
-!>   if (elpa_init(20170403) != ELPA_OK) {
+!>   if (elpa_init(20171201) != ELPA_OK) {
 !>     fprintf(stderr, "Error: ELPA API version not supported");
 !>     exit(1);
 !>   }
@@ -208,12 +208,24 @@ module elpa
       obj => elpa_impl_allocate()
     end function
 
+
     !> \brief function to deallocate an ELPA instance
     !> Parameters
     !> \details
-    !> \param  obj        class(elpa_t), pointer : pointer to object to be destroyed and deallocated
+    !> \param  obj        class(elpa_t), pointer : pointer to the ELPA object to be destroyed and deallocated
     subroutine elpa_deallocate(obj)
       class(elpa_t), pointer :: obj
+      call obj%destroy()
+      deallocate(obj)
+    end subroutine
+
+
+    !> \brief function to deallocate an ELPA autotune instance
+    !> Parameters
+    !> \details
+    !> \param  obj        class(elpa_autotune_t), pointer : pointer to the autotune object to be destroyed and deallocated   
+    subroutine elpa_autotune_deallocate(obj)
+      class(elpa_autotune_t), pointer :: obj
       call obj%destroy()
       deallocate(obj)
     end subroutine

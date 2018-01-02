@@ -73,7 +73,7 @@
        MATH_DATATYPE(kind=rck), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
        logical                      :: wantDebug
        logical                      :: success
-       integer(kind=ik)             :: istat, debug
+       integer(kind=ik)             :: istat, debug, error
        character(200)               :: errorMessage
 
       call obj%timer%start("elpa_invert_trm_&
@@ -87,10 +87,22 @@
        nblk       = obj%nblk
        matrixCols = obj%local_ncols
 
-       call obj%get("mpi_comm_rows",mpi_comm_rows)
-       call obj%get("mpi_comm_cols",mpi_comm_cols)
+       call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+       if (error .ne. ELPA_OK) then
+         print *,"Error getting option. Aborting..."
+         stop
+       endif
+       call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+       if (error .ne. ELPA_OK) then
+         print *,"Error getting option. Aborting..."
+         stop
+       endif
 
-       call obj%get("debug", debug)
+       call obj%get("debug", debug,error)
+       if (error .ne. ELPA_OK) then
+         print *,"Error getting option. Aborting..."
+         stop
+       endif
        if (debug == 1) then
          wantDebug = .true.
        else
@@ -225,7 +237,7 @@
            do i=1,nb
 #ifdef WITH_MPI
              call obj%timer%start("mpi_communication")
-             call MPI_Bcast(tmat2(1,i), l_row1-1, MPI_MATH_DATATYPE_PRECISION, &
+             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_MATH_DATATYPE_PRECISION, &
                              pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
 
              call obj%timer%stop("mpi_communication")

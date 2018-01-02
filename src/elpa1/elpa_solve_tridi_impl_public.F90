@@ -58,9 +58,9 @@
 
       use elpa1_compute, solve_tridi_&
                          &PRECISION&
-			 &_private_impl => solve_tridi_&
-			 &PRECISION&
-			 &_impl
+                         &_private_impl => solve_tridi_&
+                         &PRECISION&
+                         &_impl
       use precision
       use elpa_abstract_impl
 
@@ -77,7 +77,7 @@
       logical                  :: wantDebug
       logical                  :: success
 
-      integer                  :: debug
+      integer                  :: debug, error
 
       call obj%timer%start("elpa_solve_tridi_public_&
       &MATH_DATATYPE&
@@ -90,10 +90,22 @@
       ldq        = obj%local_nrows
       matrixCols = obj%local_ncols
 
-      call obj%get("mpi_comm_rows", mpi_comm_rows)
-      call obj%get("mpi_comm_cols", mpi_comm_cols)
+      call obj%get("mpi_comm_rows", mpi_comm_rows,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      call obj%get("mpi_comm_cols", mpi_comm_cols,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
 
-      call obj%get("debug",debug)
+      call obj%get("debug",debug,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
       if (debug == 1) then
         wantDebug = .true.
       else

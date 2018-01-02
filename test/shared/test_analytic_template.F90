@@ -99,34 +99,43 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals) result(status)
+    &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, check_eigenvectors) result(status)
     implicit none
 #include "../../src/general/precision_kinds.F90"
-    integer(kind=ik), intent(in)    :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-    integer(kind=ik)                :: status, mpierr
-    MATH_DATATYPE(kind=rck), intent(inout)   :: z(:,:)
-    real(kind=rk), intent(inout)   :: ev(:)
-    logical, intent(in)            :: check_all_evals
+    integer(kind=ik), intent(in)           :: na, nev, nblk, myid, np_rows, &
+                                              np_cols, my_prow, my_pcol
+    integer(kind=ik)                       :: status, mpierr
+    MATH_DATATYPE(kind=rck), intent(inout) :: z(:,:)
+    real(kind=rk), intent(inout)           :: ev(:)
+    logical, intent(in)                    :: check_all_evals, check_eigenvectors
 
-    integer(kind=ik) :: globI, globJ, locI, locJ, levels(num_primes)
-    real(kind=rk)   :: diff, max_z_diff, max_ev_diff, glob_max_z_diff, max_curr_z_diff 
+    integer(kind=ik)                       :: globI, globJ, locI, locJ, &
+                                              levels(num_primes)
+    real(kind=rk)                          :: diff, max_z_diff, max_ev_diff, &
+                                              glob_max_z_diff, max_curr_z_diff
 #ifdef DOUBLE_PRECISION
-    real(kind=rk), parameter   :: tol_eigenvalues = 5e-14_rk8
-    real(kind=rk), parameter   :: tol_eigenvectors = 6e-11_rk8
+    real(kind=rk), parameter               :: tol_eigenvalues = 5e-14_rk8
+    real(kind=rk), parameter               :: tol_eigenvectors = 6e-11_rk8
 #endif
 #ifdef SINGLE_PRECISION
     ! tolerance needs to be very high due to qr tests
     ! it should be distinguished somehow!
-    real(kind=rk), parameter   :: tol_eigenvalues = 7e-6_rk4
-    real(kind=rk), parameter   :: tol_eigenvectors = 4e-3_rk4
+    real(kind=rk), parameter               :: tol_eigenvalues = 7e-6_rk4
+    real(kind=rk), parameter               :: tol_eigenvectors = 4e-3_rk4
 #endif
-    real(kind=rk)             :: computed_ev, expected_ev
-    MATH_DATATYPE(kind=rck)   :: computed_z,  expected_z
+    real(kind=rk)                          :: computed_ev, expected_ev
+    MATH_DATATYPE(kind=rck)                :: computed_z,  expected_z
 
-    MATH_DATATYPE(kind=rck)   :: max_value_for_normalization, computed_z_on_max_position, normalization_quotient
-    MATH_DATATYPE(kind=rck)   :: max_values_array(np_rows * np_cols), corresponding_exact_value
-    integer(kind=ik)          :: max_idx_array(np_rows * np_cols), rank
-    integer(kind=ik)          :: max_value_idx, rank_with_max, rank_with_max_reduced, num_checked_evals
+    MATH_DATATYPE(kind=rck)                :: max_value_for_normalization, &
+                                              computed_z_on_max_position,  &
+                                              normalization_quotient
+    MATH_DATATYPE(kind=rck)                :: max_values_array(np_rows * np_cols), &
+                                              corresponding_exact_value
+    integer(kind=ik)                       :: max_value_idx, rank_with_max, &
+                                              rank_with_max_reduced,        &
+                                              num_checked_evals
+    integer(kind=ik)                       :: max_idx_array(np_rows * np_cols), &
+                                              rank
 
     type(timer_t)    :: timer
 
@@ -246,14 +255,21 @@
     glob_max_z_diff = max_z_diff
 #endif
     if(myid == 0) print *, 'Maximum error in eigenvalues      :', max_ev_diff
-    if(myid == 0) print *, 'Maximum error in eigenvectors     :', glob_max_z_diff
+    if (check_eigenvectors) then
+      if(myid == 0) print *, 'Maximum error in eigenvectors     :', glob_max_z_diff
+    endif
+
     status = 0
     if (nev .gt. 2) then
       if (max_ev_diff .gt. tol_eigenvalues .or. max_ev_diff .eq. 0.0_rk) status = 1
-      if (glob_max_z_diff .gt. tol_eigenvectors .or. glob_max_z_diff .eq. 0.0_rk) status = 1
+      if (check_eigenvectors) then
+        if (glob_max_z_diff .gt. tol_eigenvectors .or. glob_max_z_diff .eq. 0.0_rk) status = 1
+      endif
     else
       if (max_ev_diff .gt. tol_eigenvalues) status = 1
-      if (glob_max_z_diff .gt. tol_eigenvectors) status = 1
+      if (check_eigenvectors) then
+        if (glob_max_z_diff .gt. tol_eigenvectors) status = 1
+      endif
     endif
 
     call timer%stop("check_correctness_analytic")

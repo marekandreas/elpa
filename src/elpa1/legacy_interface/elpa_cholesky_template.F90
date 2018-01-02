@@ -62,10 +62,9 @@
       complex(kind=COMPLEX_DATATYPE)   :: a(lda,matrixCols)
 #endif
 #endif
-      integer(kind=ik)                 :: nev
       logical, intent(in)              :: wantDebug
       logical                          :: success
-      integer(kind=ik)                 :: successInternal
+      integer(kind=ik)                 :: successInternal, error
 
       class(elpa_t), pointer           :: e
 
@@ -85,14 +84,44 @@
 
       e => elpa_allocate()
 
-      call e%set("na", na)
-      call e%set("nev", nev)
-      call e%set("local_nrows", lda)
-      call e%set("local_ncols", matrixCols)
-      call e%set("nblk", nblk)
+      call e%set("na", na, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call e%set("local_nrows", lda, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call e%set("local_ncols", matrixCols, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call e%set("nblk", nblk, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
 
-      call e%set("mpi_comm_rows", mpi_comm_rows)
-      call e%set("mpi_comm_cols", mpi_comm_cols)
+      call e%set("mpi_comm_rows", mpi_comm_rows, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+      call e%set("mpi_comm_cols", mpi_comm_cols, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+      endif
+
+      !! the elpa object needs nev to be set (in case the EVP-solver is
+      !! called later. Thus it is set by user, do nothing, otherwise,
+      !! set it to na as default
+      !if (e%is_set("nev")) .ne. 1) then
+      !  call e%set("nev", na)
+      !endif
 
       if (e%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
@@ -101,7 +130,11 @@
       endif
 
       if (wantDebug) then
-        call e%set("debug",1)
+        call e%set("debug",1, error)
+        if (error .ne. ELPA_OK) then
+           print *,"Problem setting option. Aborting..."
+           stop
+        endif
       endif
       call e%cholesky(a(1:lda,1:matrixCols), successInternal)
 

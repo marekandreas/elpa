@@ -336,14 +336,14 @@ module ftimings
   !> \param     bytes_per_ldst               For calculating the AI, assume this number
   !>                                         of bytes per load or store (default: 8)
   subroutine timer_set_print_options(self, &
-	print_allocated_memory, &
-	print_virtual_memory, &
-	print_max_allocated_memory, &
-	print_flop_count, &
-	print_flop_rate, &
-	print_ldst, &
+        print_allocated_memory, &
+        print_virtual_memory, &
+        print_max_allocated_memory, &
+        print_flop_count, &
+        print_flop_rate, &
+        print_ldst, &
         print_memory_bandwidth, &
-	print_ai, &
+        print_ai, &
         bytes_per_ldst)
     class(timer_t), intent(inout) :: self
     logical, intent(in), optional :: &

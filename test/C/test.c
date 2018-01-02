@@ -55,15 +55,15 @@
 #include "test/shared/generated.h"
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
-error: define exactly one of TEST_REAL or TEST_COMPLEX
+#error "define exactly one of TEST_REAL or TEST_COMPLEX"
 #endif
 
 #if !(defined(TEST_SINGLE) ^ defined(TEST_DOUBLE))
-error: define exactly one of TEST_SINGLE or TEST_DOUBLE
+#error "define exactly one of TEST_SINGLE or TEST_DOUBLE"
 #endif
 
 #if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE))
-error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
+#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
 #ifdef TEST_SINGLE
@@ -71,14 +71,14 @@ error: define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE float
 #  else
-#    define MATRIX_TYPE float complex
+#    define MATRIX_TYPE complex float
 #  endif
 #else
 #  define EV_TYPE double
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE double
 #  else
-#    define MATRIX_TYPE double complex
+#    define MATRIX_TYPE complex double
 #  endif
 #endif
 
@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
    int np_cols, np_rows;
    int my_prow, my_pcol;
    int mpi_comm;
+   int provided_mpi_thread_level;
 
    /* blacs */
    int my_blacs_ctxt, sc_desc[9], info;
@@ -109,17 +110,35 @@ int main(int argc, char** argv) {
 
    int value;
 #ifdef WITH_MPI
+#ifndef WITH_OPENMP
    MPI_Init(&argc, &argv);
+#else
+   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided_mpi_thread_level);
+
+   if (provided_mpi_thread_level != MPI_THREAD_MULTIPLE) {
+     fprintf(stderr, "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system\n");
+     MPI_Finalize();
+     exit(77);
+   }
+#endif
+
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+
 #else
    nprocs = 1;
    myid = 0;
 #endif
 
-   na = 1000;
-   nev = 500;
-   nblk = 16;
+   if (argc == 4) {
+     na = atoi(argv[1]);
+     nev = atoi(argv[2]);
+     nblk = atoi(argv[3]);
+   } else {
+     na = 1000;
+     nev = 500;
+     nblk = 16;
+   }
 
    for (np_cols = (int) sqrt((double) nprocs); np_cols > 1; np_cols--) {
      if (nprocs % np_cols == 0) {
@@ -174,6 +193,9 @@ int main(int argc, char** argv) {
    elpa_set(handle, "nev", nev, &error);
    assert_elpa_ok(error);
 
+   if (myid == 0) {
+     printf("Setting the matrix parameters na=%d, nev=%d \n",na,nev);
+   }
    elpa_set(handle, "local_nrows", na_rows, &error);
    assert_elpa_ok(error);
 
@@ -218,8 +240,9 @@ int main(int argc, char** argv) {
 #endif
 
    elpa_get(handle, "solver", &value, &error);
-   printf("Solver is set to %d \n", value);
-
+   if (myid == 0) {
+     printf("Solver is set to %d \n", value);
+   }
    /* Solve EV problem */
    elpa_eigenvectors(handle, a, ev, z, &error);
    assert_elpa_ok(error);

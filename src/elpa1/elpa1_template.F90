@@ -106,7 +106,7 @@ function elpa_solve_evp_&
    character(200)                                  :: errorMessage
    integer(kind=ik)                                :: na, nev, lda, ldq, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols,        &
-                                                      mpi_comm_all, check_pd, i
+                                                      mpi_comm_all, check_pd, i, error
 
    logical                                         :: do_bandred, do_solve, do_trans_ev
 
@@ -156,11 +156,27 @@ function elpa_solve_evp_&
    endif
 
 
-   call obj%get("mpi_comm_rows",mpi_comm_rows)
-   call obj%get("mpi_comm_cols",mpi_comm_cols)
-   call obj%get("mpi_comm_parent", mpi_comm_all)
+   call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
+   call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
+   call obj%get("mpi_comm_parent", mpi_comm_all,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
 
-   call obj%get("gpu",gpu)
+   call obj%get("gpu",gpu,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
    if (gpu .eq. 1) then
      useGPU =.true.
    else
@@ -182,7 +198,11 @@ function elpa_solve_evp_&
 
    call obj%timer%stop("mpi_communication")
 
-   call obj%get("debug", debug)
+   call obj%get("debug", debug,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
    wantDebug = debug == 1
    do_useGPU = .false.
 
@@ -204,7 +224,11 @@ function elpa_solve_evp_&
      endif
    else
      ! check whether set by environment variable
-     call obj%get("gpu", gpu)
+     call obj%get("gpu", gpu,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem setting option. Aborting..."
+       stop
+     endif
      do_useGPU = gpu == 1
 
      if (do_useGPU) then
@@ -298,7 +322,11 @@ function elpa_solve_evp_&
    if (obj%eigenvalues_only) then
      do_trans_ev = .false.
    else
-     call obj%get("check_pd",check_pd)
+     call obj%get("check_pd",check_pd,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem setting option. Aborting..."
+       stop
+     endif
      if (check_pd .eq. 1) then
        check_pd = 0
        do i = 1, na

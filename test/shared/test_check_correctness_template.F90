@@ -74,9 +74,9 @@
 
       ! tolerance for the residual test for different math type/precision setups
       real(kind=rk), parameter       :: tol_res_real_double      = 5e-12_rk
-      real(kind=rk), parameter       :: tol_res_real_single      = 3e-3_rk
+      real(kind=rk), parameter       :: tol_res_real_single      = 3e-2_rk
       real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
-      real(kind=rk), parameter       :: tol_res_complex_single   = 3e-3_rk
+      real(kind=rk), parameter       :: tol_res_complex_single   = 3e-2_rk
       real(kind=rk)                  :: tol_res                  = tol_res_&
                                                                           &MATH_DATATYPE&
                                                                           &_&
@@ -85,10 +85,10 @@
       real(kind=rk), parameter       :: generalized_penalty = 10.0_rk
 
       ! tolerance for the orthogonality test for different math type/precision setups
-      real(kind=rk), parameter       :: tol_orth_real_double     = 5e-12_rk
-      real(kind=rk), parameter       :: tol_orth_real_single     = 9e-4_rk
-      real(kind=rk), parameter       :: tol_orth_complex_double  = 5e-12_rk
-      real(kind=rk), parameter       :: tol_orth_complex_single  = 9e-4_rk
+      real(kind=rk), parameter       :: tol_orth_real_double     = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_real_single     = 9e-2_rk
+      real(kind=rk), parameter       :: tol_orth_complex_double  = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_complex_single  = 9e-3_rk
       real(kind=rk), parameter       :: tol_orth                 = tol_orth_&
                                                                           &MATH_DATATYPE&
                                                                           &_&
@@ -236,16 +236,15 @@
       errmax = err
 #endif /* WITH_MPI */
       if (myid==0) print *,'Error Orthogonality:',errmax
-      if (nev .ge. 2) then
-        if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
-          status = 1
+        if (nev .ge. 2) then
+          if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
+            status = 1
+          endif
+        else
+          if (errmax .gt. tol_orth) then
+            status = 1
+          endif
         endif
-      else
-        if (errmax .gt. tol_orth) then
-          status = 1
-        endif
-      endif
-
       endif  ! skiping test of orthogonality for generalized eigenproblem
     end function
 
@@ -373,9 +372,17 @@ function check_correctness_evp_numeric_residuals_&
 #endif
        status = 1
        if (myid .eq. 0) then
+         print *,"Result of Toeplitz matrix test: "
          print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
        endif
      endif
+
+    if (status .eq. 0) then
+       if (myid .eq. 0) then
+         print *,"Result of Toeplitz matrix test: test passed"
+         print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+       endif
+    endif
     end function
 
     function check_correctness_cholesky_&
@@ -600,7 +607,80 @@ function check_correctness_evp_numeric_residuals_&
 #endif
     end function
 
+    function check_correctness_eigenvalues_frank_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (na, ev, z, myid) result(status)
+      use iso_c_binding
+      implicit none
+#include "../../src/general/precision_kinds.F90"
 
+      integer                   :: status, i, j, myid
+      integer, intent(in)       :: na
+      real(kind=rck)            :: ev_analytic(na), ev(na)
+      MATH_DATATYPE(kind=rck)   :: z(:,:)
 
+#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
+      real(kind=rck), parameter :: pi = 3.141592653589793238462643383279_c_double
+#else
+      real(kind=rck), parameter :: pi = 3.1415926535897932_c_float
+#endif
+      real(kind=rck)            :: tmp, maxerr
+      integer                   :: loctmp
+      status = 0
+
+     ! analytic solution
+     do i = 1, na
+       j = na - i
+#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
+       ev_analytic(i) = pi * (2.0_c_double * real(j,kind=c_double) + 1.0_c_double) / &
+           (2.0_c_double * real(na,kind=c_double) + 1.0_c_double)
+       ev_analytic(i) = 0.5_c_double / (1.0_c_double - cos(ev_analytic(i)))
+#else
+       ev_analytic(i) = pi * (2.0_c_float * real(j,kind=c_float) + 1.0_c_float) / &
+           (2.0_c_float * real(na,kind=c_float) + 1.0_c_float)
+       ev_analytic(i) = 0.5_c_float / (1.0_c_float - cos(ev_analytic(i)))
+#endif
+     enddo
+
+     ! sort analytic solution:
+
+     ! this hack is neither elegant, nor optimized: for huge matrixes it might be expensive
+     ! a proper sorting algorithmus might be implemented here
+
+     tmp    = minval(ev_analytic)
+     loctmp = minloc(ev_analytic, 1)
+
+     ev_analytic(loctmp) = ev_analytic(1)
+     ev_analytic(1) = tmp
+     do i=2, na
+       tmp = ev_analytic(i)
+       do j= i, na
+         if (ev_analytic(j) .lt. tmp) then
+           tmp    = ev_analytic(j)
+           loctmp = j
+         endif
+       enddo
+       ev_analytic(loctmp) = ev_analytic(i)
+       ev_analytic(i) = tmp
+     enddo
+
+     ! compute a simple error max of eigenvalues
+     maxerr = 0.0
+     maxerr = maxval( (ev(:) - ev_analytic(:))/ev_analytic(:) , 1)
+
+#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
+     if (maxerr .gt. 8.e-13_c_double) then
+#else
+     if (maxerr .gt. 8.e-4_c_float) then
+#endif
+       status = 1
+       if (myid .eq. 0) then
+         print *,"Result of Frank matrix test: "
+         print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+       endif
+     endif
+    end function
 
 ! vim: syntax=fortran

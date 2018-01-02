@@ -43,59 +43,6 @@
 #include "config-f90.h"
   !lc> #include <complex.h>
 
-  !lc> /*! \brief C old, deprecated interface, will be deleted. Use "elpa_get_communicators"
-  !lc> *
-  !lc> * \param mpi_comm_word    MPI global communicator (in)
-  !lc> * \param my_prow          Row coordinate of the calling process in the process grid (in)
-  !lc> * \param my_pcol          Column coordinate of the calling process in the process grid (in)
-  !lc> * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
-  !lc> * \result int             integer error value of mpi_comm_split function
-  !lc> */
-  !lc> int get_elpa_row_col_comms(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
-  function get_elpa_row_col_comms_wrapper_c_name1(mpi_comm_world, my_prow, my_pcol, &
-                                          mpi_comm_rows, mpi_comm_cols)     &
-                                          result(mpierr) bind(C,name="get_elpa_row_col_comms")
-    use, intrinsic :: iso_c_binding
-    use elpa1, only : elpa_get_communicators
-
-    implicit none
-    integer(kind=c_int)         :: mpierr
-    integer(kind=c_int), value  :: mpi_comm_world, my_prow, my_pcol
-    integer(kind=c_int)         :: mpi_comm_rows, mpi_comm_cols
-
-    mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
-                                    mpi_comm_rows, mpi_comm_cols)
-
-  end function
-  !lc> #include <complex.h>
-
-  !lc> /*! \brief C old, deprecated interface, will be deleted. Use "elpa_get_communicators"
-  !lc> *
-  !lc> * \param mpi_comm_word    MPI global communicator (in)
-  !lc> * \param my_prow          Row coordinate of the calling process in the process grid (in)
-  !lc> * \param my_pcol          Column coordinate of the calling process in the process grid (in)
-  !lc> * \param mpi_comm_rows    Communicator for communicating within rows of processes (out)
-  !lc> * \result int             integer error value of mpi_comm_split function
-  !lc> */
-  !lc> int get_elpa_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
-  function get_elpa_row_col_comms_wrapper_c_name2(mpi_comm_world, my_prow, my_pcol, &
-                                          mpi_comm_rows, mpi_comm_cols)     &
-                                          result(mpierr) bind(C,name="get_elpa_communicators")
-    use, intrinsic :: iso_c_binding
-    use elpa1, only : elpa_get_communicators
-
-    implicit none
-    integer(kind=c_int)         :: mpierr
-    integer(kind=c_int), value  :: mpi_comm_world, my_prow, my_pcol
-    integer(kind=c_int)         :: mpi_comm_rows, mpi_comm_cols
-
-    mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
-                                    mpi_comm_rows, mpi_comm_cols)
-
-  end function
-
-  !lc> #include <complex.h>
-
   !lc> /*! \brief C interface to create ELPA communicators
   !lc> *
   !lc> * \param mpi_comm_word    MPI global communicator (in)

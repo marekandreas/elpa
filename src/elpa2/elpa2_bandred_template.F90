@@ -312,7 +312,7 @@
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
 #endif
 
-          work_size = dwork_size(1)
+          work_size = int(dwork_size(1))
           allocate(work_blocked(work_size), stat=istat, errmsg=errorMessage)
           if (istat .ne. 0) then
             print *,"bandred_real: error when allocating work_blocked "//errorMessage
@@ -599,7 +599,12 @@
               aux2 = aux1 ! this should be optimized
 #endif
 
+#if REALCASE == 1
              vnorm2 = aux2(1)
+#endif
+#if COMPLEXCASE == 1
+             vnorm2 = real(aux2(1),kind=rk)
+#endif
              vrl    = aux2(2)
 
              ! Householder transformation
@@ -739,7 +744,7 @@
            !$omp single
 #ifdef WITH_MPI
            if (wantDebug) call obj%timer%start("mpi_communication")
-           if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, MPI_MATH_DATATYPE_PRECISION,
+           if (mynlc>0) call mpi_allreduce(aux1, aux2, mynlc, MPI_MATH_DATATYPE_PRECISION, &
                                            MPI_SUM, mpi_comm_rows, mpierr)
            if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
