@@ -602,20 +602,20 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     (scalapackldflags,scalapackfcflags,libs,ldflags) = set_scalapack_flags(instr, fc, g, m, o)
 
+    memory = set_requested_memory(matrix_size[na])
+
     # do the configure
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
+        print("   - export SKIP_STEP=0 ")
+
+        if ( instr == "sse"):
+            print("   - if [ $MEDIUM_MATRIX -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
         print("   - ./run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-+ " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE ")
-#      #  print("    - ./configure " + " CC=\""+c_compiler_wrapper+"\"" + " CFLAGS=\""+CFLAGS+"\"" + " FC=\""+fortran_compiler_wrapper+"\"" + " FCFLAGS=\""+FCFLAGS+"\"" \
-#      #      + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
-#      #      + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
-#      #      + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-#      #      + " " +gpu[g] + INSTRUCTION_OPTIONS + " || { cat config.log; exit 1; }")
-#        
-    memory = set_requested_memory(matrix_size[na])
++ " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP ")
+
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
         print("    - export REQUESTED_MEMORY="+memory)    
         print("\n")
