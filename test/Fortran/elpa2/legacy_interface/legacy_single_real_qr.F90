@@ -53,7 +53,7 @@
 !> By calling executable [arg1] [arg2] [arg3] [arg4]
 !> one can define the size (arg1), the number of
 !> Eigenvectors to compute (arg2), and the blocking (arg3).
-!> If these values are not set default values (4000, 1500, 16)
+!> If these values are not set default values (500, 150, 16)
 !> are choosen.
 !> If these values are set the 4th argument can be
 !> "output", which specifies that the EV's are written to
@@ -143,11 +143,11 @@ program test_real2_default_kernel_qr_decomposition_single_precision
 
 !   ! override nblk
 !      nblk = 2
-!      na   = 4000
-!      nev  = 1500
+!      na   = 500
+!      nev  = 150
 !!       nblk = 32
-!   !   na   = 4000
-!   !   nev  = 1500
+!   !   na   = 500
+!   !   nev  = 150
 !
 !   ! make sure na, nbl is even
 !   if (mod(nblk,2 ) .ne. 0) then

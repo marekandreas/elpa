@@ -135,8 +135,8 @@ int main(int argc, char** argv) {
      nev = atoi(argv[2]);
      nblk = atoi(argv[3]);
    } else {
-     na = 1000;
-     nev = 500;
+     na = 500;
+     nev = 250;
      nblk = 16;
    }
 
