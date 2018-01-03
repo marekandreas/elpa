@@ -215,8 +215,8 @@ module test_read_input_parameters
 
       ! default parameters
       input_options%datatype = 1
-      input_options%na = 4000
-      input_options%nev = 1500
+      input_options%na = 500
+      input_options%nev = 150
       input_options%nblk = 16
 
       input_options%write_to_file%eigenvectors = .false.
@@ -350,8 +350,8 @@ module test_read_input_parameters
       integer(kind=ik)              :: mpierr
 
       ! default parameters
-      na = 4000
-      nev = 1500
+      na = 5000
+      nev = 150
       nblk = 16
       write_to_file%eigenvectors = .false.
       write_to_file%eigenvalues  = .false.
