@@ -116,7 +116,7 @@
       call solve_tridi_&
       &PRECISION&
       &_private_impl(obj, na, nev, d, e, q, ldq, nblk, matrixCols, &
-               mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+               mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success)
 
       call obj%timer%stop("elpa_solve_tridi_public_&
       &MATH_DATATYPE&

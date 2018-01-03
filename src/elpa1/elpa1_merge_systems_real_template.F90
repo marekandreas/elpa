@@ -57,8 +57,9 @@
     subroutine merge_systems_&
     &PRECISION &
                          (obj, na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, wantDebug, success)
-
+                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success)
+      use cuda_functions
+      use iso_c_binding
       use precision
       use elpa_abstract_impl
       implicit none
@@ -73,9 +74,11 @@
 #else
       real(kind=REAL_DATATYPE), intent(inout)     :: q(ldq,matrixCols)
 #endif
-      logical, intent(in)           :: wantDebug
+      logical, intent(in)           :: useGPU, wantDebug
       logical, intent(out)          :: success
 
+      ! TODO: play with max_strip. If it was larger, matrices being multiplied
+      ! might be larger as well!
       integer(kind=ik), parameter   :: max_strip=128
 
       real(kind=REAL_DATATYPE)                 :: PRECISION_LAMCH, PRECISION_LAPY2
@@ -101,7 +104,13 @@
 
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
+      integer(kind=ik)              :: gemm_dim_k, gemm_dim_l, gemm_dim_m
 
+      integer(kind=C_intptr_T)                        :: qtmp1_dev, qtmp2_dev, ev_dev
+      logical                                         :: successCUDA
+      integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
+                                                                          &PRECISION&
+                                                                          &_real
 #ifdef WITH_OPENMP
       integer(kind=ik)              :: max_threads, my_thread
       integer(kind=ik)              :: omp_get_max_threads, omp_get_thread_num
@@ -574,33 +583,50 @@
           endif
         enddo
 
-        allocate(ev(max_local_cols,MIN(max_strip,MAX(1,nqcols1))), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when allocating ev "//errorMessage
-          stop 1
-        endif
+        gemm_dim_k = MAX(1,l_rows)
+        gemm_dim_l = max_local_cols
+        gemm_dim_m = MIN(max_strip,MAX(1,nqcols1))
 
-        allocate(qtmp1(MAX(1,l_rows),max_local_cols), stat=istat, errmsg=errorMessage)
+        allocate(qtmp1(gemm_dim_k, gemm_dim_l), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"merge_systems: error when allocating qtmp1 "//errorMessage
           stop 1
         endif
 
-        allocate(qtmp2(MAX(1,l_rows),MIN(max_strip,MAX(1,nqcols1))), stat=istat, errmsg=errorMessage)
+        allocate(ev(gemm_dim_l,gemm_dim_m), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"merge_systems: error when allocating ev "//errorMessage
+          stop 1
+        endif
+
+        allocate(qtmp2(gemm_dim_k, gemm_dim_m), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"merge_systems: error when allocating qtmp2 "//errorMessage
           stop 1
         endif
 
-!        if (useGPU) then
-!          allocate(qtmp1_dev(MAX(1,l_rows),max_local_cols))
-!   endif
+        qtmp1 = 0 ! May contain empty (unset) parts
+        qtmp2 = 0 ! Not really needed
+
+        if (useGPU) then
+          successCUDA = cuda_malloc(qtmp1_dev, gemm_dim_k * gemm_dim_l * size_of_datatype)
+          check_alloc_cuda("merge_systems: qtmp1_dev", successCUDA)
+
+          successCUDA = cuda_malloc(ev_dev, gemm_dim_l * gemm_dim_m * size_of_datatype)
+          check_alloc_cuda("merge_systems: ev_dev", successCUDA)
+
+          successCUDA = cuda_malloc(qtmp2_dev, gemm_dim_k * gemm_dim_m * size_of_datatype)
+          check_alloc_cuda("merge_systems: qtmp2_dev", successCUDA)
+
+          successCUDA = cuda_memset(qtmp1_dev, 0, gemm_dim_k * gemm_dim_l * size_of_datatype)
+          check_memcpy_cuda("merge_systems: qtmp1_dev", successCUDA)
+
+          successCUDA = cuda_memset(qtmp2_dev, 0, gemm_dim_k * gemm_dim_m * size_of_datatype)
+          check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
+        endif
 
         ! Gather nonzero upper/lower components of old matrix Q
         ! which are needed for multiplication with new eigenvectors
-
-        qtmp1 = 0 ! May contain empty (unset) parts
-        qtmp2 = 0 ! Not really needed
 
         nnzu = 0
         nnzl = 0
@@ -640,7 +666,6 @@
         np_rem = my_pcol
 
         do np = 1, npc_n
-
           ! Do a ring send of qtmp1
 
           if (np>1) then
@@ -659,9 +684,11 @@
 #endif /* WITH_MPI */
           endif
 
-!          if (useGPU) then
-!            qtmp1_dev(:,:) = qtmp1(:,:)
-!          endif
+          if (useGPU) then
+            successCUDA = cuda_memcpy(qtmp1_dev, loc(qtmp1(1,1)), &
+                 gemm_dim_k * gemm_dim_l  * size_of_datatype, cudaMemcpyHostToDevice)
+            check_memcpy_cuda("merge_systems: qtmp1_dev", successCUDA)
+          endif
 
           ! Gather the parts in d1 and z which are fitting to qtmp1.
           ! This also delivers nnzu/nnzl for proc np_rem
@@ -710,6 +737,7 @@
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with upper half of Q:
 
+            call obj%timer%start("strange_loop")
             do i = 1, ncnt
               j = idx(idxq1(i+ns))
               ! Calculate the j-th eigenvector of the deflated system
@@ -720,23 +748,61 @@
               &(obj,tmp,nnzu,ddiff(j))
               ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
             enddo
+            call obj%timer%stop("strange_loop")
+
+            if(useGPU) then
+              !TODO: it should be enough to copy l_rows x ncnt
+              successCUDA = cuda_memcpy(qtmp2_dev, loc(qtmp2(1,1)), &
+                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
+              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
+
+              !TODO the previous loop could be possible to do on device and thus
+              !copy less
+              successCUDA = cuda_memcpy(ev_dev, loc(ev(1,1)), &
+                                 gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
+              check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
+            endif
 
             ! Multiply old Q with eigenvectors (upper half)
 
-!            if (useGPU) then
-!              if(l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
-!                 call dgemm('N','N',l_rnm,ncnt,nnzu,1.d0,qtmp1_dev,ubound(qtmp1_dev,1),ev,ubound(ev,1), &
-!                            1.d0,qtmp2(1,1),ubound(qtmp2,1))
-!       else
-              call obj%timer%start("blas")
-              if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) &
-                  call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu, 1.0_rk, qtmp1, ubound(qtmp1,dim=1), ev, ubound(ev,dim=1), &
-                             1.0_rk, qtmp2(1,1), ubound(qtmp2,dim=1))
-              call obj%timer%stop("blas")
-!            endif ! useGPU
+            if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
+              if (useGPU) then
+                call obj%timer%start("cublas")
+                call cublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
+                                    1.0_rk, qtmp1_dev, ubound(qtmp1,dim=1),    &
+                                    ev_dev, ubound(ev,dim=1), &
+                                    1.0_rk, qtmp2_dev, ubound(qtmp2,dim=1))
+                call obj%timer%stop("cublas")
+              else
+                call obj%timer%start("blas")
+                call obj%timer%start("gemm")
+                call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
+                                    1.0_rk, qtmp1, ubound(qtmp1,dim=1),    &
+                                    ev, ubound(ev,dim=1), &
+                                    1.0_rk, qtmp2(1,1), ubound(qtmp2,dim=1))
+                call obj%timer%stop("gemm")
+                call obj%timer%stop("blas")
+              endif ! useGPU
+            endif
+
+            if(useGPU) then
+              !TODO: it should be enough to copy l_rows x ncnt
+              !TODO: actually this will be done after the second mutiplication
+
+              !TODO or actually maybe I should copy the half of the qtmp2 array
+              !here and the rest after the next gemm
+              !TODO either copy only half of the matrix here, and half after the
+              !second gemm, or copy whole array after the next gemm
+
+!              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
+!                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
+!              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
+            endif
+
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
 
+            call obj%timer%start("strange_loop")
             do i = 1, ncnt
               j = idx(idxq1(i+ns))
               ! Calculate the j-th eigenvector of the deflated system
@@ -747,36 +813,71 @@
               &(obj,tmp,nnzl,ddiff(j))
               ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
             enddo
+            call obj%timer%stop("strange_loop")
+
+            if(useGPU) then
+              !TODO the previous loop could be possible to do on device and thus
+              !copy less
+              successCUDA = cuda_memcpy(ev_dev, loc(ev(1,1)), &
+                                 gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
+              check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
+            endif
 
             ! Multiply old Q with eigenvectors (lower half)
 
-!            if (useGPU) then
-!              if(l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-!                 call dgemm('N','N',l_rows-l_rnm,ncnt,nnzl,1.d0,qtmp1_dev(l_rnm+1,1),ubound(qtmp1_dev,1),ev,ubound(ev,1), &
-!                            1.d0,qtmp2(l_rnm+1,1),ubound(qtmp2,1))
-!       else
-              call obj%timer%start("blas")
-              if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) &
-                 call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl, 1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1), ev, &
-                            ubound(ev,dim=1), 1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
-              call obj%timer%stop("blas")
-!            endif ! useGPU
+            if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) then
+              if (useGPU) then
+                call obj%timer%start("cublas")
+                call cublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
+                                    1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
+                                    ev_dev, ubound(ev,dim=1), &
+                                    1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1))
+                call obj%timer%stop("cublas")
+              else
+                call obj%timer%start("blas")
+                call obj%timer%start("gemm")
+                call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
+                                     1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1),    &
+                                     ev,  ubound(ev,dim=1),   &
+                                     1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+                call obj%timer%stop("gemm")
+                call obj%timer%stop("blas")
+              endif ! useGPU
+            endif
+
+            if(useGPU) then
+              !TODO either copy only half of the matrix here, and get rid of the
+              !previous copy or copy whole array here
+              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
+                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
+              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
+            endif
+
              ! Put partial result into (output) Q
 
-             do i = 1, ncnt
-               q(l_rqs:l_rqe,l_col_out(idxq1(i+ns))) = qtmp2(1:l_rows,i)
-             enddo
+            do i = 1, ncnt
+              q(l_rqs:l_rqe,l_col_out(idxq1(i+ns))) = qtmp2(1:l_rows,i)
+            enddo
 
-           enddo
-        enddo
+          enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
+        enddo    !do np = 1, npc_n
 
         deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"merge_systems: error when deallocating ev "//errorMessage
           stop 1
         endif
-      endif
 
+        if(useGPU) then
+          successCUDA = cuda_free(qtmp1_dev)
+          check_dealloc_cuda("merge_systems: qtmp1_dev", successCUDA)
+          successCUDA = cuda_free(qtmp2_dev)
+          check_dealloc_cuda("merge_systems: qtmp2_dev", successCUDA)
+          successCUDA = cuda_free(ev_dev)
+          check_dealloc_cuda("merge_systems: ev_dev", successCUDA)
+        endif
+
+      endif !very outer test (na1==1 .or. na1==2) 
 #ifdef WITH_OPENMP
       deallocate(z_p, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
