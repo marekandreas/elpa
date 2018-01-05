@@ -58,7 +58,6 @@
       real(kind=rk) :: xr(size(a,dim=1), size(a,dim=2))
 #endif /* COMPLEXCASE */
 
-
       integer, allocatable :: iseed(:)
       integer ::  n
 
@@ -174,6 +173,40 @@ subroutine prepare_matrix_random_&
       & (na, myid, sc_desc, a, z, as)
     end subroutine
 
+
+    subroutine prepare_matrix_random_spd_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (na, myid, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
+
+
+      use test_util
+      implicit none
+#include "../../src/general/precision_kinds.F90"
+      integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
+      MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
+      integer, intent(in)        ::  nblk, np_rows, np_cols, my_prow, my_pcol
+
+      integer                    :: ii, rowLocal, colLocal
+
+
+      call prepare_matrix_random_&
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION&
+        & (na, myid, sc_desc, a, z, as)
+
+      ! hermitian diagonaly dominant matrix => positive definite
+      do ii=1, na
+        if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+          a(rowLocal,colLocal) = real(a(rowLocal, colLocal)) + na + 1
+        end if
+      end do
+
+      as = a
+
+   end subroutine
 
    subroutine prepare_matrix_toeplitz_&
    &MATH_DATATYPE&
