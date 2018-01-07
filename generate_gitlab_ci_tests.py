@@ -100,8 +100,8 @@ def set_scalapack_flags(instr, fc, g, m, o):
             scalapackfcflags += " -I\\$CUDA_HOME/include"
 
         if (instr == "sse" or (instr == "avx" and g != "with-gpu")):
-            scalapackldflags = " SCALAPACK_LDFLAGS=\""+scalapackldflags+"\""
-            scalapackfcflags = " SCALAPACK_FCFLAGS=\""+scalapackfcflags+"\""
+            scalapackldflags = " SCALAPACK_LDFLAGS=\\\""+scalapackldflags+"\\\""
+            scalapackfcflags = " SCALAPACK_FCFLAGS=\\\""+scalapackfcflags+"\\\""
 
         if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
             scalapackldflags = " SCALAPACK_LDFLAGS=\\\""+"\\"+scalapackldflags+"\\\""
@@ -512,6 +512,11 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
         CFLAGS +=" --coverage -O0"
         FCFLAGS +=" --coverage -O0"
 
+    # add tests for scalapack for some specific test cases
+    runScalapackTest = False
+    if (instr == "avx2" and cov == "coverage"):
+        runScalapackTest = True
+
 
     # address-sanitize only with gnu compiler
     if (addr == "address-sanitize" and (cc != "gnu" and fc != "gnu")):
@@ -602,15 +607,20 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     (scalapackldflags,scalapackfcflags,libs,ldflags) = set_scalapack_flags(instr, fc, g, m, o)
 
+    memory = set_requested_memory(matrix_size[na])
+
     # do the configure
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
-        print("    - ./configure " + " CC=\""+c_compiler_wrapper+"\"" + " CFLAGS=\""+CFLAGS+"\"" + " FC=\""+fortran_compiler_wrapper+"\"" + " FCFLAGS=\""+FCFLAGS+"\"" \
-            + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
-            + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
-            + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-            + " " +gpu[g] + INSTRUCTION_OPTIONS + " || { cat config.log; exit 1; }")
+        print("   - export SKIP_STEP=0 ")
 
-    memory = set_requested_memory(matrix_size[na])
+        if ( instr == "sse"):
+            print("   - if [ $MEDIUM_MATRIX -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
+        print("   - ./run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
+                + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
+                + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
++ " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
++ " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP ")
+
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
         print("    - export REQUESTED_MEMORY="+memory)    
         print("\n")
@@ -629,32 +639,34 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
             print("    - export SRUN_COMMANDLINE_BUILD=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
             print("    - export SRUN_COMMANDLINE_RUN=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
         #print("    - echo \"srun --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE\" ")
-        print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
-            + " /scratch/elpa/bin/configure_elpa.sh" \
-            + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
-            + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
-            + libs + " " + ldflags + " " + " " + scalapackldflags + " " + scalapackfcflags \
-            + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
-            + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-            + " " +gpu[g] + INSTRUCTION_OPTIONS + "\"" )
+
+        if (runScalapackTest):
+            print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
+                + " /scratch/elpa/bin/configure_elpa.sh" \
+                + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
+                + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
+                + libs + " " + ldflags + " " + " " + scalapackldflags + " " + scalapackfcflags \
+                + " --enable-option-checking=fatal --enable-scalapack-tests" + " " + mpi_configure_flag + " " + openmp[o] \
+                + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
+                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\"" )
+        else:
+            print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
+                + " /scratch/elpa/bin/configure_elpa.sh" \
+                + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
+                + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
+                + libs + " " + ldflags + " " + " " + scalapackldflags + " " + scalapackfcflags \
+                + " --enable-option-checking=fatal " + " " + mpi_configure_flag + " " + openmp[o] \
+                + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
+                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\"" )
+
         print("    - sleep 1")
 
-    # do the build
-    if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
-        print("    - make -j 8")
+#    # do the build
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
         #print("    - echo \"srun --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD\" ")
         print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
 
     # do the test
-    if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
-        if (o == "openmp" and cov == "no-coverage"):
-            print("    - export OMP_NUM_THREADS=2")
-        if (o == "openmp" and cov == "coverage"):
-            print("    - export OMP_NUM_THREADS=1")
-        for na in sorted(matrix_size.keys(),reverse=True):
-            print("    - make check TASKS="+str(MPI_TASKS) + " TEST_FLAGS=\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " + "\" || { cat test-suite.log; exit 1; }")
-            print("    - grep -i \"Expected %stop\" test-suite.log && exit 1 || true ;")
 
     if ( instr == "avx2" or instr == "avx512" or instr == "knl"  or g == "with-gpu"):
         print("    - sleep 1")
