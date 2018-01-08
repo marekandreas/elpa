@@ -320,7 +320,7 @@ program test
 
 #if defined(TEST_MATRIX_RANDOM) && defined(TEST_CHOLESKY)
      call prepare_matrix_random_spd(na, myid, sc_desc, a, z, as, &
-                 nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+                 nblk, np_rows, np_cols, my_prow, my_pcol)
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
     do_test_frank_eigenvalues = .false.
@@ -405,8 +405,6 @@ program test
 #else
    do_test_toeplitz_eigenvalues = .true.
 #endif
-
-write(*,*) "defining at test matrix toeplitz"
 
 #endif /* TEST_MATRIX_TOEPLITZ */
 
@@ -591,9 +589,6 @@ write(*,*) "defining at test matrix toeplitz"
 #endif
 
 #if defined(TEST_CHOLESKY)
-
-   write(*,*) do_test_numeric_residual, do_test_analytic_eigenvalues, do_test_analytic_eigenvalues_eigenvectors, &
-   do_test_frank_eigenvalues, do_test_toeplitz_eigenvalues, do_test_cholesky
      call e%timer_start("e%cholesky()")
      call e%cholesky(a, error)
      assert_elpa_ok(error)
