@@ -107,11 +107,13 @@ module elpa_impl
      procedure, public :: elpa_eigenvalues_dc
      procedure, public :: elpa_eigenvalues_fc
 
+#if 0
      procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized 
                                                                !< eigenproblem and real/complex double/single matrices
      procedure, public :: elpa_generalized_eigenvectors_f
      procedure, public :: elpa_generalized_eigenvectors_dc
      procedure, public :: elpa_generalized_eigenvectors_fc
+#endif
 
      procedure, public :: elpa_hermitian_multiply_d            !< public methods to implement a "hermitian" multiplication of matrices a and b
      procedure, public :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
@@ -135,6 +137,7 @@ module elpa_impl
 
      procedure, public :: associate_int => elpa_associate_int  !< public method to set some pointers
 
+#if 0
      procedure, private :: elpa_transform_generalized_d
      procedure, private :: elpa_transform_back_generalized_d
      procedure, private :: elpa_transform_generalized_dc
@@ -146,6 +149,7 @@ module elpa_impl
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
      procedure, private :: elpa_transform_generalized_fc
      procedure, private :: elpa_transform_back_generalized_fc
+#endif
 #endif
 
      procedure, public :: autotune_setup => elpa_autotune_setup
@@ -1477,6 +1481,7 @@ module elpa_impl
       call elpa_eigenvalues_fc(self, a, ev, error)
     end subroutine
 
+#if 0
 !********************************************************************************************************
 !             GENERALIZED EIGENVECTOR PROBLEM
 !********************************************************************************************************
@@ -1906,7 +1911,7 @@ module elpa_impl
       call elpa_generalized_eigenvectors_fc(self, a, b, ev, q, sc_desc, error)
     end subroutine
 
-
+#endif
 
 
 !********************************************************************************************************
