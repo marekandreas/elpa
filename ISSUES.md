@@ -5,6 +5,7 @@ Issues which are not mentioned in a newer release are (considered as) solved
 
 ### ELPA 2017.11.001 release ###
 - the elpa autotune print functions cannot print at the moment
+- on (officially not supported) 32bit systems hangs in MPI can occur
 
 ### ELPA 2017.05.003 release ###
 - at the moment no issues are known
