@@ -514,7 +514,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     # add tests for scalapack for some specific test cases
     runScalapackTest = False
-    if (instr == "avx2" and cov == "coverage"):
+    if (instr == "avx2" and cov == "coverage" and m == "mpi"):
         runScalapackTest = True
 
 
