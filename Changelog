@@ -1,5 +1,6 @@
 Changelog for ELPA 2017.11.001
 
+- significant improvement of performance of GPU version
 - added new compute kernels for IBM Power8 and Fujistu Sparc64
   processors
 - a first implementation of autotuning capability
