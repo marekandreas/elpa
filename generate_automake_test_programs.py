@@ -44,6 +44,7 @@ test_type_flag = {
     "solve_tridiagonal":  "-DTEST_SOLVE_TRIDIAGONAL",
     "cholesky":           "-DTEST_CHOLESKY",
     "hermitian_multiply": "-DTEST_HERMITIAN_MULTIPLY",
+    "generalized"       : "-DTEST_GENERALIZED_EIGENPROBLEM",
 }
 
 layout_flag = {
@@ -87,6 +88,10 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
 
     # solve tridiagonal only for real toeplitz matrix in 1stage
     if (t == "solve_tridiagonal" and (s != "1stage" or d != "real" or m != "toeplitz")):
+        continue
+
+    # solve generalized only for random matrix in 1stage
+    if (t == "generalized" and (m != "random" or s == "2stage")):
         continue
 
     # cholesky tests only 1stage and teoplitz or random matrix

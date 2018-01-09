@@ -138,6 +138,9 @@ program test
 #if defined(TEST_HERMITIAN_MULTIPLY)
    MATRIX_TYPE, allocatable    :: b(:,:), c(:,:)
 #endif
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+   MATRIX_TYPE, allocatable    :: b(:,:), bs(:,:)
+#endif
    ! eigenvectors
    MATRIX_TYPE, allocatable    :: z(:,:)
    ! eigenvalues
@@ -163,7 +166,8 @@ program test
 #endif
    integer                     :: kernel
    character(len=1)            :: layout
-   logical                     :: do_test_numeric_residual, do_test_analytic_eigenvalues, &
+   logical                     :: do_test_numeric_residual, do_test_numeric_residual_generalized, &
+                                  do_test_analytic_eigenvalues, &
                                   do_test_analytic_eigenvalues_eigenvectors,   &
                                   do_test_frank_eigenvalues,  &
                                   do_test_toeplitz_eigenvalues, do_test_cholesky,   &
@@ -182,6 +186,7 @@ program test
 
 
    do_test_numeric_residual = .false.
+   do_test_numeric_residual_generalized = .false.
    do_test_analytic_eigenvalues = .false.
    do_test_analytic_eigenvalues_eigenvectors = .false.
    do_test_frank_eigenvalues = .false.
@@ -276,6 +281,11 @@ program test
    allocate(c (na_rows,na_cols))
 #endif
 
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+   allocate(b (na_rows,na_cols))
+   allocate(bs (na_rows,na_cols))
+#endif
+
 #if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
    allocate(d (na), ds(na))
    allocate(sd (na), sds(na))
@@ -326,6 +336,18 @@ program test
     do_test_frank_eigenvalues = .false.
     do_test_toeplitz_eigenvalues = .false.
 #endif /* TEST_MATRIX_RANDOM and TEST_CHOLESKY */
+
+#if defined(TEST_MATRIX_RANDOM) && defined(TEST_GENERALIZED_EIGENPROBLEM)
+   ! call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+    call prepare_matrix_random_spd(na, myid, sc_desc, b, z, bs, &
+                 nblk, np_rows, np_cols, my_prow, my_pcol)
+    do_test_analytic_eigenvalues = .false.
+    do_test_analytic_eigenvalues_eigenvectors = .false.
+    do_test_frank_eigenvalues = .false.
+    do_test_toeplitz_eigenvalues = .false.
+    do_test_numeric_residual = .false.
+    do_test_numeric_residual_generalized = .true.
+#endif /* TEST_MATRIX_RANDOM and TEST_GENERALIZED_EIGENPROBLEM */
 
 #if defined(TEST_MATRIX_RANDOM) && (defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVALUES))
 #error "Random matrix is not allowed in this configuration"
@@ -601,6 +623,12 @@ program test
      call e%timer_stop("e%hermitian_multiply()")
 #endif
 
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+     call e%timer_start("e%generalized_eigenvectors()")
+     call e%generalized_eigenvectors(a, b, ev, z, sc_desc, error)
+     call e%timer_stop("e%generalized_eigenvectors()")
+#endif
+
      assert_elpa_ok(error)
 
 #ifdef TEST_ALL_KERNELS
@@ -631,6 +659,9 @@ program test
 #ifdef TEST_HERMITIAN_MULTIPLY
        call e%print_times("e%hermitian_multiply()")
 #endif
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+      call e%print_times("e%generalized_eigenvectors()")
+#endif
 #endif /* TEST_ALL_KERNELS */
      endif
 
@@ -643,6 +674,7 @@ program test
        status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, .true.)
        call check_status(status, myid)
      endif
+
      if(do_test_numeric_residual) then
        status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
        call check_status(status, myid)
@@ -673,6 +705,14 @@ program test
      endif
 #endif
 
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+     if(do_test_numeric_residual_generalized) then
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, &
+       my_pcol, bs)
+       call check_status(status, myid)
+     endif
+#endif
+
      if (myid == 0) then
        print *, ""
      endif
@@ -699,6 +739,9 @@ program test
 #if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
    deallocate(d, ds)
    deallocate(sd, sds)
+#endif
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+  deallocate(b, bs)
 #endif
 
 #ifdef TEST_ALL_LAYOUTS
