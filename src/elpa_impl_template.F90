@@ -13,6 +13,8 @@
      integer                :: error
      integer                :: sc_desc(9)
 
+     logical, parameter     :: do_use_elpa_hermitian_multiply = .true.
+
      ! local helper array. TODO: do we want it this way? (do we need it? )
      MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 
@@ -28,26 +30,31 @@
          &ELPA_IMPL_SUFFIX&
          &(b, error)
      if(error .NE. ELPA_OK) return
-!     ! tmp <- inv(U^T) * A
-!     call self%elpa_hermitian_multiply_&
-!         &ELPA_IMPL_SUFFIX&
-!         &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
-!                               self%local_nrows, self%local_ncols, error)
-!     if(error .NE. ELPA_OK) return
 
-     ! A <= inv(U)^T * A
-     call self%timer_start("scalapack multiply inv(U)^T * A")
+     if(do_use_elpa_hermitian_multiply) then
+       ! tmp <- inv(U^T) * A
+       call self%elpa_hermitian_multiply_&
+           &ELPA_IMPL_SUFFIX&
+           &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
+                                 self%local_nrows, self%local_ncols, error)
+       if(error .NE. ELPA_OK) return
+
+       a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+     else
+       ! A <= inv(U)^T * A
+       call self%timer_start("scalapack multiply inv(U)^T * A")
 #ifdef WITH_MPI
-     call p&
-         &BLAS_CHAR&
-         &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
-               ONE, b, 1, 1, sc_desc,  a, 1, 1, sc_desc)
+       call p&
+           &BLAS_CHAR&
+           &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
+                 ONE, b, 1, 1, sc_desc,  a, 1, 1, sc_desc)
 #else
-     call BLAS_CHAR&
-         &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
-               ONE, b, self%na, a, self%na)
+       call BLAS_CHAR&
+           &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
+                 ONE, b, self%na, a, self%na)
 #endif
-     call self%timer_stop("scalapack multiply inv(U)^T * A")
+       call self%timer_stop("scalapack multiply inv(U)^T * A")
+     endif ! do_use_elpa_hermitian_multiply
 
      ! A <= inv(U)^T * A * inv(U)
      call self%timer_start("scalapack multiply A * inv(U)")
