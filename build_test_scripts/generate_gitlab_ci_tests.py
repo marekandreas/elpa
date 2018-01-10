@@ -196,11 +196,11 @@ print("  - export LANG=C")
 print("  - ulimit -s unlimited")
 print("  - ulimit -v unlimited")
 print("  - echo \"HOST \" $(hostname)")
-print("  - if [ \"$(hostname)\" = \"buildtest-rzg\" ]; then module purge && module load git && module list && source .ci-env-vars; fi")
-print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-1\" ]; then module purge && module load git && module list && source .ci-env-vars; fi")
-print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-2\" ]; then module purge && module load git && module list && source .ci-env-vars; fi")
-print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-3\" ]; then module purge && module load git && module list && source .ci-env-vars; fi")
-print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-4\" ]; then module purge && module load git && module list && source .ci-env-vars; fi")
+print("  - if [ \"$(hostname)\" = \"buildtest-rzg\" ]; then module purge && module load git && module list && source ./build_test_scripts/.ci-env-vars; fi")
+print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-1\" ]; then module purge && module load git && module list && source ./build_test_scripts/.ci-env-vars; fi")
+print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-2\" ]; then module purge && module load git && module list && source ./build_test_scripts/.ci-env-vars; fi")
+print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-3\" ]; then module purge && module load git && module list && source ./build_test_scripts/.ci-env-vars; fi")
+print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-4\" ]; then module purge && module load git && module list && source ./build_test_scripts/.ci-env-vars; fi")
 
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-1\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" ; fi")
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-2\" ]; then export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=5 && export BUILDTIME=60 && export RUNTIME=20 && export CONTSTRAINTS=\"skylake\" ; fi")
@@ -615,7 +615,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
         if ( instr == "sse"):
             print("   - if [ $MEDIUM_MATRIX -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
-        print("   - ./run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
+        print("   - ./build_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
