@@ -852,15 +852,13 @@ if test x"${need_avx512}" = x"yes"; then
   fi
   AC_DEFINE([HAVE_AVX512],[1],[AVX512 is supported on this CPU])
 
-  echo "AVX512 allgemein " $can_compile_avx512
-
   if test x"$can_compile_avx512" = x"yes"; then
-    AC_MSG_CHECKING([whether we compile for Xeon PHI or Xeon])
+    AC_MSG_CHECKING([whether we compile for Xeon])
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([
      #include <x86intrin.h>
      int main(int argc, char **argv){
      __m512d sign;
-     __m512d h1;
+     __m512d h1_real;
 
      __m512d x1 = _mm512_xor_pd(h1_real, sign);
      return 0;
@@ -869,6 +867,9 @@ if test x"${need_avx512}" = x"yes"; then
      [can_compile_avx512_xeon=yes],
      [can_compile_avx512_xeon=no]
     )
+    AC_MSG_RESULT([${can_compile_avx512_xeon}])
+
+    AC_MSG_CHECKING([whether we compile for Xeon PHI])
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([
      #include <x86intrin.h>
      int main(int argc, char **argv){
@@ -883,8 +884,8 @@ if test x"${need_avx512}" = x"yes"; then
      [can_compile_avx512_xeon_phi=yes],
      [can_compile_avx512_xeon_phi=no]
     )
-    echo $can_compile_avx512_xeon
-    echo $can_compile_avx512_xeon_phi
+    AC_MSG_RESULT([${can_compile_avx512_xeon_phi}])
+
     if test x"$can_compile_avx512_xeon" = x"yes"; then
       AC_DEFINE([HAVE_AVX512_XEON],[1],[AVX512 for Xeon is supported on this CPU])
     else
