@@ -63,7 +63,9 @@
 #define _AVX512_MUL _mm512_mul_pd
 #define _AVX512_ADD _mm512_add_pd
 #define _AVX512_SHUFFLE _mm512_shuffle_pd
+#ifdef HAVE_AVX512_XEON
 #define _AVX512_XOR _mm512_xor_pd
+#endif
 #define _AVX512_XOR_EPI _mm512_xor_epi64
 #define _SHUFFLE 0x55
 
@@ -87,7 +89,9 @@
 #define _AVX512_MUL _mm512_mul_ps
 #define _AVX512_ADD _mm512_add_ps
 #define _AVX512_SHUFFLE _mm512_shuffle_ps
+#ifdef HAVE_AVX512_XEON
 #define _AVX512_XOR _mm512_xor_ps
+#endif
 #define _AVX512_XOR_EPI _mm512_xor_epi32
 #define _SHUFFLE 0xb1
 
@@ -361,6 +365,7 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
         h1_real = _AVX512_SET1(hh_dbl[0]);
         h1_imag = _AVX512_SET1(hh_dbl[1]);
 
+#ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
@@ -368,6 +373,13 @@ static __forceinline void hh_trafo_complex_kernel_48_AVX512_1hv_single(float com
 #ifdef SINGLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _AVX512_XOR(h1_real, sign);
+        h1_imag = _AVX512_XOR(h1_imag, sign);
+#endif
 #endif
 
         tmp1 = _AVX512_MUL(h1_imag, x1);
@@ -539,6 +551,7 @@ static __forceinline void hh_trafo_complex_kernel_40_AVX512_1hv_single(float com
         h1_real = _AVX512_SET1(hh_dbl[0]);
         h1_imag = _AVX512_SET1(hh_dbl[1]);
 
+#ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
@@ -546,6 +559,13 @@ static __forceinline void hh_trafo_complex_kernel_40_AVX512_1hv_single(float com
 #ifdef SINGLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _AVX512_XOR(h1_real, sign);
+        h1_imag = _AVX512_XOR(h1_imag, sign);
+#endif
 #endif
 
         tmp1 = _AVX512_MUL(h1_imag, x1);
@@ -688,9 +708,10 @@ static __forceinline void hh_trafo_complex_kernel_32_AVX512_1hv_single(float com
                 x4 = _AVX512_ADD(x4, _AVX512_FMSUBADD(h1_real, q4, _AVX512_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
         }
 
-        h1_real = _AVX512_SET1(hh_dbl[0]);
-        h1_imag = _AVX512_SET1(hh_dbl[1]);
+	h1_real = _AVX512_SET1(hh_dbl[0]);
+	h1_imag = _AVX512_SET1(hh_dbl[1]);
 
+#ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
@@ -698,6 +719,13 @@ static __forceinline void hh_trafo_complex_kernel_32_AVX512_1hv_single(float com
 #ifdef SINGLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _AVX512_XOR(h1_real, sign);
+        h1_imag = _AVX512_XOR(h1_imag, sign);
+#endif
 #endif
 
         tmp1 = _AVX512_MUL(h1_imag, x1);
@@ -824,6 +852,7 @@ static __forceinline void hh_trafo_complex_kernel_24_AVX512_1hv_single(float com
         h1_real = _AVX512_SET1(hh_dbl[0]);
         h1_imag = _AVX512_SET1(hh_dbl[1]);
 
+#ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
@@ -831,6 +860,13 @@ static __forceinline void hh_trafo_complex_kernel_24_AVX512_1hv_single(float com
 #ifdef SINGLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _AVX512_XOR(h1_real, sign);
+        h1_imag = _AVX512_XOR(h1_imag, sign);
+#endif
 #endif
 
         tmp1 = _AVX512_MUL(h1_imag, x1);
@@ -934,6 +970,7 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_single(float com
         h1_real = _AVX512_SET1(hh_dbl[0]);
         h1_imag = _AVX512_SET1(hh_dbl[1]);
 
+#ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
@@ -941,6 +978,13 @@ static __forceinline void hh_trafo_complex_kernel_16_AVX512_1hv_single(float com
 #ifdef SINGLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _AVX512_XOR(h1_real, sign);
+        h1_imag = _AVX512_XOR(h1_imag, sign);
+#endif
 #endif
 
         tmp1 = _AVX512_MUL(h1_imag, x1);
@@ -1022,9 +1066,10 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_single(float comp
                 x1 = _AVX512_ADD(x1, _AVX512_FMSUBADD(h1_real, q1, _AVX512_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
         }
 
-        h1_real = _AVX512_SET1(hh_dbl[0]);
-        h1_imag = _AVX512_SET1(hh_dbl[1]);
+	h1_real = _AVX512_SET1(hh_dbl[0]);
+	h1_imag = _AVX512_SET1(hh_dbl[1]);
 
+#ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
@@ -1032,6 +1077,13 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_single(float comp
 #ifdef SINGLE_PRECISION_COMPLEX
         h1_real = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__AVX512_DATATYPE) _AVX512_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _AVX512_XOR(h1_real, sign);
+        h1_imag = _AVX512_XOR(h1_imag, sign);
+#endif
 #endif
 
         tmp1 = _AVX512_MUL(h1_imag, x1);
