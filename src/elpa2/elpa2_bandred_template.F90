@@ -193,6 +193,7 @@
       &" // &
       &PRECISION_SUFFIX &
       )
+      useGPU_reduction_lower_block_to_tridiagonal = .false.
 
       if (useGPU) then
         useGPU_reduction_lower_block_to_tridiagonal = .true.
