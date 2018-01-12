@@ -345,6 +345,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 #ifdef SINGLE_PRECISION_REAL
         h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
 #endif
+#endif
 
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_REAL) || defined(SINGLE_PRECISION_REAL)
@@ -364,6 +365,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
 #endif
 #endif
+
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_REAL) || defined(SINGLE_PRECISION_REAL)
 	h1 = _AVX512_XOR(tau2, sign);
@@ -441,7 +443,6 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	q4 = _AVX512_LOAD(&q[(nb*ldq)+3*offset]);
 	q4 = _AVX512_FMA(x4, h1, q4);
 	_AVX512_STORE(&q[(nb*ldq)+3*offset],q4);
->>>>>>> Skylake
 
 }
 
@@ -531,6 +532,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
         h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
 #endif
 #endif
+
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_REAL) || defined(SINGLE_PRECISION_REAL)
 	h1 = _AVX512_XOR(tau1, sign);
@@ -549,6 +551,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
 #endif
 #endif
+
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_REAL) || defined(SINGLE_PRECISION_REAL)
 	h1 = _AVX512_XOR(tau2, sign);
@@ -613,7 +616,6 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	q3 = _AVX512_LOAD(&q[(nb*ldq)+2*offset]);
 	q3 = _AVX512_FMA(x3, h1, q3);
 	_AVX512_STORE(&q[(nb*ldq)+2*offset],q3);
->>>>>>> Skylake
 
 }
 
@@ -693,6 +695,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
         h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
 #endif
 #endif
+
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_REAL) || defined(SINGLE_PRECISION_REAL)
 	h1 = _AVX512_XOR(tau1, sign);
@@ -708,6 +711,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
 #endif
 #endif
+
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_REAL) || defined(SINGLE_PRECISION_REAL)
 	h1 = _AVX512_XOR(tau2, sign);
@@ -758,8 +762,6 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 	q2 = _AVX512_LOAD(&q[(nb*ldq)+offset]);
 	q2 = _AVX512_FMA(x2, h1, q2);
 	_AVX512_STORE(&q[(nb*ldq)+offset],q2);
->>>>>>> Skylake
-
 }
 
 /**
@@ -830,6 +832,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
         h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
 #endif
 #endif
+
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_REAL) || defined(SINGLE_PRECISION_REAL)
 	h1 = _AVX512_XOR(tau1, sign);
@@ -837,6 +840,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
 #endif
 
 	x1 = _AVX512_MUL(x1, h1);
+
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
         h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
@@ -845,6 +849,7 @@ void double_hh_trafo_real_avx512_2hv_single(float* q, float* hh, int* pnb, int* 
         h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
 #endif
 #endif
+
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_REAL) || defined(SINGLE_PRECISION_REAL)
 	h1 = _AVX512_XOR(tau2, sign);
