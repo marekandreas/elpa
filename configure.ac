@@ -892,6 +892,7 @@ if test x"${need_avx512}" = x"yes"; then
         # we want only one to be true; this is ugly but could not come up with a better way
         grep Phi /proc/cpuinfo > /dev/null
         if test x"$?" = x"0" ; then
+	  echo "Xeon PHI found ... disabling AVX512 Xeon"
           can_compile_avx512_xeon=no
         fi
       fi
