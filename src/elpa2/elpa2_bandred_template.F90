@@ -179,7 +179,7 @@
       logical, intent(in)                         :: useQR
 #endif
       integer(kind=ik)                            :: mystart, myend, m_way, n_way, work_per_thread, m_id, n_id, n_threads, &
-                                                    ii, pp, transformChunkSize
+                                                    ii, pp
       integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
                                                                         &PRECISION&
                                                                         &_&
