@@ -886,6 +886,17 @@ if test x"${need_avx512}" = x"yes"; then
     )
     AC_MSG_RESULT([${can_compile_avx512_xeon_phi}])
 
+    # this is needed for the intel compiler
+    if test x"$can_compile_avx512_xeon" = x"yes" ; then
+      if test x"$can_compile_avx512_xeon_phi" = x"yes" ; then
+        # we want only one to be true; this is ugly but could not come up with a better way
+        grep Phi /proc/cpuinfo > /dev/null
+        if test x"$?" = x"0" ; then
+          can_compile_avx512_xeon=no
+        fi
+      fi
+    fi
+
     if test x"$can_compile_avx512_xeon" = x"yes"; then
       AC_DEFINE([HAVE_AVX512_XEON],[1],[AVX512 for Xeon is supported on this CPU])
     else
