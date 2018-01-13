@@ -78,13 +78,13 @@ while getopts "c:t:j:m:n:b:o:s:h" opt; do
 	esac
 done
 
-if [ $skipStep -eq 0]
+if [ $skipStep -eq 0 ]
 then
   echo "Skipping the test since option -s has been specified"
   exit 0
 else
   eval ./configure $configureArgs
-   if [ $? -ne 0 ]; then cat confi.log && exit 1; fi
+   if [ $? -ne 0 ]; then cat config.log && exit 1; fi
   
   make -j $makeTasks
   if [ $? -ne 0 ]; then exit 1; fi
