@@ -11,6 +11,7 @@ blockSize=16
 ompThreads=1
 configueArg=""
 skipStep=0
+batchCommand=""
 
 function usage() {
 	cat >&2 <<-EOF
@@ -18,7 +19,7 @@ function usage() {
 		Call all the necessary steps to perform an ELPA CI test
 
 		Usage:
-		  run_ci_tests [-c configure arguments] [-j makeTasks] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-s skipStep]
+		  run_ci_tests [-c configure arguments] [-j makeTasks] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-s skipStep] [-q submit command]
 
 		Options:
 		 -c configure arguments
@@ -44,13 +45,16 @@ function usage() {
 		 -s skipStep
 		    Skip the test run if 1 (default 0)
 
+		 -q submit command
+		    Job steps will be submitted via command to a batch system (default no submission)
+
 		 -h
 		    Print this help text
 	EOF
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:h" opt; do
+while getopts "c:t:j:m:n:b:o:s:q:h" opt; do
 	case $opt in
 		j)
 			makeTasks=$OPTARG;;
@@ -68,6 +72,8 @@ while getopts "c:t:j:m:n:b:o:s:h" opt; do
 			configureArgs=$OPTARG;;
 		s)
 			skipStep=$OPTARG;;
+		q)
+			batchCommand=$OPTARG;;
 		:)
 			echo "Option -$OPTARG requires an argument" >&2;;
 		h)
@@ -78,21 +84,30 @@ while getopts "c:t:j:m:n:b:o:s:h" opt; do
 	esac
 done
 
-if [ $skipStep -eq 0]
+if [ $skipStep -eq 0 ]
 then
   echo "Skipping the test since option -s has been specified"
   exit 0
 else
-  eval ./configure $configureArgs
-   if [ $? -ne 0 ]; then cat confi.log && exit 1; fi
+  echo  $batchCommand
+  if [ "$batchCommand" == "srun" ]
+  then
+    echo "Running with $batchCommand with $SRUN_COMMANDLINE_CONFIGURE"
+    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source .ci-env-vars && eval  ./configure $configureArgs; }'
+    if [ $? -ne 0 ]; then cat config.log && exit 1; fi
   
-  make -j $makeTasks
-  if [ $? -ne 0 ]; then exit 1; fi
-  
-  OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite-log; exit 1; }
-  if [ $? -ne 0 ]; then exit 1; fi
-   
-  grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-  if [ $? -ne 0 ]; then exit 1; fi
+  else
+    eval ./configure $configureArgs
+    if [ $? -ne 0 ]; then cat config.log && exit 1; fi
+    
+    make -j $makeTasks
+    if [ $? -ne 0 ]; then exit 1; fi
+    
+    OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite-log; exit 1; }
+    if [ $? -ne 0 ]; then exit 1; fi
+     
+    grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    if [ $? -ne 0 ]; then exit 1; fi
+  fi
 fi
 

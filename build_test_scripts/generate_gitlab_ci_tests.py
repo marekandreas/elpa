@@ -257,6 +257,7 @@ print("  - if [ \"$MEDIUM_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=1500 && 
 print("  - if [ \"$LARGE_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=5000 && export NUMBER_OF_EIGENVECTORS=500; fi")
 print("  - if [ \"$GPU_BLOCKSIZE\" = \"yes\" ]; then export BLOCK_SIZE=128 ; fi")
 print("  - echo \"This test will run with matrix size na = $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS, on a blacs grid with blocksize nblk= $BLOCK_SIZE \" ")
+print("  - export SKIP_STEP=0")
 print("  - ./autogen.sh")
 print("\n\n")
 
@@ -422,13 +423,16 @@ coverage = {
         "no-coverage": "no-coverage",
 }
 
+#instruction_set = {
+#        "sse" : " --enable-sse --enable-sse-assembly",
+#        "avx" : " --enable-avx",
+#        "avx2" : " --enable-avx2",
+#        "avx512" : "--enable-avx512",
+#        "knl" : "--enable-avx512",
+#        "power8" : " --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
+#}
 instruction_set = {
-        "sse" : " --enable-sse --enable-sse-assembly",
-        "avx" : " --enable-avx",
         "avx2" : " --enable-avx2",
-        "avx512" : "--enable-avx512",
-        "knl" : "--enable-avx512",
-        "power8" : " --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
 }
 
 
@@ -611,7 +615,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     # do the configure
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
-        print("   - export SKIP_STEP=0 ")
 
         if ( instr == "sse"):
             print("   - if [ $MEDIUM_MATRIX -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
@@ -650,21 +653,29 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
                 + " " +gpu[g] + INSTRUCTION_OPTIONS + "\"" )
         else:
-            print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
-                + " /scratch/elpa/bin/configure_elpa.sh" \
-                + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
-                + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
-                + libs + " " + ldflags + " " + " " + scalapackldflags + " " + scalapackfcflags \
-                + " --enable-option-checking=fatal " + " " + mpi_configure_flag + " " + openmp[o] \
+            print("    - pwd")
+            print("    - ./build_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
+                + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
+                + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\"" )
+                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" ")
+            
+            
+            #print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
+            #    + " /scratch/elpa/bin/configure_elpa.sh" \
+            #    + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
+            #    + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
+            #    + libs + " " + ldflags + " " + " " + scalapackldflags + " " + scalapackfcflags \
+            #    + " --enable-option-checking=fatal " + " " + mpi_configure_flag + " " + openmp[o] \
+            #    + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
+            #    + " " +gpu[g] + INSTRUCTION_OPTIONS + "\"" )
 
         print("    - sleep 1")
 
 #    # do the build
-    if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
-        #print("    - echo \"srun --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD\" ")
-        print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
+    #if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
+    #    #print("    - echo \"srun --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD\" ")
+    #    print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
 
     # do the test
 
@@ -681,8 +692,8 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
             cores = set_number_of_cores(MPI_TASKS, o)
             #print("    - echo \" srun  --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
             print("    -  echo \"na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE\" ")
-            print("    - srun --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
-                                         /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " +"\\\"  || { cat test-suite.log; exit 1; }\"")
+            #print("    - srun --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
+            #                             /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " +"\\\"  || { cat test-suite.log; exit 1; }\"")
 
         if (cov == "coverage"):
             print("    - ./ci_coverage_collect")
