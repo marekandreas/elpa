@@ -45,6 +45,7 @@ test_type_flag = {
     "cholesky":           "-DTEST_CHOLESKY",
     "hermitian_multiply": "-DTEST_HERMITIAN_MULTIPLY",
     "generalized"       : "-DTEST_GENERALIZED_EIGENPROBLEM",
+    "generalized_decomp": "-DTEST_GENERALIZED_DECOMP_EIGENPROBLEM",
 }
 
 layout_flag = {
@@ -92,6 +93,11 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
 
     # solve generalized only for random matrix in 1stage
     if (t == "generalized" and (m != "random" or s == "2stage")):
+        continue
+
+    # solve generalized already decomposed only for random matrix in 1stage
+    # maybe this test should be further restricted, maybe not so important...
+    if (t == "generalized_decomp" and (m != "random" or s == "2stage")):
         continue
 
     # cholesky tests only 1stage and teoplitz or random matrix

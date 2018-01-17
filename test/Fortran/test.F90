@@ -75,6 +75,9 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #endif
 #endif
 
+#ifdef TEST_GENERALIZED_DECOMP_EIGENPROBLEM
+#define TEST_GENERALIZED_EIGENPROBLEM
+#endif
 
 #ifdef TEST_SINGLE
 #  define EV_TYPE real(kind=C_FLOAT)
@@ -625,7 +628,17 @@ program test
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
      call e%timer_start("e%generalized_eigenvectors()")
-     call e%generalized_eigenvectors(a, b, ev, z, sc_desc, error)
+#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
+     call e%timer_start("is_already_decomposed=.false.")
+#endif
+     call e%generalized_eigenvectors(a, b, ev, z, sc_desc, .false., error)
+#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
+     call e%timer_stop("is_already_decomposed=.false.")
+     a = as
+     call e%timer_start("is_already_decomposed=.true.")
+     call e%generalized_eigenvectors(a, b, ev, z, sc_desc, .true., error)
+     call e%timer_stop("is_already_decomposed=.true.")
+#endif
      call e%timer_stop("e%generalized_eigenvectors()")
 #endif
 

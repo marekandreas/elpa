@@ -1,7 +1,7 @@
 #if 0
     subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
-            &(self, a, b, sc_desc, error)
+            &(self, a, b, sc_desc, is_already_decomposed, error)
         implicit none
 #include "general/precision_kinds.F90"
         class(elpa_impl_t)  :: self
@@ -11,6 +11,7 @@
       MATH_DATATYPE(kind=rck) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
 #endif
      integer                :: error
+     logical                :: is_already_decomposed
      integer                :: sc_desc(9)
 
      logical, parameter     :: do_use_elpa_hermitian_multiply = .true.
@@ -19,17 +20,20 @@
      MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 
      call self%timer_start("transform_generalized()")
-     ! TODO: why I cannot use self%elpa ??
-     ! B = U^T*U, B<-U
-     call self%elpa_cholesky_&
-         &ELPA_IMPL_SUFFIX&
-         &(b, error)
-     if(error .NE. ELPA_OK) return
-     ! B <- inv(U)
-     call self%elpa_invert_trm_&
-         &ELPA_IMPL_SUFFIX&
-         &(b, error)
-     if(error .NE. ELPA_OK) return
+
+     if (.not. is_already_decomposed) then
+       ! TODO: why I cannot use self%elpa ??
+       ! B = U^T*U, B<-U
+       call self%elpa_cholesky_&
+           &ELPA_IMPL_SUFFIX&
+           &(b, error)
+       if(error .NE. ELPA_OK) return
+       ! B <- inv(U)
+       call self%elpa_invert_trm_&
+           &ELPA_IMPL_SUFFIX&
+           &(b, error)
+       if(error .NE. ELPA_OK) return
+     end if
 
      if(do_use_elpa_hermitian_multiply) then
        ! tmp <- inv(U^T) * A

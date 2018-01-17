@@ -821,9 +821,10 @@ module elpa_api
   !> \param   b           double real matrix b: defines the problem to solve
   !> \param   ev          double real: on output stores the eigenvalues
   !> \param   q           double real matrix q: on output stores the eigenvalues
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_d_i(self, a, b, ev, q, sc_desc, error)
+    subroutine elpa_generalized_eigenvectors_d_i(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -837,7 +838,7 @@ module elpa_api
 #endif
       real(kind=c_double) :: ev(self%na)
       integer             :: sc_desc(SC_DESC_LEN)
-
+      logical             :: is_already_decomposed
       integer, optional   :: error
     end subroutine
   end interface
@@ -858,9 +859,10 @@ module elpa_api
   !> \param   b           single real matrix b: defines the problem to solve
   !> \param   ev          single real: on output stores the eigenvalues
   !> \param   q           single real matrix q: on output stores the eigenvalues
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_f_i(self, a, b, ev, q, sc_desc, error)
+    subroutine elpa_generalized_eigenvectors_f_i(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -874,6 +876,7 @@ module elpa_api
 #endif
       real(kind=c_float)  :: ev(self%na)
       integer             :: sc_desc(SC_DESC_LEN)
+      logical             :: is_already_decomposed
 
       integer, optional   :: error
     end subroutine
@@ -895,9 +898,10 @@ module elpa_api
   !> \param   b           double complex matrix b: defines the problem to solve
   !> \param   ev          double real: on output stores the eigenvalues
   !> \param   q           double complex matrix q: on output stores the eigenvalues
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_dc_i(self, a, b, ev, q, sc_desc, error)
+    subroutine elpa_generalized_eigenvectors_dc_i(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -912,6 +916,7 @@ module elpa_api
 #endif
       real(kind=c_double)            :: ev(self%na)
       integer                        :: sc_desc(SC_DESC_LEN)
+      logical                        :: is_already_decomposed
 
       integer, optional              :: error
     end subroutine
@@ -933,9 +938,10 @@ module elpa_api
   !> \param   b           single complex matrix b: defines the problem to solve
   !> \param   ev          single real: on output stores the eigenvalues
   !> \param   q           single complex matrix q: on output stores the eigenvalues
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_fc_i(self, a, b, ev, q, sc_desc, error)
+    subroutine elpa_generalized_eigenvectors_fc_i(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -949,6 +955,7 @@ module elpa_api
 #endif
       real(kind=c_float)            :: ev(self%na)
       integer                       :: sc_desc(SC_DESC_LEN)
+      logical                       :: is_already_decomposed
 
       integer, optional             :: error
     end subroutine
