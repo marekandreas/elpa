@@ -77,6 +77,10 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
     if(s in ["scalapack_all", "scalapack_part"] and (g == 1 or t != "eigenvectors" or m != "analytic")):
         continue
 
+    # do not test single-precision scalapack
+    if(s in ["scalapack_all", "scalapack_part"] and ( p == "single")):
+        continue
+
     # solve tridiagonal only for real toeplitz matrix in 1stage
     if (t == "solve_tridiagonal" and (s != "1stage" or d != "real" or m != "toeplitz")):
         continue
