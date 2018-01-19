@@ -93,11 +93,15 @@ else
   if [ "$batchCommand" == "srun" ]
   then
     echo "Running with $batchCommand with $SRUN_COMMANDLINE_CONFIGURE"
-    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source .ci-env-vars && eval  ./configure $configureArgs; }'
+#    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source .ci-env-vars && eval  ./configure $configureArgs; }'
+    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE ./build_test_scripts/configure_step.sh "$configureArgs"
+
     if [ $? -ne 0 ]; then cat config.log && exit 1; fi
   
   else
-    eval ./configure $configureArgs
+    #eval ./configure $configureArgs
+    ./build_test_scripts/configure_step.sh "$configureArgs"
+
     if [ $? -ne 0 ]; then cat config.log && exit 1; fi
     
     make -j $makeTasks
