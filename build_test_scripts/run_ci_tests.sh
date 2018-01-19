@@ -97,7 +97,11 @@ else
     $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE ./build_test_scripts/configure_step.sh "$configureArgs"
 
     if [ $? -ne 0 ]; then cat config.log && exit 1; fi
-  
+    sleep 1
+    $batchCommand   --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD ./build_test_scripts/build_step.sh $makeTasks
+    if [ $? -ne 0 ]; then cat config.log && exit 1; fi
+    sleep 1
+
   else
     #eval ./configure $configureArgs
     ./build_test_scripts/configure_step.sh "$configureArgs"
