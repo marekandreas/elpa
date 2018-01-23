@@ -78,7 +78,7 @@ while getopts "c:t:j:m:n:b:o:s:h" opt; do
 	esac
 done
 
-if [ $skipStep -eq 0 ]
+if [ $skipStep -eq 1 ]
 then
   echo "Skipping the test since option -s has been specified"
   exit 0
