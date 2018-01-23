@@ -94,14 +94,14 @@ else
   then
     echo "Running with $batchCommand with $SRUN_COMMANDLINE_CONFIGURE"
 #    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source .ci-env-vars && eval  ./configure $configureArgs; }'
-    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE ./build_test_scripts/configure_step.sh "$configureArgs"
+    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE ./ci_test_scripts/configure_step.sh "$configureArgs"
 
     if [ $? -ne 0 ]; then cat config.log && exit 1; fi
     sleep 1
-    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD ./build_test_scripts/build_step.sh $makeTasks
+    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD ./ci_test_scripts/build_step.sh $makeTasks
     if [ $? -ne 0 ]; then exit 1; fi
     sleep 1
-    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=2 $SRUN_COMMANDLINE_RUN ./build_test_scripts/test_step.sh $mpiTasks $ompThreads "TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" "
+    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=2 $SRUN_COMMANDLINE_RUN ./ci_test_scripts/test_step.sh $mpiTasks $ompThreads "TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" "
     if [ $? -ne 0 ]; then exit 1; fi
 
     grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -109,7 +109,7 @@ else
 
   else
     #eval ./configure $configureArgs
-    ./build_test_scripts/configure_step.sh "$configureArgs"
+    ./ci_test_scripts/configure_step.sh "$configureArgs"
 
     if [ $? -ne 0 ]; then cat config.log && exit 1; fi
     

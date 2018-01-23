@@ -2,7 +2,7 @@
 source /etc/profile.d/modules.sh
 set -ex
 
-source ./build_test_scripts/.ci-env-vars
+source ./ci_test_scripts/.ci-env-vars
 module list
 ulimit -s unlimited
 ulimit -v unlimited
