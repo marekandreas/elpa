@@ -563,7 +563,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -576,7 +576,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -826,7 +826,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -839,7 +839,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -1089,7 +1089,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -1102,7 +1102,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -1352,7 +1352,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -1365,7 +1365,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -1605,7 +1605,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -1616,7 +1616,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -1852,7 +1852,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -1863,7 +1863,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -2099,7 +2099,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -2110,7 +2110,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -2346,7 +2346,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -2357,7 +2357,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -2603,7 +2603,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -2616,7 +2616,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -2817,7 +2817,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -2830,7 +2830,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3031,7 +3031,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3044,7 +3044,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3245,7 +3245,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3258,7 +3258,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3449,7 +3449,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3460,7 +3460,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3651,7 +3651,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3662,7 +3662,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3853,7 +3853,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -3864,7 +3864,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4055,7 +4055,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4066,7 +4066,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpif90\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4267,7 +4267,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4280,7 +4280,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4505,7 +4505,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4518,7 +4518,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4743,7 +4743,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4756,7 +4756,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4981,7 +4981,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -4994,7 +4994,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -5209,7 +5209,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -5220,7 +5220,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -5433,7 +5433,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -5444,7 +5444,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -5657,7 +5657,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -5668,7 +5668,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -5881,7 +5881,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -5892,7 +5892,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6115,7 +6115,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6128,7 +6128,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6329,7 +6329,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6342,7 +6342,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6543,7 +6543,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6556,7 +6556,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6757,7 +6757,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6770,7 +6770,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6961,7 +6961,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -6972,7 +6972,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7163,7 +7163,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7174,7 +7174,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7365,7 +7365,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7376,7 +7376,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7567,7 +7567,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2 -fsanitize=address\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2 -fsanitize=address\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7578,7 +7578,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"gfortran\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7711,7 +7711,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7724,7 +7724,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7881,7 +7881,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -7894,7 +7894,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8051,7 +8051,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8064,7 +8064,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8221,7 +8221,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8234,7 +8234,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8405,7 +8405,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8416,7 +8416,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8585,7 +8585,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8596,7 +8596,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8765,7 +8765,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8776,7 +8776,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8945,7 +8945,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -8956,7 +8956,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9111,7 +9111,7 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9124,7 +9124,7 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9257,7 +9257,7 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9270,7 +9270,7 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9403,7 +9403,7 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9416,7 +9416,7 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9549,7 +9549,7 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9562,7 +9562,7 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9685,7 +9685,7 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9696,7 +9696,7 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9819,7 +9819,7 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9830,7 +9830,7 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9953,7 +9953,7 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -9964,7 +9964,7 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10087,7 +10087,7 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10098,7 +10098,7 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -msse4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10231,7 +10231,7 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10244,7 +10244,7 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10401,7 +10401,7 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10414,7 +10414,7 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10571,7 +10571,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10584,7 +10584,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10741,7 +10741,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10754,7 +10754,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10925,7 +10925,7 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -10936,7 +10936,7 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11105,7 +11105,7 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11116,7 +11116,7 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11285,7 +11285,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11296,7 +11296,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11465,7 +11465,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11476,7 +11476,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11631,7 +11631,7 @@ gnu-intel-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11644,7 +11644,7 @@ gnu-intel-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11777,7 +11777,7 @@ gnu-intel-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11790,7 +11790,7 @@ gnu-intel-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11923,7 +11923,7 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -11936,7 +11936,7 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12069,7 +12069,7 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12082,7 +12082,7 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12205,7 +12205,7 @@ gnu-intel-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12216,7 +12216,7 @@ gnu-intel-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12339,7 +12339,7 @@ gnu-intel-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12350,7 +12350,7 @@ gnu-intel-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12473,7 +12473,7 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12484,7 +12484,7 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12607,7 +12607,7 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12618,7 +12618,7 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12883,7 +12883,7 @@ intel-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -12956,7 +12956,7 @@ intel-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13029,7 +13029,7 @@ intel-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13102,7 +13102,7 @@ intel-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13191,7 +13191,7 @@ intel-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13280,7 +13280,7 @@ intel-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13369,7 +13369,7 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13458,7 +13458,7 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13531,7 +13531,7 @@ intel-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13604,7 +13604,7 @@ intel-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13677,7 +13677,7 @@ intel-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13750,7 +13750,7 @@ intel-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13815,7 +13815,7 @@ intel-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13880,7 +13880,7 @@ intel-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -13945,7 +13945,7 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14010,7 +14010,7 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14083,7 +14083,7 @@ intel-intel-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14156,7 +14156,7 @@ intel-intel-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blockin
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14229,7 +14229,7 @@ intel-intel-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blockin
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14302,7 +14302,7 @@ intel-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-bloc
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14391,7 +14391,7 @@ intel-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-n
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14480,7 +14480,7 @@ intel-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blockin
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14569,7 +14569,7 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blockin
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14658,7 +14658,7 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-bloc
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14731,7 +14731,7 @@ intel-intel-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14804,7 +14804,7 @@ intel-intel-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14877,7 +14877,7 @@ intel-intel-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -14950,7 +14950,7 @@ intel-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -15015,7 +15015,7 @@ intel-intel-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -15080,7 +15080,7 @@ intel-intel-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -15145,7 +15145,7 @@ intel-intel-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 
@@ -15210,7 +15210,7 @@ intel-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - sse
   script:
-   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
+   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xSSE4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -xSSE4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP 
 
 

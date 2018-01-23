@@ -614,7 +614,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
     # do the configure
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
         if ( instr == "sse"):
-            print("   - if [ $MMATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
+            print("   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
         print("   - ./run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
