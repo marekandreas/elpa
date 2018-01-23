@@ -1214,5 +1214,5 @@ if test x"$enable_kcomputer" = x"yes" ; then
   echo "call: make -f ../generated_headers.am generated-headers top_srcdir=.."
   echo "BEFORE triggering the build with make!"
 else
-  make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
+  make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi
