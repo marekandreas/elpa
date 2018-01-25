@@ -281,7 +281,7 @@ print("  tags:")
 print("    - coverage")
 print("  script:")
 print("    - echo \"Generating coverage report\"")
-print("    - ./ci_coverage_summary")
+print("    - ./ci_test_scripts/ci_coverage_summary")
 print("  artifacts:")
 print("    paths:")
 print("      - public")
@@ -693,7 +693,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
             #                             /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " +"\\\"  || { cat test-suite.log; exit 1; }\"")
 
         if (cov == "coverage"):
-            print("    - ./ci_coverage_collect")
+            print("    - ./ci_test_scripts/ci_coverage_collect")
             print("  artifacts:")
             print("    paths:")
             print("      - coverage_data")

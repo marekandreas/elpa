@@ -99,7 +99,7 @@ total_coverage:
     - coverage
   script:
     - echo "Generating coverage report"
-    - ./ci_coverage_summary
+    - ./ci_test_scripts/ci_coverage_summary
   artifacts:
     paths:
       - public
@@ -399,7 +399,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -426,7 +426,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -653,7 +653,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -680,7 +680,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -907,7 +907,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -934,7 +934,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -1161,7 +1161,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -1188,7 +1188,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -1415,7 +1415,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -1442,7 +1442,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -1653,7 +1653,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -1680,7 +1680,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -1891,7 +1891,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -1918,7 +1918,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2129,7 +2129,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2156,7 +2156,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2367,7 +2367,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2394,7 +2394,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2574,7 +2574,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2601,7 +2601,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2781,7 +2781,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2808,7 +2808,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -2988,7 +2988,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3015,7 +3015,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3195,7 +3195,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3222,7 +3222,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3390,7 +3390,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3417,7 +3417,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3585,7 +3585,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3612,7 +3612,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3780,7 +3780,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3807,7 +3807,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -3976,7 +3976,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4003,7 +4003,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4207,7 +4207,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4234,7 +4234,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4438,7 +4438,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4465,7 +4465,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4669,7 +4669,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4696,7 +4696,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4900,7 +4900,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -4927,7 +4927,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5117,7 +5117,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5144,7 +5144,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5334,7 +5334,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5361,7 +5361,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5551,7 +5551,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5578,7 +5578,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5768,7 +5768,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5795,7 +5795,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -5976,7 +5976,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6003,7 +6003,7 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6184,7 +6184,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6211,7 +6211,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6392,7 +6392,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6419,7 +6419,7 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6600,7 +6600,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6627,7 +6627,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6796,7 +6796,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6823,7 +6823,7 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -6992,7 +6992,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -7019,7 +7019,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -7188,7 +7188,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
@@ -7215,7 +7215,7 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-    - ./ci_coverage_collect
+    - ./ci_test_scripts/ci_coverage_collect
   artifacts:
     paths:
       - coverage_data
