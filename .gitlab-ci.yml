@@ -79,6 +79,7 @@ before_script:
   - echo "This test will run with matrix size na = $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS, on a blacs grid with blocksize nblk= $BLOCK_SIZE " 
   - export SKIP_STEP=0
   - ./autogen.sh
+  - export SKIP_STEP=0
 
 
 
@@ -375,7 +376,6 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -402,7 +402,6 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -426,7 +425,6 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -450,7 +448,6 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -477,7 +474,6 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -501,7 +497,6 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -525,7 +520,6 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -552,7 +546,6 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -576,7 +569,6 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -600,7 +592,6 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -627,7 +618,6 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -651,7 +641,6 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -675,7 +664,6 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -702,7 +690,6 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -724,7 +711,6 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -748,7 +734,6 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -775,7 +760,6 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -797,7 +781,6 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -821,7 +804,6 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -848,7 +830,6 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -870,7 +851,6 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -894,7 +874,6 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -921,7 +900,6 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -943,7 +921,6 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -967,7 +944,6 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-co
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -994,7 +970,6 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1018,7 +993,6 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1042,7 +1016,6 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1069,7 +1042,6 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1093,7 +1065,6 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1117,7 +1088,6 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1144,7 +1114,6 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1168,7 +1137,6 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1192,7 +1160,6 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1219,7 +1186,6 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1243,7 +1209,6 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1267,7 +1232,6 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-co
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1294,7 +1258,6 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1316,7 +1279,6 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1340,7 +1302,6 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1367,7 +1328,6 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1389,7 +1349,6 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1413,7 +1372,6 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1440,7 +1398,6 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1462,7 +1419,6 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1486,7 +1442,6 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1513,7 +1468,6 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1535,7 +1489,6 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1559,7 +1512,6 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1587,7 +1539,6 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1611,7 +1562,6 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1635,7 +1585,6 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1663,7 +1612,6 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1687,7 +1635,6 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1711,7 +1658,6 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1739,7 +1685,6 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1763,7 +1708,6 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1787,7 +1731,6 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1815,7 +1758,6 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1839,7 +1781,6 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1863,7 +1804,6 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1891,7 +1831,6 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1913,7 +1852,6 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1937,7 +1875,6 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1965,7 +1902,6 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -1987,7 +1923,6 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2011,7 +1946,6 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2039,7 +1973,6 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2061,7 +1994,6 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2085,7 +2017,6 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2113,7 +2044,6 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2135,7 +2065,6 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2159,7 +2088,6 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2187,7 +2115,6 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2211,7 +2138,6 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2235,7 +2161,6 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2263,7 +2188,6 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2287,7 +2211,6 @@ gnu-gnu-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2311,7 +2234,6 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2339,7 +2261,6 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2363,7 +2284,6 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2387,7 +2307,6 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2415,7 +2334,6 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2439,7 +2357,6 @@ gnu-gnu-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2463,7 +2380,6 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2491,7 +2407,6 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2513,7 +2428,6 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2537,7 +2451,6 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2565,7 +2478,6 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2587,7 +2499,6 @@ gnu-gnu-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2611,7 +2522,6 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2639,7 +2549,6 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2661,7 +2570,6 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2685,7 +2593,6 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2-coverage
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2713,7 +2620,6 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2735,7 +2641,6 @@ gnu-gnu-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2759,7 +2664,6 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2783,7 +2687,6 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2807,7 +2710,6 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2831,7 +2733,6 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2855,7 +2756,6 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2879,7 +2779,6 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2903,7 +2802,6 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2927,7 +2825,6 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2951,7 +2848,6 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2973,7 +2869,6 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -2997,7 +2892,6 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3019,7 +2913,6 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3043,7 +2936,6 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3065,7 +2957,6 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3089,7 +2980,6 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3111,7 +3001,6 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3135,7 +3024,6 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3159,7 +3047,6 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3183,7 +3070,6 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3207,7 +3093,6 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3231,7 +3116,6 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3255,7 +3139,6 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3279,7 +3162,6 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3303,7 +3185,6 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3327,7 +3208,6 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3349,7 +3229,6 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3373,7 +3252,6 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3395,7 +3273,6 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3419,7 +3296,6 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3441,7 +3317,6 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3465,7 +3340,6 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3487,7 +3361,6 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3511,7 +3384,6 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3535,7 +3407,6 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3559,7 +3430,6 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3583,7 +3453,6 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3607,7 +3476,6 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3631,7 +3499,6 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3655,7 +3522,6 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3679,7 +3545,6 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3703,7 +3568,6 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3725,7 +3589,6 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3749,7 +3612,6 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3771,7 +3633,6 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3795,7 +3656,6 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3817,7 +3677,6 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3841,7 +3700,6 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3863,7 +3721,6 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3887,7 +3744,6 @@ gnu-intel-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3911,7 +3767,6 @@ gnu-intel-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3935,7 +3790,6 @@ gnu-intel-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3959,7 +3813,6 @@ gnu-intel-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -3983,7 +3836,6 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4007,7 +3859,6 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4031,7 +3882,6 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4055,7 +3905,6 @@ gnu-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4079,7 +3928,6 @@ gnu-intel-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4101,7 +3949,6 @@ gnu-intel-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4125,7 +3972,6 @@ gnu-intel-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4147,7 +3993,6 @@ gnu-intel-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4171,7 +4016,6 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4193,7 +4037,6 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4217,7 +4060,6 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4239,7 +4081,6 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4263,7 +4104,6 @@ intel-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4287,7 +4127,6 @@ intel-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4311,7 +4150,6 @@ intel-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4335,7 +4173,6 @@ intel-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4357,7 +4194,6 @@ intel-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4379,7 +4215,6 @@ intel-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4401,7 +4236,6 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4423,7 +4257,6 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4447,7 +4280,6 @@ intel-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4471,7 +4303,6 @@ intel-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4495,7 +4326,6 @@ intel-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4519,7 +4349,6 @@ intel-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4541,7 +4370,6 @@ intel-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gp
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4563,7 +4391,6 @@ intel-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4585,7 +4412,6 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4607,7 +4433,6 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4631,7 +4456,6 @@ intel-intel-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4655,7 +4479,6 @@ intel-intel-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blockin
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4679,7 +4502,6 @@ intel-intel-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blockin
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4703,7 +4525,6 @@ intel-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-bloc
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4725,7 +4546,6 @@ intel-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-n
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4747,7 +4567,6 @@ intel-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blockin
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4769,7 +4588,6 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blockin
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4791,7 +4609,6 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-bloc
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4815,7 +4632,6 @@ intel-intel-nompi-openmp-double-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4839,7 +4655,6 @@ intel-intel-nompi-openmp-double-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4863,7 +4678,6 @@ intel-intel-nompi-openmp-double-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4887,7 +4701,6 @@ intel-intel-nompi-openmp-double-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4909,7 +4722,6 @@ intel-intel-nompi-openmp-single-precision-assumed-size-band-to-full-blocking-no-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4931,7 +4743,6 @@ intel-intel-nompi-openmp-single-precision-assumed-size-no-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4953,7 +4764,6 @@ intel-intel-nompi-openmp-single-precision-no-assumed-size-band-to-full-blocking-
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 
@@ -4975,7 +4785,6 @@ intel-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocki
   tags:
     - avx2
   script:
-   - export SKIP_STEP=0 
     - export REQUESTED_MEMORY=2Gb
 
 

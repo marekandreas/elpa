@@ -259,6 +259,8 @@ print("  - if [ \"$GPU_BLOCKSIZE\" = \"yes\" ]; then export BLOCK_SIZE=128 ; fi"
 print("  - echo \"This test will run with matrix size na = $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS, on a blacs grid with blocksize nblk= $BLOCK_SIZE \" ")
 print("  - export SKIP_STEP=0")
 print("  - ./autogen.sh")
+print("  - export SKIP_STEP=0")
+
 print("\n\n")
 
 #define after script
@@ -614,7 +616,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
     memory = set_requested_memory(matrix_size[na])
 
     # do the configure
-    print("   - export SKIP_STEP=0 ")
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
         if ( instr == "sse"):
             print("   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
