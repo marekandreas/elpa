@@ -260,6 +260,7 @@ print("  - echo \"This test will run with matrix size na = $MATRIX_SIZE, nev= $N
 print("  - export SKIP_STEP=0")
 print("  - ./autogen.sh")
 print("  - export SKIP_STEP=0")
+print("  - source /etc/profile.d/modules.sh && . ./ci_test_scripts/.ci-env-vars")
 
 print("\n\n")
 

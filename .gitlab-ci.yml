@@ -80,6 +80,7 @@ before_script:
   - export SKIP_STEP=0
   - ./autogen.sh
   - export SKIP_STEP=0
+  - source /etc/profile.d/modules.sh && . ./ci_test_scripts/.ci-env-vars
 
 
 

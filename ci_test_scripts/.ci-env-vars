@@ -51,8 +51,8 @@ export MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl
 export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_OMP="-I$MKL_HOME/include/intel64/lp64"
 export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_OMP="$MKL_GFORTRAN_SCALAPACK_NO_MPI_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-export ASAN_OPTIONS=suppressions=no_asan_for_mpi.supp,fast_unwind_on_malloc=0
-export LSAN_OPTIONS=suppressions=no_lsan_for_mpi.supp
+export ASAN_OPTIONS=suppressions=./ci_test_scripts/no_asan_for_mpi.supp,fast_unwind_on_malloc=0
+export LSAN_OPTIONS=suppressions=./ci_test_scripts/no_lsan_for_mpi.supp
 
 fi
 
