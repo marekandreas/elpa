@@ -64,6 +64,10 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
     if lang == "C" and (m == "analytic" or m == "toeplitz" or m == "frank" or lay == "all_layouts"):
         continue
 
+    # not implemented in the test.c file yet
+    if lang == "C" and (t == "cholesky" or t == "hermitian_multiply" or q == 1):
+        continue
+
     # exclude some test combinations
 
     # analytic tests only for "eigenvectors" and not on GPU
