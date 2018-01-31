@@ -197,24 +197,19 @@
 #else /* WITH_MPI */
       call PRECISION_GEMM(BLAS_TRANS_OR_CONJ,'N',nev,nev,na,ONE,z,na,z,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
-      !TODO for the C interface, not all information is passed (zeros instead)
-      !TODO than this part of the test cannot be done
-      !TODO either we will not have this part of test at all, or it will be improved
-      if(nblk > 0) then
-        ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
-        err = 0.0_rk
-        do i=1, nev
-          if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-             err = max(err, abs(tmp1(rowLocal,colLocal) - 1.0_rk))
-           endif
-        end do
+      ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
+      err = 0.0_rk
+      do i=1, nev
+        if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+           err = max(err, abs(tmp1(rowLocal,colLocal) - 1.0_rk))
+         endif
+      end do
 #ifdef WITH_MPI
-        call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
-        errmax = err
+      errmax = err
 #endif /* WITH_MPI */
-        if (myid==0) print *,'Maximal error in eigenvector lengths:',errmax
-      end if
+      if (myid==0) print *,'Maximal error in eigenvector lengths:',errmax
 
       ! Second, find the maximal error in the whole Z**T * Z matrix (its diference from identity matrix)
       ! Initialize tmp2 to unit matrix
@@ -250,28 +245,26 @@
 
 
 #if REALCASE == 1
-
 #ifdef DOUBLE_PRECISION_REAL
     !c> int check_correctness_evp_numeric_residuals_real_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         double *as, double *z, double *ev,
-    !c>                                         int sc_desc[9], int myid);
+    !c>                                         double *as, double *z, double *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
 #else
     !c> int check_correctness_evp_numeric_residuals_real_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         float *as, float *z, float *ev,
-    !c>                                         int sc_desc[9], int myid);
+    !c>                                         float *as, float *z, float *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
 #endif
-
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> int check_correctness_evp_numeric_residuals_complex_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex double *as, complex double *z, double *ev,
-    !c>                                         int sc_desc[9], int myid);
+    !c>                                         complex double *as, complex double *z, double *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
 #else
     !c> int check_correctness_evp_numeric_residuals_complex_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex float *as, complex float *z, float *ev,
-    !c>                                         int sc_desc[9], int myid);
+    !c>                                         complex float *as, complex float *z, float *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -279,7 +272,7 @@ function check_correctness_evp_numeric_residuals_&
 &MATH_DATATYPE&
 &_&
 &PRECISION&
-&_f (na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid) result(status) &
+&_f (na, nev, na_rows, na_cols, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status) &
       bind(C,name="check_correctness_evp_numeric_residuals_&
       &MATH_DATATYPE&
       &_&
@@ -292,21 +285,81 @@ function check_correctness_evp_numeric_residuals_&
 #include "../../src/general/precision_kinds.F90"
 
       integer(kind=c_int)            :: status
-      integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols
+      integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
       MATH_DATATYPE(kind=rck)     :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
       real(kind=rck)    :: ev(1:na)
       integer(kind=c_int)            :: sc_desc(1:9)
 
-      ! TODO: I did not want to add all the variables to the C interface as well
-      ! TODO: I think that we should find a better way to pass this information
-      ! TODO: to all the functions anyway (get it from sc_desc, pass elpa_t, etc..)
       status = check_correctness_evp_numeric_residuals_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      & (na, nev, as, z, ev, sc_desc, 0, myid, 0, 0, 0, 0)
+      & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
     end function
+
+!---- variant for the generalized eigenproblem
+!---- unlike in Fortran, we cannot use optional parameter
+!---- we thus define a different function
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> int check_correctness_evp_gen_numeric_residuals_real_double_f(int na, int nev, int na_rows, int na_cols,
+    !c>                                         double *as, double *z, double *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol,
+    !c>                                         double *bs);
+#else
+    !c> int check_correctness_evp_gen_numeric_residuals_real_single_f(int na, int nev, int na_rows, int na_cols,
+    !c>                                         float *as, float *z, float *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol, 
+    !c>                                         float *bs);
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> int check_correctness_evp_gen_numeric_residuals_complex_double_f(int na, int nev, int na_rows, int na_cols,
+    !c>                                         complex double *as, complex double *z, double *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol,
+    !c>                                         complex double *bs);
+#else
+    !c> int check_correctness_evp_gen_numeric_residuals_complex_single_f(int na, int nev, int na_rows, int na_cols,
+    !c>                                         complex float *as, complex float *z, float *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol,
+    !c>                                         complex float *bs);
+#endif
+#endif /* COMPLEXCASE */
+
+function check_correctness_evp_gen_numeric_residuals_&
+&MATH_DATATYPE&
+&_&
+&PRECISION&
+&_f (na, nev, na_rows, na_cols, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs) result(status) &
+      bind(C,name="check_correctness_evp_gen_numeric_residuals_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+
+      use iso_c_binding
+
+      implicit none
+#include "../../src/general/precision_kinds.F90"
+
+      integer(kind=c_int)            :: status
+      integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
+      MATH_DATATYPE(kind=rck)     :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols), bs(1:na_rows,1:na_cols)
+      real(kind=rck)    :: ev(1:na)
+      integer(kind=c_int)            :: sc_desc(1:9)
+
+      status = check_correctness_evp_numeric_residuals_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs)
+
+    end function
+
+    !-----------------------------------------------------------------------------------------------------------
 
     function check_correctness_eigenvalues_toeplitz_&
     &MATH_DATATYPE&

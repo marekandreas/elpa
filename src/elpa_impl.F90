@@ -1569,14 +1569,17 @@ module elpa_impl
       endif
     end subroutine
 
-    !c> void elpa_generalized_eigenvectors_d(elpa_t handle, double *a, double *ev, double *q, int *error);
-    subroutine elpa_generalized_eigenvectors_d_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, error) &
+    !c> void elpa_generalized_eigenvectors_d(elpa_t handle, double *a, double *b, double *ev, double *q,
+    !c> int sc_desc[9], int is_already_decomposed, int *error);
+    subroutine elpa_generalized_eigenvectors_d_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, is_already_decomposed, error) &
                                                             bind(C, name="elpa_generalized_eigenvectors_d")
       type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p, sc_desc_p
+      integer(kind=c_int), intent(in), value :: is_already_decomposed
       integer(kind=c_int), optional, intent(in) :: error
 
       real(kind=c_double), pointer :: a(:, :), b(:, :), q(:, :), ev(:)
       integer(kind=c_int), pointer             :: sc_desc(:)
+      logical :: is_already_decomposed_fortran
       type(elpa_impl_t), pointer  :: self
 
       call c_f_pointer(handle, self)
@@ -1585,8 +1588,13 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
       call c_f_pointer(sc_desc_p, sc_desc, [SC_DESC_LEN])
+      if(is_already_decomposed .eq. 0) then
+        is_already_decomposed_fortran = .false.
+      else
+        is_already_decomposed_fortran = .true.
+      end if
 
-      call elpa_generalized_eigenvectors_d(self, a, b, ev, q, sc_desc, .false., error)
+      call elpa_generalized_eigenvectors_d(self, a, b, ev, q, sc_desc, is_already_decomposed_fortran, error)
     end subroutine
 
 
@@ -1678,14 +1686,17 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_generalized_eigenvectors_f(elpa_t handle, float *a, float *ev, float *q, int *error);
-    subroutine elpa_generalized_eigenvectors_f_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, error) &
+    !c> void elpa_generalized_eigenvectors_f(elpa_t handle, float *a, float *b, float *ev, float *q, 
+    !c> int sc_desc[9], int is_already_decomposed, int *error);
+    subroutine elpa_generalized_eigenvectors_f_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, is_already_decomposed, error) &
                                                             bind(C, name="elpa_generalized_eigenvectors_f")
       type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p, sc_desc_p
+      integer(kind=c_int), intent(in), value :: is_already_decomposed
       integer(kind=c_int), optional, intent(in) :: error
 
       real(kind=c_float), pointer :: a(:, :), b(:, :), q(:, :), ev(:)
       integer(kind=c_int), pointer            :: sc_desc(:)
+      logical :: is_already_decomposed_fortran
       type(elpa_impl_t), pointer  :: self
 
       call c_f_pointer(handle, self)
@@ -1694,8 +1705,13 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
       call c_f_pointer(sc_desc_p, sc_desc, [SC_DESC_LEN])
+      if(is_already_decomposed .eq. 0) then
+        is_already_decomposed_fortran = .false.
+      else
+        is_already_decomposed_fortran = .true.
+      end if
 
-      call elpa_generalized_eigenvectors_f(self, a, b, ev, q, sc_desc, .false., error)
+      call elpa_generalized_eigenvectors_f(self, a, b, ev, q, sc_desc, is_already_decomposed_fortran, error)
     end subroutine
 
 
@@ -1783,15 +1799,18 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_generalized_eigenvectors_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
-    subroutine elpa_generalized_eigenvectors_dc_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, error) &
+    !c> void elpa_generalized_eigenvectors_dc(elpa_t handle, double complex *a, double complex *b, double *ev, double complex *q,
+    !c>                                       int sc_desc[9], int is_already_decomposed, int *error);
+    subroutine elpa_generalized_eigenvectors_dc_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, is_already_decomposed, error) &
                                                              bind(C, name="elpa_generalized_eigenvectors_dc")
       type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p, sc_desc_p
+      integer(kind=c_int), intent(in), value :: is_already_decomposed
       integer(kind=c_int), optional, intent(in) :: error
 
       complex(kind=c_double_complex), pointer :: a(:, :), b(:, :), q(:, :)
       real(kind=c_double), pointer :: ev(:)
       integer(kind=c_int), pointer             :: sc_desc(:)
+      logical :: is_already_decomposed_fortran
       type(elpa_impl_t), pointer  :: self
 
       call c_f_pointer(handle, self)
@@ -1800,8 +1819,13 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
       call c_f_pointer(sc_desc_p, sc_desc, [SC_DESC_LEN])
+      if(is_already_decomposed .eq. 0) then
+        is_already_decomposed_fortran = .false.
+      else
+        is_already_decomposed_fortran = .true.
+      end if
 
-      call elpa_generalized_eigenvectors_dc(self, a, b, ev, q, sc_desc, .false., error)
+      call elpa_generalized_eigenvectors_dc(self, a, b, ev, q, sc_desc, is_already_decomposed_fortran, error)
     end subroutine
 
 
@@ -1894,15 +1918,18 @@ module elpa_impl
     end subroutine
 
 
-    !c> void elpa_generalized_eigenvectors_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
-    subroutine elpa_generalized_eigenvectors_fc_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, error) &
+    !c> void elpa_generalized_eigenvectors_fc(elpa_t handle, float complex *a, float complex *b, float *ev, float complex *q,
+    !c> int sc_desc[9], int is_already_decomposed, int *error);
+    subroutine elpa_generalized_eigenvectors_fc_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, is_already_decomposed, error) &
                                                              bind(C, name="elpa_generalized_eigenvectors_fc")
       type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p, sc_desc_p
+      integer(kind=c_int), intent(in), value :: is_already_decomposed
       integer(kind=c_int), optional, intent(in) :: error
 
       complex(kind=c_float_complex), pointer :: a(:, :), b(:, :), q(:, :)
       real(kind=c_float), pointer :: ev(:)
       integer(kind=c_int), pointer            :: sc_desc(:)
+      logical :: is_already_decomposed_fortran
       type(elpa_impl_t), pointer  :: self
 
       call c_f_pointer(handle, self)
@@ -1911,8 +1938,13 @@ module elpa_impl
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
       call c_f_pointer(sc_desc_p, sc_desc, [SC_DESC_LEN])
+      if(is_already_decomposed .eq. 0) then
+        is_already_decomposed_fortran = .false.
+      else
+        is_already_decomposed_fortran = .true.
+      end if
 
-      call elpa_generalized_eigenvectors_fc(self, a, b, ev, q, sc_desc, .false., error)
+      call elpa_generalized_eigenvectors_fc(self, a, b, ev, q, sc_desc, is_already_decomposed_fortran, error)
     end subroutine
 
 #endif

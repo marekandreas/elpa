@@ -234,19 +234,23 @@ int main(int argc, char** argv) {
       /* check the results */
 #ifdef TEST_REAL
 #ifdef TEST_DOUBLE
-      status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+      status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev,
+                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
       memcpy(a, as, na_rows*na_cols*sizeof(double));
 
 #else
-      status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+      status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev,
+                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
       memcpy(a, as, na_rows*na_cols*sizeof(float));
 #endif
 #else
 #ifdef TEST_DOUBLE
-      status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+      status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev,
+                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
       memcpy(a, as, na_rows*na_cols*sizeof(complex double));
 #else
-      status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+      status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev,
+                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
       memcpy(a, as, na_rows*na_cols*sizeof(complex float));
 #endif
 #endif
