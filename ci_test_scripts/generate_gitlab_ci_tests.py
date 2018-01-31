@@ -642,14 +642,14 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
         #print("    - echo \"srun --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE\" ")
 
         if (runScalapackTest):
-            print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
-                + " /scratch/elpa/bin/configure_elpa.sh" \
-                + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
-                + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
-                + libs + " " + ldflags + " " + " " + scalapackldflags + " " + scalapackfcflags \
+            print("    - pwd")
+            print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
+                + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal --enable-scalapack-tests" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\"" )
+                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" ")
+            
+
         else:
             print("    - pwd")
             print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
@@ -657,23 +657,7 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
                 + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" ")
-            
-            
-            #print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE" \
-            #    + " /scratch/elpa/bin/configure_elpa.sh" \
-            #    + " \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" \
-            #    + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
-            #    + libs + " " + ldflags + " " + " " + scalapackldflags + " " + scalapackfcflags \
-            #    + " --enable-option-checking=fatal " + " " + mpi_configure_flag + " " + openmp[o] \
-            #    + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-            #    + " " +gpu[g] + INSTRUCTION_OPTIONS + "\"" )
-
         print("    - sleep 1")
-
-#    # do the build
-    #if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
-    #    #print("    - echo \"srun --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD\" ")
-    #    print("    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD /scratch/elpa/bin/build_elpa.sh")
 
     # do the test
 

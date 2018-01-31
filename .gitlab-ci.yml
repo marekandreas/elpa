@@ -396,7 +396,8 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -650,7 +651,8 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -904,7 +906,8 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -1158,7 +1161,8 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -1412,7 +1416,8 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -1650,7 +1655,8 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -1888,7 +1894,8 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -2126,7 +2133,8 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -2364,7 +2372,8 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -2571,7 +2580,8 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -2778,7 +2788,8 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -2985,7 +2996,8 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -3192,7 +3204,8 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-co
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -3387,7 +3400,8 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -3582,7 +3596,8 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -3777,7 +3792,8 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - srun  --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE /scratch/elpa/bin/configure_elpa.sh " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2"
+    - pwd
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma --coverage -O0\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
