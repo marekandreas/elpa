@@ -1503,12 +1503,23 @@ module elpa_impl
     !>                                              The full matrix must be set (not only one half like in scalapack).
     !>                                              Destroyed on exit (upper and lower half).
     !>
+    !>  \param b                                    Distributed matrix, part of the generalized eigenvector problem, or the
+    !>                                              product of a previous call to this function (see is_already_decomposed).
+    !>                                              Distribution is like in Scalapack.
+    !>                                              If is_already_decomposed is false, on exit replaced by the decomposition
+    !>
     !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
     !>
     !>  \param q                                    On output: Eigenvectors of a
     !>                                              Distribution is like in Scalapack.
     !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
     !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param sc_desc                              scalapack descriptor
+    !>
+    !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
+    !>                                              each subsequent call with the same b, since b then already contains
+    !>                                              decomposition and thus the decomposing step is skipped
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_generalized_eigenvectors_d(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
@@ -1615,12 +1626,23 @@ module elpa_impl
     !>                                              The full matrix must be set (not only one half like in scalapack).
     !>                                              Destroyed on exit (upper and lower half).
     !>
+    !>  \param b                                    Distributed matrix, part of the generalized eigenvector problem, or the
+    !>                                              product of a previous call to this function (see is_already_decomposed).
+    !>                                              Distribution is like in Scalapack.
+    !>                                              If is_already_decomposed is false, on exit replaced by the decomposition
+    !>
     !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
     !>
     !>  \param q                                    On output: Eigenvectors of a
     !>                                              Distribution is like in Scalapack.
     !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
     !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param sc_desc                              scalapack descriptor
+    !>
+    !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
+    !>                                              each subsequent call with the same b, since b then already contains
+    !>                                              decomposition and thus the decomposing step is skipped
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_generalized_eigenvectors_f(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
@@ -1732,12 +1754,23 @@ module elpa_impl
     !>                                              The full matrix must be set (not only one half like in scalapack).
     !>                                              Destroyed on exit (upper and lower half).
     !>
+    !>  \param b                                    Distributed matrix, part of the generalized eigenvector problem, or the
+    !>                                              product of a previous call to this function (see is_already_decomposed).
+    !>                                              Distribution is like in Scalapack.
+    !>                                              If is_already_decomposed is false, on exit replaced by the decomposition
+    !>
     !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
     !>
     !>  \param q                                    On output: Eigenvectors of a
     !>                                              Distribution is like in Scalapack.
     !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
     !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param sc_desc                              scalapack descriptor
+    !>
+    !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
+    !>                                              each subsequent call with the same b, since b then already contains
+    !>                                              decomposition and thus the decomposing step is skipped
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_generalized_eigenvectors_dc(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
@@ -1846,12 +1879,23 @@ module elpa_impl
     !>                                              The full matrix must be set (not only one half like in scalapack).
     !>                                              Destroyed on exit (upper and lower half).
     !>
+    !>  \param b                                    Distributed matrix, part of the generalized eigenvector problem, or the
+    !>                                              product of a previous call to this function (see is_already_decomposed).
+    !>                                              Distribution is like in Scalapack.
+    !>                                              If is_already_decomposed is false, on exit replaced by the decomposition
+    !>
     !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
     !>
     !>  \param q                                    On output: Eigenvectors of a
     !>                                              Distribution is like in Scalapack.
     !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
     !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param sc_desc                              scalapack descriptor
+    !>
+    !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
+    !>                                              each subsequent call with the same b, since b then already contains
+    !>                                              decomposition and thus the decomposing step is skipped
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_generalized_eigenvectors_fc(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
