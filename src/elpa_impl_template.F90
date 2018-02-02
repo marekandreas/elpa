@@ -14,15 +14,17 @@
      logical                :: is_already_decomposed
      integer                :: sc_desc(9)
 
-     logical, parameter     :: do_use_elpa_hermitian_multiply = .true.
+! using elpa internal Hermitian multiply is faster then scalapack multiply, but we need an extra
+! temporary variable. Therefore both options are provided and at the moment controled by this switch
+#define DO_USE_ELPA_HERMITIAN_MULTIPLY
 
-     ! local helper array. TODO: do we want it this way? (do we need it? )
+#ifdef DO_USE_ELPA_HERMITIAN_MULTIPLY
      MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
+#endif
 
      call self%timer_start("transform_generalized()")
 
      if (.not. is_already_decomposed) then
-       ! TODO: why I cannot use self%elpa ??
        ! B = U^T*U, B<-U
        call self%elpa_cholesky_&
            &ELPA_IMPL_SUFFIX&
@@ -35,32 +37,35 @@
        if(error .NE. ELPA_OK) return
      end if
 
-     if(do_use_elpa_hermitian_multiply) then
-       ! tmp <- inv(U^T) * A
-       call self%elpa_hermitian_multiply_&
-           &ELPA_IMPL_SUFFIX&
-           &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
-                                 self%local_nrows, self%local_ncols, error)
-       if(error .NE. ELPA_OK) return
+#ifdef DO_USE_ELPA_HERMITIAN_MULTIPLY
+     ! tmp <- inv(U^T) * A (we have to use temporary variable)
+     call self%elpa_hermitian_multiply_&
+         &ELPA_IMPL_SUFFIX&
+         &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
+                               self%local_nrows, self%local_ncols, error)
+     if(error .NE. ELPA_OK) return
 
-       a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
-     else
-       ! A <= inv(U)^T * A
-       call self%timer_start("scalapack multiply inv(U)^T * A")
-#ifdef WITH_MPI
-       call p&
-           &BLAS_CHAR&
-           &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
-                 ONE, b, 1, 1, sc_desc,  a, 1, 1, sc_desc)
+     ! A <- inv(U)^T * A
+     a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
 #else
-       call BLAS_CHAR&
-           &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
-                 ONE, b, self%na, a, self%na)
+     ! A <- inv(U)^T * A (using scalapack, we can directly update A)
+     call self%timer_start("scalapack multiply inv(U)^T * A")
+#ifdef WITH_MPI
+     call p&
+         &BLAS_CHAR&
+         &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
+               ONE, b, 1, 1, sc_desc,  a, 1, 1, sc_desc)
+#else
+     call BLAS_CHAR&
+         &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
+               ONE, b, self%na, a, self%na)
 #endif
-       call self%timer_stop("scalapack multiply inv(U)^T * A")
-     endif ! do_use_elpa_hermitian_multiply
+     call self%timer_stop("scalapack multiply inv(U)^T * A")
+#endif /* DO_USE_ELPA_HERMITIAN_MULTIPLY */
 
-     ! A <= inv(U)^T * A * inv(U)
+     ! A <- inv(U)^T * A * inv(U)
+     ! For this multiplication we do not have internal function in ELPA, 
+     ! so we have to call scalapack anyway
      call self%timer_start("scalapack multiply A * inv(U)")
 #ifdef WITH_MPI
      call p&
@@ -92,15 +97,12 @@
      integer                :: error
      integer                :: sc_desc(9)
 
-     ! local helper array. TODO: do we want it this way? (do we need it? )
-     MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
-
      call self%timer_start("transform_back_generalized()")
 
      !todo: part of eigenvectors only
      call self%timer_start("scalapack multiply inv(U) * Q")
 #ifdef WITH_MPI
-     ! Q <= inv(U) * Q
+     ! Q <- inv(U) * Q
      call p&
          &BLAS_CHAR&
          &trmm("L", "U", "N", "N", self%na, self%na, &
