@@ -70,11 +70,10 @@
  *  \param  ev      on return: float/double pointer to eigenvalues
  *  \param  q       on return: float/double float complex/double complex pointer to eigenvectors
  *  \param  is_already_decomposed   set to 1, if b already decomposed by previous call to elpa_generalized
- *  \param  sc_desc      scalapack descriptor
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
-#define elpa_generalized_eigenvectors(handle, a, b, ev, q, sc_desc, is_already_decomposed, error) _Generic((a), \
+#define elpa_generalized_eigenvectors(handle, a, b, ev, q, is_already_decomposed, error) _Generic((a), \
                 double*: \
                   elpa_generalized_eigenvectors_d, \
                 \
@@ -86,7 +85,7 @@
                 \
                 float complex*: \
                   elpa_generalized_eigenvectors_fc \
-        )(handle, a, b, ev, q, sc_desc, is_already_decomposed, error)
+        )(handle, a, b, ev, q, is_already_decomposed, error)
 
 
 /*! \brief generic C method for elpa_eigenvalues

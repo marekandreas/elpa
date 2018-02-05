@@ -156,6 +156,7 @@ module elpa_impl
      procedure, public :: autotune_step => elpa_autotune_step
      procedure, public :: autotune_set_best => elpa_autotune_set_best
 
+     procedure, private :: construct_scalapack_descriptor => elpa_construct_scalapack_descriptor
   end type elpa_impl_t
 
   !> \brief the implementation of the generic methods
@@ -343,6 +344,32 @@ module elpa_impl
       error = self%setup()
     end function
 
+    function elpa_construct_scalapack_descriptor(self, sc_desc) result(error)
+      class(elpa_impl_t), intent(inout)   :: self
+      integer                             :: error, blacs_ctx
+      integer, intent(out)                :: sc_desc(SC_DESC_LEN)
+
+#ifdef WITH_MPI
+      if (self%is_set("blacs_context") == 0) then
+        print *,"BLACS context has not been set beforehand. Aborting..."
+        stop
+      endif
+      call self%get("blacs_context", blacs_ctx, error)
+
+      sc_desc(1) = 1
+      sc_desc(2) = blacs_ctx
+      sc_desc(3) = self%na
+      sc_desc(4) = self%na
+      sc_desc(5) = self%nblk
+      sc_desc(6) = self%nblk
+      sc_desc(7) = 0
+      sc_desc(8) = 0
+      sc_desc(9) = self%local_nrows
+#else
+      sc_desc = 0
+#endif
+      error = ELPA_OK
+    end function
 
     !c> /*! \brief C interface for the implementation of the elpa_set_integer method
     !c> *  This method is available to the user as C generic elpa_set method
@@ -1515,14 +1542,12 @@ module elpa_impl
     !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
     !>                                              even if only a part of the eigenvalues is needed.
     !>
-    !>  \param sc_desc                              scalapack descriptor
-    !>
     !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
     !>                                              each subsequent call with the same b, since b then already contains
     !>                                              decomposition and thus the decomposing step is skipped
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_generalized_eigenvectors_d(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
+    subroutine elpa_generalized_eigenvectors_d(self, a, b, ev, q, is_already_decomposed, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -1536,7 +1561,6 @@ module elpa_impl
                              q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double) :: ev(self%na)
-      integer             :: sc_desc(SC_DESC_LEN)
       logical             :: is_already_decomposed
 
       integer, optional   :: error
@@ -1544,7 +1568,7 @@ module elpa_impl
       integer(kind=c_int) :: solver
       logical             :: success_l
 
-      call self%elpa_transform_generalized_d(a, b, sc_desc, is_already_decomposed, error_l)
+      call self%elpa_transform_generalized_d(a, b, is_already_decomposed, error_l)
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
@@ -1572,7 +1596,7 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      call self%elpa_transform_back_generalized_d(b, q, sc_desc, error_l)
+      call self%elpa_transform_back_generalized_d(b, q, error_l)
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
@@ -1581,15 +1605,14 @@ module elpa_impl
     end subroutine
 
     !c> void elpa_generalized_eigenvectors_d(elpa_t handle, double *a, double *b, double *ev, double *q,
-    !c> int sc_desc[9], int is_already_decomposed, int *error);
-    subroutine elpa_generalized_eigenvectors_d_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, is_already_decomposed, error) &
+    !c> int is_already_decomposed, int *error);
+    subroutine elpa_generalized_eigenvectors_d_c(handle, a_p, b_p, ev_p, q_p, is_already_decomposed, error) &
                                                             bind(C, name="elpa_generalized_eigenvectors_d")
-      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p, sc_desc_p
+      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p
       integer(kind=c_int), intent(in), value :: is_already_decomposed
       integer(kind=c_int), optional, intent(in) :: error
 
       real(kind=c_double), pointer :: a(:, :), b(:, :), q(:, :), ev(:)
-      integer(kind=c_int), pointer             :: sc_desc(:)
       logical :: is_already_decomposed_fortran
       type(elpa_impl_t), pointer  :: self
 
@@ -1598,14 +1621,13 @@ module elpa_impl
       call c_f_pointer(b_p, b, [self%local_nrows, self%local_ncols])
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
-      call c_f_pointer(sc_desc_p, sc_desc, [SC_DESC_LEN])
       if(is_already_decomposed .eq. 0) then
         is_already_decomposed_fortran = .false.
       else
         is_already_decomposed_fortran = .true.
       end if
 
-      call elpa_generalized_eigenvectors_d(self, a, b, ev, q, sc_desc, is_already_decomposed_fortran, error)
+      call elpa_generalized_eigenvectors_d(self, a, b, ev, q, is_already_decomposed_fortran, error)
     end subroutine
 
 
@@ -1638,14 +1660,12 @@ module elpa_impl
     !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
     !>                                              even if only a part of the eigenvalues is needed.
     !>
-    !>  \param sc_desc                              scalapack descriptor
-    !>
     !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
     !>                                              each subsequent call with the same b, since b then already contains
     !>                                              decomposition and thus the decomposing step is skipped
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_generalized_eigenvectors_f(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
+    subroutine elpa_generalized_eigenvectors_f(self, a, b, ev, q, is_already_decomposed, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -1658,7 +1678,6 @@ module elpa_impl
                              q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)  :: ev(self%na)
-      integer             :: sc_desc(SC_DESC_LEN)
 
       integer, optional   :: error
       logical             :: is_already_decomposed
@@ -1667,7 +1686,7 @@ module elpa_impl
 #ifdef WANT_SINGLE_PRECISION_REAL
       logical             :: success_l
 
-      call self%elpa_transform_generalized_f(a, b, sc_desc, is_already_decomposed, error_l)
+      call self%elpa_transform_generalized_f(a, b, is_already_decomposed, error_l)
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
@@ -1695,7 +1714,7 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      call self%elpa_transform_back_generalized_f(b, q, sc_desc, error_l)
+      call self%elpa_transform_back_generalized_f(b, q, error_l)
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
@@ -1709,15 +1728,14 @@ module elpa_impl
 
 
     !c> void elpa_generalized_eigenvectors_f(elpa_t handle, float *a, float *b, float *ev, float *q, 
-    !c> int sc_desc[9], int is_already_decomposed, int *error);
-    subroutine elpa_generalized_eigenvectors_f_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, is_already_decomposed, error) &
+    !c> int is_already_decomposed, int *error);
+    subroutine elpa_generalized_eigenvectors_f_c(handle, a_p, b_p, ev_p, q_p, is_already_decomposed, error) &
                                                             bind(C, name="elpa_generalized_eigenvectors_f")
-      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p, sc_desc_p
+      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p
       integer(kind=c_int), intent(in), value :: is_already_decomposed
       integer(kind=c_int), optional, intent(in) :: error
 
       real(kind=c_float), pointer :: a(:, :), b(:, :), q(:, :), ev(:)
-      integer(kind=c_int), pointer            :: sc_desc(:)
       logical :: is_already_decomposed_fortran
       type(elpa_impl_t), pointer  :: self
 
@@ -1726,14 +1744,13 @@ module elpa_impl
       call c_f_pointer(b_p, b, [self%local_nrows, self%local_ncols])
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
-      call c_f_pointer(sc_desc_p, sc_desc, [SC_DESC_LEN])
       if(is_already_decomposed .eq. 0) then
         is_already_decomposed_fortran = .false.
       else
         is_already_decomposed_fortran = .true.
       end if
 
-      call elpa_generalized_eigenvectors_f(self, a, b, ev, q, sc_desc, is_already_decomposed_fortran, error)
+      call elpa_generalized_eigenvectors_f(self, a, b, ev, q, is_already_decomposed_fortran, error)
     end subroutine
 
 
@@ -1766,14 +1783,12 @@ module elpa_impl
     !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
     !>                                              even if only a part of the eigenvalues is needed.
     !>
-    !>  \param sc_desc                              scalapack descriptor
-    !>
     !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
     !>                                              each subsequent call with the same b, since b then already contains
     !>                                              decomposition and thus the decomposing step is skipped
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_generalized_eigenvectors_dc(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
+    subroutine elpa_generalized_eigenvectors_dc(self, a, b, ev, q, is_already_decomposed, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -1787,7 +1802,6 @@ module elpa_impl
                                         q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double)            :: ev(self%na)
-      integer                        :: sc_desc(SC_DESC_LEN)
 
       integer, optional              :: error
       logical             :: is_already_decomposed
@@ -1795,7 +1809,7 @@ module elpa_impl
       integer(kind=c_int)            :: solver
       logical                        :: success_l
 
-      call self%elpa_transform_generalized_dc(a, b, sc_desc, is_already_decomposed, error_l)
+      call self%elpa_transform_generalized_dc(a, b, is_already_decomposed, error_l)
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
@@ -1823,7 +1837,7 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      call self%elpa_transform_back_generalized_dc(b, q, sc_desc, error_l)
+      call self%elpa_transform_back_generalized_dc(b, q, error_l)
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
@@ -1833,16 +1847,15 @@ module elpa_impl
 
 
     !c> void elpa_generalized_eigenvectors_dc(elpa_t handle, double complex *a, double complex *b, double *ev, double complex *q,
-    !c>                                       int sc_desc[9], int is_already_decomposed, int *error);
-    subroutine elpa_generalized_eigenvectors_dc_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, is_already_decomposed, error) &
+    !c>                                       int is_already_decomposed, int *error);
+    subroutine elpa_generalized_eigenvectors_dc_c(handle, a_p, b_p, ev_p, q_p, is_already_decomposed, error) &
                                                              bind(C, name="elpa_generalized_eigenvectors_dc")
-      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p, sc_desc_p
+      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p
       integer(kind=c_int), intent(in), value :: is_already_decomposed
       integer(kind=c_int), optional, intent(in) :: error
 
       complex(kind=c_double_complex), pointer :: a(:, :), b(:, :), q(:, :)
       real(kind=c_double), pointer :: ev(:)
-      integer(kind=c_int), pointer             :: sc_desc(:)
       logical :: is_already_decomposed_fortran
       type(elpa_impl_t), pointer  :: self
 
@@ -1851,14 +1864,13 @@ module elpa_impl
       call c_f_pointer(b_p, b, [self%local_nrows, self%local_ncols])
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
-      call c_f_pointer(sc_desc_p, sc_desc, [SC_DESC_LEN])
       if(is_already_decomposed .eq. 0) then
         is_already_decomposed_fortran = .false.
       else
         is_already_decomposed_fortran = .true.
       end if
 
-      call elpa_generalized_eigenvectors_dc(self, a, b, ev, q, sc_desc, is_already_decomposed_fortran, error)
+      call elpa_generalized_eigenvectors_dc(self, a, b, ev, q, is_already_decomposed_fortran, error)
     end subroutine
 
 
@@ -1891,14 +1903,12 @@ module elpa_impl
     !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
     !>                                              even if only a part of the eigenvalues is needed.
     !>
-    !>  \param sc_desc                              scalapack descriptor
-    !>
     !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
     !>                                              each subsequent call with the same b, since b then already contains
     !>                                              decomposition and thus the decomposing step is skipped
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_generalized_eigenvectors_fc(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
+    subroutine elpa_generalized_eigenvectors_fc(self, a, b, ev, q, is_already_decomposed, error)
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
@@ -1912,7 +1922,6 @@ module elpa_impl
                                        q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)            :: ev(self%na)
-      integer                       :: sc_desc(SC_DESC_LEN)
 
       integer, optional             :: error
       logical             :: is_already_decomposed
@@ -1921,7 +1930,7 @@ module elpa_impl
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
       logical                       :: success_l
 
-      call self%elpa_transform_generalized_fc(a, b, sc_desc, is_already_decomposed, error_l)
+      call self%elpa_transform_generalized_fc(a, b, is_already_decomposed, error_l)
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
@@ -1949,7 +1958,7 @@ module elpa_impl
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-      call self%elpa_transform_back_generalized_fc(b, q, sc_desc, error_l)
+      call self%elpa_transform_back_generalized_fc(b, q, error_l)
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
@@ -1963,16 +1972,15 @@ module elpa_impl
 
 
     !c> void elpa_generalized_eigenvectors_fc(elpa_t handle, float complex *a, float complex *b, float *ev, float complex *q,
-    !c> int sc_desc[9], int is_already_decomposed, int *error);
-    subroutine elpa_generalized_eigenvectors_fc_c(handle, a_p, b_p, ev_p, q_p, sc_desc_p, is_already_decomposed, error) &
+    !c> int is_already_decomposed, int *error);
+    subroutine elpa_generalized_eigenvectors_fc_c(handle, a_p, b_p, ev_p, q_p, is_already_decomposed, error) &
                                                              bind(C, name="elpa_generalized_eigenvectors_fc")
-      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p, sc_desc_p
+      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p
       integer(kind=c_int), intent(in), value :: is_already_decomposed
       integer(kind=c_int), optional, intent(in) :: error
 
       complex(kind=c_float_complex), pointer :: a(:, :), b(:, :), q(:, :)
       real(kind=c_float), pointer :: ev(:)
-      integer(kind=c_int), pointer            :: sc_desc(:)
       logical :: is_already_decomposed_fortran
       type(elpa_impl_t), pointer  :: self
 
@@ -1981,14 +1989,13 @@ module elpa_impl
       call c_f_pointer(b_p, b, [self%local_nrows, self%local_ncols])
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
-      call c_f_pointer(sc_desc_p, sc_desc, [SC_DESC_LEN])
       if(is_already_decomposed .eq. 0) then
         is_already_decomposed_fortran = .false.
       else
         is_already_decomposed_fortran = .true.
       end if
 
-      call elpa_generalized_eigenvectors_fc(self, a, b, ev, q, sc_desc, is_already_decomposed_fortran, error)
+      call elpa_generalized_eigenvectors_fc(self, a, b, ev, q, is_already_decomposed_fortran, error)
     end subroutine
 
 #endif

@@ -1,7 +1,7 @@
 #if 0
     subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
-            &(self, a, b, sc_desc, is_already_decomposed, error)
+            &(self, a, b, is_already_decomposed, error)
         implicit none
 #include "general/precision_kinds.F90"
         class(elpa_impl_t)  :: self
@@ -12,7 +12,7 @@
 #endif
      integer                :: error
      logical                :: is_already_decomposed
-     integer                :: sc_desc(9)
+     integer                :: sc_desc(SC_DESC_LEN)
 
 ! using elpa internal Hermitian multiply is faster then scalapack multiply, but we need an extra
 ! temporary variable. Therefore both options are provided and at the moment controled by this switch
@@ -23,6 +23,9 @@
 #endif
 
      call self%timer_start("transform_generalized()")
+
+     error = self%construct_scalapack_descriptor(sc_desc)
+     if(error .NE. ELPA_OK) return
 
      if (.not. is_already_decomposed) then
        ! B = U^T*U, B<-U
@@ -85,7 +88,7 @@
 
     subroutine elpa_transform_back_generalized_&
             &ELPA_IMPL_SUFFIX&
-            &(self, b, q, sc_desc, error)
+            &(self, b, q, error)
         implicit none
 #include "general/precision_kinds.F90"
         class(elpa_impl_t)  :: self
@@ -95,9 +98,12 @@
       MATH_DATATYPE(kind=rck) :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
      integer                :: error
-     integer                :: sc_desc(9)
+     integer                :: sc_desc(SC_DESC_LEN)
 
      call self%timer_start("transform_back_generalized()")
+
+     error = self%construct_scalapack_descriptor(sc_desc)
+     if(error .NE. ELPA_OK) return
 
      !todo: part of eigenvectors only
      call self%timer_start("scalapack multiply inv(U) * Q")

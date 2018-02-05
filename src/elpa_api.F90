@@ -824,7 +824,7 @@ module elpa_api
   !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_d_i(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
+    subroutine elpa_generalized_eigenvectors_d_i(self, a, b, ev, q, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -837,7 +837,6 @@ module elpa_api
                              q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double) :: ev(self%na)
-      integer             :: sc_desc(SC_DESC_LEN)
       logical             :: is_already_decomposed
       integer, optional   :: error
     end subroutine
@@ -862,7 +861,7 @@ module elpa_api
   !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_f_i(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
+    subroutine elpa_generalized_eigenvectors_f_i(self, a, b, ev, q, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -875,7 +874,6 @@ module elpa_api
                              q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)  :: ev(self%na)
-      integer             :: sc_desc(SC_DESC_LEN)
       logical             :: is_already_decomposed
 
       integer, optional   :: error
@@ -901,7 +899,7 @@ module elpa_api
   !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_dc_i(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
+    subroutine elpa_generalized_eigenvectors_dc_i(self, a, b, ev, q, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -915,7 +913,6 @@ module elpa_api
                                         q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double)            :: ev(self%na)
-      integer                        :: sc_desc(SC_DESC_LEN)
       logical                        :: is_already_decomposed
 
       integer, optional              :: error
@@ -941,7 +938,7 @@ module elpa_api
   !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_fc_i(self, a, b, ev, q, sc_desc, is_already_decomposed, error)
+    subroutine elpa_generalized_eigenvectors_fc_i(self, a, b, ev, q, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -954,7 +951,6 @@ module elpa_api
                                        q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)            :: ev(self%na)
-      integer                       :: sc_desc(SC_DESC_LEN)
       logical                       :: is_already_decomposed
 
       integer, optional             :: error

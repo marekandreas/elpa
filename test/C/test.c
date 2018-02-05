@@ -229,6 +229,10 @@ int main(int argc, char** argv) {
    elpa_set(handle, "process_col", my_pcol, &error);
    assert_elpa_ok(error);
 #endif
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+   elpa_set(handle, "blacs_context", my_blacs_ctxt, &error);
+   assert_elpa_ok(error);
+#endif
 
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
@@ -259,11 +263,11 @@ int main(int argc, char** argv) {
    }
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-     elpa_generalized_eigenvectors(handle, a, b, ev, z, sc_desc, 0, &error);
+     elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error);
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      //a = as, so that the problem can be solved again
      memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE));
-     elpa_generalized_eigenvectors(handle, a, b, ev, z, sc_desc, 1, &error);
+     elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error);
 #endif
 #else
    /* Solve EV problem */

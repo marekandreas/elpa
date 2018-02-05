@@ -530,6 +530,10 @@ program test
    call e%set("process_col", my_pcol, error)
    assert_elpa_ok(error)
 #endif
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+   call e%set("blacs_context", my_blacs_ctxt, error)
+   assert_elpa_ok(error)
+#endif
    call e%set("timings",1,error)
    assert_elpa_ok(e%setup())
 
@@ -631,12 +635,12 @@ program test
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      call e%timer_start("is_already_decomposed=.false.")
 #endif
-     call e%generalized_eigenvectors(a, b, ev, z, sc_desc, .false., error)
+     call e%generalized_eigenvectors(a, b, ev, z, .false., error)
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      call e%timer_stop("is_already_decomposed=.false.")
      a = as
      call e%timer_start("is_already_decomposed=.true.")
-     call e%generalized_eigenvectors(a, b, ev, z, sc_desc, .true., error)
+     call e%generalized_eigenvectors(a, b, ev, z, .true., error)
      call e%timer_stop("is_already_decomposed=.true.")
 #endif
      call e%timer_stop("e%generalized_eigenvectors()")
