@@ -92,6 +92,10 @@ integer parameter. The parent MPI communicator which includes all MPI process wh
 .TP
 .RI \fB"bandwidth"\fP:
 integer parameter. Some ELPA compute steps can be accelerated if the matrix is already in banded form. If set, ELPA assumes that the bandwidth of the matrix is the value set.
+.TP
+.RI \fB"blacs_context"\fP:
+integer parameter. The generalized eigenvalue solver \fBelpa_generalized_eigenvectors\fP(3) use internal calls to some of the scalapack routines. Thus before calling it, the user has to provide properly initialized blacs context.
+.TP
 .RI \fB"timings"\fP:
 Choose whether time measurements should be done in the ELPA routines.
 
