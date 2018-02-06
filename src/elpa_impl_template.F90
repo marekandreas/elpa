@@ -1,4 +1,3 @@
-#if 0
     subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, a, b, is_already_decomposed, error)
@@ -123,5 +122,4 @@
      call self%timer_stop("transform_back_generalized()")
 
     end subroutine
-#endif
 
