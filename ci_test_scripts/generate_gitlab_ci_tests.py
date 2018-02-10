@@ -580,7 +580,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
 
     print("# " + cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" + a + "-" + b + "-" +g + "-" + cov + "-" + instr + "-" + addr)
     print(cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" +a + "-" +b + "-" +g + "-" + cov + "-" + instr + "-" + addr + "-jobs:")
-    print("  retry: 2")
     if (MasterOnly):
         print("  only:")
         print("    - /.*master.*/")
@@ -642,7 +641,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
         #print("    - echo \"srun --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE\" ")
 
         if (runScalapackTest):
-            print("    - pwd")
             print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal --enable-scalapack-tests" + " " + mpi_configure_flag + " " + openmp[o] \
@@ -651,7 +649,6 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
             
 
         else:
-            print("    - pwd")
             print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
