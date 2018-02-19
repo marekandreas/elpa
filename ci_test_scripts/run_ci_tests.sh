@@ -12,6 +12,7 @@ ompThreads=1
 configueArg=""
 skipStep=0
 batchCommand=""
+interactiveRun="yes"
 
 function usage() {
 	cat >&2 <<-EOF
@@ -19,7 +20,7 @@ function usage() {
 		Call all the necessary steps to perform an ELPA CI test
 
 		Usage:
-		  run_ci_tests [-c configure arguments] [-j makeTasks] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-s skipStep] [-q submit command]
+		  run_ci_tests [-c configure arguments] [-j makeTasks] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-s skipStep] [-q submit command] [-i interactive run]
 
 		Options:
 		 -c configure arguments
@@ -48,13 +49,16 @@ function usage() {
 		 -q submit command
 		    Job steps will be submitted via command to a batch system (default no submission)
 
+		 -i interactive_run
+		    if "yes" NO no batch command will be triggered
+
 		 -h
 		    Print this help text
 	EOF
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:q:h" opt; do
+while getopts "c:t:j:m:n:b:o:s:q:i:h" opt; do
 	case $opt in
 		j)
 			makeTasks=$OPTARG;;
@@ -74,6 +78,8 @@ while getopts "c:t:j:m:n:b:o:s:q:h" opt; do
 			skipStep=$OPTARG;;
 		q)
 			batchCommand=$OPTARG;;
+		i)
+			interactiveRun=$OPTARG;;
 		:)
 			echo "Option -$OPTARG requires an argument" >&2;;
 		h)
@@ -89,24 +95,25 @@ then
   echo "Skipping the test since option -s has been specified"
   exit 0
 else
-  echo  $batchCommand
   if [ "$batchCommand" == "srun" ]
   then
-    echo "Running with $batchCommand with $SRUN_COMMANDLINE_CONFIGURE"
-#    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source ./ci_test_scripts/ci-env-vars && eval  ./configure $configureArgs; }'
-    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE ./ci_test_scripts/configure_step.sh "$configureArgs"
+    if [ "$interactiveRun" == "no"]
+    then
+      echo "Running with $batchCommand with $SRUN_COMMANDLINE_CONFIGURE"
+#      $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source ./ci_test_scripts/ci-env-vars && eval  ./configure $configureArgs; }'
+      $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE ./ci_test_scripts/configure_step.sh "$configureArgs"
 
-    if [ $? -ne 0 ]; then cat config.log && exit 1; fi
-    sleep 1
-    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD ./ci_test_scripts/build_step.sh $makeTasks
-    if [ $? -ne 0 ]; then exit 1; fi
-    sleep 1
-    $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=2 $SRUN_COMMANDLINE_RUN ./ci_test_scripts/test_step.sh $mpiTasks $ompThreads "TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" "
-    if [ $? -ne 0 ]; then exit 1; fi
+      if [ $? -ne 0 ]; then cat config.log && exit 1; fi
+      sleep 1
+      $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD ./ci_test_scripts/build_step.sh $makeTasks
+      if [ $? -ne 0 ]; then exit 1; fi
+      sleep 1
+      $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=2 $SRUN_COMMANDLINE_RUN ./ci_test_scripts/test_step.sh $mpiTasks $ompThreads "TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" "
+      if [ $? -ne 0 ]; then exit 1; fi
 
-    grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    if [ $? -ne 0 ]; then exit 1; fi
-
+      grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+      if [ $? -ne 0 ]; then exit 1; fi
+    fi
   else
     #eval ./configure $configureArgs
     ./ci_test_scripts/configure_step.sh "$configureArgs"

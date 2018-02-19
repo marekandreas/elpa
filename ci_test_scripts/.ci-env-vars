@@ -1,3 +1,7 @@
+
+
+if [ "$(hostname)" == "freya01" ]; then module purge && source /mpcdf/SLE_12_SP3/try_new_modules.sh && module load git intel/17.0 gcc/7 impi/2017.3  mkl/2017.3 autoconf automake libtool pkg-config; fi
+
 if [ "$(hostname)" == "buildtest-rzg" ]; then module load impi/5.1.3 intel/16.0 gcc/6.3 mkl/11.3 autotools pkg-config; fi
 
 if [ "$(hostname)" == "knl1" -o "$(hostname)" == "knl2" -o "$(hostname)" == "knl3" -o "$(hostname)" == "knl4" ] ; then module load impi/2017.4 intel/17.0 gcc/7.2 mkl/2017 pkg-config; fi
