@@ -97,7 +97,7 @@ then
 else
   if [ "$batchCommand" == "srun" ]
   then
-    if [ "$interactiveRun" == "no"]
+    if [ "$interactiveRun" == "no" ]
     then
       echo "Running with $batchCommand with $SRUN_COMMANDLINE_CONFIGURE"
 #      $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source ./ci_test_scripts/ci-env-vars && eval  ./configure $configureArgs; }'
