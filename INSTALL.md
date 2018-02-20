@@ -286,17 +286,17 @@ Remarks: - you have to know the name of the Intel Fortran compiler wrapper
 	 - you should specify compiler flags for Intel Fortran compiler; in the example only "-O3 -xAVX2" is set
 	 - you should be carefull with the CFLAGS. The example shows typical flags
 
-FC=wrapper_for_intel_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -march=native -mavx2 -mfma funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
+FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -march=native -mavx2 -mfma -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
 
 
 2. Building with GNU Fortran compiler and GNU C compiler:
 
 Remarks: - you have to know the name of the GNU Fortran compiler wrapper
-         - you do not have to specify a C compiler (with CC); GNU C compiler is recognized automatically
+         - you DO have to specify a C compiler (with CC); GNU C compiler is recognized automatically
 	 - you should specify compiler flags for GNU Fortran compiler; in the example only "-O3 -march=native -mavx2 -mfma" is set
 	 - you should be carefull with the CFLAGS. The example shows typical flags
 
-FC=wrapper_for_gnu_compiler ./configure FCFLAGS="-O3 -march=native -mavx2 -mfma" CFLAGS="-O3 -march=native -mavx2 -mfma funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
+FC=mpi_wrapper_for_gnu_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -march=native -mavx2 -mfma" CFLAGS="-O3 -march=native -mavx2 -mfma  -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
 
 
 2. Building with Intel Fortran compiler and Intel C compiler:
@@ -306,7 +306,7 @@ Remarks: - you have to know the name of the Intel Fortran compiler wrapper
 	 - you should specify compiler flags for Intel Fortran compiler; in the example only "-O3 -xAVX2" is set
 	 - you should be carefull with the CFLAGS. The example shows typical flags
 
-FC=wrapper_for_gnu_compiler CC=icc ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -xAVX2" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
+FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -xAVX2" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
 
 
 
