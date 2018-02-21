@@ -196,6 +196,7 @@ print("  - export LANG=C")
 print("  - ulimit -s unlimited")
 print("  - ulimit -v unlimited")
 print("  - echo \"HOST \" $(hostname)")
+print("  - echo $CI_RUNNER_DESCRIPTION")
 print("  - if [ \"$(hostname)\" = \"buildtest-rzg\" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && source ./ci_test_scripts/.ci-env-vars; fi")
 print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-1\" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && source ./ci_test_scripts/.ci-env-vars; fi")
 print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-2\" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && source ./ci_test_scripts/.ci-env-vars; fi")
@@ -203,7 +204,7 @@ print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-3\" ]; then module
 print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-4\" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && source ./ci_test_scripts/.ci-env-vars; fi")
 
 
-print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"frey01-interactive\" ]; then export INTERACTIVE_RUN=yes ; fi")
+print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"freya01-interactive\" ]; then export INTERACTIVE_RUN=yes ; fi")
 
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-1\" ]; then export INTERACTIVE_RUN=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-2\" ]; then export INTERACTIVE_RUN=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
