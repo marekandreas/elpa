@@ -56,6 +56,18 @@ module test_prepare_matrix
    end interface
 
 
+  interface prepare_matrix_random_spd
+    module procedure prepare_matrix_random_spd_complex_double
+    module procedure prepare_matrix_random_spd_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_random_spd_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_random_spd_complex_single
+#endif
+   end interface
+
+
   interface prepare_matrix_toeplitz
     module procedure prepare_matrix_toeplitz_complex_double
     module procedure prepare_matrix_toeplitz_real_double

@@ -66,19 +66,39 @@
 #error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
+#ifdef TEST_GENERALIZED_DECOMP_EIGENPROBLEM
+#define TEST_GENERALIZED_EIGENPROBLEM
+#endif
+
 #ifdef TEST_SINGLE
 #  define EV_TYPE float
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE float
+#    define PREPARE_MATRIX_RANDOM prepare_matrix_random_real_single_f
+#    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_real_single_f
+#    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_single_f
+#    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_single_f
 #  else
 #    define MATRIX_TYPE complex float
+#    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_single_f
+#    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_single_f
+#    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_single_f
+#    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_single_f
 #  endif
 #else
 #  define EV_TYPE double
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE double
+#    define PREPARE_MATRIX_RANDOM prepare_matrix_random_real_double_f
+#    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_real_double_f
+#    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_double_f
+#    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_double_f
 #  else
 #    define MATRIX_TYPE complex double
+#    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_double_f
+#    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_double_f
+#    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_double_f
+#    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_double_f
 #  endif
 #endif
 
@@ -101,7 +121,7 @@ int main(int argc, char** argv) {
    int my_blacs_ctxt, sc_desc[9], info;
 
    /* The Matrix */
-   MATRIX_TYPE *a, *as, *z;
+   MATRIX_TYPE *a, *as, *z, *b, *bs;
    EV_TYPE *ev;
 
    int error, status;
@@ -164,18 +184,12 @@ int main(int argc, char** argv) {
    as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
    ev = calloc(na, sizeof(EV_TYPE));
 
-#ifdef TEST_REAL
-#ifdef TEST_DOUBLE
-   prepare_matrix_random_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
-#else
-   prepare_matrix_random_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
-#endif
-#else
-#ifdef TEST_DOUBLE
-   prepare_matrix_random_complex_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
-#else
-   prepare_matrix_random_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
-#endif
+   PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+   b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   bs = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, b, z, bs, nblk, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
    if (elpa_init(CURRENT_API_VERSION) != ELPA_OK) {
@@ -215,6 +229,10 @@ int main(int argc, char** argv) {
    elpa_set(handle, "process_col", my_pcol, &error);
    assert_elpa_ok(error);
 #endif
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+   elpa_set(handle, "blacs_context", my_blacs_ctxt, &error);
+   assert_elpa_ok(error);
+#endif
 
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
@@ -243,27 +261,30 @@ int main(int argc, char** argv) {
    if (myid == 0) {
      printf("Solver is set to %d \n", value);
    }
+
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+     elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error);
+#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
+     //a = as, so that the problem can be solved again
+     memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE));
+     elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error);
+#endif
+#else
    /* Solve EV problem */
    elpa_eigenvectors(handle, a, ev, z, &error);
+#endif
    assert_elpa_ok(error);
 
    elpa_deallocate(handle);
    elpa_uninit();
 
-
    /* check the results */
-#ifdef TEST_REAL
-#ifdef TEST_DOUBLE
-   status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+   status = CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
+                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
 #else
-   status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
-#endif
-#else
-#ifdef TEST_DOUBLE
-   status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
-#else
-   status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
-#endif
+   status = CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
+                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
    if (status !=0){
@@ -277,6 +298,10 @@ int main(int argc, char** argv) {
    free(z);
    free(as);
    free(ev);
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+   free(b);
+   free(bs);
+#endif
 
 #ifdef WITH_MPI
    MPI_Finalize();

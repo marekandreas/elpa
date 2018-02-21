@@ -851,6 +851,63 @@ if test x"${need_avx512}" = x"yes"; then
     AC_MSG_ERROR([Could not compile a test program with AVX512, adjust the C compiler or CFLAGS])
   fi
   AC_DEFINE([HAVE_AVX512],[1],[AVX512 is supported on this CPU])
+
+  if test x"$can_compile_avx512" = x"yes"; then
+    AC_MSG_CHECKING([whether we compile for Xeon])
+    AC_RUN_IFELSE([AC_LANG_SOURCE([
+     #include <x86intrin.h>
+     int main(int argc, char **argv){
+     __m512d sign;
+     __m512d h1_real;
+
+     __m512d x1 = _mm512_xor_pd(h1_real, sign);
+     return 0;
+     }
+     ])],
+     [can_compile_avx512_xeon=yes],
+     [can_compile_avx512_xeon=no]
+    )
+    AC_MSG_RESULT([${can_compile_avx512_xeon}])
+
+    AC_MSG_CHECKING([whether we compile for Xeon PHI])
+    AC_RUN_IFELSE([AC_LANG_SOURCE([
+     #include <x86intrin.h>
+     int main(int argc, char **argv){
+     __m512d sign;
+     __m512d h1;
+     __m512d h2_real;
+
+     __m512d x1 = (__m512d) _mm512_xor_epi64((__m512i) h2_real, (__m512i) sign);
+     return 0;
+     }
+     ])],
+     [can_compile_avx512_xeon_phi=yes],
+     [can_compile_avx512_xeon_phi=no]
+    )
+    AC_MSG_RESULT([${can_compile_avx512_xeon_phi}])
+
+    # this is needed for the intel compiler
+    if test x"$can_compile_avx512_xeon" = x"yes" ; then
+      if test x"$can_compile_avx512_xeon_phi" = x"yes" ; then
+        # we want only one to be true; this is ugly but could not come up with a better way
+        grep Phi /proc/cpuinfo > /dev/null
+        if test x"$?" = x"0" ; then
+	  echo "Xeon PHI found ... disabling AVX512 Xeon"
+          can_compile_avx512_xeon=no
+        fi
+      fi
+    fi
+
+    if test x"$can_compile_avx512_xeon" = x"yes"; then
+      AC_DEFINE([HAVE_AVX512_XEON],[1],[AVX512 for Xeon is supported on this CPU])
+    else
+      if test x"$can_compile_avx512_xeon_phi" = x"yes"; then
+        AC_DEFINE([HAVE_AVX512_XEON_PHI],[1],[AVX512 for Xeon-PHI is supported on this CPU])
+      else
+        AC_MSG_ERROR([Oho! We can neither compile AVX512 intrinsics for Xeon nor Xeon Phi. This should not happen!])
+      fi
+    fi
+  fi
 fi
 AC_LANG_POP([C])
 
@@ -1157,5 +1214,5 @@ if test x"$enable_kcomputer" = x"yes" ; then
   echo "call: make -f ../generated_headers.am generated-headers top_srcdir=.."
   echo "BEFORE triggering the build with make!"
 else
-  make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir"
+  make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi

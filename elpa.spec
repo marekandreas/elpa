@@ -286,9 +286,7 @@ popd
 
 %files tools
 %attr(0755,root,root) %{_bindir}/elpa2_print_kernels
-%attr(0755,root,root) %{_bindir}/elpa_tests
 %attr(0644,root,root) %{_mandir}/man1/elpa2_print_kernels.1.gz
-%attr(0644,root,root) %{_mandir}/man1/elpa_tests.1.gz
 
 %files devel
 %defattr(-,root,root)
@@ -313,7 +311,6 @@ popd
 %files -n %{name}_openmp-tools
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/elpa2_print_kernels_openmp
-%attr(0755,root,root) %{_bindir}/elpa_tests_openmp
 
 
 %files -n %{name}_openmp-devel

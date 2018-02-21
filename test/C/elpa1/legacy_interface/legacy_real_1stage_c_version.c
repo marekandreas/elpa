@@ -233,9 +233,12 @@ int main(int argc, char** argv) {
 
 #ifdef DOUBLE_PRECISION_REAL
    /* check the results */
-   status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+   status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev,
+                                   sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+
 #else
-   status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev, sc_desc, myid);
+   status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev,
+                                   sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #endif
    if (status !=0){
      printf("The computed EVs are not correct !\n");

@@ -448,6 +448,7 @@ dist_man_MANS = \
   man/elpa_setup.3 \
   man/elpa_eigenvalues.3 \
   man/elpa_eigenvectors.3 \
+  man/elpa_generalized_eigenvectors.3 \
   man/elpa_cholesky.3 \
   man/elpa_invert_triangular.3 \
   man/elpa_solve_tridiagonal.3 \

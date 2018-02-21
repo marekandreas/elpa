@@ -58,7 +58,6 @@
       real(kind=rk) :: xr(size(a,dim=1), size(a,dim=2))
 #endif /* COMPLEXCASE */
 
-
       integer, allocatable :: iseed(:)
       integer ::  n
 
@@ -174,6 +173,98 @@ subroutine prepare_matrix_random_&
       & (na, myid, sc_desc, a, z, as)
     end subroutine
 
+!----------------------------------------------------------------------------------------------------------------
+
+    subroutine prepare_matrix_random_spd_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (na, myid, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
+
+      use test_util
+      implicit none
+#include "../../src/general/precision_kinds.F90"
+      integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
+      MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
+      integer, intent(in)        ::  nblk, np_rows, np_cols, my_prow, my_pcol
+
+      integer                    :: ii, rowLocal, colLocal
+
+
+      call prepare_matrix_random_&
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION&
+        & (na, myid, sc_desc, a, z, as)
+
+      ! hermitian diagonaly dominant matrix => positive definite
+      do ii=1, na
+        if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+          a(rowLocal,colLocal) = real(a(rowLocal, colLocal)) + na + 1
+        end if
+      end do
+
+      as = a
+
+   end subroutine
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> void prepare_matrix_random_spd_real_double_f(int na, int myid, int na_rows, int na_cols,
+    !c>                                       int sc_desc[9],
+    !c>                                       double *a, double *z, double *as,
+    !c>                                       int nblk, int np_rows, int np_cols, int my_prow, int my_pcol);
+#else
+    !c> void prepare_matrix_random_spd_real_single_f(int na, int myid, int na_rows, int na_cols,
+    !c>                                       int sc_desc[9],
+    !c>                                       float *a, float *z, float *as,
+    !c>                                       int nblk, int np_rows, int np_cols, int my_prow, int my_pcol);
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> void prepare_matrix_random_spd_complex_double_f(int na, int myid, int na_rows, int na_cols,
+    !c>                                       int sc_desc[9],
+    !c>                                       complex double *a, complex double *z, complex double *as,
+    !c>                                       int nblk, int np_rows, int np_cols, int my_prow, int my_pcol);
+#else
+    !c> void prepare_matrix_random_spd_complex_single_f(int na, int myid, int na_rows, int na_cols,
+    !c>                                       int sc_desc[9],
+    !c>                                       complex float *a, complex float *z, complex float *as,
+    !c>                                       int nblk, int np_rows, int np_cols, int my_prow, int my_pcol);
+#endif
+#endif /* COMPLEXCASE */
+
+subroutine prepare_matrix_random_spd_&
+&MATH_DATATYPE&
+&_wrapper_&
+&PRECISION&
+& (na, myid, na_rows, na_cols, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol) &
+   bind(C, name="prepare_matrix_random_spd_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   &_f")
+      use iso_c_binding
+
+      implicit none
+#include "../../src/general/precision_kinds.F90"
+
+      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
+      integer(kind=c_int)           :: sc_desc(1:9)
+      MATH_DATATYPE(kind=rck)    :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
+                                       as(1:na_rows,1:na_cols)
+      integer(kind=c_int) , value   :: nblk, np_rows, np_cols, my_prow, my_pcol
+      call prepare_matrix_random_spd_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      & (na, myid, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
+    end subroutine
+
+
+!----------------------------------------------------------------------------------------------------------------
 
    subroutine prepare_matrix_toeplitz_&
    &MATH_DATATYPE&

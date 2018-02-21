@@ -119,13 +119,11 @@ module elpa_api
           elpa_eigenvalues_dc, &
           elpa_eigenvalues_fc
 
-#if 0
       generic, public :: generalized_eigenvectors => &              !< method eigenvectors for solving the full generalized eigenvalue problem
           elpa_generalized_eigenvectors_d, &                        !< the eigenvalues and (parts of) the eigenvectors are computed
           elpa_generalized_eigenvectors_f, &                        !< for symmetric real valued / hermitian complex valued matrices
           elpa_generalized_eigenvectors_dc, &
           elpa_generalized_eigenvectors_fc
-#endif
 
       generic, public :: hermitian_multiply => &                    !< method for a "hermitian" multiplication of matrices a and b
           elpa_hermitian_multiply_d, &                              !< for real valued matrices:   a**T * b
@@ -171,12 +169,10 @@ module elpa_api
       procedure(elpa_eigenvalues_dc_i), deferred, public :: elpa_eigenvalues_dc
       procedure(elpa_eigenvalues_fc_i), deferred, public :: elpa_eigenvalues_fc
 
-#if 0
       procedure(elpa_generalized_eigenvectors_d_i),    deferred, public :: elpa_generalized_eigenvectors_d
       procedure(elpa_generalized_eigenvectors_f_i),    deferred, public :: elpa_generalized_eigenvectors_f
       procedure(elpa_generalized_eigenvectors_dc_i), deferred, public :: elpa_generalized_eigenvectors_dc
       procedure(elpa_generalized_eigenvectors_fc_i), deferred, public :: elpa_generalized_eigenvectors_fc
-#endif
 
       procedure(elpa_hermitian_multiply_d_i),  deferred, public :: elpa_hermitian_multiply_d
       procedure(elpa_hermitian_multiply_f_i),  deferred, public :: elpa_hermitian_multiply_f
@@ -804,7 +800,6 @@ module elpa_api
     end subroutine
   end interface
 
-#if 0
   !> \brief abstract definition of interface to solve double real generalized eigenvalue problem
   !>
   !>  The dimensions of the matrix a and b (locally ditributed and global), the block-cyclic distribution
@@ -821,9 +816,10 @@ module elpa_api
   !> \param   b           double real matrix b: defines the problem to solve
   !> \param   ev          double real: on output stores the eigenvalues
   !> \param   q           double real matrix q: on output stores the eigenvalues
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_d_i(self, a, b, ev, q, sc_desc, error)
+    subroutine elpa_generalized_eigenvectors_d_i(self, a, b, ev, q, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -836,8 +832,7 @@ module elpa_api
                              q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double) :: ev(self%na)
-      integer             :: sc_desc(SC_DESC_LEN)
-
+      logical             :: is_already_decomposed
       integer, optional   :: error
     end subroutine
   end interface
@@ -858,9 +853,10 @@ module elpa_api
   !> \param   b           single real matrix b: defines the problem to solve
   !> \param   ev          single real: on output stores the eigenvalues
   !> \param   q           single real matrix q: on output stores the eigenvalues
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_f_i(self, a, b, ev, q, sc_desc, error)
+    subroutine elpa_generalized_eigenvectors_f_i(self, a, b, ev, q, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -873,7 +869,7 @@ module elpa_api
                              q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)  :: ev(self%na)
-      integer             :: sc_desc(SC_DESC_LEN)
+      logical             :: is_already_decomposed
 
       integer, optional   :: error
     end subroutine
@@ -895,9 +891,10 @@ module elpa_api
   !> \param   b           double complex matrix b: defines the problem to solve
   !> \param   ev          double real: on output stores the eigenvalues
   !> \param   q           double complex matrix q: on output stores the eigenvalues
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_dc_i(self, a, b, ev, q, sc_desc, error)
+    subroutine elpa_generalized_eigenvectors_dc_i(self, a, b, ev, q, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -911,7 +908,7 @@ module elpa_api
                                         q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_double)            :: ev(self%na)
-      integer                        :: sc_desc(SC_DESC_LEN)
+      logical                        :: is_already_decomposed
 
       integer, optional              :: error
     end subroutine
@@ -933,9 +930,10 @@ module elpa_api
   !> \param   b           single complex matrix b: defines the problem to solve
   !> \param   ev          single real: on output stores the eigenvalues
   !> \param   q           single complex matrix q: on output stores the eigenvalues
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_fc_i(self, a, b, ev, q, sc_desc, error)
+    subroutine elpa_generalized_eigenvectors_fc_i(self, a, b, ev, q, is_already_decomposed, error)
       use iso_c_binding
       use elpa_constants
       import elpa_t
@@ -948,12 +946,11 @@ module elpa_api
                                        q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=c_float)            :: ev(self%na)
-      integer                       :: sc_desc(SC_DESC_LEN)
+      logical                       :: is_already_decomposed
 
       integer, optional             :: error
     end subroutine
   end interface
-#endif
 
 
   !> \brief abstract definition of interface to compute C : = A**T * B for double real matrices

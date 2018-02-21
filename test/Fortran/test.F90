@@ -75,6 +75,9 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #endif
 #endif
 
+#ifdef TEST_GENERALIZED_DECOMP_EIGENPROBLEM
+#define TEST_GENERALIZED_EIGENPROBLEM
+#endif
 
 #ifdef TEST_SINGLE
 #  define EV_TYPE real(kind=C_FLOAT)
@@ -138,20 +141,19 @@ program test
 #if defined(TEST_HERMITIAN_MULTIPLY)
    MATRIX_TYPE, allocatable    :: b(:,:), c(:,:)
 #endif
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+   MATRIX_TYPE, allocatable    :: b(:,:), bs(:,:)
+#endif
    ! eigenvectors
    MATRIX_TYPE, allocatable    :: z(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable        :: ev(:), ev_analytic(:)
+   EV_TYPE, allocatable        :: ev(:)
 
    logical                     :: check_all_evals
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || TEST_QR_DECOMPOSITION == 1 || defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
    EV_TYPE, allocatable        :: d(:), sd(:), ds(:), sds(:)
    EV_TYPE                     :: diagonalELement, subdiagonalElement
-#endif
-#if defined(TEST_CHOLESKY)
-   MATRIX_TYPE, allocatable    :: d(:), sd(:), ds(:), sds(:)
-   MATRIX_TYPE                 :: diagonalELement, subdiagonalElement
 #endif
 
    integer                     :: error, status
@@ -167,7 +169,8 @@ program test
 #endif
    integer                     :: kernel
    character(len=1)            :: layout
-   logical                     :: do_test_numeric_residual, do_test_analytic_eigenvalues, &
+   logical                     :: do_test_numeric_residual, do_test_numeric_residual_generalized, &
+                                  do_test_analytic_eigenvalues, &
                                   do_test_analytic_eigenvalues_eigenvectors,   &
                                   do_test_frank_eigenvalues,  &
                                   do_test_toeplitz_eigenvalues, do_test_cholesky,   &
@@ -186,6 +189,7 @@ program test
 
 
    do_test_numeric_residual = .false.
+   do_test_numeric_residual_generalized = .false.
    do_test_analytic_eigenvalues = .false.
    do_test_analytic_eigenvalues_eigenvectors = .false.
    do_test_frank_eigenvalues = .false.
@@ -280,10 +284,14 @@ program test
    allocate(c (na_rows,na_cols))
 #endif
 
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || TEST_QR_DECOMPOSITION == 1|| defined(TEST_CHOLESKY)
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+   allocate(b (na_rows,na_cols))
+   allocate(bs (na_rows,na_cols))
+#endif
+
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
    allocate(d (na), ds(na))
    allocate(sd (na), sds(na))
-   allocate(ev_analytic(na))
 #endif
 
    a(:,:) = 0.0
@@ -295,27 +303,15 @@ program test
    ! correctness checks have been implemented; do not allow these
    ! combinations
    ! RANDOM + TEST_SOLVE_TRIDIAGONAL: we need a TOEPLITZ MATRIX
-   ! RANDOM + TEST_CHOLESKY: no correctness check yet implemented
+   ! RANDOM + TEST_CHOLESKY: wee need SPD matrix
    ! RANDOM + TEST_EIGENVALUES: no correctness check known
 
    ! We also have to take care of special case in TEST_EIGENVECTORS
 #if !defined(TEST_EIGENVECTORS)
     call prepare_matrix_random(na, myid, sc_desc, a, z, as)
-
-    do_test_analytic_eigenvalues = .false.
-    do_test_analytic_eigenvalues_eigenvectors = .false.
-    do_test_frank_eigenvalues = .false.
-    do_test_toeplitz_eigenvalues = .false.
-
 #else /* TEST_EIGENVECTORS */
-
     if (nev .ge. 1) then
      call prepare_matrix_random(na, myid, sc_desc, a, z, as)
-
-    do_test_analytic_eigenvalues = .false.
-    do_test_analytic_eigenvalues_eigenvectors = .false.
-    do_test_frank_eigenvalues = .false.
-    do_test_toeplitz_eigenvalues = .false.
 #ifndef TEST_HERMITIAN_MULTIPLY
     do_test_numeric_residual = .true.
 #endif
@@ -327,12 +323,36 @@ program test
      call mpi_finalize(mpierr)
 #endif
      stop 77
-
    endif
-
 #endif /* TEST_EIGENVECTORS */
+    do_test_analytic_eigenvalues = .false.
+    do_test_analytic_eigenvalues_eigenvectors = .false.
+    do_test_frank_eigenvalues = .false.
+    do_test_toeplitz_eigenvalues = .false.
 #endif /* (TEST_MATRIX_RANDOM) */
-#if defined(TEST_MATRIX_RANDOM) && (defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_CHOLESKY) || defined(TEST_EIGENVALUES))
+
+#if defined(TEST_MATRIX_RANDOM) && defined(TEST_CHOLESKY)
+     call prepare_matrix_random_spd(na, myid, sc_desc, a, z, as, &
+                 nblk, np_rows, np_cols, my_prow, my_pcol)
+    do_test_analytic_eigenvalues = .false.
+    do_test_analytic_eigenvalues_eigenvectors = .false.
+    do_test_frank_eigenvalues = .false.
+    do_test_toeplitz_eigenvalues = .false.
+#endif /* TEST_MATRIX_RANDOM and TEST_CHOLESKY */
+
+#if defined(TEST_MATRIX_RANDOM) && defined(TEST_GENERALIZED_EIGENPROBLEM)
+   ! call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+    call prepare_matrix_random_spd(na, myid, sc_desc, b, z, bs, &
+                 nblk, np_rows, np_cols, my_prow, my_pcol)
+    do_test_analytic_eigenvalues = .false.
+    do_test_analytic_eigenvalues_eigenvectors = .false.
+    do_test_frank_eigenvalues = .false.
+    do_test_toeplitz_eigenvalues = .false.
+    do_test_numeric_residual = .false.
+    do_test_numeric_residual_generalized = .true.
+#endif /* TEST_MATRIX_RANDOM and TEST_GENERALIZED_EIGENPROBLEM */
+
+#if defined(TEST_MATRIX_RANDOM) && (defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVALUES))
 #error "Random matrix is not allowed in this configuration"
 #endif
 
@@ -377,13 +397,14 @@ program test
    subdiagonalElement =  0.78_c_double
 #endif
 
+! actually we test cholesky for diagonal matrix only
 #if defined(TEST_CHOLESKY)
 #ifdef TEST_SINGLE
-   diagonalElement = (2.546_c_float, 0.0_c_float)
-   subdiagonalElement =  (0.0_c_float, 0.0_c_float)
+  diagonalElement = (2.546_c_float, 0.0_c_float)
+  subdiagonalElement =  (0.0_c_float, 0.0_c_float)
 #else
-   diagonalElement = (2.546_c_double, 0.0_c_double)
-   subdiagonalElement =  (0.0_c_double, 0.0_c_double)
+  diagonalElement = (2.546_c_double, 0.0_c_double)
+  subdiagonalElement =  (0.0_c_double, 0.0_c_double)
 #endif
 #endif /* TEST_CHOLESKY */
 
@@ -409,6 +430,7 @@ program test
 #else
    do_test_toeplitz_eigenvalues = .true.
 #endif
+
 #endif /* TEST_MATRIX_TOEPLITZ */
 
 
@@ -508,6 +530,10 @@ program test
    call e%set("process_col", my_pcol, error)
    assert_elpa_ok(error)
 #endif
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+   call e%set("blacs_context", my_blacs_ctxt, error)
+   assert_elpa_ok(error)
+#endif
    call e%set("timings",1,error)
    assert_elpa_ok(e%setup())
 
@@ -594,6 +620,7 @@ program test
 #if defined(TEST_CHOLESKY)
      call e%timer_start("e%cholesky()")
      call e%cholesky(a, error)
+     assert_elpa_ok(error)
      call e%timer_stop("e%cholesky()")
 #endif
 
@@ -601,6 +628,22 @@ program test
      call e%timer_start("e%hermitian_multiply()")
      call e%hermitian_multiply('F','F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, error)
      call e%timer_stop("e%hermitian_multiply()")
+#endif
+
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+     call e%timer_start("e%generalized_eigenvectors()")
+#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
+     call e%timer_start("is_already_decomposed=.false.")
+#endif
+     call e%generalized_eigenvectors(a, b, ev, z, .false., error)
+#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
+     call e%timer_stop("is_already_decomposed=.false.")
+     a = as
+     call e%timer_start("is_already_decomposed=.true.")
+     call e%generalized_eigenvectors(a, b, ev, z, .true., error)
+     call e%timer_stop("is_already_decomposed=.true.")
+#endif
+     call e%timer_stop("e%generalized_eigenvectors()")
 #endif
 
      assert_elpa_ok(error)
@@ -633,6 +676,9 @@ program test
 #ifdef TEST_HERMITIAN_MULTIPLY
        call e%print_times("e%hermitian_multiply()")
 #endif
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+      call e%print_times("e%generalized_eigenvectors()")
+#endif
 #endif /* TEST_ALL_KERNELS */
      endif
 
@@ -645,6 +691,7 @@ program test
        status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, .true.)
        call check_status(status, myid)
      endif
+
      if(do_test_numeric_residual) then
        status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
        call check_status(status, myid)
@@ -675,13 +722,21 @@ program test
      endif
 #endif
 
+#ifdef TEST_GENERALIZED_EIGENPROBLEM
+     if(do_test_numeric_residual_generalized) then
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, &
+       my_pcol, bs)
+       call check_status(status, myid)
+     endif
+#endif
+
      if (myid == 0) then
        print *, ""
      endif
 
 #ifdef TEST_ALL_KERNELS
      a(:,:) = as(:,:)
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || TEST_QR_DECOMPOSITION == 1 || defined(TEST_CHOLESKY)
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
      d = ds
      sd = sds
 #endif
@@ -698,10 +753,12 @@ program test
    deallocate(b)
    deallocate(c)
 #endif
-#if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVECTORS) || TEST_QR_DECOMPOSITION == 1 || defined(TEST_CHOLESKY)
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
    deallocate(d, ds)
    deallocate(sd, sds)
-   deallocate(ev_analytic)
+#endif
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+  deallocate(b, bs)
 #endif
 
 #ifdef TEST_ALL_LAYOUTS
