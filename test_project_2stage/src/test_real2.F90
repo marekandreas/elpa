@@ -42,7 +42,7 @@
 !
 !>
 !> Fortran test programm to demonstrates the use of
-!> ELPA 1 real case library.
+!> ELPA 2 real case library.
 !> If "HAVE_REDIRECT" was defined at build time
 !> the stdout and stderr output of each MPI task
 !> can be redirected to files if the environment
@@ -215,7 +215,7 @@ program test_real_example
    ! Calculate eigenvalues/eigenvectors
 
    if (myid==0) then
-     print '(a)','| Entering one-step ELPA solver ... '
+     print '(a)','| Entering two-step ELPA solver ... '
      print *
    end if
 
@@ -223,7 +223,7 @@ program test_real_example
    call e%eigenvectors(a, ev, z, success)
 
    if (myid==0) then
-     print '(a)','| One-step ELPA solver complete.'
+     print '(a)','| Two-step ELPA solver complete.'
      print *
    end if
 

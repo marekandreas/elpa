@@ -9,7 +9,7 @@ is 20171201. This release supports the earliest API version 20170403.
 status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)
 
 [![Code 
-coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](http://elpa.pages.mpcdf.de/elpa/coverage_summary
+coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](http://elpa.pages.mpcdf.de/elpa/coverage_summary)
 
 [![License: LGPL v3][license-badge]](LICENSE)
 [license-badge]: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
@@ -54,7 +54,7 @@ There exist several ways to obtain the *ELPA* library either as sources or pre-c
 
 - official release tar-gz sources from the [*ELPA* webpage] (http://elpa.mpcdf.mpg.de/elpa-tar-archive)
 - from the [*ELPA* git repository] (https://gitlab.mpcdf.mpg.de/elpa/elpa)
-- as packaged software for several Linux distribtutions (e.g. Debian, Fedora, OpenSuse)
+- as packaged software for several Linux distributions (e.g. Debian, Fedora, OpenSuse)
 
 ## Terms of usage
 
@@ -81,7 +81,7 @@ Nonetheless, we are grateful if you cite the following publications:
 
 ## Installation of the *ELPA* library
 
-*ELPA* is shipped with a standard autotools automake installation infrastruture.
+*ELPA* is shipped with a standard autotools automake installation infrastructure.
 Some other libraries are needed to install *ELPA* (the details depend on how you
 configure *ELPA*):
 
@@ -97,7 +97,7 @@ the possible configure options.
 ## Using *ELPA*
 
 Please have a look at the "**USERS_GUIDE**" file, to get a documentation or at the [online]
-(http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.05.003/html/index.html) doygen
+(http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2017.11.001/html/index.html) doxygen
 documentation, where you find the definition of the interfaces.
 
 ## Contributing to *ELPA*
@@ -105,7 +105,7 @@ documentation, where you find the definition of the interfaces.
 It has been, and is, a tremendous effort to develop and maintain the
 *ELPA* library. A lot of things can still be done, but our man-power is limited.
 
-Thus every effort and help to improve the *ELPA* library is higly appreciated.
+Thus every effort and help to improve the *ELPA* library is highly appreciated.
 For details please see the CONTRIBUTING document.
 
 

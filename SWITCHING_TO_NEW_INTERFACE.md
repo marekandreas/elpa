@@ -1,4 +1,4 @@
-## Documentation how to switch from the legay API to the new API of the *ELPA* library ##
+## Documentation how to switch from the legacy API to the new API of the *ELPA* library ##
 
 
 ### Using *ELPA* from a Fortran code ###
@@ -31,7 +31,7 @@ useGPU=[.false.|.true.], choice of ELPA 2stage kernel .... New parameters were l
 the *ELPA* library to reflect the growing functionality.
 
 
-The new interface of *ELPA* is more generic, which ,however, requires ONCE the adaption of the user code if the new
+The new interface of *ELPA* is more generic, which, however, requires ONCE the adaption of the user code if the new
 interface should be used.
 
 This are the new steps to do (again it is assumed that MPI and a distributed matrix in block-cyclic scalapack layout is already created in
@@ -50,21 +50,6 @@ the user application):
    endif
 
    e => elpa_allocate()
-
-!>   call e%set("solver", ELPA_SOLVER_2STAGE, success)
-!> \endcode
-!>   ... set and get all other options that are desired
-!> \code{.f90}
-!>
-!>   ! use method solve to solve the eigenvalue problem
-!>   ! other possible methods are desribed in \ref elpa_api::elpa_t derived type
-!>   call e%eigenvectors(a, ev, z, success)
-!>
-!>   ! cleanup
-!>   call elpa_deallocate(e)
-!>
-!>   call elpa_uninit()
-
 
 
 3. set the parameters which describe the matrix setup and the MPI
@@ -87,7 +72,7 @@ the user application):
 
 5. set/get any possible option (see man pages)
 
-   call e%get("qr", qr, success)                        ! querry whether QR-decomposition is set
+   call e%get("qr", qr, success)                        ! query whether QR-decomposition is set
    print *, "qr =", qr
    if (success .ne. ELPA_OK) stop
 
