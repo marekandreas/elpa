@@ -22,7 +22,7 @@ IF AND ONLY IF *ELPA* has been build with support of this legacy interface.
 
 If you want to use the legacy interface, please look to section "B) Using the legacy API of the *ELPA* library.
 
-The legacy API defines all the functionallity as it has been defined in *ELPA* release 2016.11.011. Note, however,
+The legacy API defines all the functionality as it has been defined in *ELPA* release 2016.11.011. Note, however,
 that all future features of *ELPA* will only be accessible via the new API defined in release 2017.05.001 or later.
 
 ## A) Using the final API definition of the *ELPA* library ##
@@ -89,7 +89,7 @@ The *ELPA* library consists of two main parts:
 
 Both variants of the *ELPA* solvers are available for real or complex singe and double precision valued matrices.
 
-Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2016.11.001/html/index.html) for details):
+Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2017.11.001/html/index.html) for details):
 
 - elpa_get_communicators                        : set the row / column communicators for *ELPA*
 - elpa_solve_evp_complex_1stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 1stage* solver
@@ -106,7 +106,7 @@ which *ELPA 2stage* compute kernels have been installed and which default kernel
 
 If you want to solve an eigenvalue problem with *ELPA*, you have to decide whether you
 want to use *ELPA 1stage* or *ELPA 2stage* solver. Normally, *ELPA 2stage* is the better
-choice since it is faster, but there a matrix dimensions where *ELPA 1stage* is supperior.
+choice since it is faster, but there are matrix dimensions where *ELPA 1stage* is superior.
 
 Independent of the choice of the solver, the concept of calling *ELPA* is always the same:
 
@@ -121,7 +121,7 @@ To solve a Eigenvalue problem of this matrix with *ELPA*, one has
 
 Here is a very simple MPI code snippet for using *ELPA 1stage*: For the definition of all variables
 please have a look at the man pages and/or the online documentation (see above). A full version
-of a simple example program can be found in ./test_project/src.
+of a simple example program can be found in ./test_project_1stage_legacy_api/src.
 
 
    ! All ELPA routines need MPI communicators for communicating within
@@ -309,7 +309,7 @@ The *ELPA 2stage* solver can be used in the same manner, as the *ELPA 1stage* so
 However, the 2 stage solver, can be used with different compute kernels, which offers
 more possibilities for configuration.
 
-It is recommended to first call the utillity program
+It is recommended to first call the utility program
 
 elpa2_print_kernels
 
@@ -325,13 +325,13 @@ the default kernels will be set.
 
 ##### Setting the *ELPA 2stage* compute kernels with environment variables#####
 
-If the *ELPA* installation allows setting ther compute kernels with enviroment variables,
+If the *ELPA* installation allows setting their compute kernels with environment variables,
 setting the variables "REAL_ELPA_KERNEL" and "COMPLEX_ELPA_KERNEL" will set the compute
 kernels. The environment variable setting will take precedence over all other settings!
 
 The utility program "elpa2_print_kernels" can list which kernels are available and which
-would be choosen. This reflects, as well the setting of the default kernel or the settings
-with the environment variables
+would be chosen. This reflects the setting of the default kernel as well as the setting
+with the environment variables.
 
 ##### Setting the *ELPA 2stage* compute kernels with API calls#####
 

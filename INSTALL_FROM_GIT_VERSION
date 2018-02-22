@@ -12,7 +12,7 @@ features/improvements for ELPA, and a rebuild of the autotools scripts
 will be necessary anyway.
 
 Thus please run "autogen.sh" after your changes, in order to build the
-autotoos scripts. Note that autoconf version >= 2.69 is needed for
+autotools scripts. Note that autoconf version >= 2.69 is needed for
 ELPA.
 
 After this step, please proceed as written in the "INSTALL" file.

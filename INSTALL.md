@@ -4,7 +4,7 @@
 
 This file provides documentation on how to build the *ELPA* library in **version ELPA-2017.11.001**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
-which makes it easier to install the *ELPA* library
+which makes it easier to install the *ELPA* library.
 
 ## How to install *ELPA *##
 
@@ -80,7 +80,7 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
   --with-gpu-support-only Compile and always use the GPU version
 
 
-We recommend that you do not build ELPA in it`s main directory but that you use it
+We recommend that you do not build ELPA in its main directory but that you use it
 in a sub-directory:
 
 mkdir build
@@ -99,7 +99,7 @@ For details, please have a look at the documentation for the compilers of your c
 
 ### Choice of building with or without MPI ###
 
-It is possible to build the *ELPA* library with or without MPI support
+It is possible to build the *ELPA* library with or without MPI support.
 
 Normally *ELPA* is build with MPI, in order to speed-up calculations by using distributed
 parallelisation over several nodes. This is, however, only reasonably if the programs
@@ -123,7 +123,7 @@ cannot automatically found, it is recommended to set it by hand with a variable,
 
 configure FC=mpif90
 
-Please note, thate setting a C MPI-compiler is NOT necessary, and in most case even harmful.
+Please note, that setting a C MPI-compiler is NOT necessary, and in most cases even harmful.
 
 In some cases, on your system different MPI libraries and compilers are installed. Then it might happen
 that during the build step an error like "no module mpi" or "cannot open module mpi" is given.
@@ -151,8 +151,8 @@ configure FC=gfortran --with-mpi=0
 
 DO NOT specify a MPI compiler here!
 
-Note, that the the installed *ELPA* library files will be suffixed with
-"_onenode", in order to descriminate this build from possible ones with MPI.
+Note, that the installed *ELPA* library files will be suffixed with
+"_onenode", in order to discriminate this build from possible ones with MPI.
 
 
 Please continue reading at "C) Enabling GPU support"
@@ -185,14 +185,14 @@ shared-memory parallization, since *ELPA* is build without MPI support (see B).
 
 To enable OpenMP support, add
 
-"--enable-openmp"
+--enable-openmp
 
 as configure option.
 
 Note that as in case with/without MPI, you can also build and install versions of *ELPA*
 with/without OpenMP support at the same time.
 
-However, the GPU choice at runtime, is not compatible with OpenMP support
+However, the GPU choice at runtime is not compatible with OpenMP support.
 
 Please continue reading at "E) Standard libraries in default installation paths".
 
@@ -229,14 +229,14 @@ variables.
 For example, due to performance reasons it might be benefical to use the *BLAS*, *BLACS*, *LAPACK*,
 and *SCALAPACK* implementation from *Intel's MKL* library.
 
-Togehter with the Intel Fortran Compiler the call to configure might then look like:
+Together with the Intel Fortran Compiler the call to configure might then look like:
 
 configure SCALAPACK_LDFLAGS="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential \
                              -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKL_HOME/lib/intel64" \
 	  SCALAPACK_FCFLAGS="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential \
 	                      -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -I$MKL_HOME/include/intel64/lp64"
 
-and for *INTEL MKL* togehter with *GNU GFORTRAN* :
+and for *INTEL MKL* together with *GNU GFORTRAN* :
 
 configure SCALAPACK_LDFLAGS="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential \
                              -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -Wl,-rpath,$MKL_HOME/lib/intel64" \
@@ -245,7 +245,7 @@ configure SCALAPACK_LDFLAGS="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_
 
 
 Please, for the correct link-line refer to the documentation of the correspondig library. In case of *Intel's MKL* we
-sugest the [Intel Math Kernel Library Link Line Advisor] (https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor).
+suggest the [Intel Math Kernel Library Link Line Advisor] (https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor).
 
 
 ### G) Choice of ELPA2 compute kernels ###
@@ -281,32 +281,35 @@ with GNU compiler for the C part.
 
 1. Building with Intel Fortran compiler and GNU C compiler:
 
-Remarks: - you have to know the name of the Intel Fortran compiler wrapper
-         - you do not have to specify a C compiler (with CC); GNU C compiler is recognized automatically
-	 - you should specify compiler flags for Intel Fortran compiler; in the example only "-O3 -xAVX2" is set
-	 - you should be carefull with the CFLAGS. The example shows typical flags
+Remarks:
+  - you have to know the name of the Intel Fortran compiler wrapper
+  - you do not have to specify a C compiler (with CC); GNU C compiler is recognized automatically
+  - you should specify compiler flags for Intel Fortran compiler; in the example only "-O3 -xAVX2" is set
+  - you should be careful with the CFLAGS, the example shows typical flags
 
-FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -march=native -mavx2 -mfma -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
+FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -march=native -mavx2 -mfma -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
 
 
 2. Building with GNU Fortran compiler and GNU C compiler:
 
-Remarks: - you have to know the name of the GNU Fortran compiler wrapper
-         - you DO have to specify a C compiler (with CC); GNU C compiler is recognized automatically
-	 - you should specify compiler flags for GNU Fortran compiler; in the example only "-O3 -march=native -mavx2 -mfma" is set
-	 - you should be carefull with the CFLAGS. The example shows typical flags
+Remarks: 
+  - you have to know the name of the GNU Fortran compiler wrapper
+  - you DO have to specify a C compiler (with CC); GNU C compiler is recognized automatically
+  - you should specify compiler flags for GNU Fortran compiler; in the example only "-O3 -march=native -mavx2 -mfma" is set
+  - you should be careful with the CFLAGS, the example shows typical flags
 
-FC=mpi_wrapper_for_gnu_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -march=native -mavx2 -mfma" CFLAGS="-O3 -march=native -mavx2 -mfma  -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
+FC=mpi_wrapper_for_gnu_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -march=native -mavx2 -mfma" CFLAGS="-O3 -march=native -mavx2 -mfma  -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
 
 
 2. Building with Intel Fortran compiler and Intel C compiler:
 
-Remarks: - you have to know the name of the Intel Fortran compiler wrapper
-         - you have to specify the Intel C compiler
-	 - you should specify compiler flags for Intel Fortran compiler; in the example only "-O3 -xAVX2" is set
-	 - you should be carefull with the CFLAGS. The example shows typical flags
+Remarks:
+  - you have to know the name of the Intel Fortran compiler wrapper
+  - you have to specify the Intel C compiler
+  - you should specify compiler flags for Intel Fortran compiler; in the example only "-O3 -xAVX2" is set
+  - you should be careful with the CFLAGS, the example shows typical flags
 
-FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -xAVX2" --enable-option-checking=fatal SCALAPACK_LDFLAGS="L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
+FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -xAVX2" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
 
 
 

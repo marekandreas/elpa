@@ -215,7 +215,7 @@ program test_real_example
                             na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
-      write(error_unit,*) "solve_evp_real_1stage produced an error! Aborting..."
+      write(error_unit,*) "elpa_solve_evp_real_1stage_double produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 
