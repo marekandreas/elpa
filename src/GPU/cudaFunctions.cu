@@ -306,9 +306,9 @@ extern "C" {
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);     
   }
   
-  void cublasZgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, double complex alpha,
-                               const double complex *A, int lda,  const double complex *x, int incx,
-                               double complex beta, double complex *y, int incy) {    
+  void cublasZgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, double _Complex alpha,
+                               const double _Complex *A, int lda,  const double _Complex *x, int incx,
+                               double _Complex beta, double _Complex *y, int incy) {    
 
     cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
     cuDoubleComplex beta_casted = *((cuDoubleComplex*)(&beta));
@@ -321,9 +321,9 @@ extern "C" {
                 m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);     
   }
   
-  void cublasCgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, float complex alpha,
-                               const float complex *A, int lda,  const float complex *x, int incx,
-                               float complex beta, float complex *y, int incy) {    
+  void cublasCgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, float _Complex alpha,
+                               const float _Complex *A, int lda,  const float _Complex *x, int incx,
+                               float _Complex beta, float _Complex *y, int incy) {    
 
     cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
     cuFloatComplex beta_casted = *((cuFloatComplex*)(&beta));
@@ -356,9 +356,9 @@ extern "C" {
   }
 
   void cublasZgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
-                               double complex alpha, const double complex *A, int lda,
-                               const double complex *B, int ldb, double complex beta,
-                               double complex *C, int ldc) {
+                               double _Complex alpha, const double _Complex *A, int lda,
+                               const double _Complex *B, int ldb, double _Complex beta,
+                               double _Complex *C, int ldc) {
     
     cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
     cuDoubleComplex beta_casted = *((cuDoubleComplex*)(&beta));
@@ -372,9 +372,9 @@ extern "C" {
   }
 
   void cublasCgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
-                               float complex alpha, const float complex *A, int lda,
-                               const float complex *B, int ldb, float complex beta,
-                               float complex *C, int ldc) {
+                               float _Complex alpha, const float _Complex *A, int lda,
+                               const float _Complex *B, int ldb, float _Complex beta,
+                               float _Complex *C, int ldc) {
     
     cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
     cuFloatComplex beta_casted = *((cuFloatComplex*)(&beta));
@@ -409,8 +409,8 @@ extern "C" {
   }
 
   void cublasZtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
-                               int m, int n, double complex alpha, const double complex *A,
-                               int lda, double complex *B, int ldb){
+                               int m, int n, double _Complex alpha, const double _Complex *A,
+                               int lda, double _Complex *B, int ldb){
 
     cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
     
@@ -422,8 +422,8 @@ extern "C" {
   }
 
   void cublasCtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
-                               int m, int n, float complex alpha, const float complex *A,
-                               int lda, float complex *B, int ldb){
+                               int m, int n, float _Complex alpha, const float _Complex *A,
+                               int lda, float _Complex *B, int ldb){
 
     cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
     
