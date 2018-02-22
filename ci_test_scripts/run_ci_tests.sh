@@ -113,6 +113,21 @@ else
 
       grep -i "Expected %stop" test-suite.log && exit 1 || true ;
       if [ $? -ne 0 ]; then exit 1; fi
+    else
+    #eval ./configure $configureArgs
+    ./ci_test_scripts/configure_step.sh "$configureArgs"
+
+    if [ $? -ne 0 ]; then cat config.log && exit 1; fi
+    
+    make -j $makeTasks
+    if [ $? -ne 0 ]; then exit 1; fi
+    
+    OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite-log; exit 1; }
+    if [ $? -ne 0 ]; then exit 1; fi
+     
+    grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    if [ $? -ne 0 ]; then exit 1; fi
+
     fi
   else
     #eval ./configure $configureArgs
