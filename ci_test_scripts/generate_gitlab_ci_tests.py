@@ -205,6 +205,7 @@ print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-4\" ]; then module
 
 
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"freya01-interactive\" ]; then export INTERACTIVE_RUN=yes ; fi")
+print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"freya01-interactive-2\" ]; then export INTERACTIVE_RUN=yes ; fi")
 
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-1\" ]; then export INTERACTIVE_RUN=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-2\" ]; then export INTERACTIVE_RUN=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
