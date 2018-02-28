@@ -135,15 +135,17 @@ program print_available_elpa2_kernels
 
    contains
 
-     subroutine print_options(e, option_name)
+     subroutine print_options(e, KERNEL_KEY)
        class(elpa_t), intent(inout) :: e
-       character(len=*), intent(in) :: option_name
-       integer :: i, option
+       character(len=*), intent(in) :: KERNEL_KEY
+       integer                      :: i, kernel,error
 
-       do i = 0, elpa_option_cardinality(option_name) - 1
-         option = elpa_option_enumerate(option_name, i)
-         if (e%can_set(option_name, option) == ELPA_OK) then
-           print *, "  ", elpa_int_value_to_string(option_name, option)
+       call e%set("solver",ELPA_SOLVER_2STAGE,error)
+
+       do i = 0, elpa_option_cardinality(KERNEL_KEY)
+         kernel = elpa_option_enumerate(KERNEL_KEY, i)
+         if (e%can_set(KERNEL_KEY, kernel) == ELPA_OK) then
+           print *, "  ", elpa_int_value_to_string(KERNEL_KEY, kernel)
          endif
        end do
      end subroutine
