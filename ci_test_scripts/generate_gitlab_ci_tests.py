@@ -430,12 +430,12 @@ coverage = {
         "no-coverage": "no-coverage",
 }
 
+        #"knl" : "--enable-avx512",
 instruction_set = {
         "sse" : " --enable-sse --enable-sse-assembly",
         "avx" : " --enable-avx",
         "avx2" : " --enable-avx2",
         "avx512" : "--enable-avx512",
-        "knl" : "--enable-avx512",
         "power8" : " --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 ",
 }
 

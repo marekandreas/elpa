@@ -7481,27 +7481,6 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
 
 
 
-# gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=native\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-address-sanitize
 gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-address-sanitize-jobs:
   tags:
@@ -7633,27 +7612,6 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=native\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -7797,27 +7755,6 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
 
 
 
-# gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=native\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-address-sanitize
 gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-address-sanitize-jobs:
   tags:
@@ -7949,27 +7886,6 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=native\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -9709,27 +9625,6 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
 
 
 
-# gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=native\" FC=\"ifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-address-sanitize
 gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-address-sanitize-jobs:
   tags:
@@ -9861,27 +9756,6 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-gnu-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=native\" FC=\"ifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -10025,27 +9899,6 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
 
 
 
-# gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=native\" FC=\"ifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-address-sanitize
 gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-address-sanitize-jobs:
   tags:
@@ -10177,27 +10030,6 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=native\" FC=\"ifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -11710,27 +11542,6 @@ intel-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
 
 
 
-# intel-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-intel-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xMIC-AVX512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # intel-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-no-address-sanitize
 intel-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-no-address-sanitize-jobs:
   tags:
@@ -11782,27 +11593,6 @@ intel-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xCORE-AVX512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# intel-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-intel-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xMIC-AVX512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -11866,27 +11656,6 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
 
 
 
-# intel-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-intel-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xMIC-AVX512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # intel-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-no-address-sanitize
 intel-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-no-address-sanitize-jobs:
   tags:
@@ -11938,27 +11707,6 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xCORE-AVX512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xMIC-AVX512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -12770,27 +12518,6 @@ intel-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-n
 
 
 
-# intel-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-intel-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xMIC-AVX512\" FC=\"ifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # intel-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-no-address-sanitize
 intel-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-no-address-sanitize-jobs:
   tags:
@@ -12842,27 +12569,6 @@ intel-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blockin
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xCORE-AVX512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# intel-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-intel-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xMIC-AVX512\" FC=\"ifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
@@ -12926,27 +12632,6 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blockin
 
 
 
-# intel-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-intel-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xMIC-AVX512\" FC=\"ifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # intel-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-no-address-sanitize
 intel-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu-no-coverage-sse-no-address-sanitize-jobs:
   tags:
@@ -12998,27 +12683,6 @@ intel-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-bloc
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xCORE-AVX512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
-    - sleep 1
-    - sleep 1
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# intel-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize
-intel-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-knl-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  tags:
-    - knl
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST "with constraints " $CONTSTRAINTS 
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY" 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"icc\" CFLAGS=\"-O3 -xMIC-AVX512\" FC=\"ifort\" FCFLAGS=\"-O3 -xMIC-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx512" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN 
     - sleep 1
     - sleep 1
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
