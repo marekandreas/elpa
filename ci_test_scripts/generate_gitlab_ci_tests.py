@@ -186,8 +186,8 @@ def set_cflags_fcflags(instr, cc, fc, instruction_set):
 #define the stages
 print("stages:")
 print("  - test")
-print("  - coverage")
-print("  - deploy")
+#print("  - coverage")
+#print("  - deploy")
 print("\n\n")
 
 #define before test actions
@@ -277,34 +277,34 @@ print("  - chmod u+w -R .")
 print("\n\n")
 
 
-#define the total coverage phase
-print("# print coverage results")
-print("total_coverage:")
-print("  only:")
-print("    - /.*master.*/")
-print("  stage: coverage")
-print("  tags:")
-print("    - coverage")
-print("  script:")
-print("    - echo \"Generating coverage report\"")
-print("    - ./ci_test_scripts/ci_coverage_summary")
-print("  artifacts:")
-print("    paths:")
-print("      - public")
-print("\n\n")
-
-print("pages:")
-print("  stage: deploy")
-print("  tags:")
-print("    - coverage")
-print("  script:")
-print("    - echo \"Publishing pages\"")
-print("  artifacts:")
-print("    paths:")
-print("      - public")
-print("  only:")
-print("    - master")
-print("\n\n")
+##define the total coverage phase
+#print("# print coverage results")
+#print("total_coverage:")
+#print("  only:")
+#print("    - /.*master.*/")
+#print("  stage: coverage")
+#print("  tags:")
+#print("    - coverage")
+#print("  script:")
+#print("    - echo \"Generating coverage report\"")
+#print("    - ./ci_test_scripts/ci_coverage_summary")
+#print("  artifacts:")
+#print("    paths:")
+#print("      - public")
+#print("\n\n")
+#
+#print("pages:")
+#print("  stage: deploy")
+#print("  tags:")
+#print("    - coverage")
+#print("  script:")
+#print("    - echo \"Publishing pages\"")
+#print("  artifacts:")
+#print("    paths:")
+#print("      - public")
+#print("  only:")
+#print("    - master")
+#print("\n\n")
 
 print("static-build:")
 print("  tags:")
@@ -456,8 +456,8 @@ matrix_size = {
 }
 
 MPI_TASKS=2
-
-for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
+#                             sorted(coverage.keys()),     
+for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                              sorted(c_compiler.keys()),
                              sorted(fortran_compiler.keys()),
                              sorted(mpi.keys()),
@@ -466,11 +466,11 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
                              sorted(assumed_size.keys()),
                              sorted(band_to_full_blocking.keys()),
                              sorted(gpu.keys()),
-                             sorted(coverage.keys()),
                              sorted(instruction_set.keys()),
                              sorted(address_sanitize_flag.keys()),
                              sorted(matrix_size.keys())):
 
+    cov = "no-coverage"
 
     nev = 150
     nblk = 16
@@ -659,12 +659,10 @@ for cc, fc, m, o, p, a, b, g, cov, instr, addr, na in product(
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
                 + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -i $INTERACTIVE_RUN ")
-        print("    - sleep 1")
 
     # do the test
 
     if ( instr == "avx2" or instr == "avx512" or instr == "knl"  or g == "with-gpu"):
-        print("    - sleep 1")
         if (o == "openmp"):
             if (cov == "no-coverage"):
                 openmp_threads=" 2 "
