@@ -104,10 +104,8 @@ else
       $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE ./ci_test_scripts/configure_step.sh "$configureArgs"
 
       if [ $? -ne 0 ]; then cat config.log && exit 1; fi
-      sleep 1
       $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=8 $SRUN_COMMANDLINE_BUILD ./ci_test_scripts/build_step.sh $makeTasks
       if [ $? -ne 0 ]; then exit 1; fi
-      sleep 1
       $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=2 $SRUN_COMMANDLINE_RUN ./ci_test_scripts/test_step.sh $mpiTasks $ompThreads "TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" "
       if [ $? -ne 0 ]; then exit 1; fi
 
