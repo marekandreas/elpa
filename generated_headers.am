@@ -18,6 +18,7 @@ config-f90.h: config.h
 
 generated_headers += elpa/elpa_generated.h
 elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
+                       $(top_srcdir)/src/elpa_impl_math_template.F90 \
                        $(top_srcdir)/src/elpa_api.F90 | elpa
 	@rm -f $@
 	$(call extract_interface,!c>)

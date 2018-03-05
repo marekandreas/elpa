@@ -1,4 +1,4 @@
-    subroutine elpa_transform_generalized_&
+   subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, a, b, is_already_decomposed, error)
         implicit none
@@ -62,6 +62,7 @@
          &trmm("L", "U", BLAS_TRANS_OR_CONJ, "N", self%na, self%na, &
                ONE, b, self%na, a, self%na)
 #endif
+
      call self%timer_stop("scalapack multiply inv(U)^T * A")
 #endif /* DO_USE_ELPA_HERMITIAN_MULTIPLY */
 

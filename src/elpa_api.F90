@@ -513,14 +513,12 @@ module elpa_api
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
-#ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "general/precision_macros.h"
 #include "elpa_api_math_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
-#endif /* WANT_SINGLE_PRECISION_REAL */
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
@@ -529,14 +527,12 @@ module elpa_api
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
 #include "general/precision_macros.h"
 #include "elpa_api_math_template.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
-#endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 ! end of math routines
 
