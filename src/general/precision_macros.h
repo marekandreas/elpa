@@ -9,6 +9,7 @@
 #undef  SPECIAL_COMPLEX_DATATYPE
 #undef  PRECISION_STR
 #undef  REAL_DATATYPE
+#undef  C_REAL_DATATYPE
 
 #undef  PRECISION_TRTRI
 #undef  PRECISION_POTRF
@@ -63,6 +64,7 @@
 #define  PRECISION_SUFFIX "_double"
 #define  ELPA_IMPL_SUFFIX d
 #define  REAL_DATATYPE rk8
+#define  C_REAL_DATATYPE c_double
 #define  BLAS_CHAR D
 #define BLAS_CHAR_AND_SY_OR_HE DSY
 #define  SPECIAL_COMPLEX_DATATYPE ck8
@@ -116,6 +118,7 @@
 #define  PRECISION_SUFFIX "_single"
 #define  ELPA_IMPL_SUFFIX f
 #define  REAL_DATATYPE rk4
+#define  C_REAL_DATATYPE c_float
 #define  BLAS_CHAR S
 #define  BLAS_CHAR_AND_SY_OR_HE SSY
 #define  SPECIAL_COMPLEX_DATATYPE ck4
@@ -174,6 +177,7 @@
 #undef COMPLEX_DATATYPE
 /* in the complex case also sometime real valued variables are needed */
 #undef REAL_DATATYPE
+#undef C_REAL_DATATYPE
 
 #undef  PRECISION_TRTRI
 #undef  PRECISION_POTRF
@@ -238,6 +242,7 @@
 #define BLAS_CHAR Z
 #define BLAS_CHAR_AND_SY_OR_HE ZHE
 #define REAL_DATATYPE RK8
+#define C_REAL_DATATYPE c_double
 
 #define  PRECISION_TRTRI ZTRTRI
 #define  PRECISION_POTRF ZPOTRF
@@ -295,6 +300,7 @@
 #define BLAS_CHAR C
 #define BLAS_CHAR_AND_SY_OR_HE CHE
 #define REAL_DATATYPE RK4
+#define C_REAL_DATATYPE c_float
 
 #define  PRECISION_TRTRI CTRTRI
 #define  PRECISION_POTRF CPOTRF
