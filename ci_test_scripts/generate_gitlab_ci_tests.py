@@ -608,6 +608,9 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                print("    - gpu")
         else:
             print("    - " + instr)
+    print("  artifacts:")
+    print("    when: on_success")
+    print("    expire_in: 2 month")
     print("  script:")
 
     (fortran_compiler_wrapper, c_compiler_wrapper) = set_compiler_wrappers(mpi, fc, cc, instr, fortran_compiler, c_compiler)
