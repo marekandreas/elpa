@@ -625,7 +625,7 @@
 #ifdef USE_ASSUMED_SIZE
       MATH_DATATYPE(kind=C_DATATYPE_KIND)                       :: b(nrows_b,*), c(nrows_c,*)
 #else
-      MATH_DATATYPE(kind=C_DATATTYPE_KIND)                       :: b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+      MATH_DATATYPE(kind=C_DATATYPE_KIND)                       :: b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
       type(elpa_impl_t), pointer                :: self
 
