@@ -661,7 +661,7 @@ EXTRA_DIST = \
   src/GPU/cuUtils_template.cu \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
-  src/elpa_impl_generalized_transform.F90 \
+  src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa1/elpa1_merge_systems_real_template.F90 \
   src/elpa1/elpa1_solve_tridi_real_template.F90 \
