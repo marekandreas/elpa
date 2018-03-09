@@ -186,16 +186,28 @@
       endif
 
       ! 2. Eigenvector orthogonality
-      !TODO for the generalized eigenvector problem, the orthogonality test has to be altered
-      !TODO at the moment, it is skipped
-      if(.not. present(bs)) then
-      ! tmp1 = Z**T * Z
+      if(present(bs)) then
+        !for the generalized EVP, the eigenvectors should be B-orthogonal, not orthogonal
+        ! tmp2 = B * Z
+        tmp2(:,:) = 0.0_rck
+#ifdef WITH_MPI
+        call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, &
+                        sc_desc, z, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
+#else /* WITH_MPI */
+        call PRECISION_GEMM('N','N', na, nev, na, ONE, bs, na, z, na, ZERO, tmp2, na)
+#endif /* WITH_MPI */
+
+      else
+        tmp2(:,:) = z(:,:)
+      endif
+      ! tmp1 = Z**T * tmp2
+      ! actually tmp1 = Z**T * Z for standard case and tmp1 = Z**T * B * Z for generalized
       tmp1 = 0
 #ifdef WITH_MPI
       call scal_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nev, nev, na, ONE, z, 1, 1, &
-                        sc_desc, z, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+                        sc_desc, tmp2, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
 #else /* WITH_MPI */
-      call PRECISION_GEMM(BLAS_TRANS_OR_CONJ,'N',nev,nev,na,ONE,z,na,z,na,ZERO,tmp1,na)
+      call PRECISION_GEMM(BLAS_TRANS_OR_CONJ,'N',nev,nev,na,ONE,z,na,tmp2,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
       ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
       err = 0.0_rk
@@ -231,16 +243,16 @@
       errmax = err
 #endif /* WITH_MPI */
       if (myid==0) print *,'Error Orthogonality:',errmax
-        if (nev .ge. 2) then
-          if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
-            status = 1
-          endif
-        else
-          if (errmax .gt. tol_orth) then
-            status = 1
-          endif
+
+      if (nev .ge. 2) then
+        if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
+          status = 1
         endif
-      endif  ! skiping test of orthogonality for generalized eigenproblem
+      else
+        if (errmax .gt. tol_orth) then
+          status = 1
+        endif
+      endif
     end function
 
 
