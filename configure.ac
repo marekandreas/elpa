@@ -109,6 +109,14 @@ if test x"${enable_openmp}" = x"yes"; then
   CFLAGS="$OPENMP_CFLAGS $CFLAGS"
 fi
 
+
+AX_CHECK_COMPILE_FLAG([-std=c11], [
+  CFLAGS+=" -std=c11"
+], [
+  echo "C compiler cannot compile C11 code"
+  exit -1
+])
+
 AC_PROG_INSTALL
 AM_PROG_AR
 AM_PROG_AS
