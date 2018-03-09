@@ -105,17 +105,16 @@
      error = self%construct_scalapack_descriptor(sc_desc)
      if(error .NE. ELPA_OK) return
 
-     !todo: part of eigenvectors only
      call self%timer_start("scalapack multiply inv(U) * Q")
 #ifdef WITH_MPI
      ! Q <- inv(U) * Q
      call p&
          &BLAS_CHAR&
-         &trmm("L", "U", "N", "N", self%na, self%na, &
+         &trmm("L", "U", "N", "N", self%na, self%nev, &
                ONE, b, 1, 1, sc_desc,  q, 1, 1, sc_desc)
 #else
      call BLAS_CHAR&
-         &trmm("L", "U", "N", "N", self%na, self%na, &
+         &trmm("L", "U", "N", "N", self%na, self%nev, &
                ONE, b, self%na, q, self%na)
 #endif
      call self%timer_stop("scalapack multiply inv(U) * Q")
