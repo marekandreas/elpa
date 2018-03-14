@@ -51,7 +51,7 @@ The return error code of the function. Should be "ELPA_OK". The error code can b
 elpa_t handle;
 
 .br
-.RI "void \fBelpa_eigenvalues\fP(\fBelpa_t\fP handle, \fBdatatype\fP *a, \fBdatatype\fP *ev, \fBdatatype\fP *q, \fBint\fP *error);"
+.RI "void \fBelpa_generalized_eigenvectors\fP(\fBelpa_t\fP handle, \fBdatatype\fP *a, \fBdatatype\fP *b, \fBdatatype\fP *ev, \fBdatatype\fP *q,  \fBint\fP is_already_decomposed, \fBint\fP *error);"
 .br
 .RI " "
 .br
@@ -65,6 +65,9 @@ The handle to the ELPA object
 .RI "datatype *\fBa\fP;"
 The matrix a for which the eigenvalues should be computed. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".
 .TP
+.RI "datatype *\fBb\fP;"
+The matrix b defining the generalized eigenvalue problem. The dimensions and the datatype of the matrix b must be the same as matrix a.
+.TP
 .RI "datatype *\fBev\fP;"
 The storage for the computed eigenvalues. Eigenvalues will be stored in \fIascendig\fP order. The \fBdatatype\fP can be either "double" or "float". Note that the eigenvalues of complex hermitian matrices are also real.
 .TP
@@ -72,9 +75,7 @@ The storage for the computed eigenvalues. Eigenvalues will be stored in \fIascen
 The storage space for the computed eigenvectors. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".
 .TP
 .RI "int \fBis_already_decomposed\fP;"
-Has to be set to 0 for the first call with a given b and 1 for
-each subsequent call with the same b, since b then already contains
-decomposition and thus the decomposing step is skipped.
+Has to be set to 0 for the first call with a given b and 1 for each subsequent call with the same b, since b then already contains decomposition and thus the decomposing step is skipped.
 .TP
 .RI "int *\fBerror\fP;"
 The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)
