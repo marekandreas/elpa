@@ -113,6 +113,12 @@ module elpa_impl
      procedure, public :: elpa_generalized_eigenvectors_dc
      procedure, public :: elpa_generalized_eigenvectors_fc
 
+     procedure, public :: elpa_generalized_eigenvalues_d      !< public methods to implement the solve step for generalized 
+                                                              !< eigenproblem and real/complex double/single matrices
+     procedure, public :: elpa_generalized_eigenvalues_f
+     procedure, public :: elpa_generalized_eigenvalues_dc
+     procedure, public :: elpa_generalized_eigenvalues_fc
+
      procedure, public :: elpa_hermitian_multiply_d            !< public methods to implement a "hermitian" multiplication of matrices a and b
      procedure, public :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
      procedure, public :: elpa_hermitian_multiply_dc           !< for complex valued matrices:   a**H * b

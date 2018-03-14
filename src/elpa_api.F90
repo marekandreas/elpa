@@ -125,6 +125,12 @@ module elpa_api
           elpa_generalized_eigenvectors_dc, &
           elpa_generalized_eigenvectors_fc
 
+      generic, public :: generalized_eigenvalues => &              !< method eigenvectors for solving the full generalized eigenvalue problem
+          elpa_generalized_eigenvalues_d, &                        !< only the eigenvalues
+          elpa_generalized_eigenvalues_f, &                        !< for symmetric real valued / hermitian complex valued matrices
+          elpa_generalized_eigenvalues_dc, &
+          elpa_generalized_eigenvalues_fc
+
       generic, public :: hermitian_multiply => &                    !< method for a "hermitian" multiplication of matrices a and b
           elpa_hermitian_multiply_d, &                              !< for real valued matrices:   a**T * b
           elpa_hermitian_multiply_dc, &                             !< for complex valued matrices a**H * b
@@ -173,6 +179,11 @@ module elpa_api
       procedure(elpa_generalized_eigenvectors_f_i),    deferred, public :: elpa_generalized_eigenvectors_f
       procedure(elpa_generalized_eigenvectors_dc_i), deferred, public :: elpa_generalized_eigenvectors_dc
       procedure(elpa_generalized_eigenvectors_fc_i), deferred, public :: elpa_generalized_eigenvectors_fc
+
+      procedure(elpa_generalized_eigenvalues_d_i),    deferred, public :: elpa_generalized_eigenvalues_d
+      procedure(elpa_generalized_eigenvalues_f_i),    deferred, public :: elpa_generalized_eigenvalues_f
+      procedure(elpa_generalized_eigenvalues_dc_i), deferred, public :: elpa_generalized_eigenvalues_dc
+      procedure(elpa_generalized_eigenvalues_fc_i), deferred, public :: elpa_generalized_eigenvalues_fc
 
       procedure(elpa_hermitian_multiply_d_i),  deferred, public :: elpa_hermitian_multiply_d
       procedure(elpa_hermitian_multiply_f_i),  deferred, public :: elpa_hermitian_multiply_f

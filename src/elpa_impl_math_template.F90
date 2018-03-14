@@ -490,6 +490,168 @@
     end subroutine
 
     
+
+    !>  \brief elpa_generalized_eigenvalues_d: class method to solve the eigenvalue problem
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param b                                    Distributed matrix, part of the generalized eigenvector problem, or the
+    !>                                              product of a previous call to this function (see is_already_decomposed).
+    !>                                              Distribution is like in Scalapack.
+    !>                                              If is_already_decomposed is false, on exit replaced by the decomposition
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
+    !>                                              each subsequent call with the same b, since b then already contains
+    !>                                              decomposition and thus the decomposing step is skipped
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr   
+    subroutine elpa_generalized_eigenvalues_&
+                    &ELPA_IMPL_SUFFIX&
+                    & (self, a, b, ev, is_already_decomposed, error)
+      use elpa2_impl
+      use elpa1_impl
+      use elpa_utilities, only : error_unit
+      use iso_c_binding
+      class(elpa_impl_t)  :: self
+
+#ifdef USE_ASSUMED_SIZE
+      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, *), b(self%local_nrows, *)
+#else
+      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=C_REAL_DATATYPE) :: ev(self%na)
+      logical             :: is_already_decomposed
+
+      integer, optional   :: error
+      integer             :: error_l
+      integer(kind=c_int) :: solver
+      logical             :: success_l
+
+#if defined(INCLUDE_ROUTINES)
+      call self%elpa_transform_generalized_&
+              &ELPA_IMPL_SUFFIX&
+              & (a, b, is_already_decomposed, error_l)
+#endif
+      if (present(error)) then
+          error = error_l
+      else if (error_l .ne. ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
+      endif
+
+      call self%get("solver", solver)
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
+#if defined(INCLUDE_ROUTINES)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                &_1stage_&
+                &PRECISION&
+                &_impl(self, a, ev)
+#endif
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
+#if defined(INCLUDE_ROUTINES)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                &_2stage_&
+                &PRECISION&
+                &_impl(self, a, ev)
+#endif
+      else
+        print *,"unknown solver"
+        stop
+      endif
+
+      if (present(error)) then
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+      endif
+
+#endif
+    end subroutine
+
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL  
+    !c> void elpa_generalized_eigenvalues_d(elpa_t handle, double *a, double *b, double *ev,
+    !c> int is_already_decomposed, int *error);
+#endif
+#ifdef SINGLE_PRECISION_REAL  
+    !c> void elpa_generalized_eigenvalues_f(elpa_t handle, float *a, float *b, float *ev,
+    !c> int is_already_decomposed, int *error);
+#endif
+#endif
+#ifdef COMPLEXCASE
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> void elpa_generalized_eigenvalues_dc(elpa_t handle, double complex *a, double complex *b, double *ev,
+    !c> int is_already_decomposed, int *error);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+    !c> void elpa_generalized_eigenvalues_fc(elpa_t handle, float complex *a, float complex *b, float *ev,
+    !c> int is_already_decomposed, int *error);
+#endif
+#endif
+    subroutine elpa_generalized_eigenvalues_&
+                    &ELPA_IMPL_SUFFIX&
+                    &_c(handle, a_p, b_p, ev_p, is_already_decomposed, error) &
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL 
+                                                            bind(C, name="elpa_generalized_eigenvalues_d")
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                                                            bind(C, name="elpa_generalized_eigenvalues_f")
+#endif
+#endif
+#ifdef COMPLEXCASE
+#ifdef DOUBLE_PRECISION_COMPLEX
+                                                            bind(C, name="elpa_generalized_eigenvalues_dc")
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+                                                            bind(C, name="elpa_generalized_eigenvalues_fc")
+#endif
+#endif
+      type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p
+      integer(kind=c_int), intent(in), value :: is_already_decomposed
+      integer(kind=c_int), optional, intent(in) :: error
+
+      MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer :: a(:, :), b(:, :)
+      real(kind=C_REAL_DATATYPE), pointer :: ev(:)
+      logical :: is_already_decomposed_fortran
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(b_p, b, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+      if(is_already_decomposed .eq. 0) then
+        is_already_decomposed_fortran = .false.
+      else
+        is_already_decomposed_fortran = .true.
+      end if
+
+      call elpa_generalized_eigenvalues_&
+              &ELPA_IMPL_SUFFIX&
+              & (self, a, b, ev, is_already_decomposed_fortran, error)
+    end subroutine
+
+
     !> \brief  elpa_hermitian_multiply_d: class method to perform C : = A**T * B
     !>         where   A is a square matrix (self%na,self%na) which is optionally upper or lower triangular
     !>                 B is a (self%na,ncb) matrix
