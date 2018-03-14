@@ -585,7 +585,6 @@
         write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
       endif
 
-#endif
     end subroutine
 
 #ifdef REALCASE
