@@ -383,17 +383,29 @@
           mat2x2 = reshape((/ 0.5_rck * (amp + 1.0_rck) * (1.0_rk, 0.0_rk),   sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, 1.0_rk),   &
                               sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, -1.0_rk),  0.5_rck * (amp + 1.0_rck) * (1.0_rk, 0.0_rk) /), &
                                       (/2, 2/), order=(/2,1/))
+! intel 2018 does not reshape correctly (one would have to specify order=(/1,2/)
+! until this is resolved, I resorted to the following
+          mat2x2(1,2) = sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, 1.0_rk)
+          mat2x2(2,1) = sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, -1.0_rk)
 #endif
         else if(what == ANALYTIC_EIGENVECTORS) then
 #ifdef REALCASE
           mat2x2 = reshape((/ c, s,  &
                            -s,  c  /), &
                                 (/2, 2/), order=(/2,1/))
+! intel 2018 does not reshape correctly (one would have to specify order=(/1,2/)
+! until this is resolved, I resorted to the following
+          mat2x2(1,2) = s
+          mat2x2(2,1) = -s
 #endif
 #ifdef COMPLEXCASE
           mat2x2 = reshape((/ -sq2/2.0_rck * (1.0_rk, 0.0_rk),       -sq2/2.0_rck * (1.0_rk, 0.0_rk),  &
                               0.5_rk * (1.0_rk, -1.0_rk),  0.5_rk * (-1.0_rk, 1.0_rk)  /), &
                                 (/2, 2/), order=(/2,1/))
+! intel 2018 does not reshape correctly (one would have to specify order=(/1,2/)
+! until this is resolved, I resorted to the following
+          mat2x2(1,2) = -sq2/2.0_rck * (1.0_rk, 0.0_rk)
+          mat2x2(2,1) = 0.5_rk * (1.0_rk, -1.0_rk)
 #endif
         else if(what == ANALYTIC_EIGENVALUES) then
           mat2x2 = reshape((/ 1.0_rck, 0.0_rck,  &
