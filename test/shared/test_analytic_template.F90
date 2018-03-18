@@ -481,6 +481,14 @@
     MATH_DATATYPE(kind=rck)                  :: A(na, na), S(na, na), L(na, na), res(na, na)
     integer(kind=ik)                :: i, j, decomposition(num_primes)
 
+    real(kind=rk)             :: err
+#ifdef DOUBLE_PRECISION
+    real(kind=rk), parameter  :: TOL =  1e-8
+#endif
+#ifdef SINGLE_PRECISION
+    real(kind=rk), parameter  :: TOL =  1e-4
+#endif
+
     assert(decompose(na, decomposition))
 
     do i = 1, na
@@ -504,13 +512,12 @@
     end do
 
     res = matmul(A,S) - matmul(S,L)
-#ifdef DOUBLE_PRECISION
-    assert(maxval(abs(res)) < 1e-8)
-#elif SINGLE_PRECISION
-    assert(maxval(abs(res)) < 1e-4)
-#else
-    assert(.false.)
-#endif
+    err = maxval(abs(res))
+    
+    if(err > TOL) then
+      print *, "WARNING: sanity test in module analytic failed, error is ", err
+    end if
+
     if(.false.) then
     !if(na == 2 .or. na == 5) then
       call print_matrix(myid, na, A, "A")
