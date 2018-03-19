@@ -491,7 +491,7 @@
   !lc> \result succes               int reports success (1) or failure (0)
   !lc> */
 
-  !lc> int elpa_invert_trm_real_single(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
+  !lc> int elpa_invert_trm_real_single(int na, float *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
