@@ -50,7 +50,7 @@
     integer(kind=ik), intent(in)    :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
     MATH_DATATYPE(kind=REAL_DATATYPE), intent(inout)   :: a(:,:)
 
-    integer(kind=ik) :: globI, globJ, locI, locJ, levels(num_primes)
+    integer(kind=ik) :: globI, globJ, locI, locJ, pi, pj, levels(num_primes)
 
     type(timer_t)    :: timer
 
@@ -73,7 +73,15 @@
 
     call timer%start("loop")
     do globI = 1, na
+
+      pi = prow(globI, nblk, np_rows)
+      if (my_prow .ne. pi) cycle
+
       do globJ = 1, na
+
+        pj = pcol(globJ, nblk, np_cols)
+        if (my_pcol .ne. pj) cycle
+
         if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
                  nblk, np_rows, np_cols, my_prow, my_pcol)) then
            call timer%start("evaluation")
@@ -83,6 +91,8 @@
               &PRECISION&
               &(na, globI, globJ)
           call timer%stop("evaluation")
+        else
+          print *, "Warning ... error in preparation loop of the analytic test"
         end if
       end do
     end do
