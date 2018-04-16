@@ -792,10 +792,10 @@ __forceinline void hh_trafo_kernel_8_SPARC64_6hv_single(float* q, float* hh, int
 
 #ifdef HAVE_SPARC64_SSE
 #ifdef DOUBLE_PRECISION_REAL
-        h3 = _mm_set_pd(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3];
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h3 = _mm_set_ps(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3];
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
 #endif
 #endif
 
@@ -856,7 +856,7 @@ __forceinline void hh_trafo_kernel_8_SPARC64_6hv_single(float* q, float* hh, int
 #endif
 #ifdef HAVE_SPARC64_SSE
 #ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-4]), hh[nb-4];
+        h1 = _mm_set_pd(hh[nb-4], hh[nb-4]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         h1 = _mm_set_ps(hh[nb-4], hh[nb-4]);
@@ -1274,7 +1274,7 @@ __forceinline void hh_trafo_kernel_8_SPARC64_6hv_single(float* q, float* hh, int
         __SSE_DATATYPE vs_4_6 = _mm_set1_pd(scalarprods[13]);
         __SSE_DATATYPE vs_5_6 = _mm_set1_pd(scalarprods[14]);
 #endif
-#ifdef HAVE_SPARC64_SSE_INTRINSICS
+#ifdef HAVE_SPARC64_SSE
         __SSE_DATATYPE vs_3_6 = _mm_set_pd(scalarprods[12], scalarprods[12]);
         __SSE_DATATYPE vs_4_6 = _mm_set_pd(scalarprods[13], scalarprods[13]);
         __SSE_DATATYPE vs_5_6 = _mm_set_pd(scalarprods[14], scalarprods[14]);
@@ -1644,10 +1644,10 @@ __forceinline void hh_trafo_kernel_8_SPARC64_6hv_single(float* q, float* hh, int
 #endif
 #ifdef HAVE_SPARC64_SSE
 #ifdef DOUBLE_PRECISION_REAL
-        h6 = _mm_set1_pd(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+        h6 = _mm_set_pd(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-        h6 = _mm_set1_ps(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+        h6 = _mm_set_ps(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 #endif
 
