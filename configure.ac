@@ -722,10 +722,11 @@ fi
 if test x"${need_sparc64}" = x"yes"; then
   AC_MSG_CHECKING(whether we can compile SPARC64 with intrinsics in C)
   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#include <x86intrin.h>
+#include <fjmfunc.h>
+#include <emmintrin.h>
 int main(int argc, char **argv) {
-  double* q;
-  __m128d h1 = _mm_loaddup_pd(q);
+  __m128d  tau1;
+  __m128d h1 = _fjsp_neg_v2r8(tau1);
   return 0;
 }
     ])],
