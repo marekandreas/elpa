@@ -61,8 +61,10 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/elpa1.F90 \
   src/elpa2/elpa2.F90 \
   src/helpers/matrix_plot.F90 \
-  src/elpa_c_interface.c \
   src/elpa_index.c
+
+libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c 
+
 
 # elpa_utilities.F90 is private in new API, public in legacy
 if ENABLE_LEGACY
@@ -554,7 +556,11 @@ elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2/elpa2_print_kernels.F90
 elpa2_print_kernels@SUFFIX@_LDADD = libelpa@SUFFIX@.la
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)modules
 
-include test_programs.am
+include Fortran_test_programs.am
+if ENABLE_C_TESTS
+include C_test_programs.am
+endif
+
 
 if ENABLE_LEGACY
 include legacy_test_programs.am

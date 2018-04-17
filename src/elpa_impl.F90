@@ -60,7 +60,9 @@ module elpa_impl
   use elpa_utilities, only : error_unit
 
   use elpa_abstract_impl
+#ifdef ENABLE_AUTOTUNING
   use elpa_autotune_impl
+#endif
   use, intrinsic :: iso_c_binding
   implicit none
 
@@ -154,10 +156,11 @@ module elpa_impl
      procedure, private :: elpa_transform_back_generalized_fc
 #endif
 
+#ifdef ENABLE_AUTOTUNING
      procedure, public :: autotune_setup => elpa_autotune_setup
      procedure, public :: autotune_step => elpa_autotune_step
      procedure, public :: autotune_set_best => elpa_autotune_set_best
-
+#endif
      procedure, private :: construct_scalapack_descriptor => elpa_construct_scalapack_descriptor
   end type elpa_impl_t
 
@@ -228,7 +231,7 @@ module elpa_impl
       deallocate(self)
     end subroutine
 
-
+#ifdef ENABLE_AUTOTUNING
     !c> /*! \brief C interface for the implementation of the elpa_autotune_deallocate method
     !c> *
     !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
@@ -244,7 +247,7 @@ module elpa_impl
       call self%destroy()
       deallocate(self)
     end subroutine
-
+#endif
 
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
@@ -734,7 +737,7 @@ module elpa_impl
 #undef SINGLE_PRECISION
 #endif
 
-
+#ifdef ENABLE_AUTOTUNING
     !> \brief function to setup the ELPA autotuning and create the autotune object
     !> Parameters
     !> \param   self            the allocated ELPA object
@@ -942,7 +945,7 @@ module elpa_impl
       call self%autotune_set_best(tune_state)
 
     end subroutine
-
+#endif
 
 
 end module

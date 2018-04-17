@@ -4,7 +4,7 @@ module elpa_autotune_impl
   use elpa_abstract_impl
   use, intrinsic :: iso_c_binding
   implicit none
-
+#ifdef ENABLE_AUTOTUNING
   type, extends(elpa_autotune_t) :: elpa_autotune_impl_t
     class(elpa_abstract_impl_t), pointer :: parent => NULL()
     integer :: i = 0
@@ -37,5 +37,5 @@ module elpa_autotune_impl
       class(elpa_autotune_impl_t), intent(inout) :: self
       ! nothing to do atm
     end subroutine
-
+#endif
 end module

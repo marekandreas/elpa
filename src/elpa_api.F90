@@ -153,10 +153,12 @@ module elpa_api
           elpa_solve_tridiagonal_d, &                                !< matrix
           elpa_solve_tridiagonal_f
 
+#ifdef ENABLE_AUTOTUNING
       ! Auto-tune
       procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
       procedure(elpa_autotune_step_i), deferred, public :: autotune_step         !< method to do an autotuning step
       procedure(elpa_autotune_set_best_i), deferred, public :: autotune_set_best !< method to set the best options
+#endif
 
       !> \brief These method have to be public, in order to be overrideable in the extension types
       procedure(elpa_set_integer_i), deferred, public :: elpa_set_integer
@@ -204,7 +206,7 @@ module elpa_api
       procedure(elpa_solve_tridiagonal_f_i), deferred, public :: elpa_solve_tridiagonal_f
   end type elpa_t
 
-
+#ifdef ENABLE_AUTOTUNING
   !> \brief Abstract definition of the elpa_autotune type
   type, abstract :: elpa_autotune_t
     private
@@ -212,7 +214,7 @@ module elpa_api
       procedure(elpa_autotune_destroy_i), deferred, public :: destroy
       procedure(elpa_autotune_print_i), deferred, public :: print
   end type
-
+#endif
 
   !> \brief definition of helper function to get C strlen
   !> Parameters
@@ -243,7 +245,7 @@ module elpa_api
     end function
   end interface
 
-
+#ifdef ENABLE_AUTOTUNING
   !> \brief abstract definition of the autotune setup method
   !> Parameters
   !> \details
@@ -298,7 +300,7 @@ module elpa_api
       class(elpa_autotune_t), intent(in), target :: tune_state
     end subroutine
   end interface
-
+#endif
 
   !> \brief abstract definition of set method for integer values
   !> Parameters
@@ -558,7 +560,7 @@ module elpa_api
     end subroutine
   end interface
 
- 
+#ifdef ENABLE_AUTOTUNING
   !> \brief abstract definition of interface to print the autotuning state
   !> Parameters
   !> \param   self        class(elpa_autotune_t): the ELPA autotune object
@@ -581,7 +583,7 @@ module elpa_api
       class(elpa_autotune_t), intent(inout) :: self
     end subroutine
   end interface
-
+#endif
 
   contains
 

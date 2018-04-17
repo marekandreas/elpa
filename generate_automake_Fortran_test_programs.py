@@ -4,7 +4,6 @@ from itertools import product
 
 language_flag = {
     "Fortran": "",
-    "C": "_c_version",
 }
 
 domain_flag = {
@@ -213,6 +212,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
 
     name = "test_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
 
+    print("if ENABLE_AUTOTUNING")
     print("check_SCRIPTS += " + name + "_extended.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":    
@@ -229,3 +229,5 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         domain_flag[d],
         prec_flag[p]]))
     print("endif\n" * endifs)
+    print("endif")
+

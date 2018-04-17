@@ -40,12 +40,24 @@ if test x$_cv_gnu_make_command = x ; then
         AC_MSG_ERROR([Need GNU Make])
 fi
 
-AC_ARG_ENABLE([legacy],
-              AS_HELP_STRING([--disable-legacy],
+AC_MSG_CHECKING(whether legacy interface should be provided)
+AC_ARG_ENABLE([legacy-interface],
+              AS_HELP_STRING([--disable-legacy-interface],
                              [do not build legacy API, default yes]),
-              [],
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_legayc=yes
+	       else
+	         enable_legacy=no
+	       fi
+	       ],
               [enable_legacy=yes])
+AC_MSG_RESULT([${enable_legacy}])
 AM_CONDITIONAL([ENABLE_LEGACY],[test x"$enable_legacy" = x"yes"])
+if test x"${enable_legacy}" = x"yes"; then
+        AC_DEFINE([ENABLE_LEGACY], [1], [enable legacy interface])
+fi
+
 
 # gnu-make fortran module dependencies
 m4_include([fdep/fortran_dependencies.m4])
@@ -58,7 +70,13 @@ AC_MSG_CHECKING(whether --enable-openmp is specified)
 AC_ARG_ENABLE([openmp],
               AS_HELP_STRING([--enable-openmp],
                              [use OpenMP threading, default no.]),
-              [],
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_openmp=yes
+	       else
+	         enable_openmp=no
+	       fi
+	       ],
               [enable_openmp=no])
 AC_MSG_RESULT([${enable_openmp}])
 AM_CONDITIONAL([WITH_OPENMP],[test x"$enable_openmp" = x"yes"])
@@ -80,7 +98,13 @@ AC_MSG_CHECKING(whether --enable-scalapack-tests is specified)
 AC_ARG_ENABLE([scalapack-tests],
               AS_HELP_STRING([--enable-scalapack-tests],
                              [build SCALAPACK test cases for performance comparison, needs MPI, default no.]),
-              [],
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_scalapack_tests=yes
+	       else
+	         enable_scalapack_tests=no
+	       fi
+	       ],
               [enable_scalapack_tests="no"])
 AC_MSG_RESULT([$enable_scalapack_tests])
 if test x"${enable_scalapack_tests}" = x"yes"; then
@@ -163,7 +187,13 @@ AC_MSG_CHECKING(whether stdout/stderr file redirect should be enabled)
 AC_ARG_ENABLE([redirect],
               [AS_HELP_STRING([--enable-redirect],
                               [for test programs, allow redirection of stdout/stderr per MPI taks in a file (useful for timing), default no.])],
-              [],
+              [
+               if test x"$enableval" = x"yes"; then
+                 enable_redirect=yes
+               else
+                 enable_redirect=no
+               fi
+	       ],
               [enable_redirect=no])
 AC_MSG_RESULT([${enable_redirect}])
 
@@ -188,7 +218,13 @@ dnl build with ftimings support
 AC_ARG_ENABLE([timings],
               [AS_HELP_STRING([--disable-timings],
                               [more detailed timing, default yes])],
-              [],
+              [
+               if test x"$enableval" = x"yes"; then
+                 enable_timings=yes
+               else
+                 enable_timings=no
+               fi
+	       ],
               [enable_timings=yes])
 
 if test x"${enable_timings}" = x"yes"; then
@@ -201,7 +237,13 @@ AC_LANG_PUSH([C])
 AC_ARG_WITH([papi],
             [AS_HELP_STRING([--with-papi],
                             [Use PAPI to also measure flop count in the detailed timing (--enable-timing), disabled by default])],
-            [],
+            [
+               if test x"$enableval" = x"yes"; then
+                 with_papi=yes
+               else
+                 with_papi=no
+               fi
+	     ],
             [with_papi="no"])
 if test x"${enable_timings}" = x"yes"; then
   if test x"$with_papi" = x"yes" ; then
@@ -303,6 +345,7 @@ else
       LIBS="-l${lib} ${old_LIBS}"
       AC_MSG_CHECKING([whether -l${lib} already contains a BLACS implementation])
       AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY([blacs_gridinit])],[blacs_in_scalapack=yes],[blacs_in_scalapack=no])
+	       
       AC_MSG_RESULT([${blacs_in_scalapack}])
       if test x"${blacs_in_scalapack}" = x"yes"; then
         break
@@ -386,7 +429,13 @@ dnl check whether BAND_TO_FULL_BLOCKING is set
 AC_MSG_CHECKING(whether BAND_TO_FLULL_BLOCKING is requested)
 AC_ARG_ENABLE(band-to-full-blocking,[AS_HELP_STRING([--disable-band-to-full-blocking],
                                                     [build ELPA2 with blocking in band_to_full (default: enabled)])],
-              [],
+              [
+               if test x"$enableval" = x"yes"; then
+                 enable_band_to_full_blocking=yes
+               else
+                 enable_band_to_full_blocking=no
+               fi
+	       ],
 	      [enable_band_to_full_blocking="yes"])
 AC_MSG_RESULT([${enable_band_to_full_blocking}])
 
@@ -430,7 +479,13 @@ if test x"${with_mpi}" = x"yes" ; then
   AC_ARG_ENABLE([mpi-module],
                 AS_HELP_STRING([--disable-mpi-module],
                                [do not use the Fortran MPI module, get interfaces by 'include "mpif.h')]),
-                [],
+                [
+                 if test x"$enableval" = x"yes"; then
+                   enable_mpi_module=yes
+                 else
+                   enable_mpi_module=no
+                 fi
+		 ],
                 [enable_mpi_module=yes])
   if test x"${enable_mpi_module}" = x"yes" ; then
     AC_MSG_CHECKING(whether Fortran mpi module can be used)
@@ -1023,7 +1078,6 @@ DX_MAN_FEATURE(ON)
 DX_HTML_FEATURE(ON)
 DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 
-USE_ASSUMED_SIZE=yes
 AC_MSG_CHECKING(whether assumed size Fortran arrays should be used)
 AC_ARG_ENABLE([assumed-size],
                 AS_HELP_STRING([--disable-assumed-size],
@@ -1040,7 +1094,6 @@ if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
   AC_DEFINE([USE_ASSUMED_SIZE],[1],[for performance reasons use assumed size Fortran arrays, even if not debuggable])
 fi
 
-enable_fortran2008_features=yes
 AC_MSG_CHECKING(whether Fortran2008 features should be enabled)
 AC_ARG_ENABLE([Fortran2008-features],
               AS_HELP_STRING([--enable-Fortran2008-features],
@@ -1052,14 +1105,49 @@ AC_ARG_ENABLE([Fortran2008-features],
 			        enable_fortran2008_features=no
 			      fi
 			      ],
-              [])
+              [enable_fortran2008_features=yes])
 AC_MSG_RESULT([${enable_fortran2008_features}])
 AM_CONDITIONAL([USE_FORTRAN2008],[test x"$enable_fortran2008_features" = x"yes"])
 if test x"${enable_fortran2008_features}" = x"yes"; then
  AC_DEFINE([USE_FORTRAN2008], [1], [use some Fortran 2008 features])
 fi
 
-enable_kcomputer=no
+AC_MSG_CHECKING(whether autotuning functionality should be enabled)
+AC_ARG_ENABLE([autotuning],
+              AS_HELP_STRING([--enable-autotuning],
+                             [enables autotuning functionality, default yes.]),
+			     [
+			      if test x"$enableval" = x"yes"; then
+			        enable_autotuning=yes
+		              else
+			        enable_autotuning=no
+			      fi
+			      ],
+              [enable_autotuning=yes])
+AC_MSG_RESULT([${enable_autotuning}])
+AM_CONDITIONAL([ENABLE_AUTOTUNING],[test x"$enable_autotuning" = x"yes"])
+if test x"${enable_autotuning}" = x"yes"; then
+ AC_DEFINE([ENABLE_AUTOTUNING], [1], [enable autotuning functionality])
+fi
+
+AC_MSG_CHECKING(whether C tests should be provided)
+AC_ARG_ENABLE([c-tests],
+              AS_HELP_STRING([--enable-c-tests],
+                             [enables the C tests for elpa, default yes.]),
+			     [
+			      if test x"$enableval" = x"yes"; then
+			        enable_c_tests=yes
+		              else
+			        enable_c_tests=no
+			      fi
+			      ],
+              [enable_c_tests=yes])
+AC_MSG_RESULT([${enable_c_tests}])
+AM_CONDITIONAL([ENABLE_C_TESTS],[test x"$enable_c_tests" = x"yes"])
+if test x"${enable_c_tests}" = x"yes"; then
+ AC_DEFINE([ENABLE_C_TESTS], [1], [enable C tests])
+fi
+
 AC_MSG_CHECKING(whether we build for K-computer)
 AC_ARG_ENABLE([K-computer],
               AS_HELP_STRING([--enable-K-computer],

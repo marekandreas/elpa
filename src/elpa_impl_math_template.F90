@@ -466,8 +466,11 @@
 #endif
       type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p, q_p
       integer(kind=c_int), intent(in), value :: is_already_decomposed
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
-
+#else
+      integer(kind=c_int), intent(in) :: error
+#endif
       MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer :: a(:, :), b(:, :), q(:, :)
       real(kind=C_REAL_DATATYPE), pointer :: ev(:)
       logical :: is_already_decomposed_fortran
@@ -628,7 +631,11 @@
 #endif
       type(c_ptr), intent(in), value :: handle, a_p, b_p, ev_p
       integer(kind=c_int), intent(in), value :: is_already_decomposed
+#ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in) :: error
+#endif
 
       MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer :: a(:, :), b(:, :)
       real(kind=C_REAL_DATATYPE), pointer :: ev(:)

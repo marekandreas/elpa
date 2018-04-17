@@ -189,6 +189,8 @@
 !> \endcode
 !>
 !> \brief Fortran module to use the ELPA library. No other module shoule be used
+
+#include "config-f90.h"
 module elpa
   use elpa_constants
   use elpa_api
@@ -219,7 +221,7 @@ module elpa
       deallocate(obj)
     end subroutine
 
-
+#ifdef ENABLE_AUTOTUNING
     !> \brief function to deallocate an ELPA autotune instance
     !> Parameters
     !> \details
@@ -229,5 +231,6 @@ module elpa
       call obj%destroy()
       deallocate(obj)
     end subroutine
+#endif
 
 end module
