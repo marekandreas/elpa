@@ -125,7 +125,7 @@ program test_real2_single_banded
    class(elpa_t), pointer     :: e
 #define DOUBLE_PRECISION_REAL 1
 
-   call read_input_parameters_traditional(na, nev, nblk, write_to_file)
+   call read_input_parameters(na, nev, nblk, write_to_file)
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization

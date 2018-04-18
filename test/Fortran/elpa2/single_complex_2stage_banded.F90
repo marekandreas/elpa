@@ -132,7 +132,7 @@ program test_complex2_single_banded
 #define COMPLEXCASE
 #define DOUBLE_PRECISION_COMPLEX 1
 
-   call read_input_parameters_traditional(na, nev, nblk, write_to_file)
+   call read_input_parameters(na, nev, nblk, write_to_file)
       !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)

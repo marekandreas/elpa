@@ -64,6 +64,7 @@ module test_read_input_parameters
   interface read_input_parameters
     module procedure read_input_parameters_general
     module procedure read_input_parameters_traditional
+    module procedure read_input_parameters_traditional_noskip
   end interface
 
   contains
@@ -338,12 +339,24 @@ module test_read_input_parameters
 
     end subroutine
 
-    subroutine read_input_parameters_traditional(na, nev, nblk, write_to_file)
+    subroutine read_input_parameters_traditional_noskip(na, nev, nblk, write_to_file)
       implicit none
 
       integer(kind=ik), intent(out) :: na, nev, nblk
 
       type(output_t), intent(out)   :: write_to_file
+      logical                       :: skip_check_correctness
+
+      call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
+    end subroutine
+
+    subroutine read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
+      implicit none
+
+      integer(kind=ik), intent(out) :: na, nev, nblk
+
+      type(output_t), intent(out)   :: write_to_file
+      logical, intent(out)          :: skip_check_correctness
 
       ! Command line arguments
       character(len=128)            :: arg1, arg2, arg3, arg4, arg5
@@ -355,6 +368,7 @@ module test_read_input_parameters
       nblk = 16
       write_to_file%eigenvectors = .false.
       write_to_file%eigenvalues  = .false.
+      skip_check_correctness = .false.
 
       if (.not. any(COMMAND_ARGUMENT_COUNT() == [0, 3, 4, 5])) then
         write(error_unit, '(a,i0,a)') "Invalid number (", COMMAND_ARGUMENT_COUNT(), ") of command line arguments!"
@@ -384,8 +398,11 @@ module test_read_input_parameters
 
         if (arg4 .eq. "output_eigenvalues") then
           write_to_file%eigenvalues = .true.
+        elseif (arg4 .eq. "skip_check_correctness") then
+          skip_check_correctness = .true.
         else
-          write(error_unit, *) "Invalid value for output flag! Must be ""output_eigenvalues"" or omitted"
+          write(error_unit, *) &
+          "Invalid value for parameter 4.  Must be ""output_eigenvalues"", ""skip_check_correctness"" or omitted"
           stop 1
         endif
 

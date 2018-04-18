@@ -88,7 +88,7 @@ program test_interface
    type(output_t) :: write_to_file
    class(elpa_t), pointer :: e1, e2
 
-   call read_input_parameters_traditional(na, nev, nblk, write_to_file)
+   call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
 
    status = 0

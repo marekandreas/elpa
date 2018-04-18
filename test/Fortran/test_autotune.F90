@@ -124,7 +124,7 @@ program test
    class(elpa_t), pointer      :: e
    class(elpa_autotune_t), pointer :: tune_state
 
-   call read_input_parameters_traditional(na, nev, nblk, write_to_file)
+   call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI

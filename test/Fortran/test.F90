@@ -149,7 +149,7 @@ program test
    ! eigenvalues
    EV_TYPE, allocatable        :: ev(:)
 
-   logical                     :: check_all_evals
+   logical                     :: check_all_evals, skip_check_correctness
 
 #if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
    EV_TYPE, allocatable        :: d(:), sd(:), ds(:), sds(:)
@@ -176,7 +176,7 @@ program test
                                   do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                                   do_test_hermitian_multiply
 
-   call read_input_parameters_traditional(na, nev, nblk, write_to_file)
+   call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
@@ -508,6 +508,18 @@ program test
 #endif /* TEST_COMPLEX */
 
 #endif /* TEST_HERMITIAN_MULTIPLY */
+
+! if the test is used for (repeated) performacne tests, one might want to skip the checking
+! of the results, which might be time-consuming and not necessary.
+   if(skip_check_correctness) then
+     do_test_numeric_residual = .false.
+     do_test_numeric_residual_generalized = .false.
+     do_test_analytic_eigenvalues = .false.
+     do_test_analytic_eigenvalues_eigenvectors = .false.
+     do_test_frank_eigenvalues = .false.
+     do_test_toeplitz_eigenvalues = .false. 
+     do_test_cholesky = .false.
+   endif
 
    e => elpa_allocate()
 
