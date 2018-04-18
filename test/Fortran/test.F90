@@ -375,10 +375,8 @@ program test
    if (nev .ge. 1) then
      do_test_analytic_eigenvalues_eigenvectors = .true.
      do_test_analytic_eigenvalues = .false.
-     do_test_numeric_residual = .true.
    else
      do_test_analytic_eigenvalues_eigenvectors = .false.
-     do_test_numeric_residual = .false.
    endif
 #endif
    do_test_frank_eigenvalues = .false.
