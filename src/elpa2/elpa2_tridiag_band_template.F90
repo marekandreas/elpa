@@ -51,12 +51,9 @@
 
 #include "../general/sanity.F90"
 
-#if REALCASE == 1
-    subroutine tridiag_band_real_&
-#endif
-#if COMPLEXCASE == 1
-    subroutine tridiag_band_complex_&
-#endif
+    subroutine tridiag_band_&
+    &MATH_DATATYPE&
+    &_&
     &PRECISION &
     (obj, na, nb, nblk, aMatrix, a_dev, lda, d, e, matrixCols, &
     hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug)
@@ -303,14 +300,7 @@
           num_chunks  = num_chunks+1
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_irecv(hh_trans(1,num_hh_vecs+1),          &
-                   nb*local_size,                           &
-#if REALCASE == 1
-       MPI_REAL_PRECISION,                     &
-#endif
-#if COMPLEXCASE == 1
-                        MPI_COMPLEX_EXPLICIT_PRECISION,           &
-#endif
+          call mpi_irecv(hh_trans(1,num_hh_vecs+1), nb*local_size,  MPI_MATH_DATATYPE_PRECISION_EXPL,     &
                         nt, 10+n-block_limits(nt), communicator, ireq_hhr(num_chunks), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -435,13 +425,7 @@
         ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_isend(ab_s, nb+1,  &
-#if REALCASE == 1
-                 MPI_REAL_PRECISION,  &
-#endif
-#if COMPLEXCASE == 1
-                       MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
+        call mpi_isend(ab_s, nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL, &
            my_pe-1, 1, communicator, ireq_ab, mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -486,13 +470,10 @@
           if (n<2) vnorm2 = 0. ! Safety only
 #endif /* COMPLEXCASE */
 
-#if REALCASE == 1
-            call hh_transform_real_&
-#endif
-#if COMPLEXCASE == 1
-            call hh_transform_complex_&
-#endif
-&PRECISION &
+            call hh_transform_&
+                &MATH_DATATYPE&
+                &_&
+                &PRECISION &
                                (obj, ab(2,na_s-n_off), vnorm2, hf, tau, wantDebug)
 
             hv(1) = 1.0_rck
@@ -527,13 +508,7 @@
 
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_recv(hv, nb,       &
-#if REALCASE == 1
-                          MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                          MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
+            call mpi_recv(hv, nb, MPI_MATH_DATATYPE_PRECISION_EXPL, &
                           my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -548,13 +523,7 @@
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
 
-            call mpi_recv(hv, nb,          &
-#if REALCASE == 1
-                          MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                          MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
+            call mpi_recv(hv, nb, MPI_MATH_DATATYPE_PRECISION_EXPL, &
                           my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -686,12 +655,9 @@
 #endif
 #endif /* COMPLEXCASE */
 
-#if REALCASE == 1
-                  call hh_transform_real_&
-#endif
-#if COMPLEXCASE == 1
-                  call hh_transform_complex_&
-#endif
+                  call hh_transform_&
+                  &MATH_DATATYPE&
+                  &_&
                   &PRECISION &
                         (obj, ab(nb+1,ns), vnorm2, hf, tau_t(my_thread), wantDebug)
 
@@ -714,7 +680,7 @@
                                       h(i) - hs(1:nr)*hv(i)
 #endif
 #if COMPLEXCASE == 1
-                                                  conjg(h(i)) - hs(1:nr)*conjg(hv(i))
+                                      conjg(h(i)) - hs(1:nr)*conjg(hv(i))
 #endif
                   enddo
 
@@ -755,13 +721,7 @@
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call mpi_isend(ab_s, nb+1,  &
-#if REALCASE == 1
-                   MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                               MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
+                call mpi_isend(ab_s, nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL, &
              my_pe-1, 1, communicator, ireq_ab, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -774,13 +734,7 @@
               if (wantDebug) call obj%timer%start("mpi_communication")
 
               if (istep>=max_threads .and. ne <= na) then
-                call mpi_recv(ab(1,ne-n_off), nb+1,       &
-#if REALCASE == 1
-                  MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                              MPI_COMPLEX_EXPLICIT_PRECISION,  &
-#endif
+                call mpi_recv(ab(1,ne-n_off), nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL,  &
                               my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
               endif
               if (wantDebug) call obj%timer%stop("mpi_communication")
@@ -805,13 +759,7 @@
 
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call mpi_isend(hv_s, nb,     &
-#if REALCASE == 1
-                   MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                               MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
+                call mpi_isend(hv_s, nb, MPI_MATH_DATATYPE_PRECISION_EXPL, &
                                my_pe+1, 2, communicator, ireq_hv, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -867,13 +815,7 @@
 
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
-              call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk),  &
-#if REALCASE == 1
-                       MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                             MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
+              call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                              global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
                              10+iblk, communicator, ireq_hhs(iblk), mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
@@ -923,22 +865,10 @@
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
 #ifdef WITH_OPENMP
-              call mpi_recv(ab(1,ne), nb+1,    &
-#if REALCASE == 1
-                      MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                            MPI_COMPLEX_EXPLICIT_PRECISION,  &
-#endif
+              call mpi_recv(ab(1,ne), nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL,  &
           my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
 #else /* WITH_OPENMP */
-              call mpi_recv(ab(1,ne), nb+1,     &
-#if REALCASE == 1
-                      MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                            MPI_COMPLEX_EXPLICIT_PRECISION,  &
-#endif
+              call mpi_recv(ab(1,ne), nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL,  &
                       my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
 #endif /* WITH_OPENMP */
               if (wantDebug) call obj%timer%stop("mpi_communication")
@@ -989,12 +919,9 @@
 #endif
 #endif /* COMPLEXCASE */
 
-#if REALCASE == 1
-                call hh_transform_real_&
-#endif
-#if COMPLEXCASE == 1
-                call hh_transform_complex_&
-#endif
+                call hh_transform_&
+                &MATH_DATATYPE&
+                &_&
                 &PRECISION &
                              (obj, ab(nb+1,ns), vnorm2, hf, tau_new, wantDebug)
                 hv_new(1) = 1.0_rck
@@ -1020,13 +947,7 @@
 
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call mpi_isend(hv_s, nb,       &
-#if REALCASE == 1
-                   MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                               MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
+                call mpi_isend(hv_s, nb, MPI_MATH_DATATYPE_PRECISION_EXPL, &
              my_pe+1, 2, communicator, ireq_hv, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -1056,12 +977,7 @@
               ! ... send it away ...
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
-
-#ifdef WITH_OPENMP
               call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-#else
-              call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-#endif
               if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -1070,14 +986,8 @@
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
 
-              call mpi_isend(ab_s, nb+1,    &
-#if REALCASE == 1
-                       MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                             MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
-          my_pe-1, 1, communicator, ireq_ab, mpierr)
+              call mpi_isend(ab_s, nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                             my_pe-1, 1, communicator, ireq_ab, mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -1166,13 +1076,7 @@
 
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk),    &
-#if REALCASE == 1
-                     MPI_REAL_PRECISION, &
-#endif
-#if COMPLEXCASE == 1
-                           MPI_COMPLEX_EXPLICIT_PRECISION, &
-#endif
+            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
                            10+iblk, communicator, ireq_hhs(iblk), mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
