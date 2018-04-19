@@ -222,30 +222,6 @@ function elpa_solve_evp_&
        success = .false.
        return
      endif
-   else
-     ! check whether set by environment variable
-     call obj%get("gpu", gpu,error)
-     if (error .ne. ELPA_OK) then
-       print *,"Problem setting option. Aborting..."
-       stop
-     endif
-     do_useGPU = gpu == 1
-
-     if (do_useGPU) then
-       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-
-         ! set the neccessary parameters
-         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-         cudaHostRegisterPortable = cuda_hostRegisterPortable()
-         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-       else
-         print *,"GPUs are requested but not detected! Aborting..."
-         success = .false.
-         return
-       endif
-     endif
    endif
 
    ! allocate a dummy q_intern, if eigenvectors should not be commputed and thus q is NOT present
