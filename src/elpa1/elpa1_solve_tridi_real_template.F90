@@ -81,8 +81,15 @@ subroutine solve_tridi_&
 
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
+      character(20)                :: gpuString
 
-      call obj%timer%start("solve_tridi" // PRECISION_SUFFIX)
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
+
+      call obj%timer%start("solve_tridi" // PRECISION_SUFFIX // gpuString)
 
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -232,7 +239,7 @@ subroutine solve_tridi_&
         stop 1
       endif
 
-      call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
+      call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
       return
 
       contains

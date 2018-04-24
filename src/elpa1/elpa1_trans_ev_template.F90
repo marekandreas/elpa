@@ -155,6 +155,7 @@
 #endif
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
+      character(20)                                 :: gpuString
 
       integer(kind=C_intptr_T)                      :: q_dev, tmp_dev, hvm_dev, tmat_dev
       logical                                       :: successCUDA
@@ -162,12 +163,17 @@
                                                                           &PRECISION&
                                                                           &_&
                                                                           &MATH_DATATYPE
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
 
       call obj%timer%start("trans_ev_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      &PRECISION_SUFFIX //&
+      gpuString)
 
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -538,8 +544,8 @@
       call obj%timer%stop("trans_ev_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX&
-      )
+      &PRECISION_SUFFIX // &
+      gpuString )
 
     end subroutine trans_ev_&
     &MATH_DATATYPE&

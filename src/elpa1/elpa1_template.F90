@@ -96,7 +96,8 @@ function elpa_solve_evp_&
    logical                                         :: useGPU
    logical                                         :: success
 
-   logical                                         :: do_useGPU
+   logical                                         :: do_useGPU, do_useGPU_tridiag, &
+                                                      do_useGPU_solve_tridi, do_useGPU_trans_ev
    integer(kind=ik)                                :: numberOfGPUDevices
 
    integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol, mpierr
@@ -174,7 +175,7 @@ function elpa_solve_evp_&
 
    call obj%get("gpu",gpu,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
+     print *,"Problem getting option. Aborting..."
      stop
    endif
    if (gpu .eq. 1) then
@@ -223,6 +224,39 @@ function elpa_solve_evp_&
        return
      endif
    endif
+
+   do_useGPU_tridiag = do_useGPU
+   do_useGPU_solve_tridi = do_useGPU
+   do_useGPU_trans_ev = do_useGPU
+   ! only if we want (and can) use GPU in general, look what are the
+   ! requirements for individual routines. Implicitly they are all set to 1, so
+   ! unles specified otherwise by the user, GPU versions of all individual
+   ! routines should be used
+   if(do_useGPU) then
+     call obj%get("gpu_tridiag", gpu, error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+     do_useGPU_tridiag = (gpu == 1)
+
+     call obj%get("gpu_solve_tridi", gpu, error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+     do_useGPU_solve_tridi = (gpu == 1)
+
+     call obj%get("gpu_trans_ev", gpu, error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+     do_useGPU_trans_ev = (gpu == 1)
+   endif
+   ! for elpa1 the easy thing is, that the individual phases of the algorithm
+   ! do not share any data on the GPU. 
+
 
    ! allocate a dummy q_intern, if eigenvectors should not be commputed and thus q is NOT present
    if (.not.(obj%eigenvalues_only)) then
@@ -275,7 +309,7 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU, wantDebug)
+     & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug)
      call obj%timer%stop("forward")
     endif  !do_bandred
 
@@ -290,7 +324,7 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
         q_real, l_rows,  &
 #endif
-        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU, wantDebug, success)
+        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success)
      call obj%timer%stop("solve")
      if (.not.(success)) return
    endif !do_solve
@@ -330,7 +364,7 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU)
+     & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
      call obj%timer%stop("back")
    endif ! do_trans_ev
 

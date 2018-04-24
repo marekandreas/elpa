@@ -203,15 +203,22 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #endif
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
+      character(20)                                 :: gpuString
       integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
                                                                           &PRECISION&
                                                                           &_&
                                                                           &MATH_DATATYPE
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
+
       call obj%timer%start("tridiag_&
       &MATH_DATATYPE&
       &" // &
-      PRECISION_SUFFIX &
-      )
+      PRECISION_SUFFIX // &
+      gpuString )
 
 
       if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1048,8 +1055,9 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       call obj%timer%stop("tridiag_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      PRECISION_SUFFIX // &
+      gpuString )
+
     end subroutine tridiag_&
     &MATH_DATATYPE&
     &_&
