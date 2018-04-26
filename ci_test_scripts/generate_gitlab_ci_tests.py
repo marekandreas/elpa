@@ -582,6 +582,10 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         MasterOnly=True
     if (instr != "avx" and instr != "sse" and addr == "address-sanitize"):
         MasterOnly=True
+    if (g == "with-gpu"):
+        MasterOnly=True
+    if (a == "no-assumed-size"):
+        MasterOnly=True
 
     print("# " + cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" + a + "-" + b + "-" +g + "-" + cov + "-" + instr + "-" + addr)
     print(cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" +a + "-" +b + "-" +g + "-" + cov + "-" + instr + "-" + addr + "-jobs:")
