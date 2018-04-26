@@ -96,19 +96,10 @@ ifneq ($(call is_clean),1)
 include $(_f90_depfile)
 endif
 
-# $1 string
-# $2 file
-define append_to
-	$(_f90_only_verbose)echo '$1' >> $2
-
-endef
-
 # $1 program
 define program_dependencies
-	$(_f90_only_verbose)echo -n > .$p.dep.args
-	$(foreach argument,$(_$p_use_mods) $(_$p_def_mods) $(foreach l,$(call recursive_lib_deps,$p),$(_$l_use_mods) $(_$l_def_mods)),$(call append_to,$(argument),.$p.dep.args))
-	$(_f90_only_verbose)$(top_srcdir)/fdep/fortran_dependencies.pl $p < .$p.dep.args >> $@ || { rm $@; exit 1; }
-	$(_f90_only_verbose)rm -f .$p.dep.args
+	$(_f90_only_verbose){ $(foreach argument,$(_$p_use_mods) $(_$p_def_mods) $(foreach l,$(call recursive_lib_deps,$p),$(_$l_use_mods) $(_$l_def_mods)),echo $(argument); ) } | \
+	$(top_srcdir)/fdep/fortran_dependencies.pl $p >> $@ || { rm $@; exit 1; }
 
 endef
 
