@@ -407,7 +407,7 @@ int elpa_int_string_to_value(char *name, char *string, int *value) {
         if (int_entries[n].to_string == NULL) {
                 int val, ret;
                 ret = sscanf(string, "%d", &val);
-                if (ret == strlen(string)) {
+                if (ret == 1) {
                         *value = val;
                         return ELPA_OK;
                 } else {
@@ -428,7 +428,7 @@ int elpa_int_string_to_value(char *name, char *string, int *value) {
 int elpa_double_string_to_value(char *name, char *string, double *value) {
         double val;
         int ret = sscanf(string, "%lf", &val);
-        if (ret == strlen(string)) {
+        if (ret == 1) {
                 *value = val;
                 return ELPA_OK;
         } else {
