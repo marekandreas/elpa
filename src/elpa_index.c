@@ -71,6 +71,8 @@ static int band_to_full_cardinality();
 static int band_to_full_enumerate(int i);
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
 
+static int min_tile_size_cardinality();
+
 static int na_is_valid(elpa_index_t index, int n, int new_value);
 static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
@@ -158,6 +160,9 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
                         number_of_complex_kernels, complex_kernel_enumerate, \
                         complex_kernel_is_valid, complex_kernel_name),
+
+        INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        min_tile_size_cardinality, NULL, NULL, NULL),
 
 	//INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
 	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
@@ -653,6 +658,11 @@ static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
         abort();
 }
 
+static int min_tile_size_cardinality() {
+        /* TODO */
+        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
+        abort();
+}
 elpa_index_t elpa_index_instance() {
         elpa_index_t index = (elpa_index_t) calloc(1, sizeof(struct elpa_index_struct));
 

@@ -201,10 +201,11 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #if COMPLEXCASE == 1
       real(kind=REAL_DATATYPE), allocatable         :: tmp_real(:)
 #endif
+      integer(kind=ik)                              :: min_tile_size, error
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
       character(20)                                 :: gpuString
-      integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
                                                                           &PRECISION&
                                                                           &_&
                                                                           &MATH_DATATYPE
@@ -250,7 +251,21 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       ! tile_size is thus nblk * 6
       !
       tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
-      tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
+
+      ! make tile_size a smallest possible multiple of previously defined tile size, such that it is
+      ! larger or equal to min_tile_size
+      ! min_tile_size has been originally hardcoded as 128 * max(np_rows, np_cols), so it is now the implicit value
+      ! it can, however, be set by the user
+      call obj%get("min_tile_size", min_tile_size ,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem setting option. Aborting..."
+        stop
+      endif
+      if(min_tile_size == 0) then
+        ! not set by the user, use the default value
+        min_tile_size = 128*max(np_rows, np_cols)
+      endif
+      tile_size = ((min_tile_size-1)/tile_size+1)*tile_size
 
       l_rows_per_tile = tile_size/np_rows ! local rows of a tile
       l_cols_per_tile = tile_size/np_cols ! local cols of a tile
