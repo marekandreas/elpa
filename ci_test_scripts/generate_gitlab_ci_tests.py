@@ -582,9 +582,15 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         MasterOnly=True
     if (instr != "avx" and instr != "sse" and addr == "address-sanitize"):
         MasterOnly=True
+
+    # make non-master tests even faster
+    # kicking out gpu is not good, but at the momemt we have a real problem with gpu runners
+    # should be returned when solved
     if (g == "with-gpu"):
         MasterOnly=True
     if (a == "no-assumed-size"):
+        MasterOnly=True
+    if (instr == "avx2" or instr == "avx512"):
         MasterOnly=True
 
     print("# " + cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" + a + "-" + b + "-" +g + "-" + cov + "-" + instr + "-" + addr)
