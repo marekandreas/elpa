@@ -851,8 +851,9 @@ module elpa_impl
       unfinished = .false.
 
       if (ts_impl%i >= 0) then
+#ifdef HAVE_DETAILED_TIMINGS
         time_spent = self%autotune_timer%get("accumulator")
-        !print *, time_spent
+#endif
         if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
           ts_impl%min_val = time_spent
           ts_impl%min_loc = ts_impl%i

@@ -47,7 +47,11 @@
 module test_analytic
 
   use test_util
+#ifdef HAVE_DETAILED_TIMINGS
   use ftimings
+#else
+  use timings_dummy
+#endif
   interface prepare_matrix_analytic
     module procedure prepare_matrix_analytic_complex_double
     module procedure prepare_matrix_analytic_real_double

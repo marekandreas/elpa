@@ -75,6 +75,7 @@ module elpa_abstract_impl
     type(timer_t) :: autotune_timer
 #else
     type(timer_dummy_t) :: timer
+    type(timer_dummy_t) :: autotune_timer
 #endif
     type(c_ptr)         :: index = C_NULL_PTR
     logical             :: eigenvalues_only

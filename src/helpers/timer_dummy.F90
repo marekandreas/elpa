@@ -61,11 +61,21 @@ module timings_dummy
       contains
       procedure, pass :: start => timer_start
       procedure, pass :: stop => timer_stop
+      procedure, pass :: enable => timer_enable
+      procedure, pass :: free => timer_free
+      procedure, pass :: print => timer_print
   end type 
 
   type(timer_dummy_t) :: timer
+  type(timer_dummy_t) :: autotune_timer
 
   contains
+
+  subroutine timer_print(self, name)
+    class(timer_dummy_t), intent(inout), target :: self
+    character(len=*), intent(in)  :: name
+    
+  end subroutine
 
   subroutine timer_start(self, name, replace)
     class(timer_dummy_t), intent(inout), target :: self
@@ -80,4 +90,13 @@ module timings_dummy
     
   end subroutine
 
+  subroutine timer_enable(self)
+    class(timer_dummy_t), intent(inout), target :: self
+    
+  end subroutine
+
+  subroutine timer_free(self)
+    class(timer_dummy_t), intent(inout), target :: self
+    
+  end subroutine
 end module timings_dummy

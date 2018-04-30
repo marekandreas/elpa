@@ -51,8 +51,11 @@
     MATH_DATATYPE(kind=REAL_DATATYPE), intent(inout)   :: a(:,:)
 
     integer(kind=ik) :: globI, globJ, locI, locJ, pi, pj, levels(num_primes)
-
+#ifdef HAVE_DETAILED_TIMINGS
     type(timer_t)    :: timer
+#else
+    type(timer_dummy_t)    :: timer
+#endif
 
     call timer%enable()
     call timer%start("prepare_matrix_analytic")
@@ -147,7 +150,12 @@
     integer(kind=ik)                       :: max_idx_array(np_rows * np_cols), &
                                               rank
 
+
+#ifdef HAVE_DETAILED_TIMINGS
     type(timer_t)    :: timer
+#else
+    type(timer_dummy_t)    :: timer
+#endif
 
     call timer%enable()
     call timer%start("check_correctness_analytic")
