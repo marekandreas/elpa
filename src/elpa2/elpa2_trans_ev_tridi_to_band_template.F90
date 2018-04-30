@@ -2153,6 +2153,8 @@
      if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
 
 #ifdef HAVE_DETAILED_TIMINGS
+     call obj%get("print_flops",print_flops)
+     if (print_flops == 1) then
        call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, mpierr)
        kernel_flops = kernel_flops_recv
        call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_COLS, mpierr)
@@ -2162,15 +2164,14 @@
        kernel_time_recv = kernel_time
        call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_COLS, mpierr)
        kernel_time_recv = kernel_time
+     endif
 #endif
 
-#else /* WITH_MPI */
+#endif /* WITH_MPI */
 
      call obj%get("print_flops",print_flops)
      if (my_prow==0 .and. my_pcol==0 .and.print_flops == 1) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)')  kernel_time, kernel_flops/kernel_time*1.d-6
-
-#endif /* WITH_MPI */
 
      if (useGPU) then
      ! copy q to q_dev needed in trans_ev_band_to_full
