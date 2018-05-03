@@ -167,9 +167,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       MATH_DATATYPE(kind=rck), allocatable         :: ur_p(:,:), uc_p(:,:)
 #endif
 
-#if COMPLEXCASE == 1
-      real(kind=REAL_DATATYPE), allocatable         :: tmp_real(:)
-#endif
+      real(kind=rk), allocatable         :: tmp_real(:)
       integer(kind=ik)                              :: min_tile_size, error
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
@@ -957,62 +955,31 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       ! distribute the arrays d_vec and e_vec to all processors
 
-#if REALCASE == 1
-      allocate(tmp(na), stat=istat, errmsg=errorMessage)
-
-      if (istat .ne. 0) then
-        print *,"tridiag_real: error when allocating tmp "//errorMessage
-        stop 1
-      endif
-#endif
-#if COMPLEXCASE == 1
       allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"tridiag_complex: error when allocating tmp_real "//errorMessage
+        print *,"tridiag: error when allocating tmp_real "//errorMessage
         stop 1
       endif
-#endif
 
 
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
-#if REALCASE == 1
-      tmp = d_vec
-      call mpi_allreduce(tmp, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-      tmp = d_vec
-      call mpi_allreduce(tmp, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-      tmp = e_vec
-      call mpi_allreduce(tmp, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-      tmp = e_vec
-      call mpi_allreduce(tmp, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#endif
-#if COMPLEXCASE == 1
       tmp_real = d_vec
       call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
       tmp_real = d_vec
-      call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION ,MPI_SUM, mpi_comm_cols, mpierr)
+      call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
       tmp_real = e_vec
       call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
       tmp_real = e_vec
       call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#endif
       if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
-#if REALCASE == 1
-      deallocate(tmp,  stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_real: error when deallocating tmp "//errorMessage
-        stop 1
-      endif
-#endif
-#if COMPLEXCASE == 1
       deallocate(tmp_real, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"tridiag_complex: error when deallocating tmp_real "//errorMessage
+        print *,"tridiag: error when deallocating tmp_real "//errorMessage
         stop 1
       endif
-#endif
 
       call obj%timer%stop("tridiag_&
       &MATH_DATATYPE&
