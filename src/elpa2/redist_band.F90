@@ -51,7 +51,7 @@ subroutine redist_band_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-           (obj, a, a_dev, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+           (obj, a_mat, a_dev, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
 
    use elpa_abstract_impl
    use elpa2_workload
@@ -65,7 +65,7 @@ subroutine redist_band_&
    class(elpa_abstract_impl_t), intent(inout)       :: obj
    logical, intent(in)                              :: useGPU
    integer(kind=ik), intent(in)                     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)  :: a(lda, matrixCols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)  :: a_mat(lda, matrixCols)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(out) :: ab(:,:)
 
    integer(kind=ik), allocatable                    :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &
@@ -91,7 +91,7 @@ subroutine redist_band_&
 
    if (useGPU) then
      ! copy a_dev to aMatrix
-     successCUDA = cuda_memcpy (loc(a), int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
+     successCUDA = cuda_memcpy (loc(a_mat), int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
                                 cudaMemcpyDeviceToHost)
      if (.not.(successCUDA)) then
        print *,"redist_band_&
@@ -175,8 +175,8 @@ subroutine redist_band_&
 
    ! Fill send buffer
 
-   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
-   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of a
+   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a_mat
+   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of a_mat
 
    np = 0
    do j=0,(na-1)/nblk ! loop over rows of blocks
@@ -190,7 +190,7 @@ subroutine redist_band_&
            jl = MIN(nblk,l_rows-js)
            il = MIN(nblk,l_cols-is)
 
-           sbuf(1:jl,1:il,nstart_s(np)) = a(js+1:js+jl,is+1:is+il)
+           sbuf(1:jl,1:il,nstart_s(np)) = a_mat(js+1:js+jl,is+1:is+il)
          endif
        enddo
       endif
