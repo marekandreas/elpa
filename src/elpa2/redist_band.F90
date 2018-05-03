@@ -90,7 +90,7 @@ subroutine redist_band_&
    )
 
    if (useGPU) then
-     ! copy a_dev to aMatrix
+     ! copy a_dev to a_mat 
      successCUDA = cuda_memcpy (loc(a_mat), int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
                                 cudaMemcpyDeviceToHost)
      if (.not.(successCUDA)) then

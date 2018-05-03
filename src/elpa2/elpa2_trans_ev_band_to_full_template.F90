@@ -55,7 +55,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, nqc, nblk, nbw, a, a_dev, lda, tmat, tmat_dev, q, &
+    (obj, na, nqc, nblk, nbw, a_mat, a_dev, lda, tmat, tmat_dev, q_mat, &
      q_dev, ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
 #if REALCASE == 1
      ,useQr)
@@ -70,27 +70,27 @@
     !
     !  Parameters
     !
-    !  na          Order of matrix a, number of rows of matrix q
+    !  na          Order of matrix a_mat, number of rows of matrix q_mat
     !
-    !  nqc         Number of columns of matrix q
+    !  nqc         Number of columns of matrix q_mat
     !
     !  nblk        blocksize of cyclic distribution, must be the same in both directions!
     !
     !  nbw         semi bandwith
     !
-    !  a(lda,matrixCols)    Matrix containing the Householder vectors (i.e. matrix a after bandred_real/complex)
+    !  a_mat(lda,matrixCols)    Matrix containing the Householder vectors (i.e. matrix a_mat after bandred_real/complex)
     !              Distribution is like in Scalapack.
     !
-    !  lda         Leading dimension of a
-    !  matrixCols  local columns of matrix a and q
+    !  lda         Leading dimension of a_mat
+    !  matrixCols  local columns of matrix a_mat and q_mat
     !
     !  tmat(nbw,nbw,numBlocks) Factors returned by bandred_real/complex
     !
-    !  q           On input: Eigenvectors of band matrix
+    !  q_mat           On input: Eigenvectors of band matrix
     !              On output: Transformed eigenvectors
     !              Distribution is like in Scalapack.
     !
-    !  ldq         Leading dimension of q
+    !  ldq         Leading dimension of q_mat
     !
     !  mpi_comm_rows
     !  mpi_comm_cols
@@ -110,9 +110,9 @@
 #endif
       integer(kind=ik)                       :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck)               :: a(lda,*), q(ldq,*), tmat(nbw,nbw,*)
+      MATH_DATATYPE(kind=rck)               :: a_mat(lda,*), q_mat(ldq,*), tmat(nbw,nbw,*)
 #else
-      MATH_DATATYPE(kind=rck)               :: a(lda,matrixCols), q(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      MATH_DATATYPE(kind=rck)               :: a_mat(lda,matrixCols), q_mat(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
 #endif
       integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
 
@@ -124,7 +124,7 @@
 
       MATH_DATATYPE(kind=rck), allocatable   :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
       ! hvm_dev is fist used and set in this routine
-      ! q is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
+      ! q_mat is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
       ! tmp_dev is first used in this routine
       ! tmat_dev is passed along from bandred_real
       integer(kind=C_intptr_T)               :: hvm_dev, q_dev, tmp_dev, tmat_dev
@@ -165,8 +165,8 @@
 
       call obj%timer%stop("mpi_communication")
 
-      max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of A
-      max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q!
+      max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of a_mat
+      max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q_mat!
 
       max_local_rows = max_blocks_row*nblk
       max_local_cols = max_blocks_col*nblk
@@ -256,10 +256,10 @@
 !          stop 1
 !        endif
   !      q_temp(:,:) = 0.0
-  !      q_temp(1:ldq,1:na_cols) = q(1:ldq,1:na_cols)
+  !      q_temp(1:ldq,1:na_cols) = q_mat(1:ldq,1:na_cols)
 
 !        ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-!        successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
+!        successCUDA = cuda_memcpy(q_dev, loc(q_mat), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop 1
@@ -272,7 +272,7 @@
 !           stop 1
 !         endif
 !
-!         successCUDA = cuda_memcpy(q_dev, loc(q),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+!         successCUDA = cuda_memcpy(q_dev, loc(q_mat),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
 !          if (.not.(successCUDA)) then
 !            print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
 !            stop 1
@@ -290,7 +290,7 @@
 
         hvm = 0.0_rck   ! Must be set to 0 !!!
         hvb = 0.0_rck   ! Safety only
-        l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
+        l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q_mat
 
         do istep=1,(na-1)/nbw
 
@@ -308,7 +308,7 @@
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
             l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
 
-            if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+            if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a_mat(1:l_rows,l_colh)
 
             nb = nb+l_rows
 
@@ -544,7 +544,7 @@
 
         hvm = 0.0_rck   ! Must be set to 0 !!!
         hvb = 0.0_rck   ! Safety only
-        l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q
+        l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q_mat
 
 !       if ( na >= ((t_blocking+1)*nbw) ) then
 
@@ -586,7 +586,7 @@
             l_rows = local_index(nrow-1, my_prow, np_rows, nblk, -1) ! row length for bcast
             l_colh = local_index(ncol  , my_pcol, np_cols, nblk, -1) ! HV local column number
 
-            if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a(1:l_rows,l_colh)
+            if (my_pcol==pcol(ncol, nblk, np_cols)) hvb(nb+1:nb+l_rows) = a_mat(1:l_rows,l_colh)
 
             nb = nb+l_rows
 
@@ -681,7 +681,7 @@
 
             call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',         &
                           n_cols, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
-                                q, ldq, ZERO, tmp1, n_cols)
+                                q_mat, ldq, ZERO, tmp1, n_cols)
             call obj%timer%stop("blas")
 
           else ! l_rows>0
@@ -701,14 +701,14 @@
 
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                           n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp2, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp2, n_cols, ONE, q, ldq)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp2, n_cols, ONE, q_mat, ldq)
 
 #else /* BAND_TO_FULL_BLOCKING */
 
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                                 n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp2, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
-                                tmp2, n_cols, ONE, q, ldq)
+                                tmp2, n_cols, ONE, q_mat, ldq)
 
 #endif /* BAND_TO_FULL_BLOCKING */
 
@@ -721,13 +721,13 @@
 #ifdef BAND_TO_FULL_BLOCKING
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                                 n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp1, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp1, n_cols, ONE, q, ldq)
+            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp1, n_cols, ONE, q_mat, ldq)
 #else /* BAND_TO_FULL_BLOCKING */
 
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                                 n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
             call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
-                                tmp1, n_cols, ONE, q, ldq)
+                                tmp1, n_cols, ONE, q_mat, ldq)
 
 #endif  /* BAND_TO_FULL_BLOCKING */
           endif
@@ -736,7 +736,7 @@
 
 !          if (l_rows>0) then
 !            call PRECISION_TRMM('L', 'U', 'T', 'N', n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp2, n_cols)
-!            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp2, n_cols, ONE, q, ldq)
+!            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp2, n_cols, ONE, q_mat, ldq)
 !          endif
 
         enddo ! istep
@@ -777,7 +777,7 @@
         endif
 
          ! final transfer of q_dev
-         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(loc(q_mat), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&
@@ -786,7 +786,7 @@
           stop 1
          endif
 
-         !   q(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
+         !   q_mat(1:ldq,1:na_cols) = q_temp(1:ldq,1:na_cols)
 
          successCUDA = cuda_free(q_dev)
          if (.not.(successCUDA)) then
