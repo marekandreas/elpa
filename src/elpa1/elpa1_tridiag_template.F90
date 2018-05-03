@@ -143,7 +143,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       integer(kind=ik)                              :: omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
 #endif
 
-      real(kind=REAL_DATATYPE)                      :: vnorm2
+      real(kind=rk)                                 :: vnorm2
       MATH_DATATYPE(kind=rck)                       :: vav, x, aux(2*max_stored_uv), aux1(2), aux2(2), vrl, xf
 #if COMPLEXCASE == 1
       complex(kind=rck)                             :: aux3(1)
@@ -167,7 +167,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       MATH_DATATYPE(kind=rck), allocatable         :: ur_p(:,:), uc_p(:,:)
 #endif
 
-      real(kind=rk), allocatable         :: tmp_real(:)
+      real(kind=rk), allocatable                    :: tmp_real(:)
       integer(kind=ik)                              :: min_tile_size, error
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
