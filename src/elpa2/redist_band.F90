@@ -89,17 +89,6 @@ subroutine redist_band_&
    &PRECISION_SUFFIX &
    )
 
-   if (useGPU) then
-     ! copy a_dev to a_mat 
-     successCUDA = cuda_memcpy (loc(a_mat), int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
-                                cudaMemcpyDeviceToHost)
-     if (.not.(successCUDA)) then
-       print *,"redist_band_&
-       &MATH_DATATYPE&
-       &: error in cudaMemcpy"
-       stop 1
-     endif
-   endif ! useGPU
 
    call obj%timer%start("mpi_communication")
    call mpi_comm_rank(communicator,my_pe,mpierr)

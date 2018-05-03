@@ -1682,6 +1682,22 @@
      endif
 #endif
 
+     if (useGPU) then
+       ! copy a_dev to a_mat 
+       ! we do it here, since a is needed on the host in the following routine
+       ! (band to tridi). Previously, a has been kept on the device and then
+       ! copied in redist_band (called from tridiag_band). However, it seems to
+       ! be easier to do it here. 
+       successCUDA = cuda_memcpy (loc(a_mat), int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
+                                  cudaMemcpyDeviceToHost)
+       if (.not.(successCUDA)) then
+         print *,"bandred_&
+         &MATH_DATATYPE&
+         &: error in cudaMemcpy"
+         stop 1
+       endif
+     endif ! useGPU
+
      call obj%timer%stop("bandred_&
      &MATH_DATATYPE&
      &" // &
