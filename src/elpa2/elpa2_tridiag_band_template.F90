@@ -129,15 +129,24 @@
       MATH_DATATYPE(kind=rck), allocatable        :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
       integer                                      :: istat
       character(200)                               :: errorMessage
+      character(20)                                :: gpuString
 
 #ifndef WITH_MPI
       integer(kind=ik)                             :: startAddr
 #endif
+
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
+
       call obj%timer%start("tridiag_band_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      &PRECISION_SUFFIX //&
+      gpuString)
+
       if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_comm_rank(communicator,my_pe,mpierr)
       call mpi_comm_size(communicator,n_pes,mpierr)
@@ -1198,8 +1207,8 @@
       call obj%timer%stop("tridiag_band_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX&
-      )
+      &PRECISION_SUFFIX //&
+      gpuString)
 
 ! intel compiler bug makes these ifdefs necessary
 #if REALCASE == 1

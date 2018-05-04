@@ -138,17 +138,26 @@
 
       integer(kind=ik)                       :: istat
       character(200)                         :: errorMessage
+      character(20)                          :: gpuString
       logical                                :: successCUDA
       integer(kind=c_intptr_t), parameter    :: size_of_datatype = size_of_&
                                                                    &PRECISION&
                                                                    &_&
                                                                    &MATH_DATATYPE
       integer                                :: blocking_factor, error
+
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
+
       call obj%timer%start("trans_ev_band_to_full_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      &PRECISION_SUFFIX //&
+      gpuString)
+
 #ifdef BAND_TO_FULL_BLOCKING
       call obj%get("blocking_in_band_to_full",blocking_factor,error)
       if (error .ne. ELPA_OK) then
@@ -832,8 +841,8 @@
       call obj%timer%stop("trans_ev_band_to_full_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX&
-      )
+      &PRECISION_SUFFIX //&
+      gpuString)
 
     end subroutine trans_ev_band_to_full_&
     &MATH_DATATYPE&

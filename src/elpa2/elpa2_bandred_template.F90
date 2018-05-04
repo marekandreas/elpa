@@ -125,6 +125,7 @@
       real(kind=rk)                               :: eps
 #endif
       logical, intent(in)                         :: useGPU
+      character(20)                               :: gpuString
 
       integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                            :: l_cols, l_rows
@@ -188,12 +189,18 @@
 
       logical                                     :: useGPU_reduction_lower_block_to_tridiagonal
 
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
 
       call obj%timer%start("bandred_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      PRECISION_SUFFIX // &
+      gpuString )
+
       useGPU_reduction_lower_block_to_tridiagonal = .false.
 
       if (useGPU) then
@@ -1701,8 +1708,8 @@
      call obj%timer%stop("bandred_&
      &MATH_DATATYPE&
      &" // &
-     &PRECISION_SUFFIX &
-     )
+     &PRECISION_SUFFIX //&
+     gpuString)
 
    end subroutine bandred_&
    &MATH_DATATYPE&
