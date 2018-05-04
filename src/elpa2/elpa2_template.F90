@@ -201,7 +201,10 @@
     endif
     if (kernel .eq. GPU_KERNEL) then
       if (gpu .ne. 1) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+        write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
+                            &is defined as the GPU kernel!  Aborting..."
+        stop
+        !TODO do error handling properly
       endif
     endif
 
