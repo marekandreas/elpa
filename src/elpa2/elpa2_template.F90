@@ -118,6 +118,23 @@
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
 
+#if REALCASE == 1
+#undef GPU_KERNEL
+#undef GENERIC_KERNEL
+#undef KERNEL_STRING
+#define GPU_KERNEL ELPA_2STAGE_REAL_GPU
+#define GENERIC_KERNEL ELPA_2STAGE_REAL_GENERIC
+#define KERNEL_STRING "real_kernel"
+#endif
+#if COMPLEXCASE == 1
+#undef GPU_KERNEL
+#undef GENERIC_KERNEL
+#undef KERNEL_STRING
+#define GPU_KERNEL ELPA_2STAGE_COMPLEX_GPU
+#define GENERIC_KERNEL ELPA_2STAGE_COMPLEX_GENERIC
+#define KERNEL_STRING "complex_kernel"
+#endif
+
     call obj%timer%start("elpa_solve_evp_&
     &MATH_DATATYPE&
     &_2stage_&
@@ -163,8 +180,7 @@
      obj%eigenvalues_only = .true.
    endif
 
-#if REALCASE == 1
-    call obj%get("real_kernel",kernel,error)
+    call obj%get(KERNEL_STRING,kernel,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option. Aborting..."
       stop
@@ -176,19 +192,20 @@
       stop
     endif
     if (gpu == 1) then
-      if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
+      if (kernel .ne. GPU_KERNEL) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
         write(error_unit,*) "The compute kernel will be executed on CPUs!"
       else if (nblk .ne. 128) then
-        kernel = ELPA_2STAGE_REAL_GENERIC
+        kernel = GENERIC_KERNEL
       endif
     endif
-    if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+    if (kernel .eq. GPU_KERNEL) then
       if (gpu .ne. 1) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
       endif
     endif
 
+#if REALCASE == 1
 #ifdef SINGLE_PRECISION_REAL
     ! special case at the moment NO single precision kernels on POWER 8 -> set GENERIC for now
     if (kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK2 .or. &
@@ -210,33 +227,6 @@
 
 #endif
 
-#if COMPLEXCASE == 1
-    call obj%get("complex_kernel",kernel,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    ! check consistency between request for GPUs and defined kernel
-    call obj%get("gpu", gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    if (gpu == 1) then
-      if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-      else if (nblk .ne. 128) then
-        kernel = ELPA_2STAGE_COMPLEX_GENERIC
-      endif
-    endif
-    if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
-      if (gpu .ne. 1) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-      endif
-    endif
-
-#endif
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option. Aborting..."
@@ -336,12 +326,7 @@
         ! disable GPU usage for trans_ev_tridi
         do_useGPU_trans_ev_tridi = .false.
       else
-#if REALCASE == 1
-        if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
-#endif
-#if COMPLEXCASE == 1
-        if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
-#endif
+        if (kernel .eq. GPU_KERNEL) then
           do_useGPU_trans_ev_tridi = .true.
         else
           do_useGPU_trans_ev_tridi = .false.
