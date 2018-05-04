@@ -55,45 +55,46 @@
 #ifdef WITH_OPENMP
   stripe_count, max_threads, thread_width, l_nev)
 #else
-        last_stripe_width, stripe_count)
+  last_stripe_width, stripe_count)
 #endif
           use elpa_abstract_impl
           use precision
           implicit none
           class(elpa_abstract_impl_t), intent(inout) :: obj
 
-          integer(kind=ik), intent(in) :: n, stripe_count, stripe_width
+          integer(kind=ik), intent(in)               :: n, stripe_count, stripe_width
 #ifdef WITH_OPENMP
-          integer(kind=ik), intent(in) :: max_threads, thread_width, l_nev
+          integer(kind=ik), intent(in)               :: max_threads, thread_width, l_nev
+          logical                                    :: useOPENMP
 
 #if REALCASE == 1
-          real(kind=C_DATATYPE_KIND), intent(in)    :: a(:,:,:,:)
+          real(kind=C_DATATYPE_KIND), intent(in)     :: a(:,:,:,:)
 #endif
 #if COMPLEXCASE == 1
-          complex(kind=C_DATATYPE_KIND), intent(in) :: a(:,:,:,:)
+          complex(kind=C_DATATYPE_KIND), intent(in)  :: a(:,:,:,:)
 #endif
 
 #else /* WITH_OPENMP */
-          integer(kind=ik), intent(in) :: last_stripe_width
+          integer(kind=ik), intent(in)               :: last_stripe_width
 #if REALCASE == 1
-          real(kind=C_DATATYPE_KIND), intent(in)    :: a(:,:,:)
+          real(kind=C_DATATYPE_KIND), intent(in)     :: a(:,:,:)
 #endif
 #if COMPLEXCASE == 1
-          complex(kind=C_DATATYPE_KIND), intent(in)    :: a(:,:,:)
+          complex(kind=C_DATATYPE_KIND), intent(in)  :: a(:,:,:)
 #endif
 
 #endif /* WITH_OPENMP */
 
 #if REALCASE == 1
-          real(kind=C_DATATYPE_KIND)                :: row(:)
+          real(kind=C_DATATYPE_KIND)                 :: row(:)
 #endif
 #if COMPLEXCASE == 1
-          complex(kind=C_DATATYPE_KIND)                :: row(:)
+          complex(kind=C_DATATYPE_KIND)              :: row(:)
 #endif
 
-          integer(kind=ik)             :: i, noff, nl
+          integer(kind=ik)                           :: i, noff, nl
 #ifdef WITH_OPENMP
-          integer(kind=ik)             :: nt
+          integer(kind=ik)                           :: nt
 #endif
 
           call obj%timer%start("pack_row_&
@@ -106,7 +107,6 @@
           &PRECISION_SUFFIX &
     )
 
-#ifdef WITH_OPENMP
           do nt = 1, max_threads
             do i = 1, stripe_count
               noff = (nt-1)*thread_width + (i-1)*stripe_width
@@ -161,36 +161,36 @@
           use precision
           implicit none
           class(elpa_abstract_impl_t), intent(inout) :: obj
-           integer(kind=ik), intent(in) :: n, stripe_count, stripe_width
+          integer(kind=ik), intent(in)               :: n, stripe_count, stripe_width
 
 #ifdef WITH_OPENMP
           ! Private variables in OMP regions (my_thread) should better be in the argument list!
-          integer(kind=ik), intent(in) :: thread_width, l_nev, my_thread
+          integer(kind=ik), intent(in)               :: thread_width, l_nev, my_thread
 #if REALCASE == 1
-    real(kind=C_DATATYPE_KIND)    :: a(:,:,:,:)
+          real(kind=C_DATATYPE_KIND)                 :: a(:,:,:,:)
 #endif
 #if COMPLEXCASE == 1
-    complex(kind=C_DATATYPE_KIND)    :: a(:,:,:,:)
+          complex(kind=C_DATATYPE_KIND)              :: a(:,:,:,:)
 
 #endif
 #else /* WITH_OPENMP */
-          integer(kind=ik), intent(in) :: last_stripe_width
+          integer(kind=ik), intent(in)               :: last_stripe_width
 #if REALCASE == 1
-    real(kind=C_DATATYPE_KIND)    :: a(:,:,:)
+          real(kind=C_DATATYPE_KIND)                 :: a(:,:,:)
 #endif
 #if COMPLEXCASE == 1
-    complex(kind=C_DATATYPE_KIND)    :: a(:,:,:)
+          complex(kind=C_DATATYPE_KIND)              :: a(:,:,:)
 #endif
 
 #endif /* WITH_OPENMP */
 
 #if REALCASE == 1
-          real(kind=C_DATATYPE_KIND), intent(in)    :: row(:)
+          real(kind=C_DATATYPE_KIND), intent(in)     :: row(:)
 #endif
 #if COMPLEXCASE == 1
-          complex(kind=C_DATATYPE_KIND), intent(in)    :: row(:)
+          complex(kind=C_DATATYPE_KIND), intent(in)  :: row(:)
 #endif
-          integer(kind=ik)             :: i, noff, nl
+          integer(kind=ik)                           :: i, noff, nl
 
           call obj%timer%start("unpack_row_&
     &MATH_DATATYPE&
