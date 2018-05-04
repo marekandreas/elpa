@@ -105,7 +105,10 @@
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, gpu, debug, qr
    character(200)                                                     :: errorMessage
-   logical                                                            :: do_useGPU, do_useGPU_trans_ev_tridi
+   logical                                                            :: do_useGPU, do_useGPU_bandred, &
+                                                                         do_useGPU_tridi_band, do_useGPU_solve_tridi, &
+                                                                         do_useGPU_trans_ev_tridi_to_band, &
+                                                                         do_useGPU_trans_ev_band_to_full
    integer(kind=c_int)                                                :: numberOfGPUDevices
    integer(kind=c_intptr_t), parameter                                :: size_of_datatype = size_of_&
                                                                                             &PRECISION&
@@ -155,6 +158,32 @@
     ldq        = obj%local_nrows
     nblk       = obj%nblk
     matrixCols = obj%local_ncols
+
+    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    call obj%get("mpi_comm_parent",mpi_comm_all,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+
+    call obj%timer%start("mpi_communication")
+    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
+
+    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+    call obj%timer%stop("mpi_communication")
 
    ! special case na = 1
    if (na .eq. 1) then
@@ -208,101 +237,14 @@
       endif
     endif
 
-#if REALCASE == 1
-#ifdef SINGLE_PRECISION_REAL
-    ! special case at the moment NO single precision kernels on POWER 8 -> set GENERIC for now
-    if (kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK2 .or. &
-        kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK4 .or. &
-        kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK6        ) then
-        write(error_unit,*) "ELPA: At the moment there exist no specific SINGLE precision kernels for POWER8"
-        write(error_unit,*) "The GENERIC kernel will be used at the moment"
-        kernel = ELPA_2STAGE_REAL_GENERIC
-    endif
-    ! special case at the moment NO single precision kernels on SPARC64 -> set GENERIC for now
-    if (kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK2 .or. &
-        kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK4 .or. &
-        kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK6        ) then
-        write(error_unit,*) "ELPA: At the moment there exist no specific SINGLE precision kernels for SPARC64"
-        write(error_unit,*) "The GENERIC kernel will be used at the moment"
-        kernel = ELPA_2STAGE_REAL_GENERIC
-    endif
-#endif
-
-#endif
-
-    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    call obj%get("mpi_comm_parent",mpi_comm_all,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-
     if (gpu .eq. 1) then
       useGPU = .true.
     else
       useGPU = .false.
     endif
 
-#if REALCASE == 1
-    call obj%get("qr",qr,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    if (qr .eq. 1) then
-      useQR = .true.
-    else
-      useQR = .false.
-    endif
-
-#endif
-    call obj%timer%start("mpi_communication")
-    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
-    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
-
-    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-    call obj%timer%stop("mpi_communication")
-
-    call obj%get("debug",debug,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    wantDebug = debug == 1
-
     do_useGPU      = .false.
-    do_useGPU_trans_ev_tridi =.false.
-
-
-#if REALCASE == 1
-    useQRActual = .false.
-    ! set usage of qr decomposition via API call
-    if (useQR) useQRActual = .true.
-    if (.not.(useQR)) useQRACtual = .false.
-
-    if (useQRActual) then
-      if (mod(na,2) .ne. 0) then
-        if (wantDebug) then
-          write(error_unit,*) "solve_evp_real_2stage: QR-decomposition: blocksize does not fit with matrixsize"
-        endif
-        print *, "Do not use QR-decomposition for this matrix and blocksize."
-        success = .false.
-        return
-      endif
-    endif
-#endif /* REALCASE */
+    do_useGPU_trans_ev_tridi_to_band =.false.
 
     if (useGPU) then
       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
@@ -327,15 +269,79 @@
       if (nblk .ne. 128) then
         ! cannot run on GPU with this blocksize
         ! disable GPU usage for trans_ev_tridi
-        do_useGPU_trans_ev_tridi = .false.
+        do_useGPU_trans_ev_tridi_to_band = .false.
       else
         if (kernel .eq. GPU_KERNEL) then
-          do_useGPU_trans_ev_tridi = .true.
+          do_useGPU_trans_ev_tridi_to_band = .true.
         else
-          do_useGPU_trans_ev_tridi = .false.
+          do_useGPU_trans_ev_tridi_to_band = .false.
         endif
       endif
     endif
+
+#if REALCASE == 1
+#ifdef SINGLE_PRECISION_REAL
+    ! special case at the moment NO single precision kernels on POWER 8 -> set GENERIC for now
+    if (kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK2 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK4 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK6        ) then
+        write(error_unit,*) "ELPA: At the moment there exist no specific SINGLE precision kernels for POWER8"
+        write(error_unit,*) "The GENERIC kernel will be used at the moment"
+        kernel = ELPA_2STAGE_REAL_GENERIC
+    endif
+    ! special case at the moment NO single precision kernels on SPARC64 -> set GENERIC for now
+    if (kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK2 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK4 .or. &
+        kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK6        ) then
+        write(error_unit,*) "ELPA: At the moment there exist no specific SINGLE precision kernels for SPARC64"
+        write(error_unit,*) "The GENERIC kernel will be used at the moment"
+        kernel = ELPA_2STAGE_REAL_GENERIC
+    endif
+#endif
+
+#endif
+
+
+#if REALCASE == 1
+    call obj%get("qr",qr,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    if (qr .eq. 1) then
+      useQR = .true.
+    else
+      useQR = .false.
+    endif
+
+#endif
+
+    call obj%get("debug",debug,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    wantDebug = debug == 1
+
+
+
+#if REALCASE == 1
+    useQRActual = .false.
+    ! set usage of qr decomposition via API call
+    if (useQR) useQRActual = .true.
+    if (.not.(useQR)) useQRACtual = .false.
+
+    if (useQRActual) then
+      if (mod(na,2) .ne. 0) then
+        if (wantDebug) then
+          write(error_unit,*) "solve_evp_real_2stage: QR-decomposition: blocksize does not fit with matrixsize"
+        endif
+        print *, "Do not use QR-decomposition for this matrix and blocksize."
+        success = .false.
+        return
+      endif
+    endif
+#endif /* REALCASE */
 
 
 
@@ -569,7 +575,7 @@
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
        q_dev, &
-       ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
+       ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        success=success, kernel=kernel)
        call obj%timer%stop("trans_ev_to_band")
 
@@ -588,7 +594,7 @@
 
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")
-       if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
+       if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
          ! copy to device if we want to continue on GPU
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 
