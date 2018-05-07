@@ -382,6 +382,7 @@
 
       max_threads = 1
 #if REALCASE == 1
+      ! OPENMP_CHANGE here
       max_threads = omp_get_max_threads()
 #endif
 #if COMPLEXCASE == 1

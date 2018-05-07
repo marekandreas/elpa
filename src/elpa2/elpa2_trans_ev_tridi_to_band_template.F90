@@ -57,7 +57,7 @@
     &_&
     &PRECISION &
     (obj, na, nev, nblk, nbw, q, q_dev, ldq, matrixCols,         &
-     hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, success, &
+     hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, max_threads, success, &
      kernel)
 
     !-------------------------------------------------------------------------------
@@ -96,6 +96,9 @@
       use cuda_functions
       use precision
       use iso_c_binding
+#ifdef WITH_OPENMP
+      use omp_lib
+#endif
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -174,9 +177,11 @@
       integer(kind=ik), parameter                :: bottom_recv_tag = 111
       integer(kind=ik), parameter                :: top_recv_tag    = 222
       integer(kind=ik), parameter                :: result_recv_tag = 333
+
+      integer(kind=ik), intent(in)               :: max_threads
+ 
 #ifdef WITH_OPENMP
-      integer(kind=ik)                           :: max_threads, my_thread
-      integer(kind=ik)                           :: omp_get_max_threads
+      integer(kind=ik)                           :: my_thread
 #endif
 
 
@@ -214,10 +219,11 @@
       kernel_time = 0.0
       kernel_flops = 0
 
-#ifdef WITH_OPENMP
-      max_threads = 1
-      max_threads = omp_get_max_threads()
-#endif
+!#ifdef WITH_OPENMP
+!      ! openmp_change_here
+!      max_threads = 1
+!      max_threads = omp_get_max_threads()
+!#endif
       if (wantDebug) call obj%timer%start("mpi_communication")
       call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
       call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)
@@ -1459,7 +1465,7 @@
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION&
-     & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+     & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,      &
               a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
               hh_dot_dev, &
@@ -1590,7 +1596,7 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,       &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,      &
                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
             hh_dot_dev, &
@@ -1679,7 +1685,7 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
             hh_dot_dev,     &
@@ -1758,7 +1764,7 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,           &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
                       a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
 #if REALCASE == 1
                hh_dot_dev,     &

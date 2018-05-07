@@ -65,13 +65,11 @@
     &_&
     &PRECISION &
     (obj, na, a, a_dev, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-     tmat_dev, wantDebug, useGPU, success &
+     tmat_dev, wantDebug, useGPU, success, &
 #if REALCASE == 1
-     , useQR)
+     useQR, &
 #endif
-#if COMPLEXCASE == 1
-     )
-#endif
+     max_threads)
 
   !-------------------------------------------------------------------------------
   !  bandred_real/complex: Reduces a distributed symmetric matrix to band form
@@ -187,6 +185,7 @@
                                                                         &MATH_DATATYPE
 
       logical                                     :: useGPU_reduction_lower_block_to_tridiagonal
+      integer(kind=ik), intent(in)                :: max_threads
 
 
       call obj%timer%start("bandred_&
@@ -957,7 +956,7 @@
               &PRECISION &
                            (obj, vmrCUDA, cur_l_rows, mpi_comm_rows, &
                             umcCUDA(cur_l_cols * n_cols + 1), cur_l_cols, &
-                            mpi_comm_cols, 1, istep*nbw, n_cols, nblk)
+                            mpi_comm_cols, 1, istep*nbw, n_cols, nblk, max_threads)
        else ! useGPU
          call elpa_transpose_vectors_&
               &MATH_DATATYPE&
@@ -965,7 +964,7 @@
               &PRECISION &
                                            (obj, vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                             umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                            1, istep*nbw, n_cols, nblk)
+                                            1, istep*nbw, n_cols, nblk, max_threads)
        endif
 
        ! Calculate umc = A**T * vmr
@@ -1011,7 +1010,7 @@
 #ifdef WITH_OPENMP
 
 #if REALCASE == 1
-       n_way = omp_get_max_threads()
+       n_way = max_threads
 
        !$omp parallel private( i,lcs,lce,lrs,lre)
 #endif
@@ -1210,7 +1209,7 @@
                 &PRECISION &
                                 (obj, vmrCUDA(cur_l_rows * n_cols + 1),cur_l_rows,  &
                                  mpi_comm_rows, umcCUDA,                            &
-                                 cur_l_cols, mpi_comm_cols, istep*nbw, n_cols, nblk)
+                                 cur_l_cols, mpi_comm_cols, istep*nbw, n_cols, nblk, max_threads)
          else ! useGPU
 
            call elpa_reduce_add_vectors_&
@@ -1219,7 +1218,7 @@
            &PRECISION &
                                             (obj, vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
                                              umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                             istep*nbw, n_cols, nblk)
+                                             istep*nbw, n_cols, nblk, max_threads)
          endif ! useGPU
        endif ! tile_size < istep*nbw .or. n_way > 1
 
@@ -1415,7 +1414,7 @@
               &PRECISION &
                           (obj, umcCUDA, cur_l_cols, mpi_comm_cols, &
                            vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
-                           1, istep*nbw, n_cols, nblk)
+                           1, istep*nbw, n_cols, nblk, max_threads)
 
          successCUDA = cuda_memcpy(vmr_dev,       &
                                    loc(vmrCUDA(1)),    &
@@ -1456,7 +1455,7 @@
          &PRECISION &
                                   (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                         1, istep*nbw, n_cols, nblk)
+                                         1, istep*nbw, n_cols, nblk, max_threads)
 
        endif  ! useGPU
 
@@ -1464,8 +1463,13 @@
        ! A = A - V*U**T - U*V**T
 
 #ifdef WITH_OPENMP
+       ! OPENMP_CHANGE here
        !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
        n_threads = omp_get_num_threads()
+       print *,"debug"
+       if (n_threads .ne. max_threads) then
+         print *,"WTF2"
+       endif
        if (mod(n_threads, 2) == 0) then
          n_way = 2
        else

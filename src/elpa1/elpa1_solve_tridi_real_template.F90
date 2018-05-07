@@ -57,31 +57,32 @@
 subroutine solve_tridi_&
 &PRECISION_AND_SUFFIX &
     ( obj, na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                           mpi_comm_cols, useGPU, wantDebug, success )
+                                           mpi_comm_cols, useGPU, wantDebug, success, max_threads )
 
       use precision
       use elpa_abstract_impl
       implicit none
 #include "../../src/general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik), intent(in)              :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE), intent(inout)   :: d(na), e(na)
+      integer(kind=ik), intent(in)               :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      real(kind=REAL_DATATYPE), intent(inout)    :: d(na), e(na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE), intent(inout)   :: q(ldq,*)
+      real(kind=REAL_DATATYPE), intent(inout)    :: q(ldq,*)
 #else
-      real(kind=REAL_DATATYPE), intent(inout)   :: q(ldq,matrixCols)
+      real(kind=REAL_DATATYPE), intent(inout)    :: q(ldq,matrixCols)
 #endif
-      logical, intent(in)           :: useGPU, wantDebug
-      logical, intent(out)          :: success
+      logical, intent(in)                        :: useGPU, wantDebug
+      logical, intent(out)                       :: success
 
-      integer(kind=ik)              :: i, j, n, np, nc, nev1, l_cols, l_rows
-      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                           :: i, j, n, np, nc, nev1, l_cols, l_rows
+      integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols, mpierr
 
-      integer(kind=ik), allocatable :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
+      integer(kind=ik), allocatable              :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
 
-      integer(kind=ik)              :: istat
-      character(200)                :: errorMessage
-      character(20)                :: gpuString
+      integer(kind=ik)                           :: istat
+      character(200)                             :: errorMessage
+      character(20)                              :: gpuString
+      integer(kind=ik), intent(in)               :: max_threads
 
       if(useGPU) then
         gpuString = "_gpu"
@@ -152,7 +153,7 @@ subroutine solve_tridi_&
       call solve_tridi_col_&
            &PRECISION_AND_SUFFIX &
              (obj, l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
-                        matrixCols, mpi_comm_rows, useGPU, wantDebug, success)
+                        matrixCols, mpi_comm_rows, useGPU, wantDebug, success, max_threads)
       if (.not.(success)) then
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
         return
@@ -335,7 +336,7 @@ subroutine solve_tridi_&
                   &PRECISION &
                                  (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
-                                 l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success )
+                                 l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success, max_threads )
              if (.not.(success)) return
            else
              ! Not last merge, leave dense column distribution
@@ -343,7 +344,7 @@ subroutine solve_tridi_&
                   &PRECISION &
                                 (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
-                                 l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success )
+                                 l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success, max_threads )
              if (.not.(success)) return
            endif
        end subroutine merge_recursive_&
@@ -354,7 +355,7 @@ subroutine solve_tridi_&
 
     subroutine solve_tridi_col_&
     &PRECISION_AND_SUFFIX &
-      ( obj, na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, useGPU, wantDebug, success )
+      ( obj, na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, useGPU, wantDebug, success, max_threads )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -384,6 +385,8 @@ subroutine solve_tridi_&
       logical, intent(out)          :: success
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
+
+      integer(kind=ik), intent(in)  :: max_threads
 
       call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
       call obj%timer%start("mpi_communication")
@@ -557,7 +560,7 @@ subroutine solve_tridi_&
           &PRECISION &
                               (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                                matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
-                               l_col(noff+1), p_col_o(noff+1), 0, 1, useGPU, wantDebug, success)
+                               l_col(noff+1), p_col_o(noff+1), 0, 1, useGPU, wantDebug, success, max_threads)
           if (.not.(success)) return
 
         enddo

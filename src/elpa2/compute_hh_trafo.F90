@@ -51,9 +51,9 @@
        &_&
 #endif
        &PRECISION &
-       (obj, useGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count,  &
+       (obj, useGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
 #ifdef WITH_OPENMP
-       max_threads, l_nev, &
+       l_nev, &
 #endif
        a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
@@ -123,6 +123,7 @@
 
          integer(kind=ik), intent(in)               :: stripe_width,a_dim2,stripe_count
 
+         integer(kind=ik), intent(in)               :: max_threads
 #ifndef WITH_OPENMP
          integer(kind=ik), intent(in)               :: last_stripe_width
 #if REALCASE == 1
@@ -135,7 +136,7 @@
 #endif
 
 #else /* WITH_OPENMP */
-         integer(kind=ik), intent(in)               :: max_threads, l_nev, thread_width
+         integer(kind=ik), intent(in)               :: l_nev, thread_width
 #if REALCASE == 1
 !         real(kind=C_DATATYPE_KIND)                :: a(stripe_width,a_dim2,stripe_count,max_threads)
          real(kind=C_DATATYPE_KIND), pointer        :: a(:,:,:,:)

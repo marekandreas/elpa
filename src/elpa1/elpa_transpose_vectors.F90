@@ -54,7 +54,7 @@ subroutine elpa_transpose_vectors_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-             (obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk)
+             (obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads)
 
 !-------------------------------------------------------------------------------
 ! This routine transposes an array of vectors which are distributed in
@@ -94,6 +94,7 @@ subroutine elpa_transpose_vectors_&
    integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
    integer(kind=ik)                                  :: auxstride
+   integer(kind=ik), intent(in)                      :: nrThreads
 
    call obj%timer%start("elpa_transpose_vectors_&
    &MATH_DATATYPE&

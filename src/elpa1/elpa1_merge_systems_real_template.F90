@@ -57,16 +57,19 @@
     subroutine merge_systems_&
     &PRECISION &
                          (obj, na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success)
+                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
       use cuda_functions
       use iso_c_binding
       use precision
       use elpa_abstract_impl
+#ifdef WITH_OPENMP
+      use omp_lib
+#endif
       implicit none
 #include "../general/precision_kinds.F90"
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik), intent(in)               :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
-                                                    mpi_comm_cols, npc_0, npc_n
+      class(elpa_abstract_impl_t), intent(inout)  :: obj
+      integer(kind=ik), intent(in)                :: na, nm, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, &
+                                                     mpi_comm_cols, npc_0, npc_n
       integer(kind=ik), intent(in)                :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
       real(kind=REAL_DATATYPE), intent(inout)     :: d(na), e
 #ifdef USE_ASSUMED_SIZE
@@ -74,49 +77,46 @@
 #else
       real(kind=REAL_DATATYPE), intent(inout)     :: q(ldq,matrixCols)
 #endif
-      logical, intent(in)           :: useGPU, wantDebug
-      logical, intent(out)          :: success
+      logical, intent(in)                         :: useGPU, wantDebug
+      logical, intent(out)                        :: success
 
       ! TODO: play with max_strip. If it was larger, matrices being multiplied
       ! might be larger as well!
-      integer(kind=ik), parameter   :: max_strip=128
+      integer(kind=ik), parameter                 :: max_strip=128
 
-      real(kind=REAL_DATATYPE)                 :: PRECISION_LAMCH, PRECISION_LAPY2
-      real(kind=REAL_DATATYPE)                 :: beta, sig, s, c, t, tau, rho, eps, tol, &
-                                       qtrans(2,2), dmax, zmax, d1new, d2new
-      real(kind=REAL_DATATYPE)                 :: z(na), d1(na), d2(na), z1(na), delta(na),  &
-                                       dbase(na), ddiff(na), ev_scale(na), tmp(na)
-      real(kind=REAL_DATATYPE)                 :: d1u(na), zu(na), d1l(na), zl(na)
-      real(kind=REAL_DATATYPE), allocatable    :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
+      real(kind=REAL_DATATYPE)                    :: PRECISION_LAMCH, PRECISION_LAPY2
+      real(kind=REAL_DATATYPE)                    :: beta, sig, s, c, t, tau, rho, eps, tol, &
+                                                     qtrans(2,2), dmax, zmax, d1new, d2new
+      real(kind=REAL_DATATYPE)                    :: z(na), d1(na), d2(na), z1(na), delta(na),  &
+                                                     dbase(na), ddiff(na), ev_scale(na), tmp(na)
+      real(kind=REAL_DATATYPE)                    :: d1u(na), zu(na), d1l(na), zl(na)
+      real(kind=REAL_DATATYPE), allocatable       :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
 #ifdef WITH_OPENMP
-      real(kind=REAL_DATATYPE), allocatable    :: z_p(:,:)
+      real(kind=REAL_DATATYPE), allocatable       :: z_p(:,:)
 #endif
 
-      integer(kind=ik)              :: i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
-                                       l_rqm, ns, info
-      integer(kind=ik)              :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
-                                       l_cols_qreorg, np, l_idx, nqcols1, nqcols2
-      integer(kind=ik)              :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
-                                       np_cols, mpierr
-      integer(kind=ik)              :: np_next, np_prev, np_rem
-      integer(kind=ik)              :: idx(na), idx1(na), idx2(na)
-      integer(kind=ik)              :: coltyp(na), idxq1(na), idxq2(na)
+      integer(kind=ik)                            :: i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
+                                                     l_rqm, ns, info
+      integer(kind=ik)                            :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
+                                                     l_cols_qreorg, np, l_idx, nqcols1, nqcols2
+      integer(kind=ik)                            :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
+                                                     np_cols, mpierr
+      integer(kind=ik)                            :: np_next, np_prev, np_rem
+      integer(kind=ik)                            :: idx(na), idx1(na), idx2(na)
+      integer(kind=ik)                            :: coltyp(na), idxq1(na), idxq2(na)
 
-      integer(kind=ik)              :: istat
-      character(200)                :: errorMessage
-      integer(kind=ik)              :: gemm_dim_k, gemm_dim_l, gemm_dim_m
+      integer(kind=ik)                            :: istat
+      character(200)                              :: errorMessage
+      integer(kind=ik)                            :: gemm_dim_k, gemm_dim_l, gemm_dim_m
 
-      integer(kind=C_intptr_T)                        :: qtmp1_dev, qtmp2_dev, ev_dev
-      logical                                         :: successCUDA
-      integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
-                                                                          &PRECISION&
-                                                                          &_real
+      integer(kind=C_intptr_T)                    :: qtmp1_dev, qtmp2_dev, ev_dev
+      logical                                     :: successCUDA
+      integer(kind=c_intptr_t), parameter         :: size_of_datatype = size_of_&
+                                                                      &PRECISION&
+                                                                      &_real
+      integer(kind=ik), intent(in)                :: max_threads
 #ifdef WITH_OPENMP
-      integer(kind=ik)              :: max_threads, my_thread
-      integer(kind=ik)              :: omp_get_max_threads, omp_get_thread_num
-
-
-      max_threads = omp_get_max_threads()
+      integer(kind=ik)                            :: my_thread
 
       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
@@ -438,7 +438,7 @@
 #ifdef WITH_OPENMP
 
         call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
-
+        ! OPENMP_CHANGE here
 !$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
         my_thread = omp_get_thread_num()
 !$OMP DO

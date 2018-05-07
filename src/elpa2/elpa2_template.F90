@@ -63,6 +63,9 @@
    use elpa_mpi
    use cuda_functions
    use mod_check_for_gpu
+#ifdef WITH_OPENMP
+   use omp_lib
+#endif
    use iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
@@ -118,11 +121,19 @@
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
 
+    integer(kind=ik)                                                  :: nrThreads
     call obj%timer%start("elpa_solve_evp_&
     &MATH_DATATYPE&
     &_2stage_&
     &PRECISION&
     &")
+
+
+#ifdef WITH_OPENMP
+    nrThreads = omp_get_max_threads()
+#else
+    nrThreads = 1
+#endif
 
     success = .true.
 
@@ -452,11 +463,11 @@
       &PRECISION &
       (obj, na, a, &
       a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-      tmat_dev,  wantDebug, do_useGPU, success &
+      tmat_dev,  wantDebug, do_useGPU, success, &
 #if REALCASE == 1
-      , useQRActual &
+      useQRActual, &
 #endif
-      )
+       nrThreads)
       call obj%timer%stop("bandred")
       if (.not.(success)) return
     endif
@@ -516,7 +527,7 @@
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
 #endif
-       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU, wantDebug, success)
+       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU, wantDebug, success, nrThreads)
        call obj%timer%stop("solve")
        if (.not.(success)) return
      endif ! do_solve_tridi
@@ -582,7 +593,7 @@
        (obj, na, nev, nblk, nbw, q, &
        q_dev, &
        ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
-       success=success, kernel=kernel)
+       nrThreads, success=success, kernel=kernel)
        call obj%timer%stop("trans_ev_to_band")
 
        if (.not.(success)) return

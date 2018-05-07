@@ -110,12 +110,20 @@ function elpa_solve_evp_&
                                                       mpi_comm_all, check_pd, i, error
 
    logical                                         :: do_bandred, do_solve, do_trans_ev
+   integer(kind=ik)                                :: nrThreads, omp_get_num_threads
 
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
    &")
+
+#ifdef WITH_OPENMP
+   nrThreads = omp_get_num_threads()
+#else
+   nrThreads = 1
+#endif
+
 
    success = .true.
 
@@ -309,7 +317,7 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug)
+     & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
      call obj%timer%stop("forward")
     endif  !do_bandred
 
@@ -324,7 +332,7 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
         q_real, l_rows,  &
 #endif
-        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success)
+        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
      call obj%timer%stop("solve")
      if (.not.(success)) return
    endif !do_solve

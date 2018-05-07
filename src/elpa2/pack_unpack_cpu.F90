@@ -107,6 +107,7 @@
           &PRECISION_SUFFIX &
     )
 
+#ifdef WITH_OPENMP
           do nt = 1, max_threads
             do i = 1, stripe_count
               noff = (nt-1)*thread_width + (i-1)*stripe_width

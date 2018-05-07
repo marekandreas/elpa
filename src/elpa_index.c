@@ -71,6 +71,10 @@ static int band_to_full_cardinality();
 static int band_to_full_enumerate(int i);
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
 
+static int elpa_omp_threads_cardinality();
+static int elpa_omp_threads_enumerate(int i);
+static int elpa_omp_threads_is_valid(elpa_index_t index, int n, int new_value);
+
 static int min_tile_size_cardinality();
 
 static int na_is_valid(elpa_index_t index, int n, int new_value);
@@ -166,6 +170,7 @@ static const elpa_index_int_entry_t int_entries[] = {
 
 	//INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
 	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
+	INT_ENTRY("ELPA_OMP_THREADS", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, elpa_omp_threads_cardinality, elpa_omp_threads_enumerate, elpa_omp_threads_is_valid, NULL),
         //BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL),
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL),
         BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
@@ -653,6 +658,24 @@ static int band_to_full_enumerate(int i) {
 }
 
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
+        /* TODO */
+        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
+        abort();
+}
+
+static int elpa_omp_threads_cardinality() {
+        /* TODO */
+        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
+        abort();
+}
+
+static int elpa_omp_threads_enumerate(int i) {
+        /* TODO */
+        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
+        abort();
+}
+
+static int elpa_omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
         /* TODO */
         fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
         abort();

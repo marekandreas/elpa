@@ -48,6 +48,9 @@
      use elpa_mpi
      use precision
      use elpa_abstract_impl
+#ifdef WITH_OPENMP
+     use omp_lib
+#endif
      implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -68,12 +71,19 @@
       logical                       :: success
       integer(kind=ik)              :: istat, debug, error
       character(200)                :: errorMessage
+      integer(kind=ik)              :: max_threads
 
       call obj%timer%start("elpa_cholesky_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
       &")
+
+#ifdef WITH_OPENMP
+      max_threads=omp_get_num_threads()
+#else
+      max_threads=1
+#endif
 
       na         = obj%na
       lda        = obj%local_nrows
@@ -285,7 +295,7 @@
   &PRECISION &
                  (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
                                       tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-                                      n, na, nblk, nblk)
+                                      n, na, nblk, nblk, max_threads)
 
         do i=0,(na-1)/tile_size
           lcs = max(l_colx,i*l_cols_tile+1)

@@ -63,6 +63,9 @@
                          &_impl
       use precision
       use elpa_abstract_impl
+#ifdef WITH_OPENMP
+      use omp_lib
+#endif
 
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -78,6 +81,7 @@
       logical                  :: success
 
       integer                  :: debug, error
+      integer                  :: max_threads
 
       call obj%timer%start("elpa_solve_tridi_public_&
       &MATH_DATATYPE&
@@ -89,6 +93,12 @@
       nblk       = obj%nblk
       ldq        = obj%local_nrows
       matrixCols = obj%local_ncols
+
+#ifdef WITH_OPENMP
+      max_threads=omp_get_num_threads()
+#else
+      max_threads=1
+#endif
 
       call obj%get("mpi_comm_rows", mpi_comm_rows,error)
       if (error .ne. ELPA_OK) then
@@ -116,7 +126,8 @@
       call solve_tridi_&
       &PRECISION&
       &_private_impl(obj, na, nev, d, e, q, ldq, nblk, matrixCols, &
-               mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success)
+               mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success, &
+               max_threads)
 
       call obj%timer%stop("elpa_solve_tridi_public_&
       &MATH_DATATYPE&

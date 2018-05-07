@@ -96,12 +96,15 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug)
+    (obj, na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, max_threads)
       use cuda_functions
       use iso_c_binding
       use precision
       use elpa_abstract_impl
       use matrix_plot
+#ifdef WITH_OPENMP
+      use omp_lib
+#endif
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -150,11 +153,11 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       integer(kind=ik)                              :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
       integer(kind=ik)                              :: tile_size, l_rows_per_tile, l_cols_per_tile
-      integer(kind=c_intptr_t)                        :: a_offset
+      integer(kind=c_intptr_t)                      :: a_offset
 
+      integer(kind=ik), intent(in)                  :: max_threads
 #ifdef WITH_OPENMP
-      integer(kind=ik)                              :: my_thread, n_threads, max_threads, n_iter
-      integer(kind=ik)                              :: omp_get_thread_num, omp_get_num_threads, omp_get_max_threads
+      integer(kind=ik)                              :: my_thread, n_threads, n_iter
 #endif
 
       real(kind=REAL_DATATYPE)                      :: vnorm2
@@ -305,8 +308,6 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       &MATH_DATATYPE ", "u_col", istat, errorMessage)
 
 #ifdef WITH_OPENMP
-      max_threads = omp_get_max_threads()
-
       allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
       call check_alloc("tridiag_&
       &MATH_DATATYPE ", "ur_p", istat, errorMessage)
@@ -502,7 +503,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
              &_&
              &PRECISION &
                    (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-                    1, istep-1, 1, nblk)
+                    1, istep-1, 1, nblk, max_threads)
 
         ! Calculate u = (A + VU**T + UV**T)*v
 
@@ -532,7 +533,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 !$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end)
 
           my_thread = omp_get_thread_num()
+          
           n_threads = omp_get_num_threads()
+          ! debug REMOVE again
+          print *,"debug"
+          if (n_threads .ne. max_threads) then
+            print *,"WTF?"
+          endif
 
           n_iter = 0
 
@@ -710,7 +717,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           &_&
           &PRECISION &
           (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
-           mpi_comm_cols, istep-1, 1, nblk)
+           mpi_comm_cols, istep-1, 1, nblk, max_threads)
 
         endif
 
@@ -733,7 +740,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         &_&
         &PRECISION &
         (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-         mpi_comm_rows, 1, istep-1, 1, nblk)
+         mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
 
         ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
 #if REALCASE == 1

@@ -50,7 +50,7 @@ subroutine elpa_reduce_add_vectors_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-            (obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvr, nvc, nblk)
+            (obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvr, nvc, nblk, nrThreads)
 
 !-------------------------------------------------------------------------------
 ! This routine does a reduce of all vectors in vmat_s over the communicator comm_t.
@@ -81,7 +81,7 @@ subroutine elpa_reduce_add_vectors_&
    use elpa_abstract_impl
    implicit none
 
-   class(elpa_abstract_impl_t), intent(inout) :: obj
+   class(elpa_abstract_impl_t), intent(inout)         :: obj
    integer(kind=ik), intent(in)                       :: ld_s, comm_s, ld_t, comm_t, nvr, nvc, nblk
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)    :: vmat_s(ld_s,nvc)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: vmat_t(ld_t,nvc)
@@ -91,6 +91,8 @@ subroutine elpa_reduce_add_vectors_&
    integer(kind=ik)                                   :: n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer(kind=ik)                                   :: lcm_s_t, nblks_tot
    integer(kind=ik)                                   :: auxstride
+   integer(kind=ik), intent(in)                       :: nrThreads
+
 
    call obj%timer%start("elpa_reduce_add_vectors_&
    &MATH_DATATYPE&
@@ -119,6 +121,8 @@ subroutine elpa_reduce_add_vectors_&
    aux1(:) = 0
    aux2(:) = 0
 #ifdef WITH_OPENMP
+   call omp_set_num_threads(nrThreads)
+
    !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl)
 #endif
    do n = 0, lcm_s_t-1
