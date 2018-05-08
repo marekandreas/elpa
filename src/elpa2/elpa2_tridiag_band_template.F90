@@ -55,7 +55,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, nb, nblk, aMatrix, a_dev, lda, d, e, matrixCols, &
+    (obj, na, nb, nblk, a_mat, a_dev, lda, d, e, matrixCols, &
     hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug, nrThreads)
     !-------------------------------------------------------------------------------
     ! tridiag_band_real/complex:
@@ -67,7 +67,7 @@
     !
     !  nblk        blocksize of cyclic distribution, must be the same in both directions!
     !
-    !  aMatrix(lda,matrixCols)    Distributed system matrix reduced to banded form in the upper diagonal
+    !  a_mat(lda,matrixCols)    Distributed system matrix reduced to banded form in the upper diagonal
     !
     !  lda         Leading dimension of a
     !  matrixCols  local columns of matrix a
@@ -98,9 +98,9 @@
       logical, intent(in)                          :: useGPU, wantDebug
       integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck), intent(in)         :: aMatrix(lda,*)
+      MATH_DATATYPE(kind=rck), intent(in)         :: a_mat(lda,*)
 #else
-      MATH_DATATYPE(kind=rck), intent(in)         :: aMatrix(lda,matrixCols)
+      MATH_DATATYPE(kind=rck), intent(in)         :: a_mat(lda,matrixCols)
 #endif
       integer(kind=c_intptr_t)                     :: a_dev
       real(kind=rk), intent(out)        :: d(na), e(na) ! set only on PE 0
@@ -130,15 +130,24 @@
       MATH_DATATYPE(kind=rck), allocatable        :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
       integer                                      :: istat
       character(200)                               :: errorMessage
+      character(20)                                :: gpuString
 
 #ifndef WITH_MPI
       integer(kind=ik)                             :: startAddr
 #endif
+
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
+
       call obj%timer%start("tridiag_band_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      &PRECISION_SUFFIX //&
+      gpuString)
+
       if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_comm_rank(communicator,my_pe,mpierr)
       call mpi_comm_size(communicator,n_pes,mpierr)
@@ -229,7 +238,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &(obj,aMatrix, a_dev, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+      &(obj,a_mat, a_dev, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
 
       ! Calculate the workload for each sweep in the back transformation
       ! and the space requirements to hold the HH vectors
@@ -1192,8 +1201,8 @@
       call obj%timer%stop("tridiag_band_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX&
-      )
+      &PRECISION_SUFFIX //&
+      gpuString)
 
 ! intel compiler bug makes these ifdefs necessary
 #if REALCASE == 1

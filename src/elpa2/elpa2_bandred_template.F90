@@ -64,8 +64,8 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, a, a_dev, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-     tmat_dev, wantDebug, useGPU, success, &
+    (obj, na, a_mat, a_dev, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+     tmat_dev, wantDebug, useGPU, success &
 #if REALCASE == 1
      useQR, &
 #endif
@@ -78,14 +78,14 @@
   !
   !  na          Order of matrix
   !
-  !  a(lda,matrixCols)    Distributed matrix which should be reduced.
+  !  a_mat(lda,matrixCols)    Distributed matrix which should be reduced.
   !              Distribution is like in Scalapack.
-  !              Opposed to Scalapack, a(:,:) must be set completely (upper and lower half)
-  !              a(:,:) is overwritten on exit with the band and the Householder vectors
+  !              Opposed to Scalapack, a_mat(:,:) must be set completely (upper and lower half)
+  !              a_mat(:,:) is overwritten on exit with the band and the Householder vectors
   !              in the upper half.
   !
-  !  lda         Leading dimension of a
-  !  matrixCols  local columns of matrix a
+  !  lda         Leading dimension of a_mat
+  !  matrixCols  local columns of matrix a_mat
   !
   !  nblk        blocksize of cyclic distribution, must be the same in both directions!
   !
@@ -114,15 +114,16 @@
       integer(kind=ik)                            :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck)                    :: a(lda,*), tmat(nbw,nbw,*)
+      MATH_DATATYPE(kind=rck)                    :: a_mat(lda,*), tmat(nbw,nbw,*)
 #else
-      MATH_DATATYPE(kind=rck)                    :: a(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      MATH_DATATYPE(kind=rck)                    :: a_mat(lda,matrixCols), tmat(nbw,nbw,numBlocks)
 #endif
 
 #if REALCASE == 1
       real(kind=rk)                               :: eps
 #endif
       logical, intent(in)                         :: useGPU
+      character(20)                               :: gpuString
 
       integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                            :: l_cols, l_rows
@@ -187,12 +188,18 @@
       logical                                     :: useGPU_reduction_lower_block_to_tridiagonal
       integer(kind=ik), intent(in)                :: max_threads
 
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
 
       call obj%timer%start("bandred_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      PRECISION_SUFFIX // &
+      gpuString )
+
       useGPU_reduction_lower_block_to_tridiagonal = .false.
 
       if (useGPU) then
@@ -324,14 +331,14 @@
 #ifdef USE_ASSUMED_SIZE_QR
           call qr_pdgeqrf_2dcomm_&
                &PRECISION&
-               &(obj, a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
+               &(obj, a_mat, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), na, tmat(1,1,1), &
                                  nbw, nbw, dwork_size, 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
 
 #else
           call qr_pdgeqrf_2dcomm_&
                &PRECISION&
-               &(obj, a(1:lda,1:matrixCols), matrixCols, lda, vmrCPU(1:max(l_rows,1),1:vmrCols), max(l_rows,1), &
+               &(obj, a_mat(1:lda,1:matrixCols), matrixCols, lda, vmrCPU(1:max(l_rows,1),1:vmrCols), max(l_rows,1), &
                                  vmrCols, tauvector(1:na), na, tmat(1:nbw,1:nbw,1), nbw, &
                                  nbw, dwork_size(1:1), 1, -1, na, nbw, nblk, nblk, na, na, 1, 0, PQRPARAM(1:11), &
                                  mpi_comm_rows, mpi_comm_cols, blockheuristic)
@@ -360,7 +367,7 @@
         cur_l_rows = 0
         cur_l_cols = 0
 
-        successCUDA = cuda_memcpy(a_dev, loc(a(1,1)), (lda)*(na_cols)* size_of_datatype, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), (lda)*(na_cols)* size_of_datatype, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"bandred_&
                   &MATH_DATATYPE&
@@ -538,7 +545,7 @@
           cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
 
           if (my_pcol == cur_pcol) then
-            successCUDA = cuda_memcpy2d(loc(a(1, lc_start)), &
+            successCUDA = cuda_memcpy2d(loc(a_mat(1, lc_start)), &
                                       int((lda*size_of_datatype),kind=c_intptr_t), &
                                             (a_dev + int( ( (lc_start-1) * lda*size_of_datatype),kind=c_intptr_t )),      &
                                             int(lda*size_of_datatype,kind=c_intptr_t),              &
@@ -567,7 +574,7 @@
 #ifdef USE_ASSUMED_SIZE_QR
             call qr_pdgeqrf_2dcomm_&
                  &PRECISION&
-                 &(obj, a, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
+                 &(obj, a_mat, lda, matrixCols, vmrCPU, max(l_rows,1), vmrCols, tauvector(1), &
                                    na, tmat(1,1,istep), nbw, nbw, work_blocked, work_size,        &
                                      work_size, na, n_cols, nblk, nblk,        &
                                      istep*nbw+n_cols-nbw, istep*nbw+n_cols, 1,&
@@ -577,7 +584,7 @@
 #else
             call qr_pdgeqrf_2dcomm_&
                  &PRECISION&
-                 &(obj, a(1:lda,1:matrixCols), lda, matrixCols, vmrCPU(1:max(l_rows,1),1:vmrCols) ,   &
+                 &(obj, a_mat(1:lda,1:matrixCols), lda, matrixCols, vmrCPU(1:max(l_rows,1),1:vmrCols) ,   &
                                     max(l_rows,1), vmrCols, tauvector(1:na), na, &
                                      tmat(1:nbw,1:nbw,istep), nbw, nbw, work_blocked(1:work_size), work_size, &
                                      work_size, na, n_cols, nblk, nblk,        &
@@ -608,7 +615,7 @@
              ! Get Vector to be transformed; distribute last element and norm of
              ! remaining elements to all procs in current column
 
-             vr(1:lr) = a(1:lr,lch) ! Vector to be transformed
+             vr(1:lr) = a_mat(1:lr,lch) ! Vector to be transformed
 
              if (my_prow==prow(nrow, nblk, np_rows)) then
                aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
@@ -646,11 +653,11 @@
 
              vr(1:lr) = vr(1:lr) * xf
              if (my_prow==prow(nrow, nblk, np_rows)) then
-               a(1:lr-1,lch) = vr(1:lr-1)
-               a(lr,lch) = vrl
+               a_mat(1:lr-1,lch) = vr(1:lr-1)
+               a_mat(lr,lch) = vrl
                vr(lr) = 1.0_rck
              else
-               a(1:lr,lch) = vr(1:lr)
+               a_mat(1:lr,lch) = vr(1:lr)
              endif
 
            endif
@@ -692,7 +699,7 @@
              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
              if (lcx>0) then
                nlc = nlc+1
-               aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
+               aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
              endif
            enddo
 
@@ -708,7 +715,7 @@
              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
              if (lcx>0) then
                nlc = nlc+1
-               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+               a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
 
              endif
            enddo
@@ -726,7 +733,7 @@
              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
              if (lcx>0) then
                nlc = nlc+1
-               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
+               a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
              endif
            enddo
 
@@ -739,7 +746,7 @@
 !             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
 !             if (lcx>0) then
 !               nlc = nlc+1
-!               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+!               a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
 
 !             endif
 !           enddo
@@ -762,7 +769,7 @@
              if (lcx>0 ) then
                mynlc = mynlc+1
                if ( mod((j-1), omp_get_num_threads()) .eq. omp_get_thread_num() ) then
-                   if (lr>0) aux1(mynlc) = dot_product(vr(1:lr),a(1:lr,lcx))
+                   if (lr>0) aux1(mynlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
                endif
              endif
            enddo
@@ -795,10 +802,10 @@
                   do pp = 1,transformChunkSize
                       if (pp + ii > lr) exit
 #if REALCASE == 1
-                          a(ii+pp,lcx) = a(ii+pp,lcx) - tau*aux2(mynlc)*vr(ii+pp)
+                          a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - tau*aux2(mynlc)*vr(ii+pp)
 #endif
 #if COMPLEXCASE == 1
-                          a(ii+pp,lcx) = a(ii+pp,lcx) - conjg(tau)*aux2(mynlc)*vr(ii+pp)
+                          a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - conjg(tau)*aux2(mynlc)*vr(ii+pp)
 #endif
                   enddo
                enddo
@@ -813,7 +820,7 @@
              lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
              if (lcx>0) then
                nlc = nlc+1
-               if (lr>0) aux1(nlc) = dot_product(vr(1:lr),a(1:lr,lcx))
+               if (lr>0) aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
              endif
            enddo
 
@@ -834,10 +841,10 @@
              if (lcx>0) then
                nlc = nlc+1
 #if REALCASE == 1
-               a(1:lr,lcx) = a(1:lr,lcx) - tau*aux2(nlc)*vr(1:lr)
+               a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tau*aux2(nlc)*vr(1:lr)
 #endif
 #if COMPLEXCASE == 1
-               a(1:lr,lcx) = a(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+               a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
 #endif
              endif
            enddo
@@ -850,7 +857,7 @@
            if (my_pcol == cur_pcol) then
              successCUDA = cuda_memcpy2d((a_dev+        &
                                          int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)),    &
-                                         int(lda*size_of_datatype,kind=c_intptr_t), loc(a(1,lc_start)), &
+                                         int(lda*size_of_datatype,kind=c_intptr_t), loc(a_mat(1,lc_start)), &
                                          int(lda*size_of_datatype,kind=c_intptr_t),           &
                                          int(lr_end*size_of_datatype,kind=c_intptr_t),        &
                                          int((lc_end - lc_start+1),kind=c_intptr_t), &
@@ -931,7 +938,7 @@
          if (my_pcol == cur_pcol) then
            successCUDA = cuda_memcpy2d((a_dev+        &
                                        int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)),    &
-                                       int(lda*size_of_datatype,kind=c_intptr_t), loc(a(1,lc_start)), &
+                                       int(lda*size_of_datatype,kind=c_intptr_t), loc(a_mat(1,lc_start)), &
                                        int(lda*size_of_datatype,kind=c_intptr_t),           &
                                        int(lr_end*size_of_datatype,kind=c_intptr_t),        &
                                        int((lc_end - lc_start+1),kind=c_intptr_t), &
@@ -988,14 +995,14 @@
            lre = min(l_rows,(i+1)*l_rows_tile)
 
              call obj%timer%start("blas")
-             call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
+             call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a_mat(1,lcs), ubound(a_mat,dim=1), &
                         vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
              call obj%timer%stop("blas")
 
            if (i==0) cycle
            lre = min(l_rows,i*l_rows_tile)
              call obj%timer%start("blas")
-             call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
+             call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
                         umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
              call obj%timer%stop("blas")
          enddo
@@ -1060,7 +1067,7 @@
              if ( lre > lrs .and. l_cols > lcs ) then
                call obj%timer%start("blas")
                call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
-                                   ONE, a(lrs,lcs), ubound(a,dim=1),                 &
+                                   ONE, a_mat(lrs,lcs), ubound(a_mat,dim=1),                 &
                                    umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
                                    ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
                call obj%timer%stop("blas")
@@ -1071,7 +1078,7 @@
                call obj%timer%start("blas")
                call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',     &
                         lce-lcs+1, n_cols, lrs-1,              &
-                                    ONE, a(1,lcs),   ubound(a,dim=1),      &
+                                    ONE, a_mat(1,lcs),   ubound(a_mat,dim=1),      &
                                     vmrCPU(1,1),   ubound(vmrCPU,dim=1),   &
                                     ZERO, umcCPU(lcs,1), ubound(umcCPU,dim=1))
                call obj%timer%stop("blas")
@@ -1151,13 +1158,13 @@
 
               call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',          &
-                             lce-lcs+1, n_cols, lre, ONE, a(1,lcs), ubound(a,dim=1), &
+                             lce-lcs+1, n_cols, lre, ONE, a_mat(1,lcs), ubound(a_mat,dim=1), &
                                    vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
               call obj%timer%stop("blas")
               if (i==0) cycle
               lre = min(l_rows,i*l_rows_tile)
               call obj%timer%start("blas")
-              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a(1,lcs), lda, &
+              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
                                      umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE,      &
                                      vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
               call obj%timer%stop("blas")
@@ -1494,7 +1501,7 @@
          call obj%timer%start("blas")
          call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1, lce-lcs+1, 2*n_cols, -ONE, &
                     vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
-                     ONE, a(mystart,lcs), ubound(a,1))
+                     ONE, a_mat(mystart,lcs), ubound(a_mat,1))
           call obj%timer%stop("blas")
        enddo
        !$omp end parallel
@@ -1507,7 +1514,7 @@
 !         call obj%timer%start("blas")
 !         call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
 !                       vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-!                       ONE, a(1,lcs), lda)
+!                       ONE, a_mat(1,lcs), lda)
 !         call obj%timer%stop("blas")
 !       enddo
 !#endif
@@ -1536,7 +1543,7 @@
            call obj%timer%start("blas")
            call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, lre,lce-lcs+1, 2*n_cols, -ONE, &
                                vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                               ONE, a(1,lcs), lda)
+                               ONE, a_mat(1,lcs), lda)
            call obj%timer%stop("blas")
          endif ! useGPU
        enddo ! i=0,(istep*nbw-1)/tile_size
@@ -1682,11 +1689,27 @@
      endif
 #endif
 
+     if (useGPU) then
+       ! copy a_dev to a_mat 
+       ! we do it here, since a is needed on the host in the following routine
+       ! (band to tridi). Previously, a has been kept on the device and then
+       ! copied in redist_band (called from tridiag_band). However, it seems to
+       ! be easier to do it here. 
+       successCUDA = cuda_memcpy (loc(a_mat), int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
+                                  cudaMemcpyDeviceToHost)
+       if (.not.(successCUDA)) then
+         print *,"bandred_&
+         &MATH_DATATYPE&
+         &: error in cudaMemcpy"
+         stop 1
+       endif
+     endif ! useGPU
+
      call obj%timer%stop("bandred_&
      &MATH_DATATYPE&
      &" // &
-     &PRECISION_SUFFIX &
-     )
+     &PRECISION_SUFFIX //&
+     gpuString)
 
    end subroutine bandred_&
    &MATH_DATATYPE&

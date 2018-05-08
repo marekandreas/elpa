@@ -111,27 +111,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU, wantDebug
 
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), intent(out)         :: tau(na)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), intent(out)   :: tau(na)
-#endif
-#if REALCASE == 1
+      MATH_DATATYPE(kind=rck), intent(out)         :: tau(na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE), intent(inout)       :: a_mat(lda,*)
+      MATH_DATATYPE(kind=rck), intent(inout)       :: a_mat(lda,*)
 #else
-      real(kind=REAL_DATATYPE), intent(inout)       :: a_mat(lda,matrixCols)
+      MATH_DATATYPE(kind=rck), intent(inout)       :: a_mat(lda,matrixCols)
 #endif
-#endif
-#if COMPLEXCASE == 1
-#ifdef USE_ASSUMED_SIZE
-      complex(kind=COMPLEX_DATATYPE), intent(inout) :: a_mat(lda,*)
-#else
-      complex(kind=COMPLEX_DATATYPE), intent(inout) :: a_mat(lda,matrixCols)
-#endif
-#endif
-      real(kind=REAL_DATATYPE), intent(out)         :: d_vec(na), e_vec(na)
+      real(kind=rk), intent(out)         :: d_vec(na), e_vec(na)
 
       integer(kind=ik), parameter                   :: max_stored_uv = 32
       logical,          parameter                   :: mat_vec_as_one_block = .true.
@@ -160,50 +146,31 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       integer(kind=ik)                              :: my_thread, n_threads, n_iter
 #endif
 
-      real(kind=REAL_DATATYPE)                      :: vnorm2
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE)                      :: vav, x, aux(2*max_stored_uv), aux1(2), aux2(2), vrl, xf
-#endif
+      real(kind=rk)                                 :: vnorm2
+      MATH_DATATYPE(kind=rck)                       :: vav, x, aux(2*max_stored_uv), aux1(2), aux2(2), vrl, xf
 #if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE)                :: vav, xc, aux(2*max_stored_uv),  aux1(2), aux2(2), aux3(1), vrl, xf
+      complex(kind=rck)                             :: aux3(1)
 #endif
 
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable         :: tmp(:), &
+      MATH_DATATYPE(kind=rck), allocatable          :: tmp(:), &
                                                        v_row(:), &   ! used to store calculated Householder Vector
                                                        v_col(:), &   ! the same Vector, but transposed - differently distributed among MPI tasks
                                                        u_row(:), &
                                                        u_col(:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable   :: tmp(:), v_row(:), v_col(:), u_row(:), u_col(:)
-#endif
       ! the following two matrices store pairs of vectors v and u calculated in each step
       ! at most max_stored_uv Vector pairs are stored, than the matrix A_i is explicitli updated
       ! u and v are stored both in row and Vector forms
       ! pattern: v1,u1,v2,u2,v3,u3,....
       ! todo: It is little bit confusing, I think, that variables _row actually store columns and vice versa
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable         :: vu_stored_rows(:,:)
+      MATH_DATATYPE(kind=rck), allocatable         :: vu_stored_rows(:,:)
       ! pattern: u1,v1,u2,v2,u3,v3,....
-      real(kind=REAL_DATATYPE), allocatable         :: uv_stored_cols(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable   :: vu_stored_rows(:,:), uv_stored_cols(:,:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable         :: uv_stored_cols(:,:)
 
 #ifdef WITH_OPENMP
-#if REALCASE == 1
-      real(kind=REAL_DATATYPE), allocatable         :: ur_p(:,:), uc_p(:,:)
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), allocatable   :: ur_p(:,:), uc_p(:,:)
-#endif
+      MATH_DATATYPE(kind=rck), allocatable         :: ur_p(:,:), uc_p(:,:)
 #endif
 
-#if COMPLEXCASE == 1
-      real(kind=REAL_DATATYPE), allocatable         :: tmp_real(:)
-#endif
+      real(kind=rk), allocatable                    :: tmp_real(:)
       integer(kind=ik)                              :: min_tile_size, error
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
@@ -738,34 +705,17 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
          mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
 
         ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
-#if REALCASE == 1
         x = 0
         if (l_cols>0)  &
            x = dot_product(v_col(1:l_cols),u_col(1:l_cols))
-#endif
-#if COMPLEXCASE == 1
-        xc = 0
-        if (l_cols>0)  &
-           xc = dot_product(v_col(1:l_cols),u_col(1:l_cols))
-#endif
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-#if REALCASE == 1
         call mpi_allreduce(x, vav, 1, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#endif
-#if COMPLEXCASE == 1
-        call mpi_allreduce(xc, vav, 1 , MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#endif
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
-#if REALCASE == 1
         vav = x
-#endif
-#if COMPLEXCASE == 1
-        vav = xc
-#endif
 
 #endif /* WITH_MPI */
 
@@ -977,12 +927,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       deallocate(tmp, v_row, u_row, v_col, u_col, vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-#if REALCASE == 1
-        print *,"tridiag_real: error when deallocating uv_stored_cols "//errorMessage
-#endif
-#if COMPLEXCASE == 1
-        print *,"tridiag_complex: error when deallocating tmp "//errorMessage
-#endif
+        print *,"tridiag: error when deallocating "//errorMessage
         stop 1
       endif
 
@@ -1012,62 +957,31 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       ! distribute the arrays d_vec and e_vec to all processors
 
-#if REALCASE == 1
-      allocate(tmp(na), stat=istat, errmsg=errorMessage)
-
-      if (istat .ne. 0) then
-        print *,"tridiag_real: error when allocating tmp "//errorMessage
-        stop 1
-      endif
-#endif
-#if COMPLEXCASE == 1
       allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"tridiag_complex: error when allocating tmp_real "//errorMessage
+        print *,"tridiag: error when allocating tmp_real "//errorMessage
         stop 1
       endif
-#endif
 
 
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
-#if REALCASE == 1
-      tmp = d_vec
-      call mpi_allreduce(tmp, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-      tmp = d_vec
-      call mpi_allreduce(tmp, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-      tmp = e_vec
-      call mpi_allreduce(tmp, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
-      tmp = e_vec
-      call mpi_allreduce(tmp, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#endif
-#if COMPLEXCASE == 1
       tmp_real = d_vec
       call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
       tmp_real = d_vec
-      call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION ,MPI_SUM, mpi_comm_cols, mpierr)
+      call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
       tmp_real = e_vec
       call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
       tmp_real = e_vec
       call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
-#endif
       if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
-#if REALCASE == 1
-      deallocate(tmp,  stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_real: error when deallocating tmp "//errorMessage
-        stop 1
-      endif
-#endif
-#if COMPLEXCASE == 1
       deallocate(tmp_real, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
-        print *,"tridiag_complex: error when deallocating tmp_real "//errorMessage
+        print *,"tridiag: error when deallocating tmp_real "//errorMessage
         stop 1
       endif
-#endif
 
       call obj%timer%stop("tridiag_&
       &MATH_DATATYPE&

@@ -161,6 +161,14 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
                         number_of_real_kernels, real_kernel_enumerate, \
                         real_kernel_is_valid, real_kernel_name),
+        INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        cardinality_bool, enumerate_identity, NULL, NULL),
+        INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        cardinality_bool, enumerate_identity, NULL, NULL),
+        INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        cardinality_bool, enumerate_identity, NULL, NULL),
+        INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        cardinality_bool, enumerate_identity, NULL, NULL),
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
                         number_of_complex_kernels, complex_kernel_enumerate, \
                         complex_kernel_is_valid, complex_kernel_name),

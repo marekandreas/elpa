@@ -108,7 +108,10 @@
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, gpu, debug, qr
    character(200)                                                     :: errorMessage
-   logical                                                            :: do_useGPU, do_useGPU_trans_ev_tridi
+   logical                                                            :: do_useGPU, do_useGPU_bandred, &
+                                                                         do_useGPU_tridiag_band, do_useGPU_solve_tridi, &
+                                                                         do_useGPU_trans_ev_tridi_to_band, &
+                                                                         do_useGPU_trans_ev_band_to_full
    integer(kind=c_int)                                                :: numberOfGPUDevices
    integer(kind=c_intptr_t), parameter                                :: size_of_datatype = size_of_&
                                                                                             &PRECISION&
@@ -122,6 +125,23 @@
                                                                          do_trans_to_band, do_trans_to_full
 
     integer(kind=ik)                                                  :: nrThreads
+#if REALCASE == 1
+#undef GPU_KERNEL
+#undef GENERIC_KERNEL
+#undef KERNEL_STRING
+#define GPU_KERNEL ELPA_2STAGE_REAL_GPU
+#define GENERIC_KERNEL ELPA_2STAGE_REAL_GENERIC
+#define KERNEL_STRING "real_kernel"
+#endif
+#if COMPLEXCASE == 1
+#undef GPU_KERNEL
+#undef GENERIC_KERNEL
+#undef KERNEL_STRING
+#define GPU_KERNEL ELPA_2STAGE_COMPLEX_GPU
+#define GENERIC_KERNEL ELPA_2STAGE_COMPLEX_GENERIC
+#define KERNEL_STRING "complex_kernel"
+#endif
+
     call obj%timer%start("elpa_solve_evp_&
     &MATH_DATATYPE&
     &_2stage_&
@@ -150,6 +170,32 @@
     nblk       = obj%nblk
     matrixCols = obj%local_ncols
 
+    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    call obj%get("mpi_comm_parent",mpi_comm_all,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+
+    call obj%timer%start("mpi_communication")
+    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
+
+    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+    call obj%timer%stop("mpi_communication")
+
    ! special case na = 1
    if (na .eq. 1) then
 #if REALCASE == 1
@@ -174,32 +220,127 @@
      obj%eigenvalues_only = .true.
    endif
 
-#if REALCASE == 1
-    call obj%get("real_kernel",kernel,error)
+    call obj%get(KERNEL_STRING,kernel,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option. Aborting..."
       stop
     endif
-    ! check consistency between request for GPUs and defined kernel
+
+    ! GPU settings
     call obj%get("gpu", gpu,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option. Aborting..."
       stop
     endif
-    if (gpu == 1) then
-      if (kernel .ne. ELPA_2STAGE_REAL_GPU) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-      else if (nblk .ne. 128) then
-        kernel = ELPA_2STAGE_REAL_GENERIC
-      endif
-    endif
-    if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
-      if (gpu .ne. 1) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+
+    useGPU = (gpu == 1)
+
+    do_useGPU = .false.
+    if (useGPU) then
+      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+
+         do_useGPU = .true.
+
+         ! set the neccessary parameters
+         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+         cudaHostRegisterPortable = cuda_hostRegisterPortable()
+         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+      else
+        print *,"GPUs are requested but not detected! Aborting..."
+        success = .false.
+        return
       endif
     endif
 
+    do_useGPU_bandred = do_useGPU
+    do_useGPU_tridiag_band = do_useGPU
+    do_useGPU_solve_tridi = do_useGPU
+    do_useGPU_trans_ev_tridi_to_band = do_useGPU
+    do_useGPU_trans_ev_band_to_full = do_useGPU
+
+    ! only if we want (and can) use GPU in general, look what are the
+    ! requirements for individual routines. Implicitly they are all set to 1, so
+    ! unles specified otherwise by the user, GPU versions of all individual
+    ! routines should be used
+    if(do_useGPU) then
+      call obj%get("gpu_bandred", gpu, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      do_useGPU_bandred = (gpu == 1)
+
+      call obj%get("gpu_tridiag_band", gpu, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      do_useGPU_tridiag_band = (gpu == 1)
+
+      call obj%get("gpu_solve_tridi", gpu, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      do_useGPU_solve_tridi = (gpu == 1)
+
+      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
+
+      call obj%get("gpu_trans_ev_band_to_full", gpu, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      do_useGPU_trans_ev_band_to_full = (gpu == 1)
+    endif
+
+    ! check consistency between request for GPUs and defined kernel
+
+    if (do_useGPU_trans_ev_tridi_to_band) then
+      if (kernel .ne. GPU_KERNEL) then
+        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+        write(error_unit,*) "The compute kernel will be executed on CPUs!"
+        do_useGPU_trans_ev_tridi_to_band = .false.
+      else if (nblk .ne. 128) then
+        write(error_unit,*) "ELPA: Warning, GPU kernel can run only with scalapack block size 128!"
+        write(error_unit,*) "The compute kernel will be executed on CPUs!"
+        do_useGPU_trans_ev_tridi_to_band = .false.
+        kernel = GENERIC_KERNEL
+      endif
+    endif
+
+    ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band sould be
+    ! finally consistent
+    if (do_useGPU_trans_ev_tridi_to_band) then
+      if (kernel .ne. GPU_KERNEL) then
+        ! this should never happen, checking as an assert
+        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
+        stop
+      endif
+      if (nblk .ne. 128) then
+        ! this should never happen, checking as an assert
+        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel and blocksize!  Aborting..."
+        stop
+      endif
+    else
+      if (kernel .eq. GPU_KERNEL) then
+        ! combination not allowed
+        write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
+                            &is defined as the GPU kernel!  Aborting..."
+        stop
+        !TODO do error handling properly
+      endif
+    endif
+
+
+#if REALCASE == 1
 #ifdef SINGLE_PRECISION_REAL
     ! special case at the moment NO single precision kernels on POWER 8 -> set GENERIC for now
     if (kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK2 .or. &
@@ -221,54 +362,6 @@
 
 #endif
 
-#if COMPLEXCASE == 1
-    call obj%get("complex_kernel",kernel,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    ! check consistency between request for GPUs and defined kernel
-    call obj%get("gpu", gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    if (gpu == 1) then
-      if (kernel .ne. ELPA_2STAGE_COMPLEX_GPU) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-      else if (nblk .ne. 128) then
-        kernel = ELPA_2STAGE_COMPLEX_GENERIC
-      endif
-    endif
-    if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
-      if (gpu .ne. 1) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-      endif
-    endif
-
-#endif
-    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    call obj%get("mpi_comm_parent",mpi_comm_all,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-
-    if (gpu .eq. 1) then
-      useGPU = .true.
-    else
-      useGPU = .false.
-    endif
 
 #if REALCASE == 1
     call obj%get("qr",qr,error)
@@ -283,15 +376,6 @@
     endif
 
 #endif
-    call obj%timer%start("mpi_communication")
-    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
-    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
-
-    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-    call obj%timer%stop("mpi_communication")
 
     call obj%get("debug",debug,error)
     if (error .ne. ELPA_OK) then
@@ -300,8 +384,6 @@
     endif
     wantDebug = debug == 1
 
-    do_useGPU      = .false.
-    do_useGPU_trans_ev_tridi =.false.
 
 
 #if REALCASE == 1
@@ -321,44 +403,6 @@
       endif
     endif
 #endif /* REALCASE */
-
-    if (useGPU) then
-      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-
-         do_useGPU = .true.
-
-         ! set the neccessary parameters
-         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-         cudaHostRegisterPortable = cuda_hostRegisterPortable()
-         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-      else
-        print *,"GPUs are requested but not detected! Aborting..."
-        success = .false.
-        return
-      endif
-    endif
-
-    ! check consistency between request for GPUs and defined kernel
-    if (do_useGPU) then
-      if (nblk .ne. 128) then
-        ! cannot run on GPU with this blocksize
-        ! disable GPU usage for trans_ev_tridi
-        do_useGPU_trans_ev_tridi = .false.
-      else
-#if REALCASE == 1
-        if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
-#endif
-#if COMPLEXCASE == 1
-        if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
-#endif
-          do_useGPU_trans_ev_tridi = .true.
-        else
-          do_useGPU_trans_ev_tridi = .false.
-        endif
-      endif
-    endif
 
 
 
@@ -463,7 +507,7 @@
       &PRECISION &
       (obj, na, a, &
       a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-      tmat_dev,  wantDebug, do_useGPU, success, &
+      tmat_dev,  wantDebug, do_useGPU_bandred, success &
 #if REALCASE == 1
       useQRActual, &
 #endif
@@ -490,7 +534,7 @@
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-        do_useGPU, wantDebug, nrThreads)
+       do_useGPU_tridiag_band, wantDebug, nrThreads)
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
@@ -527,7 +571,7 @@
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
 #endif
-       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU, wantDebug, success, nrThreads)
+       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
        call obj%timer%stop("solve")
        if (.not.(success)) return
      endif ! do_solve_tridi
@@ -592,7 +636,7 @@
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
        q_dev, &
-       ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi, &
+       ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
        call obj%timer%stop("trans_ev_to_band")
 
@@ -609,9 +653,31 @@
        endif
      endif ! do_trans_to_band
 
+     ! the array q might reside on device or host, depending on whether GPU is
+     ! used or not. We thus have to transfer he data manually, if one of the
+     ! routines is run on GPU and the other not.
+
+     ! first deal with the situation that first backward step was on GPU
+     if(do_useGPU_trans_ev_tridi_to_band) then
+       ! if the second backward step is to be performed, but not on GPU, we have
+       ! to transfer q to the host
+       if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
+         successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
+       endif
+
+       ! if the last step is not required at all, or will be performed on CPU,
+       ! release the memmory allocated on the device
+       if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
+         successCUDA = cuda_free(q_dev)
+       endif
+     endif
+
+     !TODO check that the memory is properly dealocated on the host in case that
+     !the last step is not required
+
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")
-       if ( (do_useGPU) .and. .not.(do_useGPU_trans_ev_tridi) ) then
+       if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
          ! copy to device if we want to continue on GPU
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 
@@ -627,7 +693,7 @@
        (obj, na, nev, nblk, nbw, a, &
        a_dev, lda, tmat, tmat_dev,  q,  &
        q_dev, &
-       ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU &
+       ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
        , useQRActual  &
 #endif

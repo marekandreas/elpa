@@ -194,6 +194,7 @@
       logical                                    :: success
       integer(kind=ik)                           :: istat, print_flops
       character(200)                             :: errorMessage
+      character(20)                              :: gpuString
       logical                                    :: successCUDA
 #ifndef WITH_MPI
       integer(kind=ik)                           :: j1
@@ -203,11 +204,17 @@
                                                                      &_&
                                                                      &MATH_DATATYPE
 
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
+
       call obj%timer%start("trans_ev_tridi_to_band_&
       &MATH_DATATYPE&
       &" // &
-      &PRECISION_SUFFIX &
-      )
+      &PRECISION_SUFFIX //&
+      gpuString)
 
       n_times = 0
       if (useGPU) then
@@ -2377,8 +2384,8 @@
      call obj%timer%stop("trans_ev_tridi_to_band_&
                          &MATH_DATATYPE&
                          &" // &
-                         &PRECISION_SUFFIX&
-                         )
+                         &PRECISION_SUFFIX //&
+                         gpuString)
 
      return
 !#if COMPLEXCASE == 1
