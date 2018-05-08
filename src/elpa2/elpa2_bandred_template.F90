@@ -1463,13 +1463,9 @@
        ! A = A - V*U**T - U*V**T
 
 #ifdef WITH_OPENMP
-       ! OPENMP_CHANGE here
        !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
        n_threads = omp_get_num_threads()
-       print *,"debug"
-       if (n_threads .ne. max_threads) then
-         print *,"WTF2"
-       endif
+
        if (mod(n_threads, 2) == 0) then
          n_way = 2
        else

@@ -490,7 +490,7 @@
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-        do_useGPU, wantDebug)
+        do_useGPU, wantDebug, nrThreads)
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")

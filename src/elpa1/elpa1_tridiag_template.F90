@@ -535,11 +535,6 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           my_thread = omp_get_thread_num()
           
           n_threads = omp_get_num_threads()
-          ! debug REMOVE again
-          print *,"debug"
-          if (n_threads .ne. max_threads) then
-            print *,"WTF?"
-          endif
 
           n_iter = 0
 

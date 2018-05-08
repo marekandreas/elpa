@@ -97,7 +97,7 @@
       use precision
       use iso_c_binding
 #ifdef WITH_OPENMP
-      use omp_lib
+      ! use omp_lib
 #endif
       implicit none
 #include "../general/precision_kinds.F90"
@@ -219,11 +219,6 @@
       kernel_time = 0.0
       kernel_flops = 0
 
-!#ifdef WITH_OPENMP
-!      ! openmp_change_here
-!      max_threads = 1
-!      max_threads = omp_get_max_threads()
-!#endif
       if (wantDebug) call obj%timer%start("mpi_communication")
       call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
       call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)

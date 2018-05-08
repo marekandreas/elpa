@@ -66,6 +66,9 @@ function elpa_solve_evp_&
    use elpa_abstract_impl
    use elpa_mpi
    use elpa1_compute
+#ifdef WITH_OPENMP
+   use omp_lib
+#endif
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -110,7 +113,7 @@ function elpa_solve_evp_&
                                                       mpi_comm_all, check_pd, i, error
 
    logical                                         :: do_bandred, do_solve, do_trans_ev
-   integer(kind=ik)                                :: nrThreads, omp_get_num_threads
+   integer(kind=ik)                                :: nrThreads
 
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
@@ -119,7 +122,7 @@ function elpa_solve_evp_&
    &")
 
 #ifdef WITH_OPENMP
-   nrThreads = omp_get_num_threads()
+   nrThreads = omp_get_max_threads()
 #else
    nrThreads = 1
 #endif
@@ -310,7 +313,7 @@ function elpa_solve_evp_&
    if (obj%eigenvalues_only) then
      do_trans_ev = .true.
    endif
-
+    print *,"ELPA 1 ",nrThreads
    if (do_bandred) then
      call obj%timer%start("forward")
      call tridiag_&

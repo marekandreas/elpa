@@ -71,7 +71,7 @@
       logical                       :: success
       integer(kind=ik)              :: istat, debug, error
       character(200)                :: errorMessage
-      integer(kind=ik)              :: max_threads
+      integer(kind=ik)              :: nrThreads
 
       call obj%timer%start("elpa_cholesky_&
       &MATH_DATATYPE&
@@ -80,9 +80,9 @@
       &")
 
 #ifdef WITH_OPENMP
-      max_threads=omp_get_num_threads()
+      nrThreads=omp_get_max_threads()
 #else
-      max_threads=1
+      nrThreads=1
 #endif
 
       na         = obj%na
@@ -295,7 +295,7 @@
   &PRECISION &
                  (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
                                       tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-                                      n, na, nblk, nblk, max_threads)
+                                      n, na, nblk, nblk, nrThreads)
 
         do i=0,(na-1)/tile_size
           lcs = max(l_colx,i*l_cols_tile+1)

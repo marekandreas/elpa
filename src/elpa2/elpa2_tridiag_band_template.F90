@@ -56,7 +56,7 @@
     &_&
     &PRECISION &
     (obj, na, nb, nblk, aMatrix, a_dev, lda, d, e, matrixCols, &
-    hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug)
+    hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug, nrThreads)
     !-------------------------------------------------------------------------------
     ! tridiag_band_real/complex:
     ! Reduces a real symmetric band matrix to tridiagonal form
@@ -89,6 +89,9 @@
       use precision
       use iso_c_binding
       use redist
+#ifdef WITH_OPENMP
+      use omp_lib
+#endif
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)   :: obj
@@ -112,16 +115,14 @@
       integer(kind=ik)                             :: my_prow, np_rows, my_pcol, np_cols
       integer(kind=ik)                             :: ireq_ab, ireq_hv
       integer(kind=ik)                             :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
+      integer(kind=ik), intent(in)                 :: nrThreads
 #ifdef WITH_OPENMP
       integer(kind=ik)                             :: max_threads, my_thread, my_block_s, my_block_e, iter
 #ifdef WITH_MPI
-!      integer(kind=ik)                            :: my_mpi_status(MPI_STATUS_SIZE)
 #endif
-!      integer(kind=ik), allocatable               :: mpi_statuses(:,:), global_id_tmp(:,:)
       integer(kind=ik), allocatable                :: global_id_tmp(:,:)
       integer(kind=ik), allocatable                :: omp_block_limits(:)
       MATH_DATATYPE(kind=rck), allocatable        :: hv_t(:,:), tau_t(:)
-      integer(kind=ik)                             :: omp_get_max_threads
 #endif /* WITH_OPENMP */
       integer(kind=ik), allocatable                :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
       integer(kind=ik), allocatable                :: limits(:), snd_limits(:,:)
@@ -379,15 +380,7 @@
 
 #ifdef WITH_OPENMP
       ! OpenMP work distribution:
-
-      max_threads = 1
-#if REALCASE == 1
-      ! OPENMP_CHANGE here
-      max_threads = omp_get_max_threads()
-#endif
-#if COMPLEXCASE == 1
-!$      max_threads = omp_get_max_threads()
-#endif
+      max_threads = nrThreads
       ! For OpenMP we need at least 2 blocks for every thread
       max_threads = MIN(max_threads, nblocks/2)
       if (max_threads==0) max_threads = 1

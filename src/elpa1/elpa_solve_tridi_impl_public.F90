@@ -95,7 +95,7 @@
       matrixCols = obj%local_ncols
 
 #ifdef WITH_OPENMP
-      max_threads=omp_get_num_threads()
+      max_threads=omp_get_max_threads()
 #else
       max_threads=1
 #endif
