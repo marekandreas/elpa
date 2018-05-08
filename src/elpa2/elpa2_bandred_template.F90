@@ -65,7 +65,7 @@
     &_&
     &PRECISION &
     (obj, na, a_mat, a_dev, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-     tmat_dev, wantDebug, useGPU, success &
+     tmat_dev, wantDebug, useGPU, success, &
 #if REALCASE == 1
      useQR, &
 #endif

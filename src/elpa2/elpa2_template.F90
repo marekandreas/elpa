@@ -507,7 +507,7 @@
       &PRECISION &
       (obj, na, a, &
       a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-      tmat_dev,  wantDebug, do_useGPU_bandred, success &
+      tmat_dev,  wantDebug, do_useGPU_bandred, success, &
 #if REALCASE == 1
       useQRActual, &
 #endif
