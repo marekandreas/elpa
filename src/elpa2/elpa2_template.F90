@@ -429,6 +429,8 @@
     endif
 
     if (obj%is_set("bandwidth") == 1) then
+      ! bandwidth is set. That means, that the inputed matrix is actually banded and thus the 
+      ! first step of ELPA2 should be skipped
       call obj%get("bandwidth",nbw,error)
       if (nbw == 0) then
         if (wantDebug) then
@@ -463,22 +465,40 @@
       do_solve_tridi   = .true.  ! we also have to solve something :-)
       do_trans_to_band = .true.  ! and still we have to backsub to banded
       do_trans_to_full = .false. ! but not to full since we have a banded matrix
-    else ! bandwidth is not set
-
-      ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
-      ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
-      ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
-      ! For IBM Bluegene/Q this is not clear at the moment. We have to keep an eye
-      ! on this and maybe allow a run-time optimization here
-      if (do_useGPU) then
-        nbw = nblk
-      else
-#if REALCASE == 1
-        nbw = (63/nblk+1)*nblk
-#elif COMPLEXCASE == 1
-        nbw = (31/nblk+1)*nblk
-#endif
+    else ! matrix is not banded, determine the intermediate bandwidth for full->banded->tridi
+      !first check if the intermediate bandwidth was set by the user
+      call obj%get("intermediate_bandwidth", nbw, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
       endif
+
+      if(nbw == 0) then
+        ! intermediate bandwidth was not specified, select one of the defaults
+
+        ! Choose bandwidth, must be a multiple of nblk, set to a value >= 32
+        ! On older systems (IBM Bluegene/P, Intel Nehalem) a value of 32 was optimal.
+        ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
+        ! For IBM Bluegene/Q this is not clear at the moment. We have to keep an eye
+        ! on this and maybe allow a run-time optimization here
+        if (do_useGPU) then
+          nbw = nblk
+        else
+#if REALCASE == 1
+          nbw = (63/nblk+1)*nblk
+#elif COMPLEXCASE == 1
+          nbw = (31/nblk+1)*nblk
+#endif
+        endif
+
+      else
+        ! intermediate bandwidth has been specified by the user, check, whether correctly
+        if (mod(nbw, nblk) .ne. 0) then
+          print *, "Specified bandwidth ",nbw," has to be mutiple of the blocksize ", nblk, ". Aborting..."
+          success = .false.
+          return
+        endif
+      endif !nbw == 0
 
       num_blocks = (na-1)/nbw + 1
 
@@ -496,7 +516,7 @@
       do_solve_tridi   = .true.
       do_trans_to_band = .true.
       do_trans_to_full = .true.
-    end if  ! matrix not already banded on input
+    endif  ! matrix not already banded on input
 
     ! start the computations in 5 steps
 

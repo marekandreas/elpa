@@ -85,6 +85,7 @@ static int omp_threads_enumerate(int i);
 static int omp_threads_is_valid(elpa_index_t index, int n, int new_value);
 
 static int min_tile_size_cardinality();
+static int intermediate_bandwidth_cardinality();
 
 static int na_is_valid(elpa_index_t index, int n, int new_value);
 static int nev_is_valid(elpa_index_t index, int n, int new_value);
@@ -184,6 +185,8 @@ static const elpa_index_int_entry_t int_entries[] = {
 
         INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         min_tile_size_cardinality, NULL, NULL, NULL),
+        INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        intermediate_bandwidth_cardinality, NULL, NULL, NULL),
 
 	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
 #ifdef WITH_OPENMP
@@ -715,6 +718,13 @@ static int min_tile_size_cardinality() {
         fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
         abort();
 }
+
+static int intermediate_bandwidth_cardinality() {
+        /* TODO */
+        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
+        abort();
+}
+
 elpa_index_t elpa_index_instance() {
         elpa_index_t index = (elpa_index_t) calloc(1, sizeof(struct elpa_index_struct));
 
