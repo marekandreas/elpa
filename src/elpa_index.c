@@ -690,12 +690,14 @@ static int omp_threads_cardinality() {
 	if (set_max_threads_glob == 0) {
 		max_threads_glob = omp_get_max_threads();
 		set_max_threads_glob = 1;
+		//printf("Setting global max threads to %d \n",max_threads_glob);
 	}
 #else
 	max_threads_glob = 1;
 	set_max_threads_glob = 1;
 #endif
 	max_threads = max_threads_glob;
+	//printf("Setting max threads to %d \n",max_threads);
 	return max_threads;
 }
 
@@ -706,10 +708,11 @@ static int omp_threads_enumerate(int i) {
 static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
         int max_threads;
 #ifdef WITH_OPENMP
-        max_threads = omp_get_max_threads();
+        max_threads = max_threads_glob;
 #else
         max_threads = 1;
 #endif
+	//printf("In valid max threads to %d \n",max_threads);
         return (1 <= new_value) && (new_value <= max_threads);
 }
 
@@ -783,6 +786,36 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
                 }
                 fprintf(stderr, "\n");
         }
+
+        /* Could set all values */
+        return 1;
+}
+
+int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n) {
+        //int debug = elpa_index_get_int_value(index, "debug", NULL);
+        //for (int i = 0; i < nelements(int_entries); i++) {
+        //        if (is_tunable(index, i, autotune_level, autotune_domain)) {
+        //                int value = int_entries[i].enumerate(n % int_entries[i].cardinality());
+        //                /* Try to set option i to that value */
+        //                if (int_entries[i].valid(index, i, value)) {
+        //                        index->int_options.values[i] = value;
+        //                } else {
+        //                        return 0;
+        //                }
+        //                n /= int_entries[i].cardinality();
+        //        }
+        //}
+        for (int i = 0; i < nelements(int_entries); i++) {
+                if (is_tunable(index, i, autotune_level, autotune_domain)) {
+                        fprintf(stderr, " %s = ", int_entries[i].base.name);
+                        if (int_entries[i].to_string) {
+                                fprintf(stderr, " %s\n", int_entries[i].to_string(index->int_options.values[i]));
+                        } else {
+                                fprintf(stderr, " %d\n", index->int_options.values[i]);
+                        }
+                }
+        }
+        fprintf(stderr, "\n");
 
         /* Could set all values */
         return 1;

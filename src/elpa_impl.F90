@@ -160,6 +160,7 @@ module elpa_impl
      procedure, public :: autotune_setup => elpa_autotune_setup
      procedure, public :: autotune_step => elpa_autotune_step
      procedure, public :: autotune_set_best => elpa_autotune_set_best
+     procedure, public :: autotune_print_best => elpa_autotune_print_best
 #endif
      procedure, private :: construct_scalapack_descriptor => elpa_construct_scalapack_descriptor
   end type elpa_impl_t
@@ -927,6 +928,32 @@ module elpa_impl
 
 
 
+    !> \brief function to print the up-to-know best options of the autotuning
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
+    subroutine elpa_autotune_print_best(self, tune_state)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+
+      select type(tune_state)
+        type is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      print *, "The following settings were found to be best:"
+      print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
+      if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
+        stop "This should not happen (in elpa_autotune_print_best())"
+      endif
+    end subroutine
+
+
+
     !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method
     !c> *
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
@@ -944,6 +971,28 @@ module elpa_impl
       call c_f_pointer(autotune_handle, tune_state)
 
       call self%autotune_set_best(tune_state)
+
+    end subroutine
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_print_best method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_print_best(elpa_t handle, elpa_autotune_t autotune_handle);
+    subroutine elpa_autotune_print_best_c(handle, autotune_handle) bind(C, name="elpa_autotune_print_best")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_print_best(tune_state)
 
     end subroutine
 #endif

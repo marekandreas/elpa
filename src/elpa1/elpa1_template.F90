@@ -315,7 +315,6 @@ function elpa_solve_evp_&
    if (obj%eigenvalues_only) then
      do_trans_ev = .true.
    endif
-    print *,"ELPA 1 ",nrThreads
    if (do_bandred) then
      call obj%timer%start("forward")
      call tridiag_&

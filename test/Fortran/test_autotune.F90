@@ -127,13 +127,12 @@ program test
    integer                     :: iter
    character(len=5)            :: iter_string
 
-
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
-     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
-     call redirect_stdout(myid)
+   call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+   call redirect_stdout(myid)
 #endif
 #endif
 
@@ -176,7 +175,7 @@ program test
    z(:,:) = 0.0
    ev(:) = 0.0
 
-   call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+   call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times=.false.)
    as(:,:) = a(:,:)
 
    e => elpa_allocate()
@@ -219,7 +218,8 @@ program test
      call e%timer_stop("eigenvectors: iteration "//trim(iter_string))
 
      assert_elpa_ok(error)
-     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, .true., .true.)
+     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
+                                         .true., .true., print_times=.false.)
      a(:,:) = as(:,:)
      if (myid .eq. 0) then
        print *, ""
@@ -227,13 +227,18 @@ program test
      endif
    end do
 
-   ! de-allocate autotune object
+   ! set and print the autotuned-settings
    call e%autotune_set_best(tune_state)
+   if (myid .eq. 0) then
+     call e%autotune_print_best(tune_state)
+   endif
+   ! de-allocate autotune object
    call elpa_autotune_deallocate(tune_state)
 
    call e%eigenvectors(a, ev, z, error)
    assert_elpa_ok(error)
-   status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, .true., .true.)
+   status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
+                                       .true., .true., print_times=.false.)
 
 
    call elpa_deallocate(e)
