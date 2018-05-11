@@ -124,6 +124,10 @@ program test
    class(elpa_t), pointer      :: e
    class(elpa_autotune_t), pointer :: tune_state
 
+   integer                     :: iter
+   character(len=5)            :: iter_string
+
+
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
@@ -206,12 +210,21 @@ program test
    tune_state => e%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
+   iter=0
    do while (e%autotune_step(tune_state))
+     iter=iter+1
+     write(iter_string,'(I5.5)') iter
+     call e%timer_start("eigenvectors: iteration "//trim(iter_string))
      call e%eigenvectors(a, ev, z, error)
+     call e%timer_stop("eigenvectors: iteration "//trim(iter_string))
+
      assert_elpa_ok(error)
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, .true., .true.)
      a(:,:) = as(:,:)
-     print *, ""
+     if (myid .eq. 0) then
+       print *, ""
+       call e%print_times("eigenvectors: iteration "//trim(iter_string))
+     endif
    end do
 
    ! de-allocate autotune object
