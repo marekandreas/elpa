@@ -122,7 +122,9 @@ function elpa_solve_evp_&
    &")
 
 #ifdef WITH_OPENMP
-   nrThreads = omp_get_max_threads()
+   !nrThreads = omp_get_max_threads()
+   call obj%get("omp_threads",nrThreads,error)
+   call omp_set_num_threads(nrThreads)
 #else
    nrThreads = 1
 #endif

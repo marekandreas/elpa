@@ -121,9 +121,9 @@ subroutine elpa_reduce_add_vectors_&
    aux1(:) = 0
    aux2(:) = 0
 #ifdef WITH_OPENMP
-   call omp_set_num_threads(nrThreads)
+   !call omp_set_num_threads(nrThreads)
 
-   !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl)
+   !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl) num_threads(nrThreads)
 #endif
    do n = 0, lcm_s_t-1
 

@@ -81,7 +81,7 @@
       logical                  :: success
 
       integer                  :: debug, error
-      integer                  :: max_threads
+      integer                  :: nrThreads
 
       call obj%timer%start("elpa_solve_tridi_public_&
       &MATH_DATATYPE&
@@ -95,9 +95,10 @@
       matrixCols = obj%local_ncols
 
 #ifdef WITH_OPENMP
-      max_threads=omp_get_max_threads()
+      !nrThreads=omp_get_max_threads()
+      call obj%get("omp_threads",nrThreads,error)
 #else
-      max_threads=1
+      nrThreads=1
 #endif
 
       call obj%get("mpi_comm_rows", mpi_comm_rows,error)
@@ -127,7 +128,7 @@
       &PRECISION&
       &_private_impl(obj, na, nev, d, e, q, ldq, nblk, matrixCols, &
                mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success, &
-               max_threads)
+               nrThreads)
 
       call obj%timer%stop("elpa_solve_tridi_public_&
       &MATH_DATATYPE&
