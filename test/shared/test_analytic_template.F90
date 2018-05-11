@@ -1,4 +1,4 @@
-! (c) Copyright Pavel Kus, 2017, MPCDF
+!  (c) Copyright Pavel Kus, 2017, MPCDF
 !
 !    This file is part of ELPA.
 !
@@ -45,20 +45,27 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    &(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+    &(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times)
     implicit none
-    integer(kind=ik), intent(in)    :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+    integer(kind=ik), intent(in)                       :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
     MATH_DATATYPE(kind=REAL_DATATYPE), intent(inout)   :: a(:,:)
-
-    integer(kind=ik) :: globI, globJ, locI, locJ, pi, pj, levels(num_primes)
+    logical, optional                                  :: print_times
+    logical                                            :: print_timer
+    integer(kind=ik)                                   :: globI, globJ, locI, locJ, pi, pj, levels(num_primes)
 #ifdef HAVE_DETAILED_TIMINGS
-    type(timer_t)    :: timer
+    type(timer_t)                                      :: timer
 #else
-    type(timer_dummy_t)    :: timer
+    type(timer_dummy_t)                                :: timer
 #endif
 
     call timer%enable()
     call timer%start("prepare_matrix_analytic")
+
+    print_timer = .true.
+
+    if (present(print_times)) then
+      print_timer = print_times
+    endif
 
     ! for debug only, do it systematicaly somehow ... unit tests
     call check_module_sanity_&
@@ -102,7 +109,7 @@
     call timer%stop("loop")
 
     call timer%stop("prepare_matrix_analytic")
-    if(myid == 0) then
+    if(myid == 0 .and. print_timer) then
       call timer%print("prepare_matrix_analytic")
     end if
     call timer%free()
@@ -112,7 +119,8 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, check_eigenvectors) result(status)
+    &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, &
+      check_eigenvectors, print_times) result(status)
     implicit none
 #include "../../src/general/precision_kinds.F90"
     integer(kind=ik), intent(in)           :: na, nev, nblk, myid, np_rows, &
@@ -149,7 +157,8 @@
                                               num_checked_evals
     integer(kind=ik)                       :: max_idx_array(np_rows * np_cols), &
                                               rank
-
+    logical, optional                      :: print_times
+    logical                                :: print_timer
 
 #ifdef HAVE_DETAILED_TIMINGS
     type(timer_t)    :: timer
@@ -160,6 +169,11 @@
     call timer%enable()
     call timer%start("check_correctness_analytic")
 
+
+    print_timer = .true.
+    if (present(print_times)) then
+      print_timer = print_times
+    endif
 
     if(.not. decompose(na, levels)) then
       print *, "can not decomopse matrix size"
@@ -291,7 +305,7 @@
     endif
 
     call timer%stop("check_correctness_analytic")
-    if(myid == 0) then
+    if(myid == 0 .and. print_timer) then
       call timer%print("check_correctness_analytic")
     end if
     call timer%free()
