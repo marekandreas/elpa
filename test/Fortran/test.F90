@@ -522,6 +522,11 @@ program test
 
    e => elpa_allocate()
 
+   if(myid .ne. 0) then
+     call e%set("suppress_warnings", 1, error)
+     assert_elpa_ok(error)
+   endif
+
    call e%set("na", na, error)
    assert_elpa_ok(error)
    call e%set("nev", nev, error)
