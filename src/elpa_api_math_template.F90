@@ -14,22 +14,22 @@
 #if ELPA_IMPL_SUFFIX == d
   !> \param   a           double real matrix a: defines the problem to solve
   !> \param   ev          double real: on output stores the eigenvalues
-  !> \param   q           double real matrix q: on output stores the eigenvalues
+  !> \param   q           double real matrix q: on output stores the eigenvectors
 #endif
 #if ELPA_IMPL_SUFFIX == f
   !> \param   a           single real matrix a: defines the problem to solve
   !> \param   ev          single real: on output stores the eigenvalues
-  !> \param   q           single real matrix q: on output stores the eigenvalues
+  !> \param   q           single real matrix q: on output stores the eigenvectors
 #endif  
 #if ELPA_IMPL_SUFFIX == dc
   !> \param   a           double complex matrix a: defines the problem to solve
   !> \param   ev          double real: on output stores the eigenvalues
-  !> \param   q           double complex matrix q: on output stores the eigenvalues
+  !> \param   q           double complex matrix q: on output stores the eigenvectors
 #endif  
 #if ELPA_IMPL_SUFFIX ==fc
   !> \param   a           single complex matrix a: defines the problem to solve
   !> \param   ev          single real: on output stores the eigenvalues
-  !> \param   q           single complex matrix q: on output stores the eigenvalues
+  !> \param   q           single complex matrix q: on output stores the eigenvectors
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
