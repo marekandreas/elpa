@@ -4,6 +4,7 @@ from itertools import product
 
 language_flag = {
     "Fortran": "",
+    "C": "_c_version",
 }
 
 domain_flag = {
@@ -43,7 +44,7 @@ test_type_flag = {
     "solve_tridiagonal":  "-DTEST_SOLVE_TRIDIAGONAL",
     "cholesky":           "-DTEST_CHOLESKY",
     "hermitian_multiply": "-DTEST_HERMITIAN_MULTIPLY",
-    "generalized"       : "-DTEST_GENERALIZED_EIGENPROBLEM",
+    "generalized":        "-DTEST_GENERALIZED_EIGENPROBLEM",
     "generalized_decomp": "-DTEST_GENERALIZED_DECOMP_EIGENPROBLEM",
 }
 
@@ -83,7 +84,7 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
         continue
 
     # do not test single-precision scalapack
-    if(s in ["scalapack_all", "scalapack_part"] and ( p == "single")):
+    if(s in ["scalapack_all", "scalapack_part"] and (p == "single")):
         continue
 
     # solve tridiagonal only for real toeplitz matrix in 1stage
@@ -125,6 +126,10 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
 
         if (lang == "C" and kernel == "all_kernels"):
             continue
+
+        if (lang == "C"):
+            print("if ENABLE_C_TESTS")
+            endifs += 1
 
         if (g == 1):
             print("if WITH_GPU_VERSION")
@@ -187,6 +192,9 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
             print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
             print(name + "_CFLAGS = $(test_program_cflags) \\")
 
+        else:
+            raise Exception("Unknown language")
+
         print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
         print("  " + " \\\n  ".join([
             domain_flag[d],
@@ -215,7 +223,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
     print("if ENABLE_AUTOTUNING")
     print("check_SCRIPTS += " + name + "_extended.sh")
     print("noinst_PROGRAMS += " + name)
-    if lang == "Fortran":    
+    if lang == "Fortran":
         print(name + "_SOURCES = test/Fortran/test_autotune.F90")
         print(name + "_LDADD = $(test_program_ldadd)")
         print(name + "_FCFLAGS = $(test_program_fcflags) \\")
@@ -225,9 +233,11 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
         print(name + "_CFLAGS = $(test_program_cflags) \\")
 
+    else:
+        raise Exception("Unknown language")
+
     print("  " + " \\\n  ".join([
         domain_flag[d],
         prec_flag[p]]))
     print("endif\n" * endifs)
     print("endif")
-
