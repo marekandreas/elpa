@@ -57,35 +57,35 @@
 int max_threads_glob;
 int set_max_threads_glob=0;
 
-static int enumerate_identity(int i);
-static int cardinality_bool(void);
+static int enumerate_identity(elpa_index_t index, int i);
+static int cardinality_bool(elpa_index_t index);
 static int valid_bool(elpa_index_t index, int n, int new_value);
 
-static int number_of_solvers();
-static int solver_enumerate(int i);
+static int number_of_solvers(elpa_index_t index);
+static int solver_enumerate(elpa_index_t index, int i);
 static int solver_is_valid(elpa_index_t index, int n, int new_value);
 static const char* elpa_solver_name(int solver);
 
-static int number_of_real_kernels();
-static int real_kernel_enumerate(int i);
+static int number_of_real_kernels(elpa_index_t index);
+static int real_kernel_enumerate(elpa_index_t index, int i);
 static int real_kernel_is_valid(elpa_index_t index, int n, int new_value);
 static const char *real_kernel_name(int kernel);
 
-static int number_of_complex_kernels();
-static int complex_kernel_enumerate(int i);
+static int number_of_complex_kernels(elpa_index_t index);
+static int complex_kernel_enumerate(elpa_index_t index, int i);
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value);
 static const char *complex_kernel_name(int kernel);
 
-static int band_to_full_cardinality();
-static int band_to_full_enumerate(int i);
+static int band_to_full_cardinality(elpa_index_t index);
+static int band_to_full_enumerate(elpa_index_t index, int i);
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
 
-static int omp_threads_cardinality();
-static int omp_threads_enumerate(int i);
-static int omp_threads_is_valid(elpa_index_t index, int n, int new_value);
+static int elpa_omp_threads_cardinality(elpa_index_t index);
+static int elpa_omp_threads_enumerate(elpa_index_t index, int i);
+static int elpa_omp_threads_is_valid(elpa_index_t index, int n, int new_value);
 
-static int min_tile_size_cardinality();
-static int intermediate_bandwidth_cardinality();
+static int min_tile_size_cardinality(elpa_index_t index);
+static int intermediate_bandwidth_cardinality(elpa_index_t index);
 
 static int na_is_valid(elpa_index_t index, int n, int new_value);
 static int nev_is_valid(elpa_index_t index, int n, int new_value);
@@ -453,8 +453,8 @@ int elpa_int_string_to_value(char *name, char *string, int *value) {
                 }
         }
 
-        for (int i = 0; i < int_entries[n].cardinality(); i++) {
-                int candidate = int_entries[n].enumerate(i);
+        for (int i = 0; i < int_entries[n].cardinality(NULL); i++) {
+                int candidate = int_entries[n].enumerate(NULL, i);
                 if (strcmp(string, int_entries[n].to_string(candidate)) == 0) {
                         *value = candidate;
                         return ELPA_OK;
@@ -485,7 +485,7 @@ int elpa_option_cardinality(char *name) {
         if (n < 0 || !int_entries[n].cardinality) {
                 return ELPA_ERROR_ENTRY_NOT_FOUND;
         }
-        return int_entries[n].cardinality();
+        return int_entries[n].cardinality(NULL);
 }
 
 int elpa_option_enumerate(char *name, int i) {
@@ -493,12 +493,12 @@ int elpa_option_enumerate(char *name, int i) {
         if (n < 0 || !int_entries[n].enumerate) {
                 return 0;
         }
-        return int_entries[n].enumerate(i);
+        return int_entries[n].enumerate(NULL, i);
 }
 
 
 /* Helper functions for simple int entries */
-static int cardinality_bool(void) {
+static int cardinality_bool(elpa_index_t index) {
         return 2;
 }
 
@@ -506,7 +506,7 @@ static int valid_bool(elpa_index_t index, int n, int new_value) {
         return (0 <= new_value) && (new_value < 2);
 }
 
-static int enumerate_identity(int i) {
+static int enumerate_identity(elpa_index_t index, int i) {
         return i;
 }
 
@@ -532,11 +532,11 @@ static const char* elpa_solver_name(int solver) {
         }
 }
 
-static int number_of_solvers() {
+static int number_of_solvers(elpa_index_t index) {
         return ELPA_NUMBER_OF_SOLVERS;
 }
 
-static int solver_enumerate(int i) {
+static int solver_enumerate(elpa_index_t index, int i) {
 #define OPTION_RANK(name, value, ...) \
         +(value >= sizeof(array_of_size_value)/sizeof(int) ? 0 : 1)
 
@@ -567,11 +567,11 @@ static int solver_is_valid(elpa_index_t index, int n, int new_value) {
         }
 }
 
-static int number_of_real_kernels() {
+static int number_of_real_kernels(elpa_index_t index) {
         return ELPA_2STAGE_NUMBER_OF_REAL_KERNELS;
 }
 
-static int real_kernel_enumerate(int i) {
+static int real_kernel_enumerate(elpa_index_t index,int i) {
         switch(i) {
 #define INNER_ITERATOR() ELPA_FOR_ALL_2STAGE_REAL_KERNELS
                 EVAL(ELPA_FOR_ALL_2STAGE_REAL_KERNELS(ENUMERATE_CASE))
@@ -605,12 +605,12 @@ static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         }
 }
 
-static int number_of_complex_kernels() {
+static int number_of_complex_kernels(elpa_index_t index) {
         return ELPA_2STAGE_NUMBER_OF_COMPLEX_KERNELS;
 }
 
 
-static int complex_kernel_enumerate(int i) {
+static int complex_kernel_enumerate(elpa_index_t index,int i) {
         switch(i) {
 #define INNER_ITERATOR() ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS
                 EVAL(ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(ENUMERATE_CASE))
@@ -673,11 +673,11 @@ static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value == 0 || new_value == 1;
 }
 
-static int band_to_full_cardinality() {
+static int band_to_full_cardinality(elpa_index_t index) {
 	return 10;
 }
 
-static int band_to_full_enumerate(int i) {
+static int band_to_full_enumerate(elpa_index_t index, int i) {
 	return i+1;
 }
 
@@ -686,7 +686,7 @@ static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
         return (1 <= new_value) && (new_value <= max_block);
 }
 
-static int omp_threads_cardinality() {
+static int elpa_omp_threads_cardinality(elpa_index_t index) {
 	int max_threads;
 #ifdef WITH_OPENMP
 	if (set_max_threads_glob == 0) {
@@ -703,7 +703,7 @@ static int omp_threads_cardinality() {
 	return max_threads;
 }
 
-static int omp_threads_enumerate(int i) {
+static int elpa_omp_threads_enumerate(elpa_index_t index, int i) {
         return i + 1;
 }
 
@@ -718,13 +718,13 @@ static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
         return (1 <= new_value) && (new_value <= max_threads);
 }
 
-static int min_tile_size_cardinality() {
+static int min_tile_size_cardinality(elpa_index_t index) {
         /* TODO */
         fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
         abort();
 }
 
-static int intermediate_bandwidth_cardinality() {
+static int intermediate_bandwidth_cardinality(elpa_index_t index) {
         /* TODO */
         fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
         abort();
@@ -762,7 +762,7 @@ int elpa_index_autotune_cardinality(elpa_index_t index, int autotune_level, int 
 
         for (int i = 0; i < nelements(int_entries); i++) { \
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
-                        N *= int_entries[i].cardinality();
+                        N *= int_entries[i].cardinality(index);
                 }
         }
         return N;
@@ -772,14 +772,14 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
         int debug = elpa_index_get_int_value(index, "debug", NULL);
         for (int i = 0; i < nelements(int_entries); i++) {
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
-                        int value = int_entries[i].enumerate(n % int_entries[i].cardinality());
+                        int value = int_entries[i].enumerate(index, n % int_entries[i].cardinality(index));
                         /* Try to set option i to that value */
                         if (int_entries[i].valid(index, i, value)) {
                                 index->int_options.values[i] = value;
                         } else {
                                 return 0;
                         }
-                        n /= int_entries[i].cardinality();
+                        n /= int_entries[i].cardinality(index);
                 }
         }
         if (debug == 1) {

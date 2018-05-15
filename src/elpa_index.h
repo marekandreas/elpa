@@ -70,10 +70,10 @@
 typedef struct elpa_index_struct* elpa_index_t;
 
 /* Function type for the cardinality */
-typedef int (*elpa_index_cardinality_t)(void);
+typedef int (*elpa_index_cardinality_t)(elpa_index_t index);
 
 /* Function type to enumerate all possible values, starting from 0 */
-typedef int (*elpa_index_enumerate_int_option_t)(int i);
+typedef int (*elpa_index_enumerate_int_option_t)(elpa_index_t index, int i);
 
 /* Function types to check the validity of a value */
 typedef int (*elpa_index_valid_int_t)(elpa_index_t index, int n, int new_value);
