@@ -85,7 +85,10 @@ static int elpa_omp_threads_enumerate(elpa_index_t index, int i);
 static int elpa_omp_threads_is_valid(elpa_index_t index, int n, int new_value);
 
 static int min_tile_size_cardinality(elpa_index_t index);
+
 static int intermediate_bandwidth_cardinality(elpa_index_t index);
+static int intermediate_bandwidth_enumerate(elpa_index_t index, int i);
+static int intermediate_bandwidth_is_valid(elpa_index_t index, int n, int new_value);
 
 static int na_is_valid(elpa_index_t index, int n, int new_value);
 static int nev_is_valid(elpa_index_t index, int n, int new_value);
@@ -187,7 +190,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         min_tile_size_cardinality, NULL, NULL, NULL),
         INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        intermediate_bandwidth_cardinality, NULL, NULL, NULL),
+                        intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL),
 
 	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
 #ifdef WITH_OPENMP
@@ -725,9 +728,53 @@ static int min_tile_size_cardinality(elpa_index_t index) {
 }
 
 static int intermediate_bandwidth_cardinality(elpa_index_t index) {
-        /* TODO */
-        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
-        abort();
+        int na, nblk;
+        if(index == NULL)
+                return 0;
+        if (elpa_index_int_value_is_set(index, "na") != 1) {
+                return 0;
+        }
+        na = elpa_index_get_int_value(index, "na", NULL);
+
+        if (elpa_index_int_value_is_set(index, "nblk") != 1) {
+                return 0;
+        }
+        nblk = elpa_index_get_int_value(index, "nblk", NULL);
+
+        return na/nblk;
+}
+
+static int intermediate_bandwidth_enumerate(elpa_index_t index, int i) {
+        int nblk;
+        if(index == NULL)
+                return 0;
+        if (elpa_index_int_value_is_set(index, "nblk") != 1) {
+                return 0;
+        }
+        nblk = elpa_index_get_int_value(index, "nblk", NULL);
+
+        return (i+1) * nblk;
+
+}
+
+static int intermediate_bandwidth_is_valid(elpa_index_t index, int n, int new_value) {
+        int na, nblk;
+        if (elpa_index_int_value_is_set(index, "na") != 1) {
+                return 0;
+        }
+        na = elpa_index_get_int_value(index, "na", NULL);
+
+        if (elpa_index_int_value_is_set(index, "nblk") != 1) {
+                return 0;
+        }
+        nblk = elpa_index_get_int_value(index, "nblk", NULL);
+
+        if((new_value <= 1 ) || (new_value > na ))
+          return 0;
+        if(new_value % nblk != 0) {
+          fprintf(stderr, "intermediate bandwidth has to be multiple of nblk\n");
+          return 0;
+        }
 }
 
 elpa_index_t elpa_index_instance() {
