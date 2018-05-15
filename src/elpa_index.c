@@ -80,9 +80,9 @@ static int band_to_full_cardinality(elpa_index_t index);
 static int band_to_full_enumerate(elpa_index_t index, int i);
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
 
-static int elpa_omp_threads_cardinality(elpa_index_t index);
-static int elpa_omp_threads_enumerate(elpa_index_t index, int i);
-static int elpa_omp_threads_is_valid(elpa_index_t index, int n, int new_value);
+static int omp_threads_cardinality(elpa_index_t index);
+static int omp_threads_enumerate(elpa_index_t index, int i);
+static int omp_threads_is_valid(elpa_index_t index, int n, int new_value);
 
 static int min_tile_size_cardinality(elpa_index_t index);
 
@@ -689,7 +689,7 @@ static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
         return (1 <= new_value) && (new_value <= max_block);
 }
 
-static int elpa_omp_threads_cardinality(elpa_index_t index) {
+static int omp_threads_cardinality(elpa_index_t index) {
 	int max_threads;
 #ifdef WITH_OPENMP
 	if (set_max_threads_glob == 0) {
@@ -706,7 +706,7 @@ static int elpa_omp_threads_cardinality(elpa_index_t index) {
 	return max_threads;
 }
 
-static int elpa_omp_threads_enumerate(elpa_index_t index, int i) {
+static int omp_threads_enumerate(elpa_index_t index, int i) {
         return i + 1;
 }
 
