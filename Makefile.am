@@ -556,11 +556,7 @@ elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2/elpa2_print_kernels.F90
 elpa2_print_kernels@SUFFIX@_LDADD = libelpa@SUFFIX@.la
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)modules
 
-include Fortran_test_programs.am
-if ENABLE_C_TESTS
-include C_test_programs.am
-endif
-
+include test_programs.am
 
 if ENABLE_LEGACY
 include legacy_test_programs.am
