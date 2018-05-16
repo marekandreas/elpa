@@ -199,6 +199,7 @@
 #ifndef WITH_MPI
       integer(kind=ik)                           :: j1
 #endif
+      integer(kind=ik)                           :: error
       integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                                      &PRECISION&
                                                                      &_&
@@ -2160,8 +2161,9 @@
      if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
      if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
 
+
+     call obj%get("print_flops",print_flops,error)
 #ifdef HAVE_DETAILED_TIMINGS
-     call obj%get("print_flops",print_flops)
      if (print_flops == 1) then
        call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, mpierr)
        kernel_flops = kernel_flops_recv
@@ -2177,7 +2179,6 @@
 
 #endif /* WITH_MPI */
 
-     call obj%get("print_flops",print_flops)
      if (my_prow==0 .and. my_pcol==0 .and.print_flops == 1) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)')  kernel_time, kernel_flops/kernel_time*1.d-6
 
