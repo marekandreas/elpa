@@ -854,6 +854,8 @@ module elpa_impl
       if (ts_impl%i >= 0) then
 #ifdef HAVE_DETAILED_TIMINGS
         time_spent = self%autotune_timer%get("accumulator")
+#else
+        print *, "Cannot do autotuning without detailed timings"
 #endif
         if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
           ts_impl%min_val = time_spent
