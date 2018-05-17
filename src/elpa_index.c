@@ -185,8 +185,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         min_tile_size_cardinality, NULL, NULL, NULL),
 
-	//INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
-	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
+	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
 #ifdef WITH_OPENMP
 	INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
 #else
@@ -667,21 +666,16 @@ static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 static int band_to_full_cardinality() {
-        /* TODO */
-        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
-        abort();
+	return 10;
 }
 
 static int band_to_full_enumerate(int i) {
-        /* TODO */
-        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
-        abort();
+	return i+1;
 }
 
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
-        /* TODO */
-        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
-        abort();
+	int max_block=10;
+        return (1 <= new_value) && (new_value <= max_block);
 }
 
 static int omp_threads_cardinality() {
