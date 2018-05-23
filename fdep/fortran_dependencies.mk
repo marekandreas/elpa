@@ -84,7 +84,7 @@ $(foreach l,$(call translate_name,$($1_LDADD) $($1_LIBADD)),$l $(call recursive_
 endef
 
 define is_clean
-$(if $(filter-out mostlyclean clean distclean maintainer-clean,$(MAKECMDGOALS)),0,1)
+$(if $(filter-out mostlyclean clean distclean maintainer-clean am--depfiles,$(MAKECMDGOALS)),0,1)
 endef
 
 define newline
