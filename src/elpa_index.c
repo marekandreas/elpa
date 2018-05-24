@@ -84,6 +84,10 @@ static int omp_threads_cardinality(elpa_index_t index);
 static int omp_threads_enumerate(elpa_index_t index, int i);
 static int omp_threads_is_valid(elpa_index_t index, int n, int new_value);
 
+static int max_stored_rows_cardinality(elpa_index_t index);
+static int max_stored_rows_enumerate(elpa_index_t index, int i);
+static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value);
+
 static int min_tile_size_cardinality(elpa_index_t index);
 
 static int intermediate_bandwidth_cardinality(elpa_index_t index);
@@ -193,6 +197,7 @@ static const elpa_index_int_entry_t int_entries[] = {
                         intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL),
 
 	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
+	INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL),
 #ifdef WITH_OPENMP
 	INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
 #else
@@ -720,6 +725,37 @@ static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
 	//printf("In valid max threads to %d \n",max_threads);
         return (1 <= new_value) && (new_value <= max_threads);
 }
+
+
+static int max_stored_rows_cardinality(elpa_index_t index) {
+	return 8;
+}
+
+static int max_stored_rows_enumerate(elpa_index_t index, int i) {
+	switch(i) {
+	  case 0:
+	    return 15;
+	  case 1:
+	    return 31;
+	  case 2:
+	    return 47;
+	  case 3:
+	    return 63;
+	  case 4:
+	    return 79;
+	  case 5:
+	    return 95;
+	  case 6:
+	    return 111;
+	  case 7:
+	    return 127;
+	}
+}
+
+static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value) {
+        return (15 <= new_value) && (new_value <= 127);
+}
+
 
 static int min_tile_size_cardinality(elpa_index_t index) {
         /* TODO */
