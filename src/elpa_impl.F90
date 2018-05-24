@@ -862,7 +862,7 @@ module elpa_impl
         call self%autotune_timer%free()
       endif
 
-      do while (ts_impl%i < ts_impl%N)
+      do while (ts_impl%i < ts_impl%N - 1)
         ts_impl%i = ts_impl%i + 1
         if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%i) == 1) then
           unfinished = .true.
@@ -920,7 +920,6 @@ module elpa_impl
           print *, "This should not happen"
       end select
 
-      print *, "set best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
       if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
         stop "This should not happen (in elpa_autotune_set_best())"
       endif
