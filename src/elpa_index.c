@@ -89,6 +89,12 @@ static int max_stored_rows_enumerate(elpa_index_t index, int i);
 static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value);
 
 static int min_tile_size_cardinality(elpa_index_t index);
+static int min_tile_size_enumerate(elpa_index_t index, int i);
+static int min_tile_size_is_valid(elpa_index_t index, int n, int new_value);
+
+static int valid_with_gpu(elpa_index_t index, int n, int new_value);
+static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value);
+static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value);
 
 static int intermediate_bandwidth_cardinality(elpa_index_t index);
 static int intermediate_bandwidth_enumerate(elpa_index_t index, int i);
@@ -171,37 +177,39 @@ static const elpa_index_int_entry_t int_entries[] = {
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
         INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, NULL, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL),
         INT_ENTRY("gpu_solve_tridi", "Use GPU acceleration for ELPA solve tridi", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, NULL, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL),
         INT_ENTRY("gpu_trans_ev", "Use GPU acceleration for ELPA1 trans ev", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, NULL, NULL),
-        INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
-                        number_of_real_kernels, real_kernel_enumerate, \
-                        real_kernel_is_valid, real_kernel_name),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL),
         INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, NULL, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL),
         INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, NULL, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL),
         INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, NULL, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL),
         INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, NULL, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL),
+        INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
+                        number_of_real_kernels, real_kernel_enumerate, real_kernel_is_valid, real_kernel_name),
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
-                        number_of_complex_kernels, complex_kernel_enumerate, \
-                        complex_kernel_is_valid, complex_kernel_name),
+                        number_of_complex_kernels, complex_kernel_enumerate, complex_kernel_is_valid, complex_kernel_name),
 
         INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        min_tile_size_cardinality, NULL, NULL, NULL),
+                        min_tile_size_cardinality, min_tile_size_enumerate, min_tile_size_is_valid, NULL),
         INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL),
 
-	INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
-	INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL),
+        INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
+        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL),
 #ifdef WITH_OPENMP
-	INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
+        INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
 #else
-	INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
+        INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
 #endif
         //BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL),
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL),
@@ -727,6 +735,38 @@ static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 
+static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
+        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        if (gpu_is_active == 1) {
+                return ((new_value == 0 ) || (new_value == 1));
+        }
+        else {
+                return new_value == 0;
+        }
+}
+
+static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
+        int solver = elpa_index_get_int_value(index, "solver", NULL);
+        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        if ((solver == ELPA_SOLVER_1STAGE) && (gpu_is_active == 1)) {
+                return ((new_value == 0 ) || (new_value == 1));
+        }
+        else {
+                return new_value == 0;
+        }
+}
+
+static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value) {
+        int solver = elpa_index_get_int_value(index, "solver", NULL);
+        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        if ((solver == ELPA_SOLVER_2STAGE) && (gpu_is_active == 1)) {
+                return ((new_value == 0 ) || (new_value == 1));
+        }
+        else {
+                return new_value == 0;
+        }
+}
+
 static int max_stored_rows_cardinality(elpa_index_t index) {
 	return 8;
 }
@@ -753,14 +793,35 @@ static int max_stored_rows_enumerate(elpa_index_t index, int i) {
 }
 
 static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value) {
-        return (15 <= new_value) && (new_value <= 127);
+        int solver = elpa_index_get_int_value(index, "solver", NULL);
+        if (solver == ELPA_SOLVER_2STAGE) {
+                return new_value == 15;
+        } else {
+                return (15 <= new_value) && (new_value <= 127);
+        }
 }
 
 
+// TODO: this shoudl definitely be improved (too many options to test in autotuning)
+static const int TILE_SIZE_STEP = 128;
+
 static int min_tile_size_cardinality(elpa_index_t index) {
-        /* TODO */
-        fprintf(stderr, "TODO on %s:%d\n", __FILE__, __LINE__);
-        abort();
+        int na;
+        if(index == NULL)
+                return 0;
+        if (elpa_index_int_value_is_set(index, "na") != 1) {
+                return 0;
+        }
+        na = elpa_index_get_int_value(index, "na", NULL);
+        return na/TILE_SIZE_STEP;
+}
+
+static int min_tile_size_enumerate(elpa_index_t index, int i) {
+        return (i+1) * TILE_SIZE_STEP;
+}
+
+static int min_tile_size_is_valid(elpa_index_t index, int n, int new_value) {
+       return new_value % TILE_SIZE_STEP == 0;
 }
 
 static int intermediate_bandwidth_cardinality(elpa_index_t index) {
@@ -805,11 +866,16 @@ static int intermediate_bandwidth_is_valid(elpa_index_t index, int n, int new_va
         }
         nblk = elpa_index_get_int_value(index, "nblk", NULL);
 
-        if((new_value <= 1 ) || (new_value > na ))
-          return 0;
-        if(new_value % nblk != 0) {
-          fprintf(stderr, "intermediate bandwidth has to be multiple of nblk\n");
-          return 0;
+        int solver = elpa_index_get_int_value(index, "solver", NULL);
+        if (solver == ELPA_SOLVER_1STAGE) {
+                return new_value == nblk;
+        } else {
+                if((new_value <= 1 ) || (new_value > na ))
+                  return 0;
+                if(new_value % nblk != 0) {
+                  fprintf(stderr, "intermediate bandwidth has to be multiple of nblk\n");
+                  return 0;
+                }
         }
 }
 
@@ -852,6 +918,7 @@ int elpa_index_autotune_cardinality(elpa_index_t index, int autotune_level, int 
 }
 
 int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n) {
+        int n_original = n;
         int debug = elpa_index_get_int_value(index, "debug", NULL);
         for (int i = 0; i < nelements(int_entries); i++) {
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
@@ -866,6 +933,7 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
                 }
         }
         if (debug == 1) {
+                fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d ***\n", n_original);
                 for (int i = 0; i < nelements(int_entries); i++) {
                         if (is_tunable(index, i, autotune_level, autotune_domain)) {
                                 fprintf(stderr, "%s = ", int_entries[i].base.name);
@@ -876,7 +944,7 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
                                 }
                         }
                 }
-                fprintf(stderr, "\n");
+                fprintf(stderr, "***\n\n");
         }
 
         /* Could set all values */

@@ -218,28 +218,37 @@ program test
      call e%timer_stop("eigenvectors: iteration "//trim(iter_string))
 
      assert_elpa_ok(error)
-     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
-                                         .true., .true., print_times=.false.)
-     a(:,:) = as(:,:)
      if (myid .eq. 0) then
        print *, ""
        call e%print_times("eigenvectors: iteration "//trim(iter_string))
      endif
+     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
+                                         .true., .true., print_times=.false.)
+     a(:,:) = as(:,:)
    end do
 
    ! set and print the autotuned-settings
    call e%autotune_set_best(tune_state)
    if (myid .eq. 0) then
+     print *, "The best combination found by the autotuning:"
      call e%autotune_print_best(tune_state)
    endif
    ! de-allocate autotune object
    call elpa_autotune_deallocate(tune_state)
 
+   if (myid .eq. 0) then
+     print *, "Running once more time with the best found setting..."
+   endif
+   call e%timer_start("eigenvectors: best setting")
    call e%eigenvectors(a, ev, z, error)
+   call e%timer_stop("eigenvectors: best setting")
    assert_elpa_ok(error)
+   if (myid .eq. 0) then
+     print *, ""
+     call e%print_times("eigenvectors: best setting")
+   endif
    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                        .true., .true., print_times=.false.)
-
 
    call elpa_deallocate(e)
 
