@@ -99,17 +99,17 @@
       use elpa_abstract_impl
       implicit none
 #include "../general/precision_kinds.F90"
-      class(elpa_abstract_impl_t), intent(inout) :: obj
+      class(elpa_abstract_impl_t), intent(inout)    :: obj
       integer(kind=ik), intent(in)                  :: na, nqc, lda, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      MATH_DATATYPE(kind=rck), intent(in)          :: tau(na)
+      MATH_DATATYPE(kind=rck), intent(in)           :: tau(na)
 
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck), intent(inout)       :: a_mat(lda,*), q_mat(ldq,*)
+      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,*), q_mat(ldq,*)
 #else
-      MATH_DATATYPE(kind=rck), intent(inout)       :: a_mat(lda,matrixCols), q_mat(ldq,matrixCols)
+      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,matrixCols), q_mat(ldq,matrixCols)
 #endif
       logical, intent(in)                           :: useGPU
-      integer(kind=ik)                              :: max_stored_rows
+      integer(kind=ik)                              :: max_stored_rows, max_stored_rows_fac
 
       integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)                              :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
@@ -117,8 +117,8 @@
       integer(kind=ik)                              :: istep, n, nc, ic, ics, ice, nb, cur_pcol
       integer(kind=ik)                              :: hvn_ubnd, hvm_ubnd
 
-      MATH_DATATYPE(kind=rck), allocatable         :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-      MATH_DATATYPE(kind=rck), allocatable         :: tmat(:,:), h1(:), h2(:), hvm1(:)
+      MATH_DATATYPE(kind=rck), allocatable          :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+      MATH_DATATYPE(kind=rck), allocatable          :: tmat(:,:), h1(:), h2(:), hvm1(:)
 
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
@@ -126,10 +126,11 @@
 
       integer(kind=C_intptr_T)                      :: q_dev, tmp_dev, hvm_dev, tmat_dev
       logical                                       :: successCUDA
-      integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
+      integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
                                                                           &PRECISION&
                                                                           &_&
                                                                           &MATH_DATATYPE
+      integer(kind=ik)                              :: error
       if(useGPU) then
         gpuString = "_gpu"
       else
@@ -149,6 +150,8 @@
       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
       call obj%timer%stop("mpi_communication")
 
+      call obj%get("max_stored_rows",max_stored_rows_fac, error)
+
       totalblocks = (na-1)/nblk + 1
       max_blocks_row = (totalblocks-1)/np_rows + 1
       max_blocks_col = ((nqc-1)/nblk)/np_cols + 1  ! Columns of q_mat!
@@ -156,7 +159,7 @@
       max_local_rows = max_blocks_row*nblk
       max_local_cols = max_blocks_col*nblk
 
-      max_stored_rows = (63/nblk+1)*nblk
+      max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
 
       allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
       call check_alloc("trans_ev_&
