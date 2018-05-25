@@ -206,7 +206,7 @@ program test
 
    if (myid == 0) print *, ""
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error)
+   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
    iter=0
