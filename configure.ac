@@ -27,13 +27,14 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [11:0:0])
+AC_SUBST([ELPA_SO_VERSION], [12:0:1])
 
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
-AC_DEFINE([CURRENT_API_VERSION], [20180301], [Current ELPA API version])
+AC_DEFINE([CURRENT_API_VERSION], [20180525], [Current ELPA API version])
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20180525], [Current ELPA autotune version])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then

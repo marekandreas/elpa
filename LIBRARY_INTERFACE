@@ -79,3 +79,7 @@ https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
   removed). For the current interface all changes since 2017.05.001 are
   compatible, since only some functions have been added. 
   The state of release 2017.11.001.(rc1) defines this interface
+
+- 12
+  No incompatible API changes w.r.t. the previous version. Some functions have been
+  added

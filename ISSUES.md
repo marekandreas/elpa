@@ -3,6 +3,9 @@
 For more details and recent updates please visit the online [issue system] (https://gitlab.mpcdf.mpg.de/elpa/elpa/issues)
 Issues which are not mentioned in a newer release are (considered as) solved.
 
+### ELPA 2018.05.001.rc1 release ###
+- same issues as in ELPA 2017.11.001
+
 ### ELPA 2017.11.001 release ###
 - the elpa autotune print functions cannot print at the moment
 - on (officially not supported) 32bit systems hangs in MPI can occur
