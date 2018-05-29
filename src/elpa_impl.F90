@@ -207,7 +207,7 @@ module elpa_impl
     !c> *  \param  none
     !c> *  \result elpa_t handle
     !c> */
-    !c> elpa_t elpa_allocate();
+    !c> elpa_t elpa_allocate(int *error);
     function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
       integer(kind=c_int) :: error
       type(c_ptr) :: ptr
