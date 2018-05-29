@@ -1,3 +1,9 @@
+Changelog for ELPA 2018.05.001.rc1
+
+- significant improved performance on K-computer
+- added interface for the generalized eigenvalue problem
+- extended autotuning functionality
+
 Changelog for ELPA 2017.11.001
 
 - significant improvement of performance of GPU version

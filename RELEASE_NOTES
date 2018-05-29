@@ -1,24 +1,21 @@
-This file contains the release notes for the ELPA 2017.11.001 version
+This file contains the release notes for the ELPA 2018.05.001.rc1 version
 
 What is new?
 -------------
-For detailed information about changes since release ELPA 2017.05.03 please have a look at the Changelog file
+For detailed information about changes since release ELPA 2017.11 please have a look at the Changelog file
 
-- This release contains new compute kernels for IBM Power 8 and Fujistu Sparc64 processors
-- A first version of autotuning has been implemented
+- This release improves the performance on the K-computer
+- The autotuning has been extended
+- an interface to solve the generalized eigenvalue problem has been added
 
 
 ABI change
 ---------------------
 
-Since release 2017.05.003 the ABI has changed.
+Since release 2018.11.001 the ABI has changed.
 
 Any incompatibilities to previous version?
 ---------------------------------------
 
 As mentioned before, the ABI of ELPA was changed; 
-This change only affectes the  old "lecgacy interface", since as 
-anounced some deprecated function aliases have been removed.
-For the current interface there is no incompatibility with the
-previous version ELPA 2017.05.003.
-
+Some new functions (for the generalized eigenvalue problem) have been added
