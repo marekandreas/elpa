@@ -502,6 +502,8 @@
 
       num_blocks = (na-1)/nbw + 1
 
+      ! tmat is needed only in full->band and band->full steps, so alocate here
+      ! (not allocated for banded matrix on input)
       allocate(tmat(nbw,nbw,num_blocks), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"solve_evp_&
@@ -510,6 +512,18 @@
         &PRECISION&
         &" // ": error when allocating tmat "//errorMessage
         stop 1
+      endif
+
+      ! if either of full->band or band->full steps are to be done on GPU,
+      ! allocate also corresponding array on GPU.
+      if (do_useGPU_bandred .or.  do_useGPU_trans_ev_band_to_full) then
+        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* size_of_datatype)
+        if (.not.(successCUDA)) then
+          print *,"bandred_&
+                  &MATH_DATATYPE&
+                  &: error in cudaMalloc tmat_dev 1"
+          stop 1
+        endif
       endif
 
       do_bandred       = .true.
@@ -685,6 +699,10 @@
        ! to transfer q to the host
        if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
          successCUDA = cuda_memcpy(loc(q), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
+         if (.not.(successCUDA)) then
+           print *,"elpa2_template, error in copy to host"
+           stop 1
+         endif
        endif
 
        ! if the last step is not required at all, or will be performed on CPU,
@@ -704,6 +722,10 @@
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 
          successCUDA = cuda_memcpy(q_dev, loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+         if (.not.(successCUDA)) then
+           print *,"elpa2_template, error in copy to device"
+           stop 1
+         endif
        endif
 
        ! Backtransform stage 2
@@ -732,6 +754,16 @@
        endif
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
+
+     if(do_bandred .or. do_trans_to_full) then
+       if (do_useGPU_bandred .or. do_useGPU_trans_ev_band_to_full) then
+         successCUDA = cuda_free(tmat_dev)
+         if (.not.(successCUDA)) then
+           print *,"elpa2_template: error in cudaFree, tmat_dev"
+           stop 1
+         endif
+       endif
+     endif
 
      if (obj%eigenvalues_only) then
        deallocate(q_dummy, stat=istat, errmsg=errorMessage)

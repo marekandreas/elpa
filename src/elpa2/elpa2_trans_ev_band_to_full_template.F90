@@ -349,7 +349,7 @@
           successCUDA = cuda_memcpy(hvm_dev, loc(hvm), max_local_rows*nbw* size_of_datatype, cudaMemcpyHostToDevice)
 
           if (.not.(successCUDA)) then
-            print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+            print *,"trans_ev_band_to_full_real: error in cudaMemcpy, hvm"
             stop 1
 
           endif
@@ -371,7 +371,7 @@
             ! copy to host maybe this can be avoided this is needed if MPI is used (allreduce)
             successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+              print *,"trans_ev_band_to_full_real: error in cudaMemcpy, tmp1 to host"
               stop 1
             endif
 
@@ -403,7 +403,7 @@
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_&
                       &MATH_DATATYPE&
-                      &: error in cudaMemcpy"
+                      &: error in cudaMemcpy, tmp2"
               stop 1
             endif
 #else /* WITH_MPI */
@@ -419,7 +419,7 @@
            if (.not.(successCUDA)) then
              print *,"trans_ev_band_to_full_&
                      &MATH_DATATYPE&
-                     &: error in cudaMemcpy"
+                     &: error in cudaMemcpy, tmat"
              stop 1
            endif
 !#endif /* WITH_MPI */
@@ -436,7 +436,7 @@
             ! this is not necessary hvm is not used anymore
             successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_real: error in cudaMemcpy"
+              print *,"trans_ev_band_to_full_real: error in cudaMemcpy hvm to host"
               stop 1
             endif
           endif ! l_rows > 0
@@ -777,13 +777,6 @@
           stop 1
         endif
 
-        successCUDA = cuda_free(tmat_dev)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaFree"
-          stop 1
-        endif
 
          ! final transfer of q_dev
          successCUDA = cuda_memcpy(loc(q_mat), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)

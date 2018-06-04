@@ -263,14 +263,6 @@
           stop 1
         endif
 
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc tmat_dev 1"
-          stop 1
-        endif
-
         successCUDA = cuda_malloc(vav_dev, nbw*nbw* size_of_datatype)
         if (.not.(successCUDA)) then
           print *,"bandred_&
