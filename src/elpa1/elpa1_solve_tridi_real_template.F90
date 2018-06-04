@@ -155,7 +155,7 @@ subroutine solve_tridi_&
              (obj, l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
                         matrixCols, mpi_comm_rows, useGPU, wantDebug, success, max_threads)
       if (.not.(success)) then
-        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
+        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
         return
       endif
       ! If there is only 1 processor column, we are done
@@ -167,7 +167,7 @@ subroutine solve_tridi_&
           stop 1
         endif
 
-        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
+        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
         return
       endif
 
@@ -230,7 +230,7 @@ subroutine solve_tridi_&
            &PRECISION &
            (obj, 0, np_cols, useGPU, wantDebug, success)
       if (.not.(success)) then
-        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX)
+        call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
         return
       endif
 
