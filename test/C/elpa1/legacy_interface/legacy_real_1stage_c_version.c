@@ -97,8 +97,8 @@ int main(int argc, char** argv) {
    myid = 0;
    MPI_COMM_WORLD=1;
 #endif
-   na = 1000;
-   nev = 500;
+   na = 150;
+   nev = 50;
    nblk = 16;
 
    if (myid == 0) {
