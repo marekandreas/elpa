@@ -851,7 +851,6 @@ static int intermediate_bandwidth_enumerate(elpa_index_t index, int i) {
         nblk = elpa_index_get_int_value(index, "nblk", NULL);
 
         return (i+1) * nblk;
-
 }
 
 static int intermediate_bandwidth_is_valid(elpa_index_t index, int n, int new_value) {

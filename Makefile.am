@@ -638,6 +638,13 @@ CLEANFILES = \
 
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
+	-rm -rf test_*.sh
+	-rm -rf legacy_*.sh
+	-rm -rf real_2stage*.sh
+	-rm -rf complex_2stage*.sh
+	-rm -rf single_complex_2stage*.sh
+	-rm -rf single_real_2stage*.sh
+	-rm -rf double_instance_onenode*.sh
 	-rm -rf $(generated_headers)
 
 distclean-local:
