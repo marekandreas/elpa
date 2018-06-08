@@ -9,7 +9,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program which prints all
 the available kernels.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2017.11.001/html/index.html)
+Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.05.001.rc1/html/index.html)
 for each *ELPA* release is available.
 
 
@@ -34,7 +34,6 @@ Using *ELPA* with the latest API is done in the following steps
 - define a instance of the elpa type
 
 - call elpa_init
-  note, that at the moment the only supported API version number is 20170403
 
 - call elpa_allocate to allocate an instance of *ELPA*
   note that you can define (and configure individually) as many different instances
@@ -89,7 +88,7 @@ The *ELPA* library consists of two main parts:
 
 Both variants of the *ELPA* solvers are available for real or complex singe and double precision valued matrices.
 
-Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2017.11.001/html/index.html) for details):
+Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.05.001.rc1/html/index.html) for details):
 
 - elpa_get_communicators                        : set the row / column communicators for *ELPA*
 - elpa_solve_evp_complex_1stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 1stage* solver
