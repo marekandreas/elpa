@@ -121,6 +121,9 @@ program test
 #ifdef HAVE_REDIRECT
    use test_redirect
 #endif
+#ifdef WITH_OPENMP
+   use omp_lib
+#endif
    implicit none
 
    ! matrix dimensions
@@ -175,6 +178,10 @@ program test
                                   do_test_frank_eigenvalues,  &
                                   do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                                   do_test_hermitian_multiply
+
+#ifdef WITH_OPENMP
+   integer                    :: max_threads
+#endif
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
    call setup_mpi(myid, nprocs)
@@ -565,6 +572,12 @@ program test
 
 #if TEST_QR_DECOMPOSITION == 1
    call e%set("qr", 1, error)
+   assert_elpa_ok(error)
+#endif
+
+#ifdef WITH_OPENMP
+   max_threads=omp_get_max_threads()
+   call e%set("omp_threads", max_threads, error)
    assert_elpa_ok(error)
 #endif
 

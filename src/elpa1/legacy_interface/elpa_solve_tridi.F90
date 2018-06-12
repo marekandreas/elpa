@@ -62,6 +62,9 @@
       &_impl
       use elpa
       use elpa_abstract_impl
+#ifdef WITH_OPENMP
+      use omp_lib
+#endif
       implicit none
       integer(kind=ik)            :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE)    :: d(na), e(na)
@@ -75,6 +78,9 @@
       logical                     :: success ! the return value
       integer                     :: error
       class(elpa_t), pointer      :: obj
+#ifdef WITH_OPENMP
+      integer                     :: nrThreads
+#endif
 
       !call timer%start("elpa_solve_tridi_&
       !&PRECISION&
@@ -131,6 +137,14 @@
         success = .false.
         return
       endif
+
+#ifdef WITH_OPENMP
+      nrThreads = omp_get_max_threads()
+      call obj%set("omp_threads", nrThreads, error)
+#else
+      call obj%set("omp_threads", 1, error)
+#endif
+
 
       if (wantDebug) then
         call obj%set("debug",1, error)

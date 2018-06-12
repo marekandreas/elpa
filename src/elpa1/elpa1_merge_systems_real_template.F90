@@ -438,7 +438,6 @@
 #ifdef WITH_OPENMP
 
         call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
-        ! OPENMP_CHANGE here
 !$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
         my_thread = omp_get_thread_num()
 !$OMP DO

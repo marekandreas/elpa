@@ -708,14 +708,12 @@ static int omp_threads_cardinality(elpa_index_t index) {
 	if (set_max_threads_glob == 0) {
 		max_threads_glob = omp_get_max_threads();
 		set_max_threads_glob = 1;
-		//printf("Setting global max threads to %d \n",max_threads_glob);
 	}
 #else
 	max_threads_glob = 1;
 	set_max_threads_glob = 1;
 #endif
 	max_threads = max_threads_glob;
-	//printf("Setting max threads to %d \n",max_threads);
 	return max_threads;
 }
 
@@ -726,11 +724,15 @@ static int omp_threads_enumerate(elpa_index_t index, int i) {
 static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
         int max_threads;
 #ifdef WITH_OPENMP
-        max_threads = max_threads_glob;
+	if (set_max_threads_glob == 0) {
+		max_threads_glob = omp_get_max_threads();
+		set_max_threads_glob = 1;
+	}
 #else
-        max_threads = 1;
+	max_threads_glob = 1;
+	set_max_threads_glob = 1;
 #endif
-	//printf("In valid max threads to %d \n",max_threads);
+	max_threads = max_threads_glob;
         return (1 <= new_value) && (new_value <= max_threads);
 }
 
