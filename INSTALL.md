@@ -19,8 +19,7 @@ please note that *ELPA* is shipped with a typical "configure" and "make"
 autotools procedure. This is the **only supported way** how to build and install *ELPA*.
 
 If you obtained *ELPA* from the official git repository, you will not find
-the needed configure script! Please look at the "**INSTALL_FROM_GIT_VERSION**" file
-for the documentation how to proceed.
+the needed configure script! You will have to create the configure scipt with autoconf.
 
 
 ## (A): Installing *ELPA* as library with configure ##
