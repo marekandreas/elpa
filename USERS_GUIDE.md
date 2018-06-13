@@ -1,33 +1,48 @@
 ## Users guide for the *ELPA* library ##
 
-This document provides the guide for using the *ELPA* library in user applications.
+This document provides the guide for using the *ELPA* library with the new API (API version 20170403 or higher).
+If you want to use the deprecated legacy API (we strongly recommend against this), please refer to the document
+[USERS_GUIDE_DEPRECATED_LEGACY_API.md] (USERS_GUIDE_DEPRECATED_LEGACY_API.md).
+
+If you need instructions on how to build *ELPA*, please look at [INSTALL.md] (INSTALL.md).
 
 ### Online and local documentation ###
 
 Local documentation (via man pages) should be available (if *ELPA* has been installed with the documentation):
 
-For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program which prints all
+For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program, which prints all
 the available kernels.
 
 Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.05.001.rc1/html/index.html)
 for each *ELPA* release is available.
 
 
-## API of the *ELPA* library ##
+### API of the *ELPA* library ###
 
-With release 2017.05.001 of the *ELPA* library the interface has been rewritten substantially, in order to have a more generic interface and to avoid future interface changes.
+With release 2017.05.001 of the *ELPA* library the interface has been rewritten substantially, in order to have a more generic 
+interface and to avoid future interface changes.
 
 For compatibility reasons the interface defined in the previous release 2016.11.001 is also still available
-IF AND ONLY IF *ELPA* has been build with support of this legacy interface.
-
-If you want to use the legacy interface, please look to section "B) Using the legacy API of the *ELPA* library.
+**IF AND ONLY IF** *ELPA* has been build with support of this legacy interface.
 
 The legacy API defines all the functionality as it has been defined in *ELPA* release 2016.11.011. Note, however,
 that all future features of *ELPA* will only be accessible via the new API defined in release 2017.05.001 or later.
 
-## A) Using the final API definition of the *ELPA* library ##
+As mentioned, we advise against it, but if you want to use the legacy API please look at the document 
+[USERS_GUIDE_DEPRECATED_LEGACY_API.md] (USERS_GUIDE_DEPRECATED_LEGACY_API.md).
 
-Using *ELPA* with the latest API is done in the following steps
+### Table of Contents: ###
+
+- I)   General concept of the *ELPA* API
+- II)  List of supported tunable parameters
+- III) List of computational routines
+- IV)  Using OpenMP threading
+- V)   Influencing default values with environment variables
+- VI)   Autotuning
+
+## I) General concept of the *ELPA* API ##
+
+Using *ELPA* just requires a few steps:
 
 - include elpa headers "elpa/elpa.h" (C-Case) or use the Fortran module "use elpa"
 
@@ -45,469 +60,302 @@ Using *ELPA* with the latest API is done in the following steps
 
 - set or get all possible ELPA tunable options with ELPA-type functions get/set
 
-  At the moment the following tunable options are available:
-
-     - "solver" can either be ELPA_SOLVER_1STAGE or ELPA_SOLVER_2STAGE
-     - "real_kernel" can be one of the available real kernels (a list of available kernels can be
-        queried with the ELPA helper binary elpa2_print_kernels)
-     - "complex_kernel" can be one of the available complex kernels (a list of available kernels can be
-     - "qr" can be either 0 or 1, switches QR decomposition off/on for ELPA_SOLVER_2STAGE
-       only available in real-case for blocksize at least 64
-     - "gpu" can be either 0 or 1, switches GPU computations off or on, assuming that the installation
-       of the ELPA library has been build with GPU support enables
-     - "timings" can be either 0 or 1, switches time measurements off or on
-     - "debug" can be either 0 or 1, switches detailed debug messages off/on
-
 - call ELPA-type function solve or others
-
-  At the moment the following ELPA compute functions are available:
-
-    - "eigenvectors" solves the eigenvalue problem for single/double real/complex valued matrices and
-                     returns the eigenvalues AND eigenvectors
-    - "eigenvalues" solves the eigenvalue problem for single/double real/complex valued matrices and
-                     returns the eigenvalues
-    - "hermetian_multipy" computes C = A^T * B (real) or C = A^H * B (complex) for single/double
-      real/complex matrices
-    - "cholesky" does a cholesky factorization for a single/double real/complex matrix
-    - "invert_triangular" inverts a single/double real/complex triangular matrix
-    - "solve_tridiagonal" solves the single/double eigenvalue problem for a real tridiagonal matrix
 
 - if the ELPA object is not needed any more call ELPA-type function destroy
 
 - call elpa_uninit at the end of the program
 
-## B) Using the legacy API of the *ELPA* library ##
+To be more precise a basic call sequence for Fortran and C looks as follows:
+
+Fortran synopsis
+
+```Fortran
+ use elpa
+ class(elpa_t), pointer :: elpa
+ integer :: success
+
+ if (elpa_init(20171201) /= ELPA_OK) then        ! put here the API version that you are using
+    print *, "ELPA API version not supported"
+    stop
+  endif
+  elpa => elpa_allocate()
+
+  ! set parameters decribing the matrix and it's MPI distribution
+  call elpa%set("na", na, success)                          ! size of the na x na matrix
+  call elpa%set("nev", nev, success)                        ! number of eigenvectors that should be computed ( 1<= nev <= na)
+  call elpa%set("local_nrows", na_rows, success)            ! number of local rows of the distributed matrix on this MPI task 
+  call elpa%set("local_ncols", na_cols, success)            ! number of local columns of the distributed matrix on this MPI task
+  call elpa%set("nblk", nblk, success)                      ! size of the BLACS block cyclic distribution
+  call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success) ! the global MPI communicator
+  call elpa%set("process_row", my_prow, success)            ! row coordinate of MPI process
+  call elpa%set("process_col", my_pcol, success)            ! column coordinate of MPI process
+
+  succes = elpa%setup()
+
+  ! if desired, set any number of tunable run-time options
+  ! look at the list of possible options as detailed later in
+  ! USERS_GUIDE.md
+  call e%set("solver", ELPA_SOLVER_2STAGE, success)
 
-The following description describes the usage of the *ELPA* library with the legacy interface.
+  ! use method solve to solve the eigenvalue problem to obtain eigenvalues
+  ! and eigenvectors
+  ! other possible methods are desribed in USERS_GUIDE.md
+  call e%eigenvectors(a, ev, z, success)
 
-### General concept of the *ELPA* library ###
+  ! cleanup
+  call elpa_deallocate(e)
 
-The *ELPA* library consists of two main parts:
-- *ELPA 1stage* solver
-- *ELPA 2stage* solver
+  call elpa_uninit()
+```
 
-Both variants of the *ELPA* solvers are available for real or complex singe and double precision valued matrices.
+C Synopsis:
+```C
+   #include <elpa/elpa.h>
 
-Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.05.001.rc1/html/index.html) for details):
+   elpa_t handle;
+   int error;
 
-- elpa_get_communicators                        : set the row / column communicators for *ELPA*
-- elpa_solve_evp_complex_1stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 1stage* solver
-- elpa_solve_evp_real_1stage_{single|double}    : solve a {single|double} precision real eigenvalue proplem with the *ELPA 1stage* solver
-- elpa_solve_evp_complex_2stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 2stage* solver
-- elpa_solve_evp_real_2stage_{single|double}    : solve a {single|double} precision real eigenvalue proplem with the *ELPA 2stage* solver
-- elpa_solve_evp_real_{single|double}           : driver for the {single|double} precision real *ELPA 1stage* or *ELPA 2stage* solver
-- elpa_solve_evp_complex_{single|double}        : driver for the {single|double} precision complex *ELPA 1stage* or *ELPA 2stage* solver
+   if (elpa_init(20171201) != ELPA_OK) {                          // put here the API version that you are using
+     fprintf(stderr, "Error: ELPA API version not supported");
+     exit(1);
+   }
 
+   handle = elpa_allocate(&error);
 
+   /* Set parameters the matrix and it's MPI distribution */
+   elpa_set(handle, "na", na, &error);                                           // size of the na x na matrix
+   elpa_set(handle, "nev", nev, &error);                                         // number of eigenvectors that should be computed ( 1<= nev <= na)
+   elpa_set(handle, "local_nrows", na_rows, &error);                             // number of local rows of the distributed matrix on this MPI task 
+   elpa_set(handle, "local_ncols", na_cols, &error);                             // number of local columns of the distributed matrix on this MPI task
+   elpa_set(handle, "nblk", nblk, &error);                                       // size of the BLACS block cyclic distribution
+   elpa_set(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &error);    // the global MPI communicator
+   elpa_set(handle, "process_row", my_prow, &error);                             // row coordinate of MPI process
+   elpa_set(handle, "process_col", my_pcol, &error);                             // column coordinate of MPI process
 
-Furthermore *ELPA* provides the utility binary "elpa2_print_available_kernels": it tells the user
-which *ELPA 2stage* compute kernels have been installed and which default kernels are set
+   /* Setup */
+   elpa_setup(handle);
 
-If you want to solve an eigenvalue problem with *ELPA*, you have to decide whether you
-want to use *ELPA 1stage* or *ELPA 2stage* solver. Normally, *ELPA 2stage* is the better
-choice since it is faster, but there are matrix dimensions where *ELPA 1stage* is superior.
+   /* if desired, set any number of tunable run-time options */
+   /* look at the list of possible options as detailed later in
+      USERS_GUIDE.md */
 
-Independent of the choice of the solver, the concept of calling *ELPA* is always the same:
+   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
 
-#### MPI version of *ELPA* ####
+   /* use method solve to solve the eigenvalue problem */
+   /* other possible methods are desribed in USERS_GUIDE.md */
+   elpa_eigenvectors(handle, a, ev, z, &error);
 
-In this case, *ELPA* relies on a BLACS distributed matrix.
-To solve a Eigenvalue problem of this matrix with *ELPA*, one has
+   /* cleanup */
+   elpa_deallocate(handle);
+   elpa_uninit();
+```
 
-1. to include the *ELPA* header (C case) or module (Fortran)
-2. to create row and column MPI communicators for ELPA (with "elpa_get_communicators")
-3. to call to the *ELPA driver* or directly call *ELPA 1stage* or *ELPA 2stage* for the matrix.
+## II) List of supported tunable parameters ##
 
-Here is a very simple MPI code snippet for using *ELPA 1stage*: For the definition of all variables
-please have a look at the man pages and/or the online documentation (see above). A full version
-of a simple example program can be found in ./test_project_1stage_legacy_api/src.
+The following table gives a list of all supported parameters which can be used to tune (influence) the runtime behaviour of *ELPA* ([see here if you cannot read it in your editor] (https://gitlab.mpcdf.mpg.de/elpa/elpa/wikis/USERS_GUIDE))
 
+| Parameter name | Short description     | default value               | possible values         | since API version | 
+| :------------- |:--------------------- | :-------------------------- | :---------------------- | :---------------- | 
+| solver         | use ELPA 1 stage <br>  or 2 stage solver | ELPA_SOLVER_1STAGE          | ELPA_SOLVER_1STAGE <br> ELPA_SOLVER_2STAGE      | 20170403          |
+| gpu            | use GPU (if build <br> with GPU support)| 0                           | 0 or 1             | 20170403          | 
+| real_kernel    | real kernel to be <br> used in ELPA 2 | ELPA_2STAGE_REAL_DEFAULT    | see output of <br> elpa2_print_kernels    | 20170403          |
+| complex kernel | complex kernel to <br>  be used in ELPA 2 | ELPA_2STAGE_COMPLEX_DEFAULT | see output of <br>  elpa2_print_kernels     | 20170403          |
+| omp_threads    | OpenMP threads used <br> (if build with OpenMP <br> support) | 1 | >1 | 20180525 |
+| qr | Use QR decomposition in <br> ELPA 2 real | 0 | 0 or 1 |  20170403  |
+| timings | Enable time <br> measurement | 1 | 0 or 1 |  20170403  |
+| debug | give debug information | 0 | 0 or 1 | 20170403  |
+       
 
-   ! All ELPA routines need MPI communicators for communicating within
-   ! rows or columns of processes, these are set in elpa_get_communicators
+## III) List of computational routines ##
 
-   success = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
-                                    mpi_comm_rows, mpi_comm_cols)
+The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.05.001.rc1/html/index.html) for details.
 
-   if (myid==0) then
-     print '(a)','| Past split communicator setup for rows and columns.'
-   end if
 
-   ! Determine the necessary size of the distributed matrices,
-   ! we use the Scalapack tools routine NUMROC for that.
+| Name         | Purpose                                                                 | since API version |
+| :----------- | :---------------------------------------------------------------------- | :---------------- |
+| eigenvectors | solve std. eigenvalue problem <br> compute eigenvalues and eigenvectors | 20170403  |
+| eigenvalues  | solve std. eigenvalue problem <br> compute eigenvalues only             | 20170403  |
+| generalized_eigenvectors | solve generalized eigenvalule problem <br> compute eigenvalues and eigenvectors | 20180525 |
+| generalized_eigenvalues  | solve generalized eigenvalule problem <br> compute eigenvalues only             | 20180525 |
+| hermitian_multiply       | do (real) a^T x b <br> (complex) a^H x b                                        | 20170403 |
+| cholesky                 | do cholesky factorisation                                                       | 20170403 |
+| invert_triangular        | invert a upper triangular matrix                                                | 20170403 |
 
-   na_rows = numroc(na, nblk, my_prow, 0, np_rows)
-   na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
 
-   !-------------------------------------------------------------------------------
-   ! Calculate eigenvalues/eigenvectors
+## IV) Using OpenMP threading ##
 
-   if (myid==0) then
-     print '(a)','| Entering one-step ELPA solver ... '
-     print *
-   end if
+If *ELPA* has been build with OpenMP threading support you can specify the number of OpenMP threads that *ELPA* will use internally.
+Please note that it is **mandatory**  to set the number of threads to be used with the OMP_NUM_THREADS environment variable **and**
+with the **set method** 
 
-   success = elpa_solve_evp_real_1stage_{single|double} (na, nev, a, na_rows, ev, z, na_rows, nblk, &
-                                   matrixCols, mpi_comm_rows, mpi_comm_cols)
+```Fortran
+call e%set("omp_threads", 4, error)
+```
 
-   if (myid==0) then
-     print '(a)','| One-step ELPA solver complete.'
-     print *
-   end if
+**or the *ELPA* environment variable**
 
+export ELPA_DEFAULT_omp_threads=4 (see Section V for an explanation of this variable).
 
-#### Shared-memory version of *ELPA* ####
+Just setting the environment variable OMP_NUM_THREADS is **not** sufficient.
 
-If the *ELPA* library has been compiled with the configure option "--with-mpi=0",
-no MPI will be used.
+This is necessary to make the threading an autotunable option.
 
-Still the **same** call sequence as in the MPI case can be used (see above).
+## V) Influencing default values with environment variables ##
 
-#### Setting the row and column communicators ####
+For each tunable parameter mentioned in Section II, there exists a default value. This means, that if this parameter is **not explicitly** set by the user by the
+*ELPA* set method, *ELPA* takes the default value for the parameter. E.g. if the user does not set a solver method, than *ELPA* will take the default "ELPA_SOLVER_1STAGE".
 
-SYNOPSIS
-   FORTRAN INTERFACE
-       use elpa1
+The user can change this default value by setting an enviroment variable to the desired value.
 
-       success = elpa_get_communicators (mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
+The name of this variable is always constructed in the following way:
+```
+ELPA_DEFAULT_tunable_parameter_name=value
+```
 
-       integer, intent(in)   mpi_comm_global:  global communicator for the calculation
-       integer, intent(in)   my_prow:          row coordinate of the calling process in the process grid
-       integer, intent(in)   my_pcol:          column coordinate of the calling process in the process grid
-       integer, intent(out)  mpi_comm_row:     communicator for communication within rows of processes
-       integer, intent(out)  mpi_comm_row:     communicator for communication within columns of processes
+, e.g. in case of the solver the user can
 
-       integer               success:          return value indicating success or failure of the underlying MPI_COMM_SPLIT function
+```
+export ELPA_DEFAULT_solver=ELPA_SOLVER_2STAGE
+```
 
-   C INTERFACE
-       #include "elpa_generated.h"
-
-       success = elpa_get_communicators (int mpi_comm_world, int my_prow, my_pcol, int *mpi_comm_rows, int *Pmpi_comm_cols);
-
-       int mpi_comm_global:  global communicator for the calculation
-       int my_prow:          row coordinate of the calling process in the process grid
-       int my_pcol:          column coordinate of the calling process in the process grid
-       int *mpi_comm_row:    pointer to the communicator for communication within rows of processes
-       int *mpi_comm_row:    pointer to the communicator for communication within columns of processes
-
-       int  success:         return value indicating success or failure of the underlying MPI_COMM_SPLIT function
-
-
-#### Using *ELPA 1stage* ####
-
-After setting up the *ELPA* row and column communicators (by calling elpa_get_communicators),
-only the real or complex valued solver has to be called:
-
-SYNOPSIS
-   FORTRAN INTERFACE
-       use elpa1
-       success = elpa_solve_evp_real_1stage_{single|double} (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
-       mpi_comm_cols)
-
-       With the definintions of the input and output variables:
-
-       integer, intent(in)    na:            global dimension of quadratic matrix a to solve
-       integer, intent(in)    nev:           number of eigenvalues to be computed; the first nev eigenvalules are calculated
-       real*{4|8},  intent(inout) a:         locally distributed part of the matrix a. The local dimensions are lda x matrixCols
-       integer, intent(in)    lda:           leading dimension of locally distributed matrix a
-       real*{4|8},  intent(inout) ev:        on output the first nev computed eigenvalues
-       real*{4|8},  intent(inout) q:         on output the first nev computed eigenvectors
-       integer, intent(in)    ldq:           leading dimension of matrix q which stores the eigenvectors
-       integer, intent(in)    nblk:          blocksize of block cyclic distributin, must be the same in both directions
-       integer, intent(in)    matrixCols:    number of columns of locally distributed matrices a and q
-       integer, intent(in)    mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
-       integer, intent(in)    mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
+in order to define the 2stage solver as the default.
 
-       logical                success:       return value indicating success or failure
+**Important note**
+The default valule is completly ignored, if the user has manually set a parameter-value pair with the *ELPA* set method!
+Thus the above environemnt variable will **not** have an effect, if the user code contains a line
+```Fortran
+call e%set("solver",ELPA_SOLVER_1STAGE,error)
+```
+.
 
-   C INTERFACE
-       #include "elpa.h"
+## VI) Using autotuning ##
 
-       success = elpa_solve_evp_real_1stage_{single|double} (int na, int nev,  double *a, int lda,  double *ev, double *q, int ldq, int nblk, int matrixCols, int
-       mpi_comm_rows, int mpi_comm_cols);
+Since API version 20171201 *ELPA* supports the autotuning of some "tunable" parameters (see Section II). The idea is that if *ELPA* is called multiple times (like typical in
+self-consistent-iterations) some parameters can be tuned to an optimal value, which is hard to set for the user. Note, that not every parameter mentioned in Section II can actually be tuned with the autotuning. At the moment, only the parameters mentioned in the table below are affected by autotuning.
 
-       With the definintions of the input and output variables:
+There are two ways, how the user can influence the autotuning steps:
 
-       int     na:            global dimension of quadratic matrix a to solve
-       int     nev:           number of eigenvalues to be computed; the first nev eigenvalules are calculated
-       {float|double} *a:     pointer to locally distributed part of the matrix a. The local dimensions are lda x matrixCols
-       int     lda:           leading dimension of locally distributed matrix a
-       {float|double} *ev:    pointer to memory containing on output the first nev computed eigenvalues
-       {float|double} *q:     pointer to memory containing on output the first nev computed eigenvectors
-       int     ldq:           leading dimension of matrix q which stores the eigenvectors
-       int     nblk:          blocksize of block cyclic distributin, must be the same in both directions
-       int     matrixCols:    number of columns of locally distributed matrices a and q
-       int     mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
-       int     mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
+1.) the user can set one of the following autotuning levels
+- ELPA_AUTOTUNE_FAST
+- ELPA_AUTOTUNE_MEDIUM
 
-       int     success:       return value indicating success (1) or failure (0)
+Each level defines a different set of tunable parameter. The autouning option will be extended by future releases of the *ELPA* library, at the moment the following
+sets are supported: 
 
-DESCRIPTION
-       Solve the real eigenvalue problem with the 1-stage solver. The ELPA communicators mpi_comm_rows and mpi_comm_cols are obtained with the
-       elpa_get_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
-       The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues
-       will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
+| AUTOTUNE LEVEL       | Parameters                                           |
+| :------------------- | :--------------------------------------------------  |
+| ELPA_AUTOTUNE_FAST   | { solver, real_kernel, complex_kernel, omp_threads } |
+| ELPA_AUTOTUNE_MEDIUM | { gpu }                                              |
 
-   FORTRAN INTERFACE
-       use elpa1
-       success = elpa_solve_evp_complex_1stage_{single|double} (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
-       mpi_comm_cols)
 
-       With the definintions of the input and output variables:
+2.) the user can **remove** tunable parameters from the list of autotuning possibilites by explicetly setting this parameter,
+e.g. if the user sets in his code 
 
-       integer,     intent(in)    na:            global dimension of quadratic matrix a to solve
-       integer,     intent(in)    nev:           number of eigenvalues to be computed; the first nev eigenvalules are calculated
-       complex*{8|16},  intent(inout) a:         locally distributed part of the matrix a. The local dimensions are lda x matrixCols
-       integer,     intent(in)    lda:           leading dimension of locally distributed matrix a
-       real*{4|8},      intent(inout) ev:        on output the first nev computed eigenvalues
-       complex*{8|16},  intent(inout) q:         on output the first nev computed eigenvectors
-       integer,     intent(in)    ldq:           leading dimension of matrix q which stores the eigenvectors
-       integer,     intent(in)    nblk:          blocksize of block cyclic distributin, must be the same in both directions
-       integer,     intent(in)    matrixCols:    number of columns of locally distributed matrices a and q
-       integer,     intent(in)    mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
-       integer, intent(in)        mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
+```Fortran
+call e%set("solver", ELPA_SOLVER_2STAGE, error)
+```
+**before** invoking the autotuning, then the solver is fixed and not considered anymore for autotuning. Thus the ELPA_SOLVER_1STAGE would be skipped and, consequently, all possible autotuning parameters, which depend on ELPA_SOLVER_1STAGE.
 
-       logical                    success:       return value indicating success or failure
+The user can invoke autotuning in the following way:
 
-   C INTERFACE
-       #include "elpa.h"
-       #include <complex.h>
 
-       success = elpa_solve_evp_complex_1stage_{single|double} (int na, int nev,  double complex *a, int lda,  double *ev, double complex*q, int ldq, int nblk, int
-       matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+Fortran synopsis
 
-       With the definintions of the input and output variables:
+```Fortran
+ ! prepare elpa as you are used to (see Section I)
+ ! only steps for autotuning are commentd
+ use elpa
+ class(elpa_t), pointer :: elpa
+ class(elpa_autotune_t), pointer :: tune_state   ! create an autotuning pointer
+ integer :: success
 
-       int             na:            global dimension of quadratic matrix a to solve
-       int             nev:           number of eigenvalues to be computed; the first nev eigenvalules are calculated
-       {float|double} complex *a:     pointer to locally distributed part of the matrix a. The local dimensions are lda x matrixCols
-       int             lda:           leading dimension of locally distributed matrix a
-       {float|double}         *ev:    pointer to memory containing on output the first nev computed eigenvalues
-       {float|double} complex *q:     pointer to memory containing on output the first nev computed eigenvectors
-       int             ldq:           leading dimension of matrix q which stores the eigenvectors
-       int             nblk:          blocksize of block cyclic distributin, must be the same in both directions
-       int             matrixCols:    number of columns of locally distributed matrices a and q
-       int             mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
-       int             mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
+ if (elpa_init(20171201) /= ELPA_OK) then
+    print *, "ELPA API version not supported"
+    stop
+  endif
+  elpa => elpa_allocate()
 
-       int             success:       return value indicating success (1) or failure (0)
+  ! set parameters decribing the matrix and it's MPI distribution
+  call elpa%set("na", na, success)
+  call elpa%set("nev", nev, success))
+  call elpa%set("local_nrows", na_rows, success)
+  call elpa%set("local_ncols", na_cols, success)
+  call elpa%set("nblk", nblk, success)
+  call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success)
+  call elpa%set("process_row", my_prow, success)
+  call elpa%set("process_col", my_pcol, success)
 
-DESCRIPTION
-       Solve the complex eigenvalue problem with the 1-stage solver. The ELPA communicators mpi_comm_rows and mpi_comm_cols are obtained with the
-       elpa_get_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
-       The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues
-       will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
+  succes = elpa%setup()
 
+  tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL, error)   ! prepare autotuning, set AUTOTUNE_LEVEL and the domain (real or complex)
 
-The *ELPA 1stage* solver, does not need or accept any other parameters than in the above
-specification.
+  ! do the loop of subsequent ELPA calls which will be used to do the autotuning
+  do i=1, scf_cycles
+    unfinished = e%autotune_step(tune_state)   ! check whether autotuning is finished; If not do next step
 
-#### Using *ELPA 2stage* ####
+    if (.not.(unfinished)) then
+      print *,"autotuning finished at step ",i
+    endif
 
-The *ELPA 2stage* solver can be used in the same manner, as the *ELPA 1stage* solver.
-However, the 2 stage solver, can be used with different compute kernels, which offers
-more possibilities for configuration.
+    call e%eigenvectors(a, ev, z, error)       ! do the normal computation
 
-It is recommended to first call the utility program
+  enddo
 
-elpa2_print_kernels
+  call e%autotune_set_best(tune_state)         ! from now use the values found by autotuning
 
-which will tell all the compute kernels that can be used with *ELPA 2stage*". It will
-also give information, whether a kernel can be set via environment variables.
+  call elpa_autotune_deallocate(tune_state)    ! cleanup autotuning object 
+```
 
-##### Using the default kernels #####
+C Synopsis
+```C
+   /* prepare ELPA the usual way; only steps for autotuning are commented */
+   #include <elpa/elpa.h>
 
-If no kernel is set either via an environment variable or the *ELPA 2stage API* then
-the default kernels will be set.
+   elpa_t handle;
+   elpa_autotune_t autotune_handle;                               // handle for autotuning
+   int error;
 
-##### Setting the *ELPA 2stage* compute kernels #####
+   if (elpa_init(20171201) != ELPA_OK) { 
+     fprintf(stderr, "Error: ELPA API version not supported");
+     exit(1);
+   }
 
-##### Setting the *ELPA 2stage* compute kernels with environment variables#####
+   handle = elpa_allocate(&error);
 
-If the *ELPA* installation allows setting their compute kernels with environment variables,
-setting the variables "REAL_ELPA_KERNEL" and "COMPLEX_ELPA_KERNEL" will set the compute
-kernels. The environment variable setting will take precedence over all other settings!
+   /* Set parameters the matrix and it's MPI distribution */
+   elpa_set(handle, "na", na, &error);
+   elpa_set(handle, "nev", nev, &error);
+   elpa_set(handle, "local_nrows", na_rows, &error);
+   elpa_set(handle, "local_ncols", na_cols, &error);
+   elpa_set(handle, "nblk", nblk, &error);
+   elpa_set(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &error);
+   elpa_set(handle, "process_row", my_prow, &error);
+   elpa_set(handle, "process_col", my_pcol, &error);
+   /* Setup */
+   elpa_setup(handle);
 
-The utility program "elpa2_print_kernels" can list which kernels are available and which
-would be chosen. This reflects the setting of the default kernel as well as the setting
-with the environment variables.
+   autotune_handle = elpa_autotune_setup(handle, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error);   // create autotune object
 
-##### Setting the *ELPA 2stage* compute kernels with API calls#####
+   // repeatedl call ELPA, e.g. in an scf iteration
+   for (i=0; i < scf_cycles; i++) {
 
-It is also possible to set the *ELPA 2stage* compute kernels via the API.
+     unfinished = elpa_autotune_step(handle, autotune_handle);      // check whether autotuning finished. If not do next step
 
-As an example the API for ELPA real double-precision 2stage is shown:
+     if (unfinished == 0) {
+       printf("ELPA autotuning finished in the %d th scf step \n",i);
+      }
 
-SYNOPSIS
-   FORTRAN INTERFACE
-       use elpa1
-       use elpa2
-       success = elpa_solve_evp_real_2stage_double (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
-       mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQR, useGPU)
 
-       With the definintions of the input and output variables:
+      /* do the normal computation */
+      elpa_eigenvectors(handle, a, ev, z, &error);
+   }
+   elpa_autotune_set_best(handle, autotune_handle);  // from now on use values used by autotuning
+   elpa_autotune_deallocate(autotune_handle);        // cleanup autotuning
+   
+```
 
-       integer, intent(in)            na:            global dimension of quadratic matrix a to solve
-       integer, intent(in)            nev:           number of eigenvalues to be computed; the first nev eigenvalules are calculated
-       real*{4|8},  intent(inout)         a:         locally distributed part of the matrix a. The local dimensions are lda x matrixCols
-       integer, intent(in)            lda:           leading dimension of locally distributed matrix a
-       real*{4|8},  intent(inout)         ev:        on output the first nev computed eigenvalues
-       real*{4|8},  intent(inout)         q:         on output the first nev computed eigenvectors
-       integer, intent(in)            ldq:           leading dimension of matrix q which stores the eigenvectors
-       integer, intent(in)            nblk:          blocksize of block cyclic distributin, must be the same in both directions
-       integer, intent(in)            matrixCols:    number of columns of locally distributed matrices a and q
-       integer, intent(in)            mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
-       integer, intent(in)            mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
-       integer, intent(in)            mpi_comm_all:  communicator for all processes in the processor set involved in ELPA
-       logical, intent(in), optional: useQR:         optional argument; switches to QR-decomposition if set to .true.
-       logical, intent(in), optional: useGPU:        decide whether GPUs should be used ore not
-
-      logical                        success:       return value indicating success or failure
-
-   C INTERFACE
-       #include "elpa.h"
-
-       success = elpa_solve_evp_real_2stage_double (int na, int nev,  double *a, int lda,  double *ev, double *q, int ldq, int nblk, int matrixCols, int
-       mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_ELPA_REAL_KERNEL, int useQR, int useGPU);
-
-       With the definintions of the input and output variables:
-
-       int     na:            global dimension of quadratic matrix a to solve
-       int     nev:           number of eigenvalues to be computed; the first nev eigenvalules are calculated
-       double *a:             pointer to locally distributed part of the matrix a. The local dimensions are lda x matrixCols
-       int     lda:           leading dimension of locally distributed matrix a
-       double *ev:            pointer to memory containing on output the first nev computed eigenvalues
-       double *q:             pointer to memory containing on output the first nev computed eigenvectors
-       int     ldq:           leading dimension of matrix q which stores the eigenvectors
-       int     nblk:          blocksize of block cyclic distributin, must be the same in both directions
-       int     matrixCols:    number of columns of locally distributed matrices a and q
-       int     mpi_comm_rows: communicator for communication in rows. Constructed with elpa_get_communicators(3)
-       int     mpi_comm_cols: communicator for communication in colums. Constructed with elpa_get_communicators(3)
-       int     mpi_comm_all:  communicator for all processes in the processor set involved in ELPA
-       int     useQR:         if set to 1 switch to QR-decomposition
-       int     useGPU:        decide whether the GPU version should be used or not
-
-       int     success:       return value indicating success (1) or failure (0)
-
-
-DESCRIPTION
-       Solve the real eigenvalue problem with the 2-stage solver. The ELPA communicators mpi_comm_rows and mpi_comm_cols are obtained with the
-       elpa_get_communicators(3) function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols.
-       The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues
-       will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
-
-##### Setting up *ELPA 1stage* or *ELPA 2stage* with the *ELPA driver interface* #####
-
-Since release ELPA 2016.005.004 a driver routine allows to choose more easily which solver (1stage or 2stage) will be used.
-
-As an exmple the real double-precision case is explained:
-
- SYNOPSIS
-
- FORTRAN INTERFACE
-
-  use elpa_driver
-
-  success = elpa_solve_evp_real_double (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL=THIS_REAL_ELPA_KERNEL, useQR, useGPU, method=method)
-
-  Generalized interface to the ELPA 1stage and 2stage solver for real-valued problems
-
-  With the definintions of the input and output variables:
-
-
-  integer, intent(in)            na:                    global dimension of quadratic matrix a to solve
-
-  integer, intent(in)            nev:                   number of eigenvalues to be computed; the first nev eigenvalules are calculated
-
-  real*8,  intent(inout)         a:                     locally distributed part of the matrix a. The local dimensions are lda x matrixCols
-
-  integer, intent(in)            lda:                   leading dimension of locally distributed matrix a
-
-  real*8,  intent(inout)         ev:                    on output the first nev computed eigenvalues"
-
-  real*8,  intent(inout)         q:                     on output the first nev computed eigenvectors"
-
-  integer, intent(in)            ldq:                   leading dimension of matrix q which stores the eigenvectors
-
-  integer, intent(in)            nblk:                  blocksize of block cyclic distributin, must be the same in both directions
-
-  integer, intent(in)            matrixCols:            number of columns of locally distributed matrices a and q
-
-  integer, intent(in)            mpi_comm_rows:         communicator for communication in rows. Constructed with elpa_get_communicators
-
-  integer, intent(in)            mpi_comm_cols:         communicator for communication in colums. Constructed with elpa_get_communicators
-
-  integer, intent(in)            mpi_comm_all:          communicator for all processes in the processor set involved in ELPA
-
-  integer, intent(in), optional: THIS_REAL_ELPA_KERNEL: optional argument, choose the compute kernel for 2-stage solver
-
-  logical, intent(in), optional: useQR:                 optional argument; switches to QR-decomposition if set to .true.
-
-  logical, intent(in), optional: useQPU:                decide whether the GPU version should be used or not
-
-  character(*), optional         method:                use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto"
-
-  logical                        success:               return value indicating success or failure
-
-
- C INTERFACE
-
- #include "elpa.h"
-
- success = elpa_solve_evp_real_double (int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_ELPA_REAL_KERNEL, int useQR, int useGPU, char *method);"
-
-
- With the definintions of the input and output variables:"
-
-
- int     na:                    global dimension of quadratic matrix a to solve
-
- int     nev:                   number of eigenvalues to be computed; the first nev eigenvalules are calculated
-
- double *a:                     pointer to locally distributed part of the matrix a. The local dimensions are lda x matrixCols
-
- int     lda:                   leading dimension of locally distributed matrix a
-
- double *ev:                    pointer to memory containing on output the first nev computed eigenvalues
-
- double *q:                     pointer to memory containing on output the first nev computed eigenvectors
-
- int     ldq:                   leading dimension of matrix q which stores the eigenvectors
-
- int     nblk:                  blocksize of block cyclic distributin, must be the same in both directions
-
- int     matrixCols:            number of columns of locally distributed matrices a and q
-
- int     mpi_comm_rows:         communicator for communication in rows. Constructed with elpa_get_communicators
-
- int     mpi_comm_cols:         communicator for communication in colums. Constructed with elpa_get_communicators
-
- int     mpi_comm_all:          communicator for all processes in the processor set involved in ELPA
-
- int     THIS_ELPA_REAL_KERNEL: choose the compute kernel for 2-stage solver
-
- int     useQR:                 if set to 1 switch to QR-decomposition
-
- int     useGPU:                decide whether the GPU version should be used or not
-
- char   *method:                use 1stage solver if "1stage", use 2stage solver if "2stage", (at the moment) use 2stage solver if "auto"
-
- int     success:               return value indicating success (1) or failure (0)
-
- DESCRIPTION
- Solve the real eigenvalue problem. The value of method desides whether the 1stage or 2stage solver is used. The ELPA communicators mpi_comm_rows and mpi_comm_cols are obtained with the elpa_get_communicators function. The distributed quadratic marix a has global dimensions na x na, and a local size lda x matrixCols. The solver will compute the first nev eigenvalues, which will be stored on exit in ev. The eigenvectors corresponding to the eigenvalues will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
-
-##### Setting up the GPU version of *ELPA* 1 and 2 stage #####
-
-Since release ELPA 2016.011.001.pre *ELPA* offers GPU support, IF *ELPA* has been build with the configure option "--enabble-gpu-support".
-
-At run-time the GPU version can be used by setting the environment variable "ELPA_USE_GPU" to "yes", or by calling the *ELPA* functions
-(elpa_solve_evp_real_{double|single}, elpa_solve_evp_real_1stage_{double|single}, elpa_solve_evp_real_2stage_{double|single}) with the
-argument "useGPU = .true." or "useGPU = 1" for the Fortran and C case, respectively. Please, not that similiar to the choice of the
-*ELPA* 2stage compute kernels, the enviroment variable takes precendence over the setting in the API call.
-
-Further note that it is NOT allowed to define the usage of GPUs AND to EXPLICITLY set an ELPA 2stage compute kernel other than
-"REAL_ELPA_KERNEL_GPU" or "COMPLEX_ELPA_KERNEL_GPU".
+  
 
 
 
