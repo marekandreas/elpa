@@ -6,7 +6,7 @@ This file provides documentation on how to build the *ELPA* library in **version
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
-## How to install *ELPA *##
+## How to install *ELPA* ##
 
 First of all, if you do not want to build *ELPA* yourself, and you run Linux,
 it is worth having a look at the [*ELPA* webpage*] (http://elpa.mpcdf.mpg.de)
@@ -17,6 +17,7 @@ Debian, and OpenSuse. More, will hopefully follow in the future.
 If you want to build (or have to since no packages are available) *ELPA* yourself,
 please note that *ELPA* is shipped with a typical "configure" and "make"
 autotools procedure. This is the **only supported way** how to build and install *ELPA*.
+
 
 If you obtained *ELPA* from the official git repository, you will not find
 the needed configure script! You will have to create the configure scipt with autoconf.
@@ -34,50 +35,35 @@ Please look at configure --help for all available options.
 
 An excerpt of the most important (*ELPA* specific) options reads as follows:
 
-  --disable-legacy        do not build legacy API, default yes
-  --enable-openmp         use OpenMP threading, default no.
-  --enable-redirect       for test programs, allow redirection of
-                          stdout/stderr per MPI taks in a file (useful for
-                          timing), default no.
-  --enable-single-precision
-                          build with single precision
-  --disable-timings       more detailed timing, default yes
-  --disable-band-to-full-blocking
-                          build ELPA2 with blocking in band_to_full (default:
-                          enabled)
-  --disable-mpi-module    do not use the Fortran MPI module, get interfaces by
-                          'include "mpif.h')
-  --disable-generic       do not build GENERIC kernels, default: enabled
-  --disable-sse           do not build SSE kernels, default: enabled
-  --disable-sse-assembly  do not build SSE_ASSEMBLY kernels, default: enabled
-  --disable-avx           do not build AVX kernels, default: enabled
-  --disable-avx2          do not build AVX2 kernels, default: enabled
-  --enable-avx512         build AVX512 kernels, default: disabled
-  --enable-gpu            build GPU kernels, default: disabled
-  --enable-bgp            build BGP kernels, default: disabled
-  --enable-bgq            build BGQ kernels, default: disabled
-  --with-mpi=[yes|no]     compile with MPI. Default: yes
-  --with-cuda-path=PATH   prefix where CUDA is installed [default=auto]
-  --with-cuda-sdk-path=PATH
-                          prefix where CUDA SDK is installed [default=auto]
-  --with-GPU-compute-capability=VALUE
-                          use compute capability VALUE for GPU version,
-                          default: "sm_35"
-  --with-fixed-real-kernel=KERNEL
-                          compile with only a single specific real kernel.
-                          Available kernels are: generic generic_simple
-                          sse_block2 sse_block4 sse_block6 sse_assembly
-                          avx_block2 avx_block4 avx_block6 avx2_block2
-                          avx2_block4 avx2_block6 avx512_block2 avx512_block4
-                          avx512_block6 bgp bgq
-  --with-fixed-complex-kernel=KERNEL
-                          compile with only a single specific complex kernel.
-                          Available kernels are: generic generic_simple
-                          sse_block1 sse_block2 sse_assembly avx_block1
-                          avx_block2 avx2_block1 avx2_block2 avx512_block1
-                          avx512_block2 bgp bgq
-  --with-gpu-support-only Compile and always use the GPU version
-
+| configure option                     | description                                           |
+|:------------------------------------ |:----------------------------------------------------- |
+|  --disable-legacy                    | do not build legacy API, will be build as default     |
+|  --enable-openmp                     | use OpenMP threading, default no.                     |
+|  --enable-redirect                   | for ELPA test programs, allow redirection of <br> stdout/stderr per MPI taks in a file <br> (useful for timing), default no. |
+|  --enable-single-precision           | build with single precision version                   |
+|  --disable-timings                   | more detailed timing, default yes <br> **If disabled some features like autotune will <br> not work anymmore !** |
+|  --disable-band-to-full-blocking     | build ELPA2 with blocking in band_to_full <br> (default:enabled) |
+|  --disable-mpi-module                | do not use the Fortran MPI module, <br> get interfaces by 'include "mpif.h') |
+|  --disable-generic                   | do not build GENERIC kernels, default: enabled        |
+|  --disable-sse                       | do not build SSE kernels, default: enabled            |
+|  --disable-sse-assembly              | do not build SSE_ASSEMBLY kernels, default: enabled   |
+|  --disable-avx                       | do not build AVX kernels, default: enabled            |
+|  --disable-avx2                      | do not build AVX2 kernels, default: enabled           |
+|  --enable-avx512                     | build AVX512 kernels, default: disabled               |
+|  --enable-gpu                        | build GPU kernels, default: disabled                  |
+|  --enable-bgp                        | build BGP kernels, default: disabled                  |
+|  --enable-bgq                        | build BGQ kernels, default: disabled                  |
+|  --with-mpi=[yes|no]                 | compile with MPI. Default: yes                        |
+|  --with-cuda-path=PATH               | prefix where CUDA is installed [default=auto]         |
+|  --with-cuda-sdk-path=PATH           | prefix where CUDA SDK is installed [default=auto]     |
+|  --with-GPU-compute-capability=VALUE | use compute capability VALUE for GPU version, <br> default: "sm_35" |
+|  --with-fixed-real-kernel=KERNEL     | compile with only a single specific real kernel.      |
+|  --with-fixed-complex-kernel=KERNEL  | compile with only a single specific complex kernel.   |
+|  --with-gpu-support-only             | Compile and always use the GPU version                |
+|  --enable-scalapack-tests            | build SCALAPACK test cases for performance <br> omparison, needs MPI, default no. |
+|  --enable-autotuning                 | enables autotuning functionality, default yes         |
+|  --enable-c-tests                    | enables the C tests for elpa, default yes             |
+| --disable-assumed-size               | do NOT use assumed-size Fortran arrays. default use   |
 
 We recommend that you do not build ELPA in its main directory but that you use it
 in a sub-directory:
@@ -95,6 +81,9 @@ for the Fortran and C part.
 For example sth. like this is a usual way: ./configure FCFLAGS="-O2 -mavx" CFLAGS="-O2 -mavx"
 For details, please have a look at the documentation for the compilers of your choice.
 
+**Note** that most kernels can only be build if the correct compiler flags for this kernel (e.g. AVX-512)
+have been enabled.
+
 
 ### Choice of building with or without MPI ###
 
@@ -110,6 +99,8 @@ has also been build without MPI support.
 
 If you want to build *ELPA* with MPI support, please have a look at "A) Setting of MPI compiler and libraries".
 For builds without MPI support, please have a look at "B) Building *ELPA* without MPI support".
+**NOTE** that if *ELPA* is build without MPI support, it will be serial unless the OpenMP parallization is
+explicitely enabled.
 
 Please note, that it is absolutely supported that both versions of the *ELPA* library are build
 and installed in the same directory.
@@ -122,11 +113,9 @@ cannot automatically found, it is recommended to set it by hand with a variable,
 
 configure FC=mpif90
 
-Please note, that setting a C MPI-compiler is NOT necessary, and in most cases even harmful.
-
 In some cases, on your system different MPI libraries and compilers are installed. Then it might happen
 that during the build step an error like "no module mpi" or "cannot open module mpi" is given.
-You can disable that the  *ELPA* library uses MPI modules (and instead uses MPI header files) by
+You can disable that the  *ELPA* library uses a MPI modules (and instead uses MPI header files) by
 adding
 
 --disable-mpi-module
@@ -140,15 +129,15 @@ Please continue reading at "C) Enabling GPU support"
 
 If you want to build *ELPA* without MPI support, add
 
---with-mpi=0
+--with-mpi=no
 
 to your configure call.
 
 You have to specify which compilers should be used with e.g.,
 
-configure FC=gfortran --with-mpi=0
+configure FC=gfortran --with-mpi=no
 
-DO NOT specify a MPI compiler here!
+**DO NOT specify a MPI compiler here!**
 
 Note, that the installed *ELPA* library files will be suffixed with
 "_onenode", in order to discriminate this build from possible ones with MPI.
