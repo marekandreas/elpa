@@ -199,7 +199,7 @@ program test
    call e%set("process_col", my_pcol, error)
    assert_elpa_ok(error)
 #endif
-   call e%set("timings",1)
+   call e%set("timings",1, error)
    !call e%set("debug",1)
 
    assert_elpa_ok(e%setup())
