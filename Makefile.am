@@ -668,6 +668,7 @@ EXTRA_DIST = \
   fdep/fortran_dependencies.pl \
   manual_cpp \
   nvcc_wrap \
+  remove_xcompiler \
   src/GPU/cuUtils_template.cu \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
