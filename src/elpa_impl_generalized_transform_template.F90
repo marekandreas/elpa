@@ -1,3 +1,22 @@
+! using elpa internal Hermitian multiply is faster then scalapack multiply, but we need an extra
+! temporary matrix.
+! using cannon algorithm should be the fastest. After this is verified, the other options should be removed
+! however, we need the extra temporary matrix as well.
+#undef FORWARD_ELPA_CANNON
+#undef  FORWARD_SCALAPACK
+#undef FORWARD_ELPA_HERMITIAN
+
+#if defined(REALCASE) && defined(DOUBLE_PRECISION)
+#define  FORWARD_ELPA_CANNON
+!#define  FORWARD_ELPA_HERMITIAN
+#else
+!TODO first just for real double...
+#define FORWARD_ELPA_HERMITIAN
+#endif
+
+#define BACKWARD_ELPA_CANNON
+#undef  BACKWARD_SCALAPACK
+
    subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, a, b, is_already_decomposed, error)
@@ -12,12 +31,10 @@
      integer                :: error
      logical                :: is_already_decomposed
      integer                :: sc_desc(SC_DESC_LEN)
+     integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpierr, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+     integer(kind=ik)       :: BuffLevelInt
 
-! using elpa internal Hermitian multiply is faster then scalapack multiply, but we need an extra
-! temporary variable. Therefore both options are provided and at the moment controled by this switch
-#define DO_USE_ELPA_HERMITIAN_MULTIPLY
-
-#ifdef DO_USE_ELPA_HERMITIAN_MULTIPLY
+#if defined(FORWARD_ELPA_HERMITIAN) || defined(FORWARD_ELPA_CANNON)
      MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 #endif
 
@@ -39,7 +56,7 @@
        if(error .NE. ELPA_OK) return
      end if
 
-#ifdef DO_USE_ELPA_HERMITIAN_MULTIPLY
+#ifdef FORWARD_ELPA_HERMITIAN
      ! tmp <- inv(U^T) * A (we have to use temporary variable)
      call self%elpa_hermitian_multiply_&
          &ELPA_IMPL_SUFFIX&
@@ -49,7 +66,8 @@
 
      ! A <- inv(U)^T * A
      a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
-#else
+#endif
+#ifdef FORWARD_SCALAPACK
      ! A <- inv(U)^T * A (using scalapack, we can directly update A)
      call self%timer_start("scalapack multiply inv(U)^T * A")
 #ifdef WITH_MPI
@@ -64,8 +82,9 @@
 #endif
 
      call self%timer_stop("scalapack multiply inv(U)^T * A")
-#endif /* DO_USE_ELPA_HERMITIAN_MULTIPLY */
+#endif /* FORWARD_SCALAPACK */
 
+#if defined(FORWARD_ELPA_HERMITIAN) || defined(FORWARD_SCALAPACK)
      ! A <- inv(U)^T * A * inv(U)
      ! For this multiplication we do not have internal function in ELPA, 
      ! so we have to call scalapack anyway
@@ -81,6 +100,29 @@
                ONE, b, self%na, a, self%na)
 #endif
      call self%timer_stop("scalapack multiply A * inv(U)")
+#endif /*(FORWARD_ELPA_HERMITIAN) || defined(FORWARD_SCALAPACK)*/
+
+#ifdef FORWARD_ELPA_CANNON
+     !TODO set the value properly
+     !TODO tunable parameter? 
+     BuffLevelInt = 1
+
+     call self%get("mpi_comm_rows",mpi_comm_rows,error)
+     call self%get("mpi_comm_cols",mpi_comm_cols,error)
+     call self%get("mpi_comm_parent", mpi_comm_all,error)
+
+     call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+     call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+     call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+     call mpi_comm_rank(mpi_comm_all,my_p,mpierr)
+     call cannons_reduction(a, b, self%local_nrows, self%local_ncols, np_rows, np_cols, my_prow, my_pcol, &
+                            sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
+
+     a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+#endif /*FORWARD_ELPA_CANNON*/
+
+     write(*, *) my_prow, my_pcol, "A(2,3)", a(2,3)
 
      call self%timer_stop("transform_generalized()")
     end subroutine

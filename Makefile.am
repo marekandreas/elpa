@@ -60,6 +60,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/qr/elpa_pdgeqrf.F90 \
   src/elpa1/elpa1.F90 \
   src/elpa2/elpa2.F90 \
+  src/elpa_generalized/cannon_forw_real_double.c \
+  src/elpa_generalized/cannon_back_real_double.c \
+  src/elpa_generalized/test_c_bindings.c \
   src/helpers/matrix_plot.F90 \
   src/elpa_index.c
 
@@ -562,6 +565,8 @@ if ENABLE_LEGACY
 include legacy_test_programs.am
 endif
 
+#include test_programs_manual.am
+
 noinst_PROGRAMS += double_instance@SUFFIX@
 check_SCRIPTS += double_instance@SUFFIX@_default.sh
 double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
@@ -595,6 +600,19 @@ single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex
 single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 endif
+
+noinst_PROGRAMS += test_c_bindings@SUFFIX@
+check_SCRIPTS += test_c_bindings@SUFFIX@_default.sh
+test_c_bindings@SUFFIX@_SOURCES = test/Fortran/elpa_generalized/test_bindings.F90
+test_c_bindings@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+test_c_bindings@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+
+noinst_PROGRAMS += test_c_cannon@SUFFIX@
+check_SCRIPTS += test_c_cannon@SUFFIX@_default.sh
+test_c_cannon@SUFFIX@_SOURCES = test/C/elpa_generalized/test_cannon.c
+test_c_cannon@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
+
 
 
 # test scripts
