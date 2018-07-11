@@ -1,0 +1,942 @@
+#include "config-f90.h"
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+#include <math.h>
+
+//#include <elpa/elpa.h>
+//#include <elpa/elpa_generated.h>
+//#include <elpa/elpa_constants.h>
+//#include <elpa/elpa_generated_legacy.h>
+//#include <elpa/elpa_generic.h>
+//#include <elpa/elpa_legacy.h>
+//
+void pdlacpy_(char*, int*, int*, double*, int*, int*, int*, double*, int*, int*, int*);
+void dlacpy_(char*, int*, int*, double*, int*, double*, int*);
+void dgemm_(char*, char*, int*, int*, int*, double*, double*, int*, double*, int*, double*, double*, int*); 
+void pdtran_(int*, int*, double*, double*, int*, int*, int*, double*, double*, int*, int*, int*);
+//void pdelset_(double*, int*, int*, int*, double*);
+//void pdsymm_(char*, char*, int*, int*, double*, double*, int*, int*, int*, double*, int*, int*, int*, double*, double*, int*, int*, int*);
+//void pdpotrf_(char*, int*, double*, int*, int*, int*, int*);
+//void pdsyngst_(int*, char*, int*, double*, int*, int*, int*, double*, int*, int*, int*, double*, double*, int*, int*);
+//void descinit_(int*, int*, int*, int*, int*, int*, int*, int*, int*, int*);
+int numroc_(int*, int*, int*, int*, int*);
+//void set_up_blacsgrid_f1(int, int*, int*, int*, int*, int*, int*, int*);
+//void pdtrtrs_(char*, char*, char*, int*, int*, double*, int*, int*, int*, double*, int*, int*, int*, int*);
+//void pdsyevr_(char*, char*, char*, int*, double*, int*, int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, int*, int*, int*, double*, int*, int*, int*, int*);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////// My function for reduction //////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void d_cannons_reduction(double* A, double* U, int np_rows, int np_cols, int my_prow, int my_pcol, int* a_desc,
+                         double *Res, int ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
+{
+   // Input matrices: 
+      // - A: full matrix
+      // - U: upper triangular matrix U(-1)
+   // Output matrix: 
+      // - Res = U(-H)*A*U(-1)
+   // row_comm: communicator along rows
+   // col_comm: communicator along columns
+  
+   int na, nblk, i, j, Size_send_A, Size_receive_A, Size_send_U, Size_receive_U, Buf_rows, Buf_cols, where_to_send_A, from_where_to_receive_A, where_to_send_U, from_where_to_receive_U, last_proc_row, last_proc_col, cols_in_buffer_A, rows_in_buffer_A, intNumber;
+   double *Buf_to_send_A, *Buf_to_receive_A, *Buf_to_send_U, *Buf_to_receive_U, *double_ptr, *Buf_A, *Buf_pos, *U_local_start, *Res_ptr, *M, *M_T, *A_local_start, *U_local_start_curr, *U_stored, *CopyTo, *CopyFrom, *U_to_calc;
+   int ratio, num_of_iters, cols_in_buffer, rows_in_block, rows_in_buffer, curr_col_loc, cols_in_block, curr_col_glob, curr_row_loc, Size_receive_A_now, Nb, owner, cols_in_buffer_A_now;
+   int  row_of_origin_U, rows_in_block_U, num_of_blocks_in_U_buffer, k, startPos, cols_in_buffer_U, rows_in_buffer_U, col_of_origin_A, curr_row_loc_res, curr_row_loc_A, curr_col_glob_res; 
+   int curr_col_loc_res, curr_col_loc_buf, proc_row_curr, curr_col_loc_U, A_local_index, LDA_A, LDA_A_new, index_row_A_for_LDA, ii, rows_in_block_U_curr, width, row_origin_U, rows_in_block_A, cols_in_buffer_A_my_initial, rows_in_buffer_A_my_initial, proc_col_min;
+   int *SizesU;
+   int Size_U_skewed, Size_U_stored, Curr_pos_in_U_stored, rows_in_buffer_A_now;
+   double done = 1.0;
+   double dzero = 0.0;
+   int one = 1; 
+   int zero = 0; 
+   int na_rows, na_cols;
+        
+   MPI_Status status;
+   MPI_Request request_A_Recv; 
+   MPI_Request request_A_Send;
+   MPI_Request request_U_Recv; 
+   MPI_Request request_U_Send;
+      
+   na = a_desc[2];
+   nblk = a_desc[4];
+   na_rows = numroc_(&na, &nblk, &my_prow, &zero, &np_rows);
+   na_cols = numroc_(&na, &nblk, &my_pcol, &zero, &np_cols); 
+   
+   if(ToStore > (np_rows -1))
+      if((my_prow == 0)&&(my_pcol == 0))
+         printf("Buffering level is larger than (np_rows-1) !!!\n");
+   if((my_prow == 0)&&(my_pcol == 0))
+         printf("Buffering level = %d\n", ToStore); 
+   
+//////////////////////////////////////////// Start of algorithm //////////////////////////////////////////////////////////////////////////////
+   if (np_cols%np_rows != 0)
+   {
+      if((my_prow == 0)&& (my_pcol ==0))
+         printf("!!!!! np_cols must be a multiple of np_rows!!!!! I do nothing! \n");
+      return;
+   }
+   if (np_cols < np_rows != 0)
+   {
+      if((my_prow == 0)&& (my_pcol ==0))
+         printf("np_cols < np_rows \n");
+      return;
+   }
+   
+   ratio = np_cols/np_rows; 
+   last_proc_row = ((na-1)/nblk) % np_rows;          // processor row having the last block-row of matrix
+   last_proc_col = ((na-1)/nblk) % np_cols;          // processor column having the last block-column of matrix
+   
+   /////////////////////////memory allocation area//////////////////////////////////////////////////////////////
+   if(na%nblk == 0)
+      if(my_pcol <= last_proc_col)
+         Buf_cols = na_cols;
+      else
+         Buf_cols = na_cols + nblk;      
+   else
+      if(my_pcol < last_proc_col)
+         Buf_cols = na_cols;
+      else if(my_pcol > last_proc_col)
+         Buf_cols = na_cols + nblk; 
+      else  // if my_pcol == last_proc_col
+         Buf_cols = na_cols + nblk - na_cols%nblk;     
+   
+  if(na%nblk == 0)
+      if(my_prow <= last_proc_row)
+         Buf_rows = na_rows;
+      else
+         Buf_rows = na_rows + nblk;      
+   else
+      if(my_prow < last_proc_row)
+         Buf_rows = na_rows;
+      else if(my_prow > last_proc_row)
+         Buf_rows = na_rows + nblk; 
+      else  // if my_prow == last_proc_row
+         Buf_rows = na_rows + nblk - na_rows%nblk;  
+      
+   intNumber = ceil((double)na/(double)(np_cols*nblk));   // max. possible number of the local block columns of U
+   Size_U_stored = ratio*nblk*nblk*intNumber*(intNumber+1)/2 + 2;   // number of local elements from the upper triangular part that every proc. has (max. possible value among all the procs.)
+   
+   U_stored = malloc((Size_U_stored*(ToStore+1))*sizeof(double));
+   SizesU = malloc(ToStore*sizeof(int));  // here will be stored the sizes of the buffers of U that I have stored     
+   Buf_to_send_A = malloc(ratio*Buf_cols*Buf_rows*sizeof(double));
+   Buf_to_receive_A = malloc(ratio*Buf_cols*Buf_rows*sizeof(double));
+   Buf_to_send_U = malloc(Size_U_stored*sizeof(double));
+   Buf_to_receive_U = malloc(Size_U_stored*sizeof(double));
+   if(ratio != 1)
+      Buf_A = malloc(Buf_cols*Buf_rows*sizeof(double));   // in this case we will receive data into initial buffer and after place block-columns to the needed positions of buffer for calculation
+   M = malloc(na_rows*na_cols*sizeof(double));
+   M_T = malloc(na_rows*na_cols*sizeof(double));
+   for(i = 0; i < na_rows*na_cols; i++)
+      M[i] = 0; 
+        
+   ////////////////////////////////////////////////////////////// initial reordering of A ///////////////////////////////////////////////////////////////////////////////////////// 
+   
+   // here we assume, that np_rows < np_cols; then I will send to the number of processors equal to <ratio> with the "leap" equal to np_rows; the same holds for receive  
+   if(ratio != 1)
+      dlacpy_("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy my buffer to send
+   Size_receive_A = 0; 
+   
+   // receive from different processors and place in my buffer for calculation;
+   for(i = 0; i < ratio; i++)
+   {
+      where_to_send_A = (my_pcol - my_prow - i*np_rows + np_cols)%np_cols;                
+      from_where_to_receive_A = (my_pcol + my_prow + i*np_rows)%np_cols;
+      
+      // send and receive in the row_comm
+      if(ratio != 1)   // if grid is not square
+      {
+         if(where_to_send_A != my_pcol)
+         {
+            MPI_Sendrecv(Buf_to_send_A, na_cols*na_rows, MPI_DOUBLE, where_to_send_A, 0, Buf_A, na_rows*Buf_cols, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A_now);
+            Size_receive_A_now = Size_receive_A_now/na_rows;       // how many columns of A I have received
+         }
+         else
+            Size_receive_A_now = na_cols;
+         Size_receive_A = Size_receive_A + Size_receive_A_now;  // here accumulate number of columns of A that I will receive
+
+         // now I need to copy the received block to my buffer for A
+         intNumber = from_where_to_receive_A/np_rows; // how many blocks I will receive, such that I will need to put them before the just received block         
+         
+         CopyTo = &Buf_to_receive_A[intNumber*na_rows*nblk];  // here I will start copying the received buffer
+         if(where_to_send_A != my_pcol)
+            CopyFrom = Buf_A; 
+         else
+            CopyFrom = A;
+         
+         intNumber = ceil((double)Size_receive_A_now/(double)nblk);   // how many block-columns I have received
+         for(j = 0; j < intNumber; j++)
+         {
+            width = nblk; // width of the current block column
+            if(nblk*(j+1) > Size_receive_A_now)
+               width = Size_receive_A_now - nblk*j; 
+            dlacpy_("A", &na_rows, &width, CopyFrom, &na_rows, CopyTo, &na_rows);
+            CopyTo = CopyTo + na_rows*nblk*ratio; 
+            CopyFrom = CopyFrom + na_rows*nblk; 
+         }
+      }
+      else  // if grid is square then simply receive from one processor to a calculation buffer
+         if(my_prow > 0)
+         {
+            dlacpy_("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy my buffer to send
+            MPI_Sendrecv(Buf_to_send_A, na_cols*na_rows, MPI_DOUBLE, where_to_send_A, 0, Buf_to_receive_A, na_rows*Buf_cols, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A);
+            Size_receive_A = Size_receive_A/na_rows;       // how many columns of A I have received
+         }
+         else
+         {
+            dlacpy_("A", &na_rows, &na_cols, A, &na_rows, Buf_to_receive_A, &na_rows);   // copy A to the received buffer if I do not need to send
+            Size_receive_A = na_cols; 
+         }
+   }
+   
+   ////////////////////////////////////////////////////////////// initial reordering of U //////////////////////////////////////////////////////
+     
+   // form array to send by block-columns
+   num_of_iters = ceil((double)na_cols/(double)nblk);             // number my of block-columns
+   
+   where_to_send_U = (my_prow - my_pcol + np_cols)%np_rows;                 // shift = my_pcol; we assume that np_cols%np_rows = 0
+   from_where_to_receive_U = (my_pcol + my_prow)%np_rows;
+   
+   if(where_to_send_U == my_prow)    // if I will not need to send my local part of U, then copy my local data to the "received" buffer
+      Buf_pos = Buf_to_receive_U;
+   else
+      Buf_pos = Buf_to_send_U;         // else form the array to send
+   
+   // find the first local block belonging to the upper part of matrix U
+   if(my_pcol >= my_prow)  // if I am in the upper part of proc. grid
+      curr_col_loc = 0;    // my first local block-column has block from the upper part of matrix
+   else
+      curr_col_loc = 1;   //ceil((double)(((double)my_prow - (double)my_pcol)/(double)np_cols)) always will give 1 since np_cols > np_rows 
+      
+   num_of_iters = num_of_iters - curr_col_loc;   // I will exclude the first <curr_col_loc> block-columns since they do not have blocks from the upper part of matrix U
+   curr_col_loc = curr_col_loc*nblk;             // local index of the found block-column
+
+   if(my_pcol >= my_prow )
+      rows_in_block = ceil(((double)(my_pcol + 1) - (double)my_prow)/(double)np_rows)*nblk;
+   else
+      rows_in_block = ratio*nblk;
+   
+   Size_send_U = 0; 
+   for(i = 0; i < num_of_iters; i++)       // loop over my block-columns, which have blocks in the upepr part of U
+   {      
+      if(rows_in_block > na_rows)
+         rows_in_block = na_rows; 
+
+      if ((na_cols - curr_col_loc) < nblk)
+         cols_in_block = na_cols - curr_col_loc;     // how many columns do I have in the current block-column
+      else
+         cols_in_block = nblk; 
+      
+      if((rows_in_block > 0)&&(cols_in_block > 0))
+      {
+         double_ptr = &U[curr_col_loc*na_rows];   // pointer to start of the current block-column to be copied to buffer
+         dlacpy_("A", &rows_in_block, &cols_in_block, double_ptr, &na_rows, Buf_pos, &rows_in_block);     // copy upper part of block-column in the buffer with LDA = length of the upper part of block-column 
+         Buf_pos = Buf_pos + rows_in_block*cols_in_block;                         // go to the position where the next block-column will be copied                                             
+         Size_send_U = Size_send_U + rows_in_block*cols_in_block; 
+      }
+      curr_col_loc = curr_col_loc + nblk;      // go to the next local block-column of my local array U 
+      rows_in_block = rows_in_block + ratio*nblk;
+   }
+   rows_in_buffer = rows_in_block - ratio*nblk;    // remove redundant addition from the previous loop 
+   *Buf_pos = (double)rows_in_buffer; // write number of the rows at the end of the buffer; we will need this for further multiplications on the other processors
+   Size_send_U = Size_send_U + 1;
+   
+   //send and receive
+   if(where_to_send_U != my_prow)
+   {   
+      // send and receive in the col_comm
+      MPI_Sendrecv(Buf_to_send_U, Size_send_U, MPI_DOUBLE, where_to_send_U, 0, Buf_to_receive_U, Buf_rows*na_cols, MPI_DOUBLE, from_where_to_receive_U, 0, col_comm, &status); 
+      MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_U); // find out how many elements I have received 
+   }
+   else // if I do not need to send 
+      Size_receive_U = Size_send_U;         // how many elements I "have received"; the needed data I have already copied to the "receive" buffer
+      
+   for(i = 0; i < Size_receive_U; i++)
+      U_stored[i] = Buf_to_receive_U[i];
+   Size_U_skewed = Size_receive_U; 
+   Curr_pos_in_U_stored = Size_U_skewed;
+
+   //////////////////////////////////////////////////////////////////////// main loop /////////////////////////////////////////////////////
+   where_to_send_A = (my_pcol - 1 + np_cols)%np_cols;
+   from_where_to_receive_A = (my_pcol + 1)%np_cols;
+   where_to_send_U = (my_prow - 1 + np_rows)%np_rows;
+   from_where_to_receive_U = (my_prow + 1)%np_rows;
+   
+   for(j = 1; j < np_rows; j++)
+   {
+      // at this moment I need to send to neighbour what I have in the "received" arrays; that is why exchange pointers of the "received" and "send" arrays
+      double_ptr = Buf_to_send_A; 
+      Buf_to_send_A = Buf_to_receive_A; 
+      Buf_to_receive_A = double_ptr; 
+      
+      double_ptr = Buf_to_send_U; 
+      Buf_to_send_U = Buf_to_receive_U; 
+      Buf_to_receive_U = double_ptr;
+      
+      ///// shift for A ////////////////////////////////////////////////////////////
+      Size_send_A = Size_receive_A;  // number of block-columns of A and block-rows of U to send (that I have received on the previous step) 
+      MPI_Isend(Buf_to_send_A, Size_send_A*na_rows, MPI_DOUBLE, where_to_send_A, 0, row_comm, &request_A_Send); 
+      MPI_Irecv(Buf_to_receive_A, Buf_cols*na_rows*ratio, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &request_A_Recv);
+         
+      ///// shift for U /////////////////////////////////////////////
+      Size_send_U = Size_receive_U; 
+      MPI_Isend(Buf_to_send_U, Size_send_U, MPI_DOUBLE, where_to_send_U, 0, col_comm, &request_U_Send); 
+      MPI_Irecv(Buf_to_receive_U, Buf_rows*na_cols, MPI_DOUBLE, from_where_to_receive_U, 0, col_comm, &request_U_Recv); 
+      
+      ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
+      rows_in_buffer = (int)Buf_to_send_U[Size_receive_U-1];
+      row_origin_U = (my_pcol + my_prow + np_cols + j - 1)%np_rows;
+      
+      if((my_pcol >= my_prow)&&(my_pcol >= row_origin_U))   // if I and sender are from the upper part of grid
+      {
+         cols_in_buffer = na_cols;                          // then we have the same number of columns in the upper triangular part
+         curr_col_loc_res = 0;                              // all my block-columns have parts in the upper triangular part
+         curr_col_loc_buf = 0;                              // I use all the block-columns of the received buffer
+      }
+      if((my_pcol < my_prow)&&(my_pcol < row_origin_U))     // if I and sender are from the lower part of grid
+      {
+         cols_in_buffer = na_cols - nblk;                   // then we have the same number of columns in the upper triangular part, but the first block-column was not included
+         curr_col_loc_res = nblk;                           // I start update from the second block-column since the first on is in the lower triangular part
+         curr_col_loc_buf = 0;                              // I use all the block-columns of the received buffer
+      }
+      if((my_pcol >= my_prow)&&(my_pcol < row_origin_U))    // if I am from the upper part of grid and sender is from the lower part
+      {
+         cols_in_buffer = na_cols - nblk;                   // then I have received one block-column less than I have
+         curr_col_loc_res = nblk;                           // all my block-columns have parts in the upper triangular part, but the first block-column of the received buffers corresponds to my second one
+         curr_col_loc_buf = 0;                              // I use all the block-columns of the received buffer
+      }
+      if((my_pcol < my_prow)&&(my_pcol >= row_origin_U))    // if I am from the lower part of grid and sender is from the upper part
+      {
+         cols_in_buffer = na_cols;                          // then I have received the full set of block-columns
+         curr_col_loc_res = nblk;                           // I start update from the second block-column since the first on is in the lower triangular part
+         curr_col_loc_buf = nblk;                           // I skip the first block-column of the buffer, since my first block-column is in the lower part
+      }
+    
+      num_of_blocks_in_U_buffer = ceil(((double)cols_in_buffer - (double)curr_col_loc_buf)/(double)nblk); 
+      
+      startPos = (curr_col_loc_buf + nblk)*curr_col_loc_buf/2;
+      U_local_start = &Buf_to_send_U[startPos];
+      Res_ptr = &M[curr_col_loc_res*na_rows];
+  
+      for (i = 0; i < num_of_blocks_in_U_buffer; i++)
+      { 
+         curr_col_glob = (curr_col_loc_res/nblk)*nblk*np_cols + my_pcol*nblk;
+         proc_row_curr = (curr_col_glob/nblk)%np_rows; 
+         rows_in_block_A = (curr_col_glob/(nblk*np_rows))*nblk;     // in A; not to go down beyond  the upper triangular part
+         if(my_prow <= proc_row_curr)
+            rows_in_block_A = rows_in_block_A + nblk; 
+         
+         if(rows_in_block_A > na_rows)
+            rows_in_block_A = na_rows; 
+      
+         if((curr_col_loc_buf + nblk) <= cols_in_buffer)
+            cols_in_block = nblk;      // number columns in block of U which will take part in this calculation
+         else
+            cols_in_block = cols_in_buffer - curr_col_loc_buf; 
+      
+         rows_in_block_U = (curr_col_glob/(nblk*np_rows))*nblk;    // corresponds to columns in A;
+         if(proc_row_curr >= row_origin_U)
+            rows_in_block_U = rows_in_block_U + nblk; 
+         
+         if(rows_in_block_U > rows_in_buffer)
+            rows_in_block_U = rows_in_buffer;
+
+         if ((rows_in_block_A > 0)&&(cols_in_block > 0))
+            if (j == 1)
+               dgemm_("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
+            else 
+               dgemm_("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
+      
+         U_local_start = U_local_start + rows_in_block_U*cols_in_block;
+         curr_col_loc_res = curr_col_loc_res + nblk;
+         Res_ptr = &M[curr_col_loc_res*na_rows];
+         curr_col_loc_buf = curr_col_loc_buf + nblk;  
+      } 
+     
+      MPI_Wait(&request_A_Send, &status);
+      MPI_Wait(&request_A_Recv, &status);
+      MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A); // find out how many elements I have received 
+      Size_receive_A = Size_receive_A/na_rows;
+      
+      MPI_Wait(&request_U_Send, &status);
+      MPI_Wait(&request_U_Recv, &status);
+      MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_U); // find out how many elements I have received  
+      
+       //// write in the buffer for later use //////////////////////////////7
+      if(j <= ToStore)
+      {
+         for(k = 0; k < Size_receive_U; k++)
+            U_stored[Curr_pos_in_U_stored + k] = Buf_to_receive_U[k]; 
+         Curr_pos_in_U_stored = Curr_pos_in_U_stored + Size_receive_U; 
+         SizesU[j-1] = Size_receive_U; 
+      }
+   }
+   
+   /////// do the last multiplication //////////////
+   rows_in_buffer = (int)Buf_to_receive_U[Size_receive_U-1];
+   row_origin_U = (my_pcol + my_prow + np_cols + np_rows -1)%np_rows;
+
+   if((my_pcol >= my_prow)&&(my_pcol >= row_origin_U))   // if I and sender are from the upper part of grid
+   {
+      cols_in_buffer = na_cols;                          // then we have the same number of columns in the upper triangular part
+      curr_col_loc_res = 0;                              // all my block-columns have parts in the upper triangular part
+      curr_col_loc_buf = 0;                              // I use all the block-columns of the received buffer
+   }
+   if((my_pcol < my_prow)&&(my_pcol < row_origin_U))     // if I and sender are from the lower part of grid
+   {
+      cols_in_buffer = na_cols - nblk;                   // then we have the same number of columns in the upper triangular part, but the first block-column was not included
+      curr_col_loc_res = nblk;                           // I start update from the second block-column since the first on is in the lower triangular part
+      curr_col_loc_buf = 0;                              // I use all the block-columns of the received buffer
+   }
+   if((my_pcol >= my_prow)&&(my_pcol < row_origin_U))    // if I am from the upper part of grid and sender is from the lower part
+   {
+      cols_in_buffer = na_cols - nblk;                   // then I have received one block-column less than I have
+      curr_col_loc_res = nblk;                           // all my block-columns have parts in the upper triangular part, but the first block-column of the received buffers corresponds to my second one
+      curr_col_loc_buf = 0;                              // I use all the block-columns of the received buffer
+   }
+   if((my_pcol < my_prow)&&(my_pcol >= row_origin_U))    // if I am from the lower part of grid and sender is from the upper part
+   {
+      cols_in_buffer = na_cols;                          // then I have received the full set of block-columns
+      curr_col_loc_res = nblk;                           // I start update from the second block-column since the first on is in the lower triangular part
+      curr_col_loc_buf = nblk;                           // I skip the first block-column of the buffer, since my first block-column is in the lower part
+   }
+    
+   num_of_blocks_in_U_buffer = ceil(((double)cols_in_buffer - (double)curr_col_loc_buf)/(double)nblk); 
+      
+   startPos = (curr_col_loc_buf + nblk)*curr_col_loc_buf/2;
+   U_local_start = &Buf_to_receive_U[startPos];
+   Res_ptr = &M[curr_col_loc_res*na_rows];
+  
+   for (i = 0; i < num_of_blocks_in_U_buffer; i++)
+   { 
+      curr_col_glob = (curr_col_loc_res/nblk)*nblk*np_cols + my_pcol*nblk;
+      proc_row_curr = (curr_col_glob/nblk)%np_rows; 
+      rows_in_block_A = (curr_col_glob/(nblk*np_rows))*nblk;     // in A; not to go down beyond  the upper triangular part
+      if(my_prow <= proc_row_curr)
+         rows_in_block_A = rows_in_block_A + nblk; 
+         
+      if(rows_in_block_A > na_rows)
+         rows_in_block_A = na_rows; 
+      
+      if((curr_col_loc_buf + nblk) <= cols_in_buffer)
+         cols_in_block = nblk;      // number columns in block of U which will take part in this calculation
+      else
+         cols_in_block = cols_in_buffer - curr_col_loc_buf; 
+      
+      rows_in_block_U = (curr_col_glob/(nblk*np_rows))*nblk;    // corresponds to columns in A;
+      if(proc_row_curr >= row_origin_U)
+         rows_in_block_U = rows_in_block_U + nblk; 
+        
+      if(rows_in_block_U > rows_in_buffer)
+         rows_in_block_U = rows_in_buffer; 
+
+      if ((rows_in_block_A > 0)&&(cols_in_block > 0))
+         if (j == 1)
+            dgemm_("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
+         else 
+            dgemm_("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
+      
+      U_local_start = U_local_start + rows_in_block_U*cols_in_block;
+      curr_col_loc_res = curr_col_loc_res + nblk;
+      Res_ptr = &M[curr_col_loc_res*na_rows];
+      curr_col_loc_buf = curr_col_loc_buf + nblk;  
+   }  
+   
+   ///////////////////// Now M has an upper part of A*U(-1) ///////////////////////////////////////////////
+   
+   pdtran_(&na, &na, &done, M, &one, &one, a_desc, &dzero, M_T, &one, &one, a_desc);     // now M_T has lower part of U(-H)*A 
+ 
+   ////////////////////////////////////////////////// start algorithm to find lower part of U(-H)*A*U(-1) //////////////////////////
+           
+   /////////////////////////////////////////////////////////////// initial reordering of A ////////////////////////////////////////////////
+   
+   // here we assume, that np_rows < np_cols; then I will send to the number of processors equal to <ratio> with the "leap" equal to np_rows; the same holds for receive  
+   if((ratio != 1)||(my_prow != 0))   // if grid is rectangular or my_prow is not 0
+      Buf_pos = Buf_to_send_A;     // I will copy to the send buffer
+   else
+      Buf_pos = Buf_to_receive_A;  // if grid is square and my_prow is 0, then I will copy to the received buffer
+   
+   // form array to send by block-columns; we need only lower triangular part
+   num_of_iters = ceil((double)na_cols/(double)nblk);             // number my of block-columns
+   
+   cols_in_buffer_A_my_initial = 0;
+   Size_send_A = 0; 
+   
+   if(my_pcol <= my_prow)  // if I am from the lower part of grid
+   {
+      curr_row_loc = 0;     // I will copy all my block-rows
+      rows_in_buffer_A_my_initial = na_rows;
+   }
+   else
+   {
+      curr_row_loc = ceil((double)(((double)my_pcol - (double)my_prow)/(double)np_rows))*nblk; // I will skip some of my block-rows
+      rows_in_buffer_A_my_initial = na_rows - curr_row_loc;   
+   }
+       
+   for(i = 0; i < num_of_iters; i++)       // loop over my block-columns
+   {
+      curr_col_loc = i*nblk;      // local index of start of the current block-column 
+      rows_in_block = na_rows - curr_row_loc;    // how many rows do I have in the lower part of the current block-column
+      
+      if ((na_cols - curr_col_loc) < nblk)
+         cols_in_block = na_cols - curr_col_loc;     // how many columns do I have in the block-column
+      else
+         cols_in_block = nblk; 
+      
+      if((rows_in_block > 0)&&(cols_in_block > 0))
+      {
+         A_local_start = &M_T[curr_col_loc*na_rows + curr_row_loc];
+         dlacpy_("A", &rows_in_block, &cols_in_block, A_local_start, &na_rows, Buf_pos, &rows_in_block);     // copy lower part of block-column in the buffer with LDA = length of the lower part of block-column 
+         Buf_pos = Buf_pos + rows_in_block*cols_in_block;
+         Size_send_A = Size_send_A + rows_in_block*cols_in_block; 
+         cols_in_buffer_A_my_initial = cols_in_buffer_A_my_initial + cols_in_block; 
+      }
+      curr_row_loc = curr_row_loc + ratio*nblk;
+   }
+   *Buf_pos = (double)cols_in_buffer_A_my_initial; // write number of the columns at the end of the buffer; we will need this for furhter multiplications on the other processors
+   Size_send_A = Size_send_A + 1;
+   
+   // now we have the local buffer to send
+   // find the lowest processor column among those who will send me
+   proc_col_min = np_cols; 
+   for(i = 0; i < ratio; i++)
+   {
+      from_where_to_receive_A = (my_pcol + my_prow + i*np_rows)%np_cols;
+      if(from_where_to_receive_A < proc_col_min)
+         proc_col_min = from_where_to_receive_A;
+   }
+   // do communications and form local buffers for calculations
+   Size_receive_A = 0;       // size of the accumulated buffer
+   cols_in_buffer_A = 0;     // number of columns in the accumulated buffer
+   rows_in_buffer_A = 0;     // number of rows in the accumulated buffer
+   for(i = 0; i < ratio; i++)
+   {
+      where_to_send_A = (my_pcol - my_prow - i*np_rows + np_cols)%np_cols;                
+      from_where_to_receive_A = (my_pcol + my_prow + i*np_rows)%np_cols;
+      
+      // send and receive in the row_comm
+      if(ratio != 1)   // if grid is not square
+      {
+         if(where_to_send_A != my_pcol)   // if I need to send and receive on this step
+         {
+            MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_DOUBLE, where_to_send_A, 0, Buf_A, Size_U_stored, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A_now);
+            Size_receive_A = Size_receive_A + Size_receive_A_now - 1; // we need only number of elements, so exclude information about cols_in_buffer_A
+            
+            cols_in_buffer_A_now = Buf_A[Size_receive_A_now-1];
+            cols_in_buffer_A = cols_in_buffer_A + cols_in_buffer_A_now; 
+            
+            // determine number of rows in the received buffer
+            if(from_where_to_receive_A <= my_prow)  // if source is from the lower part of grid
+            {
+               rows_in_buffer_A_now = na_rows;
+            }
+            else
+            {
+               rows_in_buffer_A_now = na_rows - ceil((double)(((double)from_where_to_receive_A - (double)my_prow)/(double)np_rows))*nblk; // some of the block-rows have been skipped
+            }
+            if(rows_in_buffer_A < rows_in_buffer_A_now)
+               rows_in_buffer_A = rows_in_buffer_A_now; 
+
+            intNumber = from_where_to_receive_A/np_rows; // how many processors will send me blocks, such that they will be placed before the current blocks  
+            if(proc_col_min <= my_prow)   // if among procs who will send me there is one with the full sets of block-rows in the lower part
+               CopyTo = &Buf_to_receive_A[nblk*(na_rows*intNumber - nblk*(intNumber-1)*intNumber/2)];  // here I will copy to; formula based on arithm. progression
+            else
+               CopyTo = &Buf_to_receive_A[nblk*(na_rows*intNumber - nblk*intNumber*(intNumber+1)/2)];  // otherwise, the first block-column will be shorter by one block
+            CopyFrom = Buf_A; 
+         }
+         else  // if I need to send to myself on this step, then I will copy from Buf_to_send_L to Buf_to_receive_A
+         {
+            cols_in_buffer_A_now = cols_in_buffer_A_my_initial;
+            cols_in_buffer_A = cols_in_buffer_A + cols_in_buffer_A_now; 
+            
+            rows_in_buffer_A_now = rows_in_buffer_A_my_initial;
+            if(rows_in_buffer_A < rows_in_buffer_A_now)
+               rows_in_buffer_A = rows_in_buffer_A_now; 
+
+            intNumber = my_pcol/np_rows; // how many processors will send me blocks, such that they will be placed before the current blocks  
+            if(proc_col_min <= my_prow)   // if among procs who will send me there is one with the full sets of block-rows in the lower part
+               CopyTo = &Buf_to_receive_A[nblk*(na_rows*intNumber - nblk*(intNumber-1)*intNumber/2)];  // here I will copy to; formula based on arithm. progression
+            else
+               CopyTo = &Buf_to_receive_A[nblk*(na_rows*intNumber - nblk*intNumber*(intNumber+1)/2)];  // otherwise, the first block-column will be shorter by one block
+            CopyFrom = Buf_to_send_A;  
+
+            Size_receive_A = Size_receive_A + Size_send_A - 1;
+         }
+            
+         // copy by block-columns
+         intNumber = ceil((double)cols_in_buffer_A_now/(double)nblk);  // how many block-columns I have received on this iteration
+         rows_in_block = rows_in_buffer_A_now; 
+         for(j = 0; j < intNumber; j++)
+         {
+            if((j+1)*nblk < cols_in_buffer_A_now)
+               cols_in_block = nblk; 
+            else
+               cols_in_block = cols_in_buffer_A_now - j*nblk;
+               
+            dlacpy_("A", &rows_in_block, &cols_in_block, CopyFrom, &rows_in_block, CopyTo, &rows_in_block);
+
+            CopyFrom = CopyFrom + rows_in_block*cols_in_block; 
+            CopyTo = CopyTo + nblk*(ratio*rows_in_block - nblk*(ratio-1)*ratio/2);  // I need to leave place for ratio block-columns of the other procs. of the lengths rows_in_block, (rows_in_block-nblk), (rows_in_block-2*nblk) and so on
+            rows_in_block = rows_in_block - ratio*nblk;     // number of rows in the next block-columns
+         }
+      }
+      else    // if grid is square
+      {
+         if(my_prow > 0)
+         {
+            MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_DOUBLE, where_to_send_A, 0, Buf_to_receive_A, Size_U_stored, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A);
+            cols_in_buffer_A = (int)Buf_to_receive_A[Size_receive_A-1];
+            if(from_where_to_receive_A <= my_prow)  // if source is from the lower part of grid
+            {
+               rows_in_buffer_A = na_rows;
+            }
+            else
+            {
+               rows_in_buffer_A = na_rows - ceil((double)(((double)from_where_to_receive_A - (double)my_prow)/(double)np_rows))*nblk; // some of the block-rows have been skipped
+            }
+         }
+         else    // if my_prow == 0, then I have already everything in my Buf_to_receive_A buffer
+         {
+            Size_receive_A = Size_send_A;
+            rows_in_buffer_A = rows_in_buffer_A_my_initial;
+            cols_in_buffer_A = cols_in_buffer_A_my_initial;
+         }
+      }
+   }
+   if(ratio != 1)
+   {
+      Buf_to_receive_A[Size_receive_A] = cols_in_buffer_A;
+      Buf_to_receive_A[Size_receive_A + 1] = rows_in_buffer_A;
+      Size_receive_A = Size_receive_A + 2;
+   }
+   else
+   {
+      Buf_to_receive_A[Size_receive_A] = rows_in_buffer_A;
+      Size_receive_A = Size_receive_A + 1;
+   }
+
+   ////////////////////////////////////////////////////////////// initial reordering of U: restore skewed U from the first multiplication ///////////////////////////
+   
+   Size_receive_U = Size_U_skewed;
+   U_to_calc = U_stored;
+   
+   //////////////////////////////////////////////////////////////////////// main loop ////////////////////////////////////////////////////////////////////////////////
+   
+   where_to_send_A = (my_pcol - 1 + np_cols)%np_cols;
+   from_where_to_receive_A = (my_pcol + 1)%np_cols;
+   where_to_send_U = (my_prow - 1 + np_rows)%np_rows;
+   from_where_to_receive_U = (my_prow + 1)%np_rows;
+   Curr_pos_in_U_stored = Size_U_skewed;
+  
+   for(j = 1; j < np_rows; j++)
+   {
+      // at this moment I need to send to neighbour what I have in the "received" arrays; that is why exchange pointers of the "received" and "send" arrays
+      double_ptr = Buf_to_send_A; 
+      Buf_to_send_A = Buf_to_receive_A; 
+      Buf_to_receive_A = double_ptr; 
+      
+      if (j > ToStore)
+      {
+         double_ptr = Buf_to_send_U; 
+         Buf_to_send_U = Buf_to_receive_U; 
+         Buf_to_receive_U = double_ptr;
+      }
+        
+      ///// shift for A ////////////////////////////////////////////////////////////
+      Size_send_A = Size_receive_A; 
+      MPI_Isend(Buf_to_send_A, Size_send_A, MPI_DOUBLE, where_to_send_A, 0, row_comm, &request_A_Send); 
+      MPI_Irecv(Buf_to_receive_A, ratio*Size_U_stored, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &request_A_Recv);
+         
+      ///// shift for U /////////////////////////////////////////////
+      Size_send_U = Size_receive_U; 
+      if (j > ToStore)
+      {
+         if(j > ToStore + 1)
+         {
+            MPI_Isend(Buf_to_send_U, Size_send_U, MPI_DOUBLE, where_to_send_U, 0, col_comm, &request_U_Send); 
+            U_to_calc = Buf_to_send_U;
+         }
+         else
+            MPI_Isend(U_to_calc, Size_send_U, MPI_DOUBLE, where_to_send_U, 0, col_comm, &request_U_Send);
+         MPI_Irecv(Buf_to_receive_U, Size_U_stored, MPI_DOUBLE, from_where_to_receive_U, 0, col_comm, &request_U_Recv);
+      }
+      
+      ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
+      rows_in_buffer_U = (int)U_to_calc[Size_receive_U-1];
+      row_of_origin_U = (my_pcol + my_prow + np_cols + j - 1)%np_rows;
+      if(my_pcol >= row_of_origin_U)
+         cols_in_buffer_U = na_cols;
+      else
+         cols_in_buffer_U = na_cols - nblk;
+      
+      cols_in_buffer_A = (int)Buf_to_send_A[Size_receive_A-2];
+      rows_in_buffer_A = (int)Buf_to_send_A[Size_receive_A-1];
+      // find the minimal pcol among those who have sent A for this iteration
+      col_of_origin_A = np_cols; 
+      for(i = 0; i < ratio; i++)
+      {
+         intNumber = (my_pcol + my_prow + i*np_rows + np_cols + j - 1)%np_cols;
+         if(intNumber < col_of_origin_A)
+            col_of_origin_A = intNumber;
+      }
+      
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // find block-column of the result to start update with
+      if (my_pcol >= row_of_origin_U)   // if origin of U is from the upper part 
+         curr_col_loc_res = 0;          // then I update all columns of Result    
+      else
+         curr_col_loc_res = nblk;       // the first block column of U corresponds to my second one and I do not need to update the first block-column
+      
+      num_of_blocks_in_U_buffer = ceil((double)((double)cols_in_buffer_U/(double)nblk)); 
+      if(my_pcol >= row_of_origin_U)    // if origin of U is from the upper part
+         rows_in_block_U = ceil(((double)(my_pcol + 1) - (double)row_of_origin_U)/(double)np_rows)*nblk;  // blocks in the first block-column of U buffer
+      else
+         rows_in_block_U = ratio*nblk;
+      
+      U_local_start = U_to_calc;
+      
+      for (i = 0; i < num_of_blocks_in_U_buffer; i++)
+      { 
+         // find block-row of the result to start update with; we need to update only lower triangular part of result
+         curr_col_glob_res = np_cols*nblk*(curr_col_loc_res/nblk) + curr_col_loc_res%nblk + ((np_cols+my_pcol)%np_cols)*nblk;   // global index of the first column to be updated
+         // now we need to find the smallest my local row index, such that the corresponding global index is larger of equal to <curr_col_glob_res>
+         Nb = curr_col_glob_res/nblk;    // how many global block-rows are before the needed one
+         owner = Nb%np_rows;             // proc. row index of the owner of row with the global index equal to <curr_col_glob_res> (it is not necessarily me)
+         curr_row_loc_res = (Nb/np_rows)*nblk; 
+         if(my_prow < owner)
+            curr_row_loc_res = curr_row_loc_res + nblk; 
+      
+         curr_row_loc_A = curr_row_loc_res;     // it is impossible, that both col_of_origin_L and row_of_origin_U are from upper part
+         if(col_of_origin_A > my_prow)
+            curr_row_loc_A = curr_row_loc_A - nblk;  
+        
+         rows_in_block = rows_in_buffer_A - curr_row_loc_A;    // rows in current block of A
+              
+         curr_col_loc_U = i*nblk;   // local index in the buffer U of the current column
+      
+         if((curr_col_loc_U + nblk) <= cols_in_buffer_U)
+            cols_in_block = nblk;      // number columns in block of U which will take part in this calculation
+         else
+            cols_in_block = cols_in_buffer_U - curr_col_loc_U; 
+      
+         if(rows_in_block_U > rows_in_buffer_U)
+            rows_in_block_U = rows_in_buffer_U;     // rows in current column of U; also a leading dimension for U
+ 
+         A_local_index = curr_row_loc_A;
+         A_local_start = &Buf_to_send_A[A_local_index];
+         Res_ptr = &Res[curr_col_loc_res*na_rows + curr_row_loc_res];
+
+         LDA_A = rows_in_buffer_A;
+         LDA_A_new = LDA_A;
+         if ((rows_in_block > 0)&&(cols_in_block > 0))
+         {
+            U_local_start_curr = U_local_start; 
+ 
+            // loop over block-columns of the "active" part of L buffer
+            for (ii = 0; ii < ceil((double)rows_in_block_U/(double)nblk); ii++)
+            {
+               if((ii+1)*nblk <= cols_in_buffer_A)
+                  rows_in_block_U_curr = nblk; 
+               else
+                  rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
+
+               if((j == 1)&&(ii == 0))
+                  dgemm_("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
+               else 
+                  dgemm_("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
+
+               LDA_A_new = LDA_A_new - nblk;
+      
+               U_local_start_curr = U_local_start_curr + rows_in_block_U_curr; 
+               A_local_index = A_local_index - LDA_A + LDA_A*nblk + LDA_A_new; 
+               A_local_start = &Buf_to_send_A[A_local_index];
+               LDA_A = LDA_A_new; 
+            }
+         }
+      
+         U_local_start = U_local_start + rows_in_block_U*cols_in_block;
+         curr_col_loc_res = curr_col_loc_res + nblk; 
+         rows_in_block_U = rows_in_block_U + ratio*nblk;
+      }    
+      
+      MPI_Wait(&request_A_Send, &status);
+      MPI_Wait(&request_A_Recv, &status);
+      MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A); // find out how many elements I have received 
+      
+      if (j <= ToStore)
+      {
+         U_to_calc = &U_stored[Curr_pos_in_U_stored];
+         Curr_pos_in_U_stored = Curr_pos_in_U_stored + SizesU[j-1]; 
+         Size_receive_U =  SizesU[j-1];
+      }
+      else
+      {
+         MPI_Wait(&request_U_Send, &status);
+         MPI_Wait(&request_U_Recv, &status);
+         MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_U); // find out how many elements I have received  
+      }
+   }
+   
+   /////// do the last multiplication //////////////
+   if(ToStore < np_rows - 1)
+      U_to_calc = Buf_to_receive_U;
+   rows_in_buffer_U = (int)U_to_calc[Size_receive_U-1];
+   row_of_origin_U = (my_pcol + my_prow + np_cols + j - 1)%np_rows;     
+   if(my_pcol >= row_of_origin_U)
+      cols_in_buffer_U = na_cols;
+   else
+      cols_in_buffer_U = na_cols - nblk;
+      
+   cols_in_buffer_A = (int)Buf_to_receive_A[Size_receive_A-2];
+   rows_in_buffer_A = (int)Buf_to_receive_A[Size_receive_A-1];
+   // find the minimal pcol among those who have sent A for this iteration
+   col_of_origin_A = np_cols; 
+   for(i = 0; i < ratio; i++)
+   {
+      intNumber = (my_pcol + my_prow + i*np_rows + np_cols + np_rows - 1)%np_cols;
+      if(intNumber < col_of_origin_A)
+         col_of_origin_A = intNumber;
+   }
+   
+   // find block-column of the result to start update with
+   if (my_pcol >= row_of_origin_U)   // if origin of U is from the upper part 
+      curr_col_loc_res = 0;          // then I update all columns of Result    
+   else
+      curr_col_loc_res = nblk;       // the first block column of U corresponds to my second one and I do not need to update the first block-column
+      
+   num_of_blocks_in_U_buffer = ceil((double)((double)cols_in_buffer_U/(double)nblk));
+   if(my_pcol >= row_of_origin_U)    // if origin of U is from the upper part
+      rows_in_block_U = ceil(((double)(my_pcol + 1) - (double)row_of_origin_U)/(double)np_rows)*nblk;  // blocks in the first block-column of U buffer
+   else
+      rows_in_block_U = ratio*nblk;
+      
+   U_local_start = U_to_calc;
+      
+   for (i = 0; i < num_of_blocks_in_U_buffer; i++)
+   { 
+      // find block-row of the result to start update with; we need to update only lower triangular part of result
+      curr_col_glob_res = np_cols*nblk*(curr_col_loc_res/nblk) + curr_col_loc_res%nblk + ((np_cols+my_pcol)%np_cols)*nblk;   // global index of the first column to be updated
+      // now we need to find the smallest my local row index, such that the corresponding global index is larger of equal to <curr_col_glob_res>
+      Nb = curr_col_glob_res/nblk;    // how many global block-rows are before the needed one
+      owner = Nb%np_rows;             // proc. row index of the owner of row with the global index equal to <curr_col_glob_res> (it is not necessarily me)
+      curr_row_loc_res = (Nb/np_rows)*nblk; 
+      if(my_prow < owner)
+         curr_row_loc_res = curr_row_loc_res + nblk; 
+      
+      curr_row_loc_A = curr_row_loc_res;     // it is impossible, that both col_of_origin_L and row_of_origin_U are from upper part
+      if(col_of_origin_A > my_prow)
+         curr_row_loc_A = curr_row_loc_A - nblk;
+      
+      rows_in_block = rows_in_buffer_A - curr_row_loc_A;    //rows in current block of  
+              
+      curr_col_loc_U = i*nblk;   // local index in the buffer U of the current column
+      
+      if((curr_col_loc_U + nblk) <= cols_in_buffer_U)
+         cols_in_block = nblk;      // number columns in block of U which will take part in this calculation
+      else
+         cols_in_block = cols_in_buffer_U - curr_col_loc_U; 
+      
+      if(rows_in_block_U > rows_in_buffer_U)
+         rows_in_block_U = rows_in_buffer_U; 
+ 
+      A_local_index = curr_row_loc_A;
+      A_local_start = &Buf_to_receive_A[A_local_index];
+      Res_ptr = &Res[curr_col_loc_res*na_rows + curr_row_loc_res];
+      LDA_A = rows_in_buffer_A; 
+      LDA_A_new = LDA_A; 
+      if ((rows_in_block > 0) &&(cols_in_block > 0))
+      {
+         U_local_start_curr = U_local_start; 
+
+         // loop over block-columns of the "active" part of L buffer
+         for (ii = 0; ii < ceil((double)rows_in_block_U/(double)nblk); ii++)
+         {
+            if((ii+1)*nblk <= cols_in_buffer_A)
+               rows_in_block_U_curr = nblk; 
+            else
+               rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
+
+            if((j == 1)&&(ii == 0))
+               dgemm_("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
+            else 
+               dgemm_("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
+
+            LDA_A_new = LDA_A_new - nblk;
+              
+            U_local_start_curr = U_local_start_curr + rows_in_block_U_curr; 
+            A_local_index = A_local_index - (LDA_A - rows_in_block) + LDA_A*nblk + LDA_A_new - rows_in_block; 
+            A_local_start = &Buf_to_receive_A[A_local_index];
+            LDA_A = LDA_A_new;
+         }
+      }
+      
+      U_local_start = U_local_start + rows_in_block_U*cols_in_block;
+      curr_col_loc_res = curr_col_loc_res + nblk; 
+      rows_in_block_U = rows_in_block_U + ratio*nblk;
+   }
+   
+   pdtran_(&na, &na, &done, Res, &one, &one, a_desc, &dzero, M, &one, &one, a_desc);
+   pdlacpy_("U", &na, &na, M, &one, &one, a_desc, Res, &one, &one, a_desc);
+      
+   free(Buf_to_send_A);
+   free(Buf_to_receive_A);
+   free(Buf_to_send_U);
+   free(Buf_to_receive_U);
+   free(M); 
+   free(M_T);
+   if(ratio != 1)
+      free(Buf_A);
+   free(U_stored);
+
+   double num = 7.1354857767573481E-003;
+   double eps = 0.0000001;
+   for (int i = 0; i < na_rows * na_cols; i++)
+     if(Res[i] < num + eps && Res[i] > num - eps)
+       printf("end original C code, Res(%d)  %g, size mat %d, %d\n",i,  Res[i], na_rows, na_cols);
+}
+
+//***********************************************************************************************************
+/*
+!f> interface
+!f>   subroutine cannons_reduction(A, U, local_rows, local_cols, np_rows, np_cols, my_prow, my_pcol, a_desc, &
+!f>                                Res, toStore, row_comm, col_comm) &
+!f>                             bind(C, name="d_cannons_reduction_c")
+!f>     use, intrinsic :: iso_c_binding
+!f>     real(c_double)                        :: A(local_rows, local_cols), U(local_rows, local_cols), Res(local_rows, local_cols)
+!f>     !type(c_ptr), value                   :: A, U, Res
+!f>     integer(kind=c_int)                   :: a_desc(9)
+!f>     integer(kind=c_int),value             :: local_rows, local_cols
+!f>     integer(kind=c_int),value     :: np_rows, np_cols, my_prow, my_pcol, row_comm, col_comm, ToStore
+!f>   end subroutine
+!f> end interface
+*/
+void d_cannons_reduction_c(double* A, double* U, int local_rows, int local_cols, int np_rows, int np_cols, int my_prow, int my_pcol, int* a_desc,
+                         double *Res, int ToStore, int row_comm, int col_comm)
+{
+  //printf("%d, %d, %d, %d, %lf, %lf, %lf, %lf, com: %d, %d\n", np_rows, np_cols, my_prow, my_pcol, A[0], A[1], U[0], U[1], row_comm, col_comm);
+
+  MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
+  MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
+  
+  //int c_my_prow, c_my_pcol;
+  //MPI_Comm_rank(c_row_comm, &c_my_prow);
+  //MPI_Comm_rank(c_col_comm, &c_my_pcol);
+  //printf("FORT<->C row: %d<->%d, col: %d<->%d\n", my_prow, c_my_prow, my_pcol, c_my_pcol);
+
+  // BEWARE
+  // in the cannons algorithm, column and row communicators are exchanged
+  // What we usually call row_comm in elpa, is thus passed to col_comm parameter of the function and vice versa
+  // (order is swapped in the following call)
+  // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
+  d_cannons_reduction(A, U, np_rows, np_cols, my_prow, my_pcol, a_desc, Res, ToStore, c_col_comm, c_row_comm);
+}
+
