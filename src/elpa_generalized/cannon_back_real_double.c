@@ -2,10 +2,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
+// most of the file is not compiled if not using MPI
 #ifdef WITH_MPI
 #include <mpi.h>
-#endif
-#include <math.h>
 
 //#include <elpa/elpa.h>
 //#include <elpa/elpa_generated.h>
@@ -435,4 +436,43 @@ void d_cannons_triang_rectangular(double* U, double* B, int np_rows, int np_cols
       free(Buf_U);
 }
 
+#endif
+
+//***********************************************************************************************************
+/*
+!f> interface
+!f>   subroutine cannons_triang_rectangular(U, B, local_rows, local_cols, np_rows, np_cols, my_prow, my_pcol, u_desc, b_desc, &
+!f>                                Res, row_comm, col_comm) &
+!f>                             bind(C, name="d_cannons_triang_rectangular_c")
+!f>     use, intrinsic :: iso_c_binding
+!f>     real(c_double)                        :: U(local_rows, local_cols), B(local_rows, local_cols), Res(local_rows, local_cols)
+!f>     integer(kind=c_int)                   :: u_desc(9), b_desc(9)
+!f>     integer(kind=c_int),value             :: local_rows, local_cols
+!f>     integer(kind=c_int),value     :: np_rows, np_cols, my_prow, my_pcol, row_comm, col_comm
+!f>   end subroutine
+!f> end interface
+*/
+void d_cannons_triang_rectantular_c(double* U, double* B, int local_rows, int local_cols, int np_rows, int np_cols,
+                                     int my_prow, int my_pcol, int* u_desc, int* b_desc, double *Res, int row_comm, int col_comm)
+{
+#ifdef WITH_MPI
+  MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
+  MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
+  
+  //int c_my_prow, c_my_pcol;
+  //MPI_Comm_rank(c_row_comm, &c_my_prow);
+  //MPI_Comm_rank(c_col_comm, &c_my_pcol);
+  //printf("FORT<->C row: %d<->%d, col: %d<->%d\n", my_prow, c_my_prow, my_pcol, c_my_pcol);
+
+  // BEWARE
+  // in the cannons algorithm, column and row communicators are exchanged
+  // What we usually call row_comm in elpa, is thus passed to col_comm parameter of the function and vice versa
+  // (order is swapped in the following call)
+  // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
+  d_cannons_triang_rectangular(U, B, np_rows, np_cols, my_prow, my_pcol, u_desc, b_desc, Res, c_col_comm, c_row_comm);
+#else
+  printf("Internal error: Cannons algorithm should not be called without MPI, stopping...\n");
+  exit(1);
+#endif
+}
 
