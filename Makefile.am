@@ -607,11 +607,11 @@ test_c_bindings@SUFFIX@_SOURCES = test/Fortran/elpa_generalized/test_bindings.F9
 test_c_bindings@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
 test_c_bindings@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
-noinst_PROGRAMS += test_c_cannon@SUFFIX@
-check_SCRIPTS += test_c_cannon@SUFFIX@_default.sh
-test_c_cannon@SUFFIX@_SOURCES = test/C/elpa_generalized/test_cannon.c
-test_c_cannon@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
+#noinst_PROGRAMS += test_c_cannon@SUFFIX@
+#check_SCRIPTS += test_c_cannon@SUFFIX@_default.sh
+#test_c_cannon@SUFFIX@_SOURCES = test/C/elpa_generalized/test_cannon.c
+#test_c_cannon@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+#test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
 
 
 
