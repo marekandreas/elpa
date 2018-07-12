@@ -12,5 +12,5 @@ if [ "$(hostname)" != "miy01" -a "$(hostname)" != "miy02" -a "$(hostname)" != "m
 
 export OMP_NUM_THREADS=$2
 
-eval make check TASKS=$1 ${3} || { cat test-suite-log; exit 1; }
+eval make check TASKS=$1 ${3} || { cat test-suite.log; exit 1; }
 
