@@ -74,6 +74,8 @@
 
        call self%timer_start("cannons_reduction")
 #if defined(REALCASE) && defined(DOUBLE_PRECISION)
+       ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
+       tmp = 0.0_rck
        call cannons_reduction(a, b, self%local_nrows, self%local_ncols, np_rows, np_cols, my_prow, my_pcol, &
                               sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
 #endif
