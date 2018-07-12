@@ -120,7 +120,7 @@ else
     make -j $makeTasks
     if [ $? -ne 0 ]; then exit 1; fi
     
-    OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite-log; exit 1; }
+    OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite.log; exit 1; }
     if [ $? -ne 0 ]; then exit 1; fi
      
     grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -136,7 +136,7 @@ else
     make -j $makeTasks
     if [ $? -ne 0 ]; then exit 1; fi
     
-    OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite-log; exit 1; }
+    OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite.log; exit 1; }
     if [ $? -ne 0 ]; then exit 1; fi
      
     grep -i "Expected %stop" test-suite.log && exit 1 || true ;
