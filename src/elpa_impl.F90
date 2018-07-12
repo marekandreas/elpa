@@ -53,9 +53,7 @@ module elpa_impl
   use elpa2_impl
   use elpa1_impl
   use elpa1_auxiliary_impl
-#ifdef WITH_MPI
   use elpa_mpi
-#endif
   use elpa_generated_fortran_interfaces
   use elpa_utilities, only : error_unit
 

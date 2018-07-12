@@ -62,7 +62,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/elpa2.F90 \
   src/elpa_generalized/cannon_forw_real_double.c \
   src/elpa_generalized/cannon_back_real_double.c \
-  src/elpa_generalized/test_c_bindings.c \
+  #src/elpa_generalized/test_c_bindings.c \
   src/helpers/matrix_plot.F90 \
   src/elpa_index.c
 
@@ -601,11 +601,11 @@ single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 endif
 
-noinst_PROGRAMS += test_c_bindings@SUFFIX@
-check_SCRIPTS += test_c_bindings@SUFFIX@_default.sh
-test_c_bindings@SUFFIX@_SOURCES = test/Fortran/elpa_generalized/test_bindings.F90
-test_c_bindings@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-test_c_bindings@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+#noinst_PROGRAMS += test_c_bindings@SUFFIX@
+#check_SCRIPTS += test_c_bindings@SUFFIX@_default.sh
+#test_c_bindings@SUFFIX@_SOURCES = test/Fortran/elpa_generalized/test_bindings.F90
+#test_c_bindings@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
+#test_c_bindings@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 #noinst_PROGRAMS += test_c_cannon@SUFFIX@
 #check_SCRIPTS += test_c_cannon@SUFFIX@_default.sh

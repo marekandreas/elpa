@@ -42,6 +42,14 @@
      use_cannon = 0
 #endif
 
+#if !defined(WITH_MPI)
+     if(my_p == 0) then
+       write(*,*) "Cannons algorithm can be used with MPI"
+       write(*,*) "Switching to elpa Hermitian and scalapack"
+     end if
+     use_cannon = 0
+#endif
+
      if (mod(np_cols, np_rows) /= 0) then
        if(my_p == 0) then
          write(*,*) "To use Cannons algorithm, np_cols must be a multiple of np_rows."

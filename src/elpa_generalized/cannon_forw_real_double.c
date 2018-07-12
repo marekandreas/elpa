@@ -1,10 +1,11 @@
 #include "config-f90.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
+// most of the file is not compiled if not using MPI
 #ifdef WITH_MPI
 #include <mpi.h>
-#endif
-#include <math.h>
 
 //#include <elpa/elpa.h>
 //#include <elpa/elpa_generated.h>
@@ -896,13 +897,8 @@ void d_cannons_reduction(double* A, double* U, int np_rows, int np_cols, int my_
    if(ratio != 1)
       free(Buf_A);
    free(U_stored);
-
-   double num = 7.1354857767573481E-003;
-   double eps = 0.0000001;
-   for (int i = 0; i < na_rows * na_cols; i++)
-     if(Res[i] < num + eps && Res[i] > num - eps)
-       printf("end original C code, Res(%d)  %g, size mat %d, %d\n",i,  Res[i], na_rows, na_cols);
 }
+#endif
 
 //***********************************************************************************************************
 /*
@@ -922,8 +918,7 @@ void d_cannons_reduction(double* A, double* U, int np_rows, int np_cols, int my_
 void d_cannons_reduction_c(double* A, double* U, int local_rows, int local_cols, int np_rows, int np_cols, int my_prow, int my_pcol, int* a_desc,
                          double *Res, int ToStore, int row_comm, int col_comm)
 {
-  //printf("%d, %d, %d, %d, %lf, %lf, %lf, %lf, com: %d, %d\n", np_rows, np_cols, my_prow, my_pcol, A[0], A[1], U[0], U[1], row_comm, col_comm);
-
+#ifdef WITH_MPI
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
   
@@ -938,5 +933,9 @@ void d_cannons_reduction_c(double* A, double* U, int local_rows, int local_cols,
   // (order is swapped in the following call)
   // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
   d_cannons_reduction(A, U, np_rows, np_cols, my_prow, my_pcol, a_desc, Res, ToStore, c_col_comm, c_row_comm);
+#else
+  printf("Internal error: Cannons algorithm should not be called without MPI, stopping...\n");
+  exit(1);
+#endif
 }
 
