@@ -903,29 +903,29 @@ void d_cannons_reduction(double* A, double* U, int np_rows, int np_cols, int my_
 //***********************************************************************************************************
 /*
 !f> interface
-!f>   subroutine cannons_reduction(A, U, local_rows, local_cols, np_rows, np_cols, my_prow, my_pcol, a_desc, &
-!f>                                Res, toStore, row_comm, col_comm) &
+!f>   subroutine cannons_reduction(A, U, local_rows, local_cols, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="d_cannons_reduction_c")
 !f>     use, intrinsic :: iso_c_binding
 !f>     real(c_double)                        :: A(local_rows, local_cols), U(local_rows, local_cols), Res(local_rows, local_cols)
 !f>     !type(c_ptr), value                   :: A, U, Res
 !f>     integer(kind=c_int)                   :: a_desc(9)
 !f>     integer(kind=c_int),value             :: local_rows, local_cols
-!f>     integer(kind=c_int),value     :: np_rows, np_cols, my_prow, my_pcol, row_comm, col_comm, ToStore
+!f>     integer(kind=c_int),value     ::  row_comm, col_comm, ToStore
 !f>   end subroutine
 !f> end interface
 */
-void d_cannons_reduction_c(double* A, double* U, int local_rows, int local_cols, int np_rows, int np_cols, int my_prow, int my_pcol, int* a_desc,
+void d_cannons_reduction_c(double* A, double* U, int local_rows, int local_cols, int* a_desc,
                          double *Res, int ToStore, int row_comm, int col_comm)
 {
 #ifdef WITH_MPI
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
   
-//  int c_my_prow, c_my_pcol;
-//  MPI_Comm_rank(c_row_comm, &c_my_prow);
-//  MPI_Comm_rank(c_col_comm, &c_my_pcol);
-//  printf("FORT<->C row: %d<->%d, col: %d<->%d\n", my_prow, c_my_prow, my_pcol, c_my_pcol);
+  int my_prow, my_pcol, np_rows, np_cols;
+  MPI_Comm_rank(c_row_comm, &my_prow);
+  MPI_Comm_size(c_row_comm, &np_rows);
+  MPI_Comm_rank(c_col_comm, &my_pcol);
+  MPI_Comm_size(c_col_comm, &np_cols);
 
   // BEWARE
   // in the cannons algorithm, column and row communicators are exchanged
