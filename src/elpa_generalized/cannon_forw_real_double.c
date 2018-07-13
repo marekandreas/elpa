@@ -888,6 +888,7 @@ void d_cannons_reduction(double* A, double* U, int np_rows, int np_cols, int my_
    pdtran_(&na, &na, &done, Res, &one, &one, a_desc, &dzero, M, &one, &one, a_desc);
    pdlacpy_("U", &na, &na, M, &one, &one, a_desc, Res, &one, &one, a_desc);
       
+
    free(Buf_to_send_A);
    free(Buf_to_receive_A);
    free(Buf_to_send_U);
@@ -897,6 +898,7 @@ void d_cannons_reduction(double* A, double* U, int np_rows, int np_cols, int my_
    if(ratio != 1)
       free(Buf_A);
    free(U_stored);
+   free(SizesU);
 }
 #endif
 
