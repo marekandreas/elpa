@@ -175,7 +175,7 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
         print("noinst_PROGRAMS += " + name)
         print("endif")
 
-        if lay == "square":
+        if lay == "square" or t == "generalized":
             print("check_SCRIPTS += " + name + "_default.sh")
         elif lay == "all_layouts":
             print("check_SCRIPTS += " + name + "_extended.sh")
