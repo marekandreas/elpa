@@ -452,17 +452,17 @@ void d_cannons_triang_rectangular(double* U, double* B, int np_rows, int np_cols
 !f>   end subroutine
 !f> end interface
 */
-void d_cannons_triang_rectantular_c(double* U, double* B, int local_rows, int local_cols, int np_rows, int np_cols,
+void d_cannons_triang_rectangular_c(double* U, double* B, int local_rows, int local_cols, int np_rows, int np_cols,
                                      int my_prow, int my_pcol, int* u_desc, int* b_desc, double *Res, int row_comm, int col_comm)
 {
 #ifdef WITH_MPI
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
-  
-  //int c_my_prow, c_my_pcol;
-  //MPI_Comm_rank(c_row_comm, &c_my_prow);
-  //MPI_Comm_rank(c_col_comm, &c_my_pcol);
-  //printf("FORT<->C row: %d<->%d, col: %d<->%d\n", my_prow, c_my_prow, my_pcol, c_my_pcol);
+
+//  int c_my_prow, c_my_pcol;
+//  MPI_Comm_rank(c_row_comm, &c_my_prow);
+//  MPI_Comm_rank(c_col_comm, &c_my_pcol);
+//  printf("FORT<->C row: %d<->%d, col: %d<->%d\n", my_prow, c_my_prow, my_pcol, c_my_pcol);
 
   // BEWARE
   // in the cannons algorithm, column and row communicators are exchanged
