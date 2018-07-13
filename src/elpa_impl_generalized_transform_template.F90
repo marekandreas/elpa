@@ -84,7 +84,7 @@
 #if defined(REALCASE) && defined(DOUBLE_PRECISION)
        ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
        tmp = 0.0_rck
-       call cannons_reduction(a, b, self%local_nrows, self%local_ncols, np_rows, np_cols, my_prow, my_pcol, &
+       call cannons_reduction(a, b, self%local_nrows, self%local_ncols, &
                               sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
 #endif
        call self%timer_stop("cannons_reduction")
@@ -174,8 +174,8 @@
 
      if(use_cannon == 1) then
 #if defined(REALCASE) && defined(DOUBLE_PRECISION)
-       call cannons_triang_rectangular(b, q, self%local_nrows, self%local_ncols, np_rows, np_cols, my_prow, my_pcol, &
-         sc_desc, sc_desc_ev, tmp, mpi_comm_rows, mpi_comm_cols);
+       call cannons_triang_rectangular(b, q, self%local_nrows, self%local_ncols, &
+                 sc_desc, sc_desc_ev, tmp, mpi_comm_rows, mpi_comm_cols);
 
        q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
 #endif

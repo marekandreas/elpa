@@ -441,28 +441,29 @@ void d_cannons_triang_rectangular(double* U, double* B, int np_rows, int np_cols
 //***********************************************************************************************************
 /*
 !f> interface
-!f>   subroutine cannons_triang_rectangular(U, B, local_rows, local_cols, np_rows, np_cols, my_prow, my_pcol, u_desc, b_desc, &
-!f>                                Res, row_comm, col_comm) &
+!f>   subroutine cannons_triang_rectangular(U, B, local_rows, local_cols, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="d_cannons_triang_rectangular_c")
 !f>     use, intrinsic :: iso_c_binding
 !f>     real(c_double)                        :: U(local_rows, local_cols), B(local_rows, local_cols), Res(local_rows, local_cols)
 !f>     integer(kind=c_int)                   :: u_desc(9), b_desc(9)
 !f>     integer(kind=c_int),value             :: local_rows, local_cols
-!f>     integer(kind=c_int),value     :: np_rows, np_cols, my_prow, my_pcol, row_comm, col_comm
+!f>     integer(kind=c_int),value             :: row_comm, col_comm
 !f>   end subroutine
 !f> end interface
 */
-void d_cannons_triang_rectangular_c(double* U, double* B, int local_rows, int local_cols, int np_rows, int np_cols,
-                                     int my_prow, int my_pcol, int* u_desc, int* b_desc, double *Res, int row_comm, int col_comm)
+void d_cannons_triang_rectangular_c(double* U, double* B, int local_rows, int local_cols,
+                                    int* u_desc, int* b_desc, double *Res, int row_comm, int col_comm)
 {
 #ifdef WITH_MPI
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 
-//  int c_my_prow, c_my_pcol;
-//  MPI_Comm_rank(c_row_comm, &c_my_prow);
-//  MPI_Comm_rank(c_col_comm, &c_my_pcol);
-//  printf("FORT<->C row: %d<->%d, col: %d<->%d\n", my_prow, c_my_prow, my_pcol, c_my_pcol);
+  int my_prow, my_pcol, np_rows, np_cols;
+  MPI_Comm_rank(c_row_comm, &my_prow);
+  MPI_Comm_size(c_row_comm, &np_rows);
+  MPI_Comm_rank(c_col_comm, &my_pcol);
+  MPI_Comm_size(c_col_comm, &np_cols);
+
 
   // BEWARE
   // in the cannons algorithm, column and row communicators are exchanged
