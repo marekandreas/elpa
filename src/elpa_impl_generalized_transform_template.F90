@@ -58,7 +58,7 @@
        use_cannon = 0
      endif
 
-     error = self%construct_scalapack_descriptor(sc_desc)
+     error = self%construct_scalapack_descriptor(sc_desc, .false.)
      if(error .NE. ELPA_OK) return
 
      if (.not. is_already_decomposed) then
@@ -136,28 +136,64 @@
 #else
       MATH_DATATYPE(kind=rck) :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
+     integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpierr, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
      integer                :: error
      integer                :: sc_desc(SC_DESC_LEN)
+     integer                :: sc_desc_ev(SC_DESC_LEN)
+     integer(kind=ik)       :: use_cannon
+
+     MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
+
+     call self%get("mpi_comm_rows",mpi_comm_rows,error)
+     call self%get("mpi_comm_cols",mpi_comm_cols,error)
+     call self%get("mpi_comm_parent", mpi_comm_all,error)
+
+     call mpi_comm_rank(mpi_comm_all,my_p,mpierr)
+     call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
+     call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+     call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
 
      call self%timer_start("transform_back_generalized()")
+     call self%get("cannon_for_generalized",use_cannon,error)
+#if !defined(REALCASE) || !defined(DOUBLE_PRECISION)
+     use_cannon = 0
+#endif
 
-     error = self%construct_scalapack_descriptor(sc_desc)
+#if !defined(WITH_MPI)
+     use_cannon = 0
+#endif
+
+     if (mod(np_cols, np_rows) /= 0) then
+       use_cannon = 0
+     endif
+
+     error = self%construct_scalapack_descriptor(sc_desc, .false.)
+     error = self%construct_scalapack_descriptor(sc_desc_ev, .true.)
      if(error .NE. ELPA_OK) return
 
-     call self%timer_start("scalapack multiply inv(U) * Q")
-#ifdef WITH_MPI
-     ! Q <- inv(U) * Q
-     call p&
-         &BLAS_CHAR&
-         &trmm("L", "U", "N", "N", self%na, self%nev, &
-               ONE, b, 1, 1, sc_desc,  q, 1, 1, sc_desc)
-#else
-     call BLAS_CHAR&
-         &trmm("L", "U", "N", "N", self%na, self%nev, &
-               ONE, b, self%na, q, self%na)
-#endif
-     call self%timer_stop("scalapack multiply inv(U) * Q")
+     if(use_cannon == 1) then
+#if defined(REALCASE) && defined(DOUBLE_PRECISION)
+       call cannons_triang_rectangular(b, q, self%local_nrows, self%local_ncols, np_rows, np_cols, my_prow, my_pcol, &
+         sc_desc, sc_desc_ev, tmp, mpi_comm_rows, mpi_comm_cols);
 
+       q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+#endif
+     else
+       call self%timer_start("scalapack multiply inv(U) * Q")
+#ifdef WITH_MPI
+       ! Q <- inv(U) * Q
+       call p&
+           &BLAS_CHAR&
+           &trmm("L", "U", "N", "N", self%na, self%nev, &
+                 ONE, b, 1, 1, sc_desc,  q, 1, 1, sc_desc)
+#else
+       call BLAS_CHAR&
+           &trmm("L", "U", "N", "N", self%na, self%nev, &
+                 ONE, b, self%na, q, self%na)
+#endif
+       call self%timer_stop("scalapack multiply inv(U) * Q")
+     endif
      call self%timer_stop("transform_back_generalized()")
 
     end subroutine

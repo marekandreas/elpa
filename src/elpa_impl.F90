@@ -348,8 +348,9 @@ module elpa_impl
       error = self%setup()
     end function
 
-    function elpa_construct_scalapack_descriptor(self, sc_desc) result(error)
+    function elpa_construct_scalapack_descriptor(self, sc_desc, rectangular_for_ev) result(error)
       class(elpa_impl_t), intent(inout)   :: self
+      logical, intent(in)                 :: rectangular_for_ev
       integer                             :: error, blacs_ctx
       integer, intent(out)                :: sc_desc(SC_DESC_LEN)
 
@@ -363,7 +364,11 @@ module elpa_impl
       sc_desc(1) = 1
       sc_desc(2) = blacs_ctx
       sc_desc(3) = self%na
-      sc_desc(4) = self%na
+      if(rectangular_for_ev) then
+        sc_desc(4) = self%nev
+      else
+        sc_desc(4) = self%na
+      endif
       sc_desc(5) = self%nblk
       sc_desc(6) = self%nblk
       sc_desc(7) = 0
@@ -736,6 +741,12 @@ module elpa_impl
 #undef SINGLE_PRECISION
 #endif
 
+!    function use_cannons_algorithm(self) result(use_cannon, do_print)
+!      class(elpa_impl_t), intent(inout), target :: self
+!      logical                                   :: use_cannon
+!      logical, intent(in)                       :: do_print
+!    end function
+!
 #ifdef ENABLE_AUTOTUNING
     !> \brief function to setup the ELPA autotuning and create the autotune object
     !> Parameters

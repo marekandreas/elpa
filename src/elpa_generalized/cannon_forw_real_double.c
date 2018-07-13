@@ -922,10 +922,10 @@ void d_cannons_reduction_c(double* A, double* U, int local_rows, int local_cols,
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
   
-  //int c_my_prow, c_my_pcol;
-  //MPI_Comm_rank(c_row_comm, &c_my_prow);
-  //MPI_Comm_rank(c_col_comm, &c_my_pcol);
-  //printf("FORT<->C row: %d<->%d, col: %d<->%d\n", my_prow, c_my_prow, my_pcol, c_my_pcol);
+//  int c_my_prow, c_my_pcol;
+//  MPI_Comm_rank(c_row_comm, &c_my_prow);
+//  MPI_Comm_rank(c_col_comm, &c_my_pcol);
+//  printf("FORT<->C row: %d<->%d, col: %d<->%d\n", my_prow, c_my_prow, my_pcol, c_my_pcol);
 
   // BEWARE
   // in the cannons algorithm, column and row communicators are exchanged
