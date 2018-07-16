@@ -8,8 +8,10 @@
 #define cannons_reduction_c_impl_expand1(SUFFIX) cannons_reduction_c_impl_expand2(SUFFIX)
 #define cannons_reduction_c_impl cannons_reduction_c_impl_expand1(ELPA_IMPL_SUFFIX)
 
-void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int my_prow, int my_pcol,
-                         int* a_desc, double *Res, int ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
+#include "../general/precision_typedefs.h"
+//#define math_type double
+void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols, int my_prow, int my_pcol,
+                         int* a_desc, math_type *Res, int ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
 {
    // Input matrices: 
       // - A: full matrix
@@ -20,14 +22,14 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    // col_comm: communicator along columns
   
    int na, nblk, i, j, Size_send_A, Size_receive_A, Size_send_U, Size_receive_U, Buf_rows, Buf_cols, where_to_send_A, from_where_to_receive_A, where_to_send_U, from_where_to_receive_U, last_proc_row, last_proc_col, cols_in_buffer_A, rows_in_buffer_A, intNumber;
-   double *Buf_to_send_A, *Buf_to_receive_A, *Buf_to_send_U, *Buf_to_receive_U, *double_ptr, *Buf_A, *Buf_pos, *U_local_start, *Res_ptr, *M, *M_T, *A_local_start, *U_local_start_curr, *U_stored, *CopyTo, *CopyFrom, *U_to_calc;
+   math_type *Buf_to_send_A, *Buf_to_receive_A, *Buf_to_send_U, *Buf_to_receive_U, *data_ptr, *Buf_A, *Buf_pos, *U_local_start, *Res_ptr, *M, *M_T, *A_local_start, *U_local_start_curr, *U_stored, *CopyTo, *CopyFrom, *U_to_calc;
    int ratio, num_of_iters, cols_in_buffer, rows_in_block, rows_in_buffer, curr_col_loc, cols_in_block, curr_col_glob, curr_row_loc, Size_receive_A_now, Nb, owner, cols_in_buffer_A_now;
    int  row_of_origin_U, rows_in_block_U, num_of_blocks_in_U_buffer, k, startPos, cols_in_buffer_U, rows_in_buffer_U, col_of_origin_A, curr_row_loc_res, curr_row_loc_A, curr_col_glob_res; 
    int curr_col_loc_res, curr_col_loc_buf, proc_row_curr, curr_col_loc_U, A_local_index, LDA_A, LDA_A_new, index_row_A_for_LDA, ii, rows_in_block_U_curr, width, row_origin_U, rows_in_block_A, cols_in_buffer_A_my_initial, rows_in_buffer_A_my_initial, proc_col_min;
    int *SizesU;
    int Size_U_skewed, Size_U_stored, Curr_pos_in_U_stored, rows_in_buffer_A_now;
-   double done = 1.0;
-   double dzero = 0.0;
+   math_type done = 1.0;
+   math_type dzero = 0.0;
    int one = 1; 
    int zero = 0; 
    int na_rows, na_cols;
@@ -94,19 +96,19 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       else  // if my_prow == last_proc_row
          Buf_rows = na_rows + nblk - na_rows%nblk;  
       
-   intNumber = ceil((double)na/(double)(np_cols*nblk));   // max. possible number of the local block columns of U
+   intNumber = ceil((math_type)na/(math_type)(np_cols*nblk));   // max. possible number of the local block columns of U
    Size_U_stored = ratio*nblk*nblk*intNumber*(intNumber+1)/2 + 2;   // number of local elements from the upper triangular part that every proc. has (max. possible value among all the procs.)
    
-   U_stored = malloc((Size_U_stored*(ToStore+1))*sizeof(double));
+   U_stored = malloc((Size_U_stored*(ToStore+1))*sizeof(math_type));
    SizesU = malloc(ToStore*sizeof(int));  // here will be stored the sizes of the buffers of U that I have stored     
-   Buf_to_send_A = malloc(ratio*Buf_cols*Buf_rows*sizeof(double));
-   Buf_to_receive_A = malloc(ratio*Buf_cols*Buf_rows*sizeof(double));
-   Buf_to_send_U = malloc(Size_U_stored*sizeof(double));
-   Buf_to_receive_U = malloc(Size_U_stored*sizeof(double));
+   Buf_to_send_A = malloc(ratio*Buf_cols*Buf_rows*sizeof(math_type));
+   Buf_to_receive_A = malloc(ratio*Buf_cols*Buf_rows*sizeof(math_type));
+   Buf_to_send_U = malloc(Size_U_stored*sizeof(math_type));
+   Buf_to_receive_U = malloc(Size_U_stored*sizeof(math_type));
    if(ratio != 1)
-      Buf_A = malloc(Buf_cols*Buf_rows*sizeof(double));   // in this case we will receive data into initial buffer and after place block-columns to the needed positions of buffer for calculation
-   M = malloc(na_rows*na_cols*sizeof(double));
-   M_T = malloc(na_rows*na_cols*sizeof(double));
+      Buf_A = malloc(Buf_cols*Buf_rows*sizeof(math_type));   // in this case we will receive data into initial buffer and after place block-columns to the needed positions of buffer for calculation
+   M = malloc(na_rows*na_cols*sizeof(math_type));
+   M_T = malloc(na_rows*na_cols*sizeof(math_type));
    for(i = 0; i < na_rows*na_cols; i++)
       M[i] = 0; 
         
@@ -114,7 +116,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    
    // here we assume, that np_rows < np_cols; then I will send to the number of processors equal to <ratio> with the "leap" equal to np_rows; the same holds for receive  
    if(ratio != 1)
-      dlacpy_("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy my buffer to send
+      C_LACPY("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy my buffer to send
    Size_receive_A = 0; 
    
    // receive from different processors and place in my buffer for calculation;
@@ -128,8 +130,8 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       {
          if(where_to_send_A != my_pcol)
          {
-            MPI_Sendrecv(Buf_to_send_A, na_cols*na_rows, MPI_DOUBLE, where_to_send_A, 0, Buf_A, na_rows*Buf_cols, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A_now);
+            MPI_Sendrecv(Buf_to_send_A, na_cols*na_rows, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_A, na_rows*Buf_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A_now);
             Size_receive_A_now = Size_receive_A_now/na_rows;       // how many columns of A I have received
          }
          else
@@ -145,13 +147,13 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
          else
             CopyFrom = A;
          
-         intNumber = ceil((double)Size_receive_A_now/(double)nblk);   // how many block-columns I have received
+         intNumber = ceil((math_type)Size_receive_A_now/(math_type)nblk);   // how many block-columns I have received
          for(j = 0; j < intNumber; j++)
          {
             width = nblk; // width of the current block column
             if(nblk*(j+1) > Size_receive_A_now)
                width = Size_receive_A_now - nblk*j; 
-            dlacpy_("A", &na_rows, &width, CopyFrom, &na_rows, CopyTo, &na_rows);
+            C_LACPY("A", &na_rows, &width, CopyFrom, &na_rows, CopyTo, &na_rows);
             CopyTo = CopyTo + na_rows*nblk*ratio; 
             CopyFrom = CopyFrom + na_rows*nblk; 
          }
@@ -159,14 +161,14 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       else  // if grid is square then simply receive from one processor to a calculation buffer
          if(my_prow > 0)
          {
-            dlacpy_("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy my buffer to send
-            MPI_Sendrecv(Buf_to_send_A, na_cols*na_rows, MPI_DOUBLE, where_to_send_A, 0, Buf_to_receive_A, na_rows*Buf_cols, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A);
+            C_LACPY("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy my buffer to send
+            MPI_Sendrecv(Buf_to_send_A, na_cols*na_rows, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_to_receive_A, na_rows*Buf_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A);
             Size_receive_A = Size_receive_A/na_rows;       // how many columns of A I have received
          }
          else
          {
-            dlacpy_("A", &na_rows, &na_cols, A, &na_rows, Buf_to_receive_A, &na_rows);   // copy A to the received buffer if I do not need to send
+            C_LACPY("A", &na_rows, &na_cols, A, &na_rows, Buf_to_receive_A, &na_rows);   // copy A to the received buffer if I do not need to send
             Size_receive_A = na_cols; 
          }
    }
@@ -174,7 +176,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    ////////////////////////////////////////////////////////////// initial reordering of U //////////////////////////////////////////////////////
      
    // form array to send by block-columns
-   num_of_iters = ceil((double)na_cols/(double)nblk);             // number my of block-columns
+   num_of_iters = ceil((math_type)na_cols/(math_type)nblk);             // number my of block-columns
    
    where_to_send_U = (my_prow - my_pcol + np_cols)%np_rows;                 // shift = my_pcol; we assume that np_cols%np_rows = 0
    from_where_to_receive_U = (my_pcol + my_prow)%np_rows;
@@ -188,13 +190,13 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    if(my_pcol >= my_prow)  // if I am in the upper part of proc. grid
       curr_col_loc = 0;    // my first local block-column has block from the upper part of matrix
    else
-      curr_col_loc = 1;   //ceil((double)(((double)my_prow - (double)my_pcol)/(double)np_cols)) always will give 1 since np_cols > np_rows 
+      curr_col_loc = 1;   //ceil((math_type)(((math_type)my_prow - (math_type)my_pcol)/(math_type)np_cols)) always will give 1 since np_cols > np_rows 
       
    num_of_iters = num_of_iters - curr_col_loc;   // I will exclude the first <curr_col_loc> block-columns since they do not have blocks from the upper part of matrix U
    curr_col_loc = curr_col_loc*nblk;             // local index of the found block-column
 
    if(my_pcol >= my_prow )
-      rows_in_block = ceil(((double)(my_pcol + 1) - (double)my_prow)/(double)np_rows)*nblk;
+      rows_in_block = ceil(((math_type)(my_pcol + 1) - (math_type)my_prow)/(math_type)np_rows)*nblk;
    else
       rows_in_block = ratio*nblk;
    
@@ -211,8 +213,8 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       
       if((rows_in_block > 0)&&(cols_in_block > 0))
       {
-         double_ptr = &U[curr_col_loc*na_rows];   // pointer to start of the current block-column to be copied to buffer
-         dlacpy_("A", &rows_in_block, &cols_in_block, double_ptr, &na_rows, Buf_pos, &rows_in_block);     // copy upper part of block-column in the buffer with LDA = length of the upper part of block-column 
+         data_ptr = &U[curr_col_loc*na_rows];   // pointer to start of the current block-column to be copied to buffer
+         C_LACPY("A", &rows_in_block, &cols_in_block, data_ptr, &na_rows, Buf_pos, &rows_in_block);     // copy upper part of block-column in the buffer with LDA = length of the upper part of block-column 
          Buf_pos = Buf_pos + rows_in_block*cols_in_block;                         // go to the position where the next block-column will be copied                                             
          Size_send_U = Size_send_U + rows_in_block*cols_in_block; 
       }
@@ -220,15 +222,15 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       rows_in_block = rows_in_block + ratio*nblk;
    }
    rows_in_buffer = rows_in_block - ratio*nblk;    // remove redundant addition from the previous loop 
-   *Buf_pos = (double)rows_in_buffer; // write number of the rows at the end of the buffer; we will need this for further multiplications on the other processors
+   *Buf_pos = (math_type)rows_in_buffer; // write number of the rows at the end of the buffer; we will need this for further multiplications on the other processors
    Size_send_U = Size_send_U + 1;
    
    //send and receive
    if(where_to_send_U != my_prow)
    {   
       // send and receive in the col_comm
-      MPI_Sendrecv(Buf_to_send_U, Size_send_U, MPI_DOUBLE, where_to_send_U, 0, Buf_to_receive_U, Buf_rows*na_cols, MPI_DOUBLE, from_where_to_receive_U, 0, col_comm, &status); 
-      MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_U); // find out how many elements I have received 
+      MPI_Sendrecv(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, Buf_to_receive_U, Buf_rows*na_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, col_comm, &status); 
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U); // find out how many elements I have received 
    }
    else // if I do not need to send 
       Size_receive_U = Size_send_U;         // how many elements I "have received"; the needed data I have already copied to the "receive" buffer
@@ -247,23 +249,23 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    for(j = 1; j < np_rows; j++)
    {
       // at this moment I need to send to neighbour what I have in the "received" arrays; that is why exchange pointers of the "received" and "send" arrays
-      double_ptr = Buf_to_send_A; 
+      data_ptr = Buf_to_send_A; 
       Buf_to_send_A = Buf_to_receive_A; 
-      Buf_to_receive_A = double_ptr; 
+      Buf_to_receive_A = data_ptr; 
       
-      double_ptr = Buf_to_send_U; 
+      data_ptr = Buf_to_send_U; 
       Buf_to_send_U = Buf_to_receive_U; 
-      Buf_to_receive_U = double_ptr;
+      Buf_to_receive_U = data_ptr;
       
       ///// shift for A ////////////////////////////////////////////////////////////
       Size_send_A = Size_receive_A;  // number of block-columns of A and block-rows of U to send (that I have received on the previous step) 
-      MPI_Isend(Buf_to_send_A, Size_send_A*na_rows, MPI_DOUBLE, where_to_send_A, 0, row_comm, &request_A_Send); 
-      MPI_Irecv(Buf_to_receive_A, Buf_cols*na_rows*ratio, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &request_A_Recv);
+      MPI_Isend(Buf_to_send_A, Size_send_A*na_rows, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, row_comm, &request_A_Send); 
+      MPI_Irecv(Buf_to_receive_A, Buf_cols*na_rows*ratio, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &request_A_Recv);
          
       ///// shift for U /////////////////////////////////////////////
       Size_send_U = Size_receive_U; 
-      MPI_Isend(Buf_to_send_U, Size_send_U, MPI_DOUBLE, where_to_send_U, 0, col_comm, &request_U_Send); 
-      MPI_Irecv(Buf_to_receive_U, Buf_rows*na_cols, MPI_DOUBLE, from_where_to_receive_U, 0, col_comm, &request_U_Recv); 
+      MPI_Isend(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, col_comm, &request_U_Send); 
+      MPI_Irecv(Buf_to_receive_U, Buf_rows*na_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, col_comm, &request_U_Recv); 
       
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
       rows_in_buffer = (int)Buf_to_send_U[Size_receive_U-1];
@@ -294,7 +296,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
          curr_col_loc_buf = nblk;                           // I skip the first block-column of the buffer, since my first block-column is in the lower part
       }
     
-      num_of_blocks_in_U_buffer = ceil(((double)cols_in_buffer - (double)curr_col_loc_buf)/(double)nblk); 
+      num_of_blocks_in_U_buffer = ceil(((math_type)cols_in_buffer - (math_type)curr_col_loc_buf)/(math_type)nblk); 
       
       startPos = (curr_col_loc_buf + nblk)*curr_col_loc_buf/2;
       U_local_start = &Buf_to_send_U[startPos];
@@ -325,9 +327,9 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
 
          if ((rows_in_block_A > 0)&&(cols_in_block > 0))
             if (j == 1)
-               dgemm_("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
+               C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
             else 
-               dgemm_("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
+               C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
       
          U_local_start = U_local_start + rows_in_block_U*cols_in_block;
          curr_col_loc_res = curr_col_loc_res + nblk;
@@ -337,12 +339,12 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
      
       MPI_Wait(&request_A_Send, &status);
       MPI_Wait(&request_A_Recv, &status);
-      MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A); // find out how many elements I have received 
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A); // find out how many elements I have received 
       Size_receive_A = Size_receive_A/na_rows;
       
       MPI_Wait(&request_U_Send, &status);
       MPI_Wait(&request_U_Recv, &status);
-      MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_U); // find out how many elements I have received  
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U); // find out how many elements I have received  
       
        //// write in the buffer for later use //////////////////////////////7
       if(j <= ToStore)
@@ -383,7 +385,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       curr_col_loc_buf = nblk;                           // I skip the first block-column of the buffer, since my first block-column is in the lower part
    }
     
-   num_of_blocks_in_U_buffer = ceil(((double)cols_in_buffer - (double)curr_col_loc_buf)/(double)nblk); 
+   num_of_blocks_in_U_buffer = ceil(((math_type)cols_in_buffer - (math_type)curr_col_loc_buf)/(math_type)nblk); 
       
    startPos = (curr_col_loc_buf + nblk)*curr_col_loc_buf/2;
    U_local_start = &Buf_to_receive_U[startPos];
@@ -414,9 +416,9 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
 
       if ((rows_in_block_A > 0)&&(cols_in_block > 0))
          if (j == 1)
-            dgemm_("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
+            C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
          else 
-            dgemm_("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
+            C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
       
       U_local_start = U_local_start + rows_in_block_U*cols_in_block;
       curr_col_loc_res = curr_col_loc_res + nblk;
@@ -426,7 +428,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    
    ///////////////////// Now M has an upper part of A*U(-1) ///////////////////////////////////////////////
    
-   pdtran_(&na, &na, &done, M, &one, &one, a_desc, &dzero, M_T, &one, &one, a_desc);     // now M_T has lower part of U(-H)*A 
+   C_PTRAN(&na, &na, &done, M, &one, &one, a_desc, &dzero, M_T, &one, &one, a_desc);     // now M_T has lower part of U(-H)*A 
  
    ////////////////////////////////////////////////// start algorithm to find lower part of U(-H)*A*U(-1) //////////////////////////
            
@@ -439,7 +441,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       Buf_pos = Buf_to_receive_A;  // if grid is square and my_prow is 0, then I will copy to the received buffer
    
    // form array to send by block-columns; we need only lower triangular part
-   num_of_iters = ceil((double)na_cols/(double)nblk);             // number my of block-columns
+   num_of_iters = ceil((math_type)na_cols/(math_type)nblk);             // number my of block-columns
    
    cols_in_buffer_A_my_initial = 0;
    Size_send_A = 0; 
@@ -451,7 +453,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    }
    else
    {
-      curr_row_loc = ceil((double)(((double)my_pcol - (double)my_prow)/(double)np_rows))*nblk; // I will skip some of my block-rows
+      curr_row_loc = ceil((math_type)(((math_type)my_pcol - (math_type)my_prow)/(math_type)np_rows))*nblk; // I will skip some of my block-rows
       rows_in_buffer_A_my_initial = na_rows - curr_row_loc;   
    }
        
@@ -468,14 +470,14 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       if((rows_in_block > 0)&&(cols_in_block > 0))
       {
          A_local_start = &M_T[curr_col_loc*na_rows + curr_row_loc];
-         dlacpy_("A", &rows_in_block, &cols_in_block, A_local_start, &na_rows, Buf_pos, &rows_in_block);     // copy lower part of block-column in the buffer with LDA = length of the lower part of block-column 
+         C_LACPY("A", &rows_in_block, &cols_in_block, A_local_start, &na_rows, Buf_pos, &rows_in_block);     // copy lower part of block-column in the buffer with LDA = length of the lower part of block-column 
          Buf_pos = Buf_pos + rows_in_block*cols_in_block;
          Size_send_A = Size_send_A + rows_in_block*cols_in_block; 
          cols_in_buffer_A_my_initial = cols_in_buffer_A_my_initial + cols_in_block; 
       }
       curr_row_loc = curr_row_loc + ratio*nblk;
    }
-   *Buf_pos = (double)cols_in_buffer_A_my_initial; // write number of the columns at the end of the buffer; we will need this for furhter multiplications on the other processors
+   *Buf_pos = (math_type)cols_in_buffer_A_my_initial; // write number of the columns at the end of the buffer; we will need this for furhter multiplications on the other processors
    Size_send_A = Size_send_A + 1;
    
    // now we have the local buffer to send
@@ -501,8 +503,8 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       {
          if(where_to_send_A != my_pcol)   // if I need to send and receive on this step
          {
-            MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_DOUBLE, where_to_send_A, 0, Buf_A, Size_U_stored, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A_now);
+            MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_A, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A_now);
             Size_receive_A = Size_receive_A + Size_receive_A_now - 1; // we need only number of elements, so exclude information about cols_in_buffer_A
             
             cols_in_buffer_A_now = Buf_A[Size_receive_A_now-1];
@@ -515,7 +517,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
             }
             else
             {
-               rows_in_buffer_A_now = na_rows - ceil((double)(((double)from_where_to_receive_A - (double)my_prow)/(double)np_rows))*nblk; // some of the block-rows have been skipped
+               rows_in_buffer_A_now = na_rows - ceil((math_type)(((math_type)from_where_to_receive_A - (math_type)my_prow)/(math_type)np_rows))*nblk; // some of the block-rows have been skipped
             }
             if(rows_in_buffer_A < rows_in_buffer_A_now)
                rows_in_buffer_A = rows_in_buffer_A_now; 
@@ -547,7 +549,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
          }
             
          // copy by block-columns
-         intNumber = ceil((double)cols_in_buffer_A_now/(double)nblk);  // how many block-columns I have received on this iteration
+         intNumber = ceil((math_type)cols_in_buffer_A_now/(math_type)nblk);  // how many block-columns I have received on this iteration
          rows_in_block = rows_in_buffer_A_now; 
          for(j = 0; j < intNumber; j++)
          {
@@ -556,7 +558,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
             else
                cols_in_block = cols_in_buffer_A_now - j*nblk;
                
-            dlacpy_("A", &rows_in_block, &cols_in_block, CopyFrom, &rows_in_block, CopyTo, &rows_in_block);
+            C_LACPY("A", &rows_in_block, &cols_in_block, CopyFrom, &rows_in_block, CopyTo, &rows_in_block);
 
             CopyFrom = CopyFrom + rows_in_block*cols_in_block; 
             CopyTo = CopyTo + nblk*(ratio*rows_in_block - nblk*(ratio-1)*ratio/2);  // I need to leave place for ratio block-columns of the other procs. of the lengths rows_in_block, (rows_in_block-nblk), (rows_in_block-2*nblk) and so on
@@ -567,8 +569,8 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       {
          if(my_prow > 0)
          {
-            MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_DOUBLE, where_to_send_A, 0, Buf_to_receive_A, Size_U_stored, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A);
+            MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_to_receive_A, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A);
             cols_in_buffer_A = (int)Buf_to_receive_A[Size_receive_A-1];
             if(from_where_to_receive_A <= my_prow)  // if source is from the lower part of grid
             {
@@ -576,7 +578,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
             }
             else
             {
-               rows_in_buffer_A = na_rows - ceil((double)(((double)from_where_to_receive_A - (double)my_prow)/(double)np_rows))*nblk; // some of the block-rows have been skipped
+               rows_in_buffer_A = na_rows - ceil((math_type)(((math_type)from_where_to_receive_A - (math_type)my_prow)/(math_type)np_rows))*nblk; // some of the block-rows have been skipped
             }
          }
          else    // if my_prow == 0, then I have already everything in my Buf_to_receive_A buffer
@@ -615,21 +617,21 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    for(j = 1; j < np_rows; j++)
    {
       // at this moment I need to send to neighbour what I have in the "received" arrays; that is why exchange pointers of the "received" and "send" arrays
-      double_ptr = Buf_to_send_A; 
+      data_ptr = Buf_to_send_A; 
       Buf_to_send_A = Buf_to_receive_A; 
-      Buf_to_receive_A = double_ptr; 
+      Buf_to_receive_A = data_ptr; 
       
       if (j > ToStore)
       {
-         double_ptr = Buf_to_send_U; 
+         data_ptr = Buf_to_send_U; 
          Buf_to_send_U = Buf_to_receive_U; 
-         Buf_to_receive_U = double_ptr;
+         Buf_to_receive_U = data_ptr;
       }
         
       ///// shift for A ////////////////////////////////////////////////////////////
       Size_send_A = Size_receive_A; 
-      MPI_Isend(Buf_to_send_A, Size_send_A, MPI_DOUBLE, where_to_send_A, 0, row_comm, &request_A_Send); 
-      MPI_Irecv(Buf_to_receive_A, ratio*Size_U_stored, MPI_DOUBLE, from_where_to_receive_A, 0, row_comm, &request_A_Recv);
+      MPI_Isend(Buf_to_send_A, Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, row_comm, &request_A_Send); 
+      MPI_Irecv(Buf_to_receive_A, ratio*Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &request_A_Recv);
          
       ///// shift for U /////////////////////////////////////////////
       Size_send_U = Size_receive_U; 
@@ -637,12 +639,12 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       {
          if(j > ToStore + 1)
          {
-            MPI_Isend(Buf_to_send_U, Size_send_U, MPI_DOUBLE, where_to_send_U, 0, col_comm, &request_U_Send); 
+            MPI_Isend(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, col_comm, &request_U_Send); 
             U_to_calc = Buf_to_send_U;
          }
          else
-            MPI_Isend(U_to_calc, Size_send_U, MPI_DOUBLE, where_to_send_U, 0, col_comm, &request_U_Send);
-         MPI_Irecv(Buf_to_receive_U, Size_U_stored, MPI_DOUBLE, from_where_to_receive_U, 0, col_comm, &request_U_Recv);
+            MPI_Isend(U_to_calc, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, col_comm, &request_U_Send);
+         MPI_Irecv(Buf_to_receive_U, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, col_comm, &request_U_Recv);
       }
       
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
@@ -671,9 +673,9 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       else
          curr_col_loc_res = nblk;       // the first block column of U corresponds to my second one and I do not need to update the first block-column
       
-      num_of_blocks_in_U_buffer = ceil((double)((double)cols_in_buffer_U/(double)nblk)); 
+      num_of_blocks_in_U_buffer = ceil((math_type)((math_type)cols_in_buffer_U/(math_type)nblk)); 
       if(my_pcol >= row_of_origin_U)    // if origin of U is from the upper part
-         rows_in_block_U = ceil(((double)(my_pcol + 1) - (double)row_of_origin_U)/(double)np_rows)*nblk;  // blocks in the first block-column of U buffer
+         rows_in_block_U = ceil(((math_type)(my_pcol + 1) - (math_type)row_of_origin_U)/(math_type)np_rows)*nblk;  // blocks in the first block-column of U buffer
       else
          rows_in_block_U = ratio*nblk;
       
@@ -717,7 +719,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
             U_local_start_curr = U_local_start; 
  
             // loop over block-columns of the "active" part of L buffer
-            for (ii = 0; ii < ceil((double)rows_in_block_U/(double)nblk); ii++)
+            for (ii = 0; ii < ceil((math_type)rows_in_block_U/(math_type)nblk); ii++)
             {
                if((ii+1)*nblk <= cols_in_buffer_A)
                   rows_in_block_U_curr = nblk; 
@@ -725,9 +727,9 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
                   rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
 
                if((j == 1)&&(ii == 0))
-                  dgemm_("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
+                  C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
                else 
-                  dgemm_("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
+                  C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
 
                LDA_A_new = LDA_A_new - nblk;
       
@@ -745,7 +747,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       
       MPI_Wait(&request_A_Send, &status);
       MPI_Wait(&request_A_Recv, &status);
-      MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_A); // find out how many elements I have received 
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A); // find out how many elements I have received 
       
       if (j <= ToStore)
       {
@@ -757,7 +759,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       {
          MPI_Wait(&request_U_Send, &status);
          MPI_Wait(&request_U_Recv, &status);
-         MPI_Get_count(&status, MPI_DOUBLE, &Size_receive_U); // find out how many elements I have received  
+         MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U); // find out how many elements I have received  
       }
    }
    
@@ -788,9 +790,9 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    else
       curr_col_loc_res = nblk;       // the first block column of U corresponds to my second one and I do not need to update the first block-column
       
-   num_of_blocks_in_U_buffer = ceil((double)((double)cols_in_buffer_U/(double)nblk));
+   num_of_blocks_in_U_buffer = ceil((math_type)((math_type)cols_in_buffer_U/(math_type)nblk));
    if(my_pcol >= row_of_origin_U)    // if origin of U is from the upper part
-      rows_in_block_U = ceil(((double)(my_pcol + 1) - (double)row_of_origin_U)/(double)np_rows)*nblk;  // blocks in the first block-column of U buffer
+      rows_in_block_U = ceil(((math_type)(my_pcol + 1) - (math_type)row_of_origin_U)/(math_type)np_rows)*nblk;  // blocks in the first block-column of U buffer
    else
       rows_in_block_U = ratio*nblk;
       
@@ -833,7 +835,7 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
          U_local_start_curr = U_local_start; 
 
          // loop over block-columns of the "active" part of L buffer
-         for (ii = 0; ii < ceil((double)rows_in_block_U/(double)nblk); ii++)
+         for (ii = 0; ii < ceil((math_type)rows_in_block_U/(math_type)nblk); ii++)
          {
             if((ii+1)*nblk <= cols_in_buffer_A)
                rows_in_block_U_curr = nblk; 
@@ -841,9 +843,9 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
                rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
 
             if((j == 1)&&(ii == 0))
-               dgemm_("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
+               C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
             else 
-               dgemm_("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
+               C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
 
             LDA_A_new = LDA_A_new - nblk;
               
@@ -859,8 +861,8 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
       rows_in_block_U = rows_in_block_U + ratio*nblk;
    }
    
-   pdtran_(&na, &na, &done, Res, &one, &one, a_desc, &dzero, M, &one, &one, a_desc);
-   pdlacpy_("U", &na, &na, M, &one, &one, a_desc, Res, &one, &one, a_desc);
+   C_PTRAN(&na, &na, &done, Res, &one, &one, a_desc, &dzero, M, &one, &one, a_desc);
+   C_PLACPY("U", &na, &na, M, &one, &one, a_desc, Res, &one, &one, a_desc);
       
 
    free(Buf_to_send_A);
@@ -875,8 +877,8 @@ void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int 
    free(SizesU);
 }
 
-void cannons_reduction_c_impl(double* A, double* U, int local_rows, int local_cols,
-                         int* a_desc, double *Res, int ToStore, int row_comm, int col_comm)
+void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rows, int local_cols,
+                         int* a_desc, math_type *Res, int ToStore, int row_comm, int col_comm)
 {
 #ifdef WITH_MPI
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);

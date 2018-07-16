@@ -34,9 +34,9 @@
 
      call self%timer_start("transform_generalized()")
      call self%get("cannon_for_generalized",use_cannon,error)
-#if !defined(REALCASE) || !defined(DOUBLE_PRECISION)
+#if !defined(REALCASE)
      if(my_p == 0) then
-       write(*,*) "Cannons algorithm can be used only for real double at the moment"
+       write(*,*) "Cannons algorithm can be used only for real at the moment"
        write(*,*) "Switching to elpa Hermitian and scalapack"
      end if
      use_cannon = 0
@@ -81,10 +81,12 @@
 
 
        call self%timer_start("cannons_reduction")
-#if defined(REALCASE) && defined(DOUBLE_PRECISION)
+#if defined(REALCASE)
        ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
        tmp = 0.0_rck
-       call cannons_reduction(a, b, self%local_nrows, self%local_ncols, &
+       call cannons_reduction_&
+         &ELPA_IMPL_SUFFIX&
+         &(a, b, self%local_nrows, self%local_ncols, &
                               sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
 #endif
        call self%timer_stop("cannons_reduction")
