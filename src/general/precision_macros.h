@@ -271,7 +271,7 @@
 #define C_GEMM zgemm_
 #define C_LACPY zlacpy_
 #define C_PLACPY pzlacpy_
-#define C_PTRAN pztran_
+#define C_PTRAN pztranc_
 
 #define  PRECISION_TRTRI ZTRTRI
 #define  PRECISION_POTRF ZPOTRF
@@ -335,7 +335,7 @@
 #define C_GEMM cgemm_
 #define C_LACPY clacpy_
 #define C_PLACPY pclacpy_
-#define C_PTRAN pctran_
+#define C_PTRAN pctranc_
 
 #define  PRECISION_TRTRI CTRTRI
 #define  PRECISION_POTRF CPOTRF
