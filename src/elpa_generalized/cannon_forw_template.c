@@ -9,7 +9,12 @@
 #define cannons_reduction_c_impl cannons_reduction_c_impl_expand1(ELPA_IMPL_SUFFIX)
 
 #include "../general/precision_typedefs.h"
-//#define math_type double
+
+void C_PLACPY(char*, int*, int*, math_type*, int*, int*, int*, math_type*, int*, int*, int*);
+void C_LACPY(char*, int*, int*, math_type*, int*, math_type*, int*);
+void C_GEMM(char*, char*, int*, int*, int*, math_type*, math_type*, int*, math_type*, int*, math_type*, math_type*, int*); 
+void C_PTRAN(int*, int*, math_type*, math_type*, int*, int*, int*, math_type*, math_type*, int*, int*, int*);
+
 void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols, int my_prow, int my_pcol,
                          int* a_desc, math_type *Res, int ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
 {
