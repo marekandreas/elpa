@@ -1,41 +1,15 @@
-#include "config-f90.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 
-// most of the file is not compiled if not using MPI
-#ifdef WITH_MPI
-#include <mpi.h>
+// it seems, that we need those two levels of indirection to correctly expand macros
+#define cannons_reduction_impl_expand2(SUFFIX) cannons_reduction_##SUFFIX
+#define cannons_reduction_impl_expand1(SUFFIX) cannons_reduction_impl_expand2(SUFFIX)
+#define cannons_reduction_impl cannons_reduction_impl_expand1(ELPA_IMPL_SUFFIX)
 
-//#include <elpa/elpa.h>
-//#include <elpa/elpa_generated.h>
-//#include <elpa/elpa_constants.h>
-//#include <elpa/elpa_generated_legacy.h>
-//#include <elpa/elpa_generic.h>
-//#include <elpa/elpa_legacy.h>
-//
-void pdlacpy_(char*, int*, int*, double*, int*, int*, int*, double*, int*, int*, int*);
-void dlacpy_(char*, int*, int*, double*, int*, double*, int*);
-void dgemm_(char*, char*, int*, int*, int*, double*, double*, int*, double*, int*, double*, double*, int*); 
-void pdtran_(int*, int*, double*, double*, int*, int*, int*, double*, double*, int*, int*, int*);
-//void pdelset_(double*, int*, int*, int*, double*);
-//void pdsymm_(char*, char*, int*, int*, double*, double*, int*, int*, int*, double*, int*, int*, int*, double*, double*, int*, int*, int*);
-//void pdpotrf_(char*, int*, double*, int*, int*, int*, int*);
-//void pdsyngst_(int*, char*, int*, double*, int*, int*, int*, double*, int*, int*, int*, double*, double*, int*, int*);
-//void descinit_(int*, int*, int*, int*, int*, int*, int*, int*, int*, int*);
-int numroc_(int*, int*, int*, int*, int*);
-//void set_up_blacsgrid_f1(int, int*, int*, int*, int*, int*, int*, int*);
-//void pdtrtrs_(char*, char*, char*, int*, int*, double*, int*, int*, int*, double*, int*, int*, int*, int*);
-//void pdsyevr_(char*, char*, char*, int*, double*, int*, int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, int*, int*, int*, double*, int*, int*, int*, int*);
+#define cannons_reduction_c_impl_expand2(SUFFIX) cannons_reduction_c_##SUFFIX
+#define cannons_reduction_c_impl_expand1(SUFFIX) cannons_reduction_c_impl_expand2(SUFFIX)
+#define cannons_reduction_c_impl cannons_reduction_c_impl_expand1(ELPA_IMPL_SUFFIX)
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////////////////////// My function for reduction //////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void d_cannons_reduction(double* A, double* U, int np_rows, int np_cols, int my_prow, int my_pcol, int* a_desc,
-                         double *Res, int ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
+void cannons_reduction_impl(double* A, double* U, int np_rows, int np_cols, int my_prow, int my_pcol,
+                         int* a_desc, double *Res, int ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
 {
    // Input matrices: 
       // - A: full matrix
@@ -900,29 +874,14 @@ void d_cannons_reduction(double* A, double* U, int np_rows, int np_cols, int my_
    free(U_stored);
    free(SizesU);
 }
-#endif
 
-//***********************************************************************************************************
-/*
-!f> interface
-!f>   subroutine cannons_reduction(A, U, local_rows, local_cols, a_desc, Res, toStore, row_comm, col_comm) &
-!f>                             bind(C, name="d_cannons_reduction_c")
-!f>     use, intrinsic :: iso_c_binding
-!f>     real(c_double)                        :: A(local_rows, local_cols), U(local_rows, local_cols), Res(local_rows, local_cols)
-!f>     !type(c_ptr), value                   :: A, U, Res
-!f>     integer(kind=c_int)                   :: a_desc(9)
-!f>     integer(kind=c_int),value             :: local_rows, local_cols
-!f>     integer(kind=c_int),value     ::  row_comm, col_comm, ToStore
-!f>   end subroutine
-!f> end interface
-*/
-void d_cannons_reduction_c(double* A, double* U, int local_rows, int local_cols, int* a_desc,
-                         double *Res, int ToStore, int row_comm, int col_comm)
+void cannons_reduction_c_impl(double* A, double* U, int local_rows, int local_cols,
+                         int* a_desc, double *Res, int ToStore, int row_comm, int col_comm)
 {
 #ifdef WITH_MPI
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
-  
+
   int my_prow, my_pcol, np_rows, np_cols;
   MPI_Comm_rank(c_row_comm, &my_prow);
   MPI_Comm_size(c_row_comm, &np_rows);
@@ -934,7 +893,7 @@ void d_cannons_reduction_c(double* A, double* U, int local_rows, int local_cols,
   // What we usually call row_comm in elpa, is thus passed to col_comm parameter of the function and vice versa
   // (order is swapped in the following call)
   // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
-  d_cannons_reduction(A, U, np_rows, np_cols, my_prow, my_pcol, a_desc, Res, ToStore, c_col_comm, c_row_comm);
+  cannons_reduction_impl(A, U, np_rows, np_cols, my_prow, my_pcol, a_desc, Res, ToStore, c_col_comm, c_row_comm);
 #else
   printf("Internal error: Cannons algorithm should not be called without MPI, stopping...\n");
   exit(1);
