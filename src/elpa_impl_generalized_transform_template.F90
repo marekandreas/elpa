@@ -72,14 +72,12 @@
        !TODO tunable parameter?
        BuffLevelInt = 1
 
-
        call self%timer_start("cannons_reduction")
        ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
        tmp = 0.0_rck
        call cannons_reduction_&
          &ELPA_IMPL_SUFFIX&
-         &(a, b, self%local_nrows, self%local_ncols, &
-                              sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
+         &(a, b, self%local_nrows, self%local_ncols, sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
        call self%timer_stop("cannons_reduction")
 
        a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
@@ -149,9 +147,6 @@
 
      call self%timer_start("transform_back_generalized()")
      call self%get("cannon_for_generalized",use_cannon,error)
-#if !defined(REALCASE) || !defined(DOUBLE_PRECISION)
-     use_cannon = 0
-#endif
 
 #if !defined(WITH_MPI)
      use_cannon = 0
@@ -166,12 +161,13 @@
      if(error .NE. ELPA_OK) return
 
      if(use_cannon == 1) then
-#if defined(REALCASE) && defined(DOUBLE_PRECISION)
-       call cannons_triang_rectangular(b, q, self%local_nrows, self%local_ncols, &
-                 sc_desc, sc_desc_ev, tmp, mpi_comm_rows, mpi_comm_cols);
+       call self%timer_start("cannons_triang_rectangular")
+       call cannons_triang_rectangular_&
+         &ELPA_IMPL_SUFFIX&
+         &(b, q, self%local_nrows, self%local_ncols, sc_desc, sc_desc_ev, tmp, mpi_comm_rows, mpi_comm_cols);
+       call self%timer_stop("cannons_triang_rectangular")
 
        q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
-#endif
      else
        call self%timer_start("scalapack multiply inv(U) * Q")
 #ifdef WITH_MPI

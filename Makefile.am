@@ -60,8 +60,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/qr/elpa_pdgeqrf.F90 \
   src/elpa1/elpa1.F90 \
   src/elpa2/elpa2.F90 \
-  src/elpa_generalized/cannon_forw.c \
-  src/elpa_generalized/cannon_back_real_double.c \
+  src/elpa_generalized/cannon.c \
   #src/elpa_generalized/test_c_bindings.c \
   src/helpers/matrix_plot.F90 \
   src/elpa_index.c
@@ -745,6 +744,7 @@ EXTRA_DIST = \
   src/elpa2/qr/qr_utils_template.F90 \
   src/elpa2/redist_band.F90 \
   src/elpa_generalized/cannon_forw_template.c \
+  src/elpa_generalized/cannon_back_template.c \
   src/elpa_index.h \
   src/fortran_constants.h \
   src/general/map_global_to_local.F90 \
