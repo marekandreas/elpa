@@ -418,7 +418,6 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, int np_rows, in
 void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_rows, int local_cols,
                                     int* u_desc, int* b_desc, math_type *Res, int row_comm, int col_comm)
 {
-#ifdef WITH_MPI
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 
@@ -435,9 +434,5 @@ void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_row
   // (order is swapped in the following call)
   // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
   cannons_triang_rectangular_impl(U, B, np_rows, np_cols, my_prow, my_pcol, u_desc, b_desc, Res, c_col_comm, c_row_comm);
-#else
-  printf("Internal error: Cannons algorithm should not be called without MPI, stopping...\n");
-  exit(1);
-#endif
 }
 

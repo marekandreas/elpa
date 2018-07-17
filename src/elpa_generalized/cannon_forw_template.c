@@ -885,7 +885,6 @@ void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols
 void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rows, int local_cols,
                          int* a_desc, math_type *Res, int ToStore, int row_comm, int col_comm)
 {
-#ifdef WITH_MPI
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 
@@ -901,9 +900,5 @@ void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rows, int lo
   // (order is swapped in the following call)
   // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
   cannons_reduction_impl(A, U, np_rows, np_cols, my_prow, my_pcol, a_desc, Res, ToStore, c_col_comm, c_row_comm);
-#else
-  printf("Internal error: Cannons algorithm should not be called without MPI, stopping...\n");
-  exit(1);
-#endif
 }
 
