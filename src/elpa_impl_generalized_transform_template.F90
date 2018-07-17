@@ -37,7 +37,7 @@
 
 #if !defined(WITH_MPI)
      if(my_p == 0) then
-       write(*,*) "Cannons algorithm can be used with MPI"
+       write(*,*) "Cannons algorithm can only be used with MPI"
        write(*,*) "Switching to elpa Hermitian and scalapack"
      end if
      use_cannon = 0
