@@ -75,9 +75,11 @@
        call self%timer_start("cannons_reduction")
        ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
        tmp = 0.0_rck
+#ifdef WITH_MPI
        call cannons_reduction_&
          &ELPA_IMPL_SUFFIX&
          &(a, b, self%local_nrows, self%local_ncols, sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
+#endif
        call self%timer_stop("cannons_reduction")
 
        a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
@@ -162,9 +164,11 @@
 
      if(use_cannon == 1) then
        call self%timer_start("cannons_triang_rectangular")
+#ifdef WITH_MPI
        call cannons_triang_rectangular_&
          &ELPA_IMPL_SUFFIX&
          &(b, q, self%local_nrows, self%local_ncols, sc_desc, sc_desc_ev, tmp, mpi_comm_rows, mpi_comm_cols);
+#endif
        call self%timer_stop("cannons_triang_rectangular")
 
        q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)

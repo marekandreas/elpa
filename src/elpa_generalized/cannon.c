@@ -172,48 +172,4 @@ void cannons_reduction_c_fc(float complex* A, float complex* U, int local_rows, 
 */
 void cannons_triang_rectangular_c_fc(float complex* U, float complex* B, int local_rows, int local_cols,
                                     int* u_desc, int* b_desc, float complex *Res, int row_comm, int col_comm);
-#else
-// Just because of the Intel preprocessor
-// TODO do something with it
-// ideally the build system, which is generating fortran interfaces, should respect ifdefs and not
-// generate interface for non-MPI case
-void cannons_reduction_c_d(double* A, double* U, int local_rows, int local_cols, int* a_desc,
-                         double *Res, int ToStore, int row_comm, int col_comm)
-{
-}
-
-void cannons_triang_rectangular_c_d(double* U, double* B, int local_rows, int local_cols,
-                                    int* u_desc, int* b_desc, double *Res, int row_comm, int col_comm)
-{
-}
-
-void cannons_reduction_c_f(float* A, float* U, int local_rows, int local_cols, int* a_desc,
-                         float *Res, int ToStore, int row_comm, int col_comm)
-{
-}
-
-void cannons_triang_rectangular_c_f(float* U, float* B, int local_rows, int local_cols,
-                                    int* u_desc, int* b_desc, float *Res, int row_comm, int col_comm)
-{
-}
-
-void cannons_reduction_c_dc(double complex* A, double complex* U, int local_rows, int local_cols, int* a_desc,
-                         double complex *Res, int ToStore, int row_comm, int col_comm)
-{
-}
-
-void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int local_rows, int local_cols,
-                                    int* u_desc, int* b_desc, double complex *Res, int row_comm, int col_comm)
-{
-}
-
-void cannons_reduction_c_fc(float complex* A, float complex* U, int local_rows, int local_cols, int* a_desc,
-                         float complex *Res, int ToStore, int row_comm, int col_comm)
-{
-}
-
-void cannons_triang_rectangular_c_fc(float complex* U, float complex* B, int local_rows, int local_cols,
-                                    int* u_desc, int* b_desc, float complex *Res, int row_comm, int col_comm)
-{
-}
 #endif
