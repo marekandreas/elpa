@@ -211,6 +211,9 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
 #endif
+        INT_ENTRY("cannon_buffer_size", "Increasing the buffer size might make it faster, but costs memory", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+                        NULL, NULL, NULL, NULL),
+                        //cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL),
         //BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL),
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL),
         BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
