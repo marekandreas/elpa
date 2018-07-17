@@ -68,10 +68,7 @@
      end if
 
      if(use_cannon == 1) then
-       !TODO set the value properly
-       !TODO tunable parameter?
-       BuffLevelInt = 1
-
+       call self%get("cannon_buffer_size",BuffLevelInt,error)
        call self%timer_start("cannons_reduction")
        ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
        tmp = 0.0_rck
