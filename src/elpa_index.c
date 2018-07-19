@@ -164,6 +164,8 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("local_ncols", "Number of matrix columns stored on this process", NULL),
         INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition", NULL),
         INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition", NULL),
+        INT_PARAMETER_ENTRY("num_process_rows", "Number of process row number in the 2D domain decomposition", NULL),
+        INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL),
         INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", bw_is_valid),
         INT_PARAMETER_ENTRY("suppress_warnings", "If specified, warnings will NOT be printed on this mpi rank", NULL),
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),

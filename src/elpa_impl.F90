@@ -248,6 +248,67 @@ module elpa_impl
     end subroutine
 #endif
 
+    ! we want to ensure, that my_prow(col) and np_rows(cols) values are allways accessible trhough
+    ! the elpa object, no matter whether the user provides communicators or communicators are created
+    ! by elpa. If the walues are present already, they are checked for consistency with the communicators.
+    subroutine set_or_check_missing_comm_params(self)
+      implicit none
+      class(elpa_impl_t), intent(inout)   :: self
+      integer                             :: mpi_comm_rows, mpi_comm_cols, mpierr, error, &
+                                             my_prow, my_pcol, present_my_prow, present_my_pcol, &
+                                             np_rows, np_cols, present_np_rows, present_np_cols
+      if (.not. (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) ) then
+        print *,"MPI row and column communicators not set correctly. Aborting..."
+        stop
+      endif
+      call self%get("mpi_comm_rows", mpi_comm_rows, error)
+      call self%get("mpi_comm_cols", mpi_comm_cols, error)
+
+      call mpi_comm_size(mpi_comm_rows, np_rows, mpierr)
+      if(self%is_set("num_process_rows") == 1) then
+        call self%get("num_process_rows", present_np_rows, error)
+        if(np_rows .ne. present_np_rows) then
+          print *,"MPI row communicator not set correctly. Aborting..."
+          stop
+        endif
+      else
+        call self%set("num_process_rows", np_rows, error)
+      endif
+
+      call mpi_comm_size(mpi_comm_cols, np_cols, mpierr)
+      if(self%is_set("num_process_cols") == 1) then
+        call self%get("num_process_cols", present_np_cols, error)
+        if(np_cols .ne. present_np_cols) then
+          print *,"MPI column communicator not set correctly. Aborting..."
+          stop
+        endif
+      else
+        call self%set("num_process_cols", np_cols, error)
+      endif
+
+      call mpi_comm_rank(mpi_comm_rows, my_prow, mpierr)
+      if(self%is_set("process_row") == 1) then
+        call self%get("process_row", present_my_prow, error)
+        if(my_prow .ne. present_my_prow) then
+          print *,"MPI row communicator not set correctly. Aborting..."
+          stop
+        endif
+      else
+        call self%set("process_row", my_prow, error)
+      endif
+
+      call mpi_comm_rank(mpi_comm_cols, my_pcol, mpierr)
+      if(self%is_set("process_col") == 1) then
+        call self%get("process_col", present_my_pcol, error)
+        if(my_pcol .ne. present_my_pcol) then
+          print *,"MPI column communicator not set correctly. Aborting..."
+          stop
+        endif
+      else
+        call self%set("process_col", my_pcol, error)
+      endif
+    end subroutine
+
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
@@ -312,6 +373,8 @@ module elpa_impl
           stop
         endif
 
+        call set_or_check_missing_comm_params(self)
+
         ! remember that we created those communicators and we need to free them later
         self%communicators_owned = 1
 
@@ -321,6 +384,7 @@ module elpa_impl
 
       ! Externally supplied communicators
       if (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) then
+        call set_or_check_missing_comm_params(self)
         self%communicators_owned = 0
         error = ELPA_OK
         return
