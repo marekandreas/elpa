@@ -100,6 +100,10 @@ static int intermediate_bandwidth_cardinality(elpa_index_t index);
 static int intermediate_bandwidth_enumerate(elpa_index_t index, int i);
 static int intermediate_bandwidth_is_valid(elpa_index_t index, int n, int new_value);
 
+static int cannon_buffer_size_cardinality(elpa_index_t index);
+static int cannon_buffer_size_enumerate(elpa_index_t index, int i);
+static int cannon_buffer_size_is_valid(elpa_index_t index, int n, int new_value);
+
 static int na_is_valid(elpa_index_t index, int n, int new_value);
 static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
@@ -214,8 +218,7 @@ static const elpa_index_int_entry_t int_entries[] = {
                         omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
 #endif
         INT_ENTRY("cannon_buffer_size", "Increasing the buffer size might make it faster, but costs memory", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        NULL, NULL, NULL, NULL),
-                        //cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL),
+                        cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL),
         //BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL),
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL),
         BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
@@ -884,6 +887,38 @@ static int intermediate_bandwidth_is_valid(elpa_index_t index, int n, int new_va
                   return 0;
                 }
         }
+}
+
+static int cannon_buffer_size_cardinality(elpa_index_t index) {
+        return 2;
+}
+
+static int cannon_buffer_size_enumerate(elpa_index_t index, int i) {
+        int np_rows;
+        if(index == NULL)
+                return 0;
+        if (elpa_index_int_value_is_set(index, "num_process_rows") != 1) {
+                return 0;
+        }
+        np_rows = elpa_index_get_int_value(index, "num_process_rows", NULL);
+
+        // TODO: 0 is both error code and legal value?
+        if(i == 0)
+          return 0;
+        else
+          return np_rows - 1;
+}
+
+static int cannon_buffer_size_is_valid(elpa_index_t index, int n, int new_value) {
+        int np_rows;
+        if(index == NULL)
+                return 0;
+        if (elpa_index_int_value_is_set(index, "num_process_rows") != 1) {
+                return 0;
+        }
+        np_rows = elpa_index_get_int_value(index, "num_process_rows", NULL);
+
+        return ((new_value >= 0) && (new_value < np_rows));
 }
 
 elpa_index_t elpa_index_instance() {
