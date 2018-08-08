@@ -1022,3 +1022,17 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
         /* Could set all values */
         return 1;
 }
+
+int elpa_index_print_all_parameters(elpa_index_t index) {
+        for (int i = 0; i < nelements(int_entries); i++) {
+                fprintf(stderr, " %s = ", int_entries[i].base.name);
+                if (int_entries[i].to_string) {
+                        fprintf(stderr, " %s\n", int_entries[i].to_string(index->int_options.values[i]));
+                } else {
+                        fprintf(stderr, " %d\n", index->int_options.values[i]);
+                }
+        }
+        fprintf(stderr, "\n");
+
+        return 1;
+}

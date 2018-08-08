@@ -154,6 +154,7 @@ module elpa_impl
      procedure, private :: elpa_transform_back_generalized_fc
 #endif
 
+     procedure, public :: print_all_parameters => elpa_print_all_parameters
 #ifdef ENABLE_AUTOTUNING
      procedure, public :: autotune_setup => elpa_autotune_setup
      procedure, public :: autotune_step => elpa_autotune_step
@@ -1023,6 +1024,20 @@ module elpa_impl
       print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
       if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
         stop "This should not happen (in elpa_autotune_print_best())"
+      endif
+    end subroutine
+
+
+    !> \brief function to print all the parameters, that have been set
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    subroutine elpa_print_all_parameters(self)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+
+      print *, "The following parameters have been set"
+      if (elpa_index_print_all_parameters_c(self%index) /= 1) then
+        stop "This should not happen (in elpa_print_all_parameters())"
       endif
     end subroutine
 

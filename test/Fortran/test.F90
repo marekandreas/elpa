@@ -607,6 +607,10 @@ program test
      endif
 #endif
 
+
+! print all parameters
+     call e%print_all_parameters()
+
 #ifdef TEST_ALL_KERNELS
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #endif
