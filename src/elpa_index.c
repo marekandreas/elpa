@@ -174,7 +174,6 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL),
         INT_PARAMETER_ENTRY("num_processes", "Total number of processes", NULL),
         INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", bw_is_valid),
-        INT_PARAMETER_ENTRY("suppress_warnings", "If specified, warnings will NOT be printed on this mpi rank", NULL),
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication"),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator"),
@@ -284,6 +283,7 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
 #define IMPLEMENT_GETENV(TYPE, PRINTF_SPEC, ...) \
         static int getenv_##TYPE(elpa_index_t index, const char *env_variable, enum NOTIFY_FLAGS notify_flag, int n, TYPE *value, const char *error_string) { \
                 int err; \
+                int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL); \
                 char *env_value = getenv(env_variable); \
                 if (env_value) { \
                         err = elpa_##TYPE##_string_to_value(TYPE##_entries[n].base.name, env_value, value); \
@@ -294,14 +294,14 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
                                 const char *value_string = NULL; \
                                 if (elpa_##TYPE##_value_to_string(TYPE##_entries[n].base.name, *value, &value_string) == ELPA_OK) { \
                                         if (!(index->TYPE##_options.notified[n] & notify_flag)) { \
-                                                if (! elpa_index_int_value_is_set(index, "suppress_warnings")) { \
+                                                if (is_process_id_zero == 1) { \
                                                         fprintf(stderr, "ELPA: %s '%s' is set to %s due to environment variable %s\n", \
                                                                       error_string, TYPE##_entries[n].base.name, value_string, env_variable); \
                                                 } \
                                                 index->TYPE##_options.notified[n] |= notify_flag; \
                                         } \
                                 } else { \
-                                        if (! elpa_index_int_value_is_set(index, "suppress_warnings")) { \
+                                        if (is_process_id_zero == 1) { \
                                                 fprintf(stderr, "ELPA: %s '%s' is set to '" PRINTF_SPEC "' due to environment variable %s\n", \
                                                         error_string, TYPE##_entries[n].base.name, *value, env_variable);\
                                         } \
