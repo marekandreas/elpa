@@ -963,8 +963,19 @@ int elpa_index_autotune_cardinality(elpa_index_t index, int autotune_level, int 
         return N;
 }
 
+void elpa_index_print_int_parameter(elpa_index_t index, char* buff, int i)
+{
+        sprintf(buff, "%s = ", int_entries[i].base.name);
+        if (int_entries[i].to_string) {
+                sprintf(buff, "%s%s\n", buff, int_entries[i].to_string(index->int_options.values[i]));
+        } else {
+                sprintf(buff, "%s%d\n", buff, index->int_options.values[i]);
+        }
+}
+
 int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n) {
         int n_original = n;
+        char buff[100];
         int debug = elpa_index_get_int_value(index, "debug", NULL);
         for (int i = 0; i < nelements(int_entries); i++) {
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
@@ -982,12 +993,8 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
                 fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d ***\n", n_original);
                 for (int i = 0; i < nelements(int_entries); i++) {
                         if (is_tunable(index, i, autotune_level, autotune_domain)) {
-                                fprintf(stderr, "%s = ", int_entries[i].base.name);
-                                if (int_entries[i].to_string) {
-                                        fprintf(stderr, "%s\n", int_entries[i].to_string(index->int_options.values[i]));
-                                } else {
-                                        fprintf(stderr, "%d\n", index->int_options.values[i]);
-                                }
+                                elpa_index_print_int_parameter(index, buff, i);
+                                fprintf(stderr, "%s", buff);
                         }
                 }
                 fprintf(stderr, "***\n\n");
@@ -998,6 +1005,7 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
 }
 
 int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n) {
+        char buff[100];
         //int debug = elpa_index_get_int_value(index, "debug", NULL);
         //for (int i = 0; i < nelements(int_entries); i++) {
         //        if (is_tunable(index, i, autotune_level, autotune_domain)) {
@@ -1013,12 +1021,8 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
         //}
         for (int i = 0; i < nelements(int_entries); i++) {
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
-                        fprintf(stderr, " %s = ", int_entries[i].base.name);
-                        if (int_entries[i].to_string) {
-                                fprintf(stderr, " %s\n", int_entries[i].to_string(index->int_options.values[i]));
-                        } else {
-                                fprintf(stderr, " %d\n", index->int_options.values[i]);
-                        }
+                        elpa_index_print_int_parameter(index, buff, i);
+                        fprintf(stderr, "%s", buff);
                 }
         }
         fprintf(stderr, "\n");
@@ -1029,7 +1033,7 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
 
 int elpa_index_print_all_parameters(elpa_index_t index) {
         const int LEN =10000;
-        char out_structure[LEN], out_set[LEN], out_defaults[LEN], out_nowhere[LEN];
+        char out_structure[LEN], out_set[LEN], out_defaults[LEN], out_nowhere[LEN], buff[100];
         char (*out)[LEN];
         sprintf(out_structure, "Parameters describing structure of the computation:\n");
         sprintf(out_set, "Parameters explicitly set by the user:\n");
@@ -1046,12 +1050,8 @@ int elpa_index_print_all_parameters(elpa_index_t index) {
                                 out = &out_defaults;
                         } else
                                 out = &out_nowhere;
-                        sprintf(*out, "%s %s = ", *out, int_entries[i].base.name);
-                        if (int_entries[i].to_string) {
-                                sprintf(*out, "%s%s\n", *out, int_entries[i].to_string(index->int_options.values[i]));
-                        } else {
-                                sprintf(*out, "%s%d\n",*out, index->int_options.values[i]);
-                        }
+                        elpa_index_print_int_parameter(index, buff, i);
+                        sprintf(*out, "%s%s", *out, buff);
                 }
                 fprintf(stderr, "%s\n%s\n%s\n", out_structure, out_set, out_defaults);
         }
