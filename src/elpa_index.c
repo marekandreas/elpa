@@ -168,8 +168,11 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("local_ncols", "Number of matrix columns stored on this process", NULL),
         INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition", NULL),
         INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition", NULL),
+        INT_PARAMETER_ENTRY("process_id", "Process rank", NULL),
+        INT_PARAMETER_ENTRY("is_process_id_zero", "Is it a process with rank zero?", NULL),
         INT_PARAMETER_ENTRY("num_process_rows", "Number of process row number in the 2D domain decomposition", NULL),
         INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL),
+        INT_PARAMETER_ENTRY("num_processes", "Total number of processes", NULL),
         INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", bw_is_valid),
         INT_PARAMETER_ENTRY("suppress_warnings", "If specified, warnings will NOT be printed on this mpi rank", NULL),
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),
@@ -1024,15 +1027,18 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
 }
 
 int elpa_index_print_all_parameters(elpa_index_t index) {
-        for (int i = 0; i < nelements(int_entries); i++) {
-                fprintf(stderr, " %s = ", int_entries[i].base.name);
-                if (int_entries[i].to_string) {
-                        fprintf(stderr, " %s\n", int_entries[i].to_string(index->int_options.values[i]));
-                } else {
-                        fprintf(stderr, " %d\n", index->int_options.values[i]);
+        int process_id = elpa_index_get_int_value(index, "process_id", NULL);
+        if(process_id == 0){
+                for (int i = 0; i < nelements(int_entries); i++) {
+                        fprintf(stderr, " %s = ", int_entries[i].base.name);
+                        if (int_entries[i].to_string) {
+                                fprintf(stderr, " %s\n", int_entries[i].to_string(index->int_options.values[i]));
+                        } else {
+                                fprintf(stderr, " %d\n", index->int_options.values[i]);
+                        }
                 }
+                fprintf(stderr, "\n");
         }
-        fprintf(stderr, "\n");
 
         return 1;
 }

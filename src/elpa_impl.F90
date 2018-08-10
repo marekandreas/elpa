@@ -255,9 +255,10 @@ module elpa_impl
     subroutine set_or_check_missing_comm_params(self)
       implicit none
       class(elpa_impl_t), intent(inout)   :: self
-      integer                             :: mpi_comm_rows, mpi_comm_cols, mpierr, error, &
-                                             my_prow, my_pcol, present_my_prow, present_my_pcol, &
-                                             np_rows, np_cols, present_np_rows, present_np_cols
+      integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, mpierr, error, &
+                                             my_prow, my_pcol, my_id, present_my_prow, present_my_pcol, present_my_id, &
+                                             np_rows, np_cols, np_total, present_np_rows, present_np_cols, present_np_total, &
+                                             is_process_id_zero
       if (.not. (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) ) then
         print *,"MPI row and column communicators not set correctly. Aborting..."
         stop
@@ -308,6 +309,54 @@ module elpa_impl
       else
         call self%set("process_col", my_pcol, error)
       endif
+
+
+      ! sadly, at the moment, the parent mpi communicator is not required to be set, e.g. in legacy tests
+      ! we thus cannot obtain process_id
+      ! we can, however, determine the number of prcesses and determine, whether the given process has id 0, 
+      ! assuming, that that is the wan with row and column ids == 0
+      is_process_id_zero = 0
+      if (self%is_set("mpi_comm_parent") == 1) then
+        call self%get("mpi_comm_parent", mpi_comm_parent, error)
+
+        call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
+        if(self%is_set("num_processes") == 1) then
+          call self%get("num_processes", present_np_total, error)
+          if(np_total .ne. present_np_total) then
+            print *,"MPI parent communicator not set correctly. Aborting..."
+            stop
+          endif
+        else
+          call self%set("num_processes", np_total, error)
+        endif
+
+        if(np_total .ne. np_rows * np_cols) then
+          print *,"MPI parent communicator and row/col communicators do not match. Aborting..."
+          stop
+        endif
+
+        call mpi_comm_rank(mpi_comm_parent, my_id, mpierr)
+        if(self%is_set("process_id") == 1) then
+          call self%get("process_id", present_my_id, error)
+          if(my_id .ne. present_my_id) then
+            print *,"MPI parent communicator not set correctly. Aborting..."
+            stop
+          endif
+        else
+          call self%set("process_id", my_id, error)
+        endif
+
+        if(my_id == 0) &
+          is_process_id_zero = 1
+      else
+        ! we can set number of processes and whether process id is zero, but not the process id.
+        ! we assume, that my_pcol == 0 && my_prow == 0  <==> my_id == 0
+        call self%set("num_process", np_rows * np_cols, error)
+        if((my_prow == 0) .and. (my_pcol == 0)) &
+          is_process_id_zero = 1
+      endif
+        call self%set("is_process_id_zero", is_process_id_zero, error)
+
     end subroutine
 
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
