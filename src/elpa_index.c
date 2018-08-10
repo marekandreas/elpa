@@ -114,7 +114,7 @@ static int is_positive(elpa_index_t index, int n, int new_value);
 static int elpa_double_string_to_value(char *name, char *string, double *value);
 static int elpa_double_value_to_string(char *name, double value, const char **string);
 
-#define BASE_ENTRY(option_name, option_description, once_value, readonly_value) \
+#define BASE_ENTRY(option_name, option_description, once_value, readonly_value, print_flag_value) \
                 .base = { \
                         .name = option_name, \
                         .description = option_description, \
@@ -122,17 +122,18 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
                         .readonly = readonly_value, \
                         .env_default = "ELPA_DEFAULT_" option_name, \
                         .env_force = "ELPA_FORCE_" option_name, \
+                        .print_flag = print_flag_value, \
                 }
 
-#define INT_PARAMETER_ENTRY(option_name, option_description, valid_func) \
+#define INT_PARAMETER_ENTRY(option_name, option_description, valid_func, print_flag) \
         { \
-                BASE_ENTRY(option_name, option_description, 1, 0), \
+                BASE_ENTRY(option_name, option_description, 1, 0, print_flag), \
                 .valid = valid_func, \
         }
 
-#define BOOL_ENTRY(option_name, option_description, default, tune_level, tune_domain) \
+#define BOOL_ENTRY(option_name, option_description, default, tune_level, tune_domain, print_flag) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0, print_flag), \
                 .default_value = default, \
                 .autotune_level = tune_level, \
                 .autotune_domain = tune_domain, \
@@ -141,9 +142,9 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
                 .valid = valid_bool, \
         }
 
-#define INT_ENTRY(option_name, option_description, default, tune_level, tune_domain, card_func, enumerate_func, valid_func, to_string_func) \
+#define INT_ENTRY(option_name, option_description, default, tune_level, tune_domain, card_func, enumerate_func, valid_func, to_string_func, print_flag) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0, print_flag), \
                 .default_value = default, \
                 .autotune_level = tune_level, \
                 .autotune_domain = tune_domain, \
@@ -153,81 +154,81 @@ static int elpa_double_value_to_string(char *name, double value, const char **st
                 .to_string = to_string_func, \
         }
 
-#define INT_ANY_ENTRY(option_name, option_description) \
+#define INT_ANY_ENTRY(option_name, option_description, print_flag) \
         { \
-                BASE_ENTRY(option_name, option_description, 0, 0), \
+                BASE_ENTRY(option_name, option_description, 0, 0, print_flag), \
         }
 
 /* The order here is important! Tunable options that are dependent on other
  * tunable options must appear later in the list than their prerequisites */
 static const elpa_index_int_entry_t int_entries[] = {
-        INT_PARAMETER_ENTRY("na", "Global matrix has size (na * na)", na_is_valid),
-        INT_PARAMETER_ENTRY("nev", "Number of eigenvectors to be computed, 0 <= nev <= na", nev_is_valid),
-        INT_PARAMETER_ENTRY("nblk", "Block size of scalapack block-cyclic distribution", is_positive),
-        INT_PARAMETER_ENTRY("local_nrows", "Number of matrix rows stored on this process", NULL),
-        INT_PARAMETER_ENTRY("local_ncols", "Number of matrix columns stored on this process", NULL),
-        INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition", NULL),
-        INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition", NULL),
-        INT_PARAMETER_ENTRY("process_id", "Process rank", NULL),
-        INT_PARAMETER_ENTRY("is_process_id_zero", "Is it a process with rank zero?", NULL),
-        INT_PARAMETER_ENTRY("num_process_rows", "Number of process row number in the 2D domain decomposition", NULL),
-        INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL),
-        INT_PARAMETER_ENTRY("num_processes", "Total number of processes", NULL),
-        INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", bw_is_valid),
-        INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication"),
-        INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication"),
-        INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator"),
-        INT_ANY_ENTRY("blacs_context", "BLACS context"),
+        INT_PARAMETER_ENTRY("na", "Global matrix has size (na * na)", na_is_valid, PRINT_STRUCTURE),
+        INT_PARAMETER_ENTRY("nev", "Number of eigenvectors to be computed, 0 <= nev <= na", nev_is_valid, PRINT_STRUCTURE),
+        INT_PARAMETER_ENTRY("nblk", "Block size of scalapack block-cyclic distribution", is_positive, PRINT_STRUCTURE),
+        INT_PARAMETER_ENTRY("local_nrows", "Number of matrix rows stored on this process", NULL, PRINT_NO),
+        INT_PARAMETER_ENTRY("local_ncols", "Number of matrix columns stored on this process", NULL, PRINT_NO),
+        INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition", NULL, PRINT_NO),
+        INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition", NULL, PRINT_NO),
+        INT_PARAMETER_ENTRY("process_id", "Process rank", NULL, PRINT_NO),
+        INT_PARAMETER_ENTRY("is_process_id_zero", "Is it a process with rank zero?", NULL, PRINT_NO),
+        INT_PARAMETER_ENTRY("num_process_rows", "Number of process row number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
+        INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
+        INT_PARAMETER_ENTRY("num_processes", "Total number of processes", NULL, PRINT_STRUCTURE),
+        INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", bw_is_valid, PRINT_YES),
+        INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication", PRINT_NO),
+        INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", PRINT_NO),
+        INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator", PRINT_NO),
+        INT_ANY_ENTRY("blacs_context", "BLACS context", PRINT_NO),
         INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name),
+                        number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
         INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, gpu_is_valid, NULL),
+                        cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
         INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
         INT_ENTRY("gpu_solve_tridi", "Use GPU acceleration for ELPA solve tridi", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_trans_ev", "Use GPU acceleration for ELPA1 trans ev", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
         INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL),
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
-                        number_of_real_kernels, real_kernel_enumerate, real_kernel_is_valid, real_kernel_name),
+                        number_of_real_kernels, real_kernel_enumerate, real_kernel_is_valid, real_kernel_name, PRINT_YES),
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
-                        number_of_complex_kernels, complex_kernel_enumerate, complex_kernel_is_valid, complex_kernel_name),
+                        number_of_complex_kernels, complex_kernel_enumerate, complex_kernel_is_valid, complex_kernel_name, PRINT_YES),
 
         INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        min_tile_size_cardinality, min_tile_size_enumerate, min_tile_size_is_valid, NULL),
+                        min_tile_size_cardinality, min_tile_size_enumerate, min_tile_size_is_valid, NULL, PRINT_YES),
         INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL),
+                        intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL, PRINT_YES),
 
         INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
+                        band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL, PRINT_YES),
         INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL),
+                        max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL, PRINT_YES),
 #ifdef WITH_OPENMP
         INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
+                        omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL, PRINT_YES),
 #else
         INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL),
+                        omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL, PRINT_YES),
 #endif
         INT_ENTRY("cannon_buffer_size", "Increasing the buffer size might make it faster, but costs memory", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
-                        cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL),
+                        cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL, PRINT_YES),
         //BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL),
-        BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL),
-        BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
-        BOOL_ENTRY("debug", "Emit verbose debugging messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
-        BOOL_ENTRY("print_flops", "Print FLOP rates on task 0", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
-        BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
-        BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, 0),
+        BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL, PRINT_YES),
+        BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
+        BOOL_ENTRY("debug", "Emit verbose debugging messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
+        BOOL_ENTRY("print_flops", "Print FLOP rates on task 0", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
+        BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
+        BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
 };
 
 #define READONLY_DOUBLE_ENTRY(option_name, option_description) \
@@ -1027,18 +1028,32 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
 }
 
 int elpa_index_print_all_parameters(elpa_index_t index) {
-        int process_id = elpa_index_get_int_value(index, "process_id", NULL);
-        if(process_id == 0){
+        const int LEN =10000;
+        char out_structure[LEN], out_set[LEN], out_defaults[LEN], out_nowhere[LEN];
+        char (*out)[LEN];
+        sprintf(out_structure, "Parameters describing structure of the computation:\n");
+        sprintf(out_set, "Parameters explicitly set by the user:\n");
+        sprintf(out_defaults, "Parameters with default or environment value:\n");
+        sprintf(out_nowhere, "Not to be printed:\n");
+        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
+        if(is_process_id_zero){
                 for (int i = 0; i < nelements(int_entries); i++) {
-                        fprintf(stderr, " %s = ", int_entries[i].base.name);
+                        if(int_entries[i].base.print_flag == PRINT_STRUCTURE) {
+                                out = &out_structure;
+                        } else if(int_entries[i].base.print_flag == PRINT_YES && index->int_options.is_set[i]) {
+                                out = &out_set;
+                        } else if(int_entries[i].base.print_flag == PRINT_YES && !index->int_options.is_set[i]) {
+                                out = &out_defaults;
+                        } else
+                                out = &out_nowhere;
+                        sprintf(*out, "%s %s = ", *out, int_entries[i].base.name);
                         if (int_entries[i].to_string) {
-                                fprintf(stderr, " %s\n", int_entries[i].to_string(index->int_options.values[i]));
+                                sprintf(*out, "%s%s\n", *out, int_entries[i].to_string(index->int_options.values[i]));
                         } else {
-                                fprintf(stderr, " %d\n", index->int_options.values[i]);
+                                sprintf(*out, "%s%d\n",*out, index->int_options.values[i]);
                         }
                 }
-                fprintf(stderr, "\n");
+                fprintf(stderr, "%s\n%s\n%s\n", out_structure, out_set, out_defaults);
         }
-
         return 1;
 }

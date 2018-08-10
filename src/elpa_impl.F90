@@ -1084,7 +1084,7 @@ module elpa_impl
       implicit none
       class(elpa_impl_t), intent(inout) :: self
 
-      print *, "The following parameters have been set"
+      !print *, "The following parameters have been set"
       if (elpa_index_print_all_parameters_c(self%index) /= 1) then
         stop "This should not happen (in elpa_print_all_parameters())"
       endif

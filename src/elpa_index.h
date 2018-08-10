@@ -90,6 +90,7 @@ typedef struct {
         char *env_force;
         int once;
         int readonly;
+        int print_flag;
 } elpa_index_entry_t;
 
 
@@ -114,6 +115,12 @@ typedef struct {
 enum NOTIFY_FLAGS {
         NOTIFY_ENV_DEFAULT = (1<<0),
         NOTIFY_ENV_FORCE   = (1<<1),
+};
+
+enum PRINT_FLAGS {
+        PRINT_STRUCTURE,
+        PRINT_YES,
+        PRINT_NO,
 };
 
 struct elpa_index_struct {
