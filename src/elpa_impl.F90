@@ -1071,7 +1071,7 @@ module elpa_impl
 
       print *, "The following settings were found to be best:"
       print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
-      if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
+      if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain) /= 1) then
         stop "This should not happen (in elpa_autotune_print_best())"
       endif
     end subroutine

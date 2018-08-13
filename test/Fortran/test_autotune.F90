@@ -91,6 +91,7 @@ program test
    use test_blacs_infrastructure
    use test_check_correctness
    use test_analytic
+   use iso_fortran_env
 
 #ifdef HAVE_REDIRECT
    use test_redirect
@@ -206,7 +207,7 @@ program test
 
    if (myid == 0) print *, ""
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
+   tune_state => e%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
    iter=0
@@ -231,6 +232,7 @@ program test
    call e%autotune_set_best(tune_state)
    if (myid .eq. 0) then
      print *, "The best combination found by the autotuning:"
+     flush(output_unit)
      call e%autotune_print_best(tune_state)
    endif
    ! de-allocate autotune object

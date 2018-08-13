@@ -423,17 +423,17 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
 
 /*
  !f> interface
- !f>   function elpa_index_print_autotune_parameters_c(index, autotune_level, autotune_domain, n) result(success) &
+ !f>   function elpa_index_print_autotune_parameters_c(index, autotune_level, autotune_domain) result(success) &
  !f>       bind(C, name="elpa_index_print_autotune_parameters")
  !f>     import c_int, c_ptr, c_char
  !f>     type(c_ptr), intent(in), value :: index
- !f>     integer(kind=c_int), intent(in), value :: autotune_level, autotune_domain, n
+ !f>     integer(kind=c_int), intent(in), value :: autotune_level, autotune_domain
  !f>     integer(kind=c_int) :: success
  !f>   end function
  !f> end interface
  !f>
  */
-int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n);
+int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain);
 
 /*
  !f> interface

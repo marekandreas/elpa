@@ -989,14 +989,10 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
                         n /= int_entries[i].cardinality(index);
                 }
         }
-        if (debug == 1) {
+        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
+        if (debug == 1 && is_process_id_zero) {
                 fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d ***\n", n_original);
-                for (int i = 0; i < nelements(int_entries); i++) {
-                        if (is_tunable(index, i, autotune_level, autotune_domain)) {
-                                elpa_index_print_int_parameter(index, buff, i);
-                                fprintf(stderr, "%s", buff);
-                        }
-                }
+                elpa_index_print_autotune_parameters(index, autotune_level, autotune_domain);
                 fprintf(stderr, "***\n\n");
         }
 
@@ -1004,30 +1000,17 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
         return 1;
 }
 
-int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n) {
+int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain) {
         char buff[100];
-        //int debug = elpa_index_get_int_value(index, "debug", NULL);
-        //for (int i = 0; i < nelements(int_entries); i++) {
-        //        if (is_tunable(index, i, autotune_level, autotune_domain)) {
-        //                int value = int_entries[i].enumerate(n % int_entries[i].cardinality());
-        //                /* Try to set option i to that value */
-        //                if (int_entries[i].valid(index, i, value)) {
-        //                        index->int_options.values[i] = value;
-        //                } else {
-        //                        return 0;
-        //                }
-        //                n /= int_entries[i].cardinality();
-        //        }
-        //}
-        for (int i = 0; i < nelements(int_entries); i++) {
-                if (is_tunable(index, i, autotune_level, autotune_domain)) {
-                        elpa_index_print_int_parameter(index, buff, i);
-                        fprintf(stderr, "%s", buff);
+        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
+        if (is_process_id_zero) {
+                for (int i = 0; i < nelements(int_entries); i++) {
+                        if (is_tunable(index, i, autotune_level, autotune_domain)) {
+                                elpa_index_print_int_parameter(index, buff, i);
+                                fprintf(stderr, "%s", buff);
+                        }
                 }
         }
-        fprintf(stderr, "\n");
-
-        /* Could set all values */
         return 1;
 }
 
