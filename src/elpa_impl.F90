@@ -903,9 +903,9 @@ module elpa_impl
       ts_impl%level = level
       ts_impl%domain = domain
 
-      ts_impl%i = -1
+      ts_impl%current = -1
       ts_impl%min_loc = -1
-      ts_impl%N = elpa_index_autotune_cardinality_c(self%index, level, domain)
+      ts_impl%cardinality = elpa_index_autotune_cardinality_c(self%index, level, domain)
 
       tune_state => ts_impl
 
@@ -974,7 +974,7 @@ module elpa_impl
 
       unfinished = .false.
 
-      if (ts_impl%i >= 0) then
+      if (ts_impl%current >= 0) then
 #ifdef HAVE_DETAILED_TIMINGS
         time_spent = self%autotune_timer%get("accumulator")
 #else
@@ -982,14 +982,14 @@ module elpa_impl
 #endif
         if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
           ts_impl%min_val = time_spent
-          ts_impl%min_loc = ts_impl%i
+          ts_impl%min_loc = ts_impl%current
         end if
         call self%autotune_timer%free()
       endif
 
-      do while (ts_impl%i < ts_impl%N - 1)
-        ts_impl%i = ts_impl%i + 1
-        if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%i) == 1) then
+      do while (ts_impl%current < ts_impl%cardinality - 1)
+        ts_impl%current = ts_impl%current + 1
+        if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%current) == 1) then
           unfinished = .true.
           return
         end if

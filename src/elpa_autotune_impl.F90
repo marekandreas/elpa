@@ -7,10 +7,10 @@ module elpa_autotune_impl
 #ifdef ENABLE_AUTOTUNING
   type, extends(elpa_autotune_t) :: elpa_autotune_impl_t
     class(elpa_abstract_impl_t), pointer :: parent => NULL()
-    integer :: i = 0
+    integer :: current = 0
     real(kind=C_DOUBLE) :: min_val = 0.0_C_DOUBLE
     integer :: min_loc = 0
-    integer :: N = 0
+    integer :: cardinality = 0
     integer :: level = 0
     integer :: domain = 0
     contains
