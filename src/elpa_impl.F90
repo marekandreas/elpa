@@ -444,6 +444,14 @@ module elpa_impl
 
       ! Otherwise parameters are missing
       error = ELPA_ERROR
+#else
+        call self%set("process_row", 0, error)
+        call self%set("process_col", 0, error)
+        call self%set("process_id", 0, error)
+        call self%set("is_process_id_zero", 1, error)
+        call self%set("num_process_rows", 1, error)
+        call self%set("num_process_cols", 1, error)
+        call self%set("num_processes", 1, error)
 #endif
 
     end function
