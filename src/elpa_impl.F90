@@ -62,6 +62,7 @@ module elpa_impl
   use elpa_autotune_impl
 #endif
   use, intrinsic :: iso_c_binding
+  use iso_fortran_env
   implicit none
 
   private
@@ -160,6 +161,7 @@ module elpa_impl
      procedure, public :: autotune_step => elpa_autotune_step
      procedure, public :: autotune_set_best => elpa_autotune_set_best
      procedure, public :: autotune_print_best => elpa_autotune_print_best
+     procedure, public :: autotune_print_state => elpa_autotune_print_state
 #endif
      procedure, private :: construct_scalapack_descriptor => elpa_construct_scalapack_descriptor
   end type elpa_impl_t
@@ -1071,6 +1073,7 @@ module elpa_impl
 
       print *, "The following settings were found to be best:"
       print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
+      flush(output_unit)
       if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain) /= 1) then
         stop "This should not happen (in elpa_autotune_print_best())"
       endif
@@ -1090,6 +1093,30 @@ module elpa_impl
       endif
     end subroutine
 
+
+    !> \brief function to print the state of the autotuning
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
+    subroutine elpa_autotune_print_state(self, tune_state)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+
+      select type(tune_state)
+        type is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      !print *, "The following settings were found to be best:"
+      if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
+                  ts_impl%min_val, ts_impl%current, ts_impl%cardinality) /= 1) then
+        stop "This should not happen (in elpa_autotune_print_state())"
+      endif
+    end subroutine
 
 
     !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method

@@ -201,13 +201,16 @@ program test
    assert_elpa_ok(error)
 #endif
    call e%set("timings",1, error)
-   !call e%set("debug",1)
+
+   call e%set("debug",1)
+   call e%set("gpu", 0)
+   call e%set("max_stored_rows", 30)
 
    assert_elpa_ok(e%setup())
 
    if (myid == 0) print *, ""
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error)
+   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
    iter=0
@@ -226,6 +229,7 @@ program test
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                          .true., .true., print_times=.false.)
      a(:,:) = as(:,:)
+     call e%autotune_print_state(tune_state)
    end do
 
    ! set and print the autotuned-settings

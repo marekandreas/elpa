@@ -43,6 +43,7 @@
 //    the original distribution, the GNU Lesser General Public License.
 //
 //    Authors: L. Huedepohl and A. Marek, MPCDF
+#include <assert.h>
 #include <elpa/elpa.h>
 #include "elpa_index.h"
 
@@ -945,6 +946,13 @@ elpa_index_t elpa_index_instance() {
         return index;
 }
 
+static int is_tunable_but_overriden(elpa_index_t index, int i, int autotune_level, int autotune_domain) {
+        return (int_entries[i].autotune_level != 0) &&
+               (int_entries[i].autotune_level <= autotune_level) &&
+               (int_entries[i].autotune_domain & autotune_domain) &&
+               (index->int_options.is_set[i]);
+}
+
 static int is_tunable(elpa_index_t index, int i, int autotune_level, int autotune_domain) {
         return (int_entries[i].autotune_level != 0) &&
                (int_entries[i].autotune_level <= autotune_level) &&
@@ -973,25 +981,25 @@ void elpa_index_print_int_parameter(elpa_index_t index, char* buff, int i)
         }
 }
 
-int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n) {
-        int n_original = n;
+int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int current) {
+        int current_cpy = current;
         char buff[100];
         int debug = elpa_index_get_int_value(index, "debug", NULL);
         for (int i = 0; i < nelements(int_entries); i++) {
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
-                        int value = int_entries[i].enumerate(index, n % int_entries[i].cardinality(index));
+                        int value = int_entries[i].enumerate(index, current_cpy % int_entries[i].cardinality(index));
                         /* Try to set option i to that value */
                         if (int_entries[i].valid(index, i, value)) {
                                 index->int_options.values[i] = value;
                         } else {
                                 return 0;
                         }
-                        n /= int_entries[i].cardinality(index);
+                        current_cpy /= int_entries[i].cardinality(index);
                 }
         }
         int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         if (debug == 1 && is_process_id_zero) {
-                fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d ***\n", n_original);
+                fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d ***\n", current);
                 elpa_index_print_autotune_parameters(index, autotune_level, autotune_domain);
                 fprintf(stderr, "***\n\n");
         }
@@ -1011,6 +1019,60 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
                         }
                 }
         }
+        return 1;
+}
+
+int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int autotune_domain, int min_loc,
+                                    double min_val, int current, int cardinality) {
+        char buff[100];
+        elpa_index_t index_best;
+        int min_loc_cpy = min_loc;
+
+        // get index with the currently best parameters
+        index_best = elpa_index_instance();
+
+        if(min_loc_cpy > -1){
+                for (int i = 0; i < nelements(int_entries); i++) {
+                        if (is_tunable(index, i, autotune_level, autotune_domain)) {
+
+                                int value = int_entries[i].enumerate(index, min_loc_cpy % int_entries[i].cardinality(index));
+                                /* we are setting the value for output only, we do not need to check consistency */
+                                index_best->int_options.values[i] = value;
+                                min_loc_cpy /= int_entries[i].cardinality(index);
+                        }
+                }
+        }
+        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
+        if (is_process_id_zero) {
+                fprintf(stderr, "\n*** AUTOTUNING STATE ***\n");
+                fprintf(stderr, "** This is the state of the autotuning object\n");
+                fprintf(stderr, "autotune level = %d\n", autotune_level);
+                fprintf(stderr, "autotune domain = %d\n", autotune_domain);
+                fprintf(stderr, "autotune cardinality = %d\n", cardinality);
+                fprintf(stderr, "current idx = %d\n", current);
+                fprintf(stderr, "best idx = %d\n", min_loc);
+                fprintf(stderr, "best time = %lf\n", min_val);
+                if(min_loc_cpy > -1) {
+                        fprintf(stderr, "** The following parameters are autotuned with so far the best values\n");
+                        for (int i = 0; i < nelements(int_entries); i++) {
+                                if (is_tunable(index, i, autotune_level, autotune_domain)) {
+                                        elpa_index_print_int_parameter(index_best, buff, i);
+                                        fprintf(stderr, "%s", buff);
+                                }
+                        }
+                        fprintf(stderr, "** The following parameters would be autotuned on the selected autotuning level, but were overridden by the set() method\n");
+                        for (int i = 0; i < nelements(int_entries); i++) {
+                                if (is_tunable_but_overriden(index, i, autotune_level, autotune_domain)) {
+                                        elpa_index_print_int_parameter(index_best, buff, i);
+                                        fprintf(stderr, "%s", buff);
+                                }
+                        }
+                }else{
+                        fprintf(stderr, "** No output after first step\n");
+                }
+                fprintf(stderr, "*** END OF AUTOTUNING STATE ***\n");
+        }
+        elpa_index_free(index_best);
         return 1;
 }
 
