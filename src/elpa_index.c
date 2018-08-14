@@ -706,11 +706,11 @@ static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
 static int band_to_full_cardinality(elpa_index_t index) {
 	return 10;
 }
-
 static int band_to_full_enumerate(elpa_index_t index, int i) {
 	return i+1;
 }
 
+// TODO shouldnt it be only for ELPA2??
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
 	int max_block=10;
         return (1 <= new_value) && (new_value <= max_block);
@@ -985,19 +985,23 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
         int current_cpy = current;
         char buff[100];
         int debug = elpa_index_get_int_value(index, "debug", NULL);
+        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
+
+        //if(is_process_id_zero) fprintf(stderr, "***Trying a new autotuning index %d\n", current);
         for (int i = 0; i < nelements(int_entries); i++) {
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
                         int value = int_entries[i].enumerate(index, current_cpy % int_entries[i].cardinality(index));
+                        //if(is_process_id_zero) fprintf(stderr, "  * val[%d] = %d -> %d\n", i, current_cpy % int_entries[i].cardinality(index), value);
                         /* Try to set option i to that value */
                         if (int_entries[i].valid(index, i, value)) {
                                 index->int_options.values[i] = value;
                         } else {
+                                //if(is_process_id_zero) fprintf(stderr, "  *NOT VALID becaluse of i %d (%s) and value %d translated to %d\n", i, int_entries[i].base.name, current_cpy % int_entries[i].cardinality(index), value);
                                 return 0;
                         }
                         current_cpy /= int_entries[i].cardinality(index);
                 }
         }
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         if (debug == 1 && is_process_id_zero) {
                 fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d ***\n", current);
                 elpa_index_print_autotune_parameters(index, autotune_level, autotune_domain);
@@ -1030,7 +1034,7 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
         FILE *f;
 
         if(file_name == "")
-                f = stderr;
+                f = stdout;
         else
                 f = fopen(file_name, "w");
 
@@ -1050,6 +1054,8 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
         }
         int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         if (is_process_id_zero) {
+                if(file_name == "")
+                        fprintf(f, "\n");
                 fprintf(f, "*** AUTOTUNING STATE ***\n");
                 fprintf(f, "** This is the state of the autotuning object\n");
                 fprintf(f, "autotune level = %d\n", autotune_level);
@@ -1069,7 +1075,7 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
                         fprintf(f, "** The following parameters would be autotuned on the selected autotuning level, but were overridden by the set() method\n");
                         for (int i = 0; i < nelements(int_entries); i++) {
                                 if (is_tunable_but_overriden(index, i, autotune_level, autotune_domain)) {
-                                        elpa_index_print_int_parameter(index_best, buff, i);
+                                        elpa_index_print_int_parameter(index, buff, i);
                                         fprintf(f, "%s", buff);
                                 }
                         }
@@ -1107,7 +1113,9 @@ int elpa_index_print_all_parameters(elpa_index_t index) {
                         elpa_index_print_int_parameter(index, buff, i);
                         sprintf(*out, "%s%s", *out, buff);
                 }
-                fprintf(stderr, "%s\n%s\n%s\n", out_structure, out_set, out_defaults);
+                fprintf(stdout, "*** ELPA STATE ***\n");
+                fprintf(stdout, "%s\n%s\n%s", out_structure, out_set, out_defaults);
+                fprintf(stdout, "*** END OF ELPA STATE ***\n");
         }
         return 1;
 }

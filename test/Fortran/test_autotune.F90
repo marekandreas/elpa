@@ -204,7 +204,7 @@ program test
 
    call e%set("debug",1)
    call e%set("gpu", 0)
-   call e%set("max_stored_rows", 30)
+   !call e%set("max_stored_rows", 15, error)
 
    assert_elpa_ok(e%setup())
 
@@ -213,10 +213,13 @@ program test
    tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
+   assert_elpa_ok(error)
+
    iter=0
    do while (e%autotune_step(tune_state))
      iter=iter+1
      write(iter_string,'(I5.5)') iter
+     call e%print_all_parameters()
      call e%timer_start("eigenvectors: iteration "//trim(iter_string))
      call e%eigenvectors(a, ev, z, error)
      call e%timer_stop("eigenvectors: iteration "//trim(iter_string))
