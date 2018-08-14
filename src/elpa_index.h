@@ -451,16 +451,17 @@ int elpa_index_print_all_parameters(elpa_index_t index);
 /*
  !f> interface
  !f>   function elpa_index_print_autotune_state_c(index, autotune_level, autotune_domain, min_loc, &
- !f>                                              min_val, current, cardinality) result(success) &
+ !f>                                              min_val, current, cardinality, file_name) result(success) &
  !f>       bind(C, name="elpa_index_print_autotune_state")
  !f>     import c_int, c_ptr, c_char, c_double
  !f>     type(c_ptr), intent(in), value :: index
  !f>     integer(kind=c_int), intent(in), value :: autotune_level, autotune_domain, min_loc, current, cardinality
  !f>     real(kind=c_double), intent(in), value :: min_val
+ !f>     character(kind=c_char), intent(in)     :: file_name(*)
  !f>     integer(kind=c_int) :: success
  !f>   end function
  !f> end interface
  !f>
  */
 int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int autotune_domain, int min_loc,
-                                    double min_val, int current, int cardinality);
+                                    double min_val, int current, int cardinality, char* filename);

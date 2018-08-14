@@ -1023,10 +1023,16 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
 }
 
 int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int autotune_domain, int min_loc,
-                                    double min_val, int current, int cardinality) {
+                                    double min_val, int current, int cardinality, char* file_name) {
         char buff[100];
         elpa_index_t index_best;
         int min_loc_cpy = min_loc;
+        FILE *f;
+
+        if(file_name == "")
+                f = stderr;
+        else
+                f = fopen(file_name, "w");
 
         // get index with the currently best parameters
         index_best = elpa_index_instance();
@@ -1044,35 +1050,38 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
         }
         int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         if (is_process_id_zero) {
-                fprintf(stderr, "\n*** AUTOTUNING STATE ***\n");
-                fprintf(stderr, "** This is the state of the autotuning object\n");
-                fprintf(stderr, "autotune level = %d\n", autotune_level);
-                fprintf(stderr, "autotune domain = %d\n", autotune_domain);
-                fprintf(stderr, "autotune cardinality = %d\n", cardinality);
-                fprintf(stderr, "current idx = %d\n", current);
-                fprintf(stderr, "best idx = %d\n", min_loc);
-                fprintf(stderr, "best time = %lf\n", min_val);
+                fprintf(f, "*** AUTOTUNING STATE ***\n");
+                fprintf(f, "** This is the state of the autotuning object\n");
+                fprintf(f, "autotune level = %d\n", autotune_level);
+                fprintf(f, "autotune domain = %d\n", autotune_domain);
+                fprintf(f, "autotune cardinality = %d\n", cardinality);
+                fprintf(f, "current idx = %d\n", current);
+                fprintf(f, "best idx = %d\n", min_loc);
+                fprintf(f, "best time = %lf\n", min_val);
                 if(min_loc_cpy > -1) {
-                        fprintf(stderr, "** The following parameters are autotuned with so far the best values\n");
+                        fprintf(f, "** The following parameters are autotuned with so far the best values\n");
                         for (int i = 0; i < nelements(int_entries); i++) {
                                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
                                         elpa_index_print_int_parameter(index_best, buff, i);
-                                        fprintf(stderr, "%s", buff);
+                                        fprintf(f, "%s", buff);
                                 }
                         }
-                        fprintf(stderr, "** The following parameters would be autotuned on the selected autotuning level, but were overridden by the set() method\n");
+                        fprintf(f, "** The following parameters would be autotuned on the selected autotuning level, but were overridden by the set() method\n");
                         for (int i = 0; i < nelements(int_entries); i++) {
                                 if (is_tunable_but_overriden(index, i, autotune_level, autotune_domain)) {
                                         elpa_index_print_int_parameter(index_best, buff, i);
-                                        fprintf(stderr, "%s", buff);
+                                        fprintf(f, "%s", buff);
                                 }
                         }
                 }else{
-                        fprintf(stderr, "** No output after first step\n");
+                        fprintf(f, "** No output after first step\n");
                 }
-                fprintf(stderr, "*** END OF AUTOTUNING STATE ***\n");
+                fprintf(f, "*** END OF AUTOTUNING STATE ***\n");
         }
         elpa_index_free(index_best);
+
+        if(file_name != "")
+                fclose(f);
         return 1;
 }
 

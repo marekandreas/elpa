@@ -159,8 +159,9 @@ module elpa_api
       procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
       procedure(elpa_autotune_step_i), deferred, public :: autotune_step         !< method to do an autotuning step
       procedure(elpa_autotune_set_best_i), deferred, public :: autotune_set_best !< method to set the best options
-      procedure(elpa_autotune_print_best_i), deferred, public :: autotune_print_best !< method to set the best options
-      procedure(elpa_autotune_print_state_i), deferred, public :: autotune_print_state !< method to set the best options
+      procedure(elpa_autotune_print_best_i), deferred, public :: autotune_print_best !< method to print the best options
+      procedure(elpa_autotune_print_state_i), deferred, public :: autotune_print_state !< method to print the state
+      procedure(elpa_autotune_save_state_i), deferred, public :: autotune_save_state !< method to save the state
 #endif
 
       !> \brief These method have to be public, in order to be overrideable in the extension types
@@ -345,6 +346,23 @@ module elpa_api
       implicit none
       class(elpa_t), intent(inout) :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of the autotune save state method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   file_name   string, the name of the file where to save the state
+  !> Prints the best combination of ELPA options
+  abstract interface
+    subroutine elpa_autotune_save_state_i(self, tune_state, file_name)
+      import elpa_t, elpa_autotune_t
+      implicit none
+      class(elpa_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+      character(*), intent(in)        :: file_name
     end subroutine
   end interface
 #endif

@@ -230,6 +230,7 @@ program test
                                          .true., .true., print_times=.false.)
      a(:,:) = as(:,:)
      call e%autotune_print_state(tune_state)
+     call e%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
    end do
 
    ! set and print the autotuned-settings
