@@ -157,6 +157,7 @@ module elpa_impl
 
      procedure, public :: print_all_parameters => elpa_print_all_parameters
      procedure, public :: save_all_parameters => elpa_save_all_parameters
+     procedure, public :: load_all_parameters => elpa_load_all_parameters
 #ifdef ENABLE_AUTOTUNING
      procedure, public :: autotune_setup => elpa_autotune_setup
      procedure, public :: autotune_step => elpa_autotune_step
@@ -1097,12 +1098,10 @@ module elpa_impl
       implicit none
       class(elpa_impl_t), intent(inout) :: self
 
-      !print *, "The following parameters have been set"
       if (elpa_index_print_all_parameters_c(self%index, c_null_char) /= 1) then
         stop "This should not happen (in elpa_print_all_parameters())"
       endif
     end subroutine
-
 
     !> \brief function to save all the parameters, that have been set
     !> Parameters
@@ -1111,11 +1110,24 @@ module elpa_impl
     subroutine elpa_save_all_parameters(self, file_name)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
-      character(*), intent(in)        :: file_name
+      character(*), intent(in)          :: file_name
 
-      !print *, "The following parameters have been set"
       if (elpa_index_print_all_parameters_c(self%index, file_name // c_null_char) /= 1) then
         stop "This should not happen (in elpa_save_all_parameters())"
+      endif
+    end subroutine
+
+    !> \brief function to load all the parameters, which have been saved to a file
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   file_name   string, the name of the file from which to load the parameters
+    subroutine elpa_load_all_parameters(self, file_name)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      character(*), intent(in)          :: file_name
+
+      if (elpa_index_load_all_parameters_c(self%index, file_name // c_null_char) /= 1) then
+        stop "This should not happen (in elpa_load_all_parameters())"
       endif
     end subroutine
 

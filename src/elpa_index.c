@@ -44,6 +44,8 @@
 //
 //    Authors: L. Huedepohl and A. Marek, MPCDF
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <elpa/elpa.h>
 #include "elpa_index.h"
 
@@ -385,6 +387,22 @@ FOR_ALL_TYPES(IMPLEMENT_LOC_FUNCTION)
                 return ELPA_OK; \
         }
 FOR_ALL_TYPES(IMPLEMENT_SET_FUNCTION)
+
+#define IMPLEMENT_SET_FROM_LOAD_FUNCTION(TYPE, PRINTF_SPEC, ...) \
+        int elpa_index_set_from_load_##TYPE##_value(elpa_index_t index, char *name, TYPE value, int explicit) { \
+                if (sizeof(TYPE##_entries) == 0) { \
+                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
+                } \
+                int n = find_##TYPE##_entry(name); \
+                if (n < 0) { \
+                        return ELPA_ERROR_ENTRY_NOT_FOUND; \
+                }; \
+                index->TYPE##_options.values[n] = value; \
+                if(explicit) \
+                        index->TYPE##_options.is_set[n] = 1; \
+                return ELPA_OK; \
+        }
+FOR_ALL_TYPES(IMPLEMENT_SET_FROM_LOAD_FUNCTION)
 
 
 #define IMPLEMENT_IS_SET_FUNCTION(TYPE, ...) \
@@ -973,11 +991,12 @@ int elpa_index_autotune_cardinality(elpa_index_t index, int autotune_level, int 
 
 void elpa_index_print_int_parameter(elpa_index_t index, char* buff, int i)
 {
+        int value = index->int_options.values[i];
         sprintf(buff, "%s = ", int_entries[i].base.name);
         if (int_entries[i].to_string) {
-                sprintf(buff, "%s%s\n", buff, int_entries[i].to_string(index->int_options.values[i]));
+                sprintf(buff, "%s%d -> %s\n", buff, value, int_entries[i].to_string(value));
         } else {
-                sprintf(buff, "%s%d\n", buff, index->int_options.values[i]);
+                sprintf(buff, "%s%d\n", buff, value);
         }
 }
 
@@ -1099,15 +1118,19 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
         return 1;
 }
 
+const char STRUCTURE_PARAMETERS[] = "* Parameters describing structure of the computation:\n";
+const char EXPLICIT_PARAMETERS[] = "* Parameters explicitly set by the user:\n";
+const char DEFAULT_PARAMETERS[] = "* Parameters with default or environment value:\n";
+
 int elpa_index_print_all_parameters(elpa_index_t index, char *file_name) {
         const int LEN =10000;
         char out_structure[LEN], out_set[LEN], out_defaults[LEN], out_nowhere[LEN], buff[100];
         char (*out)[LEN];
         FILE *f;
 
-        sprintf(out_structure, "Parameters describing structure of the computation:\n");
-        sprintf(out_set, "Parameters explicitly set by the user:\n");
-        sprintf(out_defaults, "Parameters with default or environment value:\n");
+        sprintf(out_structure, "%s", STRUCTURE_PARAMETERS);
+        sprintf(out_set, "%s", EXPLICIT_PARAMETERS);
+        sprintf(out_defaults, "%s", DEFAULT_PARAMETERS);
         sprintf(out_nowhere, "Not to be printed:\n");
         int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         if(is_process_id_zero){
@@ -1141,6 +1164,48 @@ int elpa_index_print_all_parameters(elpa_index_t index, char *file_name) {
                 if(output_to_file)
                         fclose(f);
         }
+
+        return 1;
+}
+
+int elpa_index_load_all_parameters(elpa_index_t index, char *file_name) {
+        const int LEN = 1000;
+        char line[LEN], s[LEN];
+        int n;
+        FILE *f;
+        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
+        int skip, explicit;
+
+        //if(is_process_id_zero){
+                f = fopen(file_name, "r");
+
+                if (f == NULL) {
+                        fprintf(stderr, "Cannont open file %s\n", file_name);
+                        return(0);
+                }
+
+                skip = 1;
+                explicit = 0;
+
+                while ((fgets(line, LEN, f)) != NULL) {
+                        if(strcmp(line, EXPLICIT_PARAMETERS) == 0){
+                                skip = 0;
+                                explicit = 1;
+                        }
+                        if(strcmp(line, DEFAULT_PARAMETERS) == 0){
+                                skip = 0;
+                                explicit = 0;
+                        }
+
+                        if(line[0] != '\n' && line[0] != '*'){
+                                sscanf(line, "%s = %d\n", &s, &n);
+                                if(! skip){
+                                        int error = elpa_index_set_from_load_int_value(index, s, n, explicit);
+                                }
+                        }
+                }
+                fclose(f);
+       // }
 
         return 1;
 }

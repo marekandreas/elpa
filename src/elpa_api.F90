@@ -155,6 +155,7 @@ module elpa_api
 
       procedure(print_all_parameters_i), deferred, public :: print_all_parameters !< method to print all parameters
       procedure(save_all_parameters_i), deferred, public :: save_all_parameters !< method to save all parameters
+      procedure(load_all_parameters_i), deferred, public :: load_all_parameters !< method to save all parameters
 #ifdef ENABLE_AUTOTUNING
       ! Auto-tune
       procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
@@ -253,7 +254,7 @@ module elpa_api
   !> \brief abstract definition of the print_all_parameters method
   !> Parameters
   !> \details
-  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   self        class(elpa_t): the ELPA object
   !> Prints all the elpa parameters
   abstract interface
     subroutine print_all_parameters_i(self)
@@ -266,7 +267,7 @@ module elpa_api
   !> \brief abstract definition of the save_all_parameters method
   !> Parameters
   !> \details
-  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   self        class(elpa_t): the ELPA object
   !> \param   file_name   string, the name of the file where to save the parameters
   !> Saves all the elpa parameters
   abstract interface
@@ -274,7 +275,22 @@ module elpa_api
       import elpa_t
       implicit none
       class(elpa_t), intent(inout) :: self
-      character(*), intent(in)        :: file_name
+      character(*), intent(in)     :: file_name
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of the load_all_parameters method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   file_name   string, the name of the file from which to load the parameters
+  !> Loads all the elpa parameters
+  abstract interface
+    subroutine load_all_parameters_i(self, file_name)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout) :: self
+      character(*), intent(in)     :: file_name
     end subroutine
   end interface
 

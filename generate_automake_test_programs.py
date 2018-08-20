@@ -241,3 +241,16 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         prec_flag[p]]))
     print("endif\n" * endifs)
     print("endif")
+
+name = "test_multiple_objs_real_double"
+print("if ENABLE_AUTOTUNING")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/Fortran/test_multiple_objs.F90")
+print(name + "_LDADD = $(test_program_ldadd)")
+print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+

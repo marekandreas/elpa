@@ -122,7 +122,7 @@ program test
    integer                     :: error, status
 
    type(output_t)              :: write_to_file
-   class(elpa_t), pointer      :: e
+   class(elpa_t), pointer      :: e1, e2, e_ptr
    class(elpa_autotune_t), pointer :: tune_state
 
    integer                     :: iter
@@ -179,70 +179,64 @@ program test
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times=.false.)
    as(:,:) = a(:,:)
 
-   e => elpa_allocate()
+   e1 => elpa_allocate()
+   call set_basic_params(e1, na, nev, na_rows, na_cols, my_prow, my_pcol)
 
-   call e%set("na", na, error)
-   assert_elpa_ok(error)
-   call e%set("nev", nev, error)
-   assert_elpa_ok(error)
-   call e%set("local_nrows", na_rows, error)
-   assert_elpa_ok(error)
-   call e%set("local_ncols", na_cols, error)
-   assert_elpa_ok(error)
-   call e%set("nblk", nblk, error)
-   assert_elpa_ok(error)
+   call e1%set("timings",1, error)
 
-#ifdef WITH_MPI
-   call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
-   assert_elpa_ok(error)
-   call e%set("process_row", my_prow, error)
-   assert_elpa_ok(error)
-   call e%set("process_col", my_pcol, error)
-   assert_elpa_ok(error)
-#endif
-   call e%set("timings",1, error)
+   call e1%set("debug",1)
+   call e1%set("gpu", 0)
+   !call e1%set("max_stored_rows", 15, error)
 
-   call e%set("debug",1)
-   call e%set("gpu", 0)
-   !call e%set("max_stored_rows", 15, error)
+   assert_elpa_ok(e1%setup())
 
-   assert_elpa_ok(e%setup())
+   call e1%save_all_parameters("initial_parameters.txt")
 
-   if (myid == 0) print *, ""
+   ! try to load parameters into another object
+   e2 => elpa_allocate()
+   call set_basic_params(e2, na, nev, na_rows, na_cols, my_prow, my_pcol)
+   call e2%load_all_parameters("initial_parameters.txt")
+   assert_elpa_ok(e2%setup())
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
-   assert_elpa_ok(error)
+   if(myid == 0) print *, "parameters of e1"
+   call e1%print_all_parameters()
+   if(myid == 0) print *, ""
+   if(myid == 0) print *, "parameters of e2"
+   call e2%print_all_parameters()
+   e_ptr => e2
 
+
+   tune_state => e_ptr%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
    iter=0
-   do while (e%autotune_step(tune_state))
+   do while (e_ptr%autotune_step(tune_state))
      iter=iter+1
      write(iter_string,'(I5.5)') iter
-     !call e%print_all_parameters()
-     !call e%save_all_parameters("saved_parameters_"//trim(iter_string)//".txt")
-     call e%timer_start("eigenvectors: iteration "//trim(iter_string))
-     call e%eigenvectors(a, ev, z, error)
-     call e%timer_stop("eigenvectors: iteration "//trim(iter_string))
+     call e_ptr%print_all_parameters()
+     call e_ptr%save_all_parameters("saved_parameters_"//trim(iter_string)//".txt")
+     call e_ptr%timer_start("eigenvectors: iteration "//trim(iter_string))
+     call e_ptr%eigenvectors(a, ev, z, error)
+     call e_ptr%timer_stop("eigenvectors: iteration "//trim(iter_string))
 
      assert_elpa_ok(error)
      if (myid .eq. 0) then
        print *, ""
-       call e%print_times("eigenvectors: iteration "//trim(iter_string))
+       call e_ptr%print_times("eigenvectors: iteration "//trim(iter_string))
      endif
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                          .true., .true., print_times=.false.)
      a(:,:) = as(:,:)
-     !call e%autotune_print_state(tune_state)
-     !call e%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+     call e_ptr%autotune_print_state(tune_state)
+     call e_ptr%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
    end do
 
    ! set and print the autotuned-settings
-   call e%autotune_set_best(tune_state)
+   call e_ptr%autotune_set_best(tune_state)
    if (myid .eq. 0) then
      print *, "The best combination found by the autotuning:"
      flush(output_unit)
-     call e%autotune_print_best(tune_state)
+     call e_ptr%autotune_print_best(tune_state)
    endif
    ! de-allocate autotune object
    call elpa_autotune_deallocate(tune_state)
@@ -250,18 +244,18 @@ program test
    if (myid .eq. 0) then
      print *, "Running once more time with the best found setting..."
    endif
-   call e%timer_start("eigenvectors: best setting")
-   call e%eigenvectors(a, ev, z, error)
-   call e%timer_stop("eigenvectors: best setting")
+   call e_ptr%timer_start("eigenvectors: best setting")
+   call e_ptr%eigenvectors(a, ev, z, error)
+   call e_ptr%timer_stop("eigenvectors: best setting")
    assert_elpa_ok(error)
    if (myid .eq. 0) then
      print *, ""
-     call e%print_times("eigenvectors: best setting")
+     call e_ptr%print_times("eigenvectors: best setting")
    endif
    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                        .true., .true., print_times=.false.)
 
-   call elpa_deallocate(e)
+   call elpa_deallocate(e_ptr)
 
    deallocate(a)
    deallocate(as)
@@ -276,5 +270,32 @@ program test
 #endif
 
    call exit(status)
+
+contains
+   subroutine set_basic_params(elpa, na, nev, na_rows, na_cols, my_prow, my_pcol)
+     implicit none
+     class(elpa_t), pointer      :: elpa
+     integer, intent(in)         :: na, nev, na_rows, na_cols, my_prow, my_pcol
+
+     call elpa%set("na", na, error)
+     assert_elpa_ok(error)
+     call elpa%set("nev", nev, error)
+     assert_elpa_ok(error)
+     call elpa%set("local_nrows", na_rows, error)
+     assert_elpa_ok(error)
+     call elpa%set("local_ncols", na_cols, error)
+     assert_elpa_ok(error)
+     call elpa%set("nblk", nblk, error)
+     assert_elpa_ok(error)
+
+#ifdef WITH_MPI
+     call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, error)
+     assert_elpa_ok(error)
+     call elpa%set("process_row", my_prow, error)
+     assert_elpa_ok(error)
+     call elpa%set("process_col", my_pcol, error)
+     assert_elpa_ok(error)
+#endif
+   end subroutine
 
 end program
