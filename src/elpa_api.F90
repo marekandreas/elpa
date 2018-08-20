@@ -153,7 +153,8 @@ module elpa_api
           elpa_solve_tridiagonal_d, &                                !< matrix
           elpa_solve_tridiagonal_f
 
-      procedure(print_all_parameters_i), deferred, public :: print_all_parameters !< method to set the best options
+      procedure(print_all_parameters_i), deferred, public :: print_all_parameters !< method to print all parameters
+      procedure(save_all_parameters_i), deferred, public :: save_all_parameters !< method to save all parameters
 #ifdef ENABLE_AUTOTUNING
       ! Auto-tune
       procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
@@ -259,6 +260,21 @@ module elpa_api
       import elpa_t
       implicit none
       class(elpa_t), intent(inout) :: self
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of the save_all_parameters method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   file_name   string, the name of the file where to save the parameters
+  !> Saves all the elpa parameters
+  abstract interface
+    subroutine save_all_parameters_i(self, file_name)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout) :: self
+      character(*), intent(in)        :: file_name
     end subroutine
   end interface
 

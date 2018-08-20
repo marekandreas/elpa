@@ -1033,11 +1033,6 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
         int min_loc_cpy = min_loc;
         FILE *f;
 
-        if(file_name == "")
-                f = stdout;
-        else
-                f = fopen(file_name, "w");
-
         // get index with the currently best parameters
         index_best = elpa_index_instance();
 
@@ -1054,7 +1049,19 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
         }
         int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         if (is_process_id_zero) {
-                if(file_name == "")
+                int output_to_file = (strlen(file_name) > 0);
+                if(output_to_file) {
+                        f = fopen(file_name, "w");
+                        if(f == NULL){
+                                fprintf(stderr, "Cannot open file %s in elpa_index_print_autotune_state\n", file_name);
+                                return 0;
+                        }
+                }
+                else {
+                        f = stdout;
+                }
+
+                if(!output_to_file)
                         fprintf(f, "\n");
                 fprintf(f, "*** AUTOTUNING STATE ***\n");
                 fprintf(f, "** This is the state of the autotuning object\n");
@@ -1083,18 +1090,21 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
                         fprintf(f, "** No output after first step\n");
                 }
                 fprintf(f, "*** END OF AUTOTUNING STATE ***\n");
+
+                if(output_to_file)
+                        fclose(f);
         }
         elpa_index_free(index_best);
 
-        if(file_name != "")
-                fclose(f);
         return 1;
 }
 
-int elpa_index_print_all_parameters(elpa_index_t index) {
+int elpa_index_print_all_parameters(elpa_index_t index, char *file_name) {
         const int LEN =10000;
         char out_structure[LEN], out_set[LEN], out_defaults[LEN], out_nowhere[LEN], buff[100];
         char (*out)[LEN];
+        FILE *f;
+
         sprintf(out_structure, "Parameters describing structure of the computation:\n");
         sprintf(out_set, "Parameters explicitly set by the user:\n");
         sprintf(out_defaults, "Parameters with default or environment value:\n");
@@ -1113,9 +1123,24 @@ int elpa_index_print_all_parameters(elpa_index_t index) {
                         elpa_index_print_int_parameter(index, buff, i);
                         sprintf(*out, "%s%s", *out, buff);
                 }
-                fprintf(stdout, "*** ELPA STATE ***\n");
-                fprintf(stdout, "%s\n%s\n%s", out_structure, out_set, out_defaults);
-                fprintf(stdout, "*** END OF ELPA STATE ***\n");
+                int output_to_file = (strlen(file_name) > 0);
+                if(output_to_file) {
+                        f = fopen(file_name, "w");
+                        if(f == NULL){
+                                fprintf(stderr, "Cannot open file %s in elpa_index_print_all_parameters\n", file_name);
+                                return 0;
+                        }
+                }
+                else {
+                        f = stdout;
+                }
+
+                fprintf(f, "*** ELPA STATE ***\n");
+                fprintf(f, "%s\n%s\n%s", out_structure, out_set, out_defaults);
+                fprintf(f, "*** END OF ELPA STATE ***\n");
+                if(output_to_file)
+                        fclose(f);
         }
+
         return 1;
 }
