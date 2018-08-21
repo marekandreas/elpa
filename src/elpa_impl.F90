@@ -165,6 +165,7 @@ module elpa_impl
      procedure, public :: autotune_print_best => elpa_autotune_print_best
      procedure, public :: autotune_print_state => elpa_autotune_print_state
      procedure, public :: autotune_save_state => elpa_autotune_save_state
+     procedure, public :: autotune_load_state => elpa_autotune_load_state
 #endif
      procedure, private :: construct_scalapack_descriptor => elpa_construct_scalapack_descriptor
   end type elpa_impl_t
@@ -1179,6 +1180,35 @@ module elpa_impl
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
         stop "This should not happen (in elpa_autotune_save_state())"
       endif
+    end subroutine
+
+
+    !> \brief function to load the state of the autotuning
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   tune_state      class(elpa_autotune_t): the autotuning object
+    !> \param   file_name       string, the name of the file from which to load the state
+    subroutine elpa_autotune_load_state(self, tune_state, file_name)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+      type(elpa_autotune_impl_t), pointer :: ts_impl
+      character(*), intent(in)        :: file_name
+
+      select type(tune_state)
+        type is (elpa_autotune_impl_t)
+          ts_impl => tune_state
+        class default
+          print *, "This should not happen"
+      end select
+
+      print *, "testing, before C call, ts_impl%current is ", ts_impl%current
+
+      if (elpa_index_load_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
+                  ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
+        stop "This should not happen (in elpa_autotune_load_state())"
+      endif
+      print *, "testing, after C call, ts_impl%current is ", ts_impl%current
     end subroutine
 
 

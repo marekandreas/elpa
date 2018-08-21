@@ -1084,12 +1084,12 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
                         fprintf(f, "\n");
                 fprintf(f, "*** AUTOTUNING STATE ***\n");
                 fprintf(f, "** This is the state of the autotuning object\n");
-                fprintf(f, "autotune level = %d\n", autotune_level);
-                fprintf(f, "autotune domain = %d\n", autotune_domain);
-                fprintf(f, "autotune cardinality = %d\n", cardinality);
-                fprintf(f, "current idx = %d\n", current);
-                fprintf(f, "best idx = %d\n", min_loc);
-                fprintf(f, "best time = %lf\n", min_val);
+                fprintf(f, "autotune_level = %d\n", autotune_level);
+                fprintf(f, "autotune_domain = %d\n", autotune_domain);
+                fprintf(f, "autotune_cardinality = %d\n", cardinality);
+                fprintf(f, "current_idx = %d\n", current);
+                fprintf(f, "best_idx = %d\n", min_loc);
+                fprintf(f, "best_time = %g\n", min_val);
                 if(min_loc_cpy > -1) {
                         fprintf(f, "** The following parameters are autotuned with so far the best values\n");
                         for (int i = 0; i < nelements(int_entries); i++) {
@@ -1114,6 +1114,65 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
                         fclose(f);
         }
         elpa_index_free(index_best);
+
+        return 1;
+}
+
+const int LEN =1000;
+
+#define IMPLEMENT_LOAD_LINE(TYPE, PRINTF_SPEC, ...) \
+        static int load_##TYPE##_line(FILE* f, const char* expected, TYPE* val) { \
+                char line[LEN], s[LEN]; \
+                int error = 0; \
+                TYPE n; \
+                if(fgets(line, LEN, f) == NULL){ \
+                        fprintf(stderr, "Loading autotuning state error: line is not there\n"); \
+                        error = 1; \
+                } else{ \
+                        sscanf(line, "%s = " PRINTF_SPEC "\n", &s, &n); \
+                        printf("FROM FILE: %s, " PRINTF_SPEC "\n", s, n); \
+                        if(strcmp(s, expected) != 0){ \
+                                fprintf(stderr, "Loading autotuning state error: expected %s, got %s\n", expected, s); \
+                                error = 1;\
+                        } else{ \
+                                *val = n; \
+                        } \
+                } \
+                if(error){ \
+                        fprintf(stderr, "Autotuning state file corrupted\n"); \
+                        return 0; \
+                } \
+                return 1; \
+        }
+FOR_ALL_TYPES(IMPLEMENT_LOAD_LINE)
+
+int elpa_index_load_autotune_state(elpa_index_t index, int* autotune_level, int* autotune_domain, int* min_loc,
+                                    double* min_val, int* current, int* cardinality, char* file_name) {
+        char line[LEN];
+        FILE *f;
+
+        //TODO: should be broadcasted, instead of read on all ranks
+        //if(is_process_id_zero){
+                f = fopen(file_name, "r");
+
+                if (f == NULL) {
+                        fprintf(stderr, "Cannont open file %s\n", file_name);
+                        return(0);
+                }
+
+
+                if(fgets(line, LEN, f) == NULL) return 0;
+                if(fgets(line, LEN, f) == NULL) return 0;
+                if(! load_int_line(f, "autotune_level", autotune_level)) return 0;
+                if(! load_int_line(f, "autotune_domain", autotune_domain)) return 0;
+                if(! load_int_line(f, "autotune_cardinality", cardinality)) return 0;
+                printf("current in C before load is %d\n", *current);
+                if(! load_int_line(f, "current_idx", current)) return 0;
+                printf("current in C after load is %d\n", *current);
+                if(! load_int_line(f, "best_idx", min_loc)) return 0;
+                if(! load_double_line(f, "best_time", min_val)) return 0;
+                fclose(f);
+       // }
 
         return 1;
 }
@@ -1159,7 +1218,7 @@ int elpa_index_print_all_parameters(elpa_index_t index, char *file_name) {
                 }
 
                 fprintf(f, "*** ELPA STATE ***\n");
-                fprintf(f, "%s\n%s\n%s", out_structure, out_set, out_defaults);
+                fprintf(f, "%s%s%s", out_structure, out_set, out_defaults);
                 fprintf(f, "*** END OF ELPA STATE ***\n");
                 if(output_to_file)
                         fclose(f);
@@ -1176,6 +1235,7 @@ int elpa_index_load_all_parameters(elpa_index_t index, char *file_name) {
         int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         int skip, explicit;
 
+        //TODO: should be broadcasted, instead of read on all ranks
         //if(is_process_id_zero){
                 f = fopen(file_name, "r");
 

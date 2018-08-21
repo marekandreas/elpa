@@ -106,7 +106,7 @@ program test
    integer                     :: na_cols, na_rows  ! local matrix size
    integer                     :: np_cols, np_rows  ! number of MPI processes per column/row
    integer                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   integer                     :: mpierr
+   integer                     :: mpierr, ierr
 
    ! blacs
    character(len=1)            :: layout
@@ -209,12 +209,14 @@ program test
    tune_state => e_ptr%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
+
    iter=0
    do while (e_ptr%autotune_step(tune_state))
      iter=iter+1
      write(iter_string,'(I5.5)') iter
      call e_ptr%print_all_parameters()
      call e_ptr%save_all_parameters("saved_parameters_"//trim(iter_string)//".txt")
+
      call e_ptr%timer_start("eigenvectors: iteration "//trim(iter_string))
      call e_ptr%eigenvectors(a, ev, z, error)
      call e_ptr%timer_stop("eigenvectors: iteration "//trim(iter_string))
@@ -229,6 +231,10 @@ program test
      a(:,:) = as(:,:)
      call e_ptr%autotune_print_state(tune_state)
      call e_ptr%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+#ifdef WITH_MPI
+     call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+#endif
+     call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
    end do
 
    ! set and print the autotuned-settings

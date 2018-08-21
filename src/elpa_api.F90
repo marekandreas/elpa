@@ -164,6 +164,7 @@ module elpa_api
       procedure(elpa_autotune_print_best_i), deferred, public :: autotune_print_best !< method to print the best options
       procedure(elpa_autotune_print_state_i), deferred, public :: autotune_print_state !< method to print the state
       procedure(elpa_autotune_save_state_i), deferred, public :: autotune_save_state !< method to save the state
+      procedure(elpa_autotune_load_state_i), deferred, public :: autotune_load_state !< method to load the state
 #endif
 
       !> \brief These method have to be public, in order to be overrideable in the extension types
@@ -371,7 +372,7 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
-  !> Prints the best combination of ELPA options
+  !> Prints the autotuning state
   abstract interface
     subroutine elpa_autotune_print_state_i(self, tune_state)
       import elpa_t, elpa_autotune_t
@@ -387,7 +388,7 @@ module elpa_api
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
   !> \param   file_name   string, the name of the file where to save the state
-  !> Prints the best combination of ELPA options
+  !> Saves the autotuning state
   abstract interface
     subroutine elpa_autotune_save_state_i(self, tune_state, file_name)
       import elpa_t, elpa_autotune_t
@@ -395,6 +396,23 @@ module elpa_api
       class(elpa_t), intent(inout) :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
       character(*), intent(in)        :: file_name
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of the autotune load state method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which is being tuned
+  !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   file_name   string, the name of the file from which to load the autotuning state
+  !> Loads all the elpa parameters
+  abstract interface
+    subroutine elpa_autotune_load_state_i(self, tune_state, file_name)
+      import elpa_t, elpa_autotune_t
+      implicit none
+      class(elpa_t), intent(inout) :: self
+      class(elpa_autotune_t), intent(in), target :: tune_state
+      character(*), intent(in)     :: file_name
     end subroutine
   end interface
 #endif
