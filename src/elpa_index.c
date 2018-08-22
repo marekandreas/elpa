@@ -692,6 +692,22 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         }
 }
 
+static const char* elpa_autotune_level_name(int level) {
+        switch(level) {
+                ELPA_FOR_ALL_AUTOTUNE_LEVELS(NAME_CASE)
+                default:
+                        return "(Invalid autotune level)";
+        }
+}
+
+static const char* elpa_autotune_domain_name(int domain) {
+        switch(domain) {
+                ELPA_FOR_ALL_AUTOTUNE_DOMAINS(NAME_CASE)
+                default:
+                        return "(Invalid autotune domain)";
+        }
+}
+
 static int na_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value > 0;
 }
@@ -1084,8 +1100,8 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
                         fprintf(f, "\n");
                 fprintf(f, "*** AUTOTUNING STATE ***\n");
                 fprintf(f, "** This is the state of the autotuning object\n");
-                fprintf(f, "autotune_level = %d\n", autotune_level);
-                fprintf(f, "autotune_domain = %d\n", autotune_domain);
+                fprintf(f, "autotune_level = %d -> %s\n", autotune_level, elpa_autotune_level_name(autotune_level));
+                fprintf(f, "autotune_domain = %d -> %s\n", autotune_domain, elpa_autotune_domain_name(autotune_domain));
                 fprintf(f, "autotune_cardinality = %d\n", cardinality);
                 fprintf(f, "current_idx = %d\n", current);
                 fprintf(f, "best_idx = %d\n", min_loc);
@@ -1130,7 +1146,6 @@ const int LEN =1000;
                         error = 1; \
                 } else{ \
                         sscanf(line, "%s = " PRINTF_SPEC "\n", &s, &n); \
-                        printf("FROM FILE: %s, " PRINTF_SPEC "\n", s, n); \
                         if(strcmp(s, expected) != 0){ \
                                 fprintf(stderr, "Loading autotuning state error: expected %s, got %s\n", expected, s); \
                                 error = 1;\
