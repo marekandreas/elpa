@@ -80,6 +80,14 @@ static int band_to_full_cardinality(elpa_index_t index);
 static int band_to_full_enumerate(elpa_index_t index, int i);
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
 
+static int stripewidth_real_cardinality(elpa_index_t index);
+static int stripewidth_real_enumerate(elpa_index_t index, int i);
+static int stripewidth_real_is_valid(elpa_index_t index, int n, int new_value);
+
+static int stripewidth_complex_cardinality(elpa_index_t index);
+static int stripewidth_complex_enumerate(elpa_index_t index, int i);
+static int stripewidth_complex_is_valid(elpa_index_t index, int n, int new_value);
+
 static int omp_threads_cardinality(elpa_index_t index);
 static int omp_threads_enumerate(elpa_index_t index, int i);
 static int omp_threads_is_valid(elpa_index_t index, int n, int new_value);
@@ -205,9 +213,12 @@ static const elpa_index_int_entry_t int_entries[] = {
                         min_tile_size_cardinality, min_tile_size_enumerate, min_tile_size_is_valid, NULL),
         INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL),
-
         INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
                         band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL),
+        INT_ENTRY("stripewidth_real", "Stripewidth_real, default 48. Must be a multiple of 4", 48, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL,
+                        stripewidth_real_cardinality, stripewidth_real_enumerate, stripewidth_real_is_valid, NULL),
+        INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_COMPLEX,
+                        stripewidth_complex_cardinality, stripewidth_complex_enumerate, stripewidth_complex_is_valid, NULL),
         INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
                         max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL),
 #ifdef WITH_OPENMP
@@ -709,6 +720,100 @@ static int band_to_full_enumerate(elpa_index_t index, int i) {
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
 	int max_block=10;
         return (1 <= new_value) && (new_value <= max_block);
+}
+
+static int stripewidth_real_cardinality(elpa_index_t index) {
+	return 17;
+}
+
+static int stripewidth_complex_cardinality(elpa_index_t index) {
+	return 17;
+}
+
+static int stripewidth_real_enumerate(elpa_index_t index, int i) {
+	switch(i) {
+	  case 0:
+	    return 32;
+	  case 1:
+	    return 36;
+	  case 2:
+	    return 40;
+	  case 3:
+	    return 44;
+	  case 4:
+	    return 48;
+	  case 5:
+	    return 52;
+	  case 6:
+	    return 56;
+	  case 7:
+	    return 60;
+	  case 8:
+	    return 64;
+	  case 9:
+	    return 68;
+	  case 10:
+	    return 72;
+	  case 11:
+	    return 76;
+	  case 12:
+	    return 80;
+	  case 13:
+	    return 84;
+	  case 14:
+	    return 88;
+	  case 15:
+	    return 92;
+	  case 16:
+	    return 96;
+	}
+}
+
+static int stripewidth_complex_enumerate(elpa_index_t index, int i) {
+	switch(i) {
+	  case 0:
+	    return 48;
+	  case 1:
+	    return 56;
+	  case 2:
+	    return 64;
+	  case 3:
+	    return 72;
+	  case 4:
+	    return 80;
+	  case 5:
+	    return 88;
+	  case 6:
+	    return 96;
+	  case 7:
+	    return 104;
+	  case 8:
+	    return 112;
+	  case 9:
+	    return 120;
+	  case 10:
+	    return 128;
+	  case 11:
+	    return 136;
+	  case 12:
+	    return 144;
+	  case 13:
+	    return 152;
+	  case 14:
+	    return 160;
+	  case 15:
+	    return 168;
+	  case 16:
+	    return 176;
+	}
+}
+
+static int stripewidth_real_is_valid(elpa_index_t index, int n, int new_value) {
+	return (32 <= new_value) && (new_value <= 96);
+}
+
+static int stripewidth_complex_is_valid(elpa_index_t index, int n, int new_value) {
+	return (48 <= new_value) && (new_value <= 176);
 }
 
 static int omp_threads_cardinality(elpa_index_t index) {
