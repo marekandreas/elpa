@@ -278,24 +278,24 @@
           thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
 
 #if REALCASE == 1
-          call obj%get("stripe_width_real",stripe_width, error)
+          ! call obj%get("stripe_width_real",stripe_width, error)
 
 #ifdef DOUBLE_PRECISION_REAL
-          !stripe_width = 48 ! Must be a multiple of 4
+          stripe_width = 48 ! Must be a multiple of 4
 #else
-          stripe_width = stripe_width * 2
-          !stripe_width = 96 ! Must be a multiple of 8
+          !stripe_width = stripe_width * 2
+          stripe_width = 96 ! Must be a multiple of 8
 #endif
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
-          call obj%get("stripe_width_complex",stripe_width, error)
+          !call obj%get("stripe_width_complex",stripe_width, error)
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-          !stripe_width = 48 ! Must be a multiple of 2
+          stripe_width = 48 ! Must be a multiple of 2
 #else
-          stripe_width = stripe_width * 2
-          !stripe_width = 48 ! Must be a multiple of 4
+          !stripe_width = stripe_width * 2
+          stripe_width = 48 ! Must be a multiple of 4
 #endif
 #endif /* COMPLEXCASE */
 

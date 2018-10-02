@@ -736,7 +736,6 @@
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with upper half of Q:
 
-            call obj%timer%start("strange_loop")
             do i = 1, ncnt
               j = idx(idxq1(i+ns))
               ! Calculate the j-th eigenvector of the deflated system
@@ -747,7 +746,6 @@
               &(obj,tmp,nnzu,ddiff(j))
               ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
             enddo
-            call obj%timer%stop("strange_loop")
 
             if(useGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
@@ -801,7 +799,6 @@
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
 
-            call obj%timer%start("strange_loop")
             do i = 1, ncnt
               j = idx(idxq1(i+ns))
               ! Calculate the j-th eigenvector of the deflated system
@@ -812,7 +809,6 @@
               &(obj,tmp,nnzl,ddiff(j))
               ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
             enddo
-            call obj%timer%stop("strange_loop")
 
             if(useGPU) then
               !TODO the previous loop could be possible to do on device and thus
