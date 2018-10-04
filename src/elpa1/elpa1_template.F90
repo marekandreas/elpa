@@ -112,7 +112,7 @@ function elpa_solve_evp_&
                                                       mpi_comm_rows, mpi_comm_cols,        &
                                                       mpi_comm_all, check_pd, i, error
 
-   logical                                         :: do_bandred, do_solve, do_trans_ev
+   logical                                         :: do_tridiag, do_solve, do_trans_ev
    integer(kind=ik)                                :: nrThreads
 
    call obj%timer%start("elpa_solve_evp_&
@@ -308,11 +308,11 @@ function elpa_solve_evp_&
 
    ! start the computations
    ! as default do all three steps (this might change at some point)
-   do_bandred  = .true.
+   do_tridiag  = .true.
    do_solve    = .true.
    do_trans_ev = .true.
 
-   if (do_bandred) then
+   if (do_tridiag) then
      call obj%timer%start("forward")
      call tridiag_&
      &MATH_DATATYPE&
@@ -320,7 +320,7 @@ function elpa_solve_evp_&
      &PRECISION&
      & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
      call obj%timer%stop("forward")
-    endif  !do_bandred
+    endif  !do_tridiag
 
     if (do_solve) then
      call obj%timer%start("solve")
