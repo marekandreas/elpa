@@ -312,9 +312,6 @@ function elpa_solve_evp_&
    do_solve    = .true.
    do_trans_ev = .true.
 
-   if (obj%eigenvalues_only) then
-     do_trans_ev = .true.
-   endif
    if (do_bandred) then
      call obj%timer%start("forward")
      call tridiag_&
