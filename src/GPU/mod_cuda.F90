@@ -55,7 +55,8 @@ module cuda_functions
   integer(kind=ik) :: cudaHostRegisterMapped
   integer(kind=ik) :: cudaMemcpyDeviceToDevice
 
-  integer(kind=C_intptr_T) :: cublasHandle
+  ! TODO global variable, has to be changed
+  integer(kind=C_intptr_T) :: cublasHandle = -1
 
   integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
 #ifdef WANT_SINGLE_PRECISION_REAL

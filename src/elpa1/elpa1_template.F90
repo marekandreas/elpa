@@ -220,10 +220,10 @@ function elpa_solve_evp_&
    wantDebug = debug == 1
    do_useGPU = .false.
 
-
+   
    if (useGPU) then
+     call obj%timer%start("check_for_gpu")
      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-
        do_useGPU = .true.
        ! set the neccessary parameters
        cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
@@ -236,7 +236,9 @@ function elpa_solve_evp_&
        success = .false.
        return
      endif
+     call obj%timer%stop("check_for_gpu")
    endif
+
 
    do_useGPU_tridiag = do_useGPU
    do_useGPU_solve_tridi = do_useGPU

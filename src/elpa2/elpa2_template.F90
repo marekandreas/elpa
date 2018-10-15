@@ -239,6 +239,7 @@
 
     do_useGPU = .false.
     if (useGPU) then
+      call obj%timer%start("check_for_gpu")
       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
          do_useGPU = .true.
@@ -254,6 +255,7 @@
         success = .false.
         return
       endif
+      call obj%timer%stop("check_for_gpu")
     endif
 
     do_useGPU_bandred = do_useGPU
