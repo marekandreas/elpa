@@ -62,6 +62,19 @@ module mod_check_for_gpu
 
       gpuAvailable = .false.
 
+      if(cublasHandle .ne. -1) then
+	gpuAvailable = .true.
+	numberOfDevices = -1
+	if(myid == 0) then
+          print *, "Skipping GPU init, should have already been initialized "
+	endif
+	return
+      else
+	if(myid == 0) then
+	  print *, "Initializing the GPU devices"
+	endif
+      endif
+
       if (.not.(present(wantDebug))) then
         wantDebugMessage = .false.
       else
