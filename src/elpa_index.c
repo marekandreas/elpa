@@ -222,9 +222,9 @@ static const elpa_index_int_entry_t int_entries[] = {
 
         INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
                         band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("stripewidth_real", "Stripewidth_real, default 48. Must be a multiple of 4", 48, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL,
+        INT_ENTRY("stripewidth_real", "Stripewidth_real, default 48. Must be a multiple of 4", 48, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_REAL,
                         stripewidth_real_cardinality, stripewidth_real_enumerate, stripewidth_real_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_COMPLEX,
+        INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_COMPLEX,
                         stripewidth_complex_cardinality, stripewidth_complex_enumerate, stripewidth_complex_is_valid, NULL, PRINT_YES),
 
         INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
