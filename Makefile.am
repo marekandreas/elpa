@@ -613,6 +613,7 @@ endif
 #test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
 
 # python wrapper
+if WITH_PYTHON
 pyelpadir = $(pythondir)/pyelpa
 pyelpa_PYTHON = python/__init__.py python/distributedmatrix.py
 pyelpa_LTLIBRARIES = wrapper.la
@@ -623,6 +624,7 @@ wrapper_la_CFLAGS = -I$(PYTHON_INCLUDE) $(AM_CFLAGS)
 
 python/wrapper.c: python/wrapper.pyx
 	cython $<
+endif
 
 
 # test scripts

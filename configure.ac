@@ -1275,21 +1275,39 @@ else
         AC_MSG_RESULT([no])
 fi
 
-AM_PATH_PYTHON([3.6])
-AC_ARG_VAR([PYTHON_INCLUDE], [Include flags for python, bypassing python-config])
-AC_ARG_VAR([PYTHON_CONFIG], [Path to python-config])
-AS_IF([test -z "$PYTHON_INCLUDE"], [
-  AS_IF([test -z "$PYTHON_CONFIG"], [
-    AC_PATH_PROGS([PYTHON_CONFIG],
-                  [python$PYTHON_VERSION-config python-config],
-                  [no],
-                  [`dirname $PYTHON`])
-    AS_IF([test "$PYTHON_CONFIG" = no], [AC_MSG_ERROR([cannot find python-config for $PYTHON.])])
-  ])
-  AC_MSG_CHECKING([python include flags])
-  PYTHON_INCLUDE=`$PYTHON_CONFIG --includes`
-  AC_MSG_RESULT([$PYTHON_INCLUDE])
-])
+AC_MSG_CHECKING(whether --enable-python is specified)
+AC_ARG_ENABLE([python],
+              AS_HELP_STRING([--enable-python],
+                             [build and install python wrapper, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_python=yes
+	       else
+	         enable_python=no
+	       fi
+	       ],
+              [enable_python=no])
+AC_MSG_RESULT([${enable_python}])
+AM_CONDITIONAL([WITH_PYTHON],[test x"$enable_python" = x"yes"])
+if test x"${enable_python}" = x"yes"; then
+        AC_DEFINE([WITH_PYTHON], [1], [build and install python wrapper])
+        # check for python and dependencies
+        AM_PATH_PYTHON([3.6])
+        AC_ARG_VAR([PYTHON_INCLUDE], [Include flags for python, bypassing python-config])
+        AC_ARG_VAR([PYTHON_CONFIG], [Path to python-config])
+        AS_IF([test -z "$PYTHON_INCLUDE"], [
+          AS_IF([test -z "$PYTHON_CONFIG"], [
+            AC_PATH_PROGS([PYTHON_CONFIG],
+                          [python$PYTHON_VERSION-config python-config],
+                          [no],
+                          [`dirname $PYTHON`])
+            AS_IF([test "$PYTHON_CONFIG" = no], [AC_MSG_ERROR([cannot find python-config for $PYTHON.])])
+          ])
+          AC_MSG_CHECKING([python include flags])
+          PYTHON_INCLUDE=`$PYTHON_CONFIG --includes`
+          AC_MSG_RESULT([$PYTHON_INCLUDE])
+        ])
+fi
 
 
 AC_OUTPUT
