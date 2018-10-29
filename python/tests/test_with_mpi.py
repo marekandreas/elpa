@@ -376,3 +376,29 @@ def test_accessing_matrix(na, nev, nblk):
             assert(np.allclose(column, matrix[:, index]))
             row = a.get_row(index)
             assert(np.allclose(row, matrix[index, :]))
+
+
+@pytest.mark.parametrize("na,nev,nblk", parameter_list)
+def test_global_index_iterator(na, nev, nblk):
+    import numpy as np
+    from pyelpa import ProcessorLayout, DistributedMatrix
+
+    for dtype in [np.float64, np.complex128]:
+        a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
+        for i, j in a.global_indices():
+            assert(a.is_local_index(i, j))
+
+
+@pytest.mark.parametrize("na,nev,nblk", parameter_list)
+def test_global_index_access(na, nev, nblk):
+    import numpy as np
+    from pyelpa import ProcessorLayout, DistributedMatrix
+
+    for dtype in [np.float64, np.complex128]:
+        a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
+        for i, j in a.global_indices():
+            x = dtype(i*j)
+            a.set_data_for_global_index(i, j, x)
+        for i, j in a.global_indices():
+            x = a.get_data_for_global_index(i, j)
+            assert(np.isclose(x, i*j))

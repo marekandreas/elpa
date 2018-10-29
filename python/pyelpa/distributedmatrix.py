@@ -327,3 +327,27 @@ class DistributedMatrix:
         # this could be done more efficiently with a gather
         self.processor_layout.comm.Allreduce(temporary, row, op=MPI.SUM)
         return row
+
+    def global_indices(self):
+        """Return iterator over global indices of matrix.
+
+        Use together with set_data_global_index and get_data_global_index.
+        """
+        for local_row in range(self.na_rows):
+            for local_col in range(self.na_cols):
+                yield self.get_global_index(local_row, local_col)
+
+    def set_data_for_global_index(self, global_row, global_col, value):
+        """Set value of matrix at global coordinates"""
+        if self.is_local_index(global_row, global_col):
+            local_row, local_col = self.get_local_index(global_row, global_col)
+            self.data[local_row, local_col] = value
+
+    def get_data_for_global_index(self, global_row, global_col):
+        """Get value of matrix at global coordinates"""
+        if self.is_local_index(global_row, global_col):
+            local_row, local_col = self.get_local_index(global_row, global_col)
+            return self.data[local_row, local_col]
+        else:
+            raise ValueError('Index out of bounds: global row {:d}, '
+                             'global col {:d}'.format(global_row, global_col))
