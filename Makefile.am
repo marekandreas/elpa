@@ -617,20 +617,17 @@ pyelpadir = $(pythondir)/pyelpa
 if WITH_PYTHON
 pyelpa_PYTHON = python/pyelpa/__init__.py python/pyelpa/distributedmatrix.py
 pyelpa_LTLIBRARIES = wrapper.la
-wrapper_la_SOURCES = python/pyelpa/wrapper.c
 else
 pyelpa_PYTHON =
 pyelpa_LTLIBRARIES =
-wrapper_la_SOURCES =
 endif
+nodist_wrapper_la_SOURCES = python/pyelpa/wrapper.c
 wrapper_la_LDFLAGS = -module -avoid-version -shared $(AM_LDFLAGS)
 wrapper_la_LIBADD = libelpa@SUFFIX@.la
 wrapper_la_CFLAGS = -I$(PYTHON_INCLUDE) $(AM_CFLAGS)
 
-if WITH_PYTHON
 python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $<
-endif
 
 
 # test scripts
@@ -670,7 +667,8 @@ CLEANFILES = \
   real* \
   complex* \
   double_instance* \
-  *.i
+  *.i \
+  python/pyelpa/wrapper.c
 
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
@@ -832,11 +830,14 @@ EXTRA_DIST += \
   test/shared/test_scalapack_template.F90
 endif
 
-if WITH_PYTHON
+# python wrapper files
 EXTRA_DIST += python/pyelpa/__init__.py \
 	      python/pyelpa/distributedmatrix.py \
-	      python/pyelpa/wrapper.pyx
-endif
+	      python/pyelpa/wrapper.pyx \
+	      python/tests/test_elpa_import.py \
+	      python/tests/test_mpi4py.py \
+	      python/tests/test_numroc.py \
+	      python/tests/test_with_mpi.py
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
