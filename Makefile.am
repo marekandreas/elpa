@@ -615,14 +615,14 @@ endif
 # python wrapper
 if WITH_PYTHON
 pyelpadir = $(pythondir)/pyelpa
-pyelpa_PYTHON = python/__init__.py python/distributedmatrix.py
+pyelpa_PYTHON = python/pyelpa/__init__.py python/pyelpa/distributedmatrix.py
 pyelpa_LTLIBRARIES = wrapper.la
-wrapper_la_SOURCES = python/wrapper.c
+wrapper_la_SOURCES = python/pyelpa/wrapper.c
 wrapper_la_LDFLAGS = -module -avoid-version -shared $(AM_LDFLAGS)
 wrapper_la_LIBADD = libelpa@SUFFIX@.la
 wrapper_la_CFLAGS = -I$(PYTHON_INCLUDE) $(AM_CFLAGS)
 
-python/wrapper.c: python/wrapper.pyx
+python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $<
 endif
 
