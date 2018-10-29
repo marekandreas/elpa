@@ -613,15 +613,21 @@ endif
 #test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
 
 # python wrapper
-if WITH_PYTHON
 pyelpadir = $(pythondir)/pyelpa
+if WITH_PYTHON
 pyelpa_PYTHON = python/pyelpa/__init__.py python/pyelpa/distributedmatrix.py
 pyelpa_LTLIBRARIES = wrapper.la
 wrapper_la_SOURCES = python/pyelpa/wrapper.c
+else
+pyelpa_PYTHON =
+pyelpa_LTLIBRARIES =
+wrapper_la_SOURCES =
+endif
 wrapper_la_LDFLAGS = -module -avoid-version -shared $(AM_LDFLAGS)
 wrapper_la_LIBADD = libelpa@SUFFIX@.la
 wrapper_la_CFLAGS = -I$(PYTHON_INCLUDE) $(AM_CFLAGS)
 
+if WITH_PYTHON
 python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $<
 endif
