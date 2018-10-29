@@ -826,6 +826,12 @@ EXTRA_DIST += \
   test/shared/test_scalapack_template.F90
 endif
 
+if WITH_PYTHON
+EXTRA_DIST += python/pyelpa/__init__.py \
+	      python/pyelpa/distributedmatrix.py \
+	      python/pyelpa/wrapper.pyx
+endif
+
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool
