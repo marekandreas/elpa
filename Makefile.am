@@ -624,7 +624,7 @@ endif
 nodist_wrapper_la_SOURCES = python/pyelpa/wrapper.c
 wrapper_la_LDFLAGS = -module -avoid-version -shared $(AM_LDFLAGS)
 wrapper_la_LIBADD = libelpa@SUFFIX@.la
-wrapper_la_CFLAGS = -I$(PYTHON_INCLUDE) $(AM_CFLAGS)
+wrapper_la_CFLAGS = $(PYTHON_INCLUDE) $(NUMPY_INCLUDE) $(AM_CFLAGS)
 
 python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $<

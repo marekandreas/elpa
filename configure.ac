@@ -1307,6 +1307,24 @@ if test x"${enable_python}" = x"yes"; then
           PYTHON_INCLUDE=`$PYTHON_CONFIG --includes`
           AC_MSG_RESULT([$PYTHON_INCLUDE])
         ])
+        AC_MSG_CHECKING([numpy module])
+        AS_IF([$PYTHON -c "import numpy"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find numpy.])])
+        AC_MSG_CHECKING([mpi4py module])
+        AS_IF([$PYTHON -c "import mpi4py"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find mpi4py.])])
+        AC_MSG_CHECKING([cython module])
+        AS_IF([$PYTHON -c "import cython"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find cython.])])
+        AC_CHECK_PROG([cython_found], [cython], [yes], [no])
+        if test x"$cython_found" != x"yes" ; then
+          AC_MSG_ERROR([cython not found.])
+        fi
+        AC_ARG_VAR([NUMPY_INCLUDE], [Include flags for numpy])
+        AC_MSG_CHECKING([numpy include flags])
+        NUMPY_INCLUDE=-I`$PYTHON -c "import numpy; print(numpy.get_include())"`
+        AS_IF([test "$NUMPY_INCLUDE" = "-I"], [AC_MSG_ERROR([cannot get numpy include path.])])
+        AC_MSG_RESULT([$NUMPY_INCLUDE])
 fi
 
 
