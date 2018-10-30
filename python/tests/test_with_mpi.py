@@ -54,7 +54,7 @@ def test_distributed_matrix_from_processor_layout(na, nev, nblk):
 @pytest.mark.parametrize("na,nev,nblk", parameter_list)
 def test_distributed_matrix_from_communicator(na, nev, nblk):
     import numpy as np
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
     from mpi4py import MPI
     comm = MPI.COMM_WORLD
 
@@ -68,7 +68,7 @@ def test_distributed_matrix_from_communicator(na, nev, nblk):
 @pytest.mark.parametrize("na,nev,nblk", parameter_list)
 def test_distributed_matrix_from_world(na, nev, nblk):
     import numpy as np
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
 
     for dtype in [np.float64, np.float32, np.complex64, np.complex128]:
         a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
@@ -164,7 +164,7 @@ def test_compare_eigenvalues_to_those_from_eigenvectors(na, nev, nblk):
 def test_compare_eigenvalues_to_those_from_eigenvectors_self_functions(
         na, nev, nblk):
     import numpy as np
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
 
     for dtype in [np.float64, np.complex128]:
         # create arrays
@@ -295,7 +295,7 @@ def test_dot_product(na, nev, nblk):
 @pytest.mark.parametrize("na,nev,nblk", parameter_list)
 def test_dot_product_incompatible_size(na, nev, nblk):
     import numpy as np
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
 
     for dtype in [np.float64, np.complex128]:
         a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
@@ -312,7 +312,7 @@ def test_dot_product_incompatible_size(na, nev, nblk):
 @pytest.mark.parametrize("na,nev,nblk", parameter_list)
 def test_validate_eigenvectors(na, nev, nblk):
     import numpy as np
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
 
     for dtype in [np.float64, np.complex128]:
         a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
@@ -338,7 +338,7 @@ def test_validate_eigenvectors(na, nev, nblk):
 def test_validate_eigenvectors_to_numpy(na, nev, nblk):
     import numpy as np
     from numpy import linalg
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
 
     for dtype in [np.float64, np.complex128]:
         a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
@@ -364,7 +364,7 @@ def test_validate_eigenvectors_to_numpy(na, nev, nblk):
 @pytest.mark.parametrize("na,nev,nblk", parameter_list)
 def test_accessing_matrix(na, nev, nblk):
     import numpy as np
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
 
     for dtype in [np.float64, np.complex128]:
         a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
@@ -381,7 +381,7 @@ def test_accessing_matrix(na, nev, nblk):
 @pytest.mark.parametrize("na,nev,nblk", parameter_list)
 def test_global_index_iterator(na, nev, nblk):
     import numpy as np
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
 
     for dtype in [np.float64, np.complex128]:
         a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
@@ -392,7 +392,7 @@ def test_global_index_iterator(na, nev, nblk):
 @pytest.mark.parametrize("na,nev,nblk", parameter_list)
 def test_global_index_access(na, nev, nblk):
     import numpy as np
-    from pyelpa import ProcessorLayout, DistributedMatrix
+    from pyelpa import DistributedMatrix
 
     for dtype in [np.float64, np.complex128]:
         a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
