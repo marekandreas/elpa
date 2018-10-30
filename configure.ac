@@ -1326,6 +1326,29 @@ if test x"${enable_python}" = x"yes"; then
         AS_IF([test "$NUMPY_INCLUDE" = "-I"], [AC_MSG_ERROR([cannot get numpy include path.])])
         AC_MSG_RESULT([$NUMPY_INCLUDE])
 fi
+AC_MSG_CHECKING(whether --enable-python-tests is specified)
+AC_ARG_ENABLE([python-tests],
+              AS_HELP_STRING([--enable-python-tests],
+                             [enable python tests, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_python_tests=yes
+	       else
+	         enable_python_tests=no
+	       fi
+	       ],
+              [enable_python_tests=no])
+AC_MSG_RESULT([${enable_python_tests}])
+AM_CONDITIONAL([WITH_PYTHON_TESTS],[test x"$enable_python_tests" = x"yes"])
+if test x"${enable_python_tests}" = x"yes"; then
+        if test x"${enable_python}" = x"no"; then
+          AC_MSG_ERROR([Python tests can only be enabled it python is enabled.])
+        fi
+        AC_CHECK_PROG([pytest_found], [pytest], [yes], [no])
+        if test x"$pytest_found" != x"yes" ; then
+          AC_MSG_ERROR([pytest not found.])
+        fi
+fi
 
 
 AC_OUTPUT

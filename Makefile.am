@@ -629,6 +629,18 @@ wrapper_la_CFLAGS = $(PYTHON_INCLUDE) $(NUMPY_INCLUDE) $(AM_CFLAGS)
 python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $<
 
+if WITH_PYTHON_TESTS
+check_SCRIPTS += check_python.sh
+endif
+
+check_python.sh:
+	@echo "#!/bin/bash" > $@
+	@echo "export PYTHONPATH=$$PYTHONPATH:$(top_srcdir)/python" >> $@
+# this is very hacky... is there a better way to get wrapper.so?
+	@echo "cp $(top_srcdir)/.libs/wrapper.so $(top_srcdir)/python" >> $@
+	@echo "pytest $(top_srcdir)/python" >> $@
+	@echo "rm $(top_srcdir)/python/wrapper.so" >> $@
+	@chmod +x $@
 
 # test scripts
 TASKS ?= 2
@@ -668,7 +680,8 @@ CLEANFILES = \
   complex* \
   double_instance* \
   *.i \
-  python/pyelpa/wrapper.c
+  python/pyelpa/wrapper.c \
+  check_python.sh
 
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
