@@ -637,9 +637,11 @@ check_python.sh:
 	@echo "#!/bin/bash" > $@
 	@echo "export PYTHONPATH=$$PYTHONPATH:$(top_srcdir)/python" >> $@
 # this is very hacky... is there a better way to get wrapper.so?
-	@echo "cp $(top_srcdir)/.libs/wrapper.so $(top_srcdir)/python" >> $@
+	@echo "cp .libs/wrapper.so $(top_srcdir)/python/pyelpa" >> $@
 	@echo "pytest $(top_srcdir)/python" >> $@
-	@echo "rm $(top_srcdir)/python/wrapper.so" >> $@
+	@echo "exit_code=$$?" >> $@
+	@echo "rm $(top_srcdir)/python/pyelpa/wrapper.so" >> $@
+	@echo "exit $$exit_code" >> $@
 	@chmod +x $@
 
 # test scripts
