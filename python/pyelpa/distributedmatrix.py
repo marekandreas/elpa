@@ -351,3 +351,49 @@ class DistributedMatrix:
         else:
             raise ValueError('Index out of bounds: global row {:d}, '
                              'global col {:d}'.format(global_row, global_col))
+
+    def global_block_indices(self):
+        """Return iterator over global indices of matrix blocks.
+
+        Use together with set_block_global_index and get_block_global_index
+        for more efficient loops.
+        """
+        for local_row in range(0, self.na_rows, self.nblk):
+            for local_col in range(0, self.na_cols, self.nblk):
+                # do not go beyond the end of the matrix
+                row_block_size = min(local_row + self.nblk,
+                                     self.na_rows) - local_row
+                col_block_size = min(local_col + self.nblk,
+                                     self.na_cols) - local_col
+                global_row, global_col = self.get_global_index(local_row,
+                                                               local_col)
+                yield global_row, global_col, row_block_size, col_block_size
+
+    def set_block_for_global_index(self, global_row, global_col,
+                                   row_block_size, col_block_size, value):
+        """Set value of block of matrix at global coordinates"""
+        if self.is_local_index(global_row, global_col):
+            local_row, local_col = self.get_local_index(global_row, global_col)
+            if value.shape != (row_block_size, col_block_size):
+                raise ValueError("value has the wrong shape. "
+                                 "Expected: {}, found: {}."
+                                 .format((row_block_size, col_block_size),
+                                         value.shape)
+                                 )
+            self.data[local_row:local_row+row_block_size,
+                      local_col:local_col+col_block_size] = value
+
+    def get_block_for_global_index(self, global_row, global_col,
+                                   row_block_size, col_block_size):
+        """Get value of block of matrix at global coordinates"""
+        if self.is_local_index(global_row, global_col):
+            local_row, local_col = self.get_local_index(global_row, global_col)
+            if local_row+row_block_size > self.na_rows or \
+                    local_col+col_block_size > self.na_cols:
+                raise ValueError("Block size wrong: exceeds dimensions of"
+                                 " matrix.")
+            return self.data[local_row:local_row+row_block_size,
+                             local_col:local_col+col_block_size]
+        else:
+            raise ValueError('Index out of bounds: global row {:d}, '
+                             'global col {:d}'.format(global_row, global_col))

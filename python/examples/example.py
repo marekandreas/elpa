@@ -11,15 +11,11 @@ nblk = 16
 # create distributed matrix
 a = DistributedMatrix.from_comm_world(na, nev, nblk)
 
-# function for setting the matrix
+# set matrix a by looping over indices
 # this is the easiest but also slowest way
-def set_matrix(a):
-    for global_row, global_col in a.global_indices():
-        a.set_data_for_global_index(global_row, global_col,
-                                    global_row*global_col)
-
-# set a
-set_matrix(a)
+for global_row, global_col in a.global_indices():
+    a.set_data_for_global_index(global_row, global_col,
+                                global_row*global_col)
 
 print("Call ELPA eigenvectors")
 sys.stdout.flush()
@@ -36,7 +32,14 @@ print("Done")
 # all computed eigenvalues on all cores
 
 # set a again because it has changed after calling elpa
-set_matrix(a)
+# this time set it by looping over blocks, this is more efficient
+for global_row, global_col, row_block_size, col_block_size in \
+        a.global_block_indices():
+    # set block with product of indices
+    x = np.arange(global_row, global_row + row_block_size)[:, None] * \
+        np.arange(global_col, global_col + col_block_size)[None, :]
+    a.set_block_for_global_index(global_row, global_col,
+                                 row_block_size, col_block_size, x)
 
 print("Call ELPA eigenvalues")
 sys.stdout.flush()

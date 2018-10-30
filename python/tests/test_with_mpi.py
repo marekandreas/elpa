@@ -402,3 +402,37 @@ def test_global_index_access(na, nev, nblk):
         for i, j in a.global_indices():
             x = a.get_data_for_global_index(i, j)
             assert(np.isclose(x, i*j))
+
+
+@pytest.mark.parametrize("na,nev,nblk", parameter_list)
+def test_global_block_iterator(na, nev, nblk):
+    import numpy as np
+    from pyelpa import DistributedMatrix
+
+    for dtype in [np.float64, np.complex128]:
+        a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
+        for i, j, blk_i, blk_j in a.global_block_indices():
+            assert(a.is_local_index(i, j))
+            assert(blk_i <= nblk)
+            assert(blk_j <= nblk)
+            assert(i+blk_i <= na)
+            assert(j+blk_j <= na)
+
+
+@pytest.mark.parametrize("na,nev,nblk", parameter_list)
+def test_global_block_access(na, nev, nblk):
+    import numpy as np
+    from pyelpa import DistributedMatrix
+
+    for dtype in [np.float64, np.complex128]:
+        a = DistributedMatrix.from_comm_world(na, nev, nblk, dtype=dtype)
+        for i, j, blk_i, blk_j in a.global_block_indices():
+            x = np.arange(i, i+blk_i)[:, None] * np.arange(j, j+blk_j)[None, :]
+            a.set_block_for_global_index(i, j, blk_i, blk_j, x)
+        for i, j, blk_i, blk_j in a.global_block_indices():
+            original = np.arange(i, i+blk_i)[:, None] * np.arange(j, j+blk_j)[None, :]
+            x = a.get_block_for_global_index(i, j, blk_i, blk_j)
+            assert(np.allclose(x, original))
+        for i, j in a.global_indices():
+            x = a.get_data_for_global_index(i, j)
+            assert(np.isclose(x, i*j))
