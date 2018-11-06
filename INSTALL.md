@@ -105,7 +105,7 @@ explicitely enabled.
 Please note, that it is absolutely supported that both versions of the *ELPA* library are build
 and installed in the same directory.
 
-### A) Setting of MPI compiler and libraries ###
+#### A) Setting of MPI compiler and libraries ####
 
 In the standard case *ELPA* needs a MPI compiler and MPI libraries. The configure script
 will try to set this by itself. If, however, on the build system the compiler wrapper
@@ -125,7 +125,7 @@ to the configure call.
 Please continue reading at "C) Enabling GPU support"
 
 
-### B) Building *ELPA* without MPI support ###
+#### B) Building *ELPA* without MPI support ####
 
 If you want to build *ELPA* without MPI support, add
 
@@ -145,7 +145,7 @@ Note, that the installed *ELPA* library files will be suffixed with
 
 Please continue reading at "C) Enabling GPU support"
 
-### C) Enabling GPU support ###
+### Enabling GPU support ###
 
 The *ELPA* library can be build with GPU support. If *ELPA* is build with GPU
 support, users can choose at RUNTIME, whether to use the GPU version or not.
@@ -165,7 +165,7 @@ It might be necessary to also set the options (please see configure --help)
 Please continue reading at "D) Enabling OpenMP support".
 
 
-### D) Enabling OpenMP support ###
+### Enabling OpenMP support ###
 
 The *ELPA* library can be build with OpenMP support. This can be support of hybrid
 MPI/OpenMP parallelization, since *ELPA* is build with MPI support (see A ) or only
@@ -185,7 +185,7 @@ However, the GPU choice at runtime is not compatible with OpenMP support.
 Please continue reading at "E) Standard libraries in default installation paths".
 
 
-### E) Standard libraries in default installation paths###
+### Standard libraries in default installation paths ###
 
 In order to build the *ELPA* library, some (depending on the settings during the
 configure step) libraries are needed.
@@ -207,7 +207,7 @@ If your configure steps finish succcessfully, please continue at "G) Choice of E
 If your configure step aborts, or you want to use libraries in non standard paths please continue at
 "F) Non standard paths or non standard libraries".
 
-### F) Non standard paths or non standard libraries ###
+### Non standard paths or non standard libraries ###
 
 If standard libraries are on the build system either installed in non standard paths, or
 special non standard libraries (e.g. *Intel's MKL*) should be used, it might be necessary
@@ -236,17 +236,25 @@ Please, for the correct link-line refer to the documentation of the correspondig
 suggest the [Intel Math Kernel Library Link Line Advisor] (https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor).
 
 
-### G) Choice of ELPA2 compute kernels ###
+### Choice of ELPA2 compute kernels ###
 
 ELPA 2stage can be used with different implementations of compute intensive kernels, which are architecture dependent.
 Some kernels (all for x86_64 architectures) are enabled by default (and must be disabled if you do not want them),
 others are disabled by default and must be enabled if they are wanted.
 
-One can enable or disable "kernel classes" by setting e.g.
+One can enable "kernel classes" by setting e.g.
 
---enable-avx2
+--enable-avx2 
+
 
 This will try to build all the AVX2 kernels. Please see configure --help for all options
+
+With
+
+--disable-avx2
+
+one chan choose not to build the AVX2 kernels.
+
 
 During the configure step all possible kernels will be printed, and whether they will be enabled or not.
 
@@ -256,6 +264,44 @@ kernels should be used.
 It this is not desired, it is possible to build *ELPA* with only one (not necessary the same) kernel for the
 real and complex valued case, respectively. This can be done with the "--with-fixed-real-kernel=NAME" or
 "--with-fixed-complex-kernel=NAME" configure options. For details please do a "configure --help"
+
+#### Cross compilation ####
+
+The ELPA library does _not_ supports cross-compilation by itself, i.e. compilation of the ELPA library on an architecture wich is not
+identical than the architecture ELPA should be used on.
+
+Whenever a cross-compilation situation might occur, great care has to be taken during the build process by the user.
+
+At the moment we see two potential pitfalls:
+
+1.) The "build architecure" is inferior to the "target" architecture (w.r.t. the instructions sets)
+
+In this case, at the moment, the ELPA library can only be build with instructions sets supported on the build
+system. All later instruction sets will _not_ be used in the compilation. This case might lead to less optimal
+performance compared to the case that ELPA is build directly on the target system.
+
+For example, if the "build architecture" consists of an HASWELL node (supporting up to Intel's AVX2 instruction set) and the 
+"target architecture" is a Skylake node (supporting Intel's AVX-512 instruction set) than the AVX-512 kernels can not be build
+This will lead to a performance degradation on the Skylake nodes, but is otherwise harmless (no chrashes).
+
+
+2.) The "build architecure" is superior to the "target" architecture (w.r.t. the instructions sets)
+
+This case is a critical one, since ELPA will by default build with instructions sets which are not supported on the target
+system. This will lead to crashes, if during build the user does not take care to solve this issue.
+
+For example, if the "build architecture" supports Intels' AVX-2 instruction set and the 
+"target architecture" does only support Intel's AVX instruction set, then by default ELPA will be build with AVX-2 instruction set
+and this will also be used at runtime (since it improves the performance). However, at the moment, since the target system does not support
+AVX-2 instructions this will lead to a crash.
+
+One can avoid this unfortunate situation by disabling instructions set which are _not_ supported on the target system.
+In the case above, setting
+
+--disable-avx2
+
+during build, will remdy this problem.
+
 
 ### Doxygen documentation ###
 A doxygen documentation can be created with the "--enable-doxygen-doc" configure option

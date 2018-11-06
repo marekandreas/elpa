@@ -220,14 +220,14 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL, PRINT_YES),
 
-        INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL, PRINT_YES),
         INT_ENTRY("stripewidth_real", "Stripewidth_real, default 48. Must be a multiple of 4", 48, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_REAL,
                         stripewidth_real_cardinality, stripewidth_real_enumerate, stripewidth_real_is_valid, NULL, PRINT_YES),
         INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_COMPLEX,
                         stripewidth_complex_cardinality, stripewidth_complex_enumerate, stripewidth_complex_is_valid, NULL, PRINT_YES),
 
-        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL, PRINT_YES),
 #ifdef WITH_OPENMP
         INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY,

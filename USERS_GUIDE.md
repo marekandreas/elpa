@@ -98,6 +98,10 @@ Fortran synopsis
   ! USERS_GUIDE.md
   call e%set("solver", ELPA_SOLVER_2STAGE, success)
 
+  ! set the AVX BLOCK2 kernel, otherwise ELPA_2STAGE_REAL_DEFAULT will
+  ! be used
+  call e%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, success)
+
   ! use method solve to solve the eigenvalue problem to obtain eigenvalues
   ! and eigenvectors
   ! other possible methods are desribed in USERS_GUIDE.md
@@ -141,6 +145,10 @@ C Synopsis:
       USERS_GUIDE.md */
 
    elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
+  
+   // set the AVX BLOCK2 kernel, otherwise ELPA_2STAGE_REAL_DEFAULT will
+   // be used
+   elpa_set(handle, "real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, &error)
 
    /* use method solve to solve the eigenvalue problem */
    /* other possible methods are desribed in USERS_GUIDE.md */
@@ -181,6 +189,7 @@ The following compute routines are available in *ELPA*: Please have a look at th
 | hermitian_multiply       | do (real) a^T x b <br> (complex) a^H x b                                        | 20170403 |
 | cholesky                 | do cholesky factorisation                                                       | 20170403 |
 | invert_triangular        | invert a upper triangular matrix                                                | 20170403 |
+| solve_tridiagonal        | solve EVP for a tridiagonal matrix                                              | 20170403 |
 
 
 ## IV) Using OpenMP threading ##
@@ -243,11 +252,12 @@ There are two ways, how the user can influence the autotuning steps:
 Each level defines a different set of tunable parameter. The autouning option will be extended by future releases of the *ELPA* library, at the moment the following
 sets are supported: 
 
-| AUTOTUNE LEVEL       | Parameters                                           |
-| :------------------- | :--------------------------------------------------  |
-| ELPA_AUTOTUNE_FAST   | { solver, real_kernel, complex_kernel, omp_threads } |
-| ELPA_AUTOTUNE_MEDIUM | { gpu }                                              |
-
+| AUTOTUNE LEVEL          | Parameters                                              |
+| :---------------------- | :------------------------------------------------------ |
+| ELPA_AUTOTUNE_FAST      | { solver, real_kernel, complex_kernel, omp_threads }    |
+| ELPA_AUTOTUNE_MEDIUM    | all of abvoe + { gpu, partly gpu }                      |
+| ELPA_AUTOTUNE_EXTENSIVE | all of above + { various blocking factors, stripewidth, |
+|                         | intermediate_bandwidth }                                |
 
 2.) the user can **remove** tunable parameters from the list of autotuning possibilites by explicetly setting this parameter,
 e.g. if the user sets in his code 
