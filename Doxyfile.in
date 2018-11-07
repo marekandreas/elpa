@@ -885,6 +885,7 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/elpa_c_interface.c \
 			@top_srcdir@/src/elpa2/mod_pack_unpack_cpu.F90 \
 			@top_srcdir@/src/elpa2/elpa2_symm_matrix_allreduce_real_template.F90 \
+			@top_srcdir@/src/elpa2/elpa2_ssymm_matrix_allreduce_real_template.F90 \
 			@top_srcdir@/src/elpa2/elpa2_tridiag_band_template.F90 \
 			@top_srcdir@/src/elpa2/mod_redist_band.F90 \
 			@top_srcdir@/src/elpa2/pack_unpack_cpu.F90 \
@@ -1002,6 +1003,7 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/elpa1/elpa_solve_tridi_impl_public.F90 \
 			@top_srcdir@/src/elpa1/elpa1_trans_ev_template.F90 \
 			@top_srcdir@/src/elpa1/elpa_transpose_vectors.F90 \
+			@top_srcdir@/src/elpa1/elpa_transpose_vectors_ss.F90 \
 			@top_srcdir@/src/elpa1/elpa1_auxiliary.F90 \
 			@top_srcdir@/src/elpa1/elpa1_tridiag_template.F90 \
 			@top_srcdir@/src/elpa1/elpa1_tools_template.F90 \

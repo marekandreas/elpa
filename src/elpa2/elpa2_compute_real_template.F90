@@ -60,6 +60,9 @@
 #include "elpa2_bandred_template.F90"
 #define REALCASE 1
 #include "elpa2_symm_matrix_allreduce_real_template.F90"
+#if SKEWSYMMETRIC == 1
+#include "elpa2_ssymm_matrix_allreduce_real_template.F90"
+#endif
 #undef REALCASE
 #define REALCASE 1
 #include "elpa2_trans_ev_band_to_full_template.F90"

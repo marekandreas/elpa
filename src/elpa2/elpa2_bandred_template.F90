@@ -1157,7 +1157,12 @@
               lre = min(l_rows,i*l_rows_tile)
               call obj%timer%start("blas")
               call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
-                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE,      &
+                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), &
+#if SKEWSYMMETRIC == 1
+                                     -ONE,      &
+#else                                     
+                                     ONE,      &
+#endif                                     
                                      vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
               call obj%timer%stop("blas")
             endif ! useGPU
@@ -1359,7 +1364,11 @@
        endif ! useGPU
 
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1
+       call ssymm_matrix_allreduce_&
+#else
        call symm_matrix_allreduce_&
+#endif
 #endif
 #if COMPLEXCASE == 1
        call herm_matrix_allreduce_&
@@ -1407,7 +1416,11 @@
          endif
 
          ! Transpose umc -> umr (stored in vmr, second half)
+#if SKEWSYMMETRIC == 1
+         call elpa_transpose_vectors_ss&
+#else
          call elpa_transpose_vectors_&
+#endif         
               &MATH_DATATYPE&
               &_&
               &PRECISION &
@@ -1438,6 +1451,9 @@
          call obj%timer%start("blas")
          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1
+                        0.5_rk,                           &
+#endif
                        -0.5_rk,                           &
 #endif
 #if COMPLEXCASE == 1
@@ -1448,7 +1464,11 @@
 
          call obj%timer%stop("blas")
          ! Transpose umc -> umr (stored in vmr, second half)
+#if SKEWSYMMETRIC == 1 
+         call elpa_transpose_vectors_ss_&
+#else
          call elpa_transpose_vectors_&
+#endif
          &MATH_DATATYPE&
          &_&
          &PRECISION &

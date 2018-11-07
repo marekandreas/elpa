@@ -486,7 +486,11 @@
 #endif
 
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1 
+          d(istep) = 0
+#else
           d(istep) = ab(1,na_s-n_off)
+#endif
           e(istep) = ab(2,na_s-n_off)
 #endif
 #if COMPLEXCASE == 1
@@ -496,7 +500,11 @@
 
           if (istep == na-1) then
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1 
+            d(na) = 0
+#else
             d(na) = ab(1,na_s+1-n_off)
+#endif
 #endif
 #if COMPLEXCASE == 1
             d(na) = real(ab(1,na_s+1-n_off),kind=rk)
@@ -855,7 +863,12 @@
               if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1
+!               call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+              call dssmv('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+#else
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+#endif
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd,1)
@@ -890,7 +903,12 @@
               ! Normal matrix multiply
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1
+!               call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+              call dssmv('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+#else
               call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+#endif
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
@@ -961,18 +979,28 @@
 
             ! Transform diagonal block
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1
+#else
             x = dot_product(hv(1:nc),hd(1:nc))*tau
+#endif
 #endif
 #if COMPLEXCASE == 1
             x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
 #endif
+#if SKEWSYMMETRIC == 1
+#else
             hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+#endif
             if (my_pe>0 .and. iblk==1) then
 
               ! The first column of the diagonal block has to be send to the previous PE
               ! Calculate first column only ...
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1
+              ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) + hv(1:nc)*hd(1)
+#else
               ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
+#endif
 #endif
 #if COMPLEXCASE == 1
               ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*conjg(hv(1)) - hv(1:nc)*conjg(hd(1))
@@ -997,7 +1025,12 @@
               ! ... and calculate remaining columns with rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1
+!               if (nc>1) call PRECISION_SSR2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+              if (nc>1) call dssr2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+#else
               if (nc>1) call PRECISION_SYR2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+#endif
 #endif
 #if COMPLEXCASE == 1
               if (nc>1) call PRECISION_HER2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
@@ -1008,7 +1041,12 @@
               ! No need to  send, just a rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
+#if SKEWSYMMETRIC == 1
+!               call PRECISION_SSR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+              call dssr2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+#else
               call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+#endif
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_HER2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
