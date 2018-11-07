@@ -45,7 +45,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    & (na, myid, sc_desc, a, z, as)
+    & (na, myid, sc_desc, a, z, as, is_skewsymmetric)
 
 
       use test_util
@@ -60,9 +60,22 @@
 
       integer, allocatable :: iseed(:)
       integer ::  n
+      integer, intent(in), optional :: is_skewsymmetric
+      logical                       :: skewsymmetric
+
+      if (present(is_skewsymmetric)) then
+        if (is_skewsymmetric .eq. 1) then
+          skewsymmetric = .true.
+        else
+          skewsymmetric = .false.
+        endif      
+      else
+        skewsymmetric = .false.
+      endif
 
       ! for getting a hermitian test matrix A we get a random matrix Z
       ! and calculate A = Z + Z**H
+      ! in case of a skewsymmetric matrix A = Z - Z**H
 
       ! we want different random numbers on every process
       ! (otherwise A might get rank deficient):
@@ -92,21 +105,41 @@
 
 #if REALCASE == 1
 #ifdef WITH_MPI
-      call p&
-          &BLAS_CHAR&
-          &tran(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**T
+      if (skewsymmetric) then
+        call p&
+            &BLAS_CHAR&
+            &tran(na, na, -ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**T
+      else
+        call p&
+            &BLAS_CHAR&
+            &tran(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**T
+      endif
 #else /* WITH_MPI */
-      a = a + transpose(z)
+      if (skewsymmetric) then
+        a = a - transpose(z)
+      else
+        a = a + transpose(z)
+      endif
 #endif /* WITH_MPI */
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef WITH_MPI
-      call p&
-          &BLAS_CHAR&
-          &tranc(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**H
+      if (skewsymmetric) then
+        call p&
+           &BLAS_CHAR&
+           &tranc(na, na, -ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**H
+      else
+        call p&
+           &BLAS_CHAR&
+           &tranc(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**H
+      endif
 #else /* WITH_MPI */
-      a = a + transpose(conjg(z))
+      if (skewsymmetric) then
+        a = a - transpose(conjg(z))
+      else
+        a = a + transpose(conjg(z))
+      endif
 #endif /* WITH_MPI */
 #endif /* COMPLEXCASE */
 
