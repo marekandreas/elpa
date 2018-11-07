@@ -1416,11 +1416,7 @@
          endif
 
          ! Transpose umc -> umr (stored in vmr, second half)
-#if SKEWSYMMETRIC == 1
-         call elpa_transpose_vectors_ss&
-#else
-         call elpa_transpose_vectors_&
-#endif         
+         call elpa_transpose_vectors_&      
               &MATH_DATATYPE&
               &_&
               &PRECISION &
@@ -1453,8 +1449,9 @@
 #if REALCASE == 1
 #if SKEWSYMMETRIC == 1
                         0.5_rk,                           &
-#endif
+#else
                        -0.5_rk,                           &
+#endif
 #endif
 #if COMPLEXCASE == 1
                               (-0.5_rk, 0.0_rk),     &

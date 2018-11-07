@@ -105,7 +105,9 @@ module elpa1_compute
   public :: elpa_reduce_add_vectors_real_double
   public :: elpa_reduce_add_vectors_real
   public :: elpa_transpose_vectors_real_double
+  public :: elpa_transpose_vectors_ss_real_double
   public :: elpa_transpose_vectors_real
+  public :: elpa_transpose_vectors_ss_real
 
   interface hh_transform_real
     module procedure hh_transform_real_double
@@ -118,11 +120,16 @@ module elpa1_compute
   interface elpa_transpose_vectors_real
     module procedure elpa_transpose_vectors_real_double
   end interface
+  
+  interface elpa_transpose_vectors_ss_real
+    module procedure elpa_transpose_vectors_ss_real_double
+  end interface
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: hh_transform_real_single
   public :: elpa_reduce_add_vectors_real_single
   public :: elpa_transpose_vectors_real_single
+  public :: elpa_transpose_vectors_ss_real_single
 #endif
 
   public :: hh_transform_complex_double
@@ -130,7 +137,9 @@ module elpa1_compute
   public :: elpa_reduce_add_vectors_complex_double
   public :: elpa_reduce_add_vectors_complex
   public :: elpa_transpose_vectors_complex_double
+  public :: elpa_transpose_vectors_ss_complex_double
   public :: elpa_transpose_vectors_complex
+  public :: elpa_transpose_vectors_ss_complex
 
   interface hh_transform_complex
     module procedure hh_transform_complex_double
@@ -143,11 +152,16 @@ module elpa1_compute
   interface elpa_transpose_vectors_complex
     module procedure elpa_transpose_vectors_complex_double
   end interface
+  
+  interface elpa_transpose_vectors_ss_complex
+    module procedure elpa_transpose_vectors_ss_complex_double
+  end interface
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   public :: hh_transform_complex_single
   public :: elpa_reduce_add_vectors_complex_single
   public :: elpa_transpose_vectors_complex_single
+  public :: elpa_transpose_vectors_ss_complex_single
 #endif
 
   contains
@@ -159,6 +173,7 @@ module elpa1_compute
 #include "../general/precision_macros.h"
 
 #include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_ss.F90"
 #include "elpa_reduce_add_vectors.F90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -170,6 +185,7 @@ module elpa1_compute
 #include "../general/precision_macros.h"
 
 #include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_ss.F90"
 #include "elpa_reduce_add_vectors.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -181,6 +197,7 @@ module elpa1_compute
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_ss.F90"
 #include "elpa_reduce_add_vectors.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
@@ -191,6 +208,7 @@ module elpa1_compute
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_ss.F90"
 #include "elpa_reduce_add_vectors.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION

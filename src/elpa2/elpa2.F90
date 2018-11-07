@@ -74,6 +74,7 @@ module elpa2_impl
   contains
 
 #define REALCASE 1
+
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 !-------------------------------------------------------------------------------

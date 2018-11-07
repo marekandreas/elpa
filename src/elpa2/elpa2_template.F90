@@ -49,6 +49,7 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+
  function elpa_solve_evp_&
   &MATH_DATATYPE&
   &_&
@@ -129,6 +130,9 @@
                                                                          do_trans_to_band, do_trans_to_full
 
     integer(kind=ik)                                                  :: nrThreads
+#if SKEWSYMMETRIC ==1
+    integer(kind=ik)                                                  :: global_index     
+#endif
 #if REALCASE == 1
 #undef GPU_KERNEL
 #undef GENERIC_KERNEL

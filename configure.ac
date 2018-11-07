@@ -1179,6 +1179,9 @@ fi
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_REAL],[test x"$want_single_precision" = x"yes"])
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" = x"yes"])
 
+#always define SKEWSYMMETRIC for the moment
+AC_DEFINE([SKEWSYMMETRIC],[1],[build for skewsyemmtric case])
+
 AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])
 AC_SUBST([WITH_BLACS])
