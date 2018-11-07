@@ -629,22 +629,6 @@ wrapper_la_CFLAGS = $(PYTHON_INCLUDE) $(NUMPY_INCLUDE) $(AM_CFLAGS)
 python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $<
 
-if WITH_PYTHON_TESTS
-check_SCRIPTS += test_python.sh
-endif
-
-test_python.sh:
-	@echo '#!/bin/bash' > $@
-	@echo 'export PYTHONPATH=$$PYTHONPATH:$(top_srcdir)/python' >> $@
-# this is very hacky... is there a better way to get wrapper.so?
-	@echo 'cp .libs/wrapper.so $(top_srcdir)/python/pyelpa' >> $@
-# the dlopen flags are needed for MKL to work properly...
-	@echo "python -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; pytest.main([\"$(top_srcdir)/python\"])'" >> $@
-	@echo 'exit_code=$$?' >> $@
-	@echo 'rm $(top_srcdir)/python/pyelpa/wrapper.so' >> $@
-	@echo 'exit $$exit_code' >> $@
-	@chmod +x $@
-
 # test scripts
 TASKS ?= 2
 if WITH_MPI
@@ -661,6 +645,22 @@ TESTS = $(check_SCRIPTS)
 %_default.sh: %
 	@echo "#!/bin/bash" > $@
 	@echo '$(wrapper)' ./$^ '$$TEST_FLAGS' >> $@
+	@chmod +x $@
+
+if WITH_PYTHON_TESTS
+check_SCRIPTS += test_python.sh
+endif
+
+test_python.sh:
+	@echo '#!/bin/bash' > $@
+	@echo 'export PYTHONPATH=$$PYTHONPATH:$(top_srcdir)/python' >> $@
+# this is very hacky... is there a better way to get wrapper.so?
+	@echo 'cp .libs/wrapper.so $(top_srcdir)/python/pyelpa' >> $@
+# the dlopen flags are needed for MKL to work properly...
+	@echo "$(wrapper) python -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; pytest.main([\"$(top_srcdir)/python\"])'" >> $@
+	@echo 'exit_code=$$?' >> $@
+	@echo 'rm $(top_srcdir)/python/pyelpa/wrapper.so' >> $@
+	@echo 'exit $$exit_code' >> $@
 	@chmod +x $@
 
 include doxygen.am
