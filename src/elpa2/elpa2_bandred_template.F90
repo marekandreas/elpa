@@ -123,6 +123,8 @@
       real(kind=rk)                               :: eps
 #endif
       logical, intent(in)                         :: useGPU
+      integer(kind=c_int)                         :: skewsymmetric
+      logical                                     :: isSkewsymmetric
       character(20)                               :: gpuString
 
       integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, mpierr
@@ -188,6 +190,13 @@
       logical                                     :: useGPU_reduction_lower_block_to_tridiagonal
       integer(kind=ik), intent(in)                :: max_threads
 
+      call obj%get("is_skewsymmetric",skewsymmetric,error)
+      if (error .ne. ELPA_OK) then
+           print *,"Problem getting option. Aborting..."
+           stop
+      endif    
+      isSkewsymmetric = (skewsymmetric == 1)
+    
       if(useGPU) then
         gpuString = "_gpu"
       else
@@ -1156,14 +1165,18 @@
               if (i==0) cycle
               lre = min(l_rows,i*l_rows_tile)
               call obj%timer%start("blas")
-              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
+              
+              if (isSkewsymmetric) then
+               call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
                                      umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), &
-#if SKEWSYMMETRIC == 1
-                                     -ONE,      &
-#else                                     
-                                     ONE,      &
-#endif                                     
+                                     -ONE,      &                                  
                                      vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+              else
+                call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
+                                       umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), &
+                                       ONE,      &
+                                       vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+              endif
               call obj%timer%stop("blas")
             endif ! useGPU
           enddo ! i=0,(istep*nbw-1)/tile_size
@@ -1364,17 +1377,21 @@
        endif ! useGPU
 
 #if REALCASE == 1
-#if SKEWSYMMETRIC == 1
-       call ssymm_matrix_allreduce_&
-#else
-       call symm_matrix_allreduce_&
-#endif
+       if (isSkewsymmetric) then
+         call ssymm_matrix_allreduce_&
+         &PRECISION &
+                              (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+       else
+         call symm_matrix_allreduce_&
+         &PRECISION &
+                              (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+       endif
 #endif
 #if COMPLEXCASE == 1
        call herm_matrix_allreduce_&
-#endif
             &PRECISION &
                               (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+#endif
 
        if (useGPU) then
          successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
@@ -1445,36 +1462,47 @@
          endif
        else ! useGPU
          call obj%timer%start("blas")
-         call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
+
 #if REALCASE == 1
-#if SKEWSYMMETRIC == 1
+         if (isSkewsymmetric) then
+           call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
                         0.5_rk,                           &
-#else
-                       -0.5_rk,                           &
-#endif
-#endif
+                        umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
+                              ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
+         else
+           call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
+                         -0.5_rk,                           &
+                        umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
+                              ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
+         endif
+#endif           
 #if COMPLEXCASE == 1
+         call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
                               (-0.5_rk, 0.0_rk),     &
-#endif
             umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
                               ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
+#endif
 
          call obj%timer%stop("blas")
          ! Transpose umc -> umr (stored in vmr, second half)
-#if SKEWSYMMETRIC == 1 
-         call elpa_transpose_vectors_ss_&
-#else
-         call elpa_transpose_vectors_&
-#endif
-         &MATH_DATATYPE&
-         &_&
-         &PRECISION &
-                                  (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                         vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                         1, istep*nbw, n_cols, nblk, max_threads)
-
+         if (isSkewsymmetric) then
+           call elpa_transpose_vectors_ss_&
+             &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+                                    (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                           vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                           1, istep*nbw, n_cols, nblk, max_threads)
+         else
+          call elpa_transpose_vectors_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION &
+                                   (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                             vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                             1, istep*nbw, n_cols, nblk, max_threads)
+         endif
        endif  ! useGPU
-
 
        ! A = A - V*U**T - U*V**T
 

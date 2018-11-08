@@ -72,6 +72,7 @@
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
    logical                                                            :: useGPU
+   logical                                                            :: isSkewsymmetric
 #if REALCASE == 1
    logical                                                            :: useQR
    logical                                                            :: useQRActual
@@ -83,7 +84,7 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,obj%local_ncols)
-#ifdef SKEWSYMMETRIC == 1
+#if SKEWSYMMETRIC == 1
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
@@ -111,7 +112,7 @@
    integer(kind=c_int)                                                :: i
    logical                                                            :: success, successCUDA
    logical                                                            :: wantDebug
-   integer(kind=c_int)                                                :: istat, gpu, debug, qr
+   integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage
    logical                                                            :: do_useGPU, do_useGPU_bandred, &
                                                                          do_useGPU_tridiag_band, do_useGPU_solve_tridi, &
@@ -130,9 +131,9 @@
                                                                          do_trans_to_band, do_trans_to_full
 
     integer(kind=ik)                                                  :: nrThreads
-#if SKEWSYMMETRIC ==1
+! #if SKEWSYMMETRIC ==1
     integer(kind=ik)                                                  :: global_index     
-#endif
+! #endif
 #if REALCASE == 1
 #undef GPU_KERNEL
 #undef GENERIC_KERNEL
@@ -235,6 +236,14 @@
       print *,"Problem getting option. Aborting..."
       stop
     endif
+    
+    call obj%get("is_skewsymmetric",skewsymmetric,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    
+    isSkewsymmetric = (skewsymmetric == 1)
 
     ! GPU settings
     call obj%get("gpu", gpu,error)
@@ -672,31 +681,31 @@
          stop 1
        endif
 #endif
-#if SKEWSYMMETRIC == 1
+       if (isSkewsymmetric) then
        ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
        ! This makes the eigenvectors complex. 
        ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
-
-       q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols) = 0.0
-       do i = 1, obj%local_nrows
-!        global_index = indxl2g(i, nblk, my_prow, 0, np_rows)
-         global_index = np_rows*nblk*((i-1)/nblk) + MOD(i-1,nblk) + MOD(np_rows+my_prow-0, np_rows)*nblk + 1
-         if (mod(global_index-1,4) .eq. 0) then
-            ! do nothing
-         end if
-         if (mod(global_index-1,4) .eq. 1) then
-            q(i,obj%local_ncols+1:2*obj%local_ncols) = q(i,1:obj%local_ncols)
-            q(i,1:obj%local_ncols) = 0
-         end if
-         if (mod(global_index-1,4) .eq. 2) then
-            q(i,1:obj%local_ncols) = -q(i,1:obj%local_ncols)
-         end if
-         if (mod(global_index-1,4) .eq. 3) then
-            q(i,obj%local_ncols+1:2*obj%local_ncols) = -q(i,1:obj%local_ncols)
-            q(i,1:obj%local_ncols) = 0
-         end if
-       end do       
-#endif
+         q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols) = 0.0
+         do i = 1, obj%local_nrows
+!          global_index = indxl2g(i, nblk, my_prow, 0, np_rows)
+           global_index = np_rows*nblk*((i-1)/nblk) + MOD(i-1,nblk) + MOD(np_rows+my_prow-0, np_rows)*nblk + 1
+           if (mod(global_index-1,4) .eq. 0) then
+              ! do nothing
+           end if
+           if (mod(global_index-1,4) .eq. 1) then
+              q(i,obj%local_ncols+1:2*obj%local_ncols) = q(i,1:obj%local_ncols)
+              q(i,1:obj%local_ncols) = 0
+           end if
+           if (mod(global_index-1,4) .eq. 2) then
+              q(i,1:obj%local_ncols) = -q(i,1:obj%local_ncols)
+           end if
+           if (mod(global_index-1,4) .eq. 3) then
+              q(i,obj%local_ncols+1:2*obj%local_ncols) = -q(i,1:obj%local_ncols)
+              q(i,1:obj%local_ncols) = 0
+           end if
+         end do       
+       endif
+       
        ! Backtransform stage 1
        call obj%timer%start("trans_ev_to_band")
 
@@ -709,18 +718,18 @@
        q_dev, &
        ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
-#if SKEWSYMMETRIC == 1
+       if (isSkewsymmetric) then
        ! Transform imaginary part
        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
-       call trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &_&
-       &PRECISION &
-       (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
-       q_dev, &
-       ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
-       nrThreads, success=success, kernel=kernel)
-#endif
+         call trans_ev_tridi_to_band_&
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
+         (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
+         q_dev, &
+         ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+         nrThreads, success=success, kernel=kernel)
+       endif
        call obj%timer%stop("trans_ev_to_band")
 
        if (.not.(success)) return
@@ -789,22 +798,22 @@
        , useQRActual  &
 #endif
        )
-#if SKEWSYMMETRIC == 1
-       ! Transform imaginary part
-       ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
-       call trans_ev_band_to_full_&
-       &MATH_DATATYPE&
-       &_&
-       &PRECISION &
-       (obj, na, nev, nblk, nbw, a, &
-       a_dev, lda, tmat, tmat_dev,  q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),  &
-       q_dev, &
-       ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
+       if (isSkewsymmetric) then
+         ! Transform imaginary part
+         ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
+         call trans_ev_band_to_full_&
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
+         (obj, na, nev, nblk, nbw, a, &
+         a_dev, lda, tmat, tmat_dev,  q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),  &
+         q_dev, &
+         ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
-       , useQRActual  &
+         , useQRActual  &
 #endif
-       )
-#endif
+         )
+       endif
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
