@@ -768,7 +768,8 @@ module elpa_impl
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     subroutine elpa_destroy(self)
 #ifdef WITH_MPI
-      integer :: mpi_comm_rows, mpi_comm_cols, mpierr, error
+      integer :: mpi_comm_rows, mpi_comm_cols, mpierr, mpierr2, error, mpi_string_length
+      character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
 #endif
       class(elpa_impl_t) :: self
 
@@ -786,7 +787,17 @@ module elpa_impl
         endif
 
         call mpi_comm_free(mpi_comm_rows, mpierr)
+        if (mpierr .ne. MPI_SUCCESS) then
+          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
+          return
+        endif
         call mpi_comm_free(mpi_comm_cols, mpierr)
+        if (mpierr .ne. MPI_SUCCESS) then
+          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          write(error_unit,*) "MPI ERROR occured during mpi_comm_free for col communicator: ", trim(mpierr_string)
+          return
+        endif
       endif
 #endif
 

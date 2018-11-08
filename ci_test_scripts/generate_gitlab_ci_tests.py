@@ -327,6 +327,16 @@ print("    # stupid 'make distcheck' leaves behind write-protected files that th
 print("    - make distcheck DISTCHECK_CONFIGURE_FLAGS=\"--with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2\" TASKS=2 TEST_FLAGS=\"150 50 16\" || { chmod u+rwX -R . ; exit 1 ; }")
 print("\n\n")
 
+print("distcheck-mpi:")
+print("  tags:")
+print("    - buildtest")
+print("  script:")
+print("    - ./configure FC=mpiifort FCFLAGS=\"-xHost\" CFLAGS=\"-march=native\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\" --enable-option-checking=fatal --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }")
+print("    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove")
+print('    - make distcheck DISTCHECK_CONFIGURE_FLAGS="FC=mpiifort FCFLAGS=\\"-xHost\\" CFLAGS=\\"-march=native\\" SCALAPACK_LDFLAGS=\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\" SCALAPACK_FCFLAGS=\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\" --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }')
+print("\n\n")
+
+# add python tests
 python_ci_tests = [
     "# python tests",
     "python-intel-intel-mpi-openmp:",
