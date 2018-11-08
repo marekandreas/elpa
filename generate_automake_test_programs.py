@@ -254,3 +254,14 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 
+name = "test_skewsymmetric_real_double"
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
+print(name + "_LDADD = $(test_program_ldadd)")
+print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+
+
