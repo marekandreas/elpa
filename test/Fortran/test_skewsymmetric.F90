@@ -248,7 +248,15 @@ program test
    if (myid .eq. 0) then
      print *, ""
      call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
-   endif  
+   endif
+   ! check eigenvalues
+   do i=1, na
+     if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-12) then
+       print *,"Error on ev: i=",i,ev_complex(i),ev_skewsymmetric(i)
+       status = 1
+     endif
+   enddo
+   call check_status(status, myid)
 #ifdef WITH_MPI
    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 #endif
@@ -257,7 +265,6 @@ program test
 
 
    !to do 
-   ! - compare ev results from brute-force and skewsymmetric
    ! - check whether brute-force check_correctness_evp_numeric_residuals worsk (complex ev)
    ! - invent a test for skewsymmetric residuals
 
@@ -273,55 +280,6 @@ program test
    call elpa_uninit()
 
 
-
-
-   !  if (myid .eq. 0) then
-   !    print *, ""
-   !    call e_ptr%print_times("eigenvectors: iteration "//trim(iter_string))
-   !  endif
-   !  status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
-   !                                      .true., .true., print_times=.false.)
-   !  a(:,:) = as(:,:)
-   !  call e_ptr%autotune_print_state(tune_state)
-   !  call e_ptr%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
-#ifdef WITH_MPI
-   !  call MPI_BARRIER(MPI_COMM_WORLD, ierr)
-#endif
-   !  call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
-   !end do
-
-   !! set and print the autotuned-settings
-   !call e_ptr%autotune_set_best(tune_state)
-   !if (myid .eq. 0) then
-   !  print *, "The best combination found by the autotuning:"
-   !  flush(output_unit)
-   !  call e_ptr%autotune_print_best(tune_state)
-   !endif
-   !! de-allocate autotune object
-   !call elpa_autotune_deallocate(tune_state)
-
-   !if (myid .eq. 0) then
-   !  print *, "Running once more time with the best found setting..."
-   !endif
-   !call e_ptr%timer_start("eigenvectors: best setting")
-   !call e_ptr%eigenvectors(a, ev, z, error)
-   !call e_ptr%timer_stop("eigenvectors: best setting")
-   !assert_elpa_ok(error)
-   !if (myid .eq. 0) then
-   !  print *, ""
-   !  call e_ptr%print_times("eigenvectors: best setting")
-   !endif
-   !status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
-   !                                    .true., .true., print_times=.false.)
-
-   !call elpa_deallocate(e_ptr)
-
-   !deallocate(a)
-   !deallocate(as)
-   !deallocate(z)
-   !deallocate(ev)
-
-   !call elpa_uninit()
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
