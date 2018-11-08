@@ -1167,9 +1167,9 @@
               call obj%timer%start("blas")
               
               if (isSkewsymmetric) then
-               call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
+               call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, -ONE, a_mat(1,lcs), lda, &
                                      umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), &
-                                     -ONE,      &                                  
+                                     ONE,      &                                  
                                      vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
               else
                 call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
