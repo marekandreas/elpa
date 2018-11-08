@@ -118,6 +118,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa_multiply_a_b.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/precision_macros.h \
+  src/general/precision_typedefs.h \
   src/general/precision_kinds.F90
 
 if ENABLE_LEGACY
@@ -749,6 +750,7 @@ EXTRA_DIST = \
   src/fortran_constants.h \
   src/general/map_global_to_local.F90 \
   src/general/precision_macros.h \
+  src/general/precision_typedefs.h \
   src/general/precision_kinds.F90 \
   src/general/prow_pcol.F90 \
   src/general/sanity.F90 \
