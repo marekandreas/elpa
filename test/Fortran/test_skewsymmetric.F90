@@ -173,15 +173,18 @@ program test
 
    allocate(a_skewsymmetric (na_rows,na_cols))
    allocate(as_skewsymmetric(na_rows,na_cols))
-   allocate(z_skewsymmetric (na_rows,na_cols))
+   allocate(z_skewsymmetric (na_rows,2*na_cols))
    allocate(ev_skewsymmetric(na))
 
    a_skewsymmetric(:,:) = 0.0
    z_skewsymmetric(:,:) = 0.0
    ev_skewsymmetric(:) = 0.0
 
-   call prepare_matrix_random(na, myid, sc_desc, a_skewsymmetric, z_skewsymmetric, as_skewsymmetric, is_skewsymmetric=1)
+   call prepare_matrix_random(na, myid, sc_desc, a_skewsymmetric, &
+   z_skewsymmetric(:,1:na_cols), as_skewsymmetric, is_skewsymmetric=1)
    as_skewsymmetric(:,:) = a_skewsymmetric(:,:)
+   
+!    CALL PDLAPRNT( na, na, a_skewsymmetric, 1, 1, sc_desc, 0, 0, 'A_ss', 6, z_skewsymmetric)
 
    ! prepare the complex matrix for the "brute force" case
    allocate(a_complex (na_rows,na_cols))
@@ -212,6 +215,7 @@ program test
    call e_complex%set("gpu", 0)
 
    assert_elpa_ok(e_complex%setup())
+   call e_complex%set("solver", elpa_solver_2stage, error)
 
    call e_complex%timer_start("eigenvectors: brute force ")
    call e_complex%eigenvectors(a_complex, ev_complex, z_complex, error)
@@ -240,7 +244,11 @@ program test
 
    call e_skewsymmetric%set("is_skewsymmetric",1)
    assert_elpa_ok(e_skewsymmetric%setup())
+   
+   call e_skewsymmetric%set("solver", elpa_solver_2stage, error)
 
+   call e_skewsymmetric%get("is_skewsymmetric", i,error)
+   
    call e_skewsymmetric%timer_start("eigenvectors: skewsymmetric ")
    call e_skewsymmetric%eigenvectors(a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, error)
    call e_skewsymmetric%timer_stop("eigenvectors: skewsymmetric ")
@@ -249,16 +257,29 @@ program test
      print *, ""
      call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
    endif
+   
+!    CALL PDLAPRNT( na, na, z_skewsymmetric(:,1:na_cols), 1, 1, sc_desc, 0, 0, 'Z1', 6, a_skewsymmetric) 
+!    CALL PDLAPRNT( na, na, z_skewsymmetric(:,na_cols+1:2*na_cols), 1, 1, sc_desc, 0, 0, 'Z2', 6, a_skewsymmetric) 
+   
    ! check eigenvalues
    do i=1, na
-     if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-12) then
-       print *,"Error on ev: i=",i,ev_complex(i),ev_skewsymmetric(i)
-       status = 1
+     if (myid == 0) then
+        print *,"ev: i=",i,ev_complex(i),ev_skewsymmetric(i)
+       if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-6) then
+         status = 1
+     endif
      endif
    enddo
    call check_status(status, myid)
+   
+   ! Check Residuum of real part
+!    status = check_correctness_evp_numeric_residuals(na, nev, as_skewsymmetric, &
+!                               z_skewsymmetric(:,1:na_cols), ev_skewsymmetric, sc_desc, &
+!                               nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+!    call check_status(status, myid)
+   
 #ifdef WITH_MPI
-   call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+!    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 #endif
    call elpa_deallocate(e_complex)
    call elpa_deallocate(e_skewsymmetric)
