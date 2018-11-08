@@ -72,6 +72,13 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #  endif
 #endif
 
+#ifdef TEST_SINGLE
+#define MATRIX_TYPE_COMPLEX complex(kind=C_FLOAT_COMPLEX)
+#define EV_TYPE_COMPLEX complex(kind=C_FLOAT_COMPLEX)
+#else
+#define MATRIX_TYPE_COMPLEX complex(kind=C_DOUBLE_COMPLEX)
+#define EV_TYPE_COMPLEX complex(kind=C_DOUBLE_COMPLEX)
+#endif
 
 #ifdef TEST_REAL
 #  define AUTOTUNE_DOMAIN ELPA_AUTOTUNE_DOMAIN_REAL
@@ -90,7 +97,6 @@ program test
    use test_read_input_parameters
    use test_blacs_infrastructure
    use test_check_correctness
-   use test_analytic
    use iso_fortran_env
 
 #ifdef HAVE_REDIRECT
@@ -113,21 +119,19 @@ program test
    integer                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
-   MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
+   MATRIX_TYPE, allocatable    :: a_skewsymmetric(:,:), as_skewsymmetric(:,:)
+   MATRIX_TYPE_COMPLEX, allocatable    :: a_complex(:,:), as_complex(:,:)
    ! eigenvectors
-   MATRIX_TYPE, allocatable    :: z(:,:)
+   MATRIX_TYPE, allocatable    :: z_skewsymmetric(:,:)
+   MATRIX_TYPE_COMPLEX, allocatable    :: z_complex(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable        :: ev(:)
+   EV_TYPE, allocatable:: ev_skewsymmetric(:), ev_complex(:)
 
-   integer                     :: error, status
+   integer                     :: error, status, i, j
 
    type(output_t)              :: write_to_file
-   class(elpa_t), pointer      :: e1, e2, e_ptr
-   class(elpa_autotune_t), pointer :: tune_state
-
-   integer                     :: iter
-   character(len=5)            :: iter_string
-
+   class(elpa_t), pointer      :: e_complex, e_skewsymmetric
+           
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
@@ -167,108 +171,157 @@ program test
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
-   allocate(a (na_rows,na_cols))
-   allocate(as(na_rows,na_cols))
-   allocate(z (na_rows,na_cols))
-   allocate(ev(na))
+   allocate(a_skewsymmetric (na_rows,na_cols))
+   allocate(as_skewsymmetric(na_rows,na_cols))
+   allocate(z_skewsymmetric (na_rows,na_cols))
+   allocate(ev_skewsymmetric(na))
 
-   a(:,:) = 0.0
-   z(:,:) = 0.0
-   ev(:) = 0.0
+   a_skewsymmetric(:,:) = 0.0
+   z_skewsymmetric(:,:) = 0.0
+   ev_skewsymmetric(:) = 0.0
 
-   call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times=.false.)
-   as(:,:) = a(:,:)
+   call prepare_matrix_random(na, myid, sc_desc, a_skewsymmetric, z_skewsymmetric, as_skewsymmetric, is_skewsymmetric=1)
+   as_skewsymmetric(:,:) = a_skewsymmetric(:,:)
 
-   e1 => elpa_allocate()
-   call set_basic_params(e1, na, nev, na_rows, na_cols, my_prow, my_pcol)
+   ! prepare the complex matrix for the "brute force" case
+   allocate(a_complex (na_rows,na_cols))
+   allocate(as_complex(na_rows,na_cols))
+   allocate(z_complex (na_rows,na_cols))
+   allocate(ev_complex(na))
 
-   call e1%set("timings",1, error)
+   a_complex(:,:) = 0.0
+   z_complex(:,:) = 0.0
+   as_complex(:,:) = 0.0
 
-   call e1%set("debug",1)
-   call e1%set("gpu", 0)
-   !call e1%set("max_stored_rows", 15, error)
+   do j=1, na_cols
+     do i=1,na_rows
+       a_complex(i,j) = cmplx(0.0, a_skewsymmetric(i,j))
+     enddo
+   enddo
 
-   assert_elpa_ok(e1%setup())
+   z_complex(:,:)  = a_complex(:,:)
+   as_complex(:,:) = a_complex(:,:)
 
-   call e1%save_all_parameters("initial_parameters.txt")
+   ! first set up and solve the brute force problem
+   e_complex => elpa_allocate()
+   call set_basic_params(e_complex, na, nev, na_rows, na_cols, my_prow, my_pcol)
 
-   ! try to load parameters into another object
-   e2 => elpa_allocate()
-   call set_basic_params(e2, na, nev, na_rows, na_cols, my_prow, my_pcol)
-   call e2%load_all_parameters("initial_parameters.txt")
-   assert_elpa_ok(e2%setup())
+   call e_complex%set("timings",1, error)
 
-   if(myid == 0) print *, "parameters of e1"
-   call e1%print_all_parameters()
-   if(myid == 0) print *, ""
-   if(myid == 0) print *, "parameters of e2"
-   call e2%print_all_parameters()
-   e_ptr => e2
+   call e_complex%set("debug",1)
+   call e_complex%set("gpu", 0)
 
+   assert_elpa_ok(e_complex%setup())
 
-   tune_state => e_ptr%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
-   assert_elpa_ok(error)
+   call e_complex%timer_start("eigenvectors: brute force ")
+   call e_complex%eigenvectors(a_complex, ev_complex, z_complex, error)
+   call e_complex%timer_stop("eigenvectors: brute force ")
 
+   if (myid .eq. 0) then
+     print *, ""
+     call e_complex%print_times("eigenvectors: brute force")
+   endif 
 
-   iter=0
-   do while (e_ptr%autotune_step(tune_state))
-     iter=iter+1
-     write(iter_string,'(I5.5)') iter
-     call e_ptr%print_all_parameters()
-     call e_ptr%save_all_parameters("saved_parameters_"//trim(iter_string)//".txt")
+   status = check_correctness_evp_numeric_residuals(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
+                                                    nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+   call check_status(status, myid)
 
-     call e_ptr%timer_start("eigenvectors: iteration "//trim(iter_string))
-     call e_ptr%eigenvectors(a, ev, z, error)
-     call e_ptr%timer_stop("eigenvectors: iteration "//trim(iter_string))
-
-     assert_elpa_ok(error)
-     if (myid .eq. 0) then
-       print *, ""
-       call e_ptr%print_times("eigenvectors: iteration "//trim(iter_string))
-     endif
-     status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
-                                         .true., .true., print_times=.false.)
-     a(:,:) = as(:,:)
-     call e_ptr%autotune_print_state(tune_state)
-     call e_ptr%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
 #ifdef WITH_MPI
      call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 #endif
-     call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
-   end do
+   ! now run the skewsymmetric case
+   e_skewsymmetric => elpa_allocate()
+   call set_basic_params(e_skewsymmetric, na, nev, na_rows, na_cols, my_prow, my_pcol)
 
-   ! set and print the autotuned-settings
-   call e_ptr%autotune_set_best(tune_state)
-   if (myid .eq. 0) then
-     print *, "The best combination found by the autotuning:"
-     flush(output_unit)
-     call e_ptr%autotune_print_best(tune_state)
-   endif
-   ! de-allocate autotune object
-   call elpa_autotune_deallocate(tune_state)
+   call e_skewsymmetric%set("timings",1, error)
 
-   if (myid .eq. 0) then
-     print *, "Running once more time with the best found setting..."
-   endif
-   call e_ptr%timer_start("eigenvectors: best setting")
-   call e_ptr%eigenvectors(a, ev, z, error)
-   call e_ptr%timer_stop("eigenvectors: best setting")
-   assert_elpa_ok(error)
+   call e_skewsymmetric%set("debug",1)
+   call e_skewsymmetric%set("gpu", 0)
+
+   call e_skewsymmetric%set("is_skewsymmetric",1)
+   assert_elpa_ok(e_skewsymmetric%setup())
+
+   call e_skewsymmetric%timer_start("eigenvectors: skewsymmetric ")
+   call e_skewsymmetric%eigenvectors(a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, error)
+   call e_skewsymmetric%timer_stop("eigenvectors: skewsymmetric ")
+
    if (myid .eq. 0) then
      print *, ""
-     call e_ptr%print_times("eigenvectors: best setting")
-   endif
-   status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
-                                       .true., .true., print_times=.false.)
+     call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
+   endif  
+#ifdef WITH_MPI
+   call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+#endif
+   call elpa_deallocate(e_complex)
+   call elpa_deallocate(e_skewsymmetric)
 
-   call elpa_deallocate(e_ptr)
 
-   deallocate(a)
-   deallocate(as)
-   deallocate(z)
-   deallocate(ev)
+   !to do 
+   ! - compare ev results from brute-force and skewsymmetric
+   ! - check whether brute-force check_correctness_evp_numeric_residuals worsk (complex ev)
+   ! - invent a test for skewsymmetric residuals
 
+   deallocate(a_complex)
+   deallocate(as_complex)
+   deallocate(z_complex)
+   deallocate(ev_complex)
+
+   deallocate(a_skewsymmetric)
+   deallocate(as_skewsymmetric)
+   deallocate(z_skewsymmetric)
+   deallocate(ev_skewsymmetric)
    call elpa_uninit()
+
+
+
+
+   !  if (myid .eq. 0) then
+   !    print *, ""
+   !    call e_ptr%print_times("eigenvectors: iteration "//trim(iter_string))
+   !  endif
+   !  status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
+   !                                      .true., .true., print_times=.false.)
+   !  a(:,:) = as(:,:)
+   !  call e_ptr%autotune_print_state(tune_state)
+   !  call e_ptr%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+#ifdef WITH_MPI
+   !  call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+#endif
+   !  call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+   !end do
+
+   !! set and print the autotuned-settings
+   !call e_ptr%autotune_set_best(tune_state)
+   !if (myid .eq. 0) then
+   !  print *, "The best combination found by the autotuning:"
+   !  flush(output_unit)
+   !  call e_ptr%autotune_print_best(tune_state)
+   !endif
+   !! de-allocate autotune object
+   !call elpa_autotune_deallocate(tune_state)
+
+   !if (myid .eq. 0) then
+   !  print *, "Running once more time with the best found setting..."
+   !endif
+   !call e_ptr%timer_start("eigenvectors: best setting")
+   !call e_ptr%eigenvectors(a, ev, z, error)
+   !call e_ptr%timer_stop("eigenvectors: best setting")
+   !assert_elpa_ok(error)
+   !if (myid .eq. 0) then
+   !  print *, ""
+   !  call e_ptr%print_times("eigenvectors: best setting")
+   !endif
+   !status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
+   !                                    .true., .true., print_times=.false.)
+
+   !call elpa_deallocate(e_ptr)
+
+   !deallocate(a)
+   !deallocate(as)
+   !deallocate(z)
+   !deallocate(ev)
+
+   !call elpa_uninit()
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
@@ -303,5 +356,16 @@ contains
      assert_elpa_ok(error)
 #endif
    end subroutine
-
+   subroutine check_status(status, myid)
+     implicit none
+     integer, intent(in) :: status, myid
+     integer :: mpierr
+     if (status /= 0) then
+       if (myid == 0) print *, "Result incorrect!"
+#ifdef WITH_MPI
+       call mpi_finalize(mpierr)
+#endif
+       call exit(status)
+     endif
+   end subroutine
 end program
