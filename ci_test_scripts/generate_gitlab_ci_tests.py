@@ -361,6 +361,10 @@ python_ci_tests = [
     "    # stupid 'make distcheck' leaves behind write-protected files that "
     "the stupid gitlab runner cannot remove",
     '    - make distcheck DISTCHECK_CONFIGURE_FLAGS="'
+    'CC=\\"mpiicc\\" CFLAGS=\\"-O3 -xAVX\\" '
+    'FC=\\"mpiifort\\" FCFLAGS=\\"-O3 -xAVX\\" '
+    'SCALAPACK_LDFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\" '
+    'SCALAPACK_FCFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
     '--disable-gpu --enable-avx --enable-python --enable-python-tests'
     '" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }',
