@@ -655,7 +655,7 @@ endif
 test_python.sh:
 	@echo '#!/bin/bash' > $@
 # this is kind of hacky... is there a better way to get wrapper.so?
-	@echo 'export PYTHONPATH=$$PYTHONPATH:$(top_srcdir)/python:./.libs' >> $@
+	@echo 'export PYTHONPATH=$(top_srcdir)/python:./.libs:$$PYTHONPATH' >> $@
 # the dlopen flags are needed for MKL to work properly...
 # only in os from python 3.3 on
 	@echo "$(wrapper) $(PYTHON) -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; pytest.main([\"$(top_srcdir)/python\"])'" >> $@
