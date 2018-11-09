@@ -183,6 +183,11 @@ program test
    integer                    :: max_threads
 #endif
 
+#ifdef SPLIT_COMM_MYSELF
+   integer                    :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
+   character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
+#endif
+
    call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
@@ -541,12 +546,33 @@ program test
    assert_elpa_ok(error)
 
 #ifdef WITH_MPI
+#ifdef SPLIT_COMM_MYSELF
+   call mpi_comm_split(MPI_COMM_WORLD,my_pcol,my_prow,mpi_comm_rows,mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+
+   call mpi_comm_split(MPI_COMM_WORLD,my_prow,my_pcol,mpi_comm_cols, mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_split for col communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+
+   call e%set("mpi_comm_rows", mpi_comm_rows, error)
+   assert_elpa_ok(error)
+   call e%set("mpi_comm_cols", mpi_comm_cols, error)
+   assert_elpa_ok(error)
+#else
    call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
    assert_elpa_ok(error)
    call e%set("process_row", my_prow, error)
    assert_elpa_ok(error)
    call e%set("process_col", my_pcol, error)
    assert_elpa_ok(error)
+#endif
 #endif
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
    call e%set("blacs_context", my_blacs_ctxt, error)
