@@ -119,6 +119,7 @@ AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"
 
 dnl C
 AC_LANG_PUSH([C])
+
 AX_PROG_CC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_c=yes],[found_mpi_c=no])
 if test x"$with_mpi" = x"yes"; then
   if test x"$found_mpi_c" = x"no"; then
@@ -141,6 +142,29 @@ AX_CHECK_COMPILE_FLAG([-std=c11], [
   echo "C compiler cannot compile C11 code"
   exit -1
 ])
+
+AC_MSG_CHECKING(whether C compiler can use _Generic )
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+int main(int argc, char **argv) {
+#define elpa_set(e, name, value, error) _Generic((value), \
+                int: \
+                  elpa_set_integer, \
+                \
+                double: \
+                  elpa_set_double \
+        )(e, name, value, error)
+
+  return 0;
+}
+    ])],
+    [can_compile_generic=yes],
+    [can_compile_generic=no]
+  )
+AC_MSG_RESULT([${can_compile_generic}])
+if test x"$can_compile_generic" != x"yes"; then
+  AC_MSG_ERROR([C compiler cannot handle _Generic statement! Upgrade or change C compiler])
+fi
+AC_DEFINE([HAVE_VSX_SSE],[1],[Altivec VSX intrinsics are supported on this CPU])
 
 AC_PROG_INSTALL
 AM_PROG_AR
