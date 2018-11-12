@@ -655,10 +655,14 @@ endif
 test_python.sh:
 	@echo '#!/bin/bash' > $@
 # this is kind of hacky... is there a better way to get wrapper.so?
-	@echo 'export PYTHONPATH=$(top_srcdir)/python:./.libs:$$PYTHONPATH' >> $@
+	@echo 'export PYTHONPATH=$(abs_top_srcdir)/python:$$PYTHONPATH' >> $@
+	@echo 'ln -s $(abs_top_builddir)/.libs/wrapper.so $(abs_top_srcdir)/python/pyelpa' >> $@
 # the dlopen flags are needed for MKL to work properly...
 # only in os from python 3.3 on
-	@echo "$(wrapper) $(PYTHON) -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; pytest.main([\"$(top_srcdir)/python\"])'" >> $@
+	@echo "$(wrapper) $(PYTHON) -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; res = pytest.main([\"$(abs_top_srcdir)/python\"]); sys.exit(res)'" >> $@
+	@echo 'exit_code=$$?' >> $@
+	@echo 'rm $(abs_top_srcdir)/python/pyelpa/wrapper.so' >> $@
+	@echo 'exit $$exit_code' >> $@
 	@chmod +x $@
 
 include doxygen.am
