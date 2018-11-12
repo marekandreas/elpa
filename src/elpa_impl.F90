@@ -268,7 +268,7 @@ module elpa_impl
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, mpierr, error, &
                                              my_prow, my_pcol, my_id, present_my_prow, present_my_pcol, present_my_id, &
                                              np_rows, np_cols, np_total, present_np_rows, present_np_cols, present_np_total, &
-                                             is_process_id_zero
+                                             is_process_id_zero, gpu
       if (.not. (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) ) then
         print *,"MPI row and column communicators not set correctly. Aborting..."
         stop
@@ -359,6 +359,16 @@ module elpa_impl
         if(my_id == 0) &
           is_process_id_zero = 1
       else
+        ! for the GPU calculation, the parent communicator has to be set
+        call self%get("gpu",gpu,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem getting option. Aborting..."
+          stop
+        endif
+        if(gpu == 1) then
+          print *,"MPI parent communicator has to be set for GPU calculation. Aborting..."
+          stop
+        endif
         ! we can set number of processes and whether process id is zero, but not the process id.
         ! we assume, that my_pcol == 0 && my_prow == 0  <==> my_id == 0
         call self%set("num_process", np_rows * np_cols, error)
@@ -445,9 +455,37 @@ module elpa_impl
 
       ! Externally supplied communicators
       if (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) then
+        call self%get("mpi_comm_rows", mpi_comm_rows,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem getting option. Aborting..."
+          stop
+        endif
+        call self%get("mpi_comm_cols", mpi_comm_cols,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem getting option. Aborting..."
+          stop
+        endif
+        !write(error_unit, '(A,2I15)') "comms provided", mpi_comm_rows, mpi_comm_cols
+
         call set_or_check_missing_comm_params(self)
         self%communicators_owned = 0
         error = ELPA_OK
+
+
+        call self%get("mpi_comm_rows", mpi_comm_rows,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem getting option. Aborting..."
+          stop
+        endif
+        call self%get("mpi_comm_cols", mpi_comm_cols,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem getting option. Aborting..."
+          stop
+        endif
+        call self%get("process_row", process_row, error)
+        call self%get("process_col", process_col, error)
+        !write(error_unit, '(A,2I15,2I4)') "comms provided II ", mpi_comm_rows, mpi_comm_cols, process_row, process_col
+
         return
       endif
 
@@ -779,18 +817,21 @@ module elpa_impl
            stop
         endif
 
+        write(error_unit, '(A,2I13)') "FREE comms", mpi_comm_rows, mpi_comm_cols
         call mpi_comm_free(mpi_comm_rows, mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
           return
         endif
+        call self%set("mpi_comm_cols", -12345,error)
         call mpi_comm_free(mpi_comm_cols, mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_free for col communicator: ", trim(mpierr_string)
           return
         endif
+        call self%set("mpi_comm_rows", -12345,error)
       endif
 #endif
 

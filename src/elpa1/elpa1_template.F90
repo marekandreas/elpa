@@ -172,17 +172,12 @@ function elpa_solve_evp_&
 
    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
+     print *,"Problem getting option. Aborting..."
      stop
    endif
    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
-     stop
-   endif
-   call obj%get("mpi_comm_parent", mpi_comm_all,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
+     print *,"Problem getting option. Aborting..."
      stop
    endif
 
@@ -198,9 +193,6 @@ function elpa_solve_evp_&
    endif
 
    call obj%timer%start("mpi_communication")
-
-   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
-   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
 
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
@@ -223,6 +215,12 @@ function elpa_solve_evp_&
    
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
+     call obj%get("mpi_comm_parent", mpi_comm_all,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+     call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = .true.
        ! set the neccessary parameters
