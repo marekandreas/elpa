@@ -109,7 +109,7 @@
 !>  class(elpa_t), pointer :: elpa
 !>  integer :: success
 !>
-!>  if (elpa_init(20171201) /= ELPA_OK) then
+!>  if (elpa_init(20181112) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
 !>     stop
 !>   endif
@@ -125,18 +125,26 @@
 !>   call elpa%set("process_row", my_prow, success)
 !>   call elpa%set("process_col", my_pcol, success)
 !>
+!>   ! set up the elpa object
 !>   succes = elpa%setup()
 !>
 !>   ! if desired, set tunable run-time options
-!>   call e%set("solver", ELPA_SOLVER_2STAGE, success)
+!>   ! here we want to use the 2-stage solver
+!>   call elpa%set("solver", ELPA_SOLVER_2STAGE, success)
+!>
+!>   ! and set a specific kernel (must be supported on the machine)
+!>   call elpa%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2)
 !> \endcode
 !>   ... set and get all other options that are desired
 !> \code{.f90}
 !>
+!>   ! if wanted you can store the settings and load them in another program
+!>   call elpa%store_settings("save_to_disk.txt")
+!>
 !>   ! use method solve to solve the eigenvalue problem to obtain eigenvalues
 !>   ! and eigenvectors
 !>   ! other possible methods are desribed in \ref elpa_api::elpa_t derived type
-!>   call e%eigenvectors(a, ev, z, success)
+!>   call elpa%eigenvectors(a, ev, z, success)
 !>
 !>   ! cleanup
 !>   call elpa_deallocate(e)
@@ -153,11 +161,12 @@
 !>   elpa_t handle;
 !>   int error;
 !>
-!>   if (elpa_init(20171201) != ELPA_OK) {
+!>   if (elpa_init(20181113) != ELPA_OK) {
 !>     fprintf(stderr, "Error: ELPA API version not supported");
 !>     exit(1);
 !>   }
 !>
+!>   
 !>   handle = elpa_allocate(&error);
 !>
 !>   /* Set parameters the matrix and it's MPI distribution */
@@ -174,10 +183,16 @@
 !>   elpa_setup(handle);
 !>
 !>   /* if desired, set tunable run-time options */
+!>   /* here we want to use the 2-stage solver
 !>   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
+!>
+!>   elpa_set(handle,"real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, &error);
 !>  \endcode
 !>   ... set and get all other options that are desired
 !>  \code{.c}
+!>
+!>   // if you want you can store the settings and load them in another program
+!>   elpa_store_settings(handle, "save_to_disk.txt")
 !>
 !>   /* use method solve to solve the eigenvalue problem */
 !>   /* other possible methods are desribed in \ref elpa_api::elpa_t derived type */
@@ -188,6 +203,80 @@
 !>   elpa_uninit();
 !> \endcode
 !>
+!> the autotuning could be used like this:
+!>
+!> Fortran synopsis
+!>
+!> \code{.f90}
+!>  use elpa
+!>  class(elpa_t), pointer :: elpa
+!>  class(elpa_autotune_t), pointer :: tune_state
+!>  integer :: success
+!>
+!>  if (elpa_init(20181112) /= ELPA_OK) then
+!>     print *, "ELPA API version not supported"
+!>     stop
+!>   endif
+!>   elpa => elpa_allocate()
+!>
+!>   ! set parameters decribing the matrix and it's MPI distribution
+!>   call elpa%set("na", na, success)
+!>   call elpa%set("nev", nev, success)
+!>   call elpa%set("local_nrows", na_rows, success)
+!>   call elpa%set("local_ncols", na_cols, success)
+!>   call elpa%set("nblk", nblk, success)
+!>   call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success)
+!>   call elpa%set("process_row", my_prow, success)
+!>   call elpa%set("process_col", my_pcol, success)
+!>
+!>   ! set up the elpa object
+!>   succes = elpa%setup()
+!>
+!>   ! create autotune object
+!>   tune_state => elpa%autotune_setup(ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, error)
+!>
+!>   ! you can set some options, these will be then FIXED for the autotuning step
+!>   ! if desired, set tunable run-time options
+!>   ! here we want to use the 2-stage solver
+!>   call e%set("solver", ELPA_SOLVER_2STAGE, success)
+!>
+!>   ! and set a specific kernel (must be supported on the machine)
+!>   call e%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2)
+!> \endcode
+!>   ... set and get all other options that are desired
+!> \code{.f90}
+!>
+!>   iter = 0
+!>   do while (elpa%autotune_step(tune_state))
+!>     iter = iter + 1
+!>     call e%eigenvectors(a, ev, z, success)
+!>
+!>     ! if needed you can save the autotune state at any point
+!>     ! and resume it
+!>     if (iter > MAX_ITER) then
+!>       call elpa%autotune_save_state(tune_state,"autotune_checkpoint.txt")
+!>       exit
+!>     endif
+!>   enddo
+!>
+!>   !set and print the finished autotuning
+!>   call elpa%autotune_set_best(tune_state)
+!>   
+!>   ! store _TUNED_ ELPA object, if needed
+!>   call elpa%store("autotuned_object.txt")
+!>
+!>   !deallocate autotune object
+!>   call elpa_autotune_deallocate(tune_state)
+!>
+!>   ! cleanup
+!>   call elpa_deallocate(e)
+!>
+!>   call elpa_uninit()
+!> \endcode
+!>
+!> More examples can be found in the folder "test", where Fortran and C example programs
+!> are stored
+
 !> \brief Fortran module to use the ELPA library. No other module shoule be used
 
 #include "config-f90.h"
