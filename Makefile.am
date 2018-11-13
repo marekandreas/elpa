@@ -655,13 +655,15 @@ endif
 test_python.sh:
 	@echo '#!/bin/bash' > $@
 # this is kind of hacky... is there a better way to get wrapper.so?
-	@echo 'export PYTHONPATH=$(abs_top_srcdir)/python:$$PYTHONPATH' >> $@
-	@echo 'ln -s $(abs_top_builddir)/.libs/wrapper.so $(abs_top_srcdir)/python/pyelpa' >> $@
+	@echo 'export PYTHONPATH=./python-copy:$$PYTHONPATH' >> $@
+	@echo 'cp -r $(abs_top_srcdir)/python python-copy || exit 1' >> $@
+	@echo 'chmod u+rwX -R python-copy || exit 1' >> $@
+	@echo 'cp .libs/wrapper.so python-copy/pyelpa/ || exit 1' >> $@
 # the dlopen flags are needed for MKL to work properly...
 # only in os from python 3.3 on
-	@echo "$(wrapper) $(PYTHON) -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; res = pytest.main([\"$(abs_top_srcdir)/python\"]); sys.exit(res)'" >> $@
+	@echo "$(wrapper) $(PYTHON) -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; sys.exit(pytest.main([\"./python-copy\", \"-p\", \"no:cacheprovider\"]))'" >> $@
 	@echo 'exit_code=$$?' >> $@
-	@echo 'rm $(abs_top_srcdir)/python/pyelpa/wrapper.so' >> $@
+	@echo 'rm -rf python-copy || exit 1' >> $@
 	@echo 'exit $$exit_code' >> $@
 	@chmod +x $@
 
