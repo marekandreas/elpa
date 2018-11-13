@@ -256,12 +256,14 @@ module elpa_api
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
+  !> \param   error       integer, optional
   !> Prints all the elpa parameters
   abstract interface
-    subroutine print_settings_i(self)
+    subroutine print_settings_i(self, error)
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)   :: self
+      integer, optional, intent(out) :: error
     end subroutine
   end interface
 
@@ -270,13 +272,15 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   file_name   string, the name of the file where to save the parameters
+  !> \param   error       integer, optional
   !> Saves all the elpa parameters
   abstract interface
-    subroutine store_settings_i(self, file_name)
+    subroutine store_settings_i(self, file_name, error)
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout) :: self
-      character(*), intent(in)     :: file_name
+      class(elpa_t), intent(inout)  :: self
+      character(*), intent(in)      :: file_name
+      integer, optional, intent(out):: error
     end subroutine
   end interface
 
@@ -285,13 +289,15 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   file_name   string, the name of the file from which to load the parameters
+  !> \param   error       integer, optional
   !> Loads all the elpa parameters
   abstract interface
-    subroutine load_settings_i(self, file_name)
+    subroutine load_settings_i(self, file_name, error)
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout) :: self
-      character(*), intent(in)     :: file_name
+      class(elpa_t), intent(inout)   :: self
+      character(*), intent(in)       :: file_name
+      integer, optional, intent(out) :: error
     end subroutine
   end interface
 
@@ -378,13 +384,15 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   error       integer, optional
   !> Prints the autotuning state
   abstract interface
-    subroutine elpa_autotune_print_state_i(self, tune_state)
+    subroutine elpa_autotune_print_state_i(self, tune_state, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+      integer, optional, intent(out)             :: error
     end subroutine
   end interface
 
@@ -394,14 +402,16 @@ module elpa_api
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
   !> \param   file_name   string, the name of the file where to save the state
+  !> \param   error       integer, optional
   !> Saves the autotuning state
   abstract interface
-    subroutine elpa_autotune_save_state_i(self, tune_state, file_name)
+    subroutine elpa_autotune_save_state_i(self, tune_state, file_name, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      character(*), intent(in)        :: file_name
+      character(*), intent(in)                   :: file_name
+      integer, optional, intent(out)             :: error
     end subroutine
   end interface
 
@@ -411,14 +421,16 @@ module elpa_api
   !> \param   self        class(elpa_t): the ELPA object, which is being tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
   !> \param   file_name   string, the name of the file from which to load the autotuning state
+  !> \param   error       integer, optional
   !> Loads all the elpa parameters
   abstract interface
-    subroutine elpa_autotune_load_state_i(self, tune_state, file_name)
+    subroutine elpa_autotune_load_state_i(self, tune_state, file_name, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      character(*), intent(in)     :: file_name
+      character(*), intent(in)                   :: file_name
+      integer, optional, intent(out)             :: error
     end subroutine
   end interface
 #endif

@@ -1133,7 +1133,7 @@ module elpa_impl
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
-    !> \param   error           integer, optiona
+    !> \param   error           integer, optional
     subroutine elpa_autotune_print_best(self, tune_state, error)
       implicit none
       class(elpa_impl_t), intent(inout)          :: self
@@ -1159,9 +1159,8 @@ module elpa_impl
       flush(output_unit)
       if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain) /= 1) then
         print *, "This should not happen (in elpa_autotune_print_best())"
-
         if (present(error)) then
-          error = ELPA_OK
+          error = ELPA_ERROR
         endif
       endif
     end subroutine
@@ -1170,64 +1169,154 @@ module elpa_impl
     !> \brief function to print all the parameters, that have been set
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
-    subroutine elpa_print_settings(self)
+    !> \param   error           optional, integer
+    subroutine elpa_print_settings(self, error)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
+      integer, optional, intent(out)    :: error
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       if (elpa_index_print_settings_c(self%index, c_null_char) /= 1) then
-        stop "This should not happen (in elpa_print_settings())"
+        print *, "This should not happen (in elpa_print_settings())"
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
       endif
     end subroutine
+
+    !c> /*! \brief C interface for the implementation of the elpa_print_settings method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* filename
+    !c> */
+    !c> void elpa_print_settings(elpa_t handle, char *filename, int *error);
+    !subroutine elpa_print_settings_c(handle, filename, error) bind(C, name="elpa_print_settings")
+    !  type(c_ptr), value         :: handle
+    !  type(elpa_impl_t), pointer :: self
+    !  integer(kind=c_int)        :: error
+    !  character(*)               :: filename
+
+    !  call c_f_pointer(handle, self)
+    !  call elpa_print_settings(self, file_name, error)
+
+    !end subroutine
+
 
     !> \brief function to save all the parameters, that have been set
     !> Parameters
-    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
     !> \param   file_name   string, the name of the file where to save the parameters
-    subroutine elpa_store_settings(self, file_name)
+    !> \param   error       integer, optional
+    subroutine elpa_store_settings(self, file_name, error)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
       character(*), intent(in)          :: file_name
+      integer, optional, intent(out)    :: error
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       if (elpa_index_print_settings_c(self%index, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_store_settings())"
+        print *, "This should not happen (in elpa_store_settings())"
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
+
       endif
     end subroutine
+
+   !c> /*! \brief C interface for the implementation of the elpa_store_settings method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* filename
+    !c> */
+    !c> void elpa_store_settings(elpa_t handle, char *filename, int *error);
+    !subroutine elpa_store_settings_c(handle, filename, error) bind(C, name="elpa_store_settings")
+    !  type(c_ptr), value         :: handle
+    !  type(elpa_impl_t), pointer :: self
+    !  integer(kind=c_int)        :: error
+    !  character(*)               :: filename
+
+    !  call c_f_pointer(handle, self)
+    !  call elpa_store_settings(self, file_name, error)
+
+    !end subroutine
+
+
 
     !> \brief function to load all the parameters, which have been saved to a file
     !> Parameters
-    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
     !> \param   file_name   string, the name of the file from which to load the parameters
-    subroutine elpa_load_settings(self, file_name)
+    !> \param   error       integer, optional
+    subroutine elpa_load_settings(self, file_name, error)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
       character(*), intent(in)          :: file_name
+      integer, optional, intent(out)    :: error
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       if (elpa_index_load_settings_c(self%index, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_load_settings())"
+        print *, "This should not happen (in elpa_load_settings())"
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
       endif
     end subroutine
+
+    !c> /*! \brief C interface for the implementation of the elpa_load_settings method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* filename
+    !c> */
+    !c> void elpa_load_settings(elpa_t handle, char *filename, int *error);
+    !subroutine elpa_load_settings_c(handle, filename, error) bind(C, name="elpa_load_settings")
+    !  type(c_ptr), value         :: handle
+    !  type(elpa_impl_t), pointer :: self
+    !  integer(kind=c_int)        :: error
+    !  character(*)               :: filename
+
+    !  call c_f_pointer(handle, self)
+    !  call elpa_load_settings(self, filename, error)
+
+    !end subroutine
 
 
     !> \brief function to print the state of the autotuning
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
-    subroutine elpa_autotune_print_state(self, tune_state)
+    !> \param   error           integer, optional
+    subroutine elpa_autotune_print_state(self, tune_state, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+      integer, optional, intent(out)             :: error
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
+          if (present(error)) then
+            error = ELPA_ERROR
+          endif
       end select
 
       if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, c_null_char) /= 1) then
-        stop "This should not happen (in elpa_autotune_print_state())"
+        print *, "This should not happen (in elpa_autotune_print_state())"
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
       endif
     end subroutine
 
@@ -1237,23 +1326,34 @@ module elpa_impl
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
     !> \param   file_name       string, the name of the file where to save the state
-    subroutine elpa_autotune_save_state(self, tune_state, file_name)
+    !> \param   error           integer, optional
+    subroutine elpa_autotune_save_state(self, tune_state, file_name, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
-      character(*), intent(in)        :: file_name
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+      character(*), intent(in)                   :: file_name
+      integer, optional, intent(out)             :: error
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
+          if (present(error)) then
+            error = ELPA_ERROR
+          endif
       end select
 
       if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_autotune_save_state())"
+        print *, "This should not happen (in elpa_autotune_save_state())"
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
       endif
     end subroutine
 
@@ -1263,25 +1363,36 @@ module elpa_impl
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
     !> \param   file_name       string, the name of the file from which to load the state
-    subroutine elpa_autotune_load_state(self, tune_state, file_name)
+    !> \param   error           integer, optional
+    subroutine elpa_autotune_load_state(self, tune_state, file_name, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
-      character(*), intent(in)        :: file_name
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+      character(*), intent(in)                   :: file_name
+      integer, optional, intent(out)             :: error
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
+          if (present(error)) then
+            error = ELPA_ERROR
+          endif
       end select
 
-      print *, "testing, before C call, ts_impl%current is ", ts_impl%current
+      !print *, "testing, before C call, ts_impl%current is ", ts_impl%current
 
       if (elpa_index_load_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_autotune_load_state())"
+        !print *, "This should not happen (in elpa_autotune_load_state())"
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
       endif
       print *, "testing, after C call, ts_impl%current is ", ts_impl%current
     end subroutine
