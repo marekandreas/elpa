@@ -123,13 +123,15 @@ for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
     if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == 1 or m != "random")):
         continue
 
-    # one test with split communicator myself should be enough
-    if(spl == "myself" and (s!="1stage" or d != "real" or p != "double" or g == 1 or m != "random" or t != "eigenvectors" or lang != "Fortran" or lay != "square")):
+    if(spl == "myself" and (d != "real" or p != "double" or q != 0 or m != "random" or (t != "eigenvectors" and t != "cholesky")  or lang != "Fortran" or lay != "square")):
         continue
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
         endifs = 0
         extra_flags = []
+
+        if(spl == "myself" and kernel == "all_kernels"):
+            continue
 
         if(spl == "myself"):
             print("if WITH_MPI")

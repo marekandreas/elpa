@@ -561,6 +561,8 @@ program test
      stop 1
    endif
 
+   call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
+   assert_elpa_ok(error)
    call e%set("mpi_comm_rows", mpi_comm_rows, error)
    assert_elpa_ok(error)
    call e%set("mpi_comm_cols", mpi_comm_cols, error)

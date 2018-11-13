@@ -258,128 +258,6 @@ module elpa_impl
     end subroutine
 #endif
 
-
-    ! we want to ensure, that my_prow(col) and np_rows(cols) values are allways accessible trhough
-    ! the elpa object, no matter whether the user provides communicators or communicators are created
-    ! by elpa. If the walues are present already, they are checked for consistency with the communicators.
-    subroutine set_or_check_missing_comm_params(self)
-      implicit none
-      class(elpa_impl_t), intent(inout)   :: self
-      integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, mpierr, error, &
-                                             my_prow, my_pcol, my_id, present_my_prow, present_my_pcol, present_my_id, &
-                                             np_rows, np_cols, np_total, present_np_rows, present_np_cols, present_np_total, &
-                                             is_process_id_zero, gpu
-      if (.not. (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) ) then
-        print *,"MPI row and column communicators not set correctly. Aborting..."
-        stop
-      endif
-      call self%get("mpi_comm_rows", mpi_comm_rows, error)
-      call self%get("mpi_comm_cols", mpi_comm_cols, error)
-
-      call mpi_comm_size(mpi_comm_rows, np_rows, mpierr)
-      if(self%is_set("num_process_rows") == 1) then
-        call self%get("num_process_rows", present_np_rows, error)
-        if(np_rows .ne. present_np_rows) then
-          print *,"MPI row communicator not set correctly. Aborting..."
-          stop
-        endif
-      else
-        call self%set("num_process_rows", np_rows, error)
-      endif
-
-      call mpi_comm_size(mpi_comm_cols, np_cols, mpierr)
-      if(self%is_set("num_process_cols") == 1) then
-        call self%get("num_process_cols", present_np_cols, error)
-        if(np_cols .ne. present_np_cols) then
-          print *,"MPI column communicator not set correctly. Aborting..."
-          stop
-        endif
-      else
-        call self%set("num_process_cols", np_cols, error)
-      endif
-
-      call mpi_comm_rank(mpi_comm_rows, my_prow, mpierr)
-      if(self%is_set("process_row") == 1) then
-        call self%get("process_row", present_my_prow, error)
-        if(my_prow .ne. present_my_prow) then
-          print *,"MPI row communicator not set correctly. Aborting..."
-          stop
-        endif
-      else
-        call self%set("process_row", my_prow, error)
-      endif
-
-      call mpi_comm_rank(mpi_comm_cols, my_pcol, mpierr)
-      if(self%is_set("process_col") == 1) then
-        call self%get("process_col", present_my_pcol, error)
-        if(my_pcol .ne. present_my_pcol) then
-          print *,"MPI column communicator not set correctly. Aborting..."
-          stop
-        endif
-      else
-        call self%set("process_col", my_pcol, error)
-      endif
-
-
-      ! sadly, at the moment, the parent mpi communicator is not required to be set, e.g. in legacy tests
-      ! we thus cannot obtain process_id
-      ! we can, however, determine the number of prcesses and determine, whether the given process has id 0, 
-      ! assuming, that that is the wan with row and column ids == 0
-      is_process_id_zero = 0
-      if (self%is_set("mpi_comm_parent") == 1) then
-        call self%get("mpi_comm_parent", mpi_comm_parent, error)
-
-        call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
-        if(self%is_set("num_processes") == 1) then
-          call self%get("num_processes", present_np_total, error)
-          if(np_total .ne. present_np_total) then
-            print *,"MPI parent communicator not set correctly. Aborting..."
-            stop
-          endif
-        else
-          call self%set("num_processes", np_total, error)
-        endif
-
-        if(np_total .ne. np_rows * np_cols) then
-          print *,"MPI parent communicator and row/col communicators do not match. Aborting..."
-          stop
-        endif
-
-        call mpi_comm_rank(mpi_comm_parent, my_id, mpierr)
-        if(self%is_set("process_id") == 1) then
-          call self%get("process_id", present_my_id, error)
-          if(my_id .ne. present_my_id) then
-            print *,"MPI parent communicator not set correctly. Aborting..."
-            stop
-          endif
-        else
-          call self%set("process_id", my_id, error)
-        endif
-
-        if(my_id == 0) &
-          is_process_id_zero = 1
-      else
-        ! for the GPU calculation, the parent communicator has to be set
-        call self%get("gpu",gpu,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem getting option. Aborting..."
-          stop
-        endif
-        if(gpu == 1) then
-          print *,"MPI parent communicator has to be set for GPU calculation. Aborting..."
-          stop
-        endif
-        ! we can set number of processes and whether process id is zero, but not the process id.
-        ! we assume, that my_pcol == 0 && my_prow == 0  <==> my_id == 0
-        call self%set("num_process", np_rows * np_cols, error)
-        if((my_prow == 0) .and. (my_pcol == 0)) &
-          is_process_id_zero = 1
-      endif
-        call self%set("is_process_id_zero", is_process_id_zero, error)
-
-    end subroutine
-
-
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
@@ -389,9 +267,13 @@ module elpa_impl
       integer                             :: error, timings
 
 #ifdef WITH_MPI
-      integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, &
-                                             mpierr, mpierr2, process_row, process_col, mpi_string_length
+      integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
+                                             mpierr, mpierr2, process_row, process_col, mpi_string_length, &
+                                             present_np_rows, present_np_cols, is_process_id_zero, np_total, legacy_api
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
+      character(*), parameter             :: MPI_CONSISTENCY_MSG = &
+        "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
+
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -403,15 +285,59 @@ module elpa_impl
 
       error = ELPA_OK
 
-#ifdef WITH_MPI
-      ! Create communicators ourselves
-      if (self%is_set("mpi_comm_parent") == 1 .and. &
-          self%is_set("process_row") == 1 .and. &
-          self%is_set("process_col") == 1) then
+      ! In most cases, we actually need the parent communicator to be supplied,
+      ! ELPA internally requires it when either GPU is enabled or when ELPA2 is
+      ! used. It thus seems reasonable that we should ALLWAYS require it. It
+      ! should then be accompanied by EITHER process_row and process_col
+      ! indices, OR mpi_comm_rows and mpi_comm_cols communicators, but NOT both.
+      ! This assumption will significanlty simplify the logic, avoid possible
+      ! inconsistencies and is rather natural from the user point of view
 
+#ifdef WITH_MPI
+      if(self%is_set("legacy_api") == 1) then
+        call self%get("legacy_api", legacy_api, error)
+        call check_elpa_get(error)
+      endif
+
+      if (self%is_set("mpi_comm_parent") == 1) then
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
+        call check_elpa_get(error)
+
+        call mpi_comm_rank(mpi_comm_parent, my_id, mpierr)
+        call self%set("process_id", my_id, error)
+        call check_elpa_set(error)
+
+        call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
+        call self%set("num_processes", np_total, error)
+        call check_elpa_set(error)
+
+        is_process_id_zero = 0
+        if(my_id == 0) &
+          is_process_id_zero = 1
+        call self%set("is_process_id_zero", is_process_id_zero, error)
+
+      else
+        if(legacy_api .ne. 1) then
+          write(error_unit,*) MPI_CONSISTENCY_MSG
+          error = ELPA_ERROR
+          return
+        endif
+      endif
+
+      ! Create communicators ourselves
+      if (self%is_set("process_row") == 1 .and. self%is_set("process_col") == 1) then
+
+        if(self%is_set("mpi_comm_rows") == 1 .or. self%is_set("mpi_comm_cols") == 1) then
+          write(error_unit,*) MPI_CONSISTENCY_MSG
+          error = ELPA_ERROR
+          return
+        endif
+
         call self%get("process_row", process_row, error)
+        call check_elpa_get(error)
+
         call self%get("process_col", process_col, error)
+        call check_elpa_get(error)
 
         ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
         ! having the same column coordinate share one mpi_comm_rows.
@@ -419,7 +345,6 @@ module elpa_impl
         ! Analogous for mpi_comm_cols
 
         call mpi_comm_split(mpi_comm_parent,process_col,process_row,mpi_comm_rows,mpierr)
-
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
@@ -434,70 +359,92 @@ module elpa_impl
         endif
 
         call self%set("mpi_comm_rows", mpi_comm_rows,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem setting option. Aborting..."
-          stop
-        endif
-        call self%set("mpi_comm_cols", mpi_comm_cols,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem setting option. Aborting..."
-          stop
-        endif
+        call check_elpa_set(error)
 
-        call set_or_check_missing_comm_params(self)
+        call self%set("mpi_comm_cols", mpi_comm_cols,error)
+        call check_elpa_set(error)
 
         ! remember that we created those communicators and we need to free them later
         self%communicators_owned = 1
 
-        error = ELPA_OK
-        return
-      endif
-
       ! Externally supplied communicators
-      if (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) then
-        call self%get("mpi_comm_rows", mpi_comm_rows,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem getting option. Aborting..."
-          stop
-        endif
-        call self%get("mpi_comm_cols", mpi_comm_cols,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem getting option. Aborting..."
-          stop
-        endif
-        !write(error_unit, '(A,2I15)') "comms provided", mpi_comm_rows, mpi_comm_cols
+      else if ( self%is_set("mpi_comm_rows") == 1 .and.  self%is_set("mpi_comm_cols") == 1) then
 
-        call set_or_check_missing_comm_params(self)
+        if(self%is_set("process_row") == 1 .or. self%is_set("process_col") == 1) then
+          write(error_unit,*) MPI_CONSISTENCY_MSG
+          error = ELPA_ERROR
+          return
+        endif
+
+        call self%get("mpi_comm_rows", mpi_comm_rows,error)
+        call check_elpa_get(error)
+
+        call self%get("mpi_comm_cols", mpi_comm_cols,error)
+        call check_elpa_get(error)
+
+        call mpi_comm_rank(mpi_comm_rows, process_row, mpierr)
+        call self%set("process_row", process_row, error)
+        call check_elpa_set(error)
+
+        call mpi_comm_rank(mpi_comm_cols, process_col, mpierr)
+        call self%set("process_col", process_col, error)
+        call check_elpa_set(error)
+
+        ! remember that we DID NOT created those communicators and we WILL NOT free them later
         self%communicators_owned = 0
-        error = ELPA_OK
-
-        call self%get("mpi_comm_rows", mpi_comm_rows,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem getting option. Aborting..."
-          stop
-        endif
-        call self%get("mpi_comm_cols", mpi_comm_cols,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem getting option. Aborting..."
-          stop
-        endif
-        call self%get("process_row", process_row, error)
-        call self%get("process_col", process_col, error)
-        !write(error_unit, '(A,2I15,2I4)') "comms provided II ", mpi_comm_rows, mpi_comm_cols, process_row, process_col
-
+      else
+        ! Otherwise parameters are missing
+        write(error_unit,*) MPI_CONSISTENCY_MSG
+        error = ELPA_ERROR
         return
       endif
 
-      ! Otherwise parameters are missing
-      error = ELPA_ERROR
+      ! set num_process_rows (and cols), if they are not supplied. Check them
+      ! for consistency if they are. Maybe we could instead require, that they
+      ! are never supplied?
+      call mpi_comm_size(mpi_comm_rows, np_rows, mpierr)
+      if(self%is_set("num_process_rows") == 1) then
+        call self%get("num_process_rows", present_np_rows, error)
+        call check_elpa_get(error)
+
+        if(np_rows .ne. present_np_rows) then
+          print *,"MPI row communicator not set correctly. Aborting..."
+          stop
+        endif
+      else
+        call self%set("num_process_rows", np_rows, error)
+        call check_elpa_set(error)
+      endif
+
+      call mpi_comm_size(mpi_comm_cols, np_cols, mpierr)
+      if(self%is_set("num_process_cols") == 1) then
+        call self%get("num_process_cols", present_np_cols, error)
+        call check_elpa_get(error)
+
+        if(np_cols .ne. present_np_cols) then
+          print *,"MPI column communicator not set correctly. Aborting..."
+          stop
+        endif
+      else
+        call self%set("num_process_cols", np_cols, error)
+        call check_elpa_set(error)
+      endif
+
+      if(legacy_api .ne. 1) then
+        if(np_total .ne. np_rows * np_cols) then
+          print *,"MPI parent communicator and row/col communicators do not match. Aborting..."
+          stop
+        endif
+      endif
+
 #else
-        call self%set("process_row", 0, error)
-        call self%set("process_col", 0, error)
-        call self%set("process_id", 0, error)
-        call self%set("is_process_id_zero", 1, error)
-        call self%set("num_process_rows", 1, error)
-        call self%set("num_process_cols", 1, error)
-        call self%set("num_processes", 1, error)
+      call self%set("process_row", 0, error)
+      call self%set("process_col", 0, error)
+      call self%set("process_id", 0, error)
+      call self%set("is_process_id_zero", 1, error)
+      call self%set("num_process_rows", 1, error)
+      call self%set("num_process_cols", 1, error)
+      call self%set("num_processes", 1, error)
 #endif
 
     end function
@@ -1557,6 +1504,23 @@ module elpa_impl
       call self%autotune_print_best(tune_state, error)
 
     end subroutine
+
+    subroutine check_elpa_get(error)
+      integer :: error
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+    end subroutine
+
+    subroutine check_elpa_set(error)
+      integer :: error
+      if (error .ne. ELPA_OK) then
+        print *,"Problem setting option. Aborting..."
+        stop
+      endif
+    end subroutine
+
 #endif
 
 

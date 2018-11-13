@@ -190,6 +190,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", PRINT_NO),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator", PRINT_NO),
         INT_ANY_ENTRY("blacs_context", "BLACS context", PRINT_NO),
+        INT_ANY_ENTRY("legacy_api", "This object has been created through the legacy api. Parameter for internal use only", PRINT_NO),
         INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
         INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,

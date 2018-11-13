@@ -116,6 +116,12 @@
          stop
       endif
 
+      call e%set("legacy_api", 1, error)
+      if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop 1
+      endif
+
       !! the elpa object needs nev to be set (in case the EVP-solver is
       !! called later. Thus it is set by user, do nothing, otherwise,
       !! set it to na as default
