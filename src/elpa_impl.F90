@@ -155,9 +155,9 @@ module elpa_impl
      procedure, private :: elpa_transform_back_generalized_fc
 #endif
 
-     procedure, public :: print_all_parameters => elpa_print_all_parameters
-     procedure, public :: save_all_parameters => elpa_save_all_parameters
-     procedure, public :: load_all_parameters => elpa_load_all_parameters
+     procedure, public :: print_settings => elpa_print_settings
+     procedure, public :: store_settings => elpa_store_settings
+     procedure, public :: load_all_settings => elpa_load_settings
 #ifdef ENABLE_AUTOTUNING
      procedure, public :: autotune_setup => elpa_autotune_setup
      procedure, public :: autotune_step => elpa_autotune_step
@@ -1106,12 +1106,12 @@ module elpa_impl
     !> \brief function to print all the parameters, that have been set
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
-    subroutine elpa_print_all_parameters(self)
+    subroutine elpa_print_settings(self)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
 
-      if (elpa_index_print_all_parameters_c(self%index, c_null_char) /= 1) then
-        stop "This should not happen (in elpa_print_all_parameters())"
+      if (elpa_index_print_settings_c(self%index, c_null_char) /= 1) then
+        stop "This should not happen (in elpa_print_settings())"
       endif
     end subroutine
 
@@ -1119,13 +1119,13 @@ module elpa_impl
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   file_name   string, the name of the file where to save the parameters
-    subroutine elpa_save_all_parameters(self, file_name)
+    subroutine elpa_store_settings(self, file_name)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
       character(*), intent(in)          :: file_name
 
-      if (elpa_index_print_all_parameters_c(self%index, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_save_all_parameters())"
+      if (elpa_index_print_settings_c(self%index, file_name // c_null_char) /= 1) then
+        stop "This should not happen (in elpa_store_settings())"
       endif
     end subroutine
 
@@ -1133,13 +1133,13 @@ module elpa_impl
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   file_name   string, the name of the file from which to load the parameters
-    subroutine elpa_load_all_parameters(self, file_name)
+    subroutine elpa_load_settings(self, file_name)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
       character(*), intent(in)          :: file_name
 
-      if (elpa_index_load_all_parameters_c(self%index, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_load_all_parameters())"
+      if (elpa_index_load_settings_c(self%index, file_name // c_null_char) /= 1) then
+        stop "This should not happen (in elpa_load_settings())"
       endif
     end subroutine
 

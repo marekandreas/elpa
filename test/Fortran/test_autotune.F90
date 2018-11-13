@@ -219,8 +219,8 @@ program test
    do while (e%autotune_step(tune_state))
      iter=iter+1
      write(iter_string,'(I5.5)') iter
-     !call e%print_all_parameters()
-     !call e%save_all_parameters("saved_parameters_"//trim(iter_string)//".txt")
+     !call e%print_settings()
+     !call e%store_settings("saved_parameters_"//trim(iter_string)//".txt")
      call e%timer_start("eigenvectors: iteration "//trim(iter_string))
      call e%eigenvectors(a, ev, z, error)
      call e%timer_stop("eigenvectors: iteration "//trim(iter_string))

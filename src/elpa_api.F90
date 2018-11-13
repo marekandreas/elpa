@@ -153,9 +153,9 @@ module elpa_api
           elpa_solve_tridiagonal_d, &                                !< matrix
           elpa_solve_tridiagonal_f
 
-      procedure(print_all_parameters_i), deferred, public :: print_all_parameters !< method to print all parameters
-      procedure(save_all_parameters_i), deferred, public :: save_all_parameters !< method to save all parameters
-      procedure(load_all_parameters_i), deferred, public :: load_all_parameters !< method to save all parameters
+      procedure(print_settings_i), deferred, public :: print_settings !< method to print all parameters
+      procedure(store_settings_i), deferred, public :: store_settings !< method to save all parameters
+      procedure(load_settings_i), deferred, public :: load_settings !< method to save all parameters
 #ifdef ENABLE_AUTOTUNING
       ! Auto-tune
       procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
@@ -252,27 +252,27 @@ module elpa_api
     end function
   end interface
 
-  !> \brief abstract definition of the print_all_parameters method
+  !> \brief abstract definition of the print_settings method
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> Prints all the elpa parameters
   abstract interface
-    subroutine print_all_parameters_i(self)
+    subroutine print_settings_i(self)
       import elpa_t
       implicit none
       class(elpa_t), intent(inout) :: self
     end subroutine
   end interface
 
-  !> \brief abstract definition of the save_all_parameters method
+  !> \brief abstract definition of the store_settings method
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   file_name   string, the name of the file where to save the parameters
   !> Saves all the elpa parameters
   abstract interface
-    subroutine save_all_parameters_i(self, file_name)
+    subroutine store_settings_i(self, file_name)
       import elpa_t
       implicit none
       class(elpa_t), intent(inout) :: self
@@ -280,14 +280,14 @@ module elpa_api
     end subroutine
   end interface
 
-  !> \brief abstract definition of the load_all_parameters method
+  !> \brief abstract definition of the load_settings method
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   file_name   string, the name of the file from which to load the parameters
   !> Loads all the elpa parameters
   abstract interface
-    subroutine load_all_parameters_i(self, file_name)
+    subroutine load_settings_i(self, file_name)
       import elpa_t
       implicit none
       class(elpa_t), intent(inout) :: self

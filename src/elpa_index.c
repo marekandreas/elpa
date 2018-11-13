@@ -1,4 +1,4 @@
-//    This file is part of ELPA.
+settings//    This file is part of ELPA.
 //
 //    The ELPA library was originally created by the ELPA consortium,
 //    consisting of the following organizations:
@@ -1303,7 +1303,7 @@ const char STRUCTURE_PARAMETERS[] = "* Parameters describing structure of the co
 const char EXPLICIT_PARAMETERS[] = "* Parameters explicitly set by the user:\n";
 const char DEFAULT_PARAMETERS[] = "* Parameters with default or environment value:\n";
 
-int elpa_index_print_all_parameters(elpa_index_t index, char *file_name) {
+int elpa_index_print_settings(elpa_index_t index, char *file_name) {
         const int LEN =10000;
         char out_structure[LEN], out_set[LEN], out_defaults[LEN], out_nowhere[LEN], buff[100];
         char (*out)[LEN];
@@ -1331,7 +1331,7 @@ int elpa_index_print_all_parameters(elpa_index_t index, char *file_name) {
                 if(output_to_file) {
                         f = fopen(file_name, "w");
                         if(f == NULL){
-                                fprintf(stderr, "Cannot open file %s in elpa_index_print_all_parameters\n", file_name);
+                                fprintf(stderr, "Cannot open file %s in elpa_index_print_settings\n", file_name);
                                 return 0;
                         }
                 }
@@ -1349,7 +1349,7 @@ int elpa_index_print_all_parameters(elpa_index_t index, char *file_name) {
         return 1;
 }
 
-int elpa_index_load_all_parameters(elpa_index_t index, char *file_name) {
+int elpa_index_load_settings(elpa_index_t index, char *file_name) {
         const int LEN = 1000;
         char line[LEN], s[LEN];
         int n;

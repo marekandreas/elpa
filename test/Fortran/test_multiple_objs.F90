@@ -190,19 +190,19 @@ program test
 
    assert_elpa_ok(e1%setup())
 
-   call e1%save_all_parameters("initial_parameters.txt")
+   call e1%store_settings("initial_parameters.txt")
 
    ! try to load parameters into another object
    e2 => elpa_allocate()
    call set_basic_params(e2, na, nev, na_rows, na_cols, my_prow, my_pcol)
-   call e2%load_all_parameters("initial_parameters.txt")
+   call e2%load_settings("initial_parameters.txt")
    assert_elpa_ok(e2%setup())
 
    if(myid == 0) print *, "parameters of e1"
-   call e1%print_all_parameters()
+   call e1%print_settings()
    if(myid == 0) print *, ""
    if(myid == 0) print *, "parameters of e2"
-   call e2%print_all_parameters()
+   call e2%print_settings()
    e_ptr => e2
 
 
@@ -214,8 +214,8 @@ program test
    do while (e_ptr%autotune_step(tune_state))
      iter=iter+1
      write(iter_string,'(I5.5)') iter
-     call e_ptr%print_all_parameters()
-     call e_ptr%save_all_parameters("saved_parameters_"//trim(iter_string)//".txt")
+     call e_ptr%print_settings()
+     call e_ptr%store_settings("saved_parameters_"//trim(iter_string)//".txt")
 
      call e_ptr%timer_start("eigenvectors: iteration "//trim(iter_string))
      call e_ptr%eigenvectors(a, ev, z, error)
