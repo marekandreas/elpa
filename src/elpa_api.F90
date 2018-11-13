@@ -325,13 +325,15 @@ module elpa_api
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
   !> \param   unfinished  logical: state whether tuning is unfinished or not
+  !> \param   error       integer, optional
   abstract interface
-    function elpa_autotune_step_i(self, tune_state) result(unfinished)
+    function elpa_autotune_step_i(self, tune_state, error) result(unfinished)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)                  :: self
       class(elpa_autotune_t), intent(inout), target :: tune_state
-      logical :: unfinished
+      logical                                       :: unfinished
+      integer, optional, intent(out)                :: error
     end function
   end interface
 
@@ -341,13 +343,15 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   error       integer, optional
   !> Sets the best combination of ELPA options
   abstract interface
-    subroutine elpa_autotune_set_best_i(self, tune_state)
+    subroutine elpa_autotune_set_best_i(self, tune_state, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+      integer, optional, intent(out)             :: error
     end subroutine
   end interface
 
@@ -357,13 +361,15 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   error       integer, optional
   !> Prints the best combination of ELPA options
   abstract interface
-    subroutine elpa_autotune_print_best_i(self, tune_state)
+    subroutine elpa_autotune_print_best_i(self, tune_state, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+      integer, optional, intent(out)             :: error
     end subroutine
   end interface
 

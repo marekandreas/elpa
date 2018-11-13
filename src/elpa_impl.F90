@@ -981,20 +981,27 @@ module elpa_impl
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
     !> \result  unfinished      logical: describes the state of the autotuning (completed/uncompleted)
-    function elpa_autotune_step(self, tune_state) result(unfinished)
+    function elpa_autotune_step(self, tune_state, error) result(unfinished)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)             :: self
       class(elpa_autotune_t), intent(inout), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
+      type(elpa_autotune_impl_t), pointer           :: ts_impl
+      integer, optional, intent(out)                :: error
       logical :: unfinished
       integer :: i
       real(kind=C_DOUBLE) :: time_spent
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
+          if (present(error)) then
+            error = ELPA_OK
+          endif
       end select
 
       unfinished = .false.
@@ -1004,6 +1011,11 @@ module elpa_impl
         time_spent = self%autotune_timer%get("accumulator")
 #else
         print *, "Cannot do autotuning without detailed timings"
+
+        if (present(error)) then
+          error = ELPA_OK
+          return
+        endif
 #endif
         if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
           ts_impl%min_val = time_spent
@@ -1030,8 +1042,8 @@ module elpa_impl
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \result int              unfinished:  describes whether autotuning finished (0) or not (1)
     !c> */
-    !c> int elpa_autotune_step(elpa_t handle, elpa_autotune_t autotune_handle);
-    function elpa_autotune_step_c(handle, autotune_handle) result(unfinished) bind(C, name="elpa_autotune_step")
+    !c> int elpa_autotune_step_no_err(elpa_t handle, elpa_autotune_t autotune_handle);
+    function elpa_autotune_step_no_err_c(handle, autotune_handle) result(unfinished) bind(C, name="elpa_autotune_step_no_err")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
@@ -1052,26 +1064,66 @@ module elpa_impl
     end function
 
 
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_step method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *error code
+    !c> *  \result int              unfinished:  describes whether autotuning finished (0) or not (1)
+    !c> */
+    !c> int elpa_autotune_step_err(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    function elpa_autotune_step_err_c(handle, autotune_handle, &
+                    error) result(unfinished) bind(C, name="elpa_autotune_step_err")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      logical                              :: unfinished_f
+      integer(kind=c_int)                  :: unfinished
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      unfinished_f = self%autotune_step(tune_state, error)
+      if (unfinished_f) then
+        unfinished = 1
+      else
+        unfinished = 0
+      endif
+
+    end function
 
     !> \brief function to set the up-to-know best options of the autotuning
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
-    subroutine elpa_autotune_set_best(self, tune_state)
+    !> \param   error code      optional, integer
+    subroutine elpa_autotune_set_best(self, tune_state, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+      integer(kind=ik), optional, intent(out)    :: error
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
+          if (present(error)) then
+            error = ELPA_ERROR
+          endif
       end select
 
       if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
-        stop "This should not happen (in elpa_autotune_set_best())"
+        print *, "This should not happen (in elpa_autotune_set_best())"
+        if (present(error)) then
+          error = ELPA_ERROR
+        endif
       endif
     end subroutine
 
@@ -1081,24 +1133,36 @@ module elpa_impl
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
-    subroutine elpa_autotune_print_best(self, tune_state)
+    !> \param   error           integer, optiona
+    subroutine elpa_autotune_print_best(self, tune_state, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+      integer, optional, intent(out)             :: error
 
+      if (present(error)) then
+        error = ELPA_OK
+      endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
+          if (present(error)) then
+            error = ELPA_ERROR
+          endif
       end select
 
       print *, "The following settings were found to be best:"
       print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
       flush(output_unit)
       if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain) /= 1) then
-        stop "This should not happen (in elpa_autotune_print_best())"
+        print *, "This should not happen (in elpa_autotune_print_best())"
+
+        if (present(error)) then
+          error = ELPA_OK
+        endif
       endif
     end subroutine
 
@@ -1229,8 +1293,8 @@ module elpa_impl
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \result none 
     !c> */
-    !c> void elpa_autotune_set_best(elpa_t handle, elpa_autotune_t autotune_handle);
-    subroutine elpa_autotune_set_best_c(handle, autotune_handle) bind(C, name="elpa_autotune_set_best")
+    !c> void elpa_autotune_set_best_no_err(elpa_t handle, elpa_autotune_t autotune_handle);
+    subroutine elpa_autotune_set_best_no_err_c(handle, autotune_handle) bind(C, name="elpa_autotune_set_best_no_err")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
@@ -1243,6 +1307,27 @@ module elpa_impl
 
     end subroutine
 
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_set_best_err(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_set_best_err_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_set_best_err")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_set_best(tune_state, error)
+
+    end subroutine
 
 
     !c> /*! \brief C interface for the implementation of the elpa_autotune_print_best method
@@ -1251,8 +1336,8 @@ module elpa_impl
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \result none 
     !c> */
-    !c> void elpa_autotune_print_best(elpa_t handle, elpa_autotune_t autotune_handle);
-    subroutine elpa_autotune_print_best_c(handle, autotune_handle) bind(C, name="elpa_autotune_print_best")
+    !c> void elpa_autotune_print_best_no_err(elpa_t handle, elpa_autotune_t autotune_handle);
+    subroutine elpa_autotune_print_best_no_err_c(handle, autotune_handle) bind(C, name="elpa_autotune_print_best_no_err")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
@@ -1262,6 +1347,28 @@ module elpa_impl
       call c_f_pointer(autotune_handle, tune_state)
 
       call self%autotune_print_best(tune_state)
+
+    end subroutine
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_print_best method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_print_best_err(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_print_best_err_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_print_best_err")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_print_best(tune_state, error)
 
     end subroutine
 #endif
