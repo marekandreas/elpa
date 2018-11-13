@@ -157,7 +157,7 @@ module elpa_impl
 
      procedure, public :: print_settings => elpa_print_settings
      procedure, public :: store_settings => elpa_store_settings
-     procedure, public :: load_all_settings => elpa_load_settings
+     procedure, public :: load_settings => elpa_load_settings
 #ifdef ENABLE_AUTOTUNING
      procedure, public :: autotune_setup => elpa_autotune_setup
      procedure, public :: autotune_step => elpa_autotune_step
