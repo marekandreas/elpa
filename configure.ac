@@ -31,10 +31,10 @@ AC_SUBST([ELPA_SO_VERSION], [12:0:1])
 
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
-AC_DEFINE([CURRENT_API_VERSION], [20180525], [Current ELPA API version])
+AC_DEFINE([CURRENT_API_VERSION], [20181113], [Current ELPA API version])
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20180525], [Current ELPA autotune version])
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20181113], [Current ELPA autotune version])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -1320,13 +1320,13 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         ])
 ])
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is a the first release candidate of ELPA 2018.05.001.rc1      *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2018.05.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is a the first release candidate of ELPA 2018.11.001.rc1      *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2018.11.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

@@ -1,12 +1,13 @@
-This file contains the release notes for the ELPA 2018.05.001 version
+This file contains the release notes for the ELPA 2018.11.001.rc1 version
 
 What is new?
 -------------
-For detailed information about changes since release ELPA 2017.11 please have a look at the Changelog file
+For detailed information about changes since release ELPA 2018.05 please have a look at the Changelog file
 
-- This release improves the performance on the K-computer
-- The autotuning has been extended
-- an interface to solve the generalized eigenvalue problem has been added
+- improved autotuning
+- improved performance of generalized problem via Cannon's algorithm
+- check pointing functionality of elpa objects
+- store/read/resume of autotuning
 
 
 ABI change

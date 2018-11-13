@@ -1,3 +1,11 @@
+Changelog for ELPA 2018.11.001.rc1
+
+- improved autotuning
+- improved performance of generalized problem via Cannon's algorithm
+- check pointing functionality of elpa objects
+- store/read/resume of autotuning
+
+
 Changelog for ELPA 2018.05.001
 
 - significant improved performance on K-computer
