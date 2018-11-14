@@ -192,7 +192,7 @@
 !>  \code{.c}
 !>
 !>   /* if you want you can store the settings and load them in another program */
-!>   elpa_store_settings(handle, "save_to_disk.txt")
+!>   elpa_store_settings(handle, "save_to_disk.txt");
 !>
 !>   /* use method solve to solve the eigenvalue problem */
 !>   /* other possible methods are desribed in \ref elpa_api::elpa_t derived type */
