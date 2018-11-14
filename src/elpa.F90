@@ -191,7 +191,7 @@
 !>   ... set and get all other options that are desired
 !>  \code{.c}
 !>
-!>   // if you want you can store the settings and load them in another program
+!>   /* if you want you can store the settings and load them in another program */
 !>   elpa_store_settings(handle, "save_to_disk.txt")
 !>
 !>   /* use method solve to solve the eigenvalue problem */
