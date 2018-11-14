@@ -1299,6 +1299,81 @@ else
         AC_MSG_RESULT([no])
 fi
 
+AC_MSG_CHECKING(whether --enable-python is specified)
+AC_ARG_ENABLE([python],
+              AS_HELP_STRING([--enable-python],
+                             [build and install python wrapper, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_python=yes
+	       else
+	         enable_python=no
+	       fi
+	       ],
+              [enable_python=no])
+AC_MSG_RESULT([${enable_python}])
+AM_CONDITIONAL([WITH_PYTHON],[test x"$enable_python" = x"yes"])
+if test x"${enable_python}" = x"yes"; then
+        AC_DEFINE([WITH_PYTHON], [1], [build and install python wrapper])
+        # check for python and dependencies
+        AM_PATH_PYTHON([3.6])
+        AC_ARG_VAR([PYTHON_INCLUDE], [Include flags for python, bypassing python-config])
+        AC_ARG_VAR([PYTHON_CONFIG], [Path to python-config])
+        AS_IF([test -z "$PYTHON_INCLUDE"], [
+          AS_IF([test -z "$PYTHON_CONFIG"], [
+            AC_PATH_PROGS([PYTHON_CONFIG],
+                          [python$PYTHON_VERSION-config python-config],
+                          [no],
+                          [`dirname $PYTHON`])
+            AS_IF([test "$PYTHON_CONFIG" = no], [AC_MSG_ERROR([cannot find python-config for $PYTHON.])])
+          ])
+          AC_MSG_CHECKING([python include flags])
+          PYTHON_INCLUDE=`$PYTHON_CONFIG --includes`
+          AC_MSG_RESULT([$PYTHON_INCLUDE])
+        ])
+        AC_MSG_CHECKING([numpy module])
+        AS_IF([$PYTHON -c "import numpy"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find numpy.])])
+        AC_MSG_CHECKING([mpi4py module])
+        AS_IF([$PYTHON -c "import mpi4py"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find mpi4py.])])
+        AC_MSG_CHECKING([cython module])
+        AS_IF([$PYTHON -c "import cython"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find cython.])])
+        AC_CHECK_PROG([cython_found], [cython], [yes], [no])
+        if test x"$cython_found" != x"yes" ; then
+          AC_MSG_ERROR([cython not found.])
+        fi
+        AC_ARG_VAR([NUMPY_INCLUDE], [Include flags for numpy])
+        AC_MSG_CHECKING([numpy include flags])
+        NUMPY_INCLUDE=-I`$PYTHON -c "import numpy; print(numpy.get_include())"`
+        AS_IF([test "$NUMPY_INCLUDE" = "-I"], [AC_MSG_ERROR([cannot get numpy include path.])])
+        AC_MSG_RESULT([$NUMPY_INCLUDE])
+fi
+AC_MSG_CHECKING(whether --enable-python-tests is specified)
+AC_ARG_ENABLE([python-tests],
+              AS_HELP_STRING([--enable-python-tests],
+                             [enable python tests, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_python_tests=yes
+	       else
+	         enable_python_tests=no
+	       fi
+	       ],
+              [enable_python_tests=no])
+AC_MSG_RESULT([${enable_python_tests}])
+AM_CONDITIONAL([WITH_PYTHON_TESTS],[test x"$enable_python_tests" = x"yes"])
+if test x"${enable_python_tests}" = x"yes"; then
+        if test x"${enable_python}" = x"no"; then
+          AC_MSG_ERROR([Python tests can only be enabled it python is enabled.])
+        fi
+        AC_CHECK_PROG([pytest_found], [pytest], [yes], [no])
+        if test x"$pytest_found" != x"yes" ; then
+          AC_MSG_ERROR([pytest not found.])
+        fi
+fi
+
 
 AC_OUTPUT
 

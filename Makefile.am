@@ -615,7 +615,22 @@ endif
 #test_c_cannon@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
 #test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
 
+# python wrapper
+pyelpadir = $(pythondir)/pyelpa
+if WITH_PYTHON
+pyelpa_PYTHON = python/pyelpa/__init__.py python/pyelpa/distributedmatrix.py
+pyelpa_LTLIBRARIES = wrapper.la
+else
+pyelpa_PYTHON =
+pyelpa_LTLIBRARIES =
+endif
+nodist_wrapper_la_SOURCES = python/pyelpa/wrapper.c
+wrapper_la_LDFLAGS = -module -avoid-version -shared $(AM_LDFLAGS)
+wrapper_la_LIBADD = libelpa@SUFFIX@.la
+wrapper_la_CFLAGS = $(PYTHON_INCLUDE) $(NUMPY_INCLUDE) $(AM_CFLAGS)
 
+python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
+	cython $< -o $@
 
 # test scripts
 TASKS ?= 2
@@ -633,6 +648,25 @@ TESTS = $(check_SCRIPTS)
 %_default.sh: %
 	@echo "#!/bin/bash" > $@
 	@echo '$(wrapper)' ./$^ '$$TEST_FLAGS' >> $@
+	@chmod +x $@
+
+if WITH_PYTHON_TESTS
+check_SCRIPTS += test_python.sh
+endif
+
+test_python.sh:
+	@echo '#!/bin/bash' > $@
+# this is kind of hacky... is there a better way to get wrapper.so?
+	@echo 'export PYTHONPATH=./python-copy:$$PYTHONPATH' >> $@
+	@echo 'cp -r $(abs_top_srcdir)/python python-copy || exit 1' >> $@
+	@echo 'chmod u+rwX -R python-copy || exit 1' >> $@
+	@echo 'cp .libs/wrapper.so python-copy/pyelpa/ || exit 1' >> $@
+# the dlopen flags are needed for MKL to work properly...
+# only in os from python 3.3 on
+	@echo "$(wrapper) $(PYTHON) -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; sys.exit(pytest.main([\"./python-copy\", \"-p\", \"no:cacheprovider\"]))'" >> $@
+	@echo 'exit_code=$$?' >> $@
+	@echo 'rm -rf python-copy || exit 1' >> $@
+	@echo 'exit $$exit_code' >> $@
 	@chmod +x $@
 
 include doxygen.am
@@ -654,7 +688,9 @@ CLEANFILES = \
   real* \
   complex* \
   double_instance* \
-  *.i
+  *.i \
+  python/pyelpa/wrapper.c \
+  check_python.sh
 
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
@@ -816,6 +852,15 @@ if WITH_SCALAPACK_TESTS
 EXTRA_DIST += \
   test/shared/test_scalapack_template.F90
 endif
+
+# python wrapper files
+EXTRA_DIST += python/pyelpa/__init__.py \
+	      python/pyelpa/distributedmatrix.py \
+	      python/pyelpa/wrapper.pyx \
+	      python/tests/test_elpa_import.py \
+	      python/tests/test_mpi4py.py \
+	      python/tests/test_numroc.py \
+	      python/tests/test_with_mpi.py
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)

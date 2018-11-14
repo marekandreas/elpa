@@ -336,6 +336,52 @@ print("    # stupid 'make distcheck' leaves behind write-protected files that th
 print('    - make distcheck DISTCHECK_CONFIGURE_FLAGS="FC=mpiifort FCFLAGS=\\"-xHost\\" CFLAGS=\\"-march=native\\" SCALAPACK_LDFLAGS=\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\" SCALAPACK_FCFLAGS=\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\" --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }')
 print("\n\n")
 
+# add python tests
+python_ci_tests = [
+    "# python tests",
+    "python-intel-intel-mpi-openmp:",
+    "  tags:",
+    "    - python",
+    "  artifacts:",
+    "    when: on_success",
+    "    expire_in: 2 month",
+    "  script:",
+    '   - ./ci_test_scripts/run_ci_tests.sh -c "'
+    'CC=\\"mpiicc\\" CFLAGS=\\"-O3 -xAVX\\" '
+    'FC=\\"mpiifort\\" FCFLAGS=\\"-O3 -xAVX\\" '
+    'SCALAPACK_LDFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\" '
+    'SCALAPACK_FCFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\" '
+    '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
+    '--disable-gpu --enable-avx --enable-python --enable-python-tests'
+    '" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
+    '-s $SKIP_STEP -i $INTERACTIVE_RUN',
+    "\n",
+    "python-distcheck:",
+    "  tags:",
+    "    - python",
+    "  script:",
+    '    - ./configure '
+    'CC="mpiicc" CFLAGS="-O3 -xAVX" '
+    'FC="mpiifort" FCFLAGS="-O3 -xAVX" '
+    'SCALAPACK_LDFLAGS="$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" '
+    'SCALAPACK_FCFLAGS="$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" '
+    '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
+    '--disable-gpu --enable-avx --enable-python --enable-python-tests'
+    ' || { cat config.log; exit 1; }',
+    "    # stupid 'make distcheck' leaves behind write-protected files that "
+    "the stupid gitlab runner cannot remove",
+    '    - make distcheck DISTCHECK_CONFIGURE_FLAGS="'
+    'CC=\\"mpiicc\\" CFLAGS=\\"-O3 -xAVX\\" '
+    'FC=\\"mpiifort\\" FCFLAGS=\\"-O3 -xAVX\\" '
+    'SCALAPACK_LDFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\" '
+    'SCALAPACK_FCFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\" '
+    '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
+    '--disable-gpu --enable-avx --enable-python --enable-python-tests'
+    '" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }',
+    "\n",
+]
+print("\n".join(python_ci_tests))
+
 
 # construct the builds of the "test_projects"
 

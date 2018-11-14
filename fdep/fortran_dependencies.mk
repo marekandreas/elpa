@@ -98,7 +98,7 @@ endif
 
 # $1 program
 define program_dependencies
-	$(_f90_only_verbose){ $(foreach argument,$(_$p_use_mods) $(_$p_def_mods) $(foreach l,$(call recursive_lib_deps,$p),$(_$l_use_mods) $(_$l_def_mods)),echo $(argument); ) } | \
+	$(_f90_only_verbose){ $(foreach argument,$(_$p_use_mods) $(_$p_def_mods) $(foreach l,$(call recursive_lib_deps,$p),$(_$l_use_mods) $(_$l_def_mods)),echo $(argument); ) true; } | \
 	$(top_srcdir)/fdep/fortran_dependencies.pl $p >> $@ || { rm $@; exit 1; }
 
 endef
