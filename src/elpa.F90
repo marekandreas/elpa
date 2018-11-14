@@ -183,7 +183,7 @@
 !>   elpa_setup(handle);
 !>
 !>   /* if desired, set tunable run-time options */
-!>   /* here we want to use the 2-stage solver
+!>   /* here we want to use the 2-stage solver */
 !>   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
 !>
 !>   elpa_set(handle,"real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, &error);
