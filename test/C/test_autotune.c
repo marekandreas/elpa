@@ -227,6 +227,15 @@ int main(int argc, char** argv) {
         }
 	break;
       }
+      if (myid == 0) {
+	printf("The current setting of the ELPA object: \n");
+        elpa_print_settings(handle, &error);
+
+	printf("The state of the autotuning: \n");
+        elpa_autotune_print_state(handle, autotune_handle, &error);
+      }
+
+
       /* Solve EV problem */
       elpa_eigenvectors(handle, a, ev, z, &error);
       assert_elpa_ok(error);
@@ -270,6 +279,11 @@ int main(int argc, char** argv) {
 
    }
    elpa_autotune_set_best(handle, autotune_handle, &error);
+
+   if (myid == 0) {
+     printf("The best combination found by the autotuning:\n");
+     elpa_autotune_print_best(handle, autotune_handle, &error);
+   }
 
    elpa_autotune_deallocate(autotune_handle);
    elpa_deallocate(handle);

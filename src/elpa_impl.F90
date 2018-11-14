@@ -1184,17 +1184,17 @@ module elpa_impl
     !c> *  \param elpa_t handle
     !c> *  \param  char* filename
     !c> */
-    !c> void elpa_print_settings(elpa_t handle, char *filename, int *error);
-    !subroutine elpa_print_settings_c(handle, filename, error) bind(C, name="elpa_print_settings")
-    !  type(c_ptr), value         :: handle
-    !  type(elpa_impl_t), pointer :: self
-    !  integer(kind=c_int)        :: error
-    !  character(*)               :: filename
+    !c> void elpa_print_settings(elpa_t handle, int *error);
+    subroutine elpa_print_settings_c(handle, error) bind(C, name="elpa_print_settings")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+ 
+      integer(kind=c_int)        :: error
 
-    !  call c_f_pointer(handle, self)
-    !  call elpa_print_settings(self, file_name, error)
+      call c_f_pointer(handle, self)
+      call elpa_print_settings(self, error)
 
-    !end subroutine
+    end subroutine
 
 
     !> \brief function to save all the parameters, that have been set
@@ -1224,23 +1224,24 @@ module elpa_impl
       endif
     end subroutine
 
-   !c> /*! \brief C interface for the implementation of the elpa_store_settings method
+    !c> /*! \brief C interface for the implementation of the elpa_store_settings method
     !c> *
     !c> *  \param elpa_t handle
     !c> *  \param  char* filename
     !c> */
-    !c> void elpa_store_settings(elpa_t handle, char *filename, int *error);
-    !subroutine elpa_store_settings_c(handle, filename, error) bind(C, name="elpa_store_settings")
-    !  type(c_ptr), value         :: handle
-    !  type(elpa_impl_t), pointer :: self
-    !  integer(kind=c_int)        :: error
-    !  character(*)               :: filename
+    !c> void elpa_store_settings(elpa_t handle, const char *filename, int *error);
+    subroutine elpa_store_settings_c(handle, filename_p, error) bind(C, name="elpa_store_settings")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in)    :: filename_p
+      character(len=elpa_strlen_c(filename_p)), pointer :: filename
+      integer(kind=c_int)        :: error
 
-    !  call c_f_pointer(handle, self)
-    !  call elpa_store_settings(self, file_name, error)
+      call c_f_pointer(handle, self)
+      call c_f_pointer(filename_p, filename)
+      call elpa_store_settings(self, filename, error)
 
-    !end subroutine
-
+    end subroutine
 
 
     !> \brief function to load all the parameters, which have been saved to a file
@@ -1273,17 +1274,20 @@ module elpa_impl
     !c> *  \param elpa_t handle
     !c> *  \param  char* filename
     !c> */
-    !c> void elpa_load_settings(elpa_t handle, char *filename, int *error);
-    !subroutine elpa_load_settings_c(handle, filename, error) bind(C, name="elpa_load_settings")
-    !  type(c_ptr), value         :: handle
-    !  type(elpa_impl_t), pointer :: self
-    !  integer(kind=c_int)        :: error
-    !  character(*)               :: filename
+    !c> void elpa_load_settings(elpa_t handle, const char *filename, int *error);
+    subroutine elpa_load_settings_c(handle, filename_p, error) bind(C, name="elpa_load_settings")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
 
-    !  call c_f_pointer(handle, self)
-    !  call elpa_load_settings(self, filename, error)
+      integer(kind=c_int)        :: error
+      type(c_ptr), intent(in)    :: filename_p
+      character(len=elpa_strlen_c(filename_p)), pointer :: filename
 
-    !end subroutine
+      call c_f_pointer(handle, self)
+      call c_f_pointer(filename_p, filename)
+      call elpa_load_settings(self, filename, error)
+
+    end subroutine
 
 
     !> \brief function to print the state of the autotuning
@@ -1322,6 +1326,30 @@ module elpa_impl
         endif
       endif
     end subroutine
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_print_state method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_print_state(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_print_state_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_print_state")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_print_state(tune_state, error)
+
+    end subroutine
+
 
 
     !> \brief function to save the state of the autotuning
