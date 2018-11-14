@@ -462,6 +462,8 @@ dist_man_MANS = \
   man/elpa_solve_tridiagonal.3 \
   man/elpa_hermitian_multiply.3 \
   man/elpa_deallocate.3 \
+  man/elpa_load_settings.3 \
+  man/elpa_store_settings.3 \
   man/elpa_uninit.3
 
 if ENABLE_LEGACY
