@@ -207,6 +207,7 @@ module elpa_impl
       endif
     end function
 
+
     !c> /*! \brief C interface for the implementation of the elpa_allocate method
     !c> *
     !c> *  \param  none
@@ -222,6 +223,7 @@ module elpa_impl
       ptr = c_loc(obj)
     end function
 
+
     !c> /*! \brief C interface for the implementation of the elpa_deallocate method
     !c> *
     !c> *  \param  elpa_t  handle of ELPA object to be deallocated
@@ -236,6 +238,7 @@ module elpa_impl
       call self%destroy()
       deallocate(self)
     end subroutine
+
 
 #ifdef ENABLE_AUTOTUNING
     !c> /*! \brief C interface for the implementation of the elpa_autotune_deallocate method
@@ -254,6 +257,7 @@ module elpa_impl
       deallocate(self)
     end subroutine
 #endif
+
 
     ! we want to ensure, that my_prow(col) and np_rows(cols) values are allways accessible trhough
     ! the elpa object, no matter whether the user provides communicators or communicators are created
@@ -365,6 +369,7 @@ module elpa_impl
 
     end subroutine
 
+
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
@@ -460,6 +465,7 @@ module elpa_impl
 
     end function
 
+
     !c> /*! \brief C interface for the implementation of the elpa_setup method
     !c> *
     !c> *  \param  elpa_t  handle of the ELPA object which describes the problem to
@@ -507,6 +513,7 @@ module elpa_impl
 #endif
       error = ELPA_OK
     end function
+
 
     !c> /*! \brief C interface for the implementation of the elpa_set_integer method
     !c> *  This method is available to the user as C generic elpa_set method
@@ -880,6 +887,7 @@ module elpa_impl
 #undef SINGLE_PRECISION
 #endif
 
+
 !    function use_cannons_algorithm(self) result(use_cannon, do_print)
 !      class(elpa_impl_t), intent(inout), target :: self
 !      logical                                   :: use_cannon
@@ -986,10 +994,14 @@ module elpa_impl
       class(elpa_impl_t), intent(inout)             :: self
       class(elpa_autotune_t), intent(inout), target :: tune_state
       type(elpa_autotune_impl_t), pointer           :: ts_impl
-      integer, optional, intent(out)                :: error
-      logical :: unfinished
-      integer :: i
-      real(kind=C_DOUBLE) :: time_spent
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out)    :: error
+#else
+      integer(kind=c_int),  intent(out)             :: error
+#endif
+      logical                                       :: unfinished
+      integer                                       :: i
+      real(kind=C_DOUBLE)                           :: time_spent
 
       if (present(error)) then
         error = ELPA_OK
@@ -1040,40 +1052,12 @@ module elpa_impl
     !c> *
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
-    !c> *  \result int              unfinished:  describes whether autotuning finished (0) or not (1)
-    !c> */
-    !c> int elpa_autotune_step_no_err(elpa_t handle, elpa_autotune_t autotune_handle);
-    function elpa_autotune_step_no_err_c(handle, autotune_handle) result(unfinished) bind(C, name="elpa_autotune_step_no_err")
-      type(c_ptr), intent(in), value       :: handle
-      type(c_ptr), intent(in), value       :: autotune_handle
-      type(elpa_impl_t), pointer           :: self
-      type(elpa_autotune_impl_t), pointer  :: tune_state
-      logical                              :: unfinished_f
-      integer(kind=c_int)                  :: unfinished
-
-      call c_f_pointer(handle, self)
-      call c_f_pointer(autotune_handle, tune_state)
-
-      unfinished_f = self%autotune_step(tune_state)
-      if (unfinished_f) then
-        unfinished = 1
-      else
-        unfinished = 0
-      endif
-
-    end function
-
-
-    !c> /*! \brief C interface for the implementation of the elpa_autotune_step method
-    !c> *
-    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
-    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \param  error            int *error code
     !c> *  \result int              unfinished:  describes whether autotuning finished (0) or not (1)
     !c> */
-    !c> int elpa_autotune_step_err(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
-    function elpa_autotune_step_err_c(handle, autotune_handle, &
-                    error) result(unfinished) bind(C, name="elpa_autotune_step_err")
+    !c> int elpa_autotune_step(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    function elpa_autotune_step_c(handle, autotune_handle, &
+                    error) result(unfinished) bind(C, name="elpa_autotune_step")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
@@ -1104,8 +1088,11 @@ module elpa_impl
       class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
       type(elpa_autotune_impl_t), pointer        :: ts_impl
+#ifdef USE_FORTRAN2008
       integer(kind=ik), optional, intent(out)    :: error
-
+#else
+      integer(kind=ik), intent(out)              :: error
+#endif
       if (present(error)) then
         error = ELPA_OK
       endif
@@ -1139,8 +1126,11 @@ module elpa_impl
       class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
       type(elpa_autotune_impl_t), pointer        :: ts_impl
-      integer, optional, intent(out)             :: error
-
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out) :: error
+#else
+      integer(kind=c_int),  intent(out)          :: error
+#endif
       if (present(error)) then
         error = ELPA_OK
       endif
@@ -1173,8 +1163,11 @@ module elpa_impl
     subroutine elpa_print_settings(self, error)
       implicit none
       class(elpa_impl_t), intent(inout) :: self
-      integer, optional, intent(out)    :: error
-
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out)    :: error
+#else
+      integer(kind=c_int), intent(out)              :: error
+#endif
       if (present(error)) then
         error = ELPA_OK
       endif
@@ -1213,7 +1206,11 @@ module elpa_impl
       implicit none
       class(elpa_impl_t), intent(inout) :: self
       character(*), intent(in)          :: file_name
-      integer, optional, intent(out)    :: error
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out)    :: error
+#else
+      integer(kind=c_int), intent(out)              :: error
+#endif
 
       if (present(error)) then
         error = ELPA_OK
@@ -1255,8 +1252,11 @@ module elpa_impl
       implicit none
       class(elpa_impl_t), intent(inout) :: self
       character(*), intent(in)          :: file_name
-      integer, optional, intent(out)    :: error
-
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out)    :: error
+#else
+      integer(kind=c_int), intent(out)              :: error
+#endif
       if (present(error)) then
         error = ELPA_OK
       endif
@@ -1296,8 +1296,11 @@ module elpa_impl
       class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
       type(elpa_autotune_impl_t), pointer        :: ts_impl
-      integer, optional, intent(out)             :: error
-
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out) :: error
+#else
+      integer(kind=c_int), intent(out)           :: error
+#endif
       if (present(error)) then
         error = ELPA_OK
       endif
@@ -1333,8 +1336,11 @@ module elpa_impl
       class(elpa_autotune_t), intent(in), target :: tune_state
       type(elpa_autotune_impl_t), pointer        :: ts_impl
       character(*), intent(in)                   :: file_name
-      integer, optional, intent(out)             :: error
-
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out) :: error
+#else
+      integer(kind=c_int), intent(out)           :: error
+#endif
       if (present(error)) then
         error = ELPA_OK
       endif
@@ -1370,7 +1376,11 @@ module elpa_impl
       class(elpa_autotune_t), intent(in), target :: tune_state
       type(elpa_autotune_impl_t), pointer        :: ts_impl
       character(*), intent(in)                   :: file_name
-      integer, optional, intent(out)             :: error
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out) :: error
+#else
+      integer(kind=c_int), intent(out)           :: error
+#endif
 
       if (present(error)) then
         error = ELPA_OK
@@ -1398,25 +1408,6 @@ module elpa_impl
     end subroutine
 
 
-    !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method
-    !c> *
-    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
-    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
-    !c> *  \result none 
-    !c> */
-    !c> void elpa_autotune_set_best_no_err(elpa_t handle, elpa_autotune_t autotune_handle);
-    subroutine elpa_autotune_set_best_no_err_c(handle, autotune_handle) bind(C, name="elpa_autotune_set_best_no_err")
-      type(c_ptr), intent(in), value       :: handle
-      type(c_ptr), intent(in), value       :: autotune_handle
-      type(elpa_impl_t), pointer           :: self
-      type(elpa_autotune_impl_t), pointer  :: tune_state
-
-      call c_f_pointer(handle, self)
-      call c_f_pointer(autotune_handle, tune_state)
-
-      call self%autotune_set_best(tune_state)
-
-    end subroutine
 
     !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method
     !c> *
@@ -1425,8 +1416,8 @@ module elpa_impl
     !c> *  \param  error            int *
     !c> *  \result none 
     !c> */
-    !c> void elpa_autotune_set_best_err(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
-    subroutine elpa_autotune_set_best_err_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_set_best_err")
+    !c> void elpa_autotune_set_best(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_set_best_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_set_best")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
@@ -1445,31 +1436,11 @@ module elpa_impl
     !c> *
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
-    !c> *  \result none 
-    !c> */
-    !c> void elpa_autotune_print_best_no_err(elpa_t handle, elpa_autotune_t autotune_handle);
-    subroutine elpa_autotune_print_best_no_err_c(handle, autotune_handle) bind(C, name="elpa_autotune_print_best_no_err")
-      type(c_ptr), intent(in), value       :: handle
-      type(c_ptr), intent(in), value       :: autotune_handle
-      type(elpa_impl_t), pointer           :: self
-      type(elpa_autotune_impl_t), pointer  :: tune_state
-
-      call c_f_pointer(handle, self)
-      call c_f_pointer(autotune_handle, tune_state)
-
-      call self%autotune_print_best(tune_state)
-
-    end subroutine
-
-    !c> /*! \brief C interface for the implementation of the elpa_autotune_print_best method
-    !c> *
-    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
-    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \param  error            int *
     !c> *  \result none 
     !c> */
-    !c> void elpa_autotune_print_best_err(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
-    subroutine elpa_autotune_print_best_err_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_print_best_err")
+    !c> void elpa_autotune_print_best(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_print_best_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_print_best")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self

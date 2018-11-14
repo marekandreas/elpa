@@ -23,9 +23,14 @@ module elpa_autotune_impl
     !> \brief function to print the autotuning
     !> Parameters
     !> \param   self  class(elpa_autotune_impl_t) the allocated ELPA autotune object
-    subroutine elpa_autotune_print(self)
+    subroutine elpa_autotune_print(self, error)
       implicit none
       class(elpa_autotune_impl_t), intent(in) :: self
+#ifdef USE_FORTRAN2008
+      integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
       !print *, "Print me"
     end subroutine
 

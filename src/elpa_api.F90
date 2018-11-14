@@ -263,7 +263,11 @@ module elpa_api
       import elpa_t
       implicit none
       class(elpa_t), intent(inout)   :: self
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
   end interface
 
@@ -280,7 +284,11 @@ module elpa_api
       implicit none
       class(elpa_t), intent(inout)  :: self
       character(*), intent(in)      :: file_name
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out):: error
+#else
+      integer, intent(out)          :: error
+#endif
     end subroutine
   end interface
 
@@ -297,7 +305,11 @@ module elpa_api
       implicit none
       class(elpa_t), intent(inout)   :: self
       character(*), intent(in)       :: file_name
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
   end interface
 
@@ -339,7 +351,11 @@ module elpa_api
       class(elpa_t), intent(inout)                  :: self
       class(elpa_autotune_t), intent(inout), target :: tune_state
       logical                                       :: unfinished
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out)                :: error
+#else
+      integer, intent(out)                          :: error
+#endif
     end function
   end interface
 
@@ -357,7 +373,12 @@ module elpa_api
       implicit none
       class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+
+#endif
     end subroutine
   end interface
 
@@ -375,7 +396,12 @@ module elpa_api
       implicit none
       class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+
+#endif
     end subroutine
   end interface
 
@@ -392,7 +418,11 @@ module elpa_api
       implicit none
       class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out)             :: error
+#else
+      integer,  intent(out)                      :: error
+#endif
     end subroutine
   end interface
 
@@ -411,7 +441,11 @@ module elpa_api
       class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
       character(*), intent(in)                   :: file_name
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+#endif
     end subroutine
   end interface
 
@@ -430,7 +464,11 @@ module elpa_api
       class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
       character(*), intent(in)                   :: file_name
+#ifdef USE_FORTRAN2008
       integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+#endif
     end subroutine
   end interface
 #endif
@@ -698,10 +736,16 @@ module elpa_api
   !> Parameters
   !> \param   self        class(elpa_autotune_t): the ELPA autotune object
   abstract interface
-    subroutine elpa_autotune_print_i(self)
+    subroutine elpa_autotune_print_i(self, error)
       import elpa_autotune_t
       implicit none
       class(elpa_autotune_t), intent(in) :: self
+#ifdef USE_FORTRAN2008
+      integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
+
     end subroutine
   end interface
 

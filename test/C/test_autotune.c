@@ -219,7 +219,7 @@ int main(int argc, char** argv) {
 
    for (i=0; i < 20; i++) {
 
-      unfinished = elpa_autotune_step_err(handle, autotune_handle, &error);
+      unfinished = elpa_autotune_step(handle, autotune_handle, &error);
 
       if (unfinished == 0) {
         if (myid == 0) {
@@ -269,7 +269,7 @@ int main(int argc, char** argv) {
      }	     
 
    }
-   elpa_autotune_set_best_no_err(handle, autotune_handle);
+   elpa_autotune_set_best(handle, autotune_handle, &error);
 
    elpa_autotune_deallocate(autotune_handle);
    elpa_deallocate(handle);
