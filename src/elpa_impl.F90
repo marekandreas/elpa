@@ -531,12 +531,7 @@ module elpa_impl
       type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
       integer(kind=c_int), intent(in), value        :: value
-
-#ifdef USE_FORTRAN2008
-      integer(kind=c_int) , intent(in), optional    :: error
-#else
       integer(kind=c_int) , intent(in)              :: error
-#endif
 
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
@@ -560,11 +555,8 @@ module elpa_impl
       type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
       integer(kind=c_int)                           :: value
-#ifdef ISE_FORTRAN2008
-      integer(kind=c_int), intent(inout), optional  :: error
-#else
       integer(kind=c_int), intent(inout)            :: error
-#endif
+ 
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_get_integer(self, name, value, error)
@@ -651,11 +643,8 @@ module elpa_impl
       type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
       real(kind=c_double), intent(in), value        :: value
-#ifdef USE_FORTRAN2008
-      integer(kind=c_int), intent(in), optional     :: error
-#else
       integer(kind=c_int), intent(in)               :: error
-#endif
+
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_set_double(self, name, value, error)
@@ -678,11 +667,8 @@ module elpa_impl
       type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
       real(kind=c_double)                           :: value
-#ifdef USE_FORTRAN2008
-      integer(kind=c_int), intent(inout), optional  :: error
-#else
       integer(kind=c_int), intent(inout)            :: error
-#endif
+
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_get_double(self, name, value, error)
@@ -963,11 +949,7 @@ module elpa_impl
       integer(kind=c_int), intent(in), value :: level
       integer(kind=c_int), intent(in), value :: domain
       type(c_ptr)                            :: ptr
-#ifdef USE_FORTRAN2008
-      integer(kind=c_int) , intent(in), optional    :: error
-#else
-      integer(kind=c_int) , intent(in)              :: error
-#endif
+      integer(kind=c_int) , intent(in)       :: error
 
       call c_f_pointer(handle, self)
 
