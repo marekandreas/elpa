@@ -278,6 +278,7 @@ module elpa_impl
 
 #ifdef HAVE_DETAILED_TIMINGS
       call self%get("timings",timings, error)
+      if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
       if (timings == 1) then
         call self%timer%enable()
       endif
@@ -296,25 +297,26 @@ module elpa_impl
 #ifdef WITH_MPI
       if(self%is_set("legacy_api") == 1) then
         call self%get("legacy_api", legacy_api, error)
-        call check_elpa_get(error)
+        if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
       endif
 
       if (self%is_set("mpi_comm_parent") == 1) then
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
-        call check_elpa_get(error)
+        if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
         call mpi_comm_rank(mpi_comm_parent, my_id, mpierr)
         call self%set("process_id", my_id, error)
-        call check_elpa_set(error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
         call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
         call self%set("num_processes", np_total, error)
-        call check_elpa_set(error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
         is_process_id_zero = 0
         if(my_id == 0) &
           is_process_id_zero = 1
         call self%set("is_process_id_zero", is_process_id_zero, error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
       else
         if(legacy_api .ne. 1) then
@@ -334,10 +336,10 @@ module elpa_impl
         endif
 
         call self%get("process_row", process_row, error)
-        call check_elpa_get(error)
+        if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
         call self%get("process_col", process_col, error)
-        call check_elpa_get(error)
+        if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
         ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
         ! having the same column coordinate share one mpi_comm_rows.
@@ -359,10 +361,10 @@ module elpa_impl
         endif
 
         call self%set("mpi_comm_rows", mpi_comm_rows,error)
-        call check_elpa_set(error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
         call self%set("mpi_comm_cols", mpi_comm_cols,error)
-        call check_elpa_set(error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
         ! remember that we created those communicators and we need to free them later
         self%communicators_owned = 1
@@ -377,18 +379,18 @@ module elpa_impl
         endif
 
         call self%get("mpi_comm_rows", mpi_comm_rows,error)
-        call check_elpa_get(error)
+        if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
         call self%get("mpi_comm_cols", mpi_comm_cols,error)
-        call check_elpa_get(error)
+        if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
         call mpi_comm_rank(mpi_comm_rows, process_row, mpierr)
         call self%set("process_row", process_row, error)
-        call check_elpa_set(error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
         call mpi_comm_rank(mpi_comm_cols, process_col, mpierr)
         call self%set("process_col", process_col, error)
-        call check_elpa_set(error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
         ! remember that we DID NOT created those communicators and we WILL NOT free them later
         self%communicators_owned = 0
@@ -405,7 +407,7 @@ module elpa_impl
       call mpi_comm_size(mpi_comm_rows, np_rows, mpierr)
       if(self%is_set("num_process_rows") == 1) then
         call self%get("num_process_rows", present_np_rows, error)
-        call check_elpa_get(error)
+        if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
         if(np_rows .ne. present_np_rows) then
           print *,"MPI row communicator not set correctly. Aborting..."
@@ -413,13 +415,13 @@ module elpa_impl
         endif
       else
         call self%set("num_process_rows", np_rows, error)
-        call check_elpa_set(error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
       endif
 
       call mpi_comm_size(mpi_comm_cols, np_cols, mpierr)
       if(self%is_set("num_process_cols") == 1) then
         call self%get("num_process_cols", present_np_cols, error)
-        call check_elpa_get(error)
+        if(check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
         if(np_cols .ne. present_np_cols) then
           print *,"MPI column communicator not set correctly. Aborting..."
@@ -427,7 +429,7 @@ module elpa_impl
         endif
       else
         call self%set("num_process_cols", np_cols, error)
-        call check_elpa_set(error)
+        if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
       endif
 
       if(legacy_api .ne. 1) then
@@ -439,12 +441,19 @@ module elpa_impl
 
 #else
       call self%set("process_row", 0, error)
+      if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("process_col", 0, error)
+      if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("process_id", 0, error)
+      if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("is_process_id_zero", 1, error)
+      if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("num_process_rows", 1, error)
+      if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("num_process_cols", 1, error)
+      if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("num_processes", 1, error)
+      if(check_elpa_set(error, ELPA_ERROR_SETUP)) return
 #endif
 
     end function
@@ -478,6 +487,7 @@ module elpa_impl
         stop
       endif
       call self%get("blacs_context", blacs_ctx, error)
+      if(check_elpa_get(error, ELPA_ERROR)) return
 
       sc_desc(1) = 1
       sc_desc(2) = blacs_ctx
@@ -593,6 +603,7 @@ module elpa_impl
       nullify(string)
 
       call self%get(option_name, val, actual_error)
+      if(check_elpa_get(error, ELPA_ERROR)) return
       if (actual_error /= ELPA_OK) then
         if (present(error)) then
           error = actual_error
@@ -753,15 +764,9 @@ module elpa_impl
 #ifdef WITH_MPI
       if (self%communicators_owned == 1) then
         call self%get("mpi_comm_rows", mpi_comm_rows,error)
-        if (error .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
-           stop
-        endif
+        if(check_elpa_get(error, ELPA_ERROR)) return
         call self%get("mpi_comm_cols", mpi_comm_cols,error)
-        if (error .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
-           stop
-        endif
+        if(check_elpa_get(error, ELPA_ERROR)) return
 
         write(error_unit, '(A,2I13)') "FREE comms", mpi_comm_rows, mpi_comm_cols
         call mpi_comm_free(mpi_comm_rows, mpierr)
@@ -771,6 +776,7 @@ module elpa_impl
           return
         endif
         call self%set("mpi_comm_cols", -12345,error)
+        if(check_elpa_set(error, ELPA_ERROR)) return
         call mpi_comm_free(mpi_comm_cols, mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
@@ -778,6 +784,7 @@ module elpa_impl
           return
         endif
         call self%set("mpi_comm_rows", -12345,error)
+        if(check_elpa_set(error, ELPA_ERROR)) return
       endif
 #endif
 
@@ -1505,21 +1512,36 @@ module elpa_impl
 
     end subroutine
 
-    subroutine check_elpa_get(error)
-      integer :: error
+    function check_elpa(error, str, new_error) result(res)
+      integer, intent(inout) :: error
+      integer, intent(in)    :: new_error
+      character(*)  :: str
+      logical :: res
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
-        stop
+        print *, trim(str)
+        res = .true.
+        error = new_error
+        return
       endif
-    end subroutine
+      res = .false.
+    end function
 
-    subroutine check_elpa_set(error)
-      integer :: error
-      if (error .ne. ELPA_OK) then
-        print *,"Problem setting option. Aborting..."
-        stop
-      endif
-    end subroutine
+    function check_elpa_get(error, new_error) result(res)
+      integer, intent(inout) :: error
+      integer, intent(in)    :: new_error
+      logical :: res
+      res = check_elpa(error, "Problem getting option. Aborting...", new_error)
+      return
+    end function
+
+    function check_elpa_set(error, new_error) result(res)
+      integer, intent(inout) :: error
+      integer, intent(in)    :: new_error
+      logical :: res
+      res = check_elpa(error, "Problem setting option. Aborting...", new_error)
+      return
+    end function
+
 
 #endif
 
