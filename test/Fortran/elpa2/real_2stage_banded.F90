@@ -224,12 +224,14 @@ program test_real2_double_banded
    assert_elpa_ok(success)
    call e%set("nblk", nblk, success)
    assert_elpa_ok(success)
+#ifdef WITH_MPI
    call e%set("mpi_comm_parent", MPI_COMM_WORLD, success)
    assert_elpa_ok(success)
    call e%set("process_row", my_prow, success)
    assert_elpa_ok(success)
    call e%set("process_col", my_pcol, success)
    assert_elpa_ok(success)
+#endif
 
    call e%set("bandwidth", bandwidth, success)
    assert_elpa_ok(success)

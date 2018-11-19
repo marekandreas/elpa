@@ -144,12 +144,14 @@ program test_interface
    assert_elpa_ok(success)
    call e1%set("nblk", nblk, success)
    assert_elpa_ok(success)
+#ifdef WITH_MPI
    call e1%set("mpi_comm_parent", MPI_COMM_WORLD, success)
    assert_elpa_ok(success)
    call e1%set("process_row", my_prow, success)
    assert_elpa_ok(success)
    call e1%set("process_col", my_pcol, success)
    assert_elpa_ok(success)
+#endif
 
    assert(e1%setup() .eq. ELPA_OK)
 
@@ -172,13 +174,14 @@ program test_interface
    assert_elpa_ok(success)
    call e2%set("nblk", nblk, success)
    assert_elpa_ok(success)
+#ifdef WITH_MPI
    call e2%set("mpi_comm_parent", MPI_COMM_WORLD, success)
    assert_elpa_ok(success)
    call e2%set("process_row", my_prow, success)
    assert_elpa_ok(success)
    call e2%set("process_col", my_pcol, success)
    assert_elpa_ok(success)
-
+#endif
    assert(e2%setup() .eq. ELPA_OK)
 
    call e2%set("solver", ELPA_SOLVER_1STAGE, success)
