@@ -79,7 +79,12 @@ Fortran synopsis
     print *, "ELPA API version not supported"
     stop
   endif
-  elpa => elpa_allocate()
+  elpa => elpa_allocate(success)
+  if (success != ELPA_OK) then
+    ! react on the error
+    ! we urge every user to always check the error codes
+    ! of all ELPA functions
+  endif
 
   ! set parameters decribing the matrix and it's MPI distribution
   call elpa%set("na", na, success)                          ! size of the na x na matrix
@@ -91,7 +96,7 @@ Fortran synopsis
   call elpa%set("process_row", my_prow, success)            ! row coordinate of MPI process
   call elpa%set("process_col", my_pcol, success)            ! column coordinate of MPI process
 
-  succes = elpa%setup()
+  success = elpa%setup()
 
   ! if desired, set any number of tunable run-time options
   ! look at the list of possible options as detailed later in
@@ -126,6 +131,11 @@ C Synopsis:
    }
 
    handle = elpa_allocate(&error);
+   if (error != ELPA_OK) {
+     /* react on the error code */
+     /* we urge the user to always check the error codes of all ELPA functions */
+   }
+
 
    /* Set parameters the matrix and it's MPI distribution */
    elpa_set(handle, "na", na, &error);                                           // size of the na x na matrix
@@ -138,7 +148,7 @@ C Synopsis:
    elpa_set(handle, "process_col", my_pcol, &error);                             // column coordinate of MPI process
 
    /* Setup */
-   elpa_setup(handle);
+   error = elpa_setup(handle);
 
    /* if desired, set any number of tunable run-time options */
    /* look at the list of possible options as detailed later in
@@ -284,7 +294,7 @@ Fortran synopsis
     print *, "ELPA API version not supported"
     stop
   endif
-  elpa => elpa_allocate()
+  elpa => elpa_allocate(success)
 
   ! set parameters decribing the matrix and it's MPI distribution
   call elpa%set("na", na, success)
@@ -296,23 +306,23 @@ Fortran synopsis
   call elpa%set("process_row", my_prow, success)
   call elpa%set("process_col", my_pcol, success)
 
-  succes = elpa%setup()
+  success = elpa%setup()
 
-  tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL, error)   ! prepare autotuning, set AUTOTUNE_LEVEL and the domain (real or complex)
+  tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL, success)   ! prepare autotuning, set AUTOTUNE_LEVEL and the domain (real or complex)
 
   ! do the loop of subsequent ELPA calls which will be used to do the autotuning
   do i=1, scf_cycles
-    unfinished = e%autotune_step(tune_state)   ! check whether autotuning is finished; If not do next step
+    unfinished = e%autotune_step(tune_state, success)   ! check whether autotuning is finished; If not do next step
 
     if (.not.(unfinished)) then
       print *,"autotuning finished at step ",i
     endif
 
-    call e%eigenvectors(a, ev, z, error)       ! do the normal computation
+    call e%eigenvectors(a, ev, z, success)       ! do the normal computation
 
   enddo
 
-  call e%autotune_set_best(tune_state)         ! from now use the values found by autotuning
+  call e%autotune_set_best(tune_state, success)         ! from now use the values found by autotuning
 
   call elpa_autotune_deallocate(tune_state)    ! cleanup autotuning object 
 ```
@@ -350,7 +360,7 @@ C Synopsis
    // repeatedl call ELPA, e.g. in an scf iteration
    for (i=0; i < scf_cycles; i++) {
 
-     unfinished = elpa_autotune_step(handle, autotune_handle);      // check whether autotuning finished. If not do next step
+     unfinished = elpa_autotune_step(handle, autotune_handle, &error);      // check whether autotuning finished. If not do next step
 
      if (unfinished == 0) {
        printf("ELPA autotuning finished in the %d th scf step \n",i);
@@ -360,7 +370,7 @@ C Synopsis
       /* do the normal computation */
       elpa_eigenvectors(handle, a, ev, z, &error);
    }
-   elpa_autotune_set_best(handle, autotune_handle);  // from now on use values used by autotuning
+   elpa_autotune_set_best(handle, autotune_handle &error);  // from now on use values used by autotuning
    elpa_autotune_deallocate(autotune_handle);        // cleanup autotuning
    
 ```
