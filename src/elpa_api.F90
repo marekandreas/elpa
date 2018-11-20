@@ -783,7 +783,7 @@ module elpa_api
         error = ELPA_OK
       else
         write(error_unit, "(a,i0,a)") "ELPA: Error API version ", api_version," is not supported by this library"
-        error = ELPA_ERROR
+        error = ELPA_ERROR_API_VERSION
       endif
     end function
 
