@@ -1415,6 +1415,34 @@ module elpa_impl
     end subroutine
 
 
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_save_state method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_save_state(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_save_state_c(handle, autotune_handle, filename_p, error) bind(C, name="elpa_autotune_save_state")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      type(c_ptr), intent(in)              :: filename_p
+      character(len=elpa_strlen_c(filename_p)), pointer :: filename
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(filename_p, filename)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_save_state(tune_state, filename, error)
+
+    end subroutine
+
+
+
     !> \brief function to load the state of the autotuning
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
@@ -1458,6 +1486,32 @@ module elpa_impl
       print *, "testing, after C call, ts_impl%current is ", ts_impl%current
     end subroutine
 
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_load_state method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_load_state(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_load_state_c(handle, autotune_handle, filename_p, error) bind(C, name="elpa_autotune_load_state")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      type(c_ptr), intent(in)              :: filename_p
+      character(len=elpa_strlen_c(filename_p)), pointer :: filename
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(filename_p, filename)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_load_state(tune_state, filename, error)
+
+    end subroutine
 
 
     !c> /*! \brief C interface for the implementation of the elpa_autotune_set_best method
