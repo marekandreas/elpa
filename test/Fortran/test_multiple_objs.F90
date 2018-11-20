@@ -206,7 +206,7 @@ program test
    e_ptr => e2
 
 
-   tune_state => e_ptr%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
+   tune_state => e_ptr%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
 

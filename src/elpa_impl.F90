@@ -188,7 +188,7 @@ module elpa_impl
       if ( elpa_initialized() .ne. ELPA_OK) then
         write(error_unit, *) "elpa_allocate(): you must call elpa_init() once before creating instances of ELPA"
         if(present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_SETUP
         endif
         return
       endif
@@ -470,7 +470,6 @@ module elpa_impl
         call set_or_check_missing_comm_params(self)
         self%communicators_owned = 0
         error = ELPA_OK
-
 
         call self%get("mpi_comm_rows", mpi_comm_rows,error)
         if (error .ne. ELPA_OK) then
@@ -950,10 +949,10 @@ module elpa_impl
         write(error_unit, "(a,i0,a)") "ELPA: Error API version: Autotuning does not support ", elpa_get_api_version()
 #ifdef USE_FORTRAN2008
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_AUTOTUNE_API_VERSION
         endif
 #else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_AUTOTUNE_API_VERSION
 #endif
         return
       endif
@@ -1123,16 +1122,16 @@ module elpa_impl
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical error"
           if (present(error)) then
-            error = ELPA_ERROR
+            error = ELPA_ERROR_CRITICAL
           endif
       end select
 
       if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
-        print *, "This should not happen (in elpa_autotune_set_best())"
+        write(error_unit, *) "This should not happen (in elpa_autotune_set_best())"
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
         endif
       endif
     end subroutine
@@ -1161,19 +1160,19 @@ module elpa_impl
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical error"
           if (present(error)) then
-            error = ELPA_ERROR
+            error = ELPA_ERROR_CRITICAL
           endif
       end select
 
-      print *, "The following settings were found to be best:"
-      print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
+      !print *, "The following settings were found to be best:"
+      !print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
       flush(output_unit)
       if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain) /= 1) then
-        print *, "This should not happen (in elpa_autotune_print_best())"
+        write(error_unit, *) "This should not happen (in elpa_autotune_print_best())"
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
         endif
       endif
     end subroutine
@@ -1195,7 +1194,7 @@ module elpa_impl
         error = ELPA_OK
       endif
       if (elpa_index_print_settings_c(self%index, c_null_char) /= 1) then
-        print *, "This should not happen (in elpa_print_settings())"
+        write(error_unit, *) "This should not happen (in elpa_print_settings())"
         if (present(error)) then
           error = ELPA_ERROR
         endif
@@ -1239,7 +1238,7 @@ module elpa_impl
         error = ELPA_OK
       endif
       if (elpa_index_print_settings_c(self%index, file_name // c_null_char) /= 1) then
-        print *, "This should not happen (in elpa_store_settings())"
+        write(error_unit, *) "This should not happen (in elpa_store_settings())"
         if (present(error)) then
           error = ELPA_ERROR
         endif
@@ -1285,7 +1284,7 @@ module elpa_impl
         error = ELPA_OK
       endif
       if (elpa_index_load_settings_c(self%index, file_name // c_null_char) /= 1) then
-        print *, "This should not happen (in elpa_load_settings())"
+        write(error_unit, *) "This should not happen (in elpa_load_settings())"
         if (present(error)) then
           error = ELPA_ERROR
         endif
@@ -1335,17 +1334,17 @@ module elpa_impl
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical erro"
           if (present(error)) then
-            error = ELPA_ERROR
+            error = ELPA_ERROR_CRITICAL
           endif
       end select
 
       if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, c_null_char) /= 1) then
-        print *, "This should not happen (in elpa_autotune_print_state())"
+        write(error_unit, *) "This should not happen (in elpa_autotune_print_state())"
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
         endif
       endif
     end subroutine
@@ -1399,17 +1398,17 @@ module elpa_impl
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical error"
           if (present(error)) then
-            error = ELPA_ERROR
+            error = ELPA_ERROR_CRITICAL
           endif
       end select
 
       if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
-        print *, "This should not happen (in elpa_autotune_save_state())"
+        write(error_unit, *) "This should not happen (in elpa_autotune_save_state())"
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
         endif
       endif
     end subroutine
@@ -1468,9 +1467,9 @@ module elpa_impl
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical error"
           if (present(error)) then
-            error = ELPA_ERROR
+            error = ELPA_ERROR_CRITICAL
           endif
       end select
 
@@ -1478,12 +1477,12 @@ module elpa_impl
 
       if (elpa_index_load_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
-        !print *, "This should not happen (in elpa_autotune_load_state())"
+         write(error_unit, *) "This should not happen (in elpa_autotune_load_state())"
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
         endif
       endif
-      print *, "testing, after C call, ts_impl%current is ", ts_impl%current
+      !print *, "testing, after C call, ts_impl%current is ", ts_impl%current
     end subroutine
 
 
