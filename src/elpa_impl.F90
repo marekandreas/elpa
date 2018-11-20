@@ -1054,7 +1054,7 @@ module elpa_impl
 
     end function
 
-    !> \brief function to set the up-to-know best options of the autotuning
+    !> \brief function to set the up-to-now best options of the autotuning
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
@@ -1092,7 +1092,7 @@ module elpa_impl
 
 
 
-    !> \brief function to print the up-to-know best options of the autotuning
+    !> \brief function to print the up-to-now best options of the autotuning
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
