@@ -464,6 +464,10 @@ dist_man_MANS = \
   man/elpa_deallocate.3 \
   man/elpa_load_settings.3 \
   man/elpa_store_settings.3 \
+  man/elpa_print_settings.3 \
+  man/elpa_autotune_save_state.3 \
+  man/elpa_autotune_load_state.3 \
+  man/elpa_autotune_print_state.3 \
   man/elpa_uninit.3
 
 if ENABLE_LEGACY

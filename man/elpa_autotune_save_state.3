@@ -1,0 +1,64 @@
+.TH "elpa_autotune_save_state" 3 "Tue Nov 13 2018" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_autotune_save_state \- saves the current state of an ELPA autotuning object
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+class(elpa_autotune_t), pointer :: autotune
+.br
+
+.RI  "call elpa%\fBautotune_save_state\fP (autotune, filename, error)"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+.br
+.br
+.TP
+.RI "class(elpa_t)          \fBelpa\f:         an instance of the ELPA object"
+.br
+.RI "class(elpa_autotune_t) \fBautotune\f:     an instance of the ELPA autotune object"
+.br
+.RI "character(*)           \fBfilename\fP:   The filename to be used for storing the settings"
+.br
+.RI "integer, optional      \fBerror\fP:      A error return code"
+.br
+
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+elpa_autotune_t autotune_handle;
+
+.br
+.RI "void \fBelpa_autotune_save_state\fP(\fBelpa_t\fP handle, \fBelpa_autotune_t\fP autotune_handle, \fBconst char\fP *filename, \fBint\fP *error):
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+.br
+.br
+.TP
+.RI "elpa_t \fBhandle\fP:                The handle to the ELPA object"
+.br
+.TP
+.RI "elpa_autotune_t \fBhandle\fP:       The handle to the ELPA autotune object"
+.br
+.TP
+.RI "const char \fB*filename\fP:         the filename to store the settings"
+.br
+.RI "int \fB*error\fP:                   the error return code"
+.TP
+
+.SH DESCRIPTION
+Saves the current state of an autotune object. The state can be restored with \fBelpa_autotune_load_state\fP.3 and the autoutuning could be resumed.
+.SH "SEE ALSO"
+.br
+\fBelpa_autotune_load_state\fP(3)
