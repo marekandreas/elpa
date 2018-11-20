@@ -188,7 +188,7 @@ module elpa_impl
       if ( elpa_initialized() .ne. ELPA_OK) then
         write(error_unit, *) "elpa_allocate(): you must call elpa_init() once before creating instances of ELPA"
         if(present(error)) then
-          error = ELPA_ERROR_SETUP
+          error = ELPA_ERROR_API_VERSION
         endif
         return
       endif
