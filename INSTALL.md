@@ -64,6 +64,11 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  --enable-autotuning                 | enables autotuning functionality, default yes         |
 |  --enable-c-tests                    | enables the C tests for elpa, default yes             |
 | --disable-assumed-size               | do NOT use assumed-size Fortran arrays. default use   |
+| --enable-scalapack-tests             | build also ScalaPack tests for performance comparison; needs MPI |
+| --disable-Fortran2008-features       | disable Fortran 2008 if compiler does not support it  |
+| --enable-pyhton                      | build and install python wrapper, default no          |
+| --enable-python-tests                | enable python tests, default no.                      |
+
 
 We recommend that you do not build ELPA in its main directory but that you use it
 in a sub-directory:
