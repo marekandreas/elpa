@@ -31,6 +31,19 @@ that all future features of *ELPA* will only be accessible via the new API defin
 As mentioned, we advise against it, but if you want to use the legacy API please look at the document 
 [USERS_GUIDE_DEPRECATED_LEGACY_API.md] (USERS_GUIDE_DEPRECATED_LEGACY_API.md).
 
+
+The old, obsolete legacy API will be deprecated in the future !
+Allready now, all new features of ELPA are only available with the new API. Thus, there
+is no reason to keep the legacy API arround for too long.
+
+The release ELPA 2018.11.001 will be the last release, where the legacy API is
+enabled by default (and can be disabled at build time).
+With release ELPA 2019.05.001 the legacy API will be disabled by default, however,
+can be still switched on at build time.
+Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and
+not supported anymore.
+
+
 ### Table of Contents: ###
 
 - I)   General concept of the *ELPA* API
