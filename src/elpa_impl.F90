@@ -1254,7 +1254,7 @@ module elpa_impl
       if (elpa_index_print_settings_c(self%index, file_name // c_null_char) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_store_settings())"
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_CANNOT_OPEN_FILE
         endif
 
       endif
@@ -1300,7 +1300,7 @@ module elpa_impl
       if (elpa_index_load_settings_c(self%index, file_name // c_null_char) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_load_settings())"
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_CANNOT_OPEN_FILE
         endif
       endif
     end subroutine
@@ -1422,7 +1422,7 @@ module elpa_impl
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_autotune_save_state())"
         if (present(error)) then
-          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+          error = ELPA_ERROR_CANNOT_OPEN_FILE
         endif
       endif
     end subroutine
@@ -1493,7 +1493,7 @@ module elpa_impl
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
          write(error_unit, *) "This should not happen (in elpa_autotune_load_state())"
         if (present(error)) then
-          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+          error = ELPA_ERROR_CANNOT_OPEN_FILE
         endif
       endif
       !print *, "testing, after C call, ts_impl%current is ", ts_impl%current
