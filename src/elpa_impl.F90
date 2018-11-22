@@ -497,7 +497,7 @@ module elpa_impl
         stop
       endif
       call self%get("blacs_context", blacs_ctx, error)
-      if(check_elpa_get(error, ELPA_ERROR)) return
+      if(check_elpa_get(error, ELPA_ERROR_CRITICAL)) return
 
       sc_desc(1) = 1
       sc_desc(2) = blacs_ctx
@@ -613,7 +613,6 @@ module elpa_impl
       nullify(string)
 
       call self%get(option_name, val, actual_error)
-      if(check_elpa_get(error, ELPA_ERROR)) return
       if (actual_error /= ELPA_OK) then
         if (present(error)) then
           error = actual_error
