@@ -89,7 +89,7 @@
    integer(kind=c_int)                       :: my_prow, my_pcol, mpierr
    logical                                   :: success
 
-   integer(kind=c_int)                       :: successInternal,error
+   integer(kind=c_int)                       :: error
    class(elpa_t), pointer                    :: e
 
     call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
@@ -102,51 +102,55 @@
       return
     endif
 
-    e => elpa_allocate()
-
-    call e%set("na", na,error)
+    e => elpa_allocate(error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem setting option. Aborting..."
-      stop
-    endif
-    call e%set("nev", nev,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem setting option. Aborting..."
-      stop
-    endif
-    call e%set("local_nrows", lda,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem setting option. Aborting..."
-      stop
-    endif
-    call e%set("local_ncols", matrixCols,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem setting option. Aborting..."
-      stop
-    endif
-    call e%set("nblk", nblk,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem setting option. Aborting..."
+      print *,"Problem calling internal elpa_allocate. Aborting ..."
       stop
     endif
 
-    call e%set("mpi_comm_parent", mpi_comm_all,error)
+    call e%set("na", na, error)
     if (error .ne. ELPA_OK) then
       print *,"Problem setting option. Aborting..."
       stop
     endif
-    call e%set("mpi_comm_rows", mpi_comm_rows,error)
+    call e%set("nev", nev, error)
     if (error .ne. ELPA_OK) then
       print *,"Problem setting option. Aborting..."
       stop
     endif
-    call e%set("mpi_comm_cols", mpi_comm_cols,error)
+    call e%set("local_nrows", lda, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("local_ncols", matrixCols, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("nblk", nblk, error)
     if (error .ne. ELPA_OK) then
       print *,"Problem setting option. Aborting..."
       stop
     endif
 
-    call e%set("timings",1,error)
+    call e%set("mpi_comm_parent", mpi_comm_all, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("mpi_comm_rows", mpi_comm_rows, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+    call e%set("mpi_comm_cols", mpi_comm_cols, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem setting option. Aborting..."
+      stop
+    endif
+
+    call e%set("timings",1, error)
     if (error .ne. ELPA_OK) then
       print *,"Problem setting option. Aborting..."
       stop
@@ -158,8 +162,8 @@
       return
     endif
 
-    call e%set("solver", ELPA_SOLVER_2STAGE, successInternal)
-    if (successInternal .ne. ELPA_OK) then
+    call e%set("solver", ELPA_SOLVER_2STAGE, error)
+    if (error .ne. ELPA_OK) then
       print *, "Cannot set ELPA 1stage solver"
       success = .false.
       return
@@ -167,15 +171,15 @@
 
     if (present(useGPU)) then
       if (useGPU) then
-        call e%set("gpu", 1, successInternal)
-        if (successInternal .ne. ELPA_OK) then
+        call e%set("gpu", 1, error)
+        if (error .ne. ELPA_OK) then
           print *, "Cannot set gpu"
           success = .false.
           return
         endif
       else
-        call e%set("gpu", 0, successInternal)
-        if (successInternal .ne. ELPA_OK) then
+        call e%set("gpu", 0, error)
+        if (error .ne. ELPA_OK) then
           print *, "Cannot set gpu"
           success = .false.
           return
@@ -186,15 +190,15 @@
 #if REALCASE == 1
     if (present(useQR)) then
       if (useQR) then
-        call e%set("qr", 1, successInternal)
-        if (successInternal .ne. ELPA_OK) then
+        call e%set("qr", 1, error)
+        if (error .ne. ELPA_OK) then
           print *, "Cannot set qr"
           success = .false.
           return
         endif
       else
-        call e%set("qr", 0, successInternal)
-        if (successInternal .ne. ELPA_OK) then
+        call e%set("qr", 0, error)
+        if (error .ne. ELPA_OK) then
           print *, "Cannot set qr"
           success = .false.
           return
@@ -205,8 +209,8 @@
 
 #if REALCASE == 1
     if (present(THIS_ELPA_KERNEL_API)) then
-      call e%set("real_kernel",THIS_ELPA_KERNEL_API, successInternal)
-      if (successInternal .ne. ELPA_OK) then
+      call e%set("real_kernel",THIS_ELPA_KERNEL_API, error)
+      if (error .ne. ELPA_OK) then
         print *, "Cannot set ELPA2 stage real_kernel"
         success = .false.
         return
@@ -216,8 +220,8 @@
 
 #if COMPLEXCASE == 1
     if (present(THIS_ELPA_KERNEL_API)) then
-      call e%set("complex_kernel",THIS_ELPA_KERNEL_API, successInternal)
-      if (successInternal .ne. ELPA_OK) then
+      call e%set("complex_kernel",THIS_ELPA_KERNEL_API, error)
+      if (error .ne. ELPA_OK) then
         print *, "Cannot set ELPA2 stage complex_kernel"
         success = .false.
         return
@@ -225,20 +229,20 @@
     endif
 #endif
 
-    call e%set("print_flops", 1,successInternal)
-    if (successInternal .ne. ELPA_OK) then
+    call e%set("print_flops", 1, error)
+    if (error .ne. ELPA_OK) then
       print *, "Cannot set print_flops"
       success = .false.
       return
     endif
-    call e%set("timings", 1,error)
+    call e%set("timings", 1, error)
     if (error .ne. ELPA_OK) then
       print *,"Problem setting option. Aborting..."
       stop
     endif
 
-    call e%eigenvectors(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), successInternal)
-    if (successInternal .ne. ELPA_OK) then
+    call e%eigenvectors(a(1:lda,1:matrixCols), ev, q(1:ldq,1:matrixCols), error)
+    if (error .ne. ELPA_OK) then
       print *, "Cannot solve with ELPA 2stage"
       success = .false.
       return
@@ -301,9 +305,17 @@
        &","trans_ev_to_full")
       endif
     endif ! na > 1
-    call elpa_deallocate(e)
+    call elpa_deallocate(e, error)
+    if (error .ne. ELPA_OK) then
+      print *," Cannot deallocate the internal ELPA object! This might lead to a memory leak!"
+!      stop
+    endif
 
-    call elpa_uninit()
+   call elpa_uninit(error)
+   if (error .ne. ELPA_OK) then
+     print *," Cannot uninit the internal ELPA object! This might lead to a memory leak!"
+!     stop
+   endif
 
    end function
 

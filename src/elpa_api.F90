@@ -247,8 +247,8 @@ module elpa_api
     function elpa_setup_i(self) result(error)
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout) :: self
-      integer :: error
+      class(elpa_t), intent(inout)   :: self
+      integer                        :: error
     end function
   end interface
 
@@ -723,11 +723,17 @@ module elpa_api
   !> \brief abstract definition of interface to destroy an ELPA object
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
+  !> \param   error       integer, optional, the error code
   abstract interface
-    subroutine elpa_destroy_i(self)
+    subroutine elpa_destroy_i(self, error)
       import elpa_t
       implicit none
-      class(elpa_t) :: self
+      class(elpa_t)                  :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
   end interface
 
@@ -741,9 +747,9 @@ module elpa_api
       implicit none
       class(elpa_autotune_t), intent(in) :: self
 #ifdef USE_FORTRAN2008
-      integer, intent(out), optional :: error
+      integer, intent(out), optional     :: error
 #else
-      integer, intent(out)           :: error
+      integer, intent(out)               :: error
 #endif
 
     end subroutine
@@ -754,10 +760,15 @@ module elpa_api
   !> Parameters
   !> \param   self        class(elpa_autotune_t): the ELPA autotune object
   abstract interface
-    subroutine elpa_autotune_destroy_i(self)
+    subroutine elpa_autotune_destroy_i(self, error)
       import elpa_autotune_t
       implicit none
       class(elpa_autotune_t), intent(inout) :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)        :: error
+#else
+      integer, intent(out)                  :: error
+#endif
     end subroutine
   end interface
 #endif
@@ -796,7 +807,7 @@ module elpa_api
       if (initDone) then
         state = ELPA_OK
       else
-        state = ELPA_ERROR
+        state = ELPA_ERROR_CRITICAL
       endif
     end function
 
@@ -809,8 +820,14 @@ module elpa_api
 
     !> \brief subroutine to uninit the ELPA library. Does nothing at the moment. Might do sth. later
     !
-    !c> void elpa_uninit(void);
-    subroutine elpa_uninit() bind(C, name="elpa_uninit")
+    !c> void elpa_uninit(int *error);
+    subroutine elpa_uninit(error) bind(C, name="elpa_uninit")
+#ifdef USE_FORTRAN2008
+     integer, optional, intent(out) :: error
+#else
+     integer, intent(out)           :: error
+#endif
+     if (present(error)) error = ELPA_OK
     end subroutine
 
 

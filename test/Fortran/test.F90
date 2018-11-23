@@ -532,7 +532,8 @@ program test
      do_test_cholesky = .false.
    endif
 
-   e => elpa_allocate()
+   e => elpa_allocate(error)
+   assert_elpa_ok(error)
 
    call e%set("na", na, error)
    assert_elpa_ok(error)
@@ -624,6 +625,7 @@ program test
      endif
      ! actually used kernel might be different if forced via environment variables
      call e%get(KERNEL_KEY, kernel, error)
+     assert_elpa_ok(error)
 #endif
      if (myid == 0) then
        print *, elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
@@ -632,7 +634,8 @@ program test
 
 
 ! print all parameters
-     call e%print_settings()
+     call e%print_settings(error)
+     assert_elpa_ok(error)
 
 #ifdef TEST_ALL_KERNELS
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
@@ -761,7 +764,7 @@ program test
      if (do_test_toeplitz_eigenvalues) then
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
        status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
-         subdiagonalElement, ev, z, myid)
+                                                       subdiagonalElement, ev, z, myid)
        call check_status(status, myid)
 #endif
      endif
@@ -799,7 +802,8 @@ program test
    end do ! kernels
 #endif
 
-   call elpa_deallocate(e)
+   call elpa_deallocate(e, error)
+   assert_elpa_ok(error)
 
    deallocate(a)
    deallocate(as)
@@ -821,7 +825,8 @@ program test
    end do ! factors
    end do ! layouts
 #endif
-   call elpa_uninit()
+   call elpa_uninit(error)
+   assert_elpa_ok(error)
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

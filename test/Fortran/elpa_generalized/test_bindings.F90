@@ -86,7 +86,8 @@ program test_bindings
    allocate(a (na_rows,na_cols))
    allocate(res(na_rows,na_cols))   
 
-   e => elpa_allocate()
+   e => elpa_allocate(error)
+   assert_elpa_ok(error)
 
    call e%set("na", na, error)
    assert_elpa_ok(error)
@@ -108,8 +109,10 @@ program test_bindings
    assert_elpa_ok(error)
 #endif
 
-   call e%get("mpi_comm_rows",mpi_comm_rows,error)
-   call e%get("mpi_comm_cols",mpi_comm_cols,error)
+   call e%get("mpi_comm_rows",mpi_comm_rows, error)
+   assert_elpa_ok(error)
+   call e%get("mpi_comm_cols",mpi_comm_cols, error)
+   assert_elpa_ok(error)
 
    a(:,:) = 1.0
    res(:,:) = 0.0
@@ -132,11 +135,13 @@ program test_bindings
 
    call check_status(status, myid)
 
-   call elpa_deallocate(e)
+   call elpa_deallocate(e, error)
+   assert_elpa_ok(error)
 
    deallocate(a)
    deallocate(res)
-   call elpa_uninit()
+   call elpa_uninit(error)
+   assert_elpa_ok(error)
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

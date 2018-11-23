@@ -285,9 +285,9 @@ int main(int argc, char** argv) {
      elpa_autotune_print_best(handle, autotune_handle, &error);
    }
 
-   elpa_autotune_deallocate(autotune_handle);
-   elpa_deallocate(handle);
-   elpa_uninit();
+   elpa_autotune_deallocate(autotune_handle, &error);
+   elpa_deallocate(handle, &error);
+   elpa_uninit(&error);
 
    if (myid == 0) {
      printf("\n");

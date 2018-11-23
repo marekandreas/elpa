@@ -179,10 +179,18 @@ module elpa_impl
     !> \param   error      integer, optional to get an error code
     !> \result  obj        class(elpa_impl_t) allocated ELPA object
     function elpa_impl_allocate(error) result(obj)
-      type(elpa_impl_t), pointer   :: obj
-      integer, optional            :: error
+      type(elpa_impl_t), pointer     :: obj
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
+      integer                        :: error2
 
-      allocate(obj)
+      allocate(obj, stat=error2)
+      if (error2 .ne. 0) then
+        write(error_unit, *) "elpa_allocate(): could not allocate object"
+      endif        
 
       ! check whether init has ever been called
       if ( elpa_initialized() .ne. ELPA_OK) then
@@ -227,15 +235,17 @@ module elpa_impl
     !c> /*! \brief C interface for the implementation of the elpa_deallocate method
     !c> *
     !c> *  \param  elpa_t  handle of ELPA object to be deallocated
+    !c> *  \param  int*    error code
     !c> *  \result void
     !c> */
-    !c> void elpa_deallocate(elpa_t handle);
-    subroutine elpa_impl_deallocate_c(handle) bind(C, name="elpa_deallocate")
-      type(c_ptr), value :: handle
+    !c> void elpa_deallocate(elpa_t handle, int *error);
+    subroutine elpa_impl_deallocate_c(handle, error) bind(C, name="elpa_deallocate")
+      type(c_ptr), value         :: handle
       type(elpa_impl_t), pointer :: self
+      integer(kind=c_int)        :: error
 
       call c_f_pointer(handle, self)
-      call self%destroy()
+      call self%destroy(error)
       deallocate(self)
     end subroutine
 
@@ -246,7 +256,7 @@ module elpa_impl
     !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
     !c> *  \result void
     !c> */
-    !c> void elpa_autotune_deallocate(elpa_autotune_t handle);
+    !c> void elpa_autotune_deallocate(elpa_autotune_t handle, int *error);
     subroutine elpa_autotune_impl_deallocate_c( autotune_handle) bind(C, name="elpa_autotune_deallocate")
       type(c_ptr), value                  :: autotune_handle
 
@@ -754,37 +764,88 @@ module elpa_impl
     !> \brief function to destroy an elpa object
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
-    subroutine elpa_destroy(self)
+    !> \param   error           integer, optional error code
+    subroutine elpa_destroy(self, error)
 #ifdef WITH_MPI
-      integer :: mpi_comm_rows, mpi_comm_cols, mpierr, mpierr2, error, mpi_string_length
-      character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
+      integer                              :: mpi_comm_rows, mpi_comm_cols, &
+                                              mpierr, mpierr2, mpi_string_length
+      character(len=MPI_MAX_ERROR_STRING)  :: mpierr_string
 #endif
-      class(elpa_impl_t) :: self
+      class(elpa_impl_t)                   :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)       :: error
+#else
+      integer, intent(out)                 :: error
+#endif
+      integer                              :: error2
+
+      if (present(error)) then
+        error = ELPA_OK
+      endif
 
 #ifdef WITH_MPI
       if (self%communicators_owned == 1) then
-        call self%get("mpi_comm_rows", mpi_comm_rows,error)
-        if(check_elpa_get(error, ELPA_ERROR)) return
-        call self%get("mpi_comm_cols", mpi_comm_cols,error)
-        if(check_elpa_get(error, ELPA_ERROR)) return
+        call self%get("mpi_comm_rows", mpi_comm_rows, error2)
+        if (error2 .ne. ELPA_OK) then
+          if (present(error)) then
+            error = error2
+            return
+          else
+            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+            return
+          endif
+        endif
+        call self%get("mpi_comm_cols", mpi_comm_cols,error2)
+        if (error2 .ne. ELPA_OK) then
+          if (present(error)) then
+            error = error2
+            return
+          else
+            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+            return
+          endif
+        endif
 
-        write(error_unit, '(A,2I13)') "FREE comms", mpi_comm_rows, mpi_comm_cols
+        ! this is just for debugging ! do not leave in a relase
+        !write(error_unit, '(A,2I13)') "FREE comms", mpi_comm_rows, mpi_comm_cols
         call mpi_comm_free(mpi_comm_rows, mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
           return
         endif
-        call self%set("mpi_comm_cols", -12345,error)
-        if(check_elpa_set(error, ELPA_ERROR)) return
+        call self%set("mpi_comm_cols", -12345, error2)
+        if (error2 .ne. ELPA_OK) then
+          if (present(error)) then
+            error = error2
+            return
+          else
+            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+            return
+          endif
+        endif
         call mpi_comm_free(mpi_comm_cols, mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_free for col communicator: ", trim(mpierr_string)
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
           return
         endif
-        call self%set("mpi_comm_rows", -12345,error)
-        if(check_elpa_set(error, ELPA_ERROR)) return
+        call self%set("mpi_comm_rows", -12345,error2)
+        if (error2 .ne. ELPA_OK) then
+          if (present(error)) then
+            error = error2
+            return
+          else
+            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+            return
+          endif
+        endif
       endif
 #endif
 

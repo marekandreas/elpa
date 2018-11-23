@@ -13,16 +13,16 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-.RI  "elpa => \fBelpa_allocate\fP ()"
+.RI  "elpa => \fBelpa_allocate\fP (error)"
 .br
 .RI " "
 .br
 .RI "With the definitions of the input and output variables:"
 
 .br
-.RI "class(elpa_t) :: \fBelpa\fP  ! returns an instance of the ELPA object"
+.RI "class(elpa_t)     :: \fBelpa\fP  ! returns an instance of the ELPA object"
 .br
-
+.RI "integer, optional :: \fBerror\fp ! a returned error code 
 .br
 .SS C INTERFACE
 #include <elpa/elpa.h>
@@ -30,7 +30,7 @@ class(elpa_t), pointer :: elpa
 elpa_t handle;
 
 .br
-.RI "\fBelpa_t\fP handle = \fBelpa_allocate\fP();"
+.RI "\fBelpa_t\fP handle = \fBelpa_allocate\fP(\fBint\fP *error);"
 .br
 .RI " "
 .br
@@ -39,6 +39,10 @@ elpa_t handle;
 .br
 .br
 .RI "elpa_t \fBhandle\fP;  // returns an handle to the allocated ELPA object"
+.br
+.RI "int \fB*error\fP;     // a returned error code
+.br
+
 
 .SH DESCRIPTION
 Allocate an ELPA object. The function \fBelpa_init\fP(3) must be called once \fIBEFORE\fP \fBelpa_allocate\fP can be called.

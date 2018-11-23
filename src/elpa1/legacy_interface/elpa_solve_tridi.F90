@@ -93,7 +93,11 @@
         success = .false.
       endif
 
-      obj => elpa_allocate()
+      obj => elpa_allocate(error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem calling internal elpa_allocate. Aborting ..."
+        stop
+      endif
 
       call obj%set("na", na, error)
       if (error .ne. ELPA_OK) then
@@ -168,8 +172,17 @@
         success = .true.
       endif
 
-      call elpa_deallocate(obj)
-      call elpa_uninit()
+      call elpa_deallocate(obj, error)
+      if (error .ne. ELPA_OK) then
+        print *," Cannot deallocate the internal ELPA object! This might lead to a memory leak! "
+!!        stop
+      endif
+
+      call elpa_uninit(error)
+      if (error .ne. ELPA_OK) then
+        print *," Cannot uninit the internal ELPA object! This might lead to a memory leak!"
+!        stop
+      endif
 
      !call timer%stop("elpa_solve_tridi_&
      !&PRECISION&

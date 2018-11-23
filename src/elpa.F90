@@ -163,7 +163,7 @@
 !>   call elpa%eigenvectors(a, ev, z, success)
 !>
 !>   ! cleanup
-!>   call elpa_deallocate(e)
+!>   call elpa_deallocate(e, success)
 !>
 !>   call elpa_uninit()
 !> \endcode
@@ -220,7 +220,7 @@
 !>   elpa_eigenvectors(handle, a, ev, z, &error);
 !>
 !>   /* cleanup */
-!>   elpa_deallocate(handle);
+!>   elpa_deallocate(handle, &error);
 !>   elpa_uninit();
 !> \endcode
 !>
@@ -287,10 +287,10 @@
 !>   call elpa%store("autotuned_object.txt", success)
 !>
 !>   !deallocate autotune object
-!>   call elpa_autotune_deallocate(tune_state)
+!>   call elpa_autotune_deallocate(tune_state, success)
 !>
 !>   ! cleanup
-!>   call elpa_deallocate(e)
+!>   call elpa_deallocate(e, success)
 !>
 !>   call elpa_uninit()
 !> \endcode
@@ -313,11 +313,34 @@ module elpa
     !> \brief function to allocate an ELPA instance
     !> Parameters
     !> \details
+    !> \params  error      integer, optional : error code
     !> \result  obj        class(elpa_t), pointer : pointer to allocated object
-    function elpa_allocate() result(obj)
+    function elpa_allocate(error) result(obj)
       use elpa_impl
-      class(elpa_t), pointer :: obj
-      obj => elpa_impl_allocate()
+      class(elpa_t), pointer         :: obj
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
+      integer                        :: error2
+
+      obj => elpa_impl_allocate(error2)
+      if (present(error)) then
+        error = error2
+        if (error .ne. ELPA_OK) then
+          write(*,*) "Cannot allocate the ELPA object!"
+          write(*,*) "This is a critical error!"
+          write(*,*) "ELPA not usable with this error"
+        endif
+      else
+        if (error2 .ne. ELPA_OK) then
+          write(*,*) "Cannot allocate the ELPA object!"
+          write(*,*) "This is a critical error, but you do not check the error codes!"
+          write(*,*) "ELPA not usable with this error"
+          stop
+        endif
+      endif
     end function
 
 
@@ -325,21 +348,91 @@ module elpa
     !> Parameters
     !> \details
     !> \param  obj        class(elpa_t), pointer : pointer to the ELPA object to be destroyed and deallocated
-    subroutine elpa_deallocate(obj)
-      class(elpa_t), pointer :: obj
-      call obj%destroy()
-      deallocate(obj)
+    !> \param  error      integer, optional : error code
+    subroutine elpa_deallocate(obj, error)
+      class(elpa_t), pointer         :: obj
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
+      integer                        :: error2
+        
+      call obj%destroy(error2)
+      if (present(error)) then
+        error = error2
+        if (error .ne. ELPA_OK) then
+          write(*,*) "Cannot destroy the ELPA object!"  
+          write(*,*) "This is a critical error!"  
+          write(*,*) "This might lead to a memory leak in your application!"
+          error = ELPA_ERROR_CRITICAL
+          return
+        endif
+      else
+        if (error2 .ne. ELPA_OK) then
+          write(*,*) "Cannot destroy the ELPA object!"
+          write(*,*) "This is a critical error!"
+          write(*,*) "This might lead to a memory leak in your application!"
+          write(*,*) "But you do not check the error codes!"
+          return
+        endif
+      endif
+      deallocate(obj, stat=error2)
+      if (error2 .ne. 0) then
+        write(*,*) "Cannot deallocate the ELPA object!"  
+        write(*,*) "This is a critical error!"  
+        write(*,*) "This might lead to a memory leak in your application!"
+        if (present(error)) then
+          error = ELPA_ERROR_CRITICAL
+          return
+        endif
+      endif
     end subroutine
 
 #ifdef ENABLE_AUTOTUNING
     !> \brief function to deallocate an ELPA autotune instance
     !> Parameters
     !> \details
-    !> \param  obj        class(elpa_autotune_t), pointer : pointer to the autotune object to be destroyed and deallocated   
-    subroutine elpa_autotune_deallocate(obj)
+    !> \param  obj        class(elpa_autotune_t), pointer : pointer to the autotune object to be destroyed and deallocated
+    !> \param  error      integer, optional : error code
+    subroutine elpa_autotune_deallocate(obj, error)
       class(elpa_autotune_t), pointer :: obj
-      call obj%destroy()
-      deallocate(obj)
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)  :: error
+#else
+      integer, intent(out)            :: error
+#endif
+      integer                         :: error2
+      call obj%destroy(error2)
+      if (present(error)) then
+        error = error2
+        if (error2 .ne. ELPA_OK) then
+          write(*,*) "Cannot destroy the ELPA autotuning object!"
+          write(*,*) "This is a critical error!"
+          write(*,*) "This might lead to a memory leak in your application!"
+          error = ELPA_ERROR_CRITICAL
+          return
+        endif
+      else
+        if (error2 .ne. ELPA_OK) then
+          write(*,*) "Cannot destroy the ELPA autotuning object!"
+          write(*,*) "This is a critical error!"
+          write(*,*) "This might lead to a memory leak in your application!"
+          write(*,*) "But you do not check the error codes"
+          return
+        endif
+      endif
+      deallocate(obj, stat=error2)
+      if (error2 .ne. 0) then
+        write(*,*) "Cannot deallocate the ELPA autotuning object!"  
+        write(*,*) "This is a critical error!"  
+        write(*,*) "This might lead to a memory leak in your application!"
+        if (present(error)) then
+          error = ELPA_ERROR_CRITICAL
+          return
+        endif
+      endif
+
     end subroutine
 #endif
 

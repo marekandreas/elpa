@@ -37,10 +37,18 @@ module elpa_autotune_impl
     !> \brief function to destroy an elpa autotune object
     !> Parameters
     !> \param   self  class(elpa_autotune_impl_t) the allocated ELPA autotune object
-    subroutine elpa_autotune_destroy(self)
+    !> \param   error integer, optional error code
+    subroutine elpa_autotune_destroy(self, error)
       implicit none
       class(elpa_autotune_impl_t), intent(inout) :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+#endif
+      
       ! nothing to do atm
+      if (present(error)) error = ELPA_OK
     end subroutine
 #endif
 end module

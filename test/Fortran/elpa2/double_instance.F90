@@ -132,7 +132,8 @@ program test_interface
      stop 1
    endif
 
-   e1 => elpa_allocate()
+   e1 => elpa_allocate(success)
+   assert_elpa_ok(success)
 
    call e1%set("na", na, success)
    assert_elpa_ok(success)
@@ -162,7 +163,8 @@ program test_interface
    assert_elpa_ok(success)
 
 
-   e2 => elpa_allocate()
+   e2 => elpa_allocate(success)
+   assert_elpa_ok(success)
 
    call e2%set("na", na, success)
    assert_elpa_ok(success)
@@ -189,11 +191,16 @@ program test_interface
 
    call e1%eigenvectors(a1, ev1, z1, success)
    assert_elpa_ok(success)
-   call elpa_deallocate(e1)
+
+   call elpa_deallocate(e1, success)
+   assert_elpa_ok(success)
 
    call e2%eigenvectors(a2, ev2, z2, success)
    assert_elpa_ok(success)
-   call elpa_deallocate(e2)
+
+   call elpa_deallocate(e2, success)
+   assert_elpa_ok(success)
+
    call elpa_uninit()
 
    status = check_correctness_evp_numeric_residuals(na, nev, as1, z1, ev1, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
