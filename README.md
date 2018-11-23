@@ -16,6 +16,7 @@ can be still switched on at build time.
 Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and
 not supported anymore.
 
+Note that the release ELPA 2018.11.001 introduces error codes to all functions, and thus an ABI and API change was neccessary
 
 [![Build 
 status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)

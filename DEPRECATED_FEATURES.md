@@ -11,6 +11,8 @@ been published. All new features of ELPA will only be accesible via this new int
 For ease of transion, the API as defined in release ELPA 2016.11.001 has been frozen in
 and will be still supported for some time, albeit without any new features.
 
+The old, legacy API will be deprecated with the release ELPA 2019.11.001 !
+
 Independent of the freezing in of the old, legacy API from the release 2016.11.001 the
 following listed interfaces will be removed at some time.
 

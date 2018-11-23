@@ -9,14 +9,22 @@ For detailed information about changes since release ELPA 2018.05 please have a 
 - check pointing functionality of elpa objects
 - store/read/resume of autotuning
 - Python interface for ELPA
+- more ELPA functions have an optional error argument (Fortran) or required
+error argument (C) => ABI and API change
 
 ABI change
 ---------------------
 
-Since release 2018.11.001 the ABI has changed.
+Since release 2018.05.001 the ABI has changed.
 
 Any incompatibilities to previous version?
 ---------------------------------------
+For Fortran:
+Break of ABI compatibility, since all functions obtained an optional, integer
+argument of the error code.
 
-As mentioned before, the ABI of ELPA was changed; 
-Some new functions (for the generalized eigenvalue problem) have been added
+For C:
+Break of ABI and API compatibility, since all functions obtained a required int* argument of the error code.
+
+
+

@@ -5,6 +5,8 @@ Changelog for ELPA 2018.11.001.rc1
 - check pointing functionality of elpa objects
 - store/read/resume of autotuning
 - Python interface for ELPA
+- more ELPA functions have an optional error argument (Fortran) or required
+error argument (C) => ABI and API change
 
 
 Changelog for ELPA 2018.05.001
