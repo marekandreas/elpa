@@ -16,9 +16,9 @@ cdef import from "<elpa/elpa.h>":
         pass
     ctypedef elpa_struct *elpa_t
     int elpa_init(int api_version)
-    void elpa_uninit()
+    void elpa_uninit(int *error)
     elpa_t elpa_allocate(int *error)
-    void elpa_deallocate(elpa_t handle)
+    void elpa_deallocate(elpa_t handle, int *error)
     int elpa_setup(elpa_t handle)
     void elpa_set_integer(elpa_t handle, const char *name, int value, int *error)
     void elpa_get_integer(elpa_t handle, const char *name, int *value, int *error)
@@ -100,8 +100,8 @@ cdef class Elpa:
 
     def __del__(self):
         """Deallocation of handle and deinitialization"""
-        elpa_deallocate(<elpa_t>self.handle)
-        elpa_uninit()
+        elpa_deallocate(<elpa_t>self.handle, &error)
+        elpa_uninit(&error)
 
     def eigenvectors_d(self,
                        np.ndarray[np.float64_t, ndim=2] a,
