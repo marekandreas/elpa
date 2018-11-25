@@ -100,6 +100,7 @@ cdef class Elpa:
 
     def __del__(self):
         """Deallocation of handle and deinitialization"""
+        cdef int error
         elpa_deallocate(<elpa_t>self.handle, &error)
         elpa_uninit(&error)
 
