@@ -127,6 +127,7 @@ program test
 
    integer                     :: iter
    character(len=5)            :: iter_string
+   integer                     :: timings, debug, gpu
 
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -208,6 +209,19 @@ program test
    assert_elpa_ok(error)
 
    assert_elpa_ok(e2%setup())
+
+   ! test whether the user setting of e1 are correctly loade to e2
+   call e2%get("timings", timings, error)
+   assert_elpa_ok(error)
+   call e2%get("debug", debug, error)
+   assert_elpa_ok(error)
+   call e2%get("gpu", gpu, error)
+   assert_elpa_ok(error)
+
+   if ((timings .ne. 1) .or. (debug .ne. 1) .or. (gpu .ne. 0)) then
+     print *, "Parameters not stored or loaded correctly. Aborting...", timings, debug, gpu
+     stop 1
+   endif
 
    if(myid == 0) print *, "parameters of e1"
    call e1%print_settings(error)
