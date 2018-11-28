@@ -13,16 +13,20 @@
 //#include <elpa/elpa_generic.h>
 //#include <elpa/elpa_legacy.h>
 //
+#if 0
 void pdlacpy_(char*, int*, int*, double*, int*, int*, int*, double*, int*, int*, int*);
 void dlacpy_(char*, int*, int*, double*, int*, double*, int*);
 void dgemm_(char*, char*, int*, int*, int*, double*, double*, int*, double*, int*, double*, double*, int*); 
 void pdtran_(int*, int*, double*, double*, int*, int*, int*, double*, double*, int*, int*, int*);
+#endif
+
+int numroc_(int*, int*, int*, int*, int*);
+
 //void pdelset_(double*, int*, int*, int*, double*);
 //void pdsymm_(char*, char*, int*, int*, double*, double*, int*, int*, int*, double*, int*, int*, int*, double*, double*, int*, int*, int*);
 //void pdpotrf_(char*, int*, double*, int*, int*, int*, int*);
 //void pdsyngst_(int*, char*, int*, double*, int*, int*, int*, double*, int*, int*, int*, double*, double*, int*, int*);
 //void descinit_(int*, int*, int*, int*, int*, int*, int*, int*, int*, int*);
-int numroc_(int*, int*, int*, int*, int*);
 //void set_up_blacsgrid_f1(int, int*, int*, int*, int*, int*, int*, int*);
 //void pdtrtrs_(char*, char*, char*, int*, int*, double*, int*, int*, int*, double*, int*, int*, int*, int*);
 //void pdsyevr_(char*, char*, char*, int*, double*, int*, int*, int*, int*, int*, int*, int*, int*, int*, double*, double*, int*, int*, int*, double*, int*, int*, int*, int*);
