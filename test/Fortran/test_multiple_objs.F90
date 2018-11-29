@@ -200,6 +200,11 @@ program test
    call e1%store_settings("initial_parameters.txt", error)
    assert_elpa_ok(error)
 
+#ifdef WITH_MPI
+     ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
+     call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+#endif
+
    ! try to load parameters into another object
    e2 => elpa_allocate(error)
    assert_elpa_ok(error)
@@ -270,6 +275,7 @@ program test
      call e_ptr%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt", error)
      assert_elpa_ok(error)
 #ifdef WITH_MPI
+     ! barrier after save state, file created from one MPI rank only, but loaded everywhere
      call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 #endif
      call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt", error)
