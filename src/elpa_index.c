@@ -1289,9 +1289,7 @@ int elpa_index_load_autotune_state(elpa_index_t index, int* autotune_level, int*
                 if(! load_int_line(f, "autotune_level", autotune_level)) return 0;
                 if(! load_int_line(f, "autotune_domain", autotune_domain)) return 0;
                 if(! load_int_line(f, "autotune_cardinality", cardinality)) return 0;
-                printf("current in C before load is %d\n", *current);
                 if(! load_int_line(f, "current_idx", current)) return 0;
-                printf("current in C after load is %d\n", *current);
                 if(! load_int_line(f, "best_idx", min_loc)) return 0;
                 if(! load_double_line(f, "best_time", min_val)) return 0;
                 fclose(f);
