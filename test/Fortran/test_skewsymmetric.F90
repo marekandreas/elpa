@@ -183,7 +183,6 @@ program test
    call prepare_matrix_random(na, myid, sc_desc, a_skewsymmetric, &
    z_skewsymmetric(:,1:na_cols), as_skewsymmetric, is_skewsymmetric=1)
    
-!    CALL PDLAPRNT( na, na, a_skewsymmetric, 1, 1, sc_desc, 0, 0, 'A_ss', 6, as_skewsymmetric)
    call MPI_BARRIER(MPI_COMM_WORLD, ierr)  
    as_skewsymmetric(:,:) = a_skewsymmetric(:,:)
    
@@ -201,7 +200,7 @@ program test
 
       do j=1, na_cols
          do i=1,na_rows
-               a_complex(i,j) = cmplx(0.0, a_skewsymmetric(i,j))
+               a_complex(i,j) = dcmplx(0.0, a_skewsymmetric(i,j))
          enddo
       enddo
    
@@ -261,14 +260,12 @@ program test
 !      call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
    endif
    
-!    CALL PDLAPRNT( na, na, z_skewsymmetric(:,1:na_cols), 1, 1, sc_desc, 0, 0, 'Z1', 6, a_skewsymmetric) 
-!    CALL PDLAPRNT( na, na, z_skewsymmetric(:,na_cols+1:2*na_cols), 1, 1, sc_desc, 0, 0, 'Z2', 6, a_skewsymmetric) 
    
    ! check eigenvalues
    do i=1, na
      if (myid == 0) then
 !          print *,"ev(", i,")=",ev_skewsymmetric(i)
-       if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-4) then
+       if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-10) then
          print *,"ev: i=",i,ev_complex(i),ev_skewsymmetric(i)
          status = 1
      endif
@@ -279,13 +276,11 @@ program test
    z_complex(:,:) = 0
    do j=1, na_cols
      do i=1,na_rows
-       z_complex(i,j) = cmplx(z_skewsymmetric(i,j), z_skewsymmetric(i,na_cols+j))
+       z_complex(i,j) = dcmplx(z_skewsymmetric(i,j), z_skewsymmetric(i,na_cols+j))
      enddo
    enddo
    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
-!    CALL PZLAPRNT( na, na, z_complex(:,1:na_cols), 1, 1, sc_desc, 0, 0, 'Z_COMPL', 6, a_complex)
    
-!    CALL PDLAPRNT( na, na, as_skewsymmetric, 1, 1, sc_desc, 0, 0, 'A_ss_wrong', 6, a_skewsymmdetric)
    status = check_correctness_evp_numeric_residuals_ss(na, nev, as_skewsymmetric, z_complex, ev_skewsymmetric, &
                               sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
 

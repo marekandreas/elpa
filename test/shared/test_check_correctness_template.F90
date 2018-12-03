@@ -119,7 +119,7 @@
       do j=1, na_cols
         do i=1,na_rows
 !           write(*,*) '(i,j)=', i, j
-          as_complex(i,j) = cmplx(0.0,-as(i,j))
+          as_complex(i,j) = dcmplx(0.0,-as(i,j))
 !           write(*,*) 'myid=', myid,'; as(',i,',',j,')=',as(i,j) &
 !           ,'; as_complex(',i,',',j,') =', as_complex(i,j),';'
        enddo
@@ -350,7 +350,7 @@ function check_correctness_evp_numeric_residuals_&
 
       integer :: mpierr
 
-      ! tolerance for the residual test for different math type/precision setups
+! tolerance for the residual test for different math type/precision setups
       real(kind=rk), parameter       :: tol_res_real_double      = 5e-12_rk
       real(kind=rk), parameter       :: tol_res_real_single      = 3e-2_rk
       real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
