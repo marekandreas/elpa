@@ -145,7 +145,7 @@ program test
      print *, "ELPA API version not supported"
      stop 1
    endif
-
+! 
    layout = 'C'
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
@@ -182,9 +182,11 @@ program test
 
    call prepare_matrix_random(na, myid, sc_desc, a_skewsymmetric, &
    z_skewsymmetric(:,1:na_cols), as_skewsymmetric, is_skewsymmetric=1)
+   
+!    CALL PDLAPRNT( na, na, a_skewsymmetric, 1, 1, sc_desc, 0, 0, 'A_ss', 6, as_skewsymmetric)
+   call MPI_BARRIER(MPI_COMM_WORLD, ierr)  
    as_skewsymmetric(:,:) = a_skewsymmetric(:,:)
    
-!    CALL PDLAPRNT( na, na, a_skewsymmetric, 1, 1, sc_desc, 0, 0, 'A_ss', 6, z_skewsymmetric)
 
    ! prepare the complex matrix for the "brute force" case
    allocate(a_complex (na_rows,na_cols))
@@ -195,13 +197,14 @@ program test
    a_complex(:,:) = 0.0
    z_complex(:,:) = 0.0
    as_complex(:,:) = 0.0
+   
 
-   do j=1, na_cols
-     do i=1,na_rows
-       a_complex(i,j) = cmplx(0.0, a_skewsymmetric(i,j))
-     enddo
-   enddo
-
+      do j=1, na_cols
+         do i=1,na_rows
+               a_complex(i,j) = cmplx(0.0, a_skewsymmetric(i,j))
+         enddo
+      enddo
+   
    z_complex(:,:)  = a_complex(:,:)
    as_complex(:,:) = a_complex(:,:)
 
@@ -223,7 +226,7 @@ program test
 
    if (myid .eq. 0) then
      print *, ""
-     call e_complex%print_times("eigenvectors: brute force")
+!      call e_complex%print_times("eigenvectors: brute force")
    endif 
 
    status = check_correctness_evp_numeric_residuals(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
@@ -255,7 +258,7 @@ program test
 
    if (myid .eq. 0) then
      print *, ""
-     call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
+!      call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
    endif
    
 !    CALL PDLAPRNT( na, na, z_skewsymmetric(:,1:na_cols), 1, 1, sc_desc, 0, 0, 'Z1', 6, a_skewsymmetric) 
@@ -264,19 +267,28 @@ program test
    ! check eigenvalues
    do i=1, na
      if (myid == 0) then
-        print *,"ev: i=",i,ev_complex(i),ev_skewsymmetric(i)
-       if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-6) then
+!          print *,"ev(", i,")=",ev_skewsymmetric(i)
+       if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-4) then
+         print *,"ev: i=",i,ev_complex(i),ev_skewsymmetric(i)
          status = 1
      endif
      endif
    enddo
    call check_status(status, myid)
    
-   ! Check Residuum of real part
-!    status = check_correctness_evp_numeric_residuals(na, nev, as_skewsymmetric, &
-!                               z_skewsymmetric(:,1:na_cols), ev_skewsymmetric, sc_desc, &
-!                               nblk, myid, np_rows,np_cols, my_prow, my_pcol)
-!    call check_status(status, myid)
+   z_complex(:,:) = 0
+   do j=1, na_cols
+     do i=1,na_rows
+       z_complex(i,j) = cmplx(z_skewsymmetric(i,j), z_skewsymmetric(i,na_cols+j))
+     enddo
+   enddo
+   call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+!    CALL PZLAPRNT( na, na, z_complex(:,1:na_cols), 1, 1, sc_desc, 0, 0, 'Z_COMPL', 6, a_complex)
+   
+!    CALL PDLAPRNT( na, na, as_skewsymmetric, 1, 1, sc_desc, 0, 0, 'A_ss_wrong', 6, a_skewsymmdetric)
+   status = check_correctness_evp_numeric_residuals_ss(na, nev, as_skewsymmetric, z_complex, ev_skewsymmetric, &
+                              sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+
    
 #ifdef WITH_MPI
 !    call MPI_BARRIER(MPI_COMM_WORLD, ierr)

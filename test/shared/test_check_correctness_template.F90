@@ -39,9 +39,287 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! Author: A. Marek, MPCDF
+! Author: A. Marek, MPCDF 
 
-    function check_correctness_evp_numeric_residuals_&
+#if REALCASE == 1
+    function check_correctness_evp_numeric_residuals_ss_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status)
+      implicit none
+#include "../../src/general/precision_kinds.F90"
+      integer(kind=ik)                 :: status, na_cols, na_rows
+      integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+      MATH_DATATYPE(kind=rck), intent(in)           :: as(:,:)
+      MATH_DATATYPE(kind=rck)                       :: tmpr
+      complex(kind=rck), intent(in)                 :: z(:,:)
+!       MATH_DATATYPE(kind=rck), intent(in), optional :: bs(:,:)
+      real(kind=rk)                 :: ev(:)
+      complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      MATH_DATATYPE(kind=rck)                :: xc
+      
+      complex(kind=rck), allocatable   :: as_complex(:,:)
+!       complex(kind=rck), allocatable   :: ev_complex(:)
+
+#ifndef WITH_MPI
+#if REALCASE == 1
+      real(kind=rck)                   :: dnrm2, snrm2
+#endif
+#if COMPLEXCASE == 1
+      complex(kind=rck)                :: zdotc, cdotc
+#endif /* COMPLEXCASE */
+#endif
+
+      integer(kind=ik)                 :: sc_desc(:)
+
+      integer(kind=ik)                 :: i, j, rowLocal, colLocal
+      real(kind=rck)                   :: err, errmax
+
+      integer :: mpierr
+
+      ! tolerance for the residual test for different math type/precision setups
+!       real(kind=rk), parameter       :: tol_res_real_double      = 5e-12_rk
+      real(kind=rk), parameter       :: tol_res_real_double      = 5e-4_rk
+      real(kind=rk), parameter       :: tol_res_real_single      = 3e-2_rk
+      real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
+      real(kind=rk), parameter       :: tol_res_complex_single   = 3e-2_rk
+      real(kind=rk)                  :: tol_res                  = tol_res_&
+                                                                          &MATH_DATATYPE&
+                                                                          &_&
+                                                                          &PRECISION
+      ! precision of generalized problem is lower
+      real(kind=rk), parameter       :: generalized_penalty = 10.0_rk
+
+      ! tolerance for the orthogonality test for different math type/precision setups
+!       real(kind=rk), parameter       :: tol_orth_real_double     = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_real_double     = 5e-4_rk
+      real(kind=rk), parameter       :: tol_orth_real_single     = 9e-2_rk
+      real(kind=rk), parameter       :: tol_orth_complex_double  = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_complex_single  = 9e-3_rk
+      real(kind=rk), parameter       :: tol_orth                 = tol_orth_&
+                                                                          &MATH_DATATYPE&
+                                                                          &_&
+                                                                          &PRECISION
+
+!       if(present(bs)) then
+!           tol_res = generalized_penalty * tol_res
+!       endif
+      status = 0
+      
+      ! Setup complex matrices and eigenvalues
+      na_rows = size(as,dim=1)
+      na_cols = size(as,dim=2)
+!       
+!       write(*,*) 'check: ', 'myid=', myid, 'na_cols=', na_cols, 'na_rows=',na_rows 
+      
+      allocate(as_complex(na_rows,na_cols))
+!       allocate(ev_complex(nev))
+!       CALL PDLAPRNT( na, na, as(:,:), 1, 1, sc_desc, 0, 0, 'A_ss1', 6, tmpr)
+      do j=1, na_cols
+        do i=1,na_rows
+!           write(*,*) '(i,j)=', i, j
+          as_complex(i,j) = cmplx(0.0,-as(i,j))
+!           write(*,*) 'myid=', myid,'; as(',i,',',j,')=',as(i,j) &
+!           ,'; as_complex(',i,',',j,') =', as_complex(i,j),';'
+       enddo
+      enddo
+      
+!       CALL PZLAPRNT( na, na, as_complex(:,:), 1, 1, sc_desc, 0, 0, 'AS_COMPL', 6, tmp1)
+      
+!       do i=1,nev
+!         ev_complex = cmplx(0.0,ev(i))
+!       enddo
+      
+!       write(*,*) 'ev_complex(1)=', ev_complex(1)
+
+      ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
+
+      ! tmp1 = Zi*EVi
+      tmp1(:,:) = z(:,:)
+      do i=1,nev
+        xc = ev(i)
+#ifdef WITH_MPI
+        call pzscal(na, xc, tmp1, 1, i, sc_desc, 1)
+#else /* WITH_MPI */
+        call zscal(na,xc,tmp1(:,i),1)
+#endif /* WITH_MPI */
+      enddo
+
+      ! for generalized EV problem, multiply by bs as well
+      ! tmp2 = B * tmp1
+!       if(present(bs)) then
+! #ifdef WITH_MPI
+!       call PZGEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, sc_desc, &
+!                   tmp1, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
+! #else /* WITH_MPI */
+!       call ZGEMM('N','N',na,nev,na,ONE,bs,na,tmp1,na,ZERO,tmp2,na)
+! #endif /* WITH_MPI */
+!       else
+        ! normal eigenvalue problem .. no need to multiply
+        tmp2(:,:) = tmp1(:,:)
+!       end if
+
+      ! tmp1 =  A * Z
+      ! as is original stored matrix, Z are the EVs
+#ifdef WITH_MPI
+      call PZGEMM('N', 'N', na, nev, na, ONE, as_complex, 1, 1, sc_desc, &
+                  z, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+#else /* WITH_MPI */
+      call ZGEMM('N','N',na,nev,na,ONE,as_complex,na,z,na,ZERO,tmp1,na)
+#endif /* WITH_MPI */
+! #ifdef WITH_MPI
+!      call MPI_BARRIER(MPI_COMM_WORLD, status)
+! #endif
+!       CALL PZLAPRNT( na, na, tmp1(:,:), 1, 1, sc_desc, 0, 0, 'TMP1', 6, as_complex)
+!       CALL PZLAPRNT( na, na, tmp2(:,:), 1, 1, sc_desc, 0, 0, 'TMP2', 6, as_complex)
+
+      !  tmp1 = A*Zi - Zi*EVi
+      tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
+      
+      ! Get maximum norm of columns of tmp1
+      errmax = 0.0_rk
+
+      do i=1,nev
+! #if REALCASE == 1
+!         err = 0.0_rk
+! #ifdef WITH_MPI
+!         call scal_PRECISION_NRM2(na, err, tmp1, 1, i, sc_desc, 1)
+! #else /* WITH_MPI */
+!         err = PRECISION_NRM2(na,tmp1(1,i),1)
+! #endif /* WITH_MPI */
+!         errmax = max(errmax, err)
+! #endif /* REALCASE */
+! 
+! #if COMPLEXCASE == 1
+        xc = 0
+#ifdef WITH_MPI
+        call scal_PRECISION_DOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
+#else /* WITH_MPI */
+        xc = PRECISION_DOTC(na,tmp1,1,tmp1,1)
+#endif /* WITH_MPI */
+        errmax = max(errmax, sqrt(real(xc,kind=REAL_DATATYPE)))
+! #endif /* COMPLEXCASE */
+      enddo
+
+      ! Get maximum error norm over all processors
+      err = errmax
+#ifdef WITH_MPI
+      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+      if (myid==0) print *,'%Results of numerical residual checks, using complex arithmetic:'
+      if (myid==0) print *,'%Error Residual     :',errmax
+      if (nev .ge. 2) then
+        if (errmax .gt. tol_res .or. errmax .eq. 0.0_rk) then
+          status = 1
+        endif
+      else
+        if (errmax .gt. tol_res) then
+          status = 1
+        endif
+      endif
+
+      ! 2. Eigenvector orthogonality
+!       if(present(bs)) then
+!         !for the generalized EVP, the eigenvectors should be B-orthogonal, not orthogonal
+!         ! tmp2 = B * Z
+!         tmp2(:,:) = 0.0_rck
+! #ifdef WITH_MPI
+!         call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, &
+!                         sc_desc, z, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
+! #else /* WITH_MPI */
+!         call PRECISION_GEMM('N','N', na, nev, na, ONE, bs, na, z, na, ZERO, tmp2, na)
+! #endif /* WITH_MPI */
+! 
+!       else
+        tmp2(:,:) = z(:,:)
+!       endif
+      ! tmp1 = Z**T * tmp2
+      ! actually tmp1 = Z**T * Z for standard case and tmp1 = Z**T * B * Z for generalized
+      tmp1 = 0
+#ifdef WITH_MPI
+      call PZGEMM('C', 'N', nev, nev, na, ONE, z, 1, 1, &
+                        sc_desc, tmp2, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+#else /* WITH_MPI */
+      call ZGEMM('C','N',nev,nev,na,ONE,z,na,tmp2,na,ZERO,tmp1,na)
+#endif /* WITH_MPI */
+      ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
+      err = 0.0_rk
+      do i=1, nev
+        if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+           err = max(err, abs(tmp1(rowLocal,colLocal) - 1.0_rk))
+         endif
+      end do
+#ifdef WITH_MPI
+      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+      if (myid==0) print *,'%Maximal error in eigenvector lengths:',errmax
+
+      ! Second, find the maximal error in the whole Z**T * Z matrix (its diference from identity matrix)
+      ! Initialize tmp2 to unit matrix
+      tmp2 = 0
+#ifdef WITH_MPI
+      call PZLASET('A', nev, nev, ZERO, ONE, tmp2, 1, 1, sc_desc)
+#else /* WITH_MPI */
+      call ZLASET('A',nev,nev,ZERO,ONE,tmp2,na)
+#endif /* WITH_MPI */
+
+      !      ! tmp1 = Z**T * Z - Unit Matrix
+      tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
+
+      ! Get maximum error (max abs value in tmp1)
+      err = maxval(abs(tmp1))
+#ifdef WITH_MPI
+      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+      if (myid==0) print *,'%Error Orthogonality:',errmax
+
+      if (nev .ge. 2) then
+        if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
+          status = 1
+        endif
+      else
+        if (errmax .gt. tol_orth) then
+          status = 1
+        endif
+      endif
+      
+      deallocate(as_complex)
+    end function
+
+#endif
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> int check_correctness_evp_numeric_residuals_real_double_f(int na, int nev, int na_rows, int na_cols,
+    !c>                                         double *as, double *z, double *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+#else
+    !c> int check_correctness_evp_numeric_residuals_real_single_f(int na, int nev, int na_rows, int na_cols,
+    !c>                                         float *as, float *z, float *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> int check_correctness_evp_numeric_residuals_complex_double_f(int na, int nev, int na_rows, int na_cols,
+    !c>                                         complex double *as, complex double *z, double *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+#else
+    !c> int check_correctness_evp_numeric_residuals_complex_single_f(int na, int nev, int na_rows, int na_cols,
+    !c>                                         complex float *as, complex float *z, float *ev, int sc_desc[9],
+    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+#endif
+#endif /* COMPLEXCASE */
+
+function check_correctness_evp_numeric_residuals_&
     &MATH_DATATYPE&
     &_&
     &PRECISION&
@@ -254,31 +532,6 @@
         endif
       endif
     end function
-
-
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION_REAL
-    !c> int check_correctness_evp_numeric_residuals_real_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         double *as, double *z, double *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
-#else
-    !c> int check_correctness_evp_numeric_residuals_real_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         float *as, float *z, float *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
-#endif
-#endif /* REALCASE */
-
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-    !c> int check_correctness_evp_numeric_residuals_complex_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex double *as, complex double *z, double *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
-#else
-    !c> int check_correctness_evp_numeric_residuals_complex_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex float *as, complex float *z, float *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
-#endif
-#endif /* COMPLEXCASE */
 
 function check_correctness_evp_numeric_residuals_&
 &MATH_DATATYPE&
