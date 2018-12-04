@@ -274,3 +274,15 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 
+name = "test_multiple_objs_real_double_c_version"
+print("if ENABLE_AUTOTUNING")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C/test_multiple_objs.c")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CFLAGS = $(test_program_cflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+

@@ -1260,6 +1260,7 @@ module elpa_impl
       endif
     end subroutine
 
+
     !c> /*! \brief C interface for the implementation of the elpa_store_settings method
     !c> *
     !c> *  \param elpa_t handle
@@ -1269,7 +1270,7 @@ module elpa_impl
     subroutine elpa_store_settings_c(handle, filename_p, error) bind(C, name="elpa_store_settings")
       type(c_ptr), value         :: handle
       type(elpa_impl_t), pointer :: self
-      type(c_ptr), intent(in)    :: filename_p
+      type(c_ptr), intent(in), value :: filename_p
       character(len=elpa_strlen_c(filename_p)), pointer :: filename
       integer(kind=c_int)        :: error
 
@@ -1316,7 +1317,7 @@ module elpa_impl
       type(elpa_impl_t), pointer :: self
 
       integer(kind=c_int)        :: error
-      type(c_ptr), intent(in)    :: filename_p
+      type(c_ptr), intent(in), value :: filename_p
       character(len=elpa_strlen_c(filename_p)), pointer :: filename
 
       call c_f_pointer(handle, self)
@@ -1436,13 +1437,13 @@ module elpa_impl
     !c> *  \param  error            int *
     !c> *  \result none 
     !c> */
-    !c> void elpa_autotune_save_state(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    !c> void elpa_autotune_save_state(elpa_t handle, elpa_autotune_t autotune_handle, const char *filename, int *error);
     subroutine elpa_autotune_save_state_c(handle, autotune_handle, filename_p, error) bind(C, name="elpa_autotune_save_state")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
       type(elpa_autotune_impl_t), pointer  :: tune_state
-      type(c_ptr), intent(in)              :: filename_p
+      type(c_ptr), intent(in), value       :: filename_p
       character(len=elpa_strlen_c(filename_p)), pointer :: filename
       integer(kind=c_int)                  :: error
 
@@ -1508,13 +1509,13 @@ module elpa_impl
     !c> *  \param  error            int *
     !c> *  \result none 
     !c> */
-    !c> void elpa_autotune_load_state(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    !c> void elpa_autotune_load_state(elpa_t handle, elpa_autotune_t autotune_handle, const char *filename, int *error);
     subroutine elpa_autotune_load_state_c(handle, autotune_handle, filename_p, error) bind(C, name="elpa_autotune_load_state")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
       type(elpa_autotune_impl_t), pointer  :: tune_state
-      type(c_ptr), intent(in)              :: filename_p
+      type(c_ptr), intent(in), value       :: filename_p
       character(len=elpa_strlen_c(filename_p)), pointer :: filename
       integer(kind=c_int)                  :: error
 
