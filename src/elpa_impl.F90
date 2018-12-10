@@ -1035,9 +1035,14 @@ module elpa_impl
 #else
       integer(kind=c_int),  intent(out)             :: error
 #endif
+      integer(kind=c_int)                           :: error2, error3
+      integer                                       :: mpierr, mpierr2, mpi_comm_parent, mpi_string_length, np_total
       logical                                       :: unfinished
       integer                                       :: i
-      real(kind=C_DOUBLE)                           :: time_spent
+      real(kind=C_DOUBLE)                           :: time_spent, sendbuf(1), recvbuf(1)
+#ifdef WITH_MPI
+      character(len=MPI_MAX_ERROR_STRING)           :: mpierr_string
+#endif
 
       if (present(error)) then
         error = ELPA_OK
@@ -1060,11 +1065,34 @@ module elpa_impl
 #else
         print *, "Cannot do autotuning without detailed timings"
 
+        ! TODO check this. Do we really want to return only if error is present? And should it be ELPA_OK?
         if (present(error)) then
           error = ELPA_OK
           return
         endif
 #endif
+
+#ifdef WITH_MPI
+        ! find the average time spent .. we need a unique value on all ranks
+        call self%get("mpi_comm_parent", mpi_comm_parent, error2)
+        call self%get("num_processes", np_total, error3)
+        if((error2 .ne. ELPA_OK) .or. (error3 .ne. ELPA_OK)) then
+          print *, "Parrent communicator is not set properly. Aborting..."
+          if(present(error)) &
+            error = ELPA_ERROR_CRITICAL
+          return
+        endif
+
+        sendbuf(1) = time_spent
+        call MPI_Allreduce(sendbuf, recvbuf, 1, MPI_REAL8, MPI_SUM, mpi_comm_parent, mpierr)
+        if (mpierr .ne. MPI_SUCCESS) then
+          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
+          return
+        endif
+        time_spent = recvbuf(1) / np_total
+#endif
+
         if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
           ts_impl%min_val = time_spent
           ts_impl%min_loc = ts_impl%current
