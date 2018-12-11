@@ -1087,7 +1087,7 @@ module elpa_impl
         call MPI_Allreduce(sendbuf, recvbuf, 1, MPI_REAL8, MPI_SUM, mpi_comm_parent, mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
-          write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
+          write(error_unit,*) "MPI ERROR occured during elpa_autotune_step: ", trim(mpierr_string)
           return
         endif
         time_spent = recvbuf(1) / np_total
