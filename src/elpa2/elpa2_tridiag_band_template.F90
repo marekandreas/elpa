@@ -510,7 +510,7 @@
           if (istep == na-1) then
 #if REALCASE == 1
             if (isSkewsymmetric) then
-              d(istep) = 0
+              d(na) = 0
             else
               d(na) = ab(1,na_s+1-n_off)
             endif
