@@ -332,7 +332,7 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
 FOR_ALL_TYPES(IMPLEMENT_GETENV)
 
 
-#define IMPLEMENT_GET_FUNCTION(TYPE, PRINTF_SPEC, ERROR_VALUE) \
+#define IMPLEMENT_GET_FUNCTION(TYPE, PRINTF_SPEC, SCANF_SPEC, ERROR_VALUE) \
         TYPE elpa_index_get_##TYPE##_value(elpa_index_t index, char *name, int *error) { \
                 TYPE ret; \
                 if (sizeof(TYPE##_entries) == 0) { \
@@ -1244,7 +1244,7 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
 
 const int LEN =1000;
 
-#define IMPLEMENT_LOAD_LINE(TYPE, PRINTF_SPEC, ...) \
+#define IMPLEMENT_LOAD_LINE(TYPE, PRINTF_SPEC, SCANF_SPEC, ...) \
         static int load_##TYPE##_line(FILE* f, const char* expected, TYPE* val) { \
                 char line[LEN], s[LEN]; \
                 int error = 0; \
@@ -1253,7 +1253,7 @@ const int LEN =1000;
                         fprintf(stderr, "Loading autotuning state error: line is not there\n"); \
                         error = 1; \
                 } else{ \
-                        sscanf(line, "%s = " PRINTF_SPEC "\n", &s, &n); \
+                        sscanf(line, "%s = " SCANF_SPEC "\n", s, &n); \
                         if(strcmp(s, expected) != 0){ \
                                 fprintf(stderr, "Loading autotuning state error: expected %s, got %s\n", expected, s); \
                                 error = 1;\
@@ -1379,7 +1379,7 @@ int elpa_index_load_settings(elpa_index_t index, char *file_name) {
                         }
 
                         if(line[0] != '\n' && line[0] != '*'){
-                                sscanf(line, "%s = %d\n", &s, &n);
+                                sscanf(line, "%s = %d\n", s, &n);
                                 if(! skip){
                                         int error = elpa_index_set_from_load_int_value(index, s, n, explicit);
                                 }

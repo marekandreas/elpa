@@ -60,8 +60,8 @@
 #define nelements(x) (sizeof(x)/sizeof(x[0]))
 
 #define FOR_ALL_TYPES(X) \
-        X(int, "%d", -1) \
-        X(double, "%g", NAN)
+        X(int, "%d", "%d", -1) \
+        X(double, "%g", "%lg", NAN)
 
 /* A simple structure for storing values to a pre-set
  * number of keys */
