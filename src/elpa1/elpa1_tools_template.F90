@@ -62,9 +62,10 @@
       use precision
       use elpa_abstract_impl
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)            :: n
-      real(kind=REAL_DATATYPE)    :: v(n),s
+      real(kind=rk)    :: v(n),s
 
       v(:) = v(:) + s
     end subroutine v_add_s_&
@@ -76,9 +77,10 @@
       use precision
       use elpa_abstract_impl
       implicit none
+#include "../general/precision_kinds.F90"
 
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      real(kind=REAL_DATATYPE)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
+      real(kind=rk)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
       integer(kind=ik)             :: noff, nlen, my_prow, np_rows, nblk
 
       integer(kind=ik)  :: nbs, nbe, jb, g_off, l_off, js, je
@@ -160,10 +162,10 @@
 #include "../../src/general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)           :: n, i
-      real(kind=REAL_DATATYPE)   :: d(n), z(n), delta(n), rho, dlam
+      real(kind=rk)   :: d(n), z(n), delta(n), rho, dlam
 
       integer(kind=ik)           :: iter
-      real(kind=REAL_DATATYPE)   :: a, b, x, y, dshift
+      real(kind=rk)   :: a, b, x, y, dshift
 
       ! In order to obtain sufficient numerical accuracy we have to shift the problem
       ! either by d(i) or d(i+1), whichever is closer to the solution
@@ -261,24 +263,25 @@
       use precision
       use elpa_abstract_impl
       implicit none
+#include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)    :: obj
       logical, intent(in)                           :: wantDebug
 #if REALCASE == 1
-      real(kind=REAL_DATATYPE), intent(inout)       :: alpha
+      real(kind=rk), intent(inout)       :: alpha
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), intent(inout) :: alpha
+      complex(kind=ck), intent(inout) :: alpha
 #endif
-      real(kind=REAL_DATATYPE), intent(in)          :: xnorm_sq
+      real(kind=rk), intent(in)          :: xnorm_sq
 #if REALCASE == 1
-      real(kind=REAL_DATATYPE), intent(out)         :: xf, tau
+      real(kind=rk), intent(out)         :: xf, tau
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=COMPLEX_DATATYPE), intent(out)   :: xf, tau
-      real(kind=REAL_DATATYPE)                      :: ALPHR, ALPHI
+      complex(kind=ck), intent(out)   :: xf, tau
+      real(kind=rk)                      :: ALPHR, ALPHI
 #endif
 
-      real(kind=REAL_DATATYPE)                      :: BETA
+      real(kind=rk)                      :: BETA
 
      if (wantDebug) call obj%timer%start("hh_transform_&
                       &MATH_DATATYPE&
@@ -286,29 +289,29 @@
 		      &PRECISION_SUFFIX )
 
 #if COMPLEXCASE == 1
-      ALPHR = real( ALPHA, kind=REAL_DATATYPE )
+      ALPHR = real( ALPHA, kind=rk )
       ALPHI = PRECISION_IMAG( ALPHA )
 #endif
 
 #if REALCASE == 1
-      if ( XNORM_SQ==0. ) then
+      if ( XNORM_SQ==0.0_rk ) then
 #endif
 #if COMPLEXCASE == 1
-      if ( XNORM_SQ==0. .AND. ALPHI==0. ) then
+      if ( XNORM_SQ==0.0_rk .AND. ALPHI==0.0_rk ) then
 #endif
 
 #if REALCASE == 1
-        if ( ALPHA>=0. ) then
+        if ( ALPHA>=0.0_rk ) then
 #endif
 #if COMPLEXCASE == 1
-        if ( ALPHR>=0. ) then
+        if ( ALPHR>=0.0_rk ) then
 #endif
-          TAU = 0.
+          TAU = 0.0_rk
         else
-          TAU = 2.
+          TAU = 2.0_rk
           ALPHA = -ALPHA
         endif
-        XF = 0.
+        XF = 0.0_rk
 
       else
 
@@ -327,8 +330,8 @@
           ALPHA = XNORM_SQ / ALPHA
 #endif
 #if COMPLEXCASE == 1
-          ALPHR = ALPHI * (ALPHI/real( ALPHA , kind=KIND_PRECISION))
-          ALPHR = ALPHR + XNORM_SQ/real( ALPHA, kind=KIND_PRECISION )
+          ALPHR = ALPHI * (ALPHI/real( ALPHA , kind=rk))
+          ALPHR = ALPHR + XNORM_SQ/real( ALPHA, kind=rk )
 #endif
 
 #if REALCASE == 1
@@ -340,7 +343,7 @@
           ALPHA = PRECISION_CMPLX( -ALPHR, ALPHI )
 #endif
        END IF
-       XF = 1.0/ALPHA
+       XF = 1.0_rk/ALPHA
        ALPHA = BETA
      endif
 
