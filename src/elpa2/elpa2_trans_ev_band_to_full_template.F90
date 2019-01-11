@@ -110,9 +110,11 @@
 #endif
       integer(kind=ik)                       :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck)               :: a_mat(lda,*), q_mat(ldq,*), tmat(nbw,nbw,*)
+      MATH_DATATYPE(kind=rck)               :: a_mat(lda,*)
+      MATH_DATATYPE(kind=rck), target       :: q_mat(ldq,*), tmat(nbw,nbw,*)
 #else
-      MATH_DATATYPE(kind=rck)               :: a_mat(lda,matrixCols), q_mat(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+      MATH_DATATYPE(kind=rck)               :: a_mat(lda,matrixCols)
+      MATH_DATATYPE(kind=rck), target       :: q_mat(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
 #endif
       integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
 
@@ -122,7 +124,8 @@
       integer(kind=ik)                       :: l_cols, l_rows, l_colh, n_cols
       integer(kind=ik)                       :: istep, lc, ncol, nrow, nb, ns
 
-      MATH_DATATYPE(kind=rck), allocatable   :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
+      MATH_DATATYPE(kind=rck), allocatable   :: hvb(:)
+      MATH_DATATYPE(kind=rck), allocatable, target   ::  tmp1(:), tmp2(:), hvm(:,:)
       ! hvm_dev is fist used and set in this routine
       ! q_mat is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
       ! tmp_dev is first used in this routine
@@ -268,7 +271,7 @@
   !      q_temp(1:ldq,1:na_cols) = q_mat(1:ldq,1:na_cols)
 
 !        ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-!        successCUDA = cuda_memcpy(q_dev, loc(q_mat), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
+!        successCUDA = cuda_memcpy(q_dev, c_loc(q_mat), (ldq)*(matrixCols)*size_of_PRECISION_real, cudaMemcpyHostToDevice)
 !        if (.not.(successCUDA)) then
 !          print *,"trans_ev_band_to_full_real: error in cudaMalloc"
 !          stop 1
@@ -281,7 +284,7 @@
 !           stop 1
 !         endif
 !
-!         successCUDA = cuda_memcpy(q_dev, loc(q_mat),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
+!         successCUDA = cuda_memcpy(q_dev, c_loc(q_mat),ldq*matrixCols*size_of_PRECISION_complex, cudaMemcpyHostToDevice)
 !          if (.not.(successCUDA)) then
 !            print *,"trans_ev_band_to_full_complex: error in cudaMemcpy"
 !            stop 1
@@ -346,7 +349,7 @@
             nb = nb+l_rows
           enddo
 
-          successCUDA = cuda_memcpy(hvm_dev, loc(hvm), max_local_rows*nbw* size_of_datatype, cudaMemcpyHostToDevice)
+          successCUDA = cuda_memcpy(hvm_dev, c_loc(hvm), max_local_rows*nbw* size_of_datatype, cudaMemcpyHostToDevice)
 
           if (.not.(successCUDA)) then
             print *,"trans_ev_band_to_full_real: error in cudaMemcpy, hvm"
@@ -369,7 +372,7 @@
 
             ! copy data from device to host for a later MPI_ALLREDUCE
             ! copy to host maybe this can be avoided this is needed if MPI is used (allreduce)
-            successCUDA = cuda_memcpy(loc(tmp1), tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(c_loc(tmp1), tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy, tmp1 to host"
               stop 1
@@ -398,7 +401,7 @@
 #ifdef WITH_MPI
             ! after the mpi_allreduce we have to copy back to the device
             ! copy back to device
-            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2), n_cols*l_cols* size_of_datatype, &
+            successCUDA = cuda_memcpy(tmp_dev, c_loc(tmp2), n_cols*l_cols* size_of_datatype, &
               cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_&
@@ -414,7 +417,7 @@
            ! IMPORTANT: even though tmat_dev is transfered from the previous rutine, we have to copy from tmat again
            ! tmat is 3-dimensional array, while tmat_dev contains only one 2-dimensional slice of it - and here we
            ! need to upload another slice
-           successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1,istep)), nbw*nbw*size_of_datatype, cudaMemcpyHostToDevice)
+           successCUDA = cuda_memcpy(tmat_dev, c_loc(tmat(1,1,istep)), nbw*nbw*size_of_datatype, cudaMemcpyHostToDevice)
 
            if (.not.(successCUDA)) then
              print *,"trans_ev_band_to_full_&
@@ -434,7 +437,7 @@
 
             ! copy to host maybe this can be avoided
             ! this is not necessary hvm is not used anymore
-            successCUDA = cuda_memcpy(loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(c_loc(hvm), hvm_dev, ((max_local_rows)*nbw*size_of_datatype),cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"trans_ev_band_to_full_real: error in cudaMemcpy hvm to host"
               stop 1
@@ -779,7 +782,7 @@
 
 
          ! final transfer of q_dev
-         successCUDA = cuda_memcpy(loc(q_mat), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(c_loc(q_mat), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
           print *,"trans_ev_band_to_full_&

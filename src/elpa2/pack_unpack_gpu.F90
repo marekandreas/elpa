@@ -63,7 +63,7 @@
       real(kind=C_DATATYPE_KIND)   :: rows(:,:)
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND):: rows(:,:)
+      complex(kind=C_DATATYPE_KIND) :: rows(:,:)
 #endif
       integer(kind=ik)             :: max_idx
       logical                      :: successCUDA
@@ -117,10 +117,10 @@
       integer(kind=ik), intent(in)                 :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev
       integer(kind=ik), intent(in)                 :: n_offset, row_count
 #if REALCASE == 1
-      real(kind=C_DATATYPE_KIND), intent(in)       :: rows(:, :)
+      real(kind=C_DATATYPE_KIND), intent(in) :: rows(:, :)
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND), intent(in)    :: rows(:, :)
+      complex(kind=C_DATATYPE_KIND), intent(in) :: rows(:, :)
 #endif
 
       integer(kind=ik)                             :: max_idx

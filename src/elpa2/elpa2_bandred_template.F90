@@ -114,9 +114,11 @@
       integer(kind=ik)                            :: na, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck)                    :: a_mat(lda,*), tmat(nbw,nbw,*)
+      MATH_DATATYPE(kind=rck), target            :: a_mat(lda,*)
+      MATH_DATATYPE(kind=rck), target            :: tmat(nbw,nbw,*)
 #else
-      MATH_DATATYPE(kind=rck)                    :: a_mat(lda,matrixCols), tmat(nbw,nbw,numBlocks)
+      MATH_DATATYPE(kind=rck), target            :: a_mat(lda,matrixCols)
+      MATH_DATATYPE(kind=rck), target            :: tmat(nbw,nbw,numBlocks)
 #endif
 
 #if REALCASE == 1
@@ -138,10 +140,12 @@
       integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
       real(kind=rk)                    :: vnorm2
-      MATH_DATATYPE(kind=rck)                    :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
+      MATH_DATATYPE(kind=rck)                    :: xf, aux1(nbw), aux2(nbw), vrl, tau
+      MATH_DATATYPE(kind=rck), target     :: vav(nbw,nbw)
 
 !      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCUDA(:,:), vmrCUDA(:,:), umcCUDA(:,:) ! note the different dimension in real case
-      MATH_DATATYPE(kind=rck), allocatable :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
+      MATH_DATATYPE(kind=rck), allocatable :: tmpCUDA(:)
+      MATH_DATATYPE(kind=rck), allocatable, target :: vmrCUDA(:), umcCUDA(:)
       MATH_DATATYPE(kind=rck), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
       MATH_DATATYPE(kind=rck), allocatable :: vr(:)
 
@@ -359,7 +363,7 @@
         cur_l_rows = 0
         cur_l_cols = 0
 
-        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), (lda)*(na_cols)* size_of_datatype, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(a_dev, c_loc(a_mat(1,1)), (lda)*(na_cols)* size_of_datatype, cudaMemcpyHostToDevice)
         if (.not.(successCUDA)) then
           print *,"bandred_&
                   &MATH_DATATYPE&
@@ -537,7 +541,7 @@
           cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
 
           if (my_pcol == cur_pcol) then
-            successCUDA = cuda_memcpy2d(loc(a_mat(1, lc_start)), &
+            successCUDA = cuda_memcpy2d(c_loc(a_mat(1, lc_start)), &
                                       int((lda*size_of_datatype),kind=c_intptr_t), &
                                             (a_dev + int( ( (lc_start-1) * lda*size_of_datatype),kind=c_intptr_t )),      &
                                             int(lda*size_of_datatype,kind=c_intptr_t),              &
@@ -849,7 +853,7 @@
            if (my_pcol == cur_pcol) then
              successCUDA = cuda_memcpy2d((a_dev+        &
                                          int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)),    &
-                                         int(lda*size_of_datatype,kind=c_intptr_t), loc(a_mat(1,lc_start)), &
+                                         int(lda*size_of_datatype,kind=c_intptr_t), c_loc(a_mat(1,lc_start)), &
                                          int(lda*size_of_datatype,kind=c_intptr_t),           &
                                          int(lr_end*size_of_datatype,kind=c_intptr_t),        &
                                          int((lc_end - lc_start+1),kind=c_intptr_t), &
@@ -930,7 +934,7 @@
          if (my_pcol == cur_pcol) then
            successCUDA = cuda_memcpy2d((a_dev+        &
                                        int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)),    &
-                                       int(lda*size_of_datatype,kind=c_intptr_t), loc(a_mat(1,lc_start)), &
+                                       int(lda*size_of_datatype,kind=c_intptr_t), c_loc(a_mat(1,lc_start)), &
                                        int(lda*size_of_datatype,kind=c_intptr_t),           &
                                        int(lr_end*size_of_datatype,kind=c_intptr_t),        &
                                        int((lc_end - lc_start+1),kind=c_intptr_t), &
@@ -1093,7 +1097,7 @@
 
           if (useGPU) then
             successCUDA = cuda_memcpy(vmr_dev,        &
-                                       loc(vmrCUDA(1)),&
+                                       c_loc(vmrCUDA(1)),&
                                        vmr_size*size_of_datatype,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -1103,7 +1107,7 @@
             endif
 
             successCUDA = cuda_memcpy(umc_dev,    &
-                                      loc(umcCUDA(1)), &
+                                      c_loc(umcCUDA(1)), &
                                       umc_size*size_of_datatype,cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -1165,7 +1169,7 @@
 
           if (useGPU) then
             successCUDA = cuda_memcpy(     &
-                                  loc(vmrCUDA(1)),    &
+                                  c_loc(vmrCUDA(1)),    &
                                    vmr_dev,vmr_size*size_of_datatype,cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -1175,7 +1179,7 @@
             endif
 
             successCUDA = cuda_memcpy(    &
-                                loc(umcCUDA(1)),    &
+                                c_loc(umcCUDA(1)),    &
                                 umc_dev, umc_size*size_of_datatype,cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"bandred_&
@@ -1290,7 +1294,7 @@
 
        if (useGPU) then
          successCUDA = cuda_memcpy(umc_dev,    &
-                                   loc(umcCUDA(1)),   &
+                                   c_loc(umcCUDA(1)),   &
                                    umc_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -1298,7 +1302,7 @@
                    &: error in cudaMemcpy umc_dev 5"
            stop 1
          endif
-         successCUDA = cuda_memcpy(tmat_dev,loc(tmat(1,1,istep)),nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(tmat_dev,c_loc(tmat(1,1,istep)),nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
                    &MATH_DATATYPE&
@@ -1312,7 +1316,7 @@
          call obj%timer%stop("cublas")
 
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-         successCUDA = cuda_memcpy(vav_dev,loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(vav_dev,c_loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
                    &MATH_DATATYPE&
@@ -1330,7 +1334,7 @@
                             n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
          call obj%timer%stop("cublas")
 
-         successCUDA = cuda_memcpy(loc(vav(1,1)), vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(c_loc(vav(1,1)), vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
            print *,"bandred_&
                    &MATH_DATATYPE&
@@ -1368,7 +1372,7 @@
                               (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
 
        if (useGPU) then
-         successCUDA = cuda_memcpy(vav_dev, loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(vav_dev, c_loc(vav(1,1)), nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
            &MATH_DATATYPE&
@@ -1396,7 +1400,7 @@
          call obj%timer%stop("cublas")
 
          successCUDA = cuda_memcpy(      &
-                                   loc(umcCUDA(1)),    &
+                                   c_loc(umcCUDA(1)),    &
                                    umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
 
          if (.not.(successCUDA)) then
@@ -1416,7 +1420,7 @@
                            1, istep*nbw, n_cols, nblk, max_threads)
 
          successCUDA = cuda_memcpy(vmr_dev,       &
-                                   loc(vmrCUDA(1)),    &
+                                   c_loc(vmrCUDA(1)),    &
                                    vmr_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -1426,7 +1430,7 @@
          endif
 
          successCUDA = cuda_memcpy(umc_dev,     &
-                                   loc(umcCUDA(1)),    &
+                                   c_loc(umcCUDA(1)),    &
                                    umc_size*size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"bandred_&
@@ -1687,7 +1691,8 @@
        ! (band to tridi). Previously, a has been kept on the device and then
        ! copied in redist_band (called from tridiag_band). However, it seems to
        ! be easier to do it here. 
-       successCUDA = cuda_memcpy (loc(a_mat), int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
+       successCUDA = cuda_memcpy (c_loc(a_mat), &
+       int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
                                   cudaMemcpyDeviceToHost)
        if (.not.(successCUDA)) then
          print *,"bandred_&

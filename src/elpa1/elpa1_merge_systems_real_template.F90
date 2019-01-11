@@ -90,7 +90,7 @@
       real(kind=REAL_DATATYPE)                    :: z(na), d1(na), d2(na), z1(na), delta(na),  &
                                                      dbase(na), ddiff(na), ev_scale(na), tmp(na)
       real(kind=REAL_DATATYPE)                    :: d1u(na), zu(na), d1l(na), zl(na)
-      real(kind=REAL_DATATYPE), allocatable       :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
+      real(kind=REAL_DATATYPE), allocatable , target :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
 #ifdef WITH_OPENMP
       real(kind=REAL_DATATYPE), allocatable       :: z_p(:,:)
 #endif
@@ -684,7 +684,7 @@
           endif
 
           if (useGPU) then
-            successCUDA = cuda_memcpy(qtmp1_dev, loc(qtmp1(1,1)), &
+            successCUDA = cuda_memcpy(qtmp1_dev, c_loc(qtmp1(1,1)), &
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("merge_systems: qtmp1_dev", successCUDA)
           endif
@@ -749,13 +749,13 @@
 
             if(useGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
-              successCUDA = cuda_memcpy(qtmp2_dev, loc(qtmp2(1,1)), &
+              successCUDA = cuda_memcpy(qtmp2_dev, c_loc(qtmp2(1,1)), &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
 
               !TODO the previous loop could be possible to do on device and thus
               !copy less
-              successCUDA = cuda_memcpy(ev_dev, loc(ev(1,1)), &
+              successCUDA = cuda_memcpy(ev_dev, c_loc(ev(1,1)), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
             endif
@@ -791,7 +791,7 @@
               !TODO either copy only half of the matrix here, and half after the
               !second gemm, or copy whole array after the next gemm
 
-!              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
+!              successCUDA = cuda_memcpy(c_loc(qtmp2(1,1)), qtmp2_dev, &
 !                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
 !              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
             endif
@@ -813,7 +813,7 @@
             if(useGPU) then
               !TODO the previous loop could be possible to do on device and thus
               !copy less
-              successCUDA = cuda_memcpy(ev_dev, loc(ev(1,1)), &
+              successCUDA = cuda_memcpy(ev_dev, c_loc(ev(1,1)), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
             endif
@@ -843,7 +843,7 @@
             if(useGPU) then
               !TODO either copy only half of the matrix here, and get rid of the
               !previous copy or copy whole array here
-              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
+              successCUDA = cuda_memcpy(c_loc(qtmp2(1,1)), qtmp2_dev, &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
               check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
             endif

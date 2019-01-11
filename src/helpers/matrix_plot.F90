@@ -38,7 +38,7 @@ module matrix_plot
 
       integer(kind=ik)                              :: row, col, mpi_rank
       integer(kind=ik), save                        :: counter = 0
-      real(kind=REAL_DATATYPE)                      :: a_dev_helper(lda,matrixCols)
+      real(kind=REAL_DATATYPE), target              :: a_dev_helper(lda,matrixCols)
       logical                                       :: successCUDA
       integer(kind=c_size_t), parameter             :: size_of_datatype = size_of_double_real
 
@@ -59,7 +59,7 @@ module matrix_plot
       ! print a_dev
 
       if(useGpu) then
-        successCUDA = cuda_memcpy(loc(a_dev_helper(1,1)), a_dev, lda * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
+        successCUDA = cuda_memcpy(c_loc(a_dev_helper(1,1)), a_dev, lda * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
 
         write(filename, "(A,A,I0.4,A,I0.2,A)") trim(directory), "/a_dev-", counter, "-", mpi_rank, ".txt"
         write(*,*) trim(filename)

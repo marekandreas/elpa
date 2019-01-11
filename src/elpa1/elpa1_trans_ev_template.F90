@@ -104,9 +104,11 @@
       MATH_DATATYPE(kind=rck), intent(in)           :: tau(na)
 
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,*), q_mat(ldq,*)
+      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,*)
+      MATH_DATATYPE(kind=rck), intent(inout), target :: q_mat(ldq,*)
 #else
-      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,matrixCols), q_mat(ldq,matrixCols)
+      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,matrixCols)
+      MATH_DATATYPE(kind=rck), intent(inout), target :: q_mat(ldq,matrixCols)
 #endif
       logical, intent(in)                           :: useGPU
       integer(kind=ik)                              :: max_stored_rows, max_stored_rows_fac
@@ -117,8 +119,10 @@
       integer(kind=ik)                              :: istep, n, nc, ic, ics, ice, nb, cur_pcol
       integer(kind=ik)                              :: hvn_ubnd, hvm_ubnd
 
-      MATH_DATATYPE(kind=rck), allocatable          :: tmp1(:), tmp2(:), hvb(:), hvm(:,:)
-      MATH_DATATYPE(kind=rck), allocatable          :: tmat(:,:), h1(:), h2(:), hvm1(:)
+      MATH_DATATYPE(kind=rck), allocatable          :: hvb(:), hvm(:,:)
+      MATH_DATATYPE(kind=rck), allocatable, target  :: tmp1(:), tmp2(:)
+      MATH_DATATYPE(kind=rck), allocatable          :: h1(:), h2(:)
+      MATH_DATATYPE(kind=rck), allocatable, target  :: tmat(:,:), hvm1(:)
 
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
@@ -233,7 +237,7 @@
         check_alloc_cuda("trans_ev", successCUDA)
 
 !         q_dev = q_mat
-        successCUDA = cuda_memcpy(q_dev, loc(q_mat(1,1)), ldq * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(q_dev, c_loc(q_mat(1,1)), ldq * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
         check_memcpy_cuda("trans_ev", successCUDA)
       endif  ! useGPU
 
@@ -337,13 +341,13 @@
             hvm1(1:hvm_ubnd*nstor) = reshape(hvm(1:hvm_ubnd,1:nstor), (/ hvm_ubnd*nstor /))
 
             !hvm_dev(1:hvm_ubnd*nstor) = hvm1(1:hvm_ubnd*nstor)
-            successCUDA = cuda_memcpy(hvm_dev, loc(hvm1(1)),   &
+            successCUDA = cuda_memcpy(hvm_dev, c_loc(hvm1(1)),   &
                           hvm_ubnd * nstor * size_of_datatype, cudaMemcpyHostToDevice)
 
             check_memcpy_cuda("trans_ev", successCUDA)
 
             !tmat_dev = tmat
-            successCUDA = cuda_memcpy(tmat_dev, loc(tmat(1,1)),   &
+            successCUDA = cuda_memcpy(tmat_dev, c_loc(tmat(1,1)),   &
                           max_stored_rows * max_stored_rows * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev", successCUDA)
           endif
@@ -381,7 +385,7 @@
           ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
           ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
           if (useGPU) then
-            successCUDA = cuda_memcpy(loc(tmp1(1)), tmp_dev,  &
+            successCUDA = cuda_memcpy(c_loc(tmp1(1)), tmp_dev,  &
                           max_local_cols * max_stored_rows * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("trans_ev", successCUDA)
           endif
@@ -390,7 +394,7 @@
           call obj%timer%stop("mpi_communication")
           ! copy back tmp2 - after reduction...
           if (useGPU) then
-            successCUDA = cuda_memcpy(tmp_dev, loc(tmp2(1)),  &
+            successCUDA = cuda_memcpy(tmp_dev, c_loc(tmp2(1)),  &
                           max_local_cols * max_stored_rows * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev", successCUDA)
           endif ! useGPU
@@ -447,7 +451,7 @@
 
       if (useGPU) then
         !q_mat = q_dev
-        successCUDA = cuda_memcpy(loc(q_mat(1,1)), q_dev, ldq * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
+        successCUDA = cuda_memcpy(c_loc(q_mat(1,1)), q_dev, ldq * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
         check_memcpy_cuda("trans_ev", successCUDA)
 
         deallocate(hvm1, stat=istat, errmsg=errorMessage)
