@@ -326,13 +326,17 @@ module elpa
       integer                        :: error2
 
       obj => elpa_impl_allocate(error2)
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
+#endif
         error = error2
         if (error .ne. ELPA_OK) then
           write(*,*) "Cannot allocate the ELPA object!"
           write(*,*) "This is a critical error!"
           write(*,*) "ELPA not usable with this error"
         endif
+#ifdef USE_FORTRAN2008
       else
         if (error2 .ne. ELPA_OK) then
           write(*,*) "Cannot allocate the ELPA object!"
@@ -341,6 +345,8 @@ module elpa
           stop
         endif
       endif
+#endif
+
     end function
 
 
@@ -359,7 +365,9 @@ module elpa
       integer                        :: error2
         
       call obj%destroy(error2)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
+#endif
         error = error2
         if (error .ne. ELPA_OK) then
           write(*,*) "Cannot destroy the ELPA object!"  
@@ -368,6 +376,7 @@ module elpa
           error = ELPA_ERROR_CRITICAL
           return
         endif
+#ifdef USE_FORTRAN2008
       else
         if (error2 .ne. ELPA_OK) then
           write(*,*) "Cannot destroy the ELPA object!"
@@ -377,15 +386,21 @@ module elpa
           return
         endif
       endif
+#endif
       deallocate(obj, stat=error2)
       if (error2 .ne. 0) then
         write(*,*) "Cannot deallocate the ELPA object!"  
         write(*,*) "This is a critical error!"  
         write(*,*) "This might lead to a memory leak in your application!"
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_CRITICAL
           return
         endif
+#else
+        error = ELPA_ERROR_CRITICAL
+        return
+#endif
       endif
     end subroutine
 
@@ -404,7 +419,9 @@ module elpa
 #endif
       integer                         :: error2
       call obj%destroy(error2)
+#ifdef USE_FORTRAN2008
       if (present(error)) then
+#endif
         error = error2
         if (error2 .ne. ELPA_OK) then
           write(*,*) "Cannot destroy the ELPA autotuning object!"
@@ -413,6 +430,7 @@ module elpa
           error = ELPA_ERROR_CRITICAL
           return
         endif
+#ifdef USE_FORTRAN2008
       else
         if (error2 .ne. ELPA_OK) then
           write(*,*) "Cannot destroy the ELPA autotuning object!"
@@ -422,15 +440,21 @@ module elpa
           return
         endif
       endif
+#endif
       deallocate(obj, stat=error2)
       if (error2 .ne. 0) then
         write(*,*) "Cannot deallocate the ELPA autotuning object!"  
         write(*,*) "This is a critical error!"  
         write(*,*) "This might lead to a memory leak in your application!"
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_CRITICAL
           return
         endif
+#else
+        error = ELPA_ERROR_CRITICAL
+        return
+#endif
       endif
 
     end subroutine

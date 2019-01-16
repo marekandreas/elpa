@@ -381,7 +381,7 @@
         write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
       endif
 
-      call self%get("solver", solver)
+      call self%get("solver", solver,error_l)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
@@ -556,7 +556,7 @@
         write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
       endif
 
-      call self%get("solver", solver)
+      call self%get("solver", solver,error_l)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&

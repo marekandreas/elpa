@@ -827,7 +827,11 @@ module elpa_api
 #else
      integer, intent(out)           :: error
 #endif
+#ifdef USE_FORTRAN2008
      if (present(error)) error = ELPA_OK
+#else
+     error = ELPA_OK
+#endif
     end subroutine
 
 

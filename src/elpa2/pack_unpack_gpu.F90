@@ -84,7 +84,7 @@
       ! Issue one single transfer call for all rows (device to host)
 !        rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
 
-      successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev , row_count * l_nev * size_of_&
+      successCUDA =  cuda_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
       &PRECISION&
       &_&
       &MATH_DATATYPE&
@@ -133,7 +133,7 @@
 !      row_group_dev(:, 1 : row_count) = rows(:, 1 : row_count)
 
 
-      successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev * &
+      successCUDA =  cuda_memcpy( row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
                                  size_of_&
                                  &PRECISION&
                                  &_&

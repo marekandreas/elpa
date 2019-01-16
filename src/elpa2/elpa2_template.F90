@@ -79,10 +79,10 @@
 
 #ifdef USE_ASSUMED_SIZE
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,*)
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,*)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target         :: q(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,obj%local_ncols)
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target        :: q(obj%local_nrows,obj%local_ncols)
 #endif
    real(kind=C_DATATYPE_KIND), intent(inout)                          :: ev(obj%na)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: hh_trans(:,:)
@@ -700,7 +700,7 @@
        ! if the second backward step is to be performed, but not on GPU, we have
        ! to transfer q to the host
        if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
-         successCUDA = cuda_memcpy(c_loc(q), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(int(loc(q),kind=c_intptr_t), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
            print *,"elpa2_template, error in copy to host"
            stop 1
@@ -723,7 +723,7 @@
          ! copy to device if we want to continue on GPU
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 
-         successCUDA = cuda_memcpy(q_dev, c_loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(q_dev, int(loc(q),kind=c_intptr_t), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"elpa2_template, error in copy to device"
            stop 1
