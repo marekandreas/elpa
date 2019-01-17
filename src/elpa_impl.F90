@@ -1287,12 +1287,11 @@ module elpa_impl
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_CRITICAL
-          return
         endif
 #else
         error = ELPA_OK
-        return
 #endif
+        return
 #endif /* HAVE_DETAILED_TIMINGS */
 
 #ifdef WITH_MPI
@@ -1300,17 +1299,16 @@ module elpa_impl
         call self%get("mpi_comm_parent", mpi_comm_parent, error2)
         call self%get("num_processes", np_total, error3)
         if ((error2 .ne. ELPA_OK) .or. (error3 .ne. ELPA_OK)) then
-          print *, "Parrent communicator is not set properly. Aborting..."
+          print *, "Parent communicator is not set properly. Aborting..."
 #ifdef USE_FORTRAN2008
           if (present(error)) &
             error = ELPA_ERROR_CRITICAL
-            return
           endif
 #else
           error = ELPA_ERROR_CRITICAL
-          return
 #endif
-       endif
+        return
+        endif
 
         sendbuf(1) = time_spent
         call MPI_Allreduce(sendbuf, recvbuf, 1, MPI_REAL8, MPI_SUM, mpi_comm_parent, mpierr)
