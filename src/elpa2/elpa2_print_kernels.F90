@@ -74,14 +74,14 @@ program print_available_elpa2_kernels
 
    integer(kind=c_int) :: i
    class(elpa_t), pointer :: e
-   integer :: option
+   integer :: option, error
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "Unsupported ELPA API Version"
      stop 1
    endif
 
-   e => elpa_allocate()
+   e => elpa_allocate(error)
 
    print *, "This program will give information on the ELPA2 kernels, "
    print *, "which are available with this library and it will give "
@@ -125,7 +125,7 @@ program print_available_elpa2_kernels
    print *
    print *
 
-   call elpa_deallocate(e)
+   call elpa_deallocate(e, error)
 
    contains
 
@@ -141,7 +141,7 @@ program print_available_elpa2_kernels
          if (elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_COMPLEX_GPU" .or. &
              elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_REAL_GPU") then
            if (e%can_set("use_gpu",1) == ELPA_OK) then
-             call e%set("use_gpu",1)
+             call e%set("use_gpu",1, error)
            endif
          endif 
 

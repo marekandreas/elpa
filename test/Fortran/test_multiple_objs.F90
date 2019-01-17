@@ -180,7 +180,7 @@ program test
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times=.false.)
    as(:,:) = a(:,:)
 
-   e1 => elpa_allocate()
+   e1 => elpa_allocate(error)
    !assert_elpa_ok(error)
 
    call set_basic_params(e1, na, nev, na_rows, na_cols, my_prow, my_pcol)
@@ -313,7 +313,7 @@ program test
    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                        .true., .true., print_times=.false.)
 
-   call elpa_deallocate(e_ptr)
+   call elpa_deallocate(e_ptr, error)
    !assert_elpa_ok(error)
 
    deallocate(a)
@@ -321,7 +321,7 @@ program test
    deallocate(z)
    deallocate(ev)
 
-   call elpa_uninit()
+   call elpa_uninit(error)
    !assert_elpa_ok(error)
 
 #ifdef WITH_MPI

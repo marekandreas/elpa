@@ -201,7 +201,7 @@ program test_interface
    call elpa_deallocate(e2, success)
    assert_elpa_ok(success)
 
-   call elpa_uninit()
+   call elpa_uninit(success)
 
    status = check_correctness_evp_numeric_residuals(na, nev, as1, z1, ev1, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
