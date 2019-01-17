@@ -402,5 +402,44 @@ subroutine prepare_matrix_random_spd_&
 
    end subroutine
 
+   subroutine prepare_matrix_valeriy_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   & (na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol, bandwidth)
+     use test_util
+     implicit none
+
+     integer, intent(in)           :: na, nblk, np_rows, np_cols, my_prow, my_pcol, bandwidth
+
+#if REALCASE == 1
+     real(kind=C_DATATYPE_KIND)    :: a(:,:), z(:,:), as(:,:)
+#endif
+#if COMPLEXCASE == 1
+     complex(kind=C_DATATYPE_KIND) :: a(:,:), z(:,:), as(:,:)
+#endif
+
+     integer                       :: i, j, rowLocal, colLocal
+
+     do i = 1, na
+       do j = 1, na
+         if (map_global_array_index_to_local_index(i, j, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+           if(abs(i-j) > bandwidth) then
+             a(rowLocal,colLocal) = 0.0
+           else
+             a(rowLocal,colLocal) = cos(real(i))*cos(real(j)) + sin(real(i))*sin(real(j));
+             if (j == i) then
+                a(rowLocal,colLocal) = a(rowLocal,colLocal) + real(i + j) / real(na);
+             endif
+           endif
+         endif
+       enddo
+     enddo
+
+     z(:,:)  = a(:,:)
+     as(:,:) = a(:,:)
+
+   end subroutine
+
 
 ! vim: syntax=fortran

@@ -585,6 +585,11 @@ real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
 real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
+noinst_PROGRAMS += real_2stage_banded_valeriy@SUFFIX@
+real_2stage_banded_valeriy@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded_valeriy.F90
+real_2stage_banded_valeriy@SUFFIX@_LDADD = $(test_program_ldadd)
+real_2stage_banded_valeriy@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+
 noinst_PROGRAMS += complex_2stage_banded@SUFFIX@
 check_SCRIPTS += complex_2stage_banded@SUFFIX@_default.sh
 complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90

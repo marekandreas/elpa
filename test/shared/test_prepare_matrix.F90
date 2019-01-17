@@ -92,6 +92,17 @@ module test_prepare_matrix
 #endif
    end interface
 
+  interface prepare_matrix_valeriy
+    module procedure prepare_matrix_valeriy_complex_double
+    module procedure prepare_matrix_valeriy_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_valeriy_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_valeriy_complex_single
+#endif
+   end interface
+
 
 
    private prows, pcols, map_global_array_index_to_local_index
