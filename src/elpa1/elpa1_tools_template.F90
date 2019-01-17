@@ -294,8 +294,22 @@
 #endif
 
 #if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+      !print the small numbers
+      if((XNORM_SQ < 1e-250_rk) .and. (XNORM_SQ .ne. 0.0_rk)) then
+        BETA = SIGN( SQRT( ALPHA**2 + XNORM_SQ ), ALPHA )
+        print *, "SMALL XNORM_SQ", XNORM_SQ, "ALPHA", ALPHA, "BETA", BETA
+      endif
+
+      !if ( XNORM_SQ==0.0_rk ) then
+      if ( XNORM_SQ < 1e-100_rk ) then
+#else
+      ! if we use XNORM_SQ < 1e-100_rk, the normal tests fail. The threshold 
+      !would need to be selected differently
       if ( XNORM_SQ==0.0_rk ) then
 #endif
+#endif
+
 #if COMPLEXCASE == 1
       if ( XNORM_SQ==0.0_rk .AND. ALPHI==0.0_rk ) then
 #endif
