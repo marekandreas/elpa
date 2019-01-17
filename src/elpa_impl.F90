@@ -966,31 +966,28 @@ module elpa_impl
 #ifdef USE_FORTRAN2008
           if (present(error)) then
             error = error2
-            return
           else
             write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-            return
           endif
 #else
           error = error2
-          return
 #endif
-        endif
+          return
+        endif ! error happend
+
         call self%get("mpi_comm_cols", mpi_comm_cols,error2)
         if (error2 .ne. ELPA_OK) then
 #ifdef USE_FORTRAN2008
           if (present(error)) then
             error = error2
-            return
           else
             write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-            return
           endif
 #else
           error = error2
-          return
 #endif
-        endif
+          return
+        endif ! error happend
 
         ! this is just for debugging ! do not leave in a relase
         !write(error_unit, '(A,2I13)') "FREE comms", mpi_comm_rows, mpi_comm_cols
@@ -1006,22 +1003,20 @@ module elpa_impl
           error = ELPA_ERROR_CRITICAL
 #endif
           return
-        endif
+        endif ! mpierr happend
         call self%set("mpi_comm_cols", -12345, error2)
         if (error2 .ne. ELPA_OK) then
 #ifdef USE_FORTRAN2008
           if (present(error)) then
             error = error2
-            return
           else
             write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-            return
           endif
 #else
           error = error2
-          return
 #endif
-        endif
+          return
+        endif ! error happend
         call mpi_comm_free(mpi_comm_cols, mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
@@ -1034,24 +1029,22 @@ module elpa_impl
           error = ELPA_ERROR_CRITICAL
 #endif
           return
-        endif
+        endif ! mpierr happend
         call self%set("mpi_comm_rows", -12345,error2)
         if (error2 .ne. ELPA_OK) then
 #ifdef USE_FORTRAN2008
           if (present(error)) then
             error = error2
-            return
           else
             write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-            return
           endif
 #else
           error = error2
+#endif
           return
-#endif
-        endif
+        endif ! error happend
       endif
-#endif
+#endif /* WITH_MPI */
 
       call timer_free(self%timer)
       call timer_free(self%autotune_timer)
@@ -1168,6 +1161,7 @@ module elpa_impl
 #else
       error = ELPA_OK
 #endif
+
       if (elpa_get_api_version() < EARLIEST_AUTOTUNE_VERSION) then
         write(error_unit, "(a,i0,a)") "ELPA: Error API version: Autotuning does not support ", elpa_get_api_version()
 #ifdef USE_FORTRAN2008
@@ -1301,13 +1295,13 @@ module elpa_impl
         if ((error2 .ne. ELPA_OK) .or. (error3 .ne. ELPA_OK)) then
           print *, "Parent communicator is not set properly. Aborting..."
 #ifdef USE_FORTRAN2008
-          if (present(error)) &
+          if (present(error)) then
             error = ELPA_ERROR_CRITICAL
           endif
 #else
           error = ELPA_ERROR_CRITICAL
 #endif
-        return
+          return
         endif
 
         sendbuf(1) = time_spent
@@ -1325,7 +1319,7 @@ module elpa_impl
           ts_impl%min_loc = ts_impl%current
         end if
         call self%autotune_timer%free()
-      endif
+      endif ! (ts_impl%current >= 0)
 
       do while (ts_impl%current < ts_impl%cardinality - 1)
         ts_impl%current = ts_impl%current + 1
