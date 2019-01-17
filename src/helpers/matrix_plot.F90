@@ -77,4 +77,46 @@ module matrix_plot
 
     end subroutine
 
+
+    ! prints a simple matrix (non block cyclic for the future plotting)
+    ! use it like:
+    !#ifdef DOUBLE_PRECISION_REAL
+    !#ifdef REALCASE
+    !#ifdef DOUBLE_PRECISION
+    !        call prmat_simple(2*nb, (nblocks+1)*nb, ab, "ab", istep)
+    !#endif
+    !#endif
+
+    subroutine prmat_simple(rows, cols, mat, name, iteration)
+      use iso_c_binding
+      use precision
+      implicit none
+      integer, parameter :: out_unit=20
+      character(len = 1025) :: directory = "matrices"
+      character(len = 1024) :: filename
+
+      character(len = *), intent(in)             :: name
+      integer(kind=ik), intent(in)                  :: rows, cols, iteration
+      real(kind=REAL_DATATYPE), intent(in)          :: mat(rows, cols)
+
+      integer(kind=ik)                              :: row, col
+      integer(kind=ik), save                        :: counter = 0
+
+
+      ! print a_mat
+      write(filename, "(A,A,I0.4,A)") trim(directory), "/a_mat-", counter, ".txt"
+      write(*,*) trim(filename)
+      open(unit=out_unit, file=trim(filename), action="write",status="replace")
+
+      write(out_unit, "(3I5)") rows, cols, iteration
+      write(out_unit, "(A)") name
+      do row = 1, rows
+          write(out_unit, *) mat(row, :)
+      end do
+      close(out_unit)
+
+      counter = counter + 1
+
+    end subroutine
+
 end module
