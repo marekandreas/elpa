@@ -120,7 +120,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       real(kind=rk), intent(out)         :: d_vec(na), e_vec(na)
 
       integer(kind=ik), parameter                   :: max_stored_uv = 32
-      logical,          parameter                   :: mat_vec_as_one_block = .true.
+      logical,          parameter                   :: mat_vec_as_one_block_GPU = .true.
+      logical,          parameter                   :: mat_vec_as_one_block_CPU = .true.
 
       ! id in processor row and column and total numbers of processor rows and columns
       integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols
@@ -496,73 +497,83 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           endif ! useGU
 
 #ifdef WITH_OPENMP
-          call obj%timer%start("OpenMP parallel")
+            call obj%timer%start("OpenMP parallel")
 !$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end)
 
-          my_thread = omp_get_thread_num()
-          
-          n_threads = omp_get_num_threads()
+            my_thread = omp_get_thread_num()
+            
+            n_threads = omp_get_num_threads()
 
-          n_iter = 0
+            n_iter = 0
 
-          ! first calculate A*v part of (A + VU**T + UV**T)*v
-          uc_p(1:l_cols,my_thread) = 0.
-          ur_p(1:l_rows,my_thread) = 0.
+            ! first calculate A*v part of (A + VU**T + UV**T)*v
+            uc_p(1:l_cols,my_thread) = 0.
+            ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP */
-          do i= 0, (istep-2)/tile_size
-            l_col_beg = i*l_cols_per_tile+1
-            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-            if (l_col_end < l_col_beg) cycle
-            do j = 0, i
-              l_row_beg = j*l_rows_per_tile+1
-              l_row_end = min(l_rows,(j+1)*l_rows_per_tile)
-              if (l_row_end < l_row_beg) cycle
+          if(mat_vec_as_one_block_CPU) then
+            ! do one large multiplication on CPU as well
+            if (wantDebug) call obj%timer%start("blas")
+            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
+                                        ONE, a_mat, lda,                   &
+                                        v_row , 1,                          &
+                                        ONE, u_col, 1)
+            if (wantDebug) call obj%timer%stop("blas")
+          else ! do multiplication by small blocks to re-use cache (the "usual" way)
+            do i= 0, (istep-2)/tile_size
+              l_col_beg = i*l_cols_per_tile+1
+              l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+              if (l_col_end < l_col_beg) cycle
+              do j = 0, i
+                l_row_beg = j*l_rows_per_tile+1
+                l_row_end = min(l_rows,(j+1)*l_rows_per_tile)
+                if (l_row_end < l_row_beg) cycle
 #ifdef WITH_OPENMP
-              if (mod(n_iter,n_threads) == my_thread) then
-                if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
-                                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                                    ONE, a_mat(l_row_beg,l_col_beg), lda,         &
-                                    v_row(l_row_beg), 1, ONE, uc_p(l_col_beg,my_thread), 1)
+                if (mod(n_iter,n_threads) == my_thread) then
+                  if (wantDebug) call obj%timer%start("blas")
+                  call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                                      l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                                      ONE, a_mat(l_row_beg,l_col_beg), lda,         &
+                                      v_row(l_row_beg), 1, ONE, uc_p(l_col_beg,my_thread), 1)
 
-                if (i/=j) then
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,          &
-                                      ONE, a_mat(l_row_beg,l_col_beg), lda, v_col(l_col_beg), 1,  &
+                  if (i/=j) then
+                    call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,          &
+                                        ONE, a_mat(l_row_beg,l_col_beg), lda, v_col(l_col_beg), 1,  &
 
-                                      ONE, ur_p(l_row_beg,my_thread), 1)
+                                        ONE, ur_p(l_row_beg,my_thread), 1)
+                  endif
+                  if (wantDebug) call obj%timer%stop("blas")
                 endif
-                if (wantDebug) call obj%timer%stop("blas")
-              endif
-              n_iter = n_iter+1
+                n_iter = n_iter+1
 #else /* WITH_OPENMP */
 
-              ! multiplication by blocks is efficient only for CPU
-              ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
-              ! CPU implementation) or by one large matrix Vector multiply
-              if (.not. useGPU) then
-                if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
-                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                            ONE, a_mat(l_row_beg, l_col_beg), lda,         &
-                            v_row(l_row_beg), 1,                           &
-                            ONE, u_col(l_col_beg), 1)
+                ! multiplication by blocks is efficient only for CPU
+                ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
+                ! CPU implementation) or by one large matrix Vector multiply
+                if (.not. useGPU) then
+                  if (wantDebug) call obj%timer%start("blas")
+                  call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+                              l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                              ONE, a_mat(l_row_beg, l_col_beg), lda,         &
+                              v_row(l_row_beg), 1,                           &
+                              ONE, u_col(l_col_beg), 1)
 
-                if (i/=j) then
+                  if (i/=j) then
 
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                      ONE, a_mat(l_row_beg,l_col_beg), lda,               &
-                                      v_col(l_col_beg), 1,                                &
-                                      ONE, u_row(l_row_beg), 1)
-                endif
-                if (wantDebug) call obj%timer%stop("blas")
-              endif ! not useGPU
+                    call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
+                                        ONE, a_mat(l_row_beg,l_col_beg), lda,               &
+                                        v_col(l_col_beg), 1,                                &
+                                        ONE, u_row(l_row_beg), 1)
+                  endif
+                  if (wantDebug) call obj%timer%stop("blas")
+                endif ! not useGPU
 
 #endif /* WITH_OPENMP */
-            enddo  ! j=0,i
-          enddo  ! i=0,(istep-2)/tile_size
+              enddo  ! j=0,i
+            enddo  ! i=0,(istep-2)/tile_size
+          endif ! multiplication by small blocks / by one large block on CPU
 
           if (useGPU) then
-            if(mat_vec_as_one_block) then
+            if(mat_vec_as_one_block_GPU) then
               ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
               ! this requires altering of the algorithm when later explicitly updating the matrix
               ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
@@ -627,7 +638,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
             successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
-          endif
+          endif ! useGPU
 
 !              call PRECISION_SYMV('U', l_cols,  &
 !                         1.d0, a_mat, ubound(a_mat,1),  &
@@ -772,7 +783,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
 
             if (useGPU) then
-              if(.not. mat_vec_as_one_block) then
+              if(.not. mat_vec_as_one_block_GPU) then
                 ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                 ! we than use the same calls as for CPU version
                 if (wantDebug) call obj%timer%start("cublas")
@@ -787,18 +798,21 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                 if (wantDebug) call obj%timer%stop("cublas")
               endif
             else !useGPU
-              if (wantDebug) call obj%timer%start("blas")
-              call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
-                                   l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
-                                   ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
-                                   uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
-                                   ONE, a_mat(l_row_beg,l_col_beg), lda)
-              if (wantDebug) call obj%timer%stop("blas")
+              if(.not. mat_vec_as_one_block_CPU) then
+                if (wantDebug) call obj%timer%start("blas")
+                call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
+                                     l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
+                                     ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
+                                     uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
+                                     ONE, a_mat(l_row_beg,l_col_beg), lda)
+                if (wantDebug) call obj%timer%stop("blas")
+              endif
             endif !useGPU
           enddo
 
+          ! if we used one large multiplication, update the whole matrix here (after the cycle ends)
           if (useGPU) then
-            if(mat_vec_as_one_block) then
+            if(mat_vec_as_one_block_GPU) then
               !update whole (remaining) part of matrix, including tiles below diagonal
               !we can do that in one large cublas call
               if (wantDebug) call obj%timer%start("cublas")
@@ -808,10 +822,21 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                                         ONE, a_dev, lda)
               if (wantDebug) call obj%timer%stop("cublas")
             endif
+          else  ! useGPU
+            if(mat_vec_as_one_block_CPU) then
+              !update whole (remaining) part of matrix, including tiles below diagonal
+              !we can do that in one large blas call
+              if (wantDebug) call obj%timer%start("blas")
+              call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
+                                        ONE, vu_stored_rows, max_local_rows, &
+                                        uv_stored_cols, max_local_cols,  &
+                                        ONE, a_mat, lda)
+              if (wantDebug) call obj%timer%stop("blas")
+            endif
           endif
 
           n_stored_vecs = 0
-        endif
+        endif ! (n_stored_vecs == max_stored_uv .or. istep == 3) 
 
         if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
           if (useGPU) then
