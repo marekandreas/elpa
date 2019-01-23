@@ -266,27 +266,17 @@ void elpa_index_free(elpa_index_t index) {
         free(index);
 }
 
-static int compar(const void *key, const void *member) {
-        const char *name = (const char *) key;
-        elpa_index_int_entry_t *entry = (elpa_index_int_entry_t *) member;
-
-        int l1 = strlen(entry->base.name);
-        int l2 = strlen(name);
-        if (l1 != l2) {
-                return 1;
-        }
-        if (strncmp(name, entry->base.name, l1) == 0) {
-                return 0;
-        } else {
-                return 1;
-        }
+static int compar(const void *a, const void *b) {
+        return strcmp(((elpa_index_int_entry_t *) a)->base.name,
+                      ((elpa_index_int_entry_t *) b)->base.name);
 }
 
 #define IMPLEMENT_FIND_ENTRY(TYPE, ...) \
         static int find_##TYPE##_entry(char *name) { \
                 elpa_index_##TYPE##_entry_t *entry; \
+                elpa_index_##TYPE##_entry_t key = { .base = {.name = name} } ; \
                 size_t nmembers = nelements(TYPE##_entries); \
-                entry = lfind((const void*) name, (const void *) TYPE##_entries, &nmembers, sizeof(elpa_index_##TYPE##_entry_t), compar); \
+                entry = lfind((const void*) &key, (const void *) TYPE##_entries, &nmembers, sizeof(elpa_index_##TYPE##_entry_t), compar); \
                 if (entry) { \
                         return (entry - &TYPE##_entries[0]); \
                 } else { \
