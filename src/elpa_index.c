@@ -49,8 +49,6 @@
 #include <elpa/elpa.h>
 #include "elpa_index.h"
 
-#include <execinfo.h>
-
 #include "config.h"
 
 #ifdef WITH_OPENMP
