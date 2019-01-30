@@ -626,10 +626,15 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                             ONE, a_dev + a_offset, lda,  &
                             v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
                             ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
-             else
-               !TODO
-               stop 1
-             endif !useGPU
+              else
+                if (wantDebug) call obj%timer%start("blas")
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                            ONE, a_mat(l_row_beg,l_col_beg), lda,  &
+                            v_row(l_row_beg), 1,  &
+                            ONE, u_col(l_col_beg), 1)
+                if (wantDebug) call obj%timer%stop("blas")
+              endif !useGPU
             enddo
 
             do i=0,(istep-2)/tile_size
@@ -646,10 +651,14 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                           ONE, a_dev + a_offset, lda, &
                           v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                           ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
-               else
-                 !TODO
-                 stop 1
-               endif !useGPU
+              else
+                if (wantDebug) call obj%timer%start("blas")
+                call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                         ONE, a_mat(l_row_beg,l_col_beg), lda, &
+                         v_col(l_col_beg),1, &
+                         ONE, u_row(l_row_beg), 1)
+                if (wantDebug) call obj%timer%stop("blas")
+              endif !useGPU
             enddo
           endif ! multiplication by small blocks / by stripes / by one large block on CPU
 
