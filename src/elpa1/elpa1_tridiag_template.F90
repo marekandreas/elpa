@@ -575,8 +575,19 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #else /* WITH_OPENMP */
 
                 if (useGPU) then
-                  !TODO make GPU implemetnation for GPU for the sake of completness
-                  stop 1
+                  a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * size_of_datatype
+                  call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+                              l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                              ONE, a_dev + a_offset, lda,         &
+                              v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,          &
+                              ONE,  u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
+
+                  if (i/=j) then
+                    call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
+                                        ONE, a_dev + a_offset, lda,               &
+                                        v_col_dev + (l_col_beg - 1) * size_of_datatype, 1,        &
+                                        ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
+                  endif
                 else
                   if (wantDebug) call obj%timer%start("blas")
                   call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
