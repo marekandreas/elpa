@@ -77,6 +77,11 @@ static int complex_kernel_enumerate(elpa_index_t index, int i);
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value);
 static const char *complex_kernel_name(int kernel);
 
+static int number_of_mult_strategies(elpa_index_t index);
+static int mult_strategy_enumerate(elpa_index_t index, int i);
+static int mult_strategy_is_valid(elpa_index_t index, int n, int new_value);
+//static const char *complex_kernel_name(int kernel);
+
 static int band_to_full_cardinality(elpa_index_t index);
 static int band_to_full_enumerate(elpa_index_t index, int i);
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
@@ -213,6 +218,10 @@ static const elpa_index_int_entry_t int_entries[] = {
                         number_of_real_kernels, real_kernel_enumerate, real_kernel_is_valid, real_kernel_name, PRINT_YES),
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
                         number_of_complex_kernels, complex_kernel_enumerate, complex_kernel_is_valid, complex_kernel_name, PRINT_YES),
+
+        //TODO: change to tunable after implementation of all options finished
+        INT_ENTRY("mult_strategy", "Multiplication strategy in tridiagonalization (and possibly bandred) step", ELPA_MULT_STRATEGY_DEFAULT, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        number_of_mult_strategies, mult_strategy_enumerate, mult_strategy_is_valid, NULL, PRINT_YES),
 
         INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         min_tile_size_cardinality, min_tile_size_enumerate, min_tile_size_is_valid, NULL, PRINT_YES),
@@ -694,6 +703,36 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
                         return 0;
         }
 }
+
+
+// there are 3 multiplication strategies for the tridiagonalization (only for ELPA 1) at the moment
+// We introduced another one, the ELPA_MULT_STRATEGY_DEFAULT. If set, it will use ELPA_MULT_STRATEGY_BLOCKING
+// if GPU is not used for the tridi step and ELPA_MULT_STRATEGY_WHOLE if it is used, since they are the
+// best from the experience (and the default is different for cpu/gpu version, which makes it more difficult)
+// TODO should we then exclude ELPA_MULT_STRATEGY_DEFAULT from the autotuning to avoid trying the same setting twice?
+// TODO This idea might be (maybe) extended to ELPA2 and bandred step as well (currently using "stripe" implementation)
+static int number_of_mult_strategies(elpa_index_t index) {
+        return ELPA_NUMBER_OF_MULT_STRATEGIES;
+}
+
+static int mult_strategy_enumerate(elpa_index_t index, int i){
+        switch(i) {
+#define INNER_ITERATOR() ELPA_FOR_ALL_MULT_STRATEGIES
+                EVAL(ELPA_FOR_ALL_MULT_STRATEGIES(ENUMERATE_CASE))
+#undef INNER_ITERATOR
+                default:
+                        return 0;
+        }
+}
+
+static int mult_strategy_is_valid(elpa_index_t index, int n, int new_value) {
+        int solver = elpa_index_get_int_value(index, "solver", NULL);
+        if(solver == ELPA_SOLVER_1STAGE)
+              return 1;
+        else
+              return new_value == ELPA_MULT_STRATEGY_DEFAULT;
+}
+//static const char *complex_kernel_name(int kernel);
 
 static const char* elpa_autotune_level_name(int level) {
         switch(level) {
