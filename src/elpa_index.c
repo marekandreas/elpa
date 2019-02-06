@@ -242,6 +242,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("debug", "Emit verbose debugging messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("print_flops", "Print FLOP rates on task 0", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
+        BOOL_ENTRY("measure_performance", "Also measure with flops (via papi) with the timings", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
 };

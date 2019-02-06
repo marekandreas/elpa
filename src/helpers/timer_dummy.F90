@@ -64,6 +64,7 @@ module timings_dummy
       procedure, pass :: enable => timer_enable
       procedure, pass :: free => timer_free
       procedure, pass :: print => timer_print
+      procedure, pass :: measure_flops => timer_measure_flops
   end type 
 
   type(timer_dummy_t) :: timer
@@ -93,6 +94,11 @@ module timings_dummy
   subroutine timer_enable(self)
     class(timer_dummy_t), intent(inout), target :: self
     
+  end subroutine
+
+  subroutine timer_measure_flops(self, enable)
+    class(timer_dummy_t), intent(inout), target :: self
+    logical                                     :: enable
   end subroutine
 
   subroutine timer_free(self)

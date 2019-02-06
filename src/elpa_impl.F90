@@ -410,7 +410,7 @@ module elpa_impl
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
       class(elpa_impl_t), intent(inout)   :: self
-      integer                             :: error, timings
+      integer                             :: error, timings, performance
 
 #ifdef WITH_MPI
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
@@ -424,9 +424,14 @@ module elpa_impl
 
 #ifdef HAVE_DETAILED_TIMINGS
       call self%get("timings",timings, error)
+      call self%get("measure_performance",performance, error)
+      print *,error
       if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
       if (timings == 1) then
         call self%timer%enable()
+        if (performance == 1) then
+          call self%timer%measure_flops(.true.)
+        endif
       endif
 #endif
 
