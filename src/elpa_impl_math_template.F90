@@ -50,15 +50,15 @@
       call self%get("solver", solver,error2)
       if (error2 .ne. ELPA_OK) then
         print *,"Problem setting option. Aborting..."
-        stop
-      endif
 #ifdef USE_FORTRAN2008
-      if (present(error)) then
-        error = error2
-      endif
+        if (present(error)) then
+          error = error2
+        endif
 #else
-      error = error2
+        error = error2
 #endif
+        return
+      endif
       if (solver .eq. ELPA_SOLVER_1STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
@@ -205,15 +205,16 @@
       call self%get("solver", solver,error2)
       if (error2 .ne. ELPA_OK) then
          print *,"Problem getting option. Aborting..."
-         stop
-      endif
 #ifdef USE_FORTRAN2008
-      if (present(error)) then
-        error = error2
-      endif
+         if (present(error)) then
+           error = error2
+         endif
 #else
-      error = error2
+         error = error2
 #endif
+         return
+      endif
+
       if (solver .eq. ELPA_SOLVER_1STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
