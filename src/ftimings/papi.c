@@ -76,6 +76,8 @@ int ftimings_papi_init(void) {
 			flops_available = 1;
 		}
 
+		ldst_available = 0;
+#if 0
 		/* Loads + Stores */
 		if ((ret = PAPI_query_event(PAPI_LD_INS)) < 0) {
 			fprintf(stderr, "ftimings: %s:%d: PAPI_query_event(PAPI_LD_INS): %s\n",
@@ -96,7 +98,7 @@ int ftimings_papi_init(void) {
 		} else {
 			ldst_available = 1;
 		}
-
+#endif
 		/* Start */
 		if ((ret = PAPI_start(event_set)) < 0) {
 			fprintf(stderr, "ftimings: %s:%d PAPI_start(): %s\n",

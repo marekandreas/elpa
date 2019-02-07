@@ -431,6 +431,7 @@ module elpa_impl
         call self%timer%enable()
         if (performance == 1) then
           call self%timer%measure_flops(.true.)
+          call self%timer%set_print_options(print_flop_count=.true.,print_flop_rate=.true.)
         endif
       endif
 #endif
