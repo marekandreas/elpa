@@ -758,6 +758,30 @@ dnl the list of kernels is now assembled
 dnl choosing a default kernel
 
 m4_foreach_w([elpa_m4_kind],[real complex],[
+        AC_ARG_WITH([default-]elpa_m4_kind[-kernel], m4_expand([AS_HELP_STRING([--with-default-]elpa_m4_kind[-kernel]=KERNEL,
+                [set a specific ]elpa_m4_kind[ kernel as default kernel. Available kernels are:]
+                 m4_foreach_w([elpa_m4_kernel],m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels),[m4_bpatsubst(elpa_m4_kernel,elpa_m4_kind[]_,[]) ]))]),
+                 [default_]elpa_m4_kind[_kernel="]elpa_m4_kind[_$withval"],[default_]elpa_m4_kind[_kernel=""])
+        #if test -n "$default_[]elpa_m4_kind[]_kernel" ; then
+        #        found="no"
+        #        m4_foreach_w([elpa_m4_otherkernel],m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels),[
+        #                if test "$default_]elpa_m4_kind[_kernel" = "]elpa_m4_otherkernel[" ; then
+        #                        use_[]elpa_m4_otherkernel[]=yes
+        #                        found="yes"
+        #                else
+        #                        use_[]elpa_m4_otherkernel[]=no
+        #                fi
+        #        ])
+        #        if test x"$found" = x"no" ; then
+        #                AC_MSG_ERROR([Invalid kernel "$default_]elpa_m4_kind[_kernel" specified for --with-default-]elpa_m4_kind[-kernel])
+        #        fi
+        #        AC_DEFINE([WITH_DEFAULT_]m4_toupper(elpa_m4_kind)[_KERNEL],[1],[use specific ]elpa_m4_kind[ default kernel (set at compile time)])
+        #fi
+])
+
+
+
+m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
                                   elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sparc64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels,
