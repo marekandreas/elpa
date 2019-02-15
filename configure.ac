@@ -29,12 +29,21 @@ AM_SILENT_RULES([yes])
 #
 AC_SUBST([ELPA_SO_VERSION], [13:0:0])
 
+# AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
+# -----------------------------------------
+AC_DEFUN([AC_DEFINE_SUBST], [
+AC_DEFINE([$1], [$2], [$3])
+AC_SUBST([$1], ['$2'])
+])
+
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
-AC_DEFINE([CURRENT_API_VERSION], [20181113], [Current ELPA API version])
+
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20181113, "Current ELPA API version")
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20181113], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20181113, "Current ELPA autotune version")
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -1257,6 +1266,7 @@ AC_CONFIG_FILES([
   Doxyfile
   ${PKG_CONFIG_FILE}:elpa.pc.in
   elpa/elpa_constants.h
+  elpa/elpa_version.h
 ])
 
 m4_include([m4/ax_fc_check_define.m4])

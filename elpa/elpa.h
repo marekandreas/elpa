@@ -4,6 +4,8 @@
 #include <limits.h>
 #include <complex.h>
 
+#include <elpa/elpa_version.h>
+
 struct elpa_struct;
 typedef struct elpa_struct *elpa_t;
 
