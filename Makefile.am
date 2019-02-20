@@ -108,6 +108,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/complex_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
+  src/elpa2/kernels/simple_block4_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/compute_hh_trafo.F90 \
@@ -186,6 +187,10 @@ endif
 
 if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_simple.F90
+endif
+
+if WITH_REAL_GENERIC_SIMPLE_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block4.F90
 endif
 
 if WITH_REAL_BGP_KERNEL
@@ -780,6 +785,7 @@ EXTRA_DIST = \
   src/elpa2/kernels/real_sse_6hv_template.c \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
+  src/elpa2/kernels/simple_block4_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/qr/elpa_pdgeqrf_template.F90 \
