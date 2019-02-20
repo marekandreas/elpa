@@ -81,7 +81,7 @@ before_script:
   - export SKIP_STEP=0
   - ./autogen.sh
   - export SKIP_STEP=0
-  - source /etc/profile.d/modules.sh && . ./ci_test_scripts/.ci-env-vars
+  - if [ -f /etc/profile.d/modules.sh ]; then source /etc/profile.d/modules.sh ; else source /etc/profile.d/mpcdf_modules.sh; fi  && . ./ci_test_scripts/.ci-env-vars
 
 
 
