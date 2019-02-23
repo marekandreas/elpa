@@ -82,8 +82,6 @@
 #define _SSE_SUB _mm_sub_pd
 #define _SSE_MUL _mm_mul_pd
 #define _SSE_STORE _mm_store_pd
-#define _SSE_SET _mm_set_pd
-#define _SSE_SET1 _mm_set1_pd
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define offset 4
@@ -93,8 +91,6 @@
 #define _SSE_SUB _mm_sub_ps
 #define _SSE_MUL _mm_mul_ps
 #define _SSE_STORE _mm_store_ps
-#define _SSE_SET _mm_set_ps
-#define _SSE_SET1 _mm_set1_ps
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -227,99 +223,99 @@ void hexa_hh_trafo_real_sparc64_6hv_single(float* q, float* hh, int* pnb, int* p
         float scalarprods[15];
 #endif
 
-        scalarprods[0] = hh[(ldh+1)];      // 1 = hh(2,2)
-        scalarprods[1] = hh[(ldh*2)+2];    // 2 = hh(3,3)
-        scalarprods[2] = hh[(ldh*2)+1];    // 3 = hh(2,3)
-        scalarprods[3] = hh[(ldh*3)+3];    // 4 = hh(4,4)
-        scalarprods[4] = hh[(ldh*3)+2];    // 5 = hh(3,4)
-        scalarprods[5] = hh[(ldh*3)+1];    // 6 = hh(2,4)
-        scalarprods[6] = hh[(ldh*4)+4];    // 7 = hh(5,5)
-        scalarprods[7] = hh[(ldh*4)+3];    // 8 = hh(4,5)
-        scalarprods[8] = hh[(ldh*4)+2];    // 9 = hh(3,5)
-        scalarprods[9] = hh[(ldh*4)+1];    //10 = hh(2,5) 
-        scalarprods[10] = hh[(ldh*5)+5];   //11 = hh(6,6) 
-        scalarprods[11] = hh[(ldh*5)+4];   //12 = hh(5,6)
-        scalarprods[12] = hh[(ldh*5)+3];   //13 = hh(4,6)
-        scalarprods[13] = hh[(ldh*5)+2];   //14 = hh(3,6)
-        scalarprods[14] = hh[(ldh*5)+1];   //15 = hh(2,6)
+        scalarprods[0] = hh[(ldh+1)];
+        scalarprods[1] = hh[(ldh*2)+2];
+        scalarprods[2] = hh[(ldh*2)+1];
+        scalarprods[3] = hh[(ldh*3)+3];
+        scalarprods[4] = hh[(ldh*3)+2];
+        scalarprods[5] = hh[(ldh*3)+1];
+        scalarprods[6] = hh[(ldh*4)+4];
+        scalarprods[7] = hh[(ldh*4)+3];
+        scalarprods[8] = hh[(ldh*4)+2];
+        scalarprods[9] = hh[(ldh*4)+1];
+        scalarprods[10] = hh[(ldh*5)+5];
+        scalarprods[11] = hh[(ldh*5)+4];
+        scalarprods[12] = hh[(ldh*5)+3];
+        scalarprods[13] = hh[(ldh*5)+2];
+        scalarprods[14] = hh[(ldh*5)+1];
 
         // calculate scalar product of first and fourth householder Vector
         // loop counter = 2
-        scalarprods[0] += hh[1] * hh[(2+ldh)];             // 1 = 1 + hh(2,1) * hh(3,2)
-        scalarprods[2] += hh[(ldh)+1] * hh[2+(ldh*2)];     // 3 = 3 + hh(2,2) * hh(3,3)
-        scalarprods[5] += hh[(ldh*2)+1] * hh[2+(ldh*3)];   // 6 = 6 + hh(2,3) * hh(3,4)
-        scalarprods[9] += hh[(ldh*3)+1] * hh[2+(ldh*4)];   //10 =10 + hh(2,4) * hh(3,5) 
-        scalarprods[14] += hh[(ldh*4)+1] * hh[2+(ldh*5)];  //15 =15 + hh(2,5) * hh(3,6)
+        scalarprods[0] += hh[1] * hh[(2+ldh)];
+        scalarprods[2] += hh[(ldh)+1] * hh[2+(ldh*2)];
+        scalarprods[5] += hh[(ldh*2)+1] * hh[2+(ldh*3)];
+        scalarprods[9] += hh[(ldh*3)+1] * hh[2+(ldh*4)];
+        scalarprods[14] += hh[(ldh*4)+1] * hh[2+(ldh*5)];
 
         // loop counter = 3
-        scalarprods[0] += hh[2] * hh[(3+ldh)];             // 1 = 1 + hh(3,1) * hh(4,2)
-        scalarprods[2] += hh[(ldh)+2] * hh[3+(ldh*2)];     // 3 = 3 + hh(3,2) * hh(4,3)
-        scalarprods[5] += hh[(ldh*2)+2] * hh[3+(ldh*3)];   // 6 = 6 + hh(3,3) * hh(4,4)
-        scalarprods[9] += hh[(ldh*3)+2] * hh[3+(ldh*4)];   //10 =10 + hh(3,4) * hh(4,5)
-        scalarprods[14] += hh[(ldh*4)+2] * hh[3+(ldh*5)];  //15 =15 + hh(3,5) * hh(4,6)
+        scalarprods[0] += hh[2] * hh[(3+ldh)];
+        scalarprods[2] += hh[(ldh)+2] * hh[3+(ldh*2)];
+        scalarprods[5] += hh[(ldh*2)+2] * hh[3+(ldh*3)];
+        scalarprods[9] += hh[(ldh*3)+2] * hh[3+(ldh*4)];
+        scalarprods[14] += hh[(ldh*4)+2] * hh[3+(ldh*5)];
 
-        scalarprods[1] += hh[1] * hh[3+(ldh*2)];           // 2 = 2 + hh(2,1) * hh(4,3)
-        scalarprods[4] += hh[(ldh*1)+1] * hh[3+(ldh*3)];   // 5 = 5 + hh(2,2) * hh(4,4)
-        scalarprods[8] += hh[(ldh*2)+1] * hh[3+(ldh*4)];   // 9 = 9 + hh(2,3) * hh(4,5)
-        scalarprods[13] += hh[(ldh*3)+1] * hh[3+(ldh*5)];  //14 =14 + hh(2,4) * hh(4,6)
+        scalarprods[1] += hh[1] * hh[3+(ldh*2)];
+        scalarprods[4] += hh[(ldh*1)+1] * hh[3+(ldh*3)];
+        scalarprods[8] += hh[(ldh*2)+1] * hh[3+(ldh*4)];
+        scalarprods[13] += hh[(ldh*3)+1] * hh[3+(ldh*5)];
 
         // loop counter = 4
-        scalarprods[0] += hh[3] * hh[(4+ldh)];            // 1 = 1 + hh(4,1) * hh(5,2)
-        scalarprods[2] += hh[(ldh)+3] * hh[4+(ldh*2)];    // 3 = 3 + hh(4,2) * hh(5,3)
-        scalarprods[5] += hh[(ldh*2)+3] * hh[4+(ldh*3)];  // 6 = 6 + hh(4,3) * hh(5,4)
-        scalarprods[9] += hh[(ldh*3)+3] * hh[4+(ldh*4)];  //10 =10 + hh(4,4) * hh(5,5)
-        scalarprods[14] += hh[(ldh*4)+3] * hh[4+(ldh*5)]; //15 =15 + hh(4,5) * hh(5,6)
+        scalarprods[0] += hh[3] * hh[(4+ldh)];
+        scalarprods[2] += hh[(ldh)+3] * hh[4+(ldh*2)];
+        scalarprods[5] += hh[(ldh*2)+3] * hh[4+(ldh*3)];
+        scalarprods[9] += hh[(ldh*3)+3] * hh[4+(ldh*4)];
+        scalarprods[14] += hh[(ldh*4)+3] * hh[4+(ldh*5)];
 
-        scalarprods[1] += hh[2] * hh[4+(ldh*2)];          // 2 = 2 + hh(3,1) * hh(5,3)
-        scalarprods[4] += hh[(ldh*1)+2] * hh[4+(ldh*3)];  // 5 = 5 + hh(3,2) * hh(5,4)
-        scalarprods[8] += hh[(ldh*2)+2] * hh[4+(ldh*4)];  // 9 = 9 + hh(3,3) * hh(5,5)
-        scalarprods[13] += hh[(ldh*3)+2] * hh[4+(ldh*5)]; //14 =14 + hh(3,4) * hh(5,6)
+        scalarprods[1] += hh[2] * hh[4+(ldh*2)];
+        scalarprods[4] += hh[(ldh*1)+2] * hh[4+(ldh*3)];
+        scalarprods[8] += hh[(ldh*2)+2] * hh[4+(ldh*4)];
+        scalarprods[13] += hh[(ldh*3)+2] * hh[4+(ldh*5)];
 
-        scalarprods[3] += hh[1] * hh[4+(ldh*3)];          // 4 = 4 + hh(2,1) * hh(5,4)
-        scalarprods[7] += hh[(ldh)+1] * hh[4+(ldh*4)];    // 8 = 8 + hh(2,2) * hh(5,5)
-        scalarprods[12] += hh[(ldh*2)+1] * hh[4+(ldh*5)]; //13 =13 + hh(2,3) * hh(5,6)
+        scalarprods[3] += hh[1] * hh[4+(ldh*3)];
+        scalarprods[7] += hh[(ldh)+1] * hh[4+(ldh*4)];
+        scalarprods[12] += hh[(ldh*2)+1] * hh[4+(ldh*5)];
 
         // loop counter = 5
-        scalarprods[0] += hh[4] * hh[(5+ldh)];            // 1 = 1 + hh(5,1) * hh(6,2)
-        scalarprods[2] += hh[(ldh)+4] * hh[5+(ldh*2)];    // 3 = 3 + hh(5,2) * hh(6,3)
-        scalarprods[5] += hh[(ldh*2)+4] * hh[5+(ldh*3)];  // 6 = 6 + hh(5,3) * hh(6,4)
-        scalarprods[9] += hh[(ldh*3)+4] * hh[5+(ldh*4)];  //10 =10 + hh(5,4) * hh(6,5)
-        scalarprods[14] += hh[(ldh*4)+4] * hh[5+(ldh*5)]; //15 =15 + hh(5,5) * hh(6,6)
+        scalarprods[0] += hh[4] * hh[(5+ldh)];
+        scalarprods[2] += hh[(ldh)+4] * hh[5+(ldh*2)];
+        scalarprods[5] += hh[(ldh*2)+4] * hh[5+(ldh*3)];
+        scalarprods[9] += hh[(ldh*3)+4] * hh[5+(ldh*4)];
+        scalarprods[14] += hh[(ldh*4)+4] * hh[5+(ldh*5)];
 
-        scalarprods[1] += hh[3] * hh[5+(ldh*2)];          // 2 = 2 + hh(4,1) * hh(6,3)
-        scalarprods[4] += hh[(ldh*1)+3] * hh[5+(ldh*3)];  // 5 = 5 + hh(4,2) * hh(6,4)
-        scalarprods[8] += hh[(ldh*2)+3] * hh[5+(ldh*4)];  // 9 = 9 + hh(4,3) * hh(6,5)
-        scalarprods[13] += hh[(ldh*3)+3] * hh[5+(ldh*5)]; //14 =14 + hh(4,4) * hh(6,6)
+        scalarprods[1] += hh[3] * hh[5+(ldh*2)];
+        scalarprods[4] += hh[(ldh*1)+3] * hh[5+(ldh*3)];
+        scalarprods[8] += hh[(ldh*2)+3] * hh[5+(ldh*4)];
+        scalarprods[13] += hh[(ldh*3)+3] * hh[5+(ldh*5)];
 
-        scalarprods[3] += hh[2] * hh[5+(ldh*3)];          // 4 = 4 + hh(3,1) * hh(6,4)
-        scalarprods[7] += hh[(ldh)+2] * hh[5+(ldh*4)];    // 8 = 8 + hh(3,2) * hh(6,5)
-        scalarprods[12] += hh[(ldh*2)+2] * hh[5+(ldh*5)]; //13 =13 + hh(3,3) * hh(6,6)
+        scalarprods[3] += hh[2] * hh[5+(ldh*3)];
+        scalarprods[7] += hh[(ldh)+2] * hh[5+(ldh*4)];
+        scalarprods[12] += hh[(ldh*2)+2] * hh[5+(ldh*5)];
 
-        scalarprods[6] += hh[1] * hh[5+(ldh*4)];          // 7 = 7 + hh(2,1) * hh(6,5)
-        scalarprods[11] += hh[(ldh)+1] * hh[5+(ldh*5)];   //12 =12 + hh(2,2) * hh(6,6) 
+        scalarprods[6] += hh[1] * hh[5+(ldh*4)];
+        scalarprods[11] += hh[(ldh)+1] * hh[5+(ldh*5)];
 
         #pragma ivdep
-        for (i = 6; i < nb; i++)                                     // do i = 7, nb
+        for (i = 6; i < nb; i++)
         {
-                scalarprods[0] += hh[i-1] * hh[(i+ldh)];             // 1 = 1 + hh(i-1,1) * hh(i,2)
-                scalarprods[2] += hh[(ldh)+i-1] * hh[i+(ldh*2)];     // 3 = 3 + hh(i-1,2) * hh(i,3)
-                scalarprods[5] += hh[(ldh*2)+i-1] * hh[i+(ldh*3)];   // 6 = 6 + hh(i-1,3) * hh(i,4)
-                scalarprods[9] += hh[(ldh*3)+i-1] * hh[i+(ldh*4)];   //10 =10 + hh(i-1,4) * hh(i,5)
-                scalarprods[14] += hh[(ldh*4)+i-1] * hh[i+(ldh*5)];  //15 =15 + hh(i-1,5) * hh(i,6)
+                scalarprods[0] += hh[i-1] * hh[(i+ldh)];
+                scalarprods[2] += hh[(ldh)+i-1] * hh[i+(ldh*2)];
+                scalarprods[5] += hh[(ldh*2)+i-1] * hh[i+(ldh*3)];
+                scalarprods[9] += hh[(ldh*3)+i-1] * hh[i+(ldh*4)];
+                scalarprods[14] += hh[(ldh*4)+i-1] * hh[i+(ldh*5)];
 
-                scalarprods[1] += hh[i-2] * hh[i+(ldh*2)];          // 2 = 2 + hh(i-2,1) * hh(i,3)
-                scalarprods[4] += hh[(ldh*1)+i-2] * hh[i+(ldh*3)];  // 5 = 5 + hh(i-2,2) * hh(i,4)
-                scalarprods[8] += hh[(ldh*2)+i-2] * hh[i+(ldh*4)];  // 9 = 9 + hh(i-2,3) * hh(i,5)
-                scalarprods[13] += hh[(ldh*3)+i-2] * hh[i+(ldh*5)]; //14 =14 + hh(i-2,4) * hh(i,6)
+                scalarprods[1] += hh[i-2] * hh[i+(ldh*2)];
+                scalarprods[4] += hh[(ldh*1)+i-2] * hh[i+(ldh*3)];
+                scalarprods[8] += hh[(ldh*2)+i-2] * hh[i+(ldh*4)];
+                scalarprods[13] += hh[(ldh*3)+i-2] * hh[i+(ldh*5)];
 
-                scalarprods[3] += hh[i-3] * hh[i+(ldh*3)];          // 4 = 4 + hh(i-3,1) * hh(i,4)
-                scalarprods[7] += hh[(ldh)+i-3] * hh[i+(ldh*4)];    // 8 = 8 + hh(i-3,2) * hh(i,5)
-                scalarprods[12] += hh[(ldh*2)+i-3] * hh[i+(ldh*5)]; //13 =13 + hh(i-3,3) * hh(i,6)
+                scalarprods[3] += hh[i-3] * hh[i+(ldh*3)];
+                scalarprods[7] += hh[(ldh)+i-3] * hh[i+(ldh*4)];
+                scalarprods[12] += hh[(ldh*2)+i-3] * hh[i+(ldh*5)];
 
-                scalarprods[6] += hh[i-4] * hh[i+(ldh*4)];          // 7 = 7 + hh(i-4,1) * hh(i,5)
-                scalarprods[11] += hh[(ldh)+i-4] * hh[i+(ldh*5)];   //12 =12 + hh(i-4,2) * hh(i,6)
+                scalarprods[6] += hh[i-4] * hh[i+(ldh*4)];
+                scalarprods[11] += hh[(ldh)+i-4] * hh[i+(ldh*5)];
 
-                scalarprods[10] += hh[i-5] * hh[i+(ldh*5)];         //11 =11 + hh(i-5,1) * hh(i,6)
+                scalarprods[10] += hh[i-5] * hh[i+(ldh*5)];
         }
 
         // Production level kernel calls with padding
@@ -428,87 +424,154 @@ __forceinline void hh_trafo_kernel_8_SPARC64_6hv_single(float* q, float* hh, int
         /////////////////////////////////////////////////////
         int i;
 
-        __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*5]);   // a_1_1 = q(1:nq,6)
-        __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*4]);   // a_2_1 = q(1:nq,5)
-        __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq*3]);   // a_3_1 = q(1:nq,4)
-        __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[ldq*2]);   // a_4_1 = q(1:nq,3)
-        __SSE_DATATYPE a5_1 = _SSE_LOAD(&q[ldq]);     // a_5_1 = q(1,nq,2)
-        __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);       // a_6_1 = q(1:nq,1)
+        __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*5]);
+        __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*4]);
+        __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq*3]);
+        __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[ldq*2]);
+        __SSE_DATATYPE a5_1 = _SSE_LOAD(&q[ldq]);
+        __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);
 
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);  // h_6_5 = hh(2,6)
-        __SSE_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);  // h_6_4 = hh(3,6)
-        __SSE_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);  // h_6_3 = hh(4,6)
-        __SSE_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);  // h_6_2 = hh(5,6)
-        __SSE_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);  // h_6_1 = hh(6,6)
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_6_5 = _mm_set1_pd(hh[(ldh*5)+1]);
+        __SSE_DATATYPE h_6_4 = _mm_set1_pd(hh[(ldh*5)+2]);
+        __SSE_DATATYPE h_6_3 = _mm_set1_pd(hh[(ldh*5)+3]);
+        __SSE_DATATYPE h_6_2 = _mm_set1_pd(hh[(ldh*5)+4]);
+        __SSE_DATATYPE h_6_1 = _mm_set1_pd(hh[(ldh*5)+5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_6_5 =         _mm_set1_ps(hh[(ldh*5)+1]) ;
+        __SSE_DATATYPE h_6_4 =         _mm_set1_ps(hh[(ldh*5)+2]) ;
+        __SSE_DATATYPE h_6_3 =         _mm_set1_ps(hh[(ldh*5)+3]) ;
+        __SSE_DATATYPE h_6_2 =         _mm_set1_ps(hh[(ldh*5)+4]) ;
+        __SSE_DATATYPE h_6_1 =         _mm_set1_ps(hh[(ldh*5)+5]) ;
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
-        __SSE_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
-        __SSE_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
-        __SSE_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
-        __SSE_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_6_5 = _mm_set_pd(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+        __SSE_DATATYPE h_6_4 = _mm_set_pd(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+        __SSE_DATATYPE h_6_3 = _mm_set_pd(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+        __SSE_DATATYPE h_6_2 = _mm_set_pd(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+        __SSE_DATATYPE h_6_1 = _mm_set_pd(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_6_5 =         _mm_set_ps(hh[(ldh*5)+1], hh[(ldh*5)+1]) ;
+        __SSE_DATATYPE h_6_4 =         _mm_set_ps(hh[(ldh*5)+2], hh[(ldh*5)+2]) ;
+        __SSE_DATATYPE h_6_3 =         _mm_set_ps(hh[(ldh*5)+3], hh[(ldh*5)+3]) ;
+        __SSE_DATATYPE h_6_2 =         _mm_set_ps(hh[(ldh*5)+4], hh[(ldh*5)+4]) ;
+        __SSE_DATATYPE h_6_1 =         _mm_set_ps(hh[(ldh*5)+5], hh[(ldh*5)+5]) ;
+#endif
 #endif
 
-        register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5));  // t1 = a_6_1 + a_5_1 * h_6_5
-        t1 = _SSE_ADD(t1, _SSE_MUL(a4_1, h_6_4)); // t1 = t1 + a_4_1 * h_6_4
-        t1 = _SSE_ADD(t1, _SSE_MUL(a3_1, h_6_3)); // t1 = t1 + a_3_1 * h_6_3
-        t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2)); // t1 = t1 + a_2_1 * h_6_2
-        t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1)); // t1 = t1 + a_1_1 * h_6_1
+
+
+        register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5));
+        t1 = _SSE_ADD(t1, _SSE_MUL(a4_1, h_6_4));
+        t1 = _SSE_ADD(t1, _SSE_MUL(a3_1, h_6_3));
+        t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2));
+        t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
 
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);  // h_5_4 = hh(2,5)
-        __SSE_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);  // h_5_3 = hh(3,5)
-        __SSE_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);  // h_5_2 = hh(4,5)
-        __SSE_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);  // h_5_1 = hh(5,5)
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_5_4 = _mm_set1_pd(hh[(ldh*4)+1]);
+        __SSE_DATATYPE h_5_3 = _mm_set1_pd(hh[(ldh*4)+2]);
+        __SSE_DATATYPE h_5_2 = _mm_set1_pd(hh[(ldh*4)+3]);
+        __SSE_DATATYPE h_5_1 = _mm_set1_pd(hh[(ldh*4)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_5_4 =         _mm_set1_ps(hh[(ldh*4)+1]) ;
+        __SSE_DATATYPE h_5_3 =         _mm_set1_ps(hh[(ldh*4)+2]) ;
+        __SSE_DATATYPE h_5_2 =         _mm_set1_ps(hh[(ldh*4)+3]) ;
+        __SSE_DATATYPE h_5_1 =         _mm_set1_ps(hh[(ldh*4)+4]) ;
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
-        __SSE_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
-        __SSE_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
-        __SSE_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_5_4 = _mm_set_pd(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+        __SSE_DATATYPE h_5_3 = _mm_set_pd(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+        __SSE_DATATYPE h_5_2 = _mm_set_pd(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+        __SSE_DATATYPE h_5_1 = _mm_set_pd(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_5_4 =         _mm_set_ps(hh[(ldh*4)+1], hh[(ldh*4)+1]) ;
+        __SSE_DATATYPE h_5_3 =         _mm_set_ps(hh[(ldh*4)+2], hh[(ldh*4)+2]) ;
+        __SSE_DATATYPE h_5_2 =         _mm_set_ps(hh[(ldh*4)+3], hh[(ldh*4)+3]) ;
+        __SSE_DATATYPE h_5_1 =         _mm_set_ps(hh[(ldh*4)+4], hh[(ldh*4)+4]) ;
+#endif
 #endif
 
-        register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4)); // v1 = a_5_1 + a_4_1 * h_5_4
-        v1 = _SSE_ADD(v1, _SSE_MUL(a3_1, h_5_3)); // v1 = v1 + a_3_1 * h_5_3
-        v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2)); // v1 = v1 + a_2_1 * h_5_2
-        v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1)); // v1 = v1 + a_1_1 * h_5_1
+
+
+        register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4));
+        v1 = _SSE_ADD(v1, _SSE_MUL(a3_1, h_5_3));
+        v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2));
+        v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
 
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);  // h_4_3 = hh(2,4)
-        __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);  // h_4_2 = hh(3,4)
-        __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);  // h_4_1 = hh(4,4)
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_4_3 = _mm_set1_pd(hh[(ldh*3)+1]);
+        __SSE_DATATYPE h_4_2 = _mm_set1_pd(hh[(ldh*3)+2]);
+        __SSE_DATATYPE h_4_1 = _mm_set1_pd(hh[(ldh*3)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_4_3 =         _mm_set1_ps(hh[(ldh*3)+1]) ;
+        __SSE_DATATYPE h_4_2 =         _mm_set1_ps(hh[(ldh*3)+2]) ;
+        __SSE_DATATYPE h_4_1 =         _mm_set1_ps(hh[(ldh*3)+3]) ;
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-        __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-        __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_4_3 = _mm_set_pd(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+        __SSE_DATATYPE h_4_2 = _mm_set_pd(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+        __SSE_DATATYPE h_4_1 = _mm_set_pd(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_4_3 =         _mm_set_ps(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+        __SSE_DATATYPE h_4_2 =         _mm_set_ps(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+        __SSE_DATATYPE h_4_1 =         _mm_set_ps(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#endif
 #endif
 
-        register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3)); // w1 = a_4_1 + a_3_1 * h_4_3
-        w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));  // w1 = w1 + a_2_1 * h_4_2
-        w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));  // w1 = w1 + a_1_1 * h_4_1
+
+        register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
+        w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
+        w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
 
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);     // h_2_1 = hh(2,2)
-        __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]); // h_3_2 = hh(2,3)
-        __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]); // h_3_1 = hh(3,3)
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_2_1 = _mm_set1_pd(hh[ldh+1]);
+        __SSE_DATATYPE h_3_2 = _mm_set1_pd(hh[(ldh*2)+1]);
+        __SSE_DATATYPE h_3_1 = _mm_set1_pd(hh[(ldh*2)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_2_1 =         _mm_set1_ps(hh[ldh+1]) ;
+        __SSE_DATATYPE h_3_2 =         _mm_set1_ps(hh[(ldh*2)+1]) ;
+        __SSE_DATATYPE h_3_1 =         _mm_set1_ps(hh[(ldh*2)+2]) ;
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-        __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-        __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_2_1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+        __SSE_DATATYPE h_3_2 = _mm_set_pd(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+        __SSE_DATATYPE h_3_1 = _mm_set_pd(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_2_1 =         _mm_set_ps(hh[ldh+1], hh[ldh+1]) ;
+        __SSE_DATATYPE h_3_2 =         _mm_set_ps(hh[(ldh*2)+1], hh[(ldh*2)+1]) ;
+        __SSE_DATATYPE h_3_1 =         _mm_set_ps(hh[(ldh*2)+2], hh[(ldh*2)+2]) ;
+#endif
 #endif
 
-        register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));  // z1 = a_3_1 + a_2_1 * h_3_2
-        z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));  // z1 = z1 + a_1_1 * h_3_1
-        register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1));  // y1 = a_2_1 + a_1_1 * h_2_1
+        register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
+        z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));
+        register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1));
 
-        register __SSE_DATATYPE x1 = a1_1;  // x1 = a_1_1
+        register __SSE_DATATYPE x1 = a1_1;
 
         __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*5)+offset]);
         __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*4)+offset]);
@@ -545,378 +608,715 @@ __forceinline void hh_trafo_kernel_8_SPARC64_6hv_single(float* q, float* hh, int
         __SSE_DATATYPE h5;
         __SSE_DATATYPE h6;
 
-        for(i = 6; i < nb; i++)             // do i=7,nb
+        for(i = 6; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-                h1 = _SSE_SET1(hh[i-5]);  // h1 = hh(i-5,1)
+#ifdef DOUBLE_PRECISION_REAL
+                h1 = _mm_set1_pd(hh[i-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h1 = _mm_set1_ps(hh[i-5]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h1 = _SSE_SET(hh[i-5], hh[i-5]);
+#ifdef DOUBLE_PRECISION_REAL
+                h1 = _mm_set_pd(hh[i-5], hh[i-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h1 = _mm_set_ps(hh[i-5], hh[i-5]);
+#endif
 #endif
         
                 q1 = _SSE_LOAD(&q[i*ldq]);
                 q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
 
-                x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));  // x1 = x1 + q(1:nq,i) * h1
+                x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
                 x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef HAVE_SSE_INTRINSICS
-                h2 = _SSE_SET1(hh[ldh+i-4]);   // h2 = hh(i-4,2)
+#ifdef DOUBLE_PRECISION_REAL
+                h2 = _mm_set1_pd(hh[ldh+i-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h2 = _mm_set1_ps(hh[ldh+i-4]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-                h2 = _SSE_SET(hh[ldh+i-4], hh[ldh+i-4]);
+#ifdef DOUBLE_PRECISION_REAL
+                h2 = _mm_set_pd(hh[ldh+i-4], hh[ldh+i-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h2 = _mm_set_ps(hh[ldh+i-4], hh[ldh+i-4]);
+#endif
 #endif
 
-                y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));  // y1 = y1 + q1(1:nq,i) * h2
+                y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
                 y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef HAVE_SSE_INTRINSICS
-                h3 = _SSE_SET1(hh[(ldh*2)+i-3]);  // h3 = hh(i-3,3)
+#ifdef DOUBLE_PRECISION_REAL
+                h3 = _mm_set1_pd(hh[(ldh*2)+i-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h3 = _mm_set1_ps(hh[(ldh*2)+i-3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h3 = _SSE_SET(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#ifdef DOUBLE_PRECISION_REAL
+                h3 = _mm_set_pd(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h3 = _mm_set_ps(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#endif
 #endif
 
-                z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));   // z1 = z1 + q(1:nq,i) * h3
+                z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
                 z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
 #ifdef HAVE_SSE_INTRINSICS
-                h4 = _SSE_SET1(hh[(ldh*3)+i-2]);    // h4 = hh(i-2,4)
+#ifdef DOUBLE_PRECISION_REAL
+                h4 = _mm_set1_pd(hh[(ldh*3)+i-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h4 = _mm_set1_ps(hh[(ldh*3)+i-2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h4 = _SSE_SET(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#ifdef DOUBLE_PRECISION_REAL
+                h4 = _mm_set_pd(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h4 = _mm_set_ps(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#endif
 #endif
 
-                w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));  // w1 = w1 + q1(1:nq,i) * h4
+                w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
                 w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
 
 #ifdef HAVE_SSE_INTRINSICS
-                h5 = _SSE_SET1(hh[(ldh*4)+i-1]);   // h5 = hh(i-1,5)
+#ifdef DOUBLE_PRECISION_REAL
+                h5 = _mm_set1_pd(hh[(ldh*4)+i-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h5 = _mm_set1_ps(hh[(ldh*4)+i-1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#ifdef DOUBLE_PRECISION_REAL
+                h5 = _mm_set_pd(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
-                v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5)); // v1 = v1 + q1(1:nq,i) * h5
+#ifdef SINGLE_PRECISION_REAL
+                h5 = _mm_set_ps(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#endif
+#endif
+
+                v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
                 v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
 
 #ifdef HAVE_SSE_INTRINSICS
-                h6 = _SSE_SET1(hh[(ldh*5)+i]);  // h6 = hh(i,6)
+#ifdef DOUBLE_PRECISION_REAL
+                h6 = _mm_set1_pd(hh[(ldh*5)+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h6 = _mm_set1_ps(hh[(ldh*5)+i]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-                h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#ifdef DOUBLE_PRECISION_REAL
+                h6 = _mm_set_pd(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h6 = _mm_set_ps(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#endif
 #endif
 
-                t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));  // t1 = t1 + q1(1:nq,i) * h6
+                t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
                 t2 = _SSE_ADD(t2, _SSE_MUL(q2,h6));
         }
 
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-5]);  // h1 = hh(nb-4,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-5] );
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-5], hh[nb-5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-5], hh[nb-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-5], hh[nb-5]);
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[nb*ldq]);
         q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
 
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));   // x1 = x1 + q1(1:nq,nb+1) * h1
+        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
         x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-4]);  // h2 = hh(nb-3,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-4]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-4], hh[ldh+nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-4], hh[ldh+nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-4], hh[ldh+nb-4]);
+#endif
 #endif
 
 
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));  // y1 = y1 + q1(1:nq,nb+1) * h2
+        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
         y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-3]); // h3 = hh(nb-2,3)
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-3]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#endif
 #endif
 
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3)); // z1 = z1 + q1(1:nq,nb+1) * h3
+        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
         z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);  // h4 = hh(nb-1,4)
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+nb-2]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#endif
 #endif
 
-        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));  // w1 = w1 + q1(1:nq,nb+1) * h4
+        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
         w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);  // h5 = hh(nb, 5)
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+nb-1]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#endif
 #endif
 
 
 
-        v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));  // v1 = v1 + q1(1:nq,nb+1) * h5
+        v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
         v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-4]);   // h1 = hh(nb-3,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-4]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-4], hh[nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-4], hh[nb-4]);
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
         q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
 
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));  // x1 = x1 + q1(1:nq,nb+2) * h1
+        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
         x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-3]); // h2 = hh(nb-2,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-3], hh[ldh+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-3], hh[ldh+nb-3]);
+#endif
 #endif
 
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));  // y1 = y1 + q1(1:nq,nb+2) * h2
+        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
         y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);  // h3 = hh(nb-1,3)
+#ifdef DOUBLE_PRECISION
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#ifdef DOUBLE_PRECISION
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#endif
 #endif
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));  // z1 = z1 + q1(1:nq,nb+2)  * h3
+        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
         z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+nb-1]); // h4 = hh(nb,4)
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+nb-1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#endif
 #endif
 
 
-        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));  // w1 = w1 + q1(1:nq,nb+2) * h4
+        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
         w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-3]); // h1 = hh(nb-2,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-3], hh[nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-3], hh[nb-3]);
+#endif
 #endif
 
 
         q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
         q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
 
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));  // x1 = x1 + q1(1:nq,nb+3) * h1
+        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
         x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-2]); // h2 = hh(nb-1,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-2]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-2], hh[ldh+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-2], hh[ldh+nb-2]);
+#endif
 #endif
 
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));  // y1 = y1 + q1(1:nq,nb+3) * h2
+        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
         y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-1]); // h3 = hh(nb,3)
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-1]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#endif
 #endif
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3)); // z1 = z1 + q1(1:nq,nb+3) * h3
+        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
         z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-2]);  // h1 = hh(nb-1,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-2]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-2], hh[nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-2], hh[nb-2]);
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
         q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
 
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));   // x1 = x1 + q1(1:nq,nb+4) * h1
+        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
         x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-1]);  // h2 = hh(nb,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-1]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-1], hh[ldh+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-1], hh[ldh+nb-1]);
+#endif
 #endif
 
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));  // y1 = y1 + q1(1:n1,nb+4) * h2
+        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
         y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
 
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-1]);  // h1 = hh(nb,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-1]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
         q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
 
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));  // x1 = x1 + q1(1:nq,nb+5) * h1
+        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
         x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
 
         /////////////////////////////////////////////////////
         // Apply tau, correct wrong calculation using pre-calculated scalar products
         /////////////////////////////////////////////////////
 
-
+#ifdef DOUBLE_PRECISION_REAL
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);  // tau1 = hh(1,1)
+        __SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+        __SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
 #endif
-        x1 = _SSE_MUL(x1, tau1);  // x1 = x1 * tau1
+        x1 = _SSE_MUL(x1, tau1);
         x2 = _SSE_MUL(x2, tau1);
 
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);            // tau2 = hh(1,2)
-        __SSE_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);   // vs_1_2 = product(1)
+        __SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
+        __SSE_DATATYPE vs_1_2 = _mm_set1_pd(scalarprods[0]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
+        __SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs_1_2 = _mm_set_pd(scalarprods[0], scalarprods[0]);
 #endif
 
-        h2 = _SSE_MUL(tau2, vs_1_2);  // h2 = tau2 * vs_1_2
+        h2 = _SSE_MUL(tau2, vs_1_2);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]);
+#endif
+#ifdef HAVE_SPARC64_SSE
+        __SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
+#endif
 
-        y1 = _SSE_SUB(_SSE_MUL(y1,tau2), _SSE_MUL(x1,h2));   // y1 = y1 * tau2 - x1 * h2
+        x1 = _SSE_MUL(x1, tau1);
+        x2 = _SSE_MUL(x2, tau1);
+
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]);
+        __SSE_DATATYPE vs_1_2 = _mm_set1_ps(scalarprods[0]);
+#endif
+
+#ifdef HAVE_SPARC64_SSE
+        __SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs_1_2 = _mm_set_ps(scalarprods[0], scalarprods[0]);
+#endif
+
+        h2 = _SSE_MUL(tau2, vs_1_2);
+#endif
+
+        y1 = _SSE_SUB(_SSE_MUL(y1,tau2), _SSE_MUL(x1,h2));
         y2 = _SSE_SUB(_SSE_MUL(y2,tau2), _SSE_MUL(x2,h2));
 
+#ifdef DOUBLE_PRECISION_REAL
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);         // tau3 = hh(1,3)
-        __SSE_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);  // vs_1_3 = prods(2)
-        __SSE_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);  // vs_2_3 = prods(3)
+        __SSE_DATATYPE tau3 = _mm_set1_pd(hh[ldh*2]);
+        __SSE_DATATYPE vs_1_3 = _mm_set1_pd(scalarprods[1]);
+        __SSE_DATATYPE vs_2_3 = _mm_set1_pd(scalarprods[2]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
-        __SSE_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
-        __SSE_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]) ;
+        __SSE_DATATYPE tau3 = _mm_set_pd(hh[ldh*2], hh[ldh*2]);
+        __SSE_DATATYPE vs_1_3 = _mm_set_pd(scalarprods[1], scalarprods[1]);
+        __SSE_DATATYPE vs_2_3 = _mm_set_pd(scalarprods[2], scalarprods[2]) ;
 #endif
 
-        h2 = _SSE_MUL(tau3, vs_1_3);   // h2 = tau3 * vs_1_3
-        h3 = _SSE_MUL(tau3, vs_2_3);   // h3 = tau3 * vs_2_3
+        h2 = _SSE_MUL(tau3, vs_1_3);
+        h3 = _SSE_MUL(tau3, vs_2_3);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE tau3 = _mm_set1_ps(hh[ldh*2]);
+        __SSE_DATATYPE vs_1_3 = _mm_set1_ps(scalarprods[1]);
+        __SSE_DATATYPE vs_2_3 = _mm_set1_ps(scalarprods[2]);
+#endif
+#ifdef HAVE_SPARC64_SSE
+        __SSE_DATATYPE tau3 = _mm_set_ps(hh[ldh*2], hh[ldh*2]);
+        __SSE_DATATYPE vs_1_3 = _mm_set_ps(scalarprods[1], scalarprods[1]);
+        __SSE_DATATYPE vs_2_3 = _mm_set_ps(scalarprods[2], scalarprods[2]);
+#endif
 
-        z1 = _SSE_SUB(_SSE_MUL(z1,tau3), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))); // Z1 = z1 * tau3 - (y1*h3 + x1*h2)
+
+        h2 = _SSE_MUL(tau3, vs_1_3);
+        h3 = _SSE_MUL(tau3, vs_2_3);
+#endif
+
+        z1 = _SSE_SUB(_SSE_MUL(z1,tau3), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
         z2 = _SSE_SUB(_SSE_MUL(z2,tau3), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)));
 
+#ifdef DOUBLE_PRECISION_REAL
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);         // tau4 = hh(1,4)
-        __SSE_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);  // vs_1_4 = prods(4)
-        __SSE_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);  // vs_2_4 = prods(5)
+        __SSE_DATATYPE tau4 = _mm_set1_pd(hh[ldh*3]);
+        __SSE_DATATYPE vs_1_4 = _mm_set1_pd(scalarprods[3]);
+        __SSE_DATATYPE vs_2_4 = _mm_set1_pd(scalarprods[4]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
-        __SSE_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
-        __SSE_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
+        __SSE_DATATYPE tau4 = _mm_set_pd(hh[ldh*3], hh[ldh*3]);
+        __SSE_DATATYPE vs_1_4 = _mm_set_pd(scalarprods[3], scalarprods[3]);
+        __SSE_DATATYPE vs_2_4 = _mm_set_pd(scalarprods[4], scalarprods[4]);
 #endif
 
-        h2 = _SSE_MUL(tau4, vs_1_4);  // h2 = tau4 * vs_1_4
-        h3 = _SSE_MUL(tau4, vs_2_4);  // h3 = tau4 * vs_2_4
+        h2 = _SSE_MUL(tau4, vs_1_4);
+        h3 = _SSE_MUL(tau4, vs_2_4);
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);  // vs_3_4 = prods(6)
+        __SSE_DATATYPE vs_3_4 = _mm_set1_pd(scalarprods[5]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
+        __SSE_DATATYPE vs_3_4 = _mm_set_pd(scalarprods[5], scalarprods[5]);
 #endif
 
-        h4 = _SSE_MUL(tau4, vs_3_4); // h4 = tau4 * vs_3_4
+        h4 = _SSE_MUL(tau4, vs_3_4);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE tau4 = _mm_set1_ps(hh[ldh*3]);
+        __SSE_DATATYPE vs_1_4 = _mm_set1_ps(scalarprods[3]);
+        __SSE_DATATYPE vs_2_4 = _mm_set1_ps(scalarprods[4]);
+#endif
+#ifdef HAVE_SPARC64_SSE
+        __SSE_DATATYPE tau4 = _mm_set_ps(hh[ldh*3], hh[ldh*3]);
+        __SSE_DATATYPE vs_1_4 = _mm_set_ps(scalarprods[3], scalarprods[3]);
+        __SSE_DATATYPE vs_2_4 = _mm_set_ps(scalarprods[4], scalarprods[4]);
+#endif
+
+        h2 = _SSE_MUL(tau4, vs_1_4);
+        h3 = _SSE_MUL(tau4, vs_2_4);
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE vs_3_4 = _mm_set1_ps(scalarprods[5]);
+#endif
+#ifdef HAVE_SPARC64_SSE
+        __SSE_DATATYPE vs_3_4 = _mm_set_ps(scalarprods[5], scalarprods[5]);
+#endif
+        h4 = _SSE_MUL(tau4, vs_3_4);
+#endif
 
         w1 = _SSE_SUB(_SSE_MUL(w1,tau4), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
         w2 = _SSE_SUB(_SSE_MUL(w2,tau4), _SSE_ADD(_SSE_MUL(z2,h4), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-        // w1 = w1 * tau4 - (z1 *h4 + y1 * h3 + x1 *h2)
+
+#ifdef DOUBLE_PRECISION_REAL
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);         // tau5 = hh(1,5)
-        __SSE_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);  // vs_1_5 = prods(7)
-        __SSE_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);  // vs_2_5 = prods(8)
+        __SSE_DATATYPE tau5 = _mm_set1_pd(hh[ldh*4]);
+        __SSE_DATATYPE vs_1_5 = _mm_set1_pd(scalarprods[6]);
+        __SSE_DATATYPE vs_2_5 = _mm_set1_pd(scalarprods[7]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
-        __SSE_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
-        __SSE_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
+        __SSE_DATATYPE tau5 = _mm_set_pd(hh[ldh*4], hh[ldh*4]);
+        __SSE_DATATYPE vs_1_5 = _mm_set_pd(scalarprods[6], scalarprods[6]);
+        __SSE_DATATYPE vs_2_5 = _mm_set_pd(scalarprods[7], scalarprods[7]);
 #endif
 
-        h2 = _SSE_MUL(tau5, vs_1_5);   // h2 = tau5 * vs_1_5
-        h3 = _SSE_MUL(tau5, vs_2_5);   // h3 = tau5 * vs_2_5
+        h2 = _SSE_MUL(tau5, vs_1_5);
+        h3 = _SSE_MUL(tau5, vs_2_5);
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);  // vs_3_5 = prods(9)
-        __SSE_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);  // vs_4_5 = prods(10)
+        __SSE_DATATYPE vs_3_5 = _mm_set1_pd(scalarprods[8]);
+        __SSE_DATATYPE vs_4_5 = _mm_set1_pd(scalarprods[9]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
-        __SSE_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
+        __SSE_DATATYPE vs_3_5 = _mm_set_pd(scalarprods[8], scalarprods[8]);
+        __SSE_DATATYPE vs_4_5 = _mm_set_pd(scalarprods[9], scalarprods[9]);
 #endif
 
-        h4 = _SSE_MUL(tau5, vs_3_5);  // h4 = tau5 * vs_3_5
-        h5 = _SSE_MUL(tau5, vs_4_5);  // h5 = tau5 * vs_4_5
+        h4 = _SSE_MUL(tau5, vs_3_5);
+        h5 = _SSE_MUL(tau5, vs_4_5);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE tau5 = _mm_set1_ps(hh[ldh*4]);
+        __SSE_DATATYPE vs_1_5 = _mm_set1_ps(scalarprods[6]);
+        __SSE_DATATYPE vs_2_5 = _mm_set1_ps(scalarprods[7]);
+#endif
+#ifdef HAVE_SPARC64_SSE
+        __SSE_DATATYPE tau5 = _mm_set_ps(hh[ldh*4], hh[ldh*4]);
+        __SSE_DATATYPE vs_1_5 = _mm_set_ps(scalarprods[6], scalarprods[6]);
+        __SSE_DATATYPE vs_2_5 = _mm_set_ps(scalarprods[7], scalarprods[7]);
+#endif
+
+        h2 = _SSE_MUL(tau5, vs_1_5);
+        h3 = _SSE_MUL(tau5, vs_2_5);
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE vs_3_5 = _mm_set1_ps(scalarprods[8]);
+        __SSE_DATATYPE vs_4_5 = _mm_set1_ps(scalarprods[9]);
+#endif
+#ifdef HAVE_SPARC64_SSE
+        __SSE_DATATYPE vs_3_5 = _mm_set_ps(scalarprods[8], scalarprods[8]);
+        __SSE_DATATYPE vs_4_5 = _mm_set_ps(scalarprods[9], scalarprods[9]);
+#endif
+
+
+        h4 = _SSE_MUL(tau5, vs_3_5);
+        h5 = _SSE_MUL(tau5, vs_4_5);
+#endif
 
         v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
         v2 = _SSE_SUB(_SSE_MUL(v2,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-       // v1 = v1 * tau5 - (w1 * h5 + z1 * h4 + y1 * h3 + x1 * h2)
+
+#ifdef DOUBLE_PRECISION_REAL
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);         // tau6 = hh(1,6)
- 	__SSE_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]); // vs_1_6 = prods(11)
-        __SSE_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]); // vs_2_6 = prods(12)
+        __SSE_DATATYPE tau6 = _mm_set1_pd(hh[ldh*5]);
+        __SSE_DATATYPE vs_1_6 = _mm_set1_pd(scalarprods[10]);
+        __SSE_DATATYPE vs_2_6 = _mm_set1_pd(scalarprods[11]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
-        __SSE_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
-        __SSE_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
+        __SSE_DATATYPE tau6 = _mm_set_pd(hh[ldh*5], hh[ldh*5]);
+        __SSE_DATATYPE vs_1_6 = _mm_set_pd(scalarprods[10], scalarprods[10]);
+        __SSE_DATATYPE vs_2_6 = _mm_set_pd(scalarprods[11], scalarprods[11]);
 #endif
 
-        h2 = _SSE_MUL(tau6, vs_1_6); // h2 = tau6 * vs_1_6
-        h3 = _SSE_MUL(tau6, vs_2_6); // h3 = tau6 * vs_2_6
+        h2 = _SSE_MUL(tau6, vs_1_6);
+        h3 = _SSE_MUL(tau6, vs_2_6);
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]); // vs_3_6 = prods(13)
-        __SSE_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]); // vs_4_6 = prods(14)
-        __SSE_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]); // vs_5_6 = prods(15)
+        __SSE_DATATYPE vs_3_6 = _mm_set1_pd(scalarprods[12]);
+        __SSE_DATATYPE vs_4_6 = _mm_set1_pd(scalarprods[13]);
+        __SSE_DATATYPE vs_5_6 = _mm_set1_pd(scalarprods[14]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
-        __SSE_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
-        __SSE_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
+        __SSE_DATATYPE vs_3_6 = _mm_set_pd(scalarprods[12], scalarprods[12]);
+        __SSE_DATATYPE vs_4_6 = _mm_set_pd(scalarprods[13], scalarprods[13]);
+        __SSE_DATATYPE vs_5_6 = _mm_set_pd(scalarprods[14], scalarprods[14]);
 #endif
 
-        h4 = _SSE_MUL(tau6, vs_3_6); // h4 = tau6 * vs_3_6
-        h5 = _SSE_MUL(tau6, vs_4_6); // h5 = tau6 * vs_4_6
-        h6 = _SSE_MUL(tau6, vs_5_6); // h6 = tau6 * vs_5_6
+        h4 = _SSE_MUL(tau6, vs_3_6);
+        h5 = _SSE_MUL(tau6, vs_4_6);
+        h6 = _SSE_MUL(tau6, vs_5_6);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE tau6 = _mm_set1_ps(hh[ldh*5]);
+        __SSE_DATATYPE vs_1_6 = _mm_set1_ps(scalarprods[10]);
+        __SSE_DATATYPE vs_2_6 = _mm_set1_ps(scalarprods[11]);
+#endif
+#ifdef HAVE_SPARC64_SSE
+        __SSE_DATATYPE tau6 = _mm_set_ps(hh[ldh*5], hh[ldh*5]);
+        __SSE_DATATYPE vs_1_6 = _mm_set_ps(scalarprods[10], scalarprods[10]);
+        __SSE_DATATYPE vs_2_6 = _mm_set_ps(scalarprods[11], scalarprods[11]);
+#endif
+
+        h2 = _SSE_MUL(tau6, vs_1_6);
+        h3 = _SSE_MUL(tau6, vs_2_6);
+#ifdef HAVE_SSE_INTRINSICS
+        __SSE_DATATYPE vs_3_6 = _mm_set1_ps(scalarprods[12]);
+        __SSE_DATATYPE vs_4_6 = _mm_set1_ps(scalarprods[13]);
+        __SSE_DATATYPE vs_5_6 = _mm_set1_ps(scalarprods[14]);
+#endif
+
+#ifdef HAVE_SPARC64_SSE_INTRINSICS
+        __SSE_DATATYPE vs_3_6 = _mm_set_ps(scalarprods[12], scalarprods[12]);
+        __SSE_DATATYPE vs_4_6 = _mm_set_ps(scalarprods[13], scalarprods[13]);
+        __SSE_DATATYPE vs_5_6 = _mm_set_ps(scalarprods[14], scalarprods[14]);
+#endif
+
+        h4 = _SSE_MUL(tau6, vs_3_6);
+        h5 = _SSE_MUL(tau6, vs_4_6);
+        h6 = _SSE_MUL(tau6, vs_5_6);
+#endif
 
         t1 = _SSE_SUB(_SSE_MUL(t1,tau6), _SSE_ADD( _SSE_MUL(v1,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))));
         t2 = _SSE_SUB(_SSE_MUL(t2,tau6), _SSE_ADD( _SSE_MUL(v2,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)))));
-        // t1 = t1 * tau6 - ( v1 * h6 + w1*h5 + z1*h4 +y1*h3 + x1*h2)
 
         /////////////////////////////////////////////////////
         // Rank-1 update of Q [4 x nb+3]
@@ -924,416 +1324,779 @@ __forceinline void hh_trafo_kernel_8_SPARC64_6hv_single(float* q, float* hh, int
 
         q1 = _SSE_LOAD(&q[0]);
         q2 = _SSE_LOAD(&q[offset]);
-        q1 = _SSE_SUB(q1, t1);       // q1(1:n1,1) = q1(1:nq,1) - t
+        q1 = _SSE_SUB(q1, t1);
         q2 = _SSE_SUB(q2, t2);
         _SSE_STORE(&q[0],q1);
         _SSE_STORE(&q[offset],q2);
 
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+1]); // h6 = hh(2,6)
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[ldq]);
         q2 = _SSE_LOAD(&q[(ldq+offset)]);
-        q1 = _SSE_SUB(q1, v1);  // q1(1:nq,2) = q1(1:nq,2) - v1
+        q1 = _SSE_SUB(q1, v1);
         q2 = _SSE_SUB(q2, v2);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6)); // q1(1:nq,2) = q1(1:nq,2) - t1 *h6
+        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
         q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
 
         _SSE_STORE(&q[ldq],q1);
         _SSE_STORE(&q[(ldq+offset)],q2);
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+1]);    // h5 = hh(2,5)
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+#endif
 #endif
         q1 = _SSE_LOAD(&q[ldq*2]);
         q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-        q1 = _SSE_SUB(q1, w1);      // q1(1:nq,3) =  q1(1:nq,3) - w
+        q1 = _SSE_SUB(q1, w1);
         q2 = _SSE_SUB(q2, w2);
-        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));  //  q1(1:nq,3) =  q1(1:nq,3) - v1 * h5
-        q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));  
+        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
+        q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+2]);     // h6 = hh(3,6)
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+#endif
 #endif
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));  // q1(1:nq,3) = q1(1:nq,3) - t1 * h6
+
+        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
         q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
 
         _SSE_STORE(&q[ldq*2],q1);
         _SSE_STORE(&q[(ldq*2)+offset],q2);
 
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+1]);  // h4 = hh(2,4)
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+1]);
+#endif
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+#endif
+#endif
+
+
 
         q1 = _SSE_LOAD(&q[ldq*3]);
         q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-        q1 = _SSE_SUB(q1, z1);        // q1(1:nq,4) = q1(1:nq,4) - z
+        q1 = _SSE_SUB(q1, z1);
         q2 = _SSE_SUB(q2, z2);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));  // q1(1:nq,4) = q1(1:nq,4) - w * h4
+        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
         q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+2]);      // h5 = hh(3,5)
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+#endif
 #endif
 
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));   // q1(1:nq,4) = q1(1:nq,4) - v1 * h5
+        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
         q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+3]);  // h6 = hh(4,6)
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+#endif
 #endif
 
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));  // q1(1:nq,4) = q1(1:nq,4) - t1 * h6
+        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
         q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
 
         _SSE_STORE(&q[ldq*3],q1);
         _SSE_STORE(&q[(ldq*3)+offset],q2);
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+1]);    // h3 = hh(2,3)
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+#endif
 #endif
         q1 = _SSE_LOAD(&q[ldq*4]);
         q2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-        q1 = _SSE_SUB(q1, y1);  // q1(1:nq,5) = q1(1:nq,5) - y
+        q1 = _SSE_SUB(q1, y1);
         q2 = _SSE_SUB(q2, y2);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3)); // q1(1:nq,5) = q1(1:nq,5) - z1 * h3
+        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
         q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+2]);     // h4 = hh(3,4)
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+#endif
 #endif
 
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));  // q(1:nq,5) = q(1:nq,5) - w1 * h4
+        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
         q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+3]);  // h5 = hh(4,5)
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+3], hh[(ldh*4)+3]);
 #endif
-        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5)); // q(1:nq,5) = q(1:nq,5) - v * h5
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+#endif
+#endif
+        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
         q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+4]);     // h6 = hh(5,6)
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+4]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+4], hh[(ldh*5)+4]);
 #endif
-        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));  // q(1:nq,5) = q(1:nq,5) - t * h6
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+#endif
+#endif
+        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
         q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
 
         _SSE_STORE(&q[ldq*4],q1);
         _SSE_STORE(&q[(ldq*4)+offset],q2);
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[(ldh)+1]);  // h2 = hh(2,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[(ldh)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[(ldh)+1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[(ldh)+1], hh[(ldh)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[(ldh)+1], hh[(ldh)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[(ldh)+1], hh[(ldh)+1]);
+#endif
 #endif
         q1 = _SSE_LOAD(&q[ldq*5]);
         q2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-        q1 = _SSE_SUB(q1, x1);  // q(1:nq,6) = q(1:nq,6) - x
+        q1 = _SSE_SUB(q1, x1);
         q2 = _SSE_SUB(q2, x2);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));  // q(1:nq,6) = q(1:nq,6) - y1 * h2
+        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
         q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+2]);  // h3 = hh(3,3)
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#endif
 #endif
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));  // q(1:nq,6) = q(1:nq,6) - z * h3
+        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
         q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+3]);  // h4 = hh(4,4)
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
-        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));  // q(1:nq,6) = q(1:nq,6) - w * h4
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#endif
+#endif
+        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
         q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+4]); // h5 = hh(5,5)
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+4]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#endif
 #endif
 
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));  // q(1:nq,6) = q(1:nq,6) - v * h5
+        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
         q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+5]);  // h6 = hh(6,6)
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+5]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#endif
 #endif
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));  // q(1:nq,6) = q(1:nq,6) - t * h6
+        q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
         q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
 
         _SSE_STORE(&q[ldq*5],q1);
         _SSE_STORE(&q[(ldq*5)+offset],q2);
 
-        for (i = 6; i < nb; i++)                            // for i=7,nb
+        for (i = 6; i < nb; i++)
         {
                 q1 = _SSE_LOAD(&q[i*ldq]);
                 q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
 #ifdef HAVE_SSE_INTRINSICS
-                h1 = _SSE_SET1(hh[i-5]);                 // h1 = hh(i-5,1)  
+#ifdef DOUBLE_PRECISION_REAL
+                h1 = _mm_set1_pd(hh[i-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h1 = _mm_set1_ps(hh[i-5]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h1 = _SSE_SET(hh[i-5], hh[i-5]);
+#ifdef DOUBLE_PRECISION_REAL
+                h1 = _mm_set_pd(hh[i-5], hh[i-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h1 = _mm_set_ps(hh[i-5], hh[i-5]);
+#endif
 #endif
 
 
-                q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));  // q(1:nq,i) = q(1:nq,i) - x1 * h1
+                q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
                 q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 #ifdef HAVE_SSE_INTRINSICS
-                h2 = _SSE_SET1(hh[ldh+i-4]);  // h2 = hh(i-4,2)
+#ifdef DOUBLE_PRECISION_REAL
+                h2 = _mm_set1_pd(hh[ldh+i-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h2 = _mm_set1_ps(hh[ldh+i-4]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h2 = _SSE_SET(hh[ldh+i-4], hh[ldh+i-4]);
+#ifdef DOUBLE_PRECISION_REAL
+                h2 = _mm_set_pd(hh[ldh+i-4], hh[ldh+i-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h2 = _mm_set_ps(hh[ldh+i-4], hh[ldh+i-4]);
+#endif
 #endif
 
 
-                q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));  // q(1:nq,i) - y * h2
+                q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
                 q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 #ifdef HAVE_SSE_INTRINSICS
-                h3 = _SSE_SET1(hh[(ldh*2)+i-3]);   // h3 = hh(i-3,3)
+#ifdef DOUBLE_PRECISION_REAL
+                h3 = _mm_set1_pd(hh[(ldh*2)+i-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h3 = _mm_set1_ps(hh[(ldh*2)+i-3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h3 = _SSE_SET(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#ifdef DOUBLE_PRECISION_REAL
+                h3 = _mm_set_pd(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
 #endif
-                q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));  // q(1:nq,i) = q(1:nq,i) - z * h3
+#ifdef SINGLE_PRECISION_REAL
+                h3 = _mm_set_ps(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#endif
+#endif
+                q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
                 q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 #ifdef HAVE_SSE_INTRINSICS
-                h4 = _SSE_SET1(hh[(ldh*3)+i-2]);  // h4 = hh(i-2,4)
+#ifdef DOUBLE_PRECISION_REAL
+                h4 = _mm_set1_pd(hh[(ldh*3)+i-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h4 = _mm_set1_ps(hh[(ldh*3)+i-2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h4 = _SSE_SET(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#ifdef DOUBLE_PRECISION_REAL
+                h4 = _mm_set_pd(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
 #endif
-                q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));  // q(1:nq,i) = q(1:nq,i) - w * h4
+#ifdef SINGLE_PRECISION_REAL
+                h4 = _mm_set_ps(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#endif
+#endif
+                q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
                 q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 #ifdef HAVE_SSE_INTRINSICS
-                h5 = _SSE_SET1(hh[(ldh*4)+i-1]);  // h5 = hh(i-1,5)
+#ifdef DOUBLE_PRECISION_REAL
+                h5 = _mm_set1_pd(hh[(ldh*4)+i-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h5 = _mm_set1_ps(hh[(ldh*4)+i-1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#ifdef DOUBLE_PRECISION_REAL
+                h5 = _mm_set_pd(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h5 = _mm_set_ps(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#endif
 #endif
 
-                q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));  // q(1:nq,i) = q(1:nq,i) - v * h5
+                q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
                 q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 #ifdef HAVE_SSE_INTRINSICS
-                h6 = _SSE_SET1(hh[(ldh*5)+i]);     // h6 = hh(i,6)
+#ifdef DOUBLE_PRECISION_REAL
+                h6 = _mm_set1_pd(hh[(ldh*5)+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h6 = _mm_set1_ps(hh[(ldh*5)+i]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#ifdef DOUBLE_PRECISION_REAL
+                h6 = _mm_set_pd(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h6 = _mm_set_ps(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#endif
 #endif
 
 
-                q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));  // q(1:nq,i) = q(1:nq,i) - t * h6
+                q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
                 q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
 
                 _SSE_STORE(&q[i*ldq],q1);
                 _SSE_STORE(&q[(i*ldq)+offset],q2);
         }
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-5]);   // h1 = hh(nb-4,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-5]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-5], hh[nb-5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-5], hh[nb-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-5], hh[nb-5]);
+#endif
 #endif
 
 
         q1 = _SSE_LOAD(&q[nb*ldq]);
         q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));  // q(1:nq,nb+1) = q(1:nq,nb+1) - x * h1
+        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
         q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-4]);  // h2 = hh(nb-3,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-4]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-4], hh[ldh+nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-4], hh[ldh+nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-4], hh[ldh+nb-4]);
+#endif
 #endif
 
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));   // q(1:nq,nb+1) =  q(1:nq,nb+1) - y * h2
+        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
         q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-3]);  // h3 = hh(nb-2,3)
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#endif
 #endif
 
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));  // q(1:nq,nb+1) = q(1:nq,nb+1) - z * h3
+        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
         q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);   // h4 = hh(nb-1,4)
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+nb-2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
-        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));  // q(1:nq,nb+1) = q(1:nq,nb+1) - w * h4
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#endif
+#endif
+        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
         q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);  // h5 = hh(nb,5)
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+nb-1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#endif
 #endif
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5)); // q(1:nq,nb+1) = q(1:nq,nb+1) - v * h5
+        q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
         q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
 
         _SSE_STORE(&q[nb*ldq],q1);
         _SSE_STORE(&q[(nb*ldq)+offset],q2);
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-4]);  // h1 = hh(nb-3,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-4]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-4], hh[nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-4], hh[nb-4]);
+#endif
 #endif
 
 
         q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
         q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));  // q1(1:nq,nb+2) = q1(1:nq,nb+2) + x1 * h1
+        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
         q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-3]); // h2 = hh(nb-2,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-3], hh[ldh+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-3], hh[ldh+nb-3]);
+#endif
 #endif
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));  // q1(1:nq,nb+2) = q1(1:nq,nb+2) + y1 * h2
+        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
         q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);  // h3 = hh(nb-1,3)
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
-        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));  // q(1:nq,nb+2) = q(1:nq,nb+2) + z * h3
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#endif
+#endif
+        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
         q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+nb-1]); // h4 = hh(nb,4)
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+nb-1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#endif
 #endif
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));  // q(1:nq,nb+2) = q(1:nq,nb+2) + w * h4
+        q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
         q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
 
         _SSE_STORE(&q[(nb+1)*ldq],q1);
         _SSE_STORE(&q[((nb+1)*ldq)+offset],q2);
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-3]);  // h1 = hh(nb-2,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-3]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-3], hh[nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-3], hh[nb-3]);
+#endif
 #endif
 
 
-        q1 = _SSE_LOAD(&q[(nb+2)*ldq]);          
-        q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);  
+        q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
+        q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));  // q(1:nq,nb+3) = q(1:nq,nb+3)  - x * h1
+        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
         q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-2]); // h2 = hh(nb-1,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-2], hh[ldh+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-2], hh[ldh+nb-2]);
+#endif
 #endif
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2)); // q(1:nq,nb+3) = q(1:nq,nb+3) - y1 * h2
+        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
         q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-1]); // h3 = hh(nb,3)
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#endif
 #endif
 
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3)); // q(1:nq,nb+3) = q(1:nq,nb+3) + z * h3
+        q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
         q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
 
         _SSE_STORE(&q[(nb+2)*ldq],q1);
         _SSE_STORE(&q[((nb+2)*ldq)+offset],q2);
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-2]);  // h1 = hh(nb-1,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-2]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-2], hh[nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-2], hh[nb-2]);
+#endif
 #endif
 
 
         q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
         q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));  // q(1:nq,nb+4) = q(1:nq,nb+4) - x * h1
+        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
         q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-1]);  // h2 = hh(nb,2)
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-1], hh[ldh+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-1], hh[ldh+nb-1]);
+#endif
 #endif
 
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));   // q(1:nq,nb+4) = q(1:nq,nb+4) - y * h2
+        q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
         q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
 
         _SSE_STORE(&q[(nb+3)*ldq],q1);
         _SSE_STORE(&q[((nb+3)*ldq)+offset],q2);
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-1]);  // h1 = hh(nb,1)
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-1]);
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
         q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
 
-        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));  // q(1:nq,nb+5) = q(1:nq,nb+5) - x * h1
+        q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
         q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
 
         _SSE_STORE(&q[(nb+4)*ldq],q1);
@@ -1382,18 +2145,36 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
         __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);
 
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
-        __SSE_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
-        __SSE_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
-        __SSE_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
-        __SSE_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_6_5 = _mm_set1_pd(hh[(ldh*5)+1]);
+        __SSE_DATATYPE h_6_4 = _mm_set1_pd(hh[(ldh*5)+2]);
+        __SSE_DATATYPE h_6_3 = _mm_set1_pd(hh[(ldh*5)+3]);
+        __SSE_DATATYPE h_6_2 = _mm_set1_pd(hh[(ldh*5)+4]);
+        __SSE_DATATYPE h_6_1 = _mm_set1_pd(hh[(ldh*5)+5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_6_5 = _mm_set1_ps(hh[(ldh*5)+1]) ;
+        __SSE_DATATYPE h_6_4 = _mm_set1_ps(hh[(ldh*5)+2]) ;
+        __SSE_DATATYPE h_6_3 = _mm_set1_ps(hh[(ldh*5)+3]) ;
+        __SSE_DATATYPE h_6_2 = _mm_set1_ps(hh[(ldh*5)+4]) ;
+        __SSE_DATATYPE h_6_1 = _mm_set1_ps(hh[(ldh*5)+5]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
-        __SSE_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
-        __SSE_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
-        __SSE_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
-        __SSE_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_6_5 = _mm_set_pd(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+        __SSE_DATATYPE h_6_4 = _mm_set_pd(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+        __SSE_DATATYPE h_6_3 = _mm_set_pd(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+        __SSE_DATATYPE h_6_2 = _mm_set_pd(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+        __SSE_DATATYPE h_6_1 = _mm_set_pd(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#endif                                                                
+#ifdef SINGLE_PRECISION_REAL                                          
+        __SSE_DATATYPE h_6_5 = _mm_set_ps(hh[(ldh*5)+1], hh[(ldh*5)+1]) ;
+        __SSE_DATATYPE h_6_4 = _mm_set_ps(hh[(ldh*5)+2], hh[(ldh*5)+2]) ;
+        __SSE_DATATYPE h_6_3 = _mm_set_ps(hh[(ldh*5)+3], hh[(ldh*5)+3]) ;
+        __SSE_DATATYPE h_6_2 = _mm_set_ps(hh[(ldh*5)+4], hh[(ldh*5)+4]) ;
+        __SSE_DATATYPE h_6_1 = _mm_set_ps(hh[(ldh*5)+5], hh[(ldh*5)+5]) ;
+#endif
 #endif
 
         register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5));
@@ -1402,16 +2183,32 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
         t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2));
         t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
-        __SSE_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
-        __SSE_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
-        __SSE_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_5_4 = _mm_set1_pd(hh[(ldh*4)+1]);
+        __SSE_DATATYPE h_5_3 = _mm_set1_pd(hh[(ldh*4)+2]);
+        __SSE_DATATYPE h_5_2 = _mm_set1_pd(hh[(ldh*4)+3]);
+        __SSE_DATATYPE h_5_1 = _mm_set1_pd(hh[(ldh*4)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_5_4 = _mm_set1_ps(hh[(ldh*4)+1]) ;
+        __SSE_DATATYPE h_5_3 = _mm_set1_ps(hh[(ldh*4)+2]) ;
+        __SSE_DATATYPE h_5_2 = _mm_set1_ps(hh[(ldh*4)+3]) ;
+        __SSE_DATATYPE h_5_1 = _mm_set1_ps(hh[(ldh*4)+4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
-        __SSE_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
-        __SSE_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
-        __SSE_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_5_4 = _mm_set_pd(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+        __SSE_DATATYPE h_5_3 = _mm_set_pd(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+        __SSE_DATATYPE h_5_2 = _mm_set_pd(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+        __SSE_DATATYPE h_5_1 = _mm_set_pd(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#endif                                                                
+#ifdef SINGLE_PRECISION_REAL                                          
+        __SSE_DATATYPE h_5_4 = _mm_set_ps(hh[(ldh*4)+1], hh[(ldh*4)+1]) ;
+        __SSE_DATATYPE h_5_3 = _mm_set_ps(hh[(ldh*4)+2], hh[(ldh*4)+2]) ;
+        __SSE_DATATYPE h_5_2 = _mm_set_ps(hh[(ldh*4)+3], hh[(ldh*4)+3]) ;
+        __SSE_DATATYPE h_5_1 = _mm_set_ps(hh[(ldh*4)+4], hh[(ldh*4)+4]) ;
+#endif
 #endif
 
         register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4));
@@ -1419,28 +2216,56 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
         v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2));
         v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-        __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-        __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_4_3 = _mm_set1_pd(hh[(ldh*3)+1]);
+        __SSE_DATATYPE h_4_2 = _mm_set1_pd(hh[(ldh*3)+2]);
+        __SSE_DATATYPE h_4_1 = _mm_set1_pd(hh[(ldh*3)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_4_3 = _mm_set1_ps(hh[(ldh*3)+1]) ;
+        __SSE_DATATYPE h_4_2 = _mm_set1_ps(hh[(ldh*3)+2]) ;
+        __SSE_DATATYPE h_4_1 = _mm_set1_ps(hh[(ldh*3)+3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-        __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-        __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_4_3 = _mm_set_pd(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+        __SSE_DATATYPE h_4_2 = _mm_set_pd(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+        __SSE_DATATYPE h_4_1 = _mm_set_pd(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#endif                                                                
+#ifdef SINGLE_PRECISION_REAL                                          
+        __SSE_DATATYPE h_4_3 = _mm_set_ps(hh[(ldh*3)+1], hh[(ldh*3)+1]) ;
+        __SSE_DATATYPE h_4_2 = _mm_set_ps(hh[(ldh*3)+2], hh[(ldh*3)+2]) ;
+        __SSE_DATATYPE h_4_1 = _mm_set_ps(hh[(ldh*3)+3], hh[(ldh*3)+3]) ;
+#endif
 #endif
 
         register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
         w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
         w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);
-        __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-        __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_2_1 = _mm_set1_pd(hh[ldh+1]);
+        __SSE_DATATYPE h_3_2 = _mm_set1_pd(hh[(ldh*2)+1]);
+        __SSE_DATATYPE h_3_1 = _mm_set1_pd(hh[(ldh*2)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_2_1 = _mm_set1_ps(hh[ldh+1]) ;
+        __SSE_DATATYPE h_3_2 = _mm_set1_ps(hh[(ldh*2)+1]) ;
+        __SSE_DATATYPE h_3_1 = _mm_set1_ps(hh[(ldh*2)+2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-        __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-        __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE h_2_1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
+        __SSE_DATATYPE h_3_2 = _mm_set_pd(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+        __SSE_DATATYPE h_3_1 = _mm_set_pd(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE h_2_1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]) ;
+        __SSE_DATATYPE h_3_2 = _mm_set_ps(hh[(ldh*2)+1], hh[(ldh*2)+1]) ;
+        __SSE_DATATYPE h_3_1 = _mm_set_ps(hh[(ldh*2)+2], hh[(ldh*2)+2]) ;
+#endif
 #endif
 
 
@@ -1462,68 +2287,133 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
         for(i = 6; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-                h1 = _SSE_SET1(hh[i-5]);
+#ifdef DOUBLE_PRECISION_REAL
+                h1 = _mm_set1_pd(hh[i-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h1 = _mm_set1_ps(hh[i-5]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h1 = _SSE_SET(hh[i-5], hh[i-5]);
+#ifdef DOUBLE_PRECISION_REAL
+                h1 = _mm_set_pd(hh[i-5], hh[i-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h1 = _mm_set_ps(hh[i-5], hh[i-5]) ;
+#endif
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
 
                 x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 #ifdef HAVE_SSE_INTRINSICS
-                h2 = _SSE_SET1(hh[ldh+i-4]);
+#ifdef DOUBLE_PRECISION_REAL
+                h2 = _mm_set1_pd(hh[ldh+i-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h2 = _mm_set1_ps(hh[ldh+i-4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h2 = _SSE_SET(hh[ldh+i-4], hh[ldh+i-4]);
+#ifdef DOUBLE_PRECISION_REAL
+                h2 = _mm_set_pd(hh[ldh+i-4], hh[ldh+i-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h2 = _mm_set_ps(hh[ldh+i-4], hh[ldh+i-4]) ;
+#endif
 #endif
 
 
                 y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 #ifdef HAVE_SSE_INTRINSICS
-                h3 = _SSE_SET1(hh[(ldh*2)+i-3]);
+#ifdef DOUBLE_PRECISION_REAL
+                h3 = _mm_set1_pd(hh[(ldh*2)+i-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h3 = _mm_set1_ps(hh[(ldh*2)+i-3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h3 = _SSE_SET(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#ifdef DOUBLE_PRECISION_REAL
+                h3 = _mm_set_pd(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h3 = _mm_set_ps(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]) ;
+#endif
 #endif
 
                 z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 #ifdef HAVE_SSE_INTRINSICS
-                h4 = _SSE_SET1(hh[(ldh*3)+i-2]);
+#ifdef DOUBLE_PRECISION_REAL
+                h4 = _mm_set1_pd(hh[(ldh*3)+i-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h4 = _mm_set1_ps(hh[(ldh*3)+i-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h4 = _SSE_SET(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#ifdef DOUBLE_PRECISION_REAL
+                h4 = _mm_set_pd(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h4 = _mm_set_ps(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]) ;
+#endif
 #endif
 
                 w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 #ifdef HAVE_SSE_INTRINSICS
-                h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
+#ifdef DOUBLE_PRECISION_REAL
+                h5 = _mm_set1_pd(hh[(ldh*4)+i-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h5 = _mm_set1_ps(hh[(ldh*4)+i-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#ifdef DOUBLE_PRECISION_REAL
+                h5 = _mm_set_pd(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h5 = _mm_set_ps(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]) ;
+#endif
 #endif
 
                 v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
-                h6 = _SSE_SET1(hh[(ldh*5)+i]);
+                h6 = _mm_set1_pd(hh[(ldh*5)+i]);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                h6 = _SSE_SET1(hh[(ldh*5)+i]) ;
+                h6 = _mm_set1_ps(hh[(ldh*5)+i]) ;
 #endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#ifdef DOUBLE_PRECISION_REAL
+                h6 = _mm_set_pd(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h6 = _mm_set_ps(hh[(ldh*5)+i], hh[(ldh*5)+i]) ;
+#endif
 #endif
 
                 t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
 
         }
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-5]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-5], hh[nb-5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-5], hh[nb-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-5], hh[nb-5]) ;
+#endif
 #endif
 
 
@@ -1531,28 +2421,58 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-4], hh[ldh+nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-4], hh[ldh+nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-4], hh[ldh+nb-4]) ;
+#endif
 #endif
 
 
         y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]) ;
+#endif
 #endif
 
 
         z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+nb-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]) ;
+#endif
 #endif
 
 
@@ -1560,19 +2480,39 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]) ;
+#endif
 #endif
 
 
         v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-4], hh[nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-4], hh[nb-4]) ;
+#endif
 #endif
 
 
@@ -1580,37 +2520,77 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-3], hh[ldh+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-3], hh[ldh+nb-3]) ;
+#endif
 #endif
 
 
         y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]) ;
+#endif
 #endif
 
 
         z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]) ;
+#endif
 #endif
 
 
         w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-3], hh[nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-3], hh[nb-3]) ;
+#endif
 #endif
 
 
@@ -1618,46 +2598,96 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-2], hh[ldh+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-2], hh[ldh+nb-2]) ;
+#endif
 #endif
 
 
         y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]) ;
+#endif
 #endif
 
 
         z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-2], hh[nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-2], hh[nb-2]) ;
+#endif
 #endif
         q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
 
         x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-1], hh[ldh+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-1], hh[ldh+nb-1]) ;
+#endif
 #endif
 
 
         y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]) ;
+#endif
 #endif
 
 
@@ -1669,20 +2699,42 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
         // Apply tau, correct wrong calculation using pre-calculated scalar products
         /////////////////////////////////////////////////////
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]) ;
+#endif
 #endif
 
         x1 = _SSE_MUL(x1, tau1);
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
-        __SSE_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
+        __SSE_DATATYPE vs_1_2 = _mm_set1_pd(scalarprods[0]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]) ;
+        __SSE_DATATYPE vs_1_2 = _mm_set1_ps(scalarprods[0]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs_1_2 = _mm_set_pd(scalarprods[0], scalarprods[0]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]) ;
+        __SSE_DATATYPE vs_1_2 = _mm_set_ps(scalarprods[0], scalarprods[0]) ;
+#endif
 #endif
 
 
@@ -1690,14 +2742,28 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         y1 = _SSE_SUB(_SSE_MUL(y1,tau2), _SSE_MUL(x1,h2));
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
-        __SSE_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
-        __SSE_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau3 = _mm_set1_pd(hh[ldh*2]);
+        __SSE_DATATYPE vs_1_3 = _mm_set1_pd(scalarprods[1]);
+        __SSE_DATATYPE vs_2_3 = _mm_set1_pd(scalarprods[2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau3 = _mm_set1_ps(hh[ldh*2]) ;
+        __SSE_DATATYPE vs_1_3 = _mm_set1_ps(scalarprods[1]) ;
+        __SSE_DATATYPE vs_2_3 = _mm_set1_ps(scalarprods[2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
-        __SSE_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
-        __SSE_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau3 = _mm_set_pd(hh[ldh*2], hh[ldh*2]);
+        __SSE_DATATYPE vs_1_3 = _mm_set_pd(scalarprods[1], scalarprods[1]);
+        __SSE_DATATYPE vs_2_3 = _mm_set_pd(scalarprods[2], scalarprods[2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau3 = _mm_set_ps(hh[ldh*2], hh[ldh*2]) ;
+        __SSE_DATATYPE vs_1_3 = _mm_set_ps(scalarprods[1], scalarprods[1]) ;
+        __SSE_DATATYPE vs_2_3 = _mm_set_ps(scalarprods[2], scalarprods[2]) ;
+#endif
 #endif
 
 
@@ -1706,48 +2772,98 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         z1 = _SSE_SUB(_SSE_MUL(z1,tau3), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
-        __SSE_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
-        __SSE_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau4 = _mm_set1_pd(hh[ldh*3]);
+        __SSE_DATATYPE vs_1_4 = _mm_set1_pd(scalarprods[3]);
+        __SSE_DATATYPE vs_2_4 = _mm_set1_pd(scalarprods[4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau4 = _mm_set1_ps(hh[ldh*3]) ;
+        __SSE_DATATYPE vs_1_4 = _mm_set1_ps(scalarprods[3]) ;
+        __SSE_DATATYPE vs_2_4 = _mm_set1_ps(scalarprods[4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
-        __SSE_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
-        __SSE_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau4 = _mm_set_pd(hh[ldh*3], hh[ldh*3]);
+        __SSE_DATATYPE vs_1_4 = _mm_set_pd(scalarprods[3], scalarprods[3]);
+        __SSE_DATATYPE vs_2_4 = _mm_set_pd(scalarprods[4], scalarprods[4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau4 = _mm_set_ps(hh[ldh*3], hh[ldh*3]) ;
+        __SSE_DATATYPE vs_1_4 = _mm_set_ps(scalarprods[3], scalarprods[3]) ;
+        __SSE_DATATYPE vs_2_4 = _mm_set_ps(scalarprods[4], scalarprods[4]) ;
+#endif
 #endif
 
         h2 = _SSE_MUL(tau4, vs_1_4);
         h3 = _SSE_MUL(tau4, vs_2_4);
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_4 = _mm_set1_pd(scalarprods[5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_4 = _mm_set1_ps(scalarprods[5]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_4 = _mm_set_pd(scalarprods[5], scalarprods[5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_4 = _mm_set_ps(scalarprods[5], ) ;
+#endif
 #endif
 
         h4 = _SSE_MUL(tau4, vs_3_4);
 
         w1 = _SSE_SUB(_SSE_MUL(w1,tau4), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
-        __SSE_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
-        __SSE_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau5 = _mm_set1_pd(hh[ldh*4]);
+        __SSE_DATATYPE vs_1_5 = _mm_set1_pd(scalarprods[6]);
+        __SSE_DATATYPE vs_2_5 = _mm_set1_pd(scalarprods[7]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau5 = _mm_set1_ps(hh[ldh*4]) ;
+        __SSE_DATATYPE vs_1_5 = _mm_set1_ps(scalarprods[6]) ;
+        __SSE_DATATYPE vs_2_5 = _mm_set1_ps(scalarprods[7]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
-        __SSE_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
-        __SSE_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]) ;
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau5 = _mm_set_pd(hh[ldh*4], hh[ldh*4]);
+        __SSE_DATATYPE vs_1_5 = _mm_set_pd(scalarprods[6], scalarprods[6]);
+        __SSE_DATATYPE vs_2_5 = _mm_set_pd(scalarprods[7], scalarprods[7]) ;
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau5 = _mm_set_ps(hh[ldh*4], hh[ldh*4]) ;
+        __SSE_DATATYPE vs_1_5 = _mm_set_ps(scalarprods[6], scalarprods[6]) ;
+        __SSE_DATATYPE vs_2_5 = _mm_set_ps(scalarprods[7], scalarprods[7]) ;
+#endif
 #endif
 
         h2 = _SSE_MUL(tau5, vs_1_5);
         h3 = _SSE_MUL(tau5, vs_2_5);
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
-        __SSE_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_5 = _mm_set1_pd(scalarprods[8]);
+        __SSE_DATATYPE vs_4_5 = _mm_set1_pd(scalarprods[9]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_5 = _mm_set1_ps(scalarprods[8]) ;
+        __SSE_DATATYPE vs_4_5 = _mm_set1_ps(scalarprods[9]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
-        __SSE_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_5 = _mm_set_pd(scalarprods[8], scalarprods[8]);
+        __SSE_DATATYPE vs_4_5 = _mm_set_pd(scalarprods[9], scalarprods[9]);
+#endif                                                                   
+#ifdef SINGLE_PRECISION_REAL                                             
+        __SSE_DATATYPE vs_3_5 = _mm_set_ps(scalarprods[8], scalarprods[8]) ;
+        __SSE_DATATYPE vs_4_5 = _mm_set_ps(scalarprods[9], scalarprods[9]) ;
+#endif
 #endif
 
         h4 = _SSE_MUL(tau5, vs_3_5);
@@ -1755,27 +2871,55 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);
-        __SSE_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
-        __SSE_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau6 = _mm_set1_pd(hh[ldh*5]);
+        __SSE_DATATYPE vs_1_6 = _mm_set1_pd(scalarprods[10]);
+        __SSE_DATATYPE vs_2_6 = _mm_set1_pd(scalarprods[11]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau6 = _mm_set1_ps(hh[ldh*5]) ;
+        __SSE_DATATYPE vs_1_6 = _mm_set1_ps(scalarprods[10]) ;
+        __SSE_DATATYPE vs_2_6 = _mm_set1_ps(scalarprods[11]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
-        __SSE_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
-        __SSE_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE tau6 = _mm_set_pd(hh[ldh*5], hh[ldh*5]);
+        __SSE_DATATYPE vs_1_6 = _mm_set_pd(scalarprods[10], scalarprods[10]);
+        __SSE_DATATYPE vs_2_6 = _mm_set_pd(scalarprods[11], scalarprods[11]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE tau6 = _mm_set_ps(hh[ldh*5], hh[ldh*5]) ;
+        __SSE_DATATYPE vs_1_6 = _mm_set_ps(scalarprods[10], scalarprods[10]) ;
+        __SSE_DATATYPE vs_2_6 = _mm_set_ps(scalarprods[11], scalarprods[11]) ;
+#endif
 #endif
 
         h2 = _SSE_MUL(tau6, vs_1_6);
         h3 = _SSE_MUL(tau6, vs_2_6);
 #ifdef HAVE_SSE_INTRINSICS
-        __SSE_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
-        __SSE_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
-        __SSE_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_6 = _mm_set1_pd(scalarprods[12]);
+        __SSE_DATATYPE vs_4_6 = _mm_set1_pd(scalarprods[13]);
+        __SSE_DATATYPE vs_5_6 = _mm_set1_pd(scalarprods[14]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_6 = _mm_set1_ps(scalarprods[12]) ;
+        __SSE_DATATYPE vs_4_6 = _mm_set1_ps(scalarprods[13]) ;
+        __SSE_DATATYPE vs_5_6 = _mm_set1_ps(scalarprods[14]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        __SSE_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
-        __SSE_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
-        __SSE_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
+#ifdef DOUBLE_PRECISION_REAL
+        __SSE_DATATYPE vs_3_6 = _mm_set_pd(scalarprods[12], scalarprods[12]);
+        __SSE_DATATYPE vs_4_6 = _mm_set_pd(scalarprods[13], scalarprods[13]);
+        __SSE_DATATYPE vs_5_6 = _mm_set_pd(scalarprods[14], scalarprods[14]);
+#endif                                                                     
+#ifdef SINGLE_PRECISION_REAL                                               
+        __SSE_DATATYPE vs_3_6 = _mm_set_ps(scalarprods[12], scalarprods[12]) ;
+        __SSE_DATATYPE vs_4_6 = _mm_set_ps(scalarprods[13], scalarprods[13]) ;
+        __SSE_DATATYPE vs_5_6 = _mm_set_ps(scalarprods[14], scalarprods[14]) ;
+#endif
 #endif
 
 
@@ -1793,10 +2937,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
         q1 = _SSE_SUB(q1, t1);
         _SSE_STORE(&q[0],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+1], hh[(ldh*5)+1]) ;
+#endif
 #endif
 
 
@@ -1807,10 +2961,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         _SSE_STORE(&q[ldq],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+1], hh[(ldh*4)+1]) ;
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[ldq*2]);
@@ -1818,10 +2982,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+2], hh[(ldh*5)+2]) ;
+#endif
 #endif
 
 
@@ -1829,10 +3003,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         _SSE_STORE(&q[ldq*2],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+1], hh[(ldh*3)+1]) ;
+#endif
 #endif
 
 
@@ -1841,17 +3025,37 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+2], hh[(ldh*4)+2]) ;
+#endif
 #endif
         q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+3], hh[(ldh*5)+3]) ;
+#endif
 #endif
 
 
@@ -1859,10 +3063,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         _SSE_STORE(&q[ldq*3],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+1], hh[(ldh*2)+1]) ;
+#endif
 #endif
 
 
@@ -1871,28 +3085,58 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+2], hh[(ldh*3)+2]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+3], hh[(ldh*4)+3]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+4], hh[(ldh*5)+4]) ;
+#endif
 #endif
 
 
@@ -1900,10 +3144,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         _SSE_STORE(&q[ldq*4],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[(ldh)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[(ldh)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[(ldh)+1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[(ldh)+1], hh[(ldh)+1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[(ldh)+1], hh[(ldh)+1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[(ldh)+1], hh[(ldh)+1]) ;
+#endif
 #endif
 
 
@@ -1912,37 +3166,77 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+2], hh[(ldh*2)+2]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+3], hh[(ldh*3)+3]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+4], hh[(ldh*4)+4]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 #ifdef HAVE_SSE_INTRINSICS
-        h6 = _SSE_SET1(hh[(ldh*5)+5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set1_pd(hh[(ldh*5)+5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set1_ps(hh[(ldh*5)+5]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h6 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h6 = _mm_set_pd(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h6 = _mm_set_ps(hh[(ldh*5)+5], hh[(ldh*5)+5]) ;
+#endif
 #endif
         q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
 
@@ -1952,55 +3246,115 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
         {
                 q1 = _SSE_LOAD(&q[i*ldq]);
 #ifdef HAVE_SSE_INTRINSICS
-                h1 = _SSE_SET1(hh[i-5]);
+#ifdef DOUBLE_PRECISION_REAL
+                h1 = _mm_set1_pd(hh[i-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h1 = _mm_set1_ps(hh[i-5]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h1 = _SSE_SET(hh[i-5], hh[i-5]);
+#ifdef DOUBLE_PRECISION_REAL
+                h1 = _mm_set_pd(hh[i-5], hh[i-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h1 = _mm_set_ps(hh[i-5], hh[i-5]) ;
+#endif
 #endif
 
 
                 q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 #ifdef HAVE_SSE_INTRINSICS
-                h2 = _SSE_SET1(hh[ldh+i-4]);
+#ifdef DOUBLE_PRECISION_REAL
+                h2 = _mm_set1_pd(hh[ldh+i-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h2 = _mm_set1_ps(hh[ldh+i-4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h2 = _SSE_SET(hh[ldh+i-4], hh[ldh+i-4]);
+#ifdef DOUBLE_PRECISION_REAL
+                h2 = _mm_set_pd(hh[ldh+i-4], hh[ldh+i-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h2 = _mm_set_ps(hh[ldh+i-4], hh[ldh+i-4]) ;
+#endif
 #endif
 
 
                 q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 #ifdef HAVE_SSE_INTRINSICS
-                h3 = _SSE_SET1(hh[(ldh*2)+i-3]);
+#ifdef DOUBLE_PRECISION_REAL
+                h3 = _mm_set1_pd(hh[(ldh*2)+i-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h3 = _mm_set1_ps(hh[(ldh*2)+i-3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h3 = _SSE_SET(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#ifdef DOUBLE_PRECISION_REAL
+                h3 = _mm_set_pd(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h3 = _mm_set_ps(hh[(ldh*2)+i-3], hh[(ldh*2)+i-3]) ;
+#endif
 #endif
 
 
                 q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 #ifdef HAVE_SSE_INTRINSICS
-                h4 = _SSE_SET1(hh[(ldh*3)+i-2]);
+#ifdef DOUBLE_PRECISION_REAL
+                h4 = _mm_set1_pd(hh[(ldh*3)+i-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h4 = _mm_set1_ps(hh[(ldh*3)+i-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h4 = _SSE_SET(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#ifdef DOUBLE_PRECISION_REAL
+                h4 = _mm_set_pd(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h4 = _mm_set_ps(hh[(ldh*3)+i-2], hh[(ldh*3)+i-2]) ;
+#endif
 #endif
 
 
                 q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 #ifdef HAVE_SSE_INTRINSICS
-                h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
+#ifdef DOUBLE_PRECISION_REAL
+                h5 = _mm_set1_pd(hh[(ldh*4)+i-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h5 = _mm_set1_ps(hh[(ldh*4)+i-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#ifdef DOUBLE_PRECISION_REAL
+                h5 = _mm_set_pd(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h5 = _mm_set_ps(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]) ;
+#endif
 #endif
 
 
                 q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
 #ifdef HAVE_SSE_INTRINSICS
-                h6 = _SSE_SET1(hh[(ldh*5)+i]);
+#ifdef DOUBLE_PRECISION_REAL
+                h6 = _mm_set1_pd(hh[(ldh*5)+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h6 = _mm_set1_ps(hh[(ldh*5)+i]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-                h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#ifdef DOUBLE_PRECISION_REAL
+                h6 = _mm_set_pd(hh[(ldh*5)+i], hh[(ldh*5)+i]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                h6 = _mm_set_ps(hh[(ldh*5)+i], hh[(ldh*5)+i]) ;
+#endif
 #endif
 
 
@@ -2009,10 +3363,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
                 _SSE_STORE(&q[i*ldq],q1);
         }
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-5]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-5], hh[nb-5]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-5], hh[nb-5]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-5], hh[nb-5]) ;
+#endif
 #endif
 
 
@@ -2020,37 +3384,77 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-4], hh[ldh+nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-4], hh[ldh+nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-4], hh[ldh+nb-4]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-3], hh[(ldh*2)+nb-3]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+nb-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
 #ifdef HAVE_SSE_INTRINSICS
-        h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set1_pd(hh[(ldh*4)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set1_ps(hh[(ldh*4)+nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h5 = _mm_set_pd(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h5 = _mm_set_ps(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]) ;
+#endif
 #endif
 
 
@@ -2058,38 +3462,78 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         _SSE_STORE(&q[nb*ldq],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-4]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-4], hh[nb-4]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-4], hh[nb-4]) ;
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
 
         q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-3], hh[ldh+nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-3], hh[ldh+nb-3]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
 #ifdef HAVE_SSE_INTRINSICS
-        h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set1_pd(hh[(ldh*3)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set1_ps(hh[(ldh*3)+nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h4 = _mm_set_pd(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h4 = _mm_set_ps(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]) ;
+#endif
 #endif
 
 
@@ -2097,10 +3541,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         _SSE_STORE(&q[(nb+1)*ldq],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-3]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-3], hh[nb-3]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-3], hh[nb-3]) ;
+#endif
 #endif
 
 
@@ -2108,19 +3562,39 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-2], hh[ldh+nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-2], hh[ldh+nb-2]) ;
+#endif
 #endif
 
 
         q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
 #ifdef HAVE_SSE_INTRINSICS
-        h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set1_pd(hh[(ldh*2)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set1_ps(hh[(ldh*2)+nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h3 = _mm_set_pd(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h3 = _mm_set_ps(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]) ;
+#endif
 #endif
 
 
@@ -2128,10 +3602,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         _SSE_STORE(&q[(nb+2)*ldq],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-2]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-2], hh[nb-2]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-2], hh[nb-2]) ;
+#endif
 #endif
 
 
@@ -2139,10 +3623,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
 #ifdef HAVE_SSE_INTRINSICS
-        h2 = _SSE_SET1(hh[ldh+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set1_pd(hh[ldh+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set1_ps(hh[ldh+nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h2 = _mm_set_pd(hh[ldh+nb-1], hh[ldh+nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h2 = _mm_set_ps(hh[ldh+nb-1], hh[ldh+nb-1]) ;
+#endif
 #endif
 
 
@@ -2150,10 +3644,20 @@ __forceinline void hh_trafo_kernel_4_SPARC64_6hv_single(float* q, float* hh, int
 
         _SSE_STORE(&q[(nb+3)*ldq],q1);
 #ifdef HAVE_SSE_INTRINSICS
-        h1 = _SSE_SET1(hh[nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set1_pd(hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set1_ps(hh[nb-1]) ;
+#endif
 #endif
 #ifdef HAVE_SPARC64_SSE
-        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
+#ifdef DOUBLE_PRECISION_REAL
+        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]) ;
+#endif
 #endif
 
         q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
