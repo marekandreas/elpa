@@ -1338,7 +1338,8 @@
                     &MATH_DATATYPE&
                     &_generic_simple_4hv_&
                     &PRECISION&
-                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, &
+                       stripe_width, nbw)
 #endif
 
 #else
@@ -1354,7 +1355,8 @@
                     &MATH_DATATYPE&
                     &_generic_simple_4hv_&
                     &PRECISION&
-                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), nbw, nl, &
+                       stripe_width, nbw)
 #endif
 
 #endif
@@ -1376,7 +1378,8 @@
                     &MATH_DATATYPE&
                     &_generic_simple_&
                     &PRECISION&
-                    & (a(1:stripe_width,jj+off+a_off-1:jj+off+a_off-1+nbw,istripe,my_thread), w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+                    & (a(1:stripe_width,jj+off+a_off-1:jj+off+a_off-1+nbw,istripe,my_thread), w(1:nbw,1:6), nbw, &
+                       nl, stripe_width, nbw)
 #endif
 
 #else
