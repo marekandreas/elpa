@@ -65,6 +65,8 @@
 #define _SSE_MUL _mm_mul_pd
 #define _SSE_XOR _mm_xor_pd
 #define _SSE_STORE _mm_store_pd
+#define _SSE_SET _mm_set_pd
+#define _SSE_SET1 _mm_set1_pd
 #define offset 2
 #endif
 
@@ -75,6 +77,8 @@
 #define _SSE_MUL _mm_mul_ps
 #define _SSE_XOR _mm_xor_ps
 #define _SSE_STORE _mm_store_ps
+#define _SSE_SET _mm_set_ps
+#define _SSE_SET1 _mm_set1_ps
 #define offset 4
 #endif
 
@@ -469,20 +473,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         __SSE_DATATYPE x6 = _SSE_LOAD(&q[ldq+5*offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
         __SSE_DATATYPE h2;
@@ -502,24 +496,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for(i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
@@ -542,20 +524,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 y6 = _SSE_ADD(y6, _SSE_MUL(q6,h2));
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
         q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -574,28 +546,14 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         // Rank-2 update of Q [12 x nb+1]
         /////////////////////////////////////////////////////
 #ifdef  HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_pd(s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_ps(s);
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef  HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_pd(s, s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_ps(s, s);
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET(s, s);
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -644,21 +602,11 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         _SSE_STORE(&q[5*offset],q6);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
         q1 = _SSE_LOAD(&q[ldq]);
@@ -683,24 +631,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for (i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
@@ -723,20 +659,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 _SSE_STORE(&q[(i*ldq)+5*offset],q6);
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
 
@@ -813,20 +739,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         __SSE_DATATYPE x5 = _SSE_LOAD(&q[ldq+4*offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
         __SSE_DATATYPE h2;
@@ -844,24 +760,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for(i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
 
@@ -883,20 +787,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         }
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
         q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -913,30 +807,14 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         // Rank-2 update of Q [12 x nb+1]
         /////////////////////////////////////////////////////
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_pd(s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_ps(s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_pd(s, s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_ps(s, s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET(s, s);
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -980,20 +858,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         _SSE_STORE(&q[4*offset],q5);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
         q1 = _SSE_LOAD(&q[ldq]);
@@ -1015,24 +883,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for (i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
@@ -1052,20 +908,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 _SSE_STORE(&q[(i*ldq)+4*offset],q5);
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
         q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1135,20 +981,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         __SSE_DATATYPE x4 = _SSE_LOAD(&q[ldq+3*offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
         __SSE_DATATYPE h2;
@@ -1164,24 +1000,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for(i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
 
@@ -1199,20 +1023,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
         q1 = _SSE_LOAD(&q[nb*ldq]);
         x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
@@ -1226,30 +1040,14 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         // Rank-2 update of Q [12 x nb+1]
         /////////////////////////////////////////////////////
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_pd(s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_ps(s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_pd(s, s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_ps(s, s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET(s, s);
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -1288,20 +1086,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         _SSE_STORE(&q[3*offset],q4);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
         q1 = _SSE_LOAD(&q[ldq]);
@@ -1320,24 +1108,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for (i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
 
@@ -1355,20 +1131,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 _SSE_STORE(&q[(i*ldq)+3*offset],q4);
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
         q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1434,20 +1200,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         __SSE_DATATYPE x3 = _SSE_LOAD(&q[ldq+2*offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
         __SSE_DATATYPE h2;
 
@@ -1460,24 +1216,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for(i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
 
@@ -1492,20 +1236,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
         q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1518,30 +1252,14 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         // Rank-2 update of Q [12 x nb+1]
         /////////////////////////////////////////////////////
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_pd(s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_ps(s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_pd(s, s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_ps(s, s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET(s, s);
 #endif
 
 
@@ -1576,20 +1294,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         _SSE_STORE(&q[2*offset],q3);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
 
@@ -1607,24 +1315,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for (i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
@@ -1638,20 +1334,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 _SSE_STORE(&q[(i*ldq)+2*offset],q3);
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
         q1 = _SSE_LOAD(&q[nb*ldq]);
         q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
@@ -1713,20 +1399,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         __SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
         __SSE_DATATYPE h2;
 
@@ -1737,24 +1413,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for(i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
@@ -1766,20 +1430,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         }
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
         q1 = _SSE_LOAD(&q[nb*ldq]);
@@ -1790,30 +1444,14 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         // Rank-2 update of Q [12 x nb+1]
         /////////////////////////////////////////////////////
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_pd(s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_ps(s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_pd(s, s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_ps(s, s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET(s, s);
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -1842,20 +1480,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         _SSE_STORE(&q[offset],q2);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
         q1 = _SSE_LOAD(&q[ldq]);
@@ -1868,24 +1496,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for (i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
@@ -1896,20 +1512,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 _SSE_STORE(&q[(i*ldq)+offset],q2);
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
         q1 = _SSE_LOAD(&q[nb*ldq]);
         q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
@@ -1967,20 +1573,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         __SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE h1 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
         __SSE_DATATYPE h2;
 
@@ -1989,24 +1585,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for(i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i], hh[ldh+i]);
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
@@ -2015,20 +1599,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         }
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
 
@@ -2038,30 +1612,14 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         // Rank-2 update of Q [12 x nb+1]
         /////////////////////////////////////////////////////
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_pd(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_pd(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_pd(s);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set1_ps(hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set1_ps(hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set1_ps(s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_pd(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_pd(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_pd(s,s );
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        __SSE_DATATYPE tau1 = _mm_set_ps(hh[0], hh[0]);
-        __SSE_DATATYPE tau2 = _mm_set_ps(hh[ldh], hh[ldh]);
-        __SSE_DATATYPE vs = _mm_set_ps(s, s);
-
-#endif
+        __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+        __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+        __SSE_DATATYPE vs = _SSE_SET(s,s );
 #endif
 
 #ifdef HAVE_SSE_INTRINSICS
@@ -2085,20 +1643,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         _SSE_STORE(q,q1);
 
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set1_pd(hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set1_ps(hh[ldh+1]);
-#endif
+        h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h2 = _mm_set_pd(hh[ldh+1], hh[ldh+1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h2 = _mm_set_ps(hh[ldh+1], hh[ldh+1]);
-#endif
+        h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
         q1 = _SSE_LOAD(&q[ldq]);
@@ -2108,24 +1656,12 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
         for (i = 2; i < nb; i++)
         {
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set1_pd(hh[i-1]);
-                h2 = _mm_set1_pd(hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set1_ps(hh[i-1]);
-                h2 = _mm_set1_ps(hh[ldh+i]);
-#endif
+                h1 = _SSE_SET1(hh[i-1]);
+                h2 = _SSE_SET1(hh[ldh+i]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-                h1 = _mm_set_pd(hh[i-1], hh[i-1]);
-                h2 = _mm_set_pd(hh[ldh+i], hh[ldh+i]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-                h1 = _mm_set_ps(hh[i-1], hh[i-1]);
-                h2 = _mm_set_ps(hh[ldh+i]), hh[ldh+i];
-#endif
+                h1 = _SSE_SET(hh[i-1], hh[i-1]);
+                h2 = _SSE_SET(hh[ldh+i], hh[ldh+i]);
 #endif
 
                 q1 = _SSE_LOAD(&q[i*ldq]);
@@ -2133,20 +1669,10 @@ void double_hh_trafo_real_sparc64_2hv_single(float* q, float* hh, int* pnb, int*
                 _SSE_STORE(&q[i*ldq],q1);
         }
 #ifdef HAVE_SSE_INTRINSICS
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set1_pd(hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set1_ps(hh[nb-1]);
-#endif
+        h1 = _SSE_SET1(hh[nb-1]);
 #endif
 #ifdef HAVE_SPARC64_SSE
-#ifdef DOUBLE_PRECISION_REAL
-        h1 = _mm_set_pd(hh[nb-1], hh[nb-1]);
-#endif
-#ifdef SINGLE_PRECISION_REAL
-        h1 = _mm_set_ps(hh[nb-1], hh[nb-1]);
-#endif
+        h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
         q1 = _SSE_LOAD(&q[nb*ldq]);
         q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
