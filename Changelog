@@ -1,3 +1,9 @@
+Changelog for upcoming release
+
+- user can define the default kernels
+- simple block4 and block6 real kernel
+- ELPA versioning number is provided in the C header files
+
 Changelog for ELPA 2018.11.001
 
 - improved autotuning
