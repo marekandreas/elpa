@@ -81,6 +81,10 @@
          use real_generic_simple_block4_kernel !, only : double_hh_trafo_generic_simple
 #endif
 
+#if defined(WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL) && !(defined(USE_ASSUMED_SIZE))
+         use real_generic_simple_block6_kernel !, only : double_hh_trafo_generic_simple
+#endif
+
 #if defined(WITH_REAL_GENERIC_KERNEL) && !(defined(USE_ASSUMED_SIZE))
          use real_generic_kernel !, only : double_hh_trafo_generic
 #endif
@@ -133,6 +137,7 @@
 #if REALCASE == 1
 !         real(kind=C_DATATYPE_KIND)                :: a(stripe_width,a_dim2,stripe_count)
          real(kind=C_DATATYPE_KIND), pointer        :: a(:,:,:)
+!         real(kind=C_DATATYPE_KIND), target         :: a1(stripe_width,a_dim2,stripe_count)
 #endif
 #if COMPLEXCASE == 1
 !          complex(kind=C_DATATYPE_KIND)            :: a(stripe_width,a_dim2,stripe_count)
@@ -144,6 +149,7 @@
 #if REALCASE == 1
 !         real(kind=C_DATATYPE_KIND)                :: a(stripe_width,a_dim2,stripe_count,max_threads)
          real(kind=C_DATATYPE_KIND), pointer        :: a(:,:,:,:)
+ 
 #endif
 #if COMPLEXCASE == 1
 !          complex(kind=C_DATATYPE_KIND)            :: a(stripe_width,a_dim2,stripe_count,max_threads)
@@ -170,13 +176,14 @@
          integer(kind=ik)                           :: j, nl, jj, jjj, n_times
 #if REALCASE == 1
          real(kind=C_DATATYPE_KIND)                 :: w(nbw,6)
+!         real(kind=C_DATATYPE_KIND)                 :: w1(nbw,6)
 #endif
 #if COMPLEXCASE == 1
          complex(kind=C_DATATYPE_KIND)              :: w(nbw,2)
 #endif
          real(kind=c_double)                        :: ttt ! MPI_WTIME always needs double
 
-
+integer :: k,l,m
          j = -99
 
          if (wantDebug) then
@@ -1395,7 +1402,8 @@
                     &MATH_DATATYPE&
                     &_generic_simple_&
                     &PRECISION&
-                    & (a(1:stripe_width,jj+off+a_off-1:jj+off+a_off-1+nbw,istripe), w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+                    & (a(1:stripe_width,jj+off+a_off-1:jj+off+a_off-1+nbw,istripe), w(1:nbw,1:6), &
+                       nbw, nl, stripe_width, nbw)
 #endif
 
 #endif
@@ -1415,7 +1423,8 @@
                   &MATH_DATATYPE&
                   &_cpu_&
                   &PRECISION&
-                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), &
+                     nbw, nl, stripe_width)
 #endif
 #endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL)) */
 
@@ -1427,7 +1436,198 @@
 #endif /* REALCASE */
 
 #if REALCASE == 1
-! generic simple block4 real kernel
+!real generic simple block6 kernel
+#if defined(WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (kernel .eq. ELPA_2STAGE_REAL_GENERIC_SIMPLE_BLOCK6) then
+
+#endif /* not WITH_FIXED_REAL_KERNEL */
+             ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
+             do j = ncols, 6, -6
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               w(:,3) = bcast_buffer(1:nbw,j+off-2)
+               w(:,4) = bcast_buffer(1:nbw,j+off-3)
+               w(:,5) = bcast_buffer(1:nbw,j+off-4)
+               w(:,6) = bcast_buffer(1:nbw,j+off-5)
+
+ !              w1(:,:) = w(:,:)
+ !              a1(:,:,:) = a(:,:,:)
+#ifdef WITH_OPENMP
+
+#ifdef USE_ASSUMED_SIZE
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_6hv_&
+                    &PRECISION&
+                    & (a(1,j+off+a_off-5,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+#else
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_6hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off-1,istripe,my_thread), w(1:nbw,1:6), &
+                       nbw, nl, stripe_width, nbw)
+#endif
+
+#else /* WITH_OPENMP */
+               !print *,"j=",j," off=",off," a_off=",a_off," istripe=",istripe," nbw=",nbw," nl=",nl, &
+               !        " stipe_width=",stripe_width,"nbw=",nbw
+#ifdef USE_ASSUMED_SIZE
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_6hv_&
+                    &PRECISION&
+                    & (a(1,j+off+a_off-5,istripe), w, nbw, nl, stripe_width, nbw)
+#else
+               !print *,"a=",a(1,151,1),"a1=",a1(1,151,1)
+               !call hexa_hh_trafo_&
+               !     &MATH_DATATYPE&
+               !     &_sse_6hv_&
+               !     &PRECISION&
+               !     & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
+
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_6hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), &
+                       nbw, nl, stripe_width, nbw)
+                    !print *," did : ",stripe_width,j+off+a_off-5,j+off+a_off+nbw-1,istripe
+                    !do k=1,nbw
+                    ! do l=1,6
+                    !   if (w(k,l) .ne. w1(k,l)) then
+                    !     print *," w not identical ",k,l,w(k,l),w1(k,l)
+                    !     stop
+                    !   endif
+                    ! enddo
+                    !enddo
+                    !do k=1,stripe_width
+                    !  do l=j+off+a_off-5,j+off+a_off+nbw-1
+                    !    do m=1,istripe
+                    !      if (a(k,l,m) .ne. 0.) then
+                    !        if (abs(a(k,l,m)-a1(k,l,m))/abs(a(k,l,m)) .gt. 1e-6) then
+                    !          print *,j,k,l,m,a(k,l,m),a1(k,l,m)
+                    !          stop
+                    !        endif
+                    !      else
+                    !        if(a1(k,l,m) .ne. 0.0) then
+                    !          print *,k,l,m,a1(k,l,m)," but should be zero"
+                    !          stop
+                    !        endif
+                    !      endif
+                    !    enddo
+                    !  enddo
+                    !enddo
+                    !print *,"done j=",j
+#endif
+#endif /* WITH_OPENMP */
+             enddo
+             do jj = j, 4, -4
+               w(:,1) = bcast_buffer(1:nbw,jj+off)
+               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+               w(:,3) = bcast_buffer(1:nbw,jj+off-2)
+               w(:,4) = bcast_buffer(1:nbw,jj+off-3)
+#ifdef WITH_OPENMP
+
+#ifdef USE_ASSUMED_SIZE
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_4hv_&
+                    &PRECISION&
+                    & (a(1,jj+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_4hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,jj+off+a_off-3:jj+off+a_off+nbw-1,istripe,my_thread), &
+                       w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef USE_ASSUMED_SIZE
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_4hv_&
+                    &PRECISION&
+                    & (a(1,jj+off+a_off-3,istripe), w, &
+                                                  nbw, nl, stripe_width, nbw)
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_4hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,jj+off+a_off-3:jj+off+a_off+nbw-1,istripe), &
+                       w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+#endif
+
+#endif /* WITH_OPENMP */
+             enddo
+             do jjj = jj, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,jjj+off)
+               w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
+#ifdef WITH_OPENMP
+
+#ifdef USE_ASSUMED_SIZE
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_&
+                    &PRECISION&
+                    & (a(1,jjj+off+a_off-1,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_&
+                    &PRECISION&
+                    & (a(1:stripe_width,jj+off+a_off-1:jj+off+a_off-1+nbw,istripe,my_thread), w(1:nbw,1:6), nbw, &
+                       nl, stripe_width, nbw)
+#endif
+
+#else /* WITH_OPENMP */
+
+#ifdef USE_ASSUMED_SIZE
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_&
+                    &PRECISION&
+                    & (a(1,jjj+off+a_off-1,istripe), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_&
+                    &PRECISION&
+                    & (a(1:stripe_width,jj+off+a_off-1:jj+off+a_off-1+nbw,istripe), w(1:nbw,1:6), nbw, nl, &
+                       stripe_width, nbw)
+#endif
+
+#endif /* WITH_OPENMP */
+             enddo
+#ifdef WITH_OPENMP
+             if (jjj==1) call single_hh_trafo_&
+                   &MATH_DATATYPE&
+                   &_cpu_openmp_&
+                   &PRECISION&
+                   & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#else
+             if (jjj==1) call single_hh_trafo_&
+                   &MATH_DATATYPE&
+                   &_cpu_&
+                   &PRECISION&
+                   & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#endif
+#ifndef WITH_FIXED_REAL_KERNEL
+           endif
+#endif /* not WITH_FIXED_REAL_KERNEL */
+#endif /* WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL */
+
+#endif /* REALCASE */
+
+
+#if REALCASE == 1
+! sparc64 block 4 real kernel
 
 #if defined(WITH_REAL_SPARC64_BLOCK4_KERNEL)
 #ifndef WITH_FIXED_REAL_KERNEL
