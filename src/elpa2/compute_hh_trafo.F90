@@ -137,7 +137,6 @@
 #if REALCASE == 1
 !         real(kind=C_DATATYPE_KIND)                :: a(stripe_width,a_dim2,stripe_count)
          real(kind=C_DATATYPE_KIND), pointer        :: a(:,:,:)
-!         real(kind=C_DATATYPE_KIND), target         :: a1(stripe_width,a_dim2,stripe_count)
 #endif
 #if COMPLEXCASE == 1
 !          complex(kind=C_DATATYPE_KIND)            :: a(stripe_width,a_dim2,stripe_count)
@@ -176,14 +175,12 @@
          integer(kind=ik)                           :: j, nl, jj, jjj, n_times
 #if REALCASE == 1
          real(kind=C_DATATYPE_KIND)                 :: w(nbw,6)
-!         real(kind=C_DATATYPE_KIND)                 :: w1(nbw,6)
 #endif
 #if COMPLEXCASE == 1
          complex(kind=C_DATATYPE_KIND)              :: w(nbw,2)
 #endif
          real(kind=c_double)                        :: ttt ! MPI_WTIME always needs double
 
-integer :: k,l,m
          j = -99
 
          if (wantDebug) then
@@ -215,14 +212,14 @@ integer :: k,l,m
          endif
 
          if (wantDebug) call obj%timer%start("compute_hh_trafo_&
-   &MATH_DATATYPE&
+                                              &MATH_DATATYPE&
 #ifdef WITH_OPENMP
-         &_openmp" // &
+                                              &_openmp" // &
 #else
-         &" // &
+                                              &" // &
 #endif
-         &PRECISION_SUFFIX &
-         )
+                                              &PRECISION_SUFFIX &
+                                              )
 
 
 #ifdef WITH_OPENMP
@@ -264,14 +261,14 @@ integer :: k,l,m
            nl = min(my_thread*thread_width-noff, l_nev-noff)
            if (nl<=0) then
              if (wantDebug) call obj%timer%stop("compute_hh_trafo_&
-       &MATH_DATATYPE&
+                                                &MATH_DATATYPE&
 #ifdef WITH_OPENMP
-             &_openmp" // &
+                                                &_openmp" // &
 #else
-             &" // &
+                                                &" // &
 #endif
-             &PRECISION_SUFFIX &
-             )
+                                                &PRECISION_SUFFIX &
+                                                )
 
              return
            endif
@@ -1451,8 +1448,6 @@ integer :: k,l,m
                w(:,5) = bcast_buffer(1:nbw,j+off-4)
                w(:,6) = bcast_buffer(1:nbw,j+off-5)
 
- !              w1(:,:) = w(:,:)
- !              a1(:,:,:) = a(:,:,:)
 #ifdef WITH_OPENMP
 
 #ifdef USE_ASSUMED_SIZE
@@ -1471,8 +1466,6 @@ integer :: k,l,m
 #endif
 
 #else /* WITH_OPENMP */
-               !print *,"j=",j," off=",off," a_off=",a_off," istripe=",istripe," nbw=",nbw," nl=",nl, &
-               !        " stipe_width=",stripe_width,"nbw=",nbw
 #ifdef USE_ASSUMED_SIZE
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
@@ -1480,46 +1473,12 @@ integer :: k,l,m
                     &PRECISION&
                     & (a(1,j+off+a_off-5,istripe), w, nbw, nl, stripe_width, nbw)
 #else
-               !print *,"a=",a(1,151,1),"a1=",a1(1,151,1)
-               !call hexa_hh_trafo_&
-               !     &MATH_DATATYPE&
-               !     &_sse_6hv_&
-               !     &PRECISION&
-               !     & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
-
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_6hv_&
                     &PRECISION&
                     & (a(1:stripe_width,j+off+a_off-5:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), &
                        nbw, nl, stripe_width, nbw)
-                    !print *," did : ",stripe_width,j+off+a_off-5,j+off+a_off+nbw-1,istripe
-                    !do k=1,nbw
-                    ! do l=1,6
-                    !   if (w(k,l) .ne. w1(k,l)) then
-                    !     print *," w not identical ",k,l,w(k,l),w1(k,l)
-                    !     stop
-                    !   endif
-                    ! enddo
-                    !enddo
-                    !do k=1,stripe_width
-                    !  do l=j+off+a_off-5,j+off+a_off+nbw-1
-                    !    do m=1,istripe
-                    !      if (a(k,l,m) .ne. 0.) then
-                    !        if (abs(a(k,l,m)-a1(k,l,m))/abs(a(k,l,m)) .gt. 1e-6) then
-                    !          print *,j,k,l,m,a(k,l,m),a1(k,l,m)
-                    !          stop
-                    !        endif
-                    !      else
-                    !        if(a1(k,l,m) .ne. 0.0) then
-                    !          print *,k,l,m,a1(k,l,m)," but should be zero"
-                    !          stop
-                    !        endif
-                    !      endif
-                    !    enddo
-                    !  enddo
-                    !enddo
-                    !print *,"done j=",j
 #endif
 #endif /* WITH_OPENMP */
              enddo
