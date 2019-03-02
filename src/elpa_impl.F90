@@ -56,6 +56,9 @@ module elpa_impl
   use elpa_mpi
   use elpa_generated_fortran_interfaces
   use elpa_utilities, only : error_unit
+#ifdef HAVE_LIKWID
+  use likwid
+#endif
 
   use elpa_abstract_impl
 #ifdef ENABLE_AUTOTUNING
@@ -528,6 +531,13 @@ module elpa_impl
       character(*), parameter             :: MPI_CONSISTENCY_MSG = &
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
 
+#endif
+
+#ifdef HAVE_LIKWID
+      !initialize likwid
+      call likwid_markerInit()
+      call likwid_markerThreadInit()
+      call likwid_markerStartRegion("TOTAL")
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -1017,6 +1027,11 @@ module elpa_impl
       if (present(error)) then
         error = ELPA_OK
       endif
+
+#ifdef HAVE_LIKWID
+      call likwid_markerStopRegion("TOTAL")
+      call likwid_markerClose()
+#endif
 
 #ifdef WITH_MPI
       if (self%communicators_owned == 1) then

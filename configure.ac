@@ -308,6 +308,51 @@ if test x"${enable_timings}" = x"yes"; then
 fi
 AC_LANG_POP([C])
 
+dnl Likwid
+AC_LANG_PUSH([Fortran])
+AC_ARG_WITH([likwid],
+            [AS_HELP_STRING([--with-likwid=[[yes|no(default)|PATH]]],
+                            [Use Likwid to measure performance in some parts of the library])],
+            [with_likwid="$withval"],
+            [with_likwid="no"])
+
+if test x"$with_likwid" != x"no" ; then
+  if test -d $with_likwid/lib ; then
+    LDFLAGS="-L$with_likwid/lib $LDFLAGS"
+  fi
+  if test -d $with_likwid/lib64 ; then
+    LDFLAGS="-L$with_likwid/lib64 $LDFLAGS"
+  fi
+  if test -d $with_likwid/include ; then
+    FCFLAGS="-I$with_likwid/include $FCFLAGS"
+  fi
+  AC_SEARCH_LIBS([likwid_markerInit], [likwid], [liblikwid_found="yes"], [liblikwid_found="no"])
+  if test x"$liblikwid_found" = x"no" ; then
+    AC_MSG_ERROR([Could not find a usable likwid library, please adjust LDFLAGS])
+  fi
+  AC_MSG_CHECKING([whether we can use the likwid module in a Fortran program])
+  AC_COMPILE_IFELSE([
+       program foo
+       use likwid
+
+       implicit none
+
+       call likwid_markerInit()
+       call likwid_markerThreadInit()
+
+       call likwid_markerStartRegion("foobar")
+       call likwid_markerStopRegion("foobar")
+
+       call likwid_markerClose()
+       end
+    ],
+    [AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])
+     AC_MSG_ERROR([Could not compile a Fortran program using the likwid module, adjust FCFLAGS])])
+  AC_DEFINE([HAVE_LIKWID], [1], [Use likwid])
+fi
+AC_LANG_POP([Fortran])
+
 save_FCFLAGS=$FCFLAGS
 save_LDFLAGS=$LDFLAGS
 

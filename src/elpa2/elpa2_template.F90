@@ -549,6 +549,9 @@
 
     if (do_bandred) then
       call obj%timer%start("bandred")
+#ifdef HAVE_LIKWID
+      call likwid_markerStartRegion("bandred")
+#endif
       ! Reduction full -> band
       call bandred_&
       &MATH_DATATYPE&
@@ -561,6 +564,9 @@
       useQRActual, &
 #endif
        nrThreads)
+#ifdef HAVE_LIKWID
+      call likwid_markerStopRegion("bandred")
+#endif
       call obj%timer%stop("bandred")
       if (.not.(success)) return
     endif
@@ -578,6 +584,9 @@
        endif
 
        call obj%timer%start("tridiag")
+#ifdef HAVE_LIKWID
+       call likwid_markerStartRegion("tridiag")
+#endif
        call tridiag_band_&
        &MATH_DATATYPE&
        &_&
@@ -591,6 +600,9 @@
        call mpi_bcast(e, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
+#ifdef HAVE_LIKWID
+       call likwid_markerStopRegion("tridiag")
+#endif
        call obj%timer%stop("tridiag")
      endif ! do_tridiag
 
@@ -611,6 +623,9 @@
      ! Solve tridiagonal system
      if (do_solve_tridi) then
        call obj%timer%start("solve")
+#ifdef HAVE_LIKWID
+       call likwid_markerStartRegion("solve")
+#endif
        call solve_tridi_&
        &PRECISION &
        (obj, na, nev, ev, e, &
@@ -621,6 +636,9 @@
        q_real, ubound(q_real,dim=1), &
 #endif
        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+#ifdef HAVE_LIKWID
+       call likwid_markerStopRegion("solve")
+#endif
        call obj%timer%stop("solve")
        if (.not.(success)) return
      endif ! do_solve_tridi
@@ -678,7 +696,9 @@
 
        ! Backtransform stage 1
        call obj%timer%start("trans_ev_to_band")
-
+#ifdef HAVE_LIKWID
+       call likwid_markerStartRegion("trans_ev_to_band")
+#endif
        call trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &_&
@@ -687,6 +707,9 @@
        q_dev, &
        ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
+#ifdef HAVE_LIKWID
+       call likwid_markerStopRegion("trans_ev_to_band")
+#endif
        call obj%timer%stop("trans_ev_to_band")
 
        if (.not.(success)) return
@@ -730,6 +753,9 @@
 
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")
+#ifdef HAVE_LIKWID
+       call likwid_markerStartRegion("trans_ev_to_full")
+#endif
        if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
          ! copy to device if we want to continue on GPU
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
@@ -765,6 +791,9 @@
          &PRECISION " // ": error when deallocating tmat"//errorMessage
          stop 1
        endif
+#ifdef HAVE_LIKWID
+       call likwid_markerStopRegion("trans_ev_to_full")
+#endif
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
 

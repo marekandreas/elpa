@@ -56,6 +56,9 @@
 !> \brief Fortran module which provides the routines to use the 2-stage ELPA solver. Implementation only. Should not be used directly
 module elpa2_impl
   use elpa_utilities, only : error_unit
+#ifdef HAVE_LIKWID
+  use likwid
+#endif
 
   implicit none
 
