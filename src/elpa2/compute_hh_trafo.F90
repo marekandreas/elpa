@@ -1450,36 +1450,36 @@
 
 #ifdef WITH_OPENMP
 
-#ifdef USE_ASSUMED_SIZE
+!#ifdef USE_ASSUMED_SIZE
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_generic_simple_6hv_&
+                    &_sse_6hv_&
                     &PRECISION&
-                    & (a(1,j+off+a_off-5,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-#else
-               call hexa_hh_trafo_&
-                    &MATH_DATATYPE&
-                    &_generic_simple_6hv_&
-                    &PRECISION&
-                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off-1,istripe,my_thread), w(1:nbw,1:6), &
-                       nbw, nl, stripe_width, nbw)
-#endif
+                    & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+!#else
+!               call hexa_hh_trafo_&
+!                    &MATH_DATATYPE&
+!                    &_sse_6hv_&
+!                    &PRECISION&
+!                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off-1,istripe,my_thread), w(1:nbw,1:6), &
+!                       nbw, nl, stripe_width, nbw)
+!#endif
 
 #else /* WITH_OPENMP */
-#ifdef USE_ASSUMED_SIZE
+!#ifdef USE_ASSUMED_SIZE
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_generic_simple_6hv_&
+                    &_sse_6hv_&
                     &PRECISION&
-                    & (a(1,j+off+a_off-5,istripe), w, nbw, nl, stripe_width, nbw)
-#else
-               call hexa_hh_trafo_&
-                    &MATH_DATATYPE&
-                    &_generic_simple_6hv_&
-                    &PRECISION&
-                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), &
-                       nbw, nl, stripe_width, nbw)
-#endif
+                    & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
+!#else
+!               call hexa_hh_trafo_&
+!                    &MATH_DATATYPE&
+!                    &_generic_simple_6hv_&
+!                    &PRECISION&
+!                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), &
+!                       nbw, nl, stripe_width, nbw)
+!#endif
 #endif /* WITH_OPENMP */
              enddo
              do jj = j, 4, -4
