@@ -59,18 +59,18 @@
 #endif
 #include "config-f90.h"
 
-#ifndef USE_ASSUMED_SIZE
-module real_generic_simple_block4_kernel
-
-  private
-  public quad_hh_trafo_real_generic_simple_4hv_double
-
-#ifdef WANT_SINGLE_PRECISION_REAL
- public quad_hh_trafo_real_generic_simple_4hv_single
-#endif
-
-  contains
-#endif
+!#ifndef USE_ASSUMED_SIZE
+!module real_generic_simple_block4_kernel
+!
+!  private
+!  public quad_hh_trafo_real_generic_simple_4hv_double
+!
+!#ifdef WANT_SINGLE_PRECISION_REAL
+! public quad_hh_trafo_real_generic_simple_4hv_single
+!#endif
+!
+!  contains
+!#endif
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
@@ -88,7 +88,7 @@ module real_generic_simple_block4_kernel
 #undef SINGLE_PRECISION
 #endif
 
-#ifndef USE_ASSUMED_SIZE
-end module real_generic_simple_block4_kernel
-#endif
+!#ifndef USE_ASSUMED_SIZE
+!end module real_generic_simple_block4_kernel
+!#endif
 ! --------------------------------------------------------------------------------------------------
