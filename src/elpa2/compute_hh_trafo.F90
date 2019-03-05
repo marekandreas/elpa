@@ -1455,7 +1455,7 @@
                     &MATH_DATATYPE&
                     &_generic_simple_6hv_&
                     &PRECISION&
-                    & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+                    & (a(1,j+off+a_off-5,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 !#else
 !               call hexa_hh_trafo_&
 !                    &MATH_DATATYPE&
@@ -1471,7 +1471,7 @@
                     &MATH_DATATYPE&
                     &_generic_simple_6hv_&
                     &PRECISION&
-                    & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
+                    & (a(1,j+off+a_off-5,istripe), w, nbw, nl, stripe_width, nbw)
 !#else
 !               call hexa_hh_trafo_&
 !                    &MATH_DATATYPE&
