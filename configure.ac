@@ -550,7 +550,6 @@ m4_define(elpa_m4_generic_kernels, [
         real_generic
         real_generic_simple
         real_generic_simple_block4
-        real_generic_simple_block6
         complex_generic
         complex_generic_simple
 ])
