@@ -77,13 +77,13 @@
          use real_generic_simple_kernel !, only : double_hh_trafo_generic_simple
 #endif
 
-!#if defined(WITH_REAL_GENERIC_SIMPLE_BLOCK4_KERNEL) && !(defined(USE_ASSUMED_SIZE))
-!         use real_generic_simple_block4_kernel !, only : double_hh_trafo_generic_simple
-!#endif
+#if defined(WITH_REAL_GENERIC_SIMPLE_BLOCK4_KERNEL) && !(defined(USE_ASSUMED_SIZE))
+         use real_generic_simple_block4_kernel !, only : double_hh_trafo_generic_simple
+#endif
 
-!#if defined(WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL) && !(defined(USE_ASSUMED_SIZE))
-!         use real_generic_simple_block6_kernel !, only : double_hh_trafo_generic_simple
-!#endif
+#if defined(WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL) && !(defined(USE_ASSUMED_SIZE))
+         use real_generic_simple_block6_kernel !, only : double_hh_trafo_generic_simple
+#endif
 
 #if defined(WITH_REAL_GENERIC_KERNEL) && !(defined(USE_ASSUMED_SIZE))
          use real_generic_kernel !, only : double_hh_trafo_generic
@@ -1331,37 +1331,37 @@
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
 #ifdef WITH_OPENMP
 
-!#ifdef USE_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_4hv_&
                     &PRECISION&
                     & (a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-!#else
-!               call quad_hh_trafo_&
-!                    &MATH_DATATYPE&
-!                    &_generic_simple_4hv_&
-!                    &PRECISION&
-!                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, &
-!                       stripe_width, nbw)
-!#endif
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_4hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, &
+                       stripe_width, nbw)
+#endif
 
 #else
 
-!#ifdef USE_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_4hv_&
                     &PRECISION&
                     & (a(1,j+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw)
-!#else
-!               call quad_hh_trafo_&
-!                    &MATH_DATATYPE&
-!                    &_generic_simple_4hv_&
-!                    &PRECISION&
-!                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), nbw, nl, &
-!                       stripe_width, nbw)
-!#endif
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_4hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), nbw, nl, &
+                       stripe_width, nbw)
+#endif
 
 #endif
              enddo
@@ -1450,36 +1450,36 @@
 
 #ifdef WITH_OPENMP
 
-!#ifdef USE_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_6hv_&
                     &PRECISION&
                     & (a(1,j+off+a_off-5,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-!#else
-!               call hexa_hh_trafo_&
-!                    &MATH_DATATYPE&
-!                    &_sse_6hv_&
-!                    &PRECISION&
-!                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off-1,istripe,my_thread), w(1:nbw,1:6), &
-!                       nbw, nl, stripe_width, nbw)
-!#endif
+#else
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_6hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off-1,istripe,my_thread), w(1:nbw,1:6), &
+                       nbw, nl, stripe_width, nbw)
+#endif
 
 #else /* WITH_OPENMP */
-!#ifdef USE_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_6hv_&
                     &PRECISION&
                     & (a(1,j+off+a_off-5,istripe), w, nbw, nl, stripe_width, nbw)
-!#else
-!               call hexa_hh_trafo_&
-!                    &MATH_DATATYPE&
-!                    &_generic_simple_6hv_&
-!                    &PRECISION&
-!                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), &
-!                       nbw, nl, stripe_width, nbw)
-!#endif
+#else
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_6hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), &
+                       nbw, nl, stripe_width, nbw)
+#endif
 #endif /* WITH_OPENMP */
              enddo
              do jj = j, 4, -4
@@ -1489,38 +1489,38 @@
                w(:,4) = bcast_buffer(1:nbw,jj+off-3)
 #ifdef WITH_OPENMP
 
-!#ifdef USE_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_4hv_&
                     &PRECISION&
                     & (a(1,jj+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-!#else
-!               call quad_hh_trafo_&
-!                    &MATH_DATATYPE&
-!                    &_generic_simple_4hv_&
-!                    &PRECISION&
-!                    & (a(1:stripe_width,jj+off+a_off-3:jj+off+a_off+nbw-1,istripe,my_thread), &
-!                       w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
-!#endif
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_4hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,jj+off+a_off-3:jj+off+a_off+nbw-1,istripe,my_thread), &
+                       w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+#endif
 
 #else /* WITH_OPENMP */
 
-!#ifdef USE_ASSUMED_SIZE
+#ifdef USE_ASSUMED_SIZE
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_4hv_&
                     &PRECISION&
                     & (a(1,jj+off+a_off-3,istripe), w, &
                                                   nbw, nl, stripe_width, nbw)
-!#else
-!               call quad_hh_trafo_&
-!                    &MATH_DATATYPE&
-!                    &_generic_simple_4hv_&
-!                    &PRECISION&
-!                    & (a(1:stripe_width,jj+off+a_off-3:jj+off+a_off+nbw-1,istripe), &
-!                       w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
-!#endif
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_generic_simple_4hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,jj+off+a_off-3:jj+off+a_off+nbw-1,istripe), &
+                       w(1:nbw,1:6), nbw, nl, stripe_width, nbw)
+#endif
 
 #endif /* WITH_OPENMP */
              enddo

@@ -60,18 +60,18 @@
 #endif
 #include "config-f90.h"
 
-!#ifndef USE_ASSUMED_SIZE
-!module real_generic_simple_block6_kernel
-!
-!  private
-!  public hexa_hh_trafo_real_generic_simple_6hv_double
-!
-!#ifdef WANT_SINGLE_PRECISION_REAL
-! public hexa_hh_trafo_real_generic_simple_6hv_single
-!#endif
-!
-!  contains
-!#endif
+#ifndef USE_ASSUMED_SIZE
+module real_generic_simple_block6_kernel
+
+  private
+  public hexa_hh_trafo_real_generic_simple_6hv_double
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+ public hexa_hh_trafo_real_generic_simple_6hv_single
+#endif
+
+  contains
+#endif
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
@@ -89,7 +89,7 @@
 #undef SINGLE_PRECISION
 #endif
 
-!#ifndef USE_ASSUMED_SIZE
-!end module real_generic_simple_block6_kernel
-!#endif
+#ifndef USE_ASSUMED_SIZE
+end module real_generic_simple_block6_kernel
+#endif
 ! --------------------------------------------------------------------------------------------------
