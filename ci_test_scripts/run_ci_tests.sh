@@ -13,6 +13,7 @@ configueArg=""
 skipStep=0
 batchCommand=""
 interactiveRun="yes"
+SLURMBATCH="no"
 
 function usage() {
 	cat >&2 <<-EOF
@@ -58,7 +59,7 @@ function usage() {
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:q:i:h" opt; do
+while getopts "c:t:j:m:n:b:o:s:q:S:i:h" opt; do
 	case $opt in
 		j)
 			makeTasks=$OPTARG;;
@@ -80,6 +81,8 @@ while getopts "c:t:j:m:n:b:o:s:q:i:h" opt; do
 			batchCommand=$OPTARG;;
 		i)
 			interactiveRun=$OPTARG;;
+		S)
+			SLURMBATCH=$OPTARG;;
 		:)
 			echo "Option -$OPTARG requires an argument" >&2;;
 		h)
