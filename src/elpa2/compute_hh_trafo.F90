@@ -81,9 +81,9 @@
          use real_generic_simple_block4_kernel !, only : double_hh_trafo_generic_simple
 #endif
 
-#if defined(WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL) && !(defined(USE_ASSUMED_SIZE))
-         use real_generic_simple_block6_kernel !, only : double_hh_trafo_generic_simple
-#endif
+!#if defined(WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL) && !(defined(USE_ASSUMED_SIZE))
+!         use real_generic_simple_block6_kernel !, only : double_hh_trafo_generic_simple
+!#endif
 
 #if defined(WITH_REAL_GENERIC_KERNEL) && !(defined(USE_ASSUMED_SIZE))
          use real_generic_kernel !, only : double_hh_trafo_generic
@@ -1450,36 +1450,36 @@
 
 #ifdef WITH_OPENMP
 
-#ifdef USE_ASSUMED_SIZE
+!#ifdef USE_ASSUMED_SIZE
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_6hv_&
                     &PRECISION&
                     & (a(1,j+off+a_off-5,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-#else
-               call hexa_hh_trafo_&
-                    &MATH_DATATYPE&
-                    &_generic_simple_6hv_&
-                    &PRECISION&
-                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off-1,istripe,my_thread), w(1:nbw,1:6), &
-                       nbw, nl, stripe_width, nbw)
-#endif
+!#else
+!               call hexa_hh_trafo_&
+!                    &MATH_DATATYPE&
+!                    &_generic_simple_6hv_&
+!                    &PRECISION&
+!                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off-1,istripe,my_thread), w(1:nbw,1:6), &
+!                       nbw, nl, stripe_width, nbw)
+!#endif
 
 #else /* WITH_OPENMP */
-#ifdef USE_ASSUMED_SIZE
+!#ifdef USE_ASSUMED_SIZE
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
                     &_generic_simple_6hv_&
                     &PRECISION&
                     & (a(1,j+off+a_off-5,istripe), w, nbw, nl, stripe_width, nbw)
-#else
-               call hexa_hh_trafo_&
-                    &MATH_DATATYPE&
-                    &_generic_simple_6hv_&
-                    &PRECISION&
-                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), &
-                       nbw, nl, stripe_width, nbw)
-#endif
+!#else
+!               call hexa_hh_trafo_&
+!                    &MATH_DATATYPE&
+!                    &_generic_simple_6hv_&
+!                    &PRECISION&
+!                    & (a(1:stripe_width,j+off+a_off-5:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), &
+!                       nbw, nl, stripe_width, nbw)
+!#endif
 #endif /* WITH_OPENMP */
              enddo
              do jj = j, 4, -4
