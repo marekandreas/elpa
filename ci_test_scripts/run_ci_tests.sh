@@ -109,37 +109,75 @@ then
   then
     CLUSTER="cobra"
   fi
+  if [[ "$HOST" =~ "talos" ]]
+  then
+    CLUSTER="talos"
+  fi
+  if [[ "$HOST" =~ "freya" ]]
+  then
+    CLUSTER="freya"
+  fi
 
 
   if [ "$CLUSTER" == "cobra" ]
   then
     echo "Running on cobra with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS"
 
+    # GPU runners
     if [ "$CI_RUNNER_TAGS" == "gpu" ]
     then
-      cp $HOME/runners/job_script_templates/run_COBRA_1node_2GPU.sh .
-      echo "./configure " "$configureArgs" >> ./run_COBRA_1node_2GPU.sh
-      echo " " >> ./run_COBRA_1node_2GPU.sh
-      echo "make -j 16" >> ./run_COBRA_1node_2GPU.sh
-      echo " " >> ./run_COBRA_1node_2GPU.sh
-      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_COBRA_1node_2GPU.sh
-      echo "export TASKS=$mpiTasks" >> ./run_COBRA_1node_2GPU.sh
-      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_COBRA_1node_2GPU.sh
+      cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_2GPU.sh .
+      echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "make -j 16" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
 
-      sbatch -W ./run_COBRA_1node_2GPU.sh
+      sbatch -W ./run_${CLUSTER}_1node_2GPU.sh
 
       exitCode=$?
       cat ./ELPA_CI_2gpu.out.*
-      cat ./ELPA_CI_2gpu.err.*
+      if (( $exitCode > 0 ))
+      then
+        cat ./ELPA_CI_2gpu.err.*
+      fi
       
     fi
+
+    #SSE, AVX, AVX2, and AVX-512 runners
+    if [ "$CI_RUNNER_TAGS" == "sse" ] || [ "$CI_RUNNER_TAGS" == "avx" ] || [ "$CI_RUNNER_TAGS" == "avx2" ]  || [ "$CI_RUNNER_TAGS" == "avx512" ]
+    then
+      cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
+      echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "make -j 16" >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
+      echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
+      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node.sh
+
+      sbatch -W ./run_COBRA_1node.sh
+
+      exitCode=$?
+      cat ./ELPA_CI.out.*
+      if (( $exitCode > 0 ))
+      then
+        cat ./ELPA_CI.err.*
+      fi
+
+    fi
+
     if (( $exitCode > 0 ))
     then
       cat ./test-suite.log
     fi
-     
+
     exit $exitCode
   fi
+
+
 fi
 
 
