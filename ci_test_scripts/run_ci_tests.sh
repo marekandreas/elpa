@@ -96,11 +96,52 @@ while getopts "c:t:j:m:n:b:o:s:q:i:S:h" opt; do
 	esac
 done
 
+
 if [ $skipStep -eq 1 ]
 then
   echo "Skipping the test since option -s has been specified"
   exit 0
 fi
+if [ "$slurmBatch" == "yes" ]
+then
+  CLUSTER=""
+  if [[ "$HOST" =~ "cobra" ]]
+  then
+    CLUSTER="cobra"
+  fi
+
+
+  if [ "$CLUSTER" == "cobra" ]
+  then
+    echo "Running on cobra with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS"
+
+    if [ "$CI_RUNNER_TAGS" == "gpu" ]
+    then
+      cp $HOME/runners/job_script_templates/run_COBRA_1node_2GPU.sh .
+      echo "./configure " "$configureArgs" >> ./run_COBRA_1node_2GPU.sh
+      echo " " >> ./run_COBRA_1node_2GPU.sh
+      echo "make -j 16" >> ./run_COBRA_1node_2GPU.sh
+      echo " " >> ./run_COBRA_1node_2GPU.sh
+      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_COBRA_1node_2GPU.sh
+      echo "export TASKS=$mpiTasks" >> ./run_COBRA_1node_2GPU.sh
+      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_COBRA_1node_2GPU.sh
+
+      sbatch -W ./run_COBRA_1node_2GPU.sh
+
+      exitCode=$?
+      cat ./ELPA_CI_2gpu.out.*
+      cat ./ELPA_CI_2gpu.err.*
+      
+    fi
+    if (( $exitCode > 0 ))
+    then
+      cat ./test-suite.log
+    fi
+     
+    exit $exitCode
+  fi
+fi
+
 
 # not skipped then proceed
 if [ "$slurmBatch" == "no" ]
@@ -111,6 +152,7 @@ then
   # - draco
   # - buildtest
   # - virtual machine runners
+  # hopefully this can be removed soon
   echo "Using old CI logic for appdev"
   if [ "$batchCommand" == "srun" ]
   then
