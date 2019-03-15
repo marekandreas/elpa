@@ -179,7 +179,6 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition", NULL, PRINT_NO),
         INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition", NULL, PRINT_NO),
         INT_PARAMETER_ENTRY("process_id", "Process rank", NULL, PRINT_NO),
-        INT_PARAMETER_ENTRY("is_process_id_zero", "Is it a process with rank zero?", NULL, PRINT_NO),
         INT_PARAMETER_ENTRY("num_process_rows", "Number of process row number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
         INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
         INT_PARAMETER_ENTRY("num_processes", "Total number of processes", NULL, PRINT_STRUCTURE),
@@ -290,7 +289,6 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
 #define IMPLEMENT_GETENV(TYPE, PRINTF_SPEC, ...) \
         static int getenv_##TYPE(elpa_index_t index, const char *env_variable, enum NOTIFY_FLAGS notify_flag, int n, TYPE *value, const char *error_string) { \
                 int err; \
-                int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL); \
                 char *env_value = getenv(env_variable); \
                 if (env_value) { \
                         err = elpa_##TYPE##_string_to_value(TYPE##_entries[n].base.name, env_value, value); \
@@ -301,14 +299,14 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
                                 const char *value_string = NULL; \
                                 if (elpa_##TYPE##_value_to_string(TYPE##_entries[n].base.name, *value, &value_string) == ELPA_OK) { \
                                         if (!(index->TYPE##_options.notified[n] & notify_flag)) { \
-                                                if (is_process_id_zero == 1) { \
+                                                if (elpa_index_is_printing_mpi_rank(index)) { \
                                                         fprintf(stderr, "ELPA: %s '%s' is set to %s due to environment variable %s\n", \
                                                                       error_string, TYPE##_entries[n].base.name, value_string, env_variable); \
                                                 } \
                                                 index->TYPE##_options.notified[n] |= notify_flag; \
                                         } \
                                 } else { \
-                                        if (is_process_id_zero == 1) { \
+                                        if (elpa_index_is_printing_mpi_rank(index)) { \
                                                 fprintf(stderr, "ELPA: %s '%s' is set to '" PRINTF_SPEC "' due to environment variable %s\n", \
                                                         error_string, TYPE##_entries[n].base.name, *value, env_variable);\
                                         } \
@@ -1117,24 +1115,23 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
         int current_cpy = current;
         char buff[100];
         int debug = elpa_index_get_int_value(index, "debug", NULL);
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
 
-        //if(is_process_id_zero) fprintf(stderr, "***Trying a new autotuning index %d\n", current);
+        //if(elpa_index_is_printing_mpi_rank(index)) fprintf(stderr, "***Trying a new autotuning index %d\n", current);
         for (int i = 0; i < nelements(int_entries); i++) {
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
                         int value = int_entries[i].enumerate(index, current_cpy % int_entries[i].cardinality(index));
-                        //if(is_process_id_zero) fprintf(stderr, "  * val[%d] = %d -> %d\n", i, current_cpy % int_entries[i].cardinality(index), value);
+                        //if(elpa_index_is_printing_mpi_rank(index)) fprintf(stderr, "  * val[%d] = %d -> %d\n", i, current_cpy % int_entries[i].cardinality(index), value);
                         /* Try to set option i to that value */
                         if (int_entries[i].valid(index, i, value)) {
                                 index->int_options.values[i] = value;
                         } else {
-                                //if(is_process_id_zero) fprintf(stderr, "  *NOT VALID becaluse of i %d (%s) and value %d translated to %d\n", i, int_entries[i].base.name, current_cpy % int_entries[i].cardinality(index), value);
+                                //if(elpa_index_is_printing_mpi_rank(index)) fprintf(stderr, "  *NOT VALID becaluse of i %d (%s) and value %d translated to %d\n", i, int_entries[i].base.name, current_cpy % int_entries[i].cardinality(index), value);
                                 return 0;
                         }
                         current_cpy /= int_entries[i].cardinality(index);
                 }
         }
-        if (debug == 1 && is_process_id_zero) {
+        if (debug == 1 && elpa_index_is_printing_mpi_rank(index)) {
                 fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d ***\n", current);
                 elpa_index_print_autotune_parameters(index, autotune_level, autotune_domain);
                 fprintf(stderr, "***\n\n");
@@ -1146,8 +1143,7 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
 
 int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain) {
         char buff[100];
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
-        if (is_process_id_zero) {
+        if (elpa_index_is_printing_mpi_rank(index)) {
                 for (int i = 0; i < nelements(int_entries); i++) {
                         if (is_tunable(index, i, autotune_level, autotune_domain)) {
                                 elpa_index_print_int_parameter(index, buff, i);
@@ -1179,8 +1175,7 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
                         }
                 }
         }
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
-        if (is_process_id_zero) {
+        if (elpa_index_is_printing_mpi_rank(index)) {
                 int output_to_file = (strlen(file_name) > 0);
                 if(output_to_file) {
                         f = fopen(file_name, "w");
@@ -1264,7 +1259,7 @@ int elpa_index_load_autotune_state(elpa_index_t index, int* autotune_level, int*
         FILE *f;
 
         //TODO: should be broadcasted, instead of read on all ranks
-        //if(is_process_id_zero){
+        //if(elpa_index_is_printing_mpi_rank(index)){
                 f = fopen(file_name, "r");
 
                 if (f == NULL) {
@@ -1301,8 +1296,7 @@ int elpa_index_print_settings(elpa_index_t index, char *file_name) {
         sprintf(out_set, "%s", EXPLICIT_PARAMETERS);
         sprintf(out_defaults, "%s", DEFAULT_PARAMETERS);
         sprintf(out_nowhere, "Not to be printed:\n");
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
-        if(is_process_id_zero){
+        if(elpa_index_is_printing_mpi_rank(index)){
                 for (int i = 0; i < nelements(int_entries); i++) {
                         if(int_entries[i].base.print_flag == PRINT_STRUCTURE) {
                                 out = &out_structure;
@@ -1342,11 +1336,10 @@ int elpa_index_load_settings(elpa_index_t index, char *file_name) {
         char line[LEN], s[LEN];
         int n;
         FILE *f;
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         int skip, explicit;
 
         //TODO: should be broadcasted, instead of read on all ranks
-        //if(is_process_id_zero){
+        //if(elpa_index_is_printing_mpi_rank(index)){
                 f = fopen(file_name, "r");
 
                 if (f == NULL) {
@@ -1378,4 +1371,16 @@ int elpa_index_load_settings(elpa_index_t index, char *file_name) {
        // }
 
         return 1;
+}
+
+
+int elpa_index_is_printing_mpi_rank(elpa_index_t index)
+{
+  int process_id;
+  if(elpa_index_int_value_is_set(index, "process_id")){
+    process_id = elpa_index_get_int_value(index, "process_id", NULL);
+    return (process_id == 0);
+  }
+  printf("Warning: process_id not set, printing on all MPI ranks. This can happen with legacy API.");
+  return 1;
 }

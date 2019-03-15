@@ -514,7 +514,7 @@ module elpa_impl
 #ifdef WITH_MPI
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
                                              mpierr, mpierr2, process_row, process_col, mpi_string_length, &
-                                             present_np_rows, present_np_cols, is_process_id_zero, np_total, legacy_api
+                                             present_np_rows, present_np_cols, np_total, legacy_api
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
       character(*), parameter             :: MPI_CONSISTENCY_MSG = &
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
@@ -562,13 +562,6 @@ module elpa_impl
         call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
         call self%set("num_processes", np_total, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-
-        is_process_id_zero = 0
-        if (my_id == 0) &
-          is_process_id_zero = 1
-        call self%set("is_process_id_zero", is_process_id_zero, error)
-        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-
       else
         if (legacy_api .ne. 1) then
           write(error_unit,*) MPI_CONSISTENCY_MSG
@@ -696,8 +689,6 @@ module elpa_impl
       call self%set("process_col", 0, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("process_id", 0, error)
-      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-      call self%set("is_process_id_zero", 1, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("num_process_rows", 1, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
