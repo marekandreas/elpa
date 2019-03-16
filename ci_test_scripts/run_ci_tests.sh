@@ -117,6 +117,10 @@ then
   then
     CLUSTER="freya"
   fi
+  if [[ "$HOST" =~ "draco" ]]
+  then
+    CLUSTER="draco"
+  fi
 
 
   if [ "$CLUSTER" == "cobra" ]
