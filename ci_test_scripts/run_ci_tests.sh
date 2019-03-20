@@ -104,6 +104,9 @@ then
 fi
 if [ "$slurmBatch" == "yes" ]
 then
+
+  # default exit code
+  exitCode=1
   CLUSTER=""
   if [[ "$HOST" =~ "cobra" ]]
   then
@@ -122,65 +125,65 @@ then
     CLUSTER="draco"
   fi
 
+  echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS"
 
-  if [ "$CLUSTER" == "cobra" ]
+  # GPU runners
+  if [ "$CI_RUNNER_TAGS" == "gpu" ]
   then
-    echo "Running on cobra with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS"
+    cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_2GPU.sh .
+    echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "make -j 16" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
 
-    # GPU runners
-    if [ "$CI_RUNNER_TAGS" == "gpu" ]
-    then
-      cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_2GPU.sh .
-      echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_2GPU.sh
-      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
-      echo "make -j 16" >> ./run_${CLUSTER}_1node_2GPU.sh
-      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
-      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_2GPU.sh
-      echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
-      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
+    sbatch -W ./run_${CLUSTER}_1node_2GPU.sh
 
-      sbatch -W ./run_${CLUSTER}_1node_2GPU.sh
-
-      exitCode=$?
-      cat ./ELPA_CI_2gpu.out.*
-      if (( $exitCode > 0 ))
-      then
-        cat ./ELPA_CI_2gpu.err.*
-      fi
-      
-    fi
-
-    #SSE, AVX, AVX2, and AVX-512 runners
-    if [ "$CI_RUNNER_TAGS" == "sse" ] || [ "$CI_RUNNER_TAGS" == "avx" ] || [ "$CI_RUNNER_TAGS" == "avx2" ]  || [ "$CI_RUNNER_TAGS" == "avx512" ]
-    then
-      cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
-      echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node.sh
-      echo " " >> ./run_${CLUSTER}_1node.sh
-      echo "make -j 16" >> ./run_${CLUSTER}_1node.sh
-      echo " " >> ./run_${CLUSTER}_1node.sh
-      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
-      echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
-      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node.sh
-
-      sbatch -W ./run_${CLUSTER}_1node.sh
-
-      exitCode=$?
-      cat ./ELPA_CI.out.*
-      if (( $exitCode > 0 ))
-      then
-        cat ./ELPA_CI.err.*
-      fi
-
-    fi
-
+    exitCode=$?
+    echo " "
+    echo "Exit Code of sbatch: $exitCode"
+    echo " "
     if (( $exitCode > 0 ))
     then
-      cat ./test-suite.log
+      cat ./ELPA_CI_2gpu.err.*
     fi
-
-    exit $exitCode
+    
   fi
 
+  #SSE, AVX, AVX2, and AVX-512 runners
+  if [[ "$CI_RUNNER_TAGS" =~ "sse" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx2" ]]  || [ ["$CI_RUNNER_TAGS" =~ "avx512" ]]
+  then
+    cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
+    echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node.sh
+    echo " " >> ./run_${CLUSTER}_1node.sh
+    echo "make -j 16" >> ./run_${CLUSTER}_1node.sh
+    echo " " >> ./run_${CLUSTER}_1node.sh
+    echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
+    echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
+    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node.sh
+
+    cat ./run_${CLUSTER}_1node.sh
+    sbatch -W ./run_${CLUSTER}_1node.sh
+    exitCode=$?
+    echo " "
+    echo "Exit Code of sbatch: $exitCode"
+    echo " "
+    cat ./ELPA_CI.out.*
+    if (( $exitCode > 0 ))
+    then
+      cat ./ELPA_CI.err.*
+    fi
+
+  fi
+
+  if (( $exitCode > 0 ))
+  then
+    cat ./test-suite.log
+  fi
+
+  exit $exitCode
 
 fi
 
