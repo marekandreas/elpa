@@ -162,7 +162,7 @@ then
       echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
       echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node.sh
 
-      sbatch -W ./run_COBRA_1node.sh
+      sbatch -W ./run_${CLUSTER}_1node.sh
 
       exitCode=$?
       cat ./ELPA_CI.out.*
