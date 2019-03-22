@@ -139,9 +139,14 @@ then
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
 
+    echo " "
+    echo "Job script for the run"
+    cat ./run_${CLUSTER}_1node.sh
+    echo " "
+    echo "Submitting to SLURM"
     sbatch -W ./run_${CLUSTER}_1node_2GPU.sh
-
     exitCode=$?
+
     echo " "
     echo "Exit Code of sbatch: $exitCode"
     echo " "
@@ -164,9 +169,14 @@ then
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
     echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node.sh
 
+    echo " "
+    echo "Job script for the run"
     cat ./run_${CLUSTER}_1node.sh
+    echo " "
+    echo "Submitting to SLURM"
     sbatch -W ./run_${CLUSTER}_1node.sh
     exitCode=$?
+
     echo " "
     echo "Exit Code of sbatch: $exitCode"
     echo " "
