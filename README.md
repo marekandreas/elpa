@@ -91,6 +91,13 @@ Nonetheless, we are grateful if you cite the following publications:
   structure theory and computational science",
   Journal of Physics Condensed Matter, 26 (2014)
   doi:10.1088/0953-8984/26/21/213201
+  
+  Kus, P; Marek, A.; Lederer, H.
+  "GPU Optimization of Large-Scale Eigenvalue Solver",
+  In: Radu F., Kumar K., Berre I., Nordbotten J., Pop I. (eds) 
+  Numerical Mathematics and Advanced Applications ENUMATH 2017. ENUMATH 2017. 
+  Lecture Notes in Computational Science and Engineering, vol 126. Springer, Cham
+  
 
 ## Installation of the *ELPA* library
 
