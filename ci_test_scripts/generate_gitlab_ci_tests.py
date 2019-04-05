@@ -330,27 +330,39 @@ print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=gcc FC=gfortran SCALAPAC
 print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \"  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\\\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\\\\\"  \
         SCALAPACK_FCFLAGS=\\\\\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
         --disable-sse --disable-avx --disable-avx2 \" -t 2 -m 150 -n 50 -b 16 -S$SLURM ")
-#print("    - ./configure --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }")
-#print("    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove")
-#print("    - make distcheck DISTCHECK_CONFIGURE_FLAGS=\"--with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2\" TASKS=2 TEST_FLAGS=\"150 50 16\" || { chmod u+rwX -R . ; exit 1 ; }")
 print("\n\n")
 
 print("distcheck-mpi:")
 print("  tags:")
-print("    - buildtest")
+print("    - distcheck")
 print("  script:")
-print("    - ./configure FC=mpiifort FCFLAGS=\"-xHost\" CFLAGS=\"-march=native\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\" --enable-option-checking=fatal --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }")
-print("    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove")
-print('    - make distcheck DISTCHECK_CONFIGURE_FLAGS="FC=mpiifort FCFLAGS=\\"-xHost\\" CFLAGS=\\"-march=native\\" SCALAPACK_LDFLAGS=\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\" SCALAPACK_FCFLAGS=\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\" --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }')
+print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" CFLAGS=\\\"-march=native\\\" \
+  SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+  SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+  --enable-option-checking=fatal --with-mpi=yes \
+ --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t 2 -m 150 \
+ -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
+print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\\\\\"-xHost\\\\\\\" \
+ CFLAGS=\\\\\\\"-march=native\\\\\\\" SCALAPACK_LDFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\\\\\"  \
+ SCALAPACK_FCFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal \
+ --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 \" -t 2 -m 150 -n 50 -b 16 -S$SLURM ")
+#print('    - make distcheck DISTCHECK_CONFIGURE_FLAGS="FC=mpiifort FCFLAGS=\\"-xHost\\" CFLAGS=\\"-march=native\\" SCALAPACK_LDFLAGS=\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\" SCALAPACK_FCFLAGS=\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\" --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }')
 print("\n\n")
 
 print("distcheck-no-autotune:")
 print("  tags:")
-print("    - buildtest")
+print("    - distcheck")
 print("  script:")
-print("    - ./configure FC=mpiifort FCFLAGS=\"-xHost\" CFLAGS=\"-march=native\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\" --enable-option-checking=fatal --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; }")
-print("    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove")
-print('    - make distcheck DISTCHECK_CONFIGURE_FLAGS="FC=mpiifort FCFLAGS=\\"-xHost\\" CFLAGS=\\"-march=native\\" SCALAPACK_LDFLAGS=\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\" SCALAPACK_FCFLAGS=\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\" --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning " TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }')
+print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" CFLAGS=\\\"-march=native\\\" \
+  SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+  SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+  --enable-option-checking=fatal --with-mpi=yes \
+  --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; } \" -t 2 -m 150 \
+  -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
+print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\\\\\"-xHost\\\\\\\" \
+ CFLAGS=\\\\\\\"-march=native\\\\\\\" SCALAPACK_LDFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\\\\\"  \
+ SCALAPACK_FCFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal \
+ --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning \" -t 2 -m 150 -n 50 -b 16 -S$SLURM ")
 print("\n\n")
 
 
