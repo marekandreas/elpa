@@ -151,229 +151,77 @@ python-intel-intel-mpi-openmp:
      #    - ./configure CC="mpiicc" CFLAGS="-O3 -xAVX" FC="mpiifort" FCFLAGS="-O3 -xAVX" SCALAPACK_LDFLAGS="$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }
      #    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
      #    - make distcheck DISTCHECK_CONFIGURE_FLAGS="CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-gpu --enable-avx --enable-python --enable-python-tests" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }
-
+     #
 
 # test_project_1stage_legacy_api_gnu
 test_project_1stage_legacy_api_gnu:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_1stage_legacy_api/build
-    - pushd test_project_1stage_legacy_api/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage_legacy_api -e test_real                 -C " FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                  --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_1stage_gnu
 test_project_1stage_gnu:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_1stage/build
-    - pushd test_project_1stage/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage -e test_real                 -C " FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                  --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_2stage_legacy_api_gnu
 test_project_2stage_legacy_api_gnu:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_2stage_legacy_api/build
-    - pushd test_project_2stage_legacy_api/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real2
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage_legacy_api -e test_real2                 -C " FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                  --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_2stage_gnu
 test_project_2stage_gnu:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_2stage/build
-    - pushd test_project_2stage/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real2
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage -e test_real2                 -C " FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                  --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_1stage_legacy_api_intel
 test_project_1stage_legacy_api_intel:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_1stage_legacy_api/build
-    - pushd test_project_1stage_legacy_api/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage_legacy_api -e test_real                 -C " FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                   --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_1stage_intel
 test_project_1stage_intel:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_1stage/build
-    - pushd test_project_1stage/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage -e test_real                 -C " FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                   --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_2stage_legacy_api_intel
 test_project_2stage_legacy_api_intel:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_2stage_legacy_api/build
-    - pushd test_project_2stage_legacy_api/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real2
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage_legacy_api -e test_real2                 -C " FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                   --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_2stage_intel
 test_project_2stage_intel:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_2stage/build
-    - pushd test_project_2stage/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real2
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage -e test_real2                 -C " FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                   --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 

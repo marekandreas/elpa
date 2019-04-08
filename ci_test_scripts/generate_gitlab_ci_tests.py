@@ -440,37 +440,29 @@ for comp, s, a in product(
     print("# test_project_"+stage[s]+api[a]+"_"+compiler[comp])
     print("test_project_"+stage[s]+api[a]+"_"+compiler[comp]+":")
     print("  tags:")
-    print("    - buildtest")
+    print("    - project_test")
     print("  script:")
-    print("    - mkdir build")
-    print("    - pushd build")
-    print("    - ../autogen.sh")
-    if (comp == "intel"):
-        print("    - ../configure --enable-option-checking=fatal FCFLAGS=\"-march=native\" CFLAGS=\"-march=native\" --disable-avx2 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }")
-    if (comp == "gnu"):
-        print("    - ../configure --enable-option-checking=fatal FCFLAGS=\"-march=native\" CFLAGS=\"-march=native\" --disable-avx2 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }")
-    print("    - make -j 8")
-    print("    - make install")
-    print("    - popd")
-    print("    - mkdir test_project_"+stage[s]+api[a]+"/build")
-    print("    - pushd test_project_"+stage[s]+api[a]+"/build")
-    print("    - ../autogen.sh")
-    if (comp == "intel"):
-        print("    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }")
-    if (comp == "gnu"):
-        print("    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }")
-    print("    - make -j 8")
-    print("    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH")
     if ( s == "1stage"):
-        print("    - ./test_real")
+        projectBinary="test_real"
     else:
-        print("    - ./test_real2")
-    print("    - make distclean")
-    print("    - popd")
-    print("    - pushd build")
-    print("    - make distclean")
-    print("    - rm -rf installdest")
-    print("    - popd")
+        projectBinary="test_real2"
+
+    if (comp == "intel"):
+        print("    - ./ci_test_scripts/run_project_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-march=native \\\" CFLAGS=\\\"-march=native\\\" \
+                SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+                SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+                --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
+                -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                -C \" FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig  \
+                 --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
+    if (comp == "gnu"):
+        print("    - ./ci_test_scripts/run_project_tests.sh -c \" FC=mpif90 FCFLAGS=\\\"-march=native \\\" CFLAGS=\\\"-march=native\\\" \
+                SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+                SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+                --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
+                -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                -C \" FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig \
+                 --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
     print("\n\n")
 
 print("#The tests follow here")
