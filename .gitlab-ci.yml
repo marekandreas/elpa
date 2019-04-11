@@ -94,6 +94,8 @@ before_script:
 # next time a runner tries to clean-up
 after_script:
   - chmod u+w -R .
+  - find . -exec chmod a+rxw {} \;
+  - rm -rf *
 
 
 
