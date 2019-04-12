@@ -278,8 +278,7 @@ print("# For some reason sometimes not-writable files remain, which cause troubl
 print("# next time a runner tries to clean-up")
 print("after_script:")
 print("  - chmod u+w -R .")
-print("  - find . -exec chmod a+rxw {} \;")
-print("  - rm -rf *")
+print("  - if [ ! -f ./debug.keep ]; then find . -exec chmod a+rxw {} \; && rm -rf * ; fi")
 print("\n\n")
 
 
