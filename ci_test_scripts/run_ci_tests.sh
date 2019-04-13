@@ -141,7 +141,7 @@ then
 
     echo " "
     echo "Job script for the run"
-    cat ./run_${CLUSTER}_1node.sh
+    cat ./run_${CLUSTER}_1node_2GPU.sh
     echo " "
     echo "Submitting to SLURM"
     sbatch -W ./run_${CLUSTER}_1node_2GPU.sh
