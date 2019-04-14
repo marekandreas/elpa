@@ -4,72 +4,22 @@ stages:
 
 
 before_script:
+  - git clean -f
   - export LANG=C
   - ulimit -s unlimited
   - ulimit -v unlimited
   - echo "HOST " $(hostname)
   - echo $CI_RUNNER_DESCRIPTION
-  - export SLURM=no
-  - if [ "$(hostname)" = "buildtest-rzg" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi
+  - export SLURM=yes
+  - export INTERACTIVE_RUN=yes
   - if [ "$(hostname)" = "amarek-elpa-gitlab-runner-1" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi
   - if [ "$(hostname)" = "amarek-elpa-gitlab-runner-2" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi
   - if [ "$(hostname)" = "amarek-elpa-gitlab-runner-3" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi
   - if [ "$(hostname)" = "amarek-elpa-gitlab-runner-4" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi
+  - module list
+  - source ./ci_test_scripts/.ci-env-vars
   - if [ "$CI_RUNNER_DESCRIPTION" = "freya01-interactive" ]; then export INTERACTIVE_RUN=yes && export SLURM=no; fi
   - if [ "$CI_RUNNER_DESCRIPTION" = "freya01-interactive-2" ]; then export INTERACTIVE_RUN=yes && export SLURM=no; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-1" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-2" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-3" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-4" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-5" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-6" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-7" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-8" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-9" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-gp02-10" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="skylake" ; fi
-
-
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-1" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-2" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-3" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-4" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-5" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-6" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-7" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-8" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-9" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-10" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-11" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-12" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-13" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-14" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-15" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-16" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-17" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-18" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-19" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl1-20" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ;  fi
-
-
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl2" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ; fi
-
-
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl3" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ; fi
-
-
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-knl4" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ; fi
-
-
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-maik" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="knl" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl01" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140  && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-
-
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-dvl02" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="x86_64&gpu0&gpu1" && export GEOMETRYRESERVATION="gpu:2" ; fi
-
-
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-miy01" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=miy01 && export SLURMPARTITION=minsky && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="power8&gpu0&gpu1&gpu2&gpu3" && export GEOMETRYRESERVATION="gpu:4" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-miy02" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=miy02 && export SLURMPARTITION=minsky && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="power8&gpu0&gpu1&gpu2&gpu3" && export GEOMETRYRESERVATION="gpu:4" ; fi
-  - if [ "$CI_RUNNER_DESCRIPTION" = "appdev-miy03" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=miy03 && export SLURMPARTITION=minsky && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS="power8&gpu0&gpu1&gpu2&gpu3" && export GEOMETRYRESERVATION="gpu:4" ; fi
 
 
   - export MATRIX_SIZE=150
@@ -90,6 +40,7 @@ before_script:
 # next time a runner tries to clean-up
 after_script:
   - chmod u+w -R .
+  - if [ ! -f ./debug.keep ]; then find . -exec chmod a+rxw {} \; && rm -rf * ; fi
 
 
 
@@ -97,42 +48,35 @@ static-build:
   tags:
     - avx
   script:
-    - ./configure --enable-option-checking=fatal CFLAGS="-O3 -mavx" FCFLAGS="-O3 -axAVX" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - make check TASKS=2 TEST_FLAGS='150 50 16' || { cat test-suite.log; exit 1; }
-    - grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+    - ./ci_test_scripts/run_ci_tests.sh -c " CFLAGS=\"-O3 -mavx\" FCFLAGS=\"-O3 -axAVX\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\"          SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2 || { cat config.log; exit 1; } " -j 8         -t 2 -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM 
 
 
 
 # test distcheck
 distcheck:
   tags:
-    - buildtest
+    - distcheck
   script:
-    - ./configure --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }
-    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-mpi=no --disable-sse-assembly --disable-sse --disable-avx --disable-avx2" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\"          SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly         --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } " -t 2 -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM 
+    - ./ci_test_scripts/run_distcheck_tests.sh  -c "  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"          SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly         --disable-sse --disable-avx --disable-avx2 " -t 2 -m 150 -n 50 -b 16 -S$SLURM 
 
 
 
 distcheck-mpi:
   tags:
-    - buildtest
+    - distcheck
   script:
-    - ./configure FC=mpiifort FCFLAGS="-xHost" CFLAGS="-march=native" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-option-checking=fatal --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; }
-    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS="FC=mpiifort FCFLAGS=\"-xHost\" CFLAGS=\"-march=native\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\" --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }
+    - ./ci_test_scripts/run_ci_tests.sh -c " FC=mpiifort FCFLAGS=\"-xHost\" CFLAGS=\"-march=native\"   SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"   SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"   --enable-option-checking=fatal --with-mpi=yes  --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } " -t 2 -m 150  -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM 
+    - ./ci_test_scripts/run_distcheck_tests.sh  -c " FC=mpiifort FCFLAGS=\\\"-xHost\\\"  CFLAGS=\\\"-march=native\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\"   SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" --enable-option-checking=fatal  --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 " -t 2 -m 150 -n 50 -b 16 -S$SLURM 
 
 
 
 distcheck-no-autotune:
   tags:
-    - buildtest
+    - distcheck
   script:
-    - ./configure FC=mpiifort FCFLAGS="-xHost" CFLAGS="-march=native" SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" --enable-option-checking=fatal --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; }
-    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS="FC=mpiifort FCFLAGS=\"-xHost\" CFLAGS=\"-march=native\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\" SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\" --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning " TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }
+    - ./ci_test_scripts/run_ci_tests.sh -c " FC=mpiifort FCFLAGS=\"-xHost\" CFLAGS=\"-march=native\"   SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"   SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"   --enable-option-checking=fatal --with-mpi=yes   --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; } " -t 2 -m 150   -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM 
+    - ./ci_test_scripts/run_distcheck_tests.sh  -c " FC=mpiifort FCFLAGS=\\\"-xHost\\\"  CFLAGS=\\\"-march=native\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\"   SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" --enable-option-checking=fatal  --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning " -t 2 -m 150 -n 50 -b 16 -S$SLURM 
 
 
 
@@ -144,239 +88,88 @@ python-intel-intel-mpi-openmp:
     when: on_success
     expire_in: 2 month
   script:
-   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-gpu --enable-avx --enable-python --enable-python-tests" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
 
 
 python-distcheck:
   tags:
-    - python
+    - python-distcheck
   script:
-    - ./configure CC="mpiicc" CFLAGS="-O3 -xAVX" FC="mpiifort" FCFLAGS="-O3 -xAVX" SCALAPACK_LDFLAGS="$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP" SCALAPACK_FCFLAGS="$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }
-    # stupid 'make distcheck' leaves behind write-protected files that the stupid gitlab runner cannot remove
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS="CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-gpu --enable-avx --enable-python --enable-python-tests" TASKS=2 TEST_FLAGS="150 50 16" || { chmod u+rwX -R . ; exit 1 ; }
+    - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX\" FC="mpiifort" FCFLAGS=\"-O3 -xAVX\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP\" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP\" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }" -j 8 -t 2 -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+    - ./ci_test_scripts/run_distcheck_tests.sh -c "CC=\\\"mpiicc\\\" CFLAGS=\\\"-O3 -xAVX\\\" FC=\\\"mpiifort\\\" FCFLAGS=\\\"-O3 -xAVX\\\" SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\\" SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\\" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-gpu --enable-avx --enable-python --enable-python-tests" -t 2 -m 150 -n 50 -b 16 -S $SLURM  || { chmod u+rwX -R . ; exit 1 ; }
 
 
 # test_project_1stage_legacy_api_gnu
 test_project_1stage_legacy_api_gnu:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_1stage_legacy_api/build
-    - pushd test_project_1stage_legacy_api/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage_legacy_api -e test_real                 -C " FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                  --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_1stage_gnu
 test_project_1stage_gnu:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_1stage/build
-    - pushd test_project_1stage/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage -e test_real                 -C " FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                  --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_2stage_legacy_api_gnu
 test_project_2stage_legacy_api_gnu:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_2stage_legacy_api/build
-    - pushd test_project_2stage_legacy_api/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real2
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage_legacy_api -e test_real2                 -C " FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                  --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_2stage_gnu
 test_project_2stage_gnu:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpif90 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_2stage/build
-    - pushd test_project_2stage/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpif90 || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real2
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage -e test_real2                 -C " FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                  --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_1stage_legacy_api_intel
 test_project_1stage_legacy_api_intel:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_1stage_legacy_api/build
-    - pushd test_project_1stage_legacy_api/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage_legacy_api -e test_real                 -C " FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                   --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_1stage_intel
 test_project_1stage_intel:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_1stage/build
-    - pushd test_project_1stage/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage -e test_real                 -C " FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                   --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_2stage_legacy_api_intel
 test_project_2stage_legacy_api_intel:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_2stage_legacy_api/build
-    - pushd test_project_2stage_legacy_api/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real2
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage_legacy_api -e test_real2                 -C " FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                   --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
 # test_project_2stage_intel
 test_project_2stage_intel:
   tags:
-    - buildtest
+    - project_test
   script:
-    - mkdir build
-    - pushd build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal FCFLAGS="-march=native" CFLAGS="-march=native" --disable-avx2 SCALAPACK_LDFLAGS="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP" SCALAPACK_FCFLAGS="$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP" FC=mpiifort --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; }
-    - make -j 8
-    - make install
-    - popd
-    - mkdir test_project_2stage/build
-    - pushd test_project_2stage/build
-    - ../autogen.sh
-    - ../configure --enable-option-checking=fatal PKG_CONFIG_PATH=../../build/installdest/lib/pkgconfig FC=mpiifort || { cat config.log; exit 1; }
-    - make -j 8
-    - export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:$LD_LIBRARY_PATH
-    - ./test_real2
-    - make distclean
-    - popd
-    - pushd build
-    - make distclean
-    - rm -rf installdest
-    - popd
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                 SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                 SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                 --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } "                 -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage -e test_real2                 -C " FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig                   --enable-option-checking=fatal || { cat config.log; exit 1; } " 
 
 
 
@@ -549,29 +342,6 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-gp
 
 
 
-# gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize
 gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize-jobs:
   only:
@@ -736,29 +506,6 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
 
 
@@ -931,29 +678,6 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-with
 
 
 
-# gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize
 gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize-jobs:
   only:
@@ -1122,29 +846,6 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-w
 
 
 
-# gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize
 gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize-jobs:
   tags:
@@ -1305,29 +1006,6 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-gp
 
 
 
-# gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize
 gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize-jobs:
   tags:
@@ -1484,29 +1162,6 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-with
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
 
 
@@ -1679,29 +1334,6 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-with
 
 
 
-# gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
 # gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize
 gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-gpu-no-coverage-avx-address-sanitize-jobs:
   only:
@@ -1866,29 +1498,6 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-w
     - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
     - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
     -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
 
 
@@ -10482,190 +10091,6 @@ gnu-intel-nompi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
   script:
    - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory
    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -msse4.2\" FC=\"ifort\" FCFLAGS=\"-O3 -msse4.2\"    SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_OMP \"  SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_OMP \" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-sse --enable-sse-assembly --disable-avx --disable-avx2" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
-
-
-
-# gnu-pgi-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-pgi-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-pgi-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-pgi-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-pgi-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-pgi-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-pgi-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-pgi-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-pgi-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-pgi-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-pgi-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-pgi-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-pgi-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-pgi-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
-
-
-
-# gnu-pgi-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize
-gnu-pgi-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-with-gpu-no-coverage-power8-no-address-sanitize-jobs:
-  only:
-    - /.*master.*/
-  allow_failure: true
-  tags:
-    - minsky
-  artifacts:
-    when: on_success
-    expire_in: 2 month
-  script:
-    - export REQUESTED_MEMORY=2Gb
-
-
-    - echo "The tasks will be submitted to SLURM PARTITION " $SLURMPARTITION " on host " $SLURMHOST " with constraints " $CONTSTRAINTS " with the geometry " $GEOMETRYRESERVATION
-    - export SRUN_COMMANDLINE_CONFIGURE="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_BUILD="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - export SRUN_COMMANDLINE_RUN="--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION " 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O2 -I\$CUDA_HOME/include\" FC=\"mpifort\" FCFLAGS=\"-O2\" LIBS=\" -lessl -lreflapack -lessl -lcublas -lgfortran \"  LDFLAGS=\" -L/home/elpa/libs/scalapack/lib -L\$CUDA_HOME/lib64 \"    --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-gpu --with-cuda-path=\$CUDA_HOME/ --enable-vsx --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-mpi-module --with-GPU-compute-capability=sm_60 " -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM
-    -  echo "na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE" 
 
 
 
