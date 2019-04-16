@@ -68,6 +68,24 @@ if test x"${enable_legacy}" = x"yes"; then
         AC_DEFINE([ENABLE_LEGACY], [1], [enable legacy interface])
 fi
 
+AC_MSG_CHECKING(whether in C interface the error argument should be optional)
+AC_ARG_ENABLE([optional-argument-in-C-API],
+              AS_HELP_STRING([--enable-optional-argument-in-C-API],
+                             [do not build C API with error argument as optional, default no]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         optional_c_error_argument=yes
+	       else
+	         optional_c_error_argument=no
+	       fi
+	       ],
+              [optional_c_error_argument=no])
+AC_MSG_RESULT([${optional_c_error_argument}])
+AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$enable_legacy" = x"yes"])
+if test x"${optional_c_error_argument}" = x"yes"; then
+        AC_DEFINE([OPTIONAL_C_ERROR_ARGUMENT], [1], [enable error argument in C-API to be optional])
+fi
+
 
 # gnu-make fortran module dependencies
 m4_include([fdep/fortran_dependencies.m4])

@@ -230,7 +230,11 @@ int main(int argc, char** argv) {
      MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+   elpa_handle_2 = elpa_allocate();
+#else
    elpa_handle_2 = elpa_allocate(&error);
+#endif
    assert_elpa_ok(error);
 
    set_basic_parameters(&elpa_handle_2, na, nev, na_rows, na_cols, nblk, my_prow, my_pcol);
@@ -341,7 +345,11 @@ int main(int argc, char** argv) {
 
    elpa_autotune_deallocate(autotune_handle, &error);
    elpa_deallocate(elpa_handle_1, &error);
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+   elpa_deallocate(elpa_handle_2);
+#else
    elpa_deallocate(elpa_handle_2, &error);
+#endif
    elpa_uninit(&error);
 
    if (myid == 0) {

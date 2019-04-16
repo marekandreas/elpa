@@ -174,7 +174,11 @@ int main(int argc, char** argv) {
      exit(1);
    }
 
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+   handle = elpa_allocate();
+#else
    handle = elpa_allocate(&error);
+#endif
    assert_elpa_ok(error);
 
    /* Set parameters */
@@ -285,8 +289,13 @@ int main(int argc, char** argv) {
      elpa_autotune_print_best(handle, autotune_handle, &error);
    }
 
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+   elpa_autotune_deallocate(autotune_handle);
+   elpa_deallocate(handle);
+#else
    elpa_autotune_deallocate(autotune_handle, &error);
    elpa_deallocate(handle, &error);
+#endif
    elpa_uninit(&error);
 
    if (myid == 0) {
