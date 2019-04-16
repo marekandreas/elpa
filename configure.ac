@@ -68,6 +68,25 @@ if test x"${enable_legacy}" = x"yes"; then
         AC_DEFINE([ENABLE_LEGACY], [1], [enable legacy interface])
 fi
 
+AC_MSG_CHECKING(whether in C interface the error argument should be optional)
+AC_ARG_ENABLE([optional-argument-in-C-API],
+              AS_HELP_STRING([--enable-optional-argument-in-C-API],
+                             [do not build C API with error argument as optional, default no]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         optional_c_error_argument=yes
+	       else
+	         optional_c_error_argument=no
+	       fi
+	       ],
+              [optional_c_error_argument=no])
+AC_MSG_RESULT([${optional_c_error_argument}])
+AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$enable_legacy" = x"yes"])
+if test x"${optional_c_error_argument}" = x"yes"; then
+        AC_DEFINE([OPTIONAL_C_ERROR_ARGUMENT], [1], [enable error argument in C-API to be optional])
+fi
+
+
 
 # gnu-make fortran module dependencies
 m4_include([fdep/fortran_dependencies.m4])
@@ -1455,5 +1474,11 @@ if test x"$enable_kcomputer" = x"yes" ; then
   echo "call: make -f ../generated_headers.am generated-headers top_srcdir=.."
   echo "BEFORE triggering the build with make!"
 else
+  if test x"$optional_c_error_argument" = x"yes" ; then
+    echo "#define OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+  else
+    echo "#undef OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+  fi
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi
+

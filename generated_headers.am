@@ -22,6 +22,22 @@ elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
                        $(top_srcdir)/src/elpa_api.F90 | elpa
 	@rm -f $@
 	$(call extract_interface,!c>)
+	$(call extract_interface,!c_o>)
+	$(call extract_interface,!c_no>)
+
+#if OPTIONAL_C_ERROR_ARGUMENT
+#
+#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
+#                       $(top_srcdir)/src/elpa_impl_math_template.F90 \
+#                       $(top_srcdir)/src/elpa_api.F90 | elpa
+#	$(call extract_interface,!c_o>)
+#
+#else
+#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
+#                       $(top_srcdir)/src/elpa_impl_math_template.F90 \
+#                       $(top_srcdir)/src/elpa_api.F90 | elpa
+#	$(call extract_interface,!c_no>)
+#endif
 
 generated_headers += elpa/elpa_generated_legacy.h
 elpa/elpa_generated_legacy.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \

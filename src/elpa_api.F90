@@ -817,20 +817,49 @@ module elpa_api
        api_version = api_version_set
     end function
 
-
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define elpa_uninit(...) CONC(elpa_uninit, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
+#endif
     !> \brief subroutine to uninit the ELPA library. Does nothing at the moment. Might do sth. later
     !
-    !c> void elpa_uninit(int *error);
-    subroutine elpa_uninit(error) bind(C, name="elpa_uninit")
-#ifdef USE_FORTRAN2008
-     integer, optional, intent(out) :: error
-#else
-     integer, intent(out)           :: error
-#endif
-     if (present(error)) error = ELPA_OK
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> void elpa_uninit1(int *error);
+    !c_o> void elpa_uninit0();
+    !c_o> #endif
+    subroutine elpa_uninit_c1(error) bind(C, name="elpa_uninit1")
+      integer(kind=c_int)        :: error
+      call elpa_uninit(error)
     end subroutine
 
+    subroutine elpa_uninit_c0() bind(C, name="elpa_uninit0")
+      call elpa_uninit()
+    end subroutine
+#else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> void elpa_uninit(int *error);
+    !c_no> #endif
+    subroutine elpa_uninit_c(error) bind(C, name="elpa_uninit")
+      integer(kind=c_int)        :: error
+      call elpa_uninit(error)
+    end subroutine
+#endif
 
+    subroutine elpa_uninit(error)
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+        return
+      endif
+#endif
+    end subroutine
     !> \brief helper function for error strings
     !> Parameters
     !> \param   elpa_error  integer: error code to querry
