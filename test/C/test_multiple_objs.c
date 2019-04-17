@@ -236,6 +236,7 @@ int main(int argc, char** argv) {
    elpa_handle_2 = elpa_allocate(&error);
 #endif
    assert_elpa_ok(error);
+#endif
 
    set_basic_parameters(&elpa_handle_2, na, nev, na_rows, na_cols, nblk, my_prow, my_pcol);
    /* Setup */

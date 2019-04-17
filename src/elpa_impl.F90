@@ -216,7 +216,9 @@ module elpa_impl
     end function
 
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c> #define elpa_allocate(...) CONC(elpa_allocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define elpa_allocate(...) CONC(elpa_allocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
 #endif
     !c> /*! \brief C interface for the implementation of the elpa_allocate method
     !c> *
@@ -224,8 +226,10 @@ module elpa_impl
     !c> *  \result elpa_t handle
     !c> */
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c> elpa_t elpa_allocate2(int *error);
-    !c> elpa_t elpa_allocate1();
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> elpa_t elpa_allocate2(int *error);
+    !c_o> elpa_t elpa_allocate1();
+    !c_o> #endif
     function elpa_impl_allocate_c1() result(ptr) bind(C, name="elpa_allocate1")
       type(c_ptr)                :: ptr
       type(elpa_impl_t), pointer :: obj
@@ -243,6 +247,9 @@ module elpa_impl
       ptr = c_loc(obj)
     end function
 #else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> elpa_t elpa_allocate(int *error);
+    !c_no> #endif
     function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
       integer(kind=c_int)        :: error
       type(c_ptr)                :: ptr
@@ -254,11 +261,13 @@ module elpa_impl
 #endif
 
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c> #define NARGS(...) NARGS_(__VA_ARGS__, 5, 4, 3, 2, 1, 0)
-    !c> #define NARGS_(_5, _4, _3, _2, _1, N, ...) N
-    !c> #define CONC(A, B) CONC_(A, B)
-    !c> #define CONC_(A, B) A##B
-    !c> #define elpa_deallocate(...) CONC(elpa_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define NARGS(...) NARGS_(__VA_ARGS__, 5, 4, 3, 2, 1, 0)
+    !c_o> #define NARGS_(_5, _4, _3, _2, _1, N, ...) N
+    !c_o> #define CONC(A, B) CONC_(A, B)
+    !c_o> #define CONC_(A, B) A##B
+    !c_o> #define elpa_deallocate(...) CONC(elpa_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
 #endif
     !c> /*! \brief C interface for the implementation of the elpa_deallocate method
     !c> *
@@ -267,8 +276,10 @@ module elpa_impl
     !c> *  \result void
     !c> */
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c> void elpa_deallocate2(elpa_t handle, int *error);
-    !c> void elpa_deallocate1(elpa_t handle);
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> void elpa_deallocate2(elpa_t handle, int *error);
+    !c_o> void elpa_deallocate1(elpa_t handle);
+    !c_o> #endif
     subroutine elpa_impl_deallocate_c2(handle, error) bind(C, name="elpa_deallocate2")
       type(c_ptr), value         :: handle
       type(elpa_impl_t), pointer :: self
@@ -288,6 +299,9 @@ module elpa_impl
       deallocate(self)
     end subroutine
 #else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> void elpa_deallocate(elpa_t handle, int *error);
+    !c_no> #endif
     subroutine elpa_impl_deallocate_c(handle, error) bind(C, name="elpa_deallocate")
       type(c_ptr), value         :: handle
       type(elpa_impl_t), pointer :: self
@@ -439,7 +453,9 @@ module elpa_impl
 
 #ifdef ENABLE_AUTOTUNING
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c> #define elpa_autotune_deallocate(...) CONC(elpa_autotune_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define elpa_autotune_deallocate(...) CONC(elpa_autotune_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
 #endif
     !c> /*! \brief C interface for the implementation of the elpa_autotune_deallocate method
     !c> *
@@ -447,8 +463,10 @@ module elpa_impl
     !c> *  \result void
     !c> */
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c> void elpa_autotune_deallocate2(elpa_autotune_t handle, int *error);
-    !c> void elpa_autotune_deallocate1(elpa_autotune_t handle);
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> void elpa_autotune_deallocate2(elpa_autotune_t handle, int *error);
+    !c_o> void elpa_autotune_deallocate1(elpa_autotune_t handle);
+    !c_o> #endif
     subroutine elpa_autotune_impl_deallocate_c1( autotune_handle) bind(C, name="elpa_autotune_deallocate1")
       type(c_ptr), value                  :: autotune_handle
 
@@ -469,6 +487,9 @@ module elpa_impl
       deallocate(self)
     end subroutine
 #else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> void elpa_autotune_deallocate(elpa_autotune_t handle, int *error);
+    !c_no> #endif
     subroutine elpa_autotune_impl_deallocate( autotune_handle, error) bind(C, name="elpa_autotune_deallocate")
       type(c_ptr), value                  :: autotune_handle
 

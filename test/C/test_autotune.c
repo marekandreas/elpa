@@ -180,6 +180,7 @@ int main(int argc, char** argv) {
    handle = elpa_allocate(&error);
 #endif
    assert_elpa_ok(error);
+#endif
 
    /* Set parameters */
    elpa_set(handle, "na", na, &error);

@@ -1473,5 +1473,11 @@ if test x"$enable_kcomputer" = x"yes" ; then
   echo "call: make -f ../generated_headers.am generated-headers top_srcdir=.."
   echo "BEFORE triggering the build with make!"
 else
+  if test x"$optional_c_error_argument" = x"yes" ; then
+    echo "#define OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+  else
+    echo "#undef OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+  fi
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi
+
