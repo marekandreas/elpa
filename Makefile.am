@@ -40,6 +40,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/helpers/mod_precision.F90 \
   src/helpers/mod_mpi.F90 \
   src/helpers/mod_mpi_stubs.F90 \
+  src/helpers/mod_omp.F90 \
   src/elpa_generated_fortran_interfaces.F90 \
   src/elpa2/mod_redist_band.F90 \
   src/elpa2/mod_pack_unpack_cpu.F90 \

@@ -102,9 +102,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       use precision
       use elpa_abstract_impl
       use matrix_plot
-#ifdef WITH_OPENMP
-      use omp_lib
-#endif
+      use elpa_omp
+
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj

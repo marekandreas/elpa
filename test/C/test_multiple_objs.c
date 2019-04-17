@@ -234,7 +234,6 @@ int main(int argc, char** argv) {
    elpa_handle_2 = elpa_allocate();
 #else
    elpa_handle_2 = elpa_allocate(&error);
-#endif
    assert_elpa_ok(error);
 #endif
 

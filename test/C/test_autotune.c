@@ -178,9 +178,9 @@ int main(int argc, char** argv) {
    handle = elpa_allocate();
 #else
    handle = elpa_allocate(&error);
-#endif
    assert_elpa_ok(error);
 #endif
+   assert_elpa_ok(error);
 
    /* Set parameters */
    elpa_set(handle, "na", na, &error);
