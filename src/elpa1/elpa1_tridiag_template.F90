@@ -583,7 +583,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                               ONE,  u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
 
                   if (i/=j) then
-                    call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
+                    call cublas_PRECISION_GEMV('N',  &
+                                        l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
                                         ONE, a_dev + a_offset, lda,               &
                                         v_col_dev + (l_col_beg - 1) * size_of_datatype, 1,        &
                                         ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
@@ -597,7 +598,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                               ONE, u_col(l_col_beg), 1)
 
                   if (i/=j) then
-                    call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
+                    call PRECISION_GEMV('N', &
+                                        l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
                                         ONE, a_mat(l_row_beg,l_col_beg), lda,               &
                                         v_col(l_col_beg), 1,                                &
                                         ONE, u_row(l_row_beg), 1)

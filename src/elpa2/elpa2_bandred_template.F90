@@ -133,7 +133,7 @@
 #ifdef WITH_OPENMP
       integer(kind=ik)                            :: mynlc, lrs, transformChunkSize
 #endif
-      integer(kind=ik)                            :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
+      integer(kind=ik)                            :: i, j, l_col_beg, l_col_end, l_row_end, lc, lr, cur_pcol, n_cols, nrow
       integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc
       integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
@@ -141,8 +141,19 @@
       MATH_DATATYPE(kind=rck)                    :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
 !      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCUDA(:,:), vmrCUDA(:,:), umcCUDA(:,:) ! note the different dimension in real case
+
+
       MATH_DATATYPE(kind=rck), allocatable :: tmpCUDA(:),  vmrCUDA(:),  umcCUDA(:)
-      MATH_DATATYPE(kind=rck), allocatable :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:)
+
+      MATH_DATATYPE(kind=rck), allocatable :: tmpCPU(:,:)
+      MATH_DATATYPE(kind=rck), allocatable :: vmrCPU(:,:)
+
+      !size : umcCPU(max(l_cols,1),2*n_cols
+      ! the number of columns is 2* n_cols. This array actually represents 2 different arrays, they are just put next to each other
+      ! it is [umc, vmc] 
+      ! used as : Transpose vmr -> vmc (stored in umc, second half)
+      MATH_DATATYPE(kind=rck), allocatable :: umcCPU(:,:)
+
       MATH_DATATYPE(kind=rck), allocatable :: vr(:)
 
 #if REALCASE == 1
@@ -980,22 +991,22 @@
        if (l_cols>0 .and. l_rows>0) then
          do i=0,(istep*nbw-1)/tile_size
 
-           lcs = i*l_cols_tile+1
-           lce = min(l_cols,(i+1)*l_cols_tile)
-           if (lce<lcs) cycle
+           l_col_beg = i*l_cols_tile+1
+           l_col_end = min(l_cols,(i+1)*l_cols_tile)
+           if (l_col_end<l_col_beg) cycle
 
-           lre = min(l_rows,(i+1)*l_rows_tile)
+           l_row_end = min(l_rows,(i+1)*l_rows_tile)
 
              call obj%timer%start("blas")
-             call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a_mat(1,lcs), ubound(a_mat,dim=1), &
-                        vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+             call PRECISION_GEMM('C', 'N', l_col_end-l_col_beg+1, n_cols, l_row_end, ONE, a_mat(1,l_col_beg), ubound(a_mat,dim=1), &
+                        vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(l_col_beg,1), ubound(umcCPU,dim=1))
              call obj%timer%stop("blas")
 
            if (i==0) cycle
-           lre = min(l_rows,i*l_rows_tile)
+           l_row_end = min(l_rows,i*l_rows_tile)
              call obj%timer%start("blas")
-             call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
-                        umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+             call PRECISION_GEMM('N', 'N', l_row_end, n_cols, l_col_end-l_col_beg+1, ONE, a_mat(1,l_col_beg), lda, &
+                        umcCPU(l_col_beg,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
              call obj%timer%stop("blas")
          enddo
 
@@ -1011,7 +1022,7 @@
 #if REALCASE == 1
        n_way = max_threads
 
-       !$omp parallel private( i,lcs,lce,lrs,lre)
+       !$omp parallel private( i,l_col_beg,l_col_end,lrs,l_row_end)
 #endif
        if (n_way > 1) then
 #if REALCASE == 1
@@ -1048,31 +1059,31 @@
            !$omp do schedule(static,1)
 #endif
            do i=0,(istep*nbw-1)/tile_size
-             lcs = i*l_cols_tile+1                   ! local column start
-             lce = min(l_cols, (i+1)*l_cols_tile)    ! local column end
+             l_col_beg = i*l_cols_tile+1                   ! local column start
+             l_col_end = min(l_cols, (i+1)*l_cols_tile)    ! local column end
 
              lrs = i*l_rows_tile+1                   ! local row start
-             lre = min(l_rows, (i+1)*l_rows_tile)    ! local row end
+             l_row_end = min(l_rows, (i+1)*l_rows_tile)    ! local row end
 
              !C1 += [A11 A12] [B1
              !                 B2]
-             if ( lre > lrs .and. l_cols > lcs ) then
+             if ( l_row_end > lrs .and. l_cols > l_col_beg ) then
                call obj%timer%start("blas")
-               call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
-                                   ONE, a_mat(lrs,lcs), ubound(a_mat,dim=1),                 &
-                                   umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
+               call PRECISION_GEMM('N', 'N', l_row_end-lrs+1, n_cols, l_cols-l_col_beg+1,          &
+                                   ONE, a_mat(lrs,l_col_beg), ubound(a_mat,dim=1),                 &
+                                   umcCPU(l_col_beg,n_cols+1), ubound(umcCPU,dim=1),  &
                                    ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
                call obj%timer%stop("blas")
              endif
 
              ! C1 += A10' B0
-             if ( lce > lcs .and. i > 0 ) then
+             if ( l_col_end > l_col_beg .and. i > 0 ) then
                call obj%timer%start("blas")
                call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',     &
-                        lce-lcs+1, n_cols, lrs-1,              &
-                                    ONE, a_mat(1,lcs),   ubound(a_mat,dim=1),      &
+                        l_col_end-l_col_beg+1, n_cols, lrs-1,              &
+                                    ONE, a_mat(1,l_col_beg),   ubound(a_mat,dim=1),      &
                                     vmrCPU(1,1),   ubound(vmrCPU,dim=1),   &
-                                    ZERO, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+                                    ZERO, umcCPU(l_col_beg,1), ubound(umcCPU,dim=1))
                call obj%timer%stop("blas")
              endif
            enddo
@@ -1114,52 +1125,59 @@
           endif ! useGPU
 
           do i=0,(istep*nbw-1)/tile_size
+            write(*, *) "istep, nbw, tile_size, i", istep, nbw, tile_size, i
 
-            lcs = i*l_cols_tile+1
-            lce = min(l_cols,(i+1)*l_cols_tile)
-            if (lce<lcs) cycle
-            lre = min(l_rows,(i+1)*l_rows_tile)
+            l_col_beg = i*l_cols_tile+1
+            l_col_end = min(l_cols,(i+1)*l_cols_tile)
+            if (l_col_end<l_col_beg) cycle
+            l_row_end = min(l_rows,(i+1)*l_rows_tile)
 
             if (useGPU) then
               call obj%timer%start("cublas")
               call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
-                                         lce-lcs+1, n_cols, lre,     &
-                                         ONE, (a_dev + ((lcs-1)*lda* &
+                                         l_col_end-l_col_beg+1, n_cols, l_row_end,     &
+                                         ONE, (a_dev + ((l_col_beg-1)*lda* &
                                          size_of_datatype)),         &
                                          lda, vmr_dev,cur_l_rows,    &
-                                         ONE, (umc_dev+ (lcs-1)*     &
+                                         ONE, (umc_dev+ (l_col_beg-1)*     &
                                              size_of_datatype),      &
                                          cur_l_cols)
 
               call obj%timer%stop("cublas")
 
-              if(i==0) cycle
-              call obj%timer%start("cublas")
+              if(i>0) then
+                call obj%timer%start("cublas")
 
-              lre = min(l_rows,i*l_rows_tile)
-              call cublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
-                                          (a_dev+ ((lcs-1)*lda*                 &
-                                                size_of_datatype)),             &
-                                     lda, (umc_dev+(cur_l_cols * n_cols+lcs-1)* &
+                l_row_end = min(l_rows,i*l_rows_tile)
+                call cublas_PRECISION_GEMM('N', 'N', l_row_end,n_cols, l_col_end-l_col_beg+1, ONE, &
+                                            (a_dev+ ((l_col_beg-1)*lda*                 &
+                                                  size_of_datatype)),             &
+                                       lda, (umc_dev+(cur_l_cols * n_cols+l_col_beg-1)* &
+                                              size_of_datatype),              &
+                                              cur_l_cols, ONE, (vmr_dev+(cur_l_rows * n_cols)* &
                                             size_of_datatype),              &
-                                            cur_l_cols, ONE, (vmr_dev+(cur_l_rows * n_cols)* &
-                                          size_of_datatype),              &
-                                            cur_l_rows)
-              call obj%timer%stop("cublas")
+                                              cur_l_rows)
+                call obj%timer%stop("cublas")
+              endif
             else ! useGPU
 
-              call obj%timer%start("blas")
+              call obj%timer%start("blas_potential")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',          &
-                             lce-lcs+1, n_cols, lre, ONE, a_mat(1,lcs), ubound(a_mat,dim=1), &
-                                   vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-              call obj%timer%stop("blas")
-              if (i==0) cycle
-              lre = min(l_rows,i*l_rows_tile)
-              call obj%timer%start("blas")
-              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
-                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE,      &
-                                     vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
-              call obj%timer%stop("blas")
+                                  l_col_end-l_col_beg+1, n_cols, l_row_end, &
+                                  ONE, a_mat(1,l_col_beg), ubound(a_mat,dim=1), &
+                                  vmrCPU, ubound(vmrCPU,dim=1), &
+                                  ONE, umcCPU(l_col_beg,1), ubound(umcCPU,dim=1))
+              call obj%timer%stop("blas_potential")
+              if (i>0) then
+                l_row_end = min(l_rows,i*l_rows_tile)
+                call obj%timer%start("blas_potential")
+                call PRECISION_GEMM('N', 'N', &
+                                    l_row_end, n_cols, l_col_end-l_col_beg+1, &
+                                    ONE, a_mat(1,l_col_beg), lda, &
+                                    umcCPU(l_col_beg,n_cols+1), ubound(umcCPU,dim=1), ONE,      &
+                                    vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+                call obj%timer%stop("blas_potential")
+              endif
             endif ! useGPU
           enddo ! i=0,(istep*nbw-1)/tile_size
 
@@ -1462,7 +1480,7 @@
        ! A = A - V*U**T - U*V**T
 
 #ifdef WITH_OPENMP
-       !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
+       !$omp parallel private( ii, i, l_col_beg, l_col_end, l_row_end, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
        n_threads = omp_get_num_threads()
 
        if (mod(n_threads, 2) == 0) then
@@ -1478,35 +1496,35 @@
 
        do ii=n_id*tile_size,(istep*nbw-1),tile_size*n_way
          i = ii / tile_size
-         lcs = i*l_cols_tile+1
-         lce = min(l_cols,(i+1)*l_cols_tile)
-         lre = min(l_rows,(i+1)*l_rows_tile)
-         if (lce<lcs .or. lre<1) cycle
+         l_col_beg = i*l_cols_tile+1
+         l_col_end = min(l_cols,(i+1)*l_cols_tile)
+         l_row_end = min(l_rows,(i+1)*l_rows_tile)
+         if (l_col_end<l_col_beg .or. l_row_end<1) cycle
 
          !Figure out this thread's range
-         work_per_thread = lre / m_way
-         if (work_per_thread * m_way < lre) work_per_thread = work_per_thread + 1
+         work_per_thread = l_row_end / m_way
+         if (work_per_thread * m_way < l_row_end) work_per_thread = work_per_thread + 1
          mystart = m_id * work_per_thread + 1
          myend   = mystart + work_per_thread - 1
-         if ( myend > lre ) myend = lre
+         if ( myend > l_row_end ) myend = l_row_end
          if ( myend-mystart+1 < 1) cycle
          call obj%timer%start("blas")
-         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1, lce-lcs+1, 2*n_cols, -ONE, &
-                    vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
-                     ONE, a_mat(mystart,lcs), ubound(a_mat,1))
+         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1, l_col_end-l_col_beg+1, 2*n_cols, -ONE, &
+                    vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(l_col_beg,1), ubound(umcCPU,1), &
+                     ONE, a_mat(mystart,l_col_beg), ubound(a_mat,1))
           call obj%timer%stop("blas")
        enddo
        !$omp end parallel
 !#if COMPLEXCASE == 1
 !       do i=0,(istep*nbw-1)/tile_size
-!         lcs = i*l_cols_tile+1
-!         lce = min(l_cols,(i+1)*l_cols_tile)
-!         lre = min(l_rows,(i+1)*l_rows_tile)
-!         if (lce<lcs .or. lre<1) cycle
+!         l_col_beg = i*l_cols_tile+1
+!         l_col_end = min(l_cols,(i+1)*l_cols_tile)
+!         l_row_end = min(l_rows,(i+1)*l_rows_tile)
+!         if (l_col_end<l_col_beg .or. l_row_end<1) cycle
 !         call obj%timer%start("blas")
-!         call PRECISION_GEMM('N', 'C', lre,lce-lcs+1, 2*n_cols, -ONE, &
-!                       vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-!                       ONE, a_mat(1,lcs), lda)
+!         call PRECISION_GEMM('N', 'C', l_row_end,l_col_end-l_col_beg+1, 2*n_cols, -ONE, &
+!                       vmrCPU, ubound(vmrCPU,dim=1), umcCPU(l_col_beg,1), ubound(umcCPU,dim=1), &
+!                       ONE, a_mat(1,l_col_beg), lda)
 !         call obj%timer%stop("blas")
 !       enddo
 !#endif
@@ -1514,29 +1532,31 @@
 #else /* WITH_OPENMP */
 
        do i=0,(istep*nbw-1)/tile_size
-         lcs = i*l_cols_tile+1
-         lce = min(l_cols,(i+1)*l_cols_tile)
-         lre = min(l_rows,(i+1)*l_rows_tile)
-         if (lce<lcs .or. lre<1) cycle
+         l_col_beg = i*l_cols_tile+1
+         l_col_end = min(l_cols,(i+1)*l_cols_tile)
+         l_row_end = min(l_rows,(i+1)*l_rows_tile)
+         if (l_col_end<l_col_beg .or. l_row_end<1) cycle
 
          if (useGPU) then
            call obj%timer%start("cublas")
 
            call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
-                                      lre, lce-lcs+1, 2*n_cols, -ONE, &
-                                      vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
+                                      l_row_end, l_col_end-l_col_beg+1, 2*n_cols, -ONE, &
+                                      vmr_dev, cur_l_rows, (umc_dev +(l_col_beg-1)*  &
                                       size_of_datatype), &
-                                      cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
+                                      cur_l_cols, ONE, (a_dev+(l_col_beg-1)*lda* &
                                       size_of_datatype), lda)
            call obj%timer%stop("cublas")
 
          else ! useGPU
 
-           call obj%timer%start("blas")
-           call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, lre,lce-lcs+1, 2*n_cols, -ONE, &
-                               vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                               ONE, a_mat(1,lcs), lda)
-           call obj%timer%stop("blas")
+           call obj%timer%start("blas_potential_2")
+           call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, &
+                               l_row_end,l_col_end-l_col_beg+1, 2*n_cols,  &
+                               -ONE, vmrCPU, ubound(vmrCPU,dim=1),  &
+                               umcCPU(l_col_beg,1), ubound(umcCPU,dim=1), &
+                               ONE, a_mat(1,l_col_beg), lda)
+           call obj%timer%stop("blas_potential_2")
          endif ! useGPU
        enddo ! i=0,(istep*nbw-1)/tile_size
 #endif /* WITH_OPENMP */
