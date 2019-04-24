@@ -63,9 +63,8 @@
    use elpa_mpi
    use cuda_functions
    use mod_check_for_gpu
-#ifdef WITH_OPENMP
-   use omp_lib
-#endif
+   use elpa_omp
+
    use iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
@@ -150,7 +149,11 @@
 
 
 #ifdef WITH_OPENMP
-    !nrThreads = omp_get_max_threads()
+    ! store the number of OpenMP threads used in the calling function
+    ! restore this at the end of ELPA 2
+    omp_threads_caller = omp_get_max_threads()
+
+    ! check the number of threads that ELPA should use internally
     call obj%get("omp_threads",nrThreads,error)
     call omp_set_num_threads(nrThreads)
 #else
@@ -209,6 +212,14 @@
      if (.not.(obj%eigenvalues_only)) then
        q(1,1) = ONE
      endif
+
+     ! restore original OpenMP settings
+#ifdef WITH_OPENMP
+     ! store the number of OpenMP threads used in the calling function
+     ! restore this at the end of ELPA 2
+     call omp_set_num_threads(omp_threads_caller)
+#endif
+
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&
      &_2stage_&
@@ -778,6 +789,13 @@
          stop 1
        endif
      endif
+
+     ! restore original OpenMP settings
+#ifdef WITH_OPENMP
+    ! store the number of OpenMP threads used in the calling function
+    ! restore this at the end of ELPA 2
+    call omp_set_num_threads(omp_threads_caller)
+#endif
 
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&
