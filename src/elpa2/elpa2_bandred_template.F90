@@ -185,6 +185,7 @@
       integer(kind=ik)                            :: istat
       character(200)                              :: errorMessage
       integer(kind=ik)                            :: min_tile_size, error
+      integer(kind=ik)                            :: multiplication_strategy
 
 #if REALCASE == 1
       logical, intent(in)                         :: useQR
@@ -301,6 +302,36 @@
         min_tile_size = 128*max(np_rows, np_cols)
       endif
       tile_size = ((min_tile_size-1)/tile_size+1)*tile_size
+
+      call obj%get("mult_strategy", multiplication_strategy ,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option mult_strategy. Aborting..."
+        stop
+      endif
+      if(multiplication_strategy == ELPA_MULT_STRATEGY_DEFAULT) then
+        if(useGPU) then
+          multiplication_strategy = ELPA_MULT_STRATEGY_WHOLE
+        else
+          ! unlike in ELPA 1, there is no multiplication strategy based on blocking.
+          ! originally the only strategy was STRIPES
+          ! currently it remains the default strategy for CPU implementation
+          multiplication_strategy = ELPA_MULT_STRATEGY_STRIPES
+        endif
+      endif
+      if(multiplication_strategy == ELPA_MULT_STRATEGY_BLOCKING) then
+        print *,"Multiplication strategy BLOCKING is not defined for ELPA 2. Aborting..."
+        stop
+      endif
+
+      if(multiplication_strategy == ELPA_MULT_STRATEGY_WHOLE) then
+        ! we can achieve having 1 large multiplication by keeping the original "stripes"
+        ! implementation, but defining so large tile size, that there will actually be
+        ! only 1 large multiplication done, since the tile will cower the whole local matrix
+        ! We thus enlarge the tile_size variable. It is consistent with description of the
+        ! min_tile_size, which is not a relevant parameter for the ELPA_MULT_STRATEGY_WHOLE choice
+        ! we can make tile_size arbitrarily large, since the algorithm will take care of bounds
+        tile_size = na
+      endif
 
       l_rows_tile = tile_size/np_rows ! local rows of a tile
       l_cols_tile = tile_size/np_cols ! local cols of a tile

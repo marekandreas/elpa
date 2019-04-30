@@ -223,7 +223,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("mult_strategy", "Multiplication strategy in tridiagonalization (and possibly bandred) step", ELPA_MULT_STRATEGY_DEFAULT, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_mult_strategies, mult_strategy_enumerate, mult_strategy_is_valid, NULL, PRINT_YES),
 
-        INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred. Discarded for ELPA_MULT_STRATEGY_WHOLE.", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         min_tile_size_cardinality, min_tile_size_enumerate, min_tile_size_is_valid, NULL, PRINT_YES),
         INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
                         intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL, PRINT_YES),
