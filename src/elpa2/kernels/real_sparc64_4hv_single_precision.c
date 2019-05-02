@@ -48,8 +48,10 @@
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
+#define BLOCK4
 #include "../../general/precision_macros.h"
-#include "real_sse_4hv_template.c"
+#include "real_128bit_BLOCK_template.c"
+#undef BLOCK4
 #undef REALCASE
 #undef SINGLE_PRECISION
 
