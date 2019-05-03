@@ -99,6 +99,10 @@ module elpa_api
       procedure(elpa_is_set_i),  deferred, public :: is_set         !< method to check whether key/value is set
       procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
 
+      ! call before setup if created from the legacy api
+      ! remove this function completely after the legacy api is dropped
+      procedure(elpa_creating_from_legacy_api_i), deferred, public :: creating_from_legacy_api
+
       ! Timer
       procedure(elpa_get_time_i), deferred, public :: get_time        !< method to get the times from the timer object
       procedure(elpa_print_times_i), deferred, public :: print_times  !< method to print the timings tree
@@ -772,6 +776,14 @@ module elpa_api
     end subroutine
   end interface
 #endif
+
+  abstract interface
+    subroutine elpa_creating_from_legacy_api_i(self)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout)          :: self
+    end subroutine
+  end interface
 
   contains
 
