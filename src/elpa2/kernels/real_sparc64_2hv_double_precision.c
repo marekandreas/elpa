@@ -48,7 +48,7 @@
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
-#define BLOCK2
+#define BLOCK2 1
 #include "../../general/precision_macros.h"
 #include "real_128bit_BLOCK_template.c"
 #undef REALCASE
