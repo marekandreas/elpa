@@ -227,6 +227,7 @@ for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
 
         print("endif\n" * endifs)
 
+
 for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys()), sorted(domain_flag.keys())):
     endifs = 0
     if (p == "single"):
@@ -286,3 +287,12 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 
+name = "test_split_comm_real_double"
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/Fortran/test_split_comm.F90")
+print(name + "_LDADD = $(test_program_ldadd)")
+print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
