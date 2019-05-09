@@ -64,12 +64,10 @@
 #define CONCAT_3ARGS(a, b, c) CONCAT2_3ARGS(a, b, c)
 #define CONCAT2_3ARGS(a, b, c) a ## b ## c
 
-
-
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128 || VEC_SET == 256
 #include <x86intrin.h>
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
 #include <fjmfunc.h>
 #include <emmintrin.h>
 #endif
@@ -91,56 +89,126 @@
 #define BLOCK 2
 #endif
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
 #define SIMD_SET SSE
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
 #define SIMD_SET SPARC64
 #endif
+
+#if VEC_SET == 256
+#define SIMD_SET AVX_AVX2
+#endif
+
 #define __forceinline __attribute__((always_inline)) static
 
+#if VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 2
+#define __SIMD_DATATYPE __m128d
+#define _SIMD_LOAD _mm_load_pd
+#define _SIMD_STORE _mm_store_pd
+#define _SIMD_ADD _mm_add_pd
+#define _SIMD_MUL _mm_mul_pd
+#define _SIMD_SUB _mm_sub_pd
+#define _SIMD_XOR _mm_xor_pd
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define offset 4
+#define __SIMD_DATATYPE __m128
+#define _SIMD_LOAD _mm_load_ps
+#define _SIMD_STORE _mm_store_ps
+#define _SIMD_ADD _mm_add_ps
+#define _SIMD_MUL _mm_mul_ps
+#define _SIMD_SUB _mm_sub_ps
+#define _SIMD_XOR _mm_xor_ps
+#endif
+#endif /* VEC_SET == 128 || VEC_SET == 1281 */
+#if VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define offset 4
+#define __SIMD_DATATYPE __m256d
+#define _SIMD_LOAD _mm256_load_pd
+#define _SIMD_STORE _mm256_store_pd
+#define _SIMD_ADD _mm256_add_pd
+#define _SIMD_MUL _mm256_mul_pd
+//#define _SIMD_SUB _mm256_dub_pd
+#define _SIMD_XOR _mm256_xor_pd
+#define _SIMD_BROADCAST _mm256_broadcast_sd
+#ifdef HAVE_AVX2
+#ifdef __FMA4__
+#define __ELPA_USE_FMA__
+#define _mm256_FMA_pd(a,b,c) _mm256_macc_pd(a,b,c)
+#define _SIMD_FMA _mm256_FMA_pd
+#endif
+#ifdef __AVX2__
+#define __ELPA_USE_FMA__
+#define _mm256_FMA_pd(a,b,c) _mm256_fmadd_pd(a,b,c)
+#define _SIMD_FMA _mm256_FMA_pd
+#endif
+#endif /* HAVE_AVX2 */
+#endif /* DOUBLE_PRECISION_REAL */
+
+#ifdef SINGLE_PRECISION_REAL
+#define offset 8
+#define __SIMD_DATATYPE __m256
+#define _SIMD_LOAD _mm256_load_ps
+#define _SIMD_STORE _mm256_store_ps
+#define _SIMD_ADD _mm256_add_ps
+#define _SIMD_MUL _mm256_mul_ps
+//#define _SIMD_SUB _mm256_sub_ps
+#define _SIMD_XOR _mm256_xor_ps
+#define _SIMD_BROADCAST _mm256_broadcast_ss
+#ifdef HAVE_AVX2
+#ifdef __FMA4__
+#define __ELPA_USE_FMA__
+#define _mm256_FMA_ps(a,b,c) _mm256_macc_ps(a,b,c)
+#define _SIMD_FMA _mm256_FMA_ps
+#endif
+#ifdef __AVX2__
+#define __ELPA_USE_FMA__
+#define _mm256_FMA_ps(a,b,c) _mm256_fmadd_ps(a,b,c)
+#define _SIMD_FMA _mm256_FMA_ps
+#endif
+#endif /* HAVE_AVX2 */
+#endif /* SINGLE_PRECISION_REAL */
+#endif /* VEC_SET == 256 */
+
+#ifdef DOUBLE_PRECISION_REAL
 #define WORD_LENGTH double
 #define DATA_TYPE double
 #define DATA_TYPE_PTR double*
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define WORD_LENGTH single
+#define DATA_TYPE float
+#define DATA_TYPE_PTR float*
+#endif
 
-#define __SSE_DATATYPE __m128d
-#define _SSE_LOAD _mm_load_pd
-#define _SSE_ADD _mm_add_pd
-#define _SSE_SUB _mm_sub_pd
-#define _SSE_MUL _mm_mul_pd
-#define _SSE_XOR _mm_xor_pd
-#define _SSE_STORE _mm_store_pd
+
+#ifdef DOUBLE_PRECISION_REAL
+
+
 #define _SSE_SET _mm_set_pd
 #define _SSE_SET1 _mm_set1_pd
 #define _SSE_SET _mm_set_pd
 #endif
 
 #ifdef SINGLE_PRECISION_REAL
-#define offset 4
-#define WORD_LENGTH single
-#define DATA_TYPE float
-#define DATA_TYPE_PTR float*
 
-#define __SSE_DATATYPE __m128
-#define _SSE_LOAD _mm_load_ps
-#define _SSE_ADD _mm_add_ps
-#define _SSE_SUB _mm_sub_ps
-#define _SSE_MUL _mm_mul_ps
-#define _SSE_XOR _mm_xor_ps
-#define _SSE_STORE _mm_store_ps
 #define _SSE_SET _mm_set_ps
 #define _SSE_SET1 _mm_set1_ps
 #define _SSE_SET _mm_set_ps
 
 #endif
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
 #undef __AVX__
 #endif
 
+
+#if VEC_SET == 128 || VEC_SET == 1281
 //Forward declaration
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
@@ -150,18 +218,9 @@
 #undef ROW_LENGTH
 #define ROW_LENGTH 4
 #endif
+#endif /* VEC_SET == 128 || VEC_SET == 1281 */
 
-__forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
-#ifdef BLOCK2
-	DATA_TYPE s);
-#endif
-#ifdef BLOCK4
-	DATA_TYPE s_1_2, DATA_TYPE s_1_3, DATA_TYPE s_2_3, DATA_TYPE s_1_4, DATA_TYPE s_2_4, DATA_TYPE s_3_4);
-#endif
-#ifdef BLOCK6
-	DATA_TYPE_PTR scalarprods);
-#endif
-
+#if VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 4
@@ -170,6 +229,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 8
 #endif
+#endif /* VEC_SET == 256 */
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
 #ifdef BLOCK2
 	DATA_TYPE s);
@@ -181,6 +241,39 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
+#if VEC_SET == 128 || VEC_SET == 1281
+#ifdef DOUBLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET == 128 || VEC_SET == 1281 */
+
+#if VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET == 256 */
+__forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
+#ifdef BLOCK2
+	DATA_TYPE s);
+#endif
+#ifdef BLOCK4
+	DATA_TYPE s_1_2, DATA_TYPE s_1_3, DATA_TYPE s_2_3, DATA_TYPE s_1_4, DATA_TYPE s_2_4, DATA_TYPE s_3_4);
+#endif
+#ifdef BLOCK6
+	DATA_TYPE_PTR scalarprods);
+#endif
+
+#if VEC_SET == 128 || VEC_SET == 1281 
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 6
@@ -189,6 +282,19 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 12
 #endif
+#endif /* VEC_SET == 128 || VEC_SET == 1281  */
+
+#if VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 24
+#endif
+#endif /* VEC_SET == 256 */
+
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
 #ifdef BLOCK2
 	DATA_TYPE s);
@@ -200,6 +306,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
+#if VEC_SET == 128 || VEC_SET == 1281 
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 8
@@ -208,6 +315,19 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 16
 #endif
+#endif /* VEC_SET == 128 || VEC_SET == 1281  */
+
+#if VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 16
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 32
+#endif
+#endif /* VEC_SET == 256 */
+
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
 #ifdef BLOCK2
 	DATA_TYPE s);
@@ -219,6 +339,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
+#if  VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 10
@@ -227,6 +348,20 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 20
 #endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 20
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 40
+#endif
+#endif /*  VEC_SET == 256 */
+
+
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
 #ifdef BLOCK2
 	DATA_TYPE s);
@@ -238,6 +373,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
+#if  VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 12
@@ -246,6 +382,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 24
 #endif
+#endif /* VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 24
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#undef ROW_LENGTH
+#define ROW_LENGTH 48
+#endif
+#endif /*  VEC_SET == 256 */
 
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
 #ifdef BLOCK2
@@ -310,6 +458,34 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 !f>     integer(kind=c_int) :: pnb, pnq, pldq, pldh
 !f>     type(c_ptr), value  :: q
 !f>     real(kind=c_float)  :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
+!f> interface
+!f>   subroutine double_hh_trafo_real_AVX_AVX2_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="double_hh_trafo_real_AVX_AVX2_2hv_double")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
+!f>        type(c_ptr), value        :: q
+!f>        real(kind=c_double)        :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
+!f> interface
+!f>   subroutine double_hh_trafo_real_AVX_AVX2_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="double_hh_trafo_real_AVX_AVX2_2hv_single")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)       :: pnb, pnq, pldq, pldh
+!f>        type(c_ptr), value        :: q
+!f>        real(kind=c_float)        :: hh(pnb,6)
 !f>   end subroutine
 !f> end interface
 !f>#endif
@@ -431,6 +607,8 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
   int ldh = *pldh;
   int worked_on;
 
+  worked_on = 0;
+
 #ifdef BLOCK2
   // calculating scalar product to compute
   // 2 householder vectors simultaneously
@@ -541,7 +719,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 
 #endif /* BLOCK6 */
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
   #pragma ivdep
 #endif
   for (i = BLOCK; i < nb; i++)
@@ -584,106 +762,170 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
     }
 
   // Production level kernel calls with padding
-#ifdef BLOCK2
+#if  VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
-  for (i = 0; i < nq-10; i+=12)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_12_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 12;
-    }
+#define STEP_SIZE 12
+#define ROW_LENGTH 12
+#define UPPER_BOUND 10
 #endif
 #ifdef SINGLE_PRECISION_REAL
-  for (i = 0; i < nq-20; i+=24)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_24_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 24;
-    }
+#define STEP_SIZE 24
+#define ROW_LENGTH 24
+#define UPPER_BOUND 20
 #endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define STEP_SIZE 24
+#define ROW_LENGTH 24
+#define UPPER_BOUND 20
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define STEP_SIZE 48
+#define ROW_LENGTH 48
+#define UPPER_BOUND 40
+#endif
+#endif /*  AVX_AVX2 */
+
+#ifdef BLOCK2
+  for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE )
+    {
+      CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
+      worked_on += ROW_LENGTH;
+    }
 
   if (nq == i)
     {
       return;
     }
 
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
-  if (nq-i == 10)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_10_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 10;
-    }
+#define ROW_LENGTH 10
 #endif
-
 #ifdef SINGLE_PRECISION_REAL
-  if (nq-i == 20)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_20_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 20;
-    }
+#define ROW_LENGTH 20
 #endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
 
+#if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
-  if (nq-i == 8)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_8_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 8;
-    }
+#define ROW_LENGTH 20
 #endif
-
 #ifdef SINGLE_PRECISION_REAL
-  if (nq-i == 16)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_16_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 16;
-    }
+#define ROW_LENGTH 40
 #endif
+#endif /* VEC_SET == 256 */
 
+  if (nq-i == ROW_LENGTH)
+    {
+      CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
+      worked_on += ROW_LENGTH;
+    }
+
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
-  if (nq-i == 6)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_6_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 6;
-    }
+#define ROW_LENGTH 8
 #endif
-
 #ifdef SINGLE_PRECISION_REAL
-  if (nq-i == 12)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_12_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 12;
-    }
+#define ROW_LENGTH 16
 #endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
 
+#if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
-  if (nq-i == 4)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_4_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 4;
-    }
+#define ROW_LENGTH 16
 #endif
-
 #ifdef SINGLE_PRECISION_REAL
-   if (nq-i == 8)
-     {
-       CONCAT_4ARGS(hh_trafo_kernel_8_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-       worked_on += 8;
-     }
+#define ROW_LENGTH 32
 #endif
+#endif /* VEC_SET == 256 */
 
+  if (nq-i == ROW_LENGTH)
+    {
+      CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
+      worked_on += ROW_LENGTH;
+    }
+
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
-  if (nq-i == 2)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_2_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 2;
-    }
+#define ROW_LENGTH 6
 #endif
-
 #ifdef SINGLE_PRECISION_REAL
-  if (nq-i == 4)
-    {
-      CONCAT_4ARGS(hh_trafo_kernel_4_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
-      worked_on += 4;
-    }
+#define ROW_LENGTH 12
 #endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 24
+#endif
+#endif /* VEC_SET == 256 */
+
+
+  if (nq-i == ROW_LENGTH)
+    {
+      CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
+      worked_on += ROW_LENGTH;
+    }
+
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 8
+#endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET == 256 */
+
+
+  if (nq-i == ROW_LENGTH)
+    {
+      CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
+      worked_on += ROW_LENGTH;
+    }
+
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 2
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 4
+#endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET == 256 */
+
+  if (nq-i == ROW_LENGTH)
+    {
+      CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
+      worked_on += ROW_LENGTH;
+    }
 
 #endif /* BLOCK2 */
 
@@ -789,13 +1031,31 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 }
 
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 24
+#endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 24
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 48
+#endif
+#endif /* VEC_SET == 256 */
 /*
  * Unrolled kernel that computes
 #ifdef DOUBLE_PRECISION_REAL
- * 12 rows of Q simultaneously, a
+ * ROW_LENGTH rows of Q simultaneously, a
 #endif
 #ifdef SINGLE_PRECISION_REAL
- * 24 rows of Q simultaneously, a
+ * ROW_LENGTH rows of Q simultaneously, a
 #endif
  * matrix Vector product with two householder
  */
@@ -809,15 +1069,6 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
  * vectors + a rank 1 update is performed
  */
 #endif
-#ifdef DOUBLE_PRECISION_REAL
-#undef ROW_LENGTH
-#define ROW_LENGTH 12
-#endif
-#ifdef SINGLE_PRECISION_REAL
-#undef ROW_LENGTH
-#define ROW_LENGTH 24
-#endif
-
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
 #ifdef BLOCK2
                DATA_TYPE s)
@@ -845,796 +1096,868 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     int i;
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
-    __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+    __SIMD_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 #endif
-#endif
-    __SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
-    __SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE x3 = _SSE_LOAD(&q[ldq+2*offset]);
-    __SSE_DATATYPE x4 = _SSE_LOAD(&q[ldq+3*offset]);
-    __SSE_DATATYPE x5 = _SSE_LOAD(&q[ldq+4*offset]);
-    __SSE_DATATYPE x6 = _SSE_LOAD(&q[ldq+5*offset]);
+#endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
 #endif
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#ifdef SINGLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi32(0x80000000);
 #endif
-    __SSE_DATATYPE h2;
+#endif /* VEC_SET == 256 */
 
-    __SSE_DATATYPE q1 = _SSE_LOAD(q);
-    __SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-    __SSE_DATATYPE q2 = _SSE_LOAD(&q[offset]);
-    __SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-    __SSE_DATATYPE q3 = _SSE_LOAD(&q[2*offset]);
-    __SSE_DATATYPE y3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-    __SSE_DATATYPE q4 = _SSE_LOAD(&q[3*offset]);
-    __SSE_DATATYPE y4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
-    __SSE_DATATYPE q5 = _SSE_LOAD(&q[4*offset]);
-    __SSE_DATATYPE y5 = _SSE_ADD(q5, _SSE_MUL(x5, h1));
-    __SSE_DATATYPE q6 = _SSE_LOAD(&q[5*offset]);
-    __SSE_DATATYPE y6 = _SSE_ADD(q6, _SSE_MUL(x6, h1));
+    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x3 = _SIMD_LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE x4 = _SIMD_LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE x5 = _SIMD_LOAD(&q[ldq+4*offset]);
+    __SIMD_DATATYPE x6 = _SIMD_LOAD(&q[ldq+5*offset]);
+
+#if VEC_SET == 128
+    __SIMD_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#endif
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#endif
+#if VEC_SET == 256
+    __SIMD_DATATYPE h1 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
+ 
+    __SIMD_DATATYPE h2;
+#ifdef __ELPA_USE_FMA__
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
+    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE y3 = _SIMD_FMA(x3, h1, q3);
+    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE y4 = _SIMD_FMA(x4, h1, q4);
+    __SIMD_DATATYPE q5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE y5 = _SIMD_FMA(x5, h1, q5);
+    __SIMD_DATATYPE q6 = _SIMD_LOAD(&q[5*offset]);
+    __SIMD_DATATYPE y6 = _SIMD_FMA(x6, h1, q6);
+#else
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+    __SIMD_DATATYPE q5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE y5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
+    __SIMD_DATATYPE q6 = _SIMD_LOAD(&q[5*offset]);
+    __SIMD_DATATYPE y6 = _SIMD_ADD(q6, _SIMD_MUL(x6, h1));
+#endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));                          
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));                          
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));                          
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1));
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*3)+offset]);                  
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
 
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE a1_3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-    __SSE_DATATYPE a2_3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-    __SSE_DATATYPE a3_3 = _SSE_LOAD(&q[ldq+2*offset]);
-    __SSE_DATATYPE a4_3 = _SSE_LOAD(&q[0+2*offset]);
+    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[0+2*offset]);
 
-    register __SSE_DATATYPE w3 = _SSE_ADD(a4_3, _SSE_MUL(a3_3, h_4_3));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a2_3, h_4_2));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a1_3, h_4_1));
-    register __SSE_DATATYPE z3 = _SSE_ADD(a3_3, _SSE_MUL(a2_3, h_3_2));
-    z3 = _SSE_ADD(z3, _SSE_MUL(a1_3, h_3_1));
-    register __SSE_DATATYPE y3 = _SSE_ADD(a2_3, _SSE_MUL(a1_3, h_2_1));
-    register __SSE_DATATYPE x3 = a1_3;
+    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE x3 = a1_3;
 
-    __SSE_DATATYPE a1_4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-    __SSE_DATATYPE a2_4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-    __SSE_DATATYPE a3_4 = _SSE_LOAD(&q[ldq+3*offset]);
-    __SSE_DATATYPE a4_4 = _SSE_LOAD(&q[0+3*offset]);
+    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[0+3*offset]);
 
-    register __SSE_DATATYPE w4 = _SSE_ADD(a4_4, _SSE_MUL(a3_4, h_4_3));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a2_4, h_4_2));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a1_4, h_4_1));
-    register __SSE_DATATYPE z4 = _SSE_ADD(a3_4, _SSE_MUL(a2_4, h_3_2));
-    z4 = _SSE_ADD(z4, _SSE_MUL(a1_4, h_3_1));
-    register __SSE_DATATYPE y4 = _SSE_ADD(a2_4, _SSE_MUL(a1_4, h_2_1));
-    register __SSE_DATATYPE x4 = a1_4;
+    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE x4 = a1_4;
 
-    __SSE_DATATYPE a1_5 = _SSE_LOAD(&q[(ldq*3)+4*offset]);
-    __SSE_DATATYPE a2_5 = _SSE_LOAD(&q[(ldq*2)+4*offset]);
-    __SSE_DATATYPE a3_5 = _SSE_LOAD(&q[ldq+4*offset]);
-    __SSE_DATATYPE a4_5 = _SSE_LOAD(&q[0+4*offset]);
+    __SIMD_DATATYPE a1_5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+    __SIMD_DATATYPE a2_5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+    __SIMD_DATATYPE a3_5 = _SIMD_LOAD(&q[ldq+4*offset]);
+    __SIMD_DATATYPE a4_5 = _SIMD_LOAD(&q[0+4*offset]);
 
-    register __SSE_DATATYPE w5 = _SSE_ADD(a4_5, _SSE_MUL(a3_5, h_4_3));
-    w5 = _SSE_ADD(w5, _SSE_MUL(a2_5, h_4_2));
-    w5 = _SSE_ADD(w5, _SSE_MUL(a1_5, h_4_1));
-    register __SSE_DATATYPE z5 = _SSE_ADD(a3_5, _SSE_MUL(a2_5, h_3_2));
-    z5 = _SSE_ADD(z5, _SSE_MUL(a1_5, h_3_1));
-    register __SSE_DATATYPE y5 = _SSE_ADD(a2_5, _SSE_MUL(a1_5, h_2_1));
-    register __SSE_DATATYPE x5 = a1_5;
+    register __SIMD_DATATYPE w5 = _SIMD_ADD(a4_5, _SIMD_MUL(a3_5, h_4_3));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(a2_5, h_4_2));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(a1_5, h_4_1));
+    register __SIMD_DATATYPE z5 = _SIMD_ADD(a3_5, _SIMD_MUL(a2_5, h_3_2));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(a1_5, h_3_1));
+    register __SIMD_DATATYPE y5 = _SIMD_ADD(a2_5, _SIMD_MUL(a1_5, h_2_1));
+    register __SIMD_DATATYPE x5 = a1_5;
 
-    __SSE_DATATYPE a1_6 = _SSE_LOAD(&q[(ldq*3)+5*offset]);
-    __SSE_DATATYPE a2_6 = _SSE_LOAD(&q[(ldq*2)+5*offset]);
-    __SSE_DATATYPE a3_6 = _SSE_LOAD(&q[ldq+5*offset]);
-    __SSE_DATATYPE a4_6 = _SSE_LOAD(&q[0+5*offset]);
+    __SIMD_DATATYPE a1_6 = _SIMD_LOAD(&q[(ldq*3)+5*offset]);
+    __SIMD_DATATYPE a2_6 = _SIMD_LOAD(&q[(ldq*2)+5*offset]);
+    __SIMD_DATATYPE a3_6 = _SIMD_LOAD(&q[ldq+5*offset]);
+    __SIMD_DATATYPE a4_6 = _SIMD_LOAD(&q[0+5*offset]);
 
-    register __SSE_DATATYPE w6 = _SSE_ADD(a4_6, _SSE_MUL(a3_6, h_4_3));
-    w6 = _SSE_ADD(w6, _SSE_MUL(a2_6, h_4_2));
-    w6 = _SSE_ADD(w6, _SSE_MUL(a1_6, h_4_1));
-    register __SSE_DATATYPE z6 = _SSE_ADD(a3_6, _SSE_MUL(a2_6, h_3_2));
-    z6 = _SSE_ADD(z6, _SSE_MUL(a1_6, h_3_1));
-    register __SSE_DATATYPE y6 = _SSE_ADD(a2_6, _SSE_MUL(a1_6, h_2_1));
-    register __SSE_DATATYPE x6 = a1_6;
+    register __SIMD_DATATYPE w6 = _SIMD_ADD(a4_6, _SIMD_MUL(a3_6, h_4_3));
+    w6 = _SIMD_ADD(w6, _SIMD_MUL(a2_6, h_4_2));
+    w6 = _SIMD_ADD(w6, _SIMD_MUL(a1_6, h_4_1));
+    register __SIMD_DATATYPE z6 = _SIMD_ADD(a3_6, _SIMD_MUL(a2_6, h_3_2));
+    z6 = _SIMD_ADD(z6, _SIMD_MUL(a1_6, h_3_1));
+    register __SIMD_DATATYPE y6 = _SIMD_ADD(a2_6, _SIMD_MUL(a1_6, h_2_1));
+    register __SIMD_DATATYPE x6 = a1_6;
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
-    __SSE_DATATYPE q3;
-    __SSE_DATATYPE q4;
-    __SSE_DATATYPE q5;
-    __SSE_DATATYPE q6;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
+    __SIMD_DATATYPE q3;
+    __SIMD_DATATYPE q4;
+    __SIMD_DATATYPE q5;
+    __SIMD_DATATYPE q6;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
     
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*5]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*4]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a5_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-    register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5)); 
-    t1 = _SSE_ADD(t1, _SSE_MUL(a4_1, h_6_4));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a3_1, h_6_3));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-    register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4)); 
-    v1 = _SSE_ADD(v1, _SSE_MUL(a3_1, h_5_3));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3)); 
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
 
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a5_2 = _SSE_LOAD(&q[(ldq)+offset]);
-    __SSE_DATATYPE a6_2 = _SSE_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
 
-    register __SSE_DATATYPE t2 = _SSE_ADD(a6_2, _SSE_MUL(a5_2, h_6_5));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a4_2, h_6_4));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a3_2, h_6_3));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a2_2, h_6_2));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a1_2, h_6_1));
-    register __SSE_DATATYPE v2 = _SSE_ADD(a5_2, _SSE_MUL(a4_2, h_5_4));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a3_2, h_5_3));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a2_2, h_5_2));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a1_2, h_5_1));
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
 
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE a1_3 = _SSE_LOAD(&q[(ldq*5)+2*offset]);
-    __SSE_DATATYPE a2_3 = _SSE_LOAD(&q[(ldq*4)+2*offset]);
-    __SSE_DATATYPE a3_3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-    __SSE_DATATYPE a4_3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-    __SSE_DATATYPE a5_3 = _SSE_LOAD(&q[(ldq)+2*offset]);
-    __SSE_DATATYPE a6_3 = _SSE_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a5_3 = _SIMD_LOAD(&q[(ldq)+2*offset]);
+    __SIMD_DATATYPE a6_3 = _SIMD_LOAD(&q[2*offset]);
 
-    register __SSE_DATATYPE t3 = _SSE_ADD(a6_3, _SSE_MUL(a5_3, h_6_5));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a4_3, h_6_4));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a3_3, h_6_3));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a2_3, h_6_2));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a1_3, h_6_1));
-    register __SSE_DATATYPE v3 = _SSE_ADD(a5_3, _SSE_MUL(a4_3, h_5_4));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a3_3, h_5_3));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a2_3, h_5_2));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a1_3, h_5_1));
-    register __SSE_DATATYPE w3 = _SSE_ADD(a4_3, _SSE_MUL(a3_3, h_4_3));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a2_3, h_4_2));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a1_3, h_4_1));
-    register __SSE_DATATYPE z3 = _SSE_ADD(a3_3, _SSE_MUL(a2_3, h_3_2));
-    z3 = _SSE_ADD(z3, _SSE_MUL(a1_3, h_3_1));
-    register __SSE_DATATYPE y3 = _SSE_ADD(a2_3, _SSE_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE t3 = _SIMD_ADD(a6_3, _SIMD_MUL(a5_3, h_6_5));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a4_3, h_6_4));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a3_3, h_6_3));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a2_3, h_6_2));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a1_3, h_6_1));
+    register __SIMD_DATATYPE v3 = _SIMD_ADD(a5_3, _SIMD_MUL(a4_3, h_5_4));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a3_3, h_5_3));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a2_3, h_5_2));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a1_3, h_5_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
 
-    register __SSE_DATATYPE x3 = a1_3;
+    register __SIMD_DATATYPE x3 = a1_3;
 
-    __SSE_DATATYPE a1_4 = _SSE_LOAD(&q[(ldq*5)+3*offset]);
-    __SSE_DATATYPE a2_4 = _SSE_LOAD(&q[(ldq*4)+3*offset]);
-    __SSE_DATATYPE a3_4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-    __SSE_DATATYPE a4_4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-    __SSE_DATATYPE a5_4 = _SSE_LOAD(&q[(ldq)+3*offset]);
-    __SSE_DATATYPE a6_4 = _SSE_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a5_4 = _SIMD_LOAD(&q[(ldq)+3*offset]);
+    __SIMD_DATATYPE a6_4 = _SIMD_LOAD(&q[3*offset]);
 
-    register __SSE_DATATYPE t4 = _SSE_ADD(a6_4, _SSE_MUL(a5_4, h_6_5));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a4_4, h_6_4));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a3_4, h_6_3));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a2_4, h_6_2));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a1_4, h_6_1));
-    register __SSE_DATATYPE v4 = _SSE_ADD(a5_4, _SSE_MUL(a4_4, h_5_4));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a3_4, h_5_3));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a2_4, h_5_2));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a1_4, h_5_1));
-    register __SSE_DATATYPE w4 = _SSE_ADD(a4_4, _SSE_MUL(a3_4, h_4_3));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a2_4, h_4_2));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a1_4, h_4_1));
-    register __SSE_DATATYPE z4 = _SSE_ADD(a3_4, _SSE_MUL(a2_4, h_3_2));
-    z4 = _SSE_ADD(z4, _SSE_MUL(a1_4, h_3_1));
-    register __SSE_DATATYPE y4 = _SSE_ADD(a2_4, _SSE_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE t4 = _SIMD_ADD(a6_4, _SIMD_MUL(a5_4, h_6_5));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a4_4, h_6_4));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a3_4, h_6_3));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a2_4, h_6_2));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a1_4, h_6_1));
+    register __SIMD_DATATYPE v4 = _SIMD_ADD(a5_4, _SIMD_MUL(a4_4, h_5_4));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a3_4, h_5_3));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a2_4, h_5_2));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a1_4, h_5_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
 
-    register __SSE_DATATYPE x4 = a1_4;
+    register __SIMD_DATATYPE x4 = a1_4;
 
-    __SSE_DATATYPE a1_5 = _SSE_LOAD(&q[(ldq*5)+4*offset]);
-    __SSE_DATATYPE a2_5 = _SSE_LOAD(&q[(ldq*4)+4*offset]);
-    __SSE_DATATYPE a3_5 = _SSE_LOAD(&q[(ldq*3)+4*offset]);
-    __SSE_DATATYPE a4_5 = _SSE_LOAD(&q[(ldq*2)+4*offset]);
-    __SSE_DATATYPE a5_5 = _SSE_LOAD(&q[(ldq)+4*offset]);
-    __SSE_DATATYPE a6_5 = _SSE_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE a1_5 = _SIMD_LOAD(&q[(ldq*5)+4*offset]);
+    __SIMD_DATATYPE a2_5 = _SIMD_LOAD(&q[(ldq*4)+4*offset]);
+    __SIMD_DATATYPE a3_5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+    __SIMD_DATATYPE a4_5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+    __SIMD_DATATYPE a5_5 = _SIMD_LOAD(&q[(ldq)+4*offset]);
+    __SIMD_DATATYPE a6_5 = _SIMD_LOAD(&q[4*offset]);
 
-    register __SSE_DATATYPE t5 = _SSE_ADD(a6_5, _SSE_MUL(a5_5, h_6_5));
-    t5 = _SSE_ADD(t5, _SSE_MUL(a4_5, h_6_4));
-    t5 = _SSE_ADD(t5, _SSE_MUL(a3_5, h_6_3));
-    t5 = _SSE_ADD(t5, _SSE_MUL(a2_5, h_6_2));
-    t5 = _SSE_ADD(t5, _SSE_MUL(a1_5, h_6_1));
-    register __SSE_DATATYPE v5 = _SSE_ADD(a5_5, _SSE_MUL(a4_5, h_5_4));
-    v5 = _SSE_ADD(v5, _SSE_MUL(a3_5, h_5_3));
-    v5 = _SSE_ADD(v5, _SSE_MUL(a2_5, h_5_2));
-    v5 = _SSE_ADD(v5, _SSE_MUL(a1_5, h_5_1));
-    register __SSE_DATATYPE w5 = _SSE_ADD(a4_5, _SSE_MUL(a3_5, h_4_3));
-    w5 = _SSE_ADD(w5, _SSE_MUL(a2_5, h_4_2));
-    w5 = _SSE_ADD(w5, _SSE_MUL(a1_5, h_4_1));
-    register __SSE_DATATYPE z5 = _SSE_ADD(a3_5, _SSE_MUL(a2_5, h_3_2));
-    z5 = _SSE_ADD(z5, _SSE_MUL(a1_5, h_3_1));
-    register __SSE_DATATYPE y5 = _SSE_ADD(a2_5, _SSE_MUL(a1_5, h_2_1));
+    register __SIMD_DATATYPE t5 = _SIMD_ADD(a6_5, _SIMD_MUL(a5_5, h_6_5));
+    t5 = _SIMD_ADD(t5, _SIMD_MUL(a4_5, h_6_4));
+    t5 = _SIMD_ADD(t5, _SIMD_MUL(a3_5, h_6_3));
+    t5 = _SIMD_ADD(t5, _SIMD_MUL(a2_5, h_6_2));
+    t5 = _SIMD_ADD(t5, _SIMD_MUL(a1_5, h_6_1));
+    register __SIMD_DATATYPE v5 = _SIMD_ADD(a5_5, _SIMD_MUL(a4_5, h_5_4));
+    v5 = _SIMD_ADD(v5, _SIMD_MUL(a3_5, h_5_3));
+    v5 = _SIMD_ADD(v5, _SIMD_MUL(a2_5, h_5_2));
+    v5 = _SIMD_ADD(v5, _SIMD_MUL(a1_5, h_5_1));
+    register __SIMD_DATATYPE w5 = _SIMD_ADD(a4_5, _SIMD_MUL(a3_5, h_4_3));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(a2_5, h_4_2));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(a1_5, h_4_1));
+    register __SIMD_DATATYPE z5 = _SIMD_ADD(a3_5, _SIMD_MUL(a2_5, h_3_2));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(a1_5, h_3_1));
+    register __SIMD_DATATYPE y5 = _SIMD_ADD(a2_5, _SIMD_MUL(a1_5, h_2_1));
 
-    register __SSE_DATATYPE x5 = a1_5;
+    register __SIMD_DATATYPE x5 = a1_5;
 
-    __SSE_DATATYPE a1_6 = _SSE_LOAD(&q[(ldq*5)+5*offset]);
-    __SSE_DATATYPE a2_6 = _SSE_LOAD(&q[(ldq*4)+5*offset]);
-    __SSE_DATATYPE a3_6 = _SSE_LOAD(&q[(ldq*3)+5*offset]);
-    __SSE_DATATYPE a4_6 = _SSE_LOAD(&q[(ldq*2)+5*offset]);
-    __SSE_DATATYPE a5_6 = _SSE_LOAD(&q[(ldq)+5*offset]);
-    __SSE_DATATYPE a6_6 = _SSE_LOAD(&q[5*offset]);
+    __SIMD_DATATYPE a1_6 = _SIMD_LOAD(&q[(ldq*5)+5*offset]);
+    __SIMD_DATATYPE a2_6 = _SIMD_LOAD(&q[(ldq*4)+5*offset]);
+    __SIMD_DATATYPE a3_6 = _SIMD_LOAD(&q[(ldq*3)+5*offset]);
+    __SIMD_DATATYPE a4_6 = _SIMD_LOAD(&q[(ldq*2)+5*offset]);
+    __SIMD_DATATYPE a5_6 = _SIMD_LOAD(&q[(ldq)+5*offset]);
+    __SIMD_DATATYPE a6_6 = _SIMD_LOAD(&q[5*offset]);
 
-    register __SSE_DATATYPE t6 = _SSE_ADD(a6_6, _SSE_MUL(a5_6, h_6_5));
-    t6 = _SSE_ADD(t6, _SSE_MUL(a4_6, h_6_4));
-    t6 = _SSE_ADD(t6, _SSE_MUL(a3_6, h_6_3));
-    t6 = _SSE_ADD(t6, _SSE_MUL(a2_6, h_6_2));
-    t6 = _SSE_ADD(t6, _SSE_MUL(a1_6, h_6_1));
-    register __SSE_DATATYPE v6 = _SSE_ADD(a5_6, _SSE_MUL(a4_6, h_5_4));
-    v6 = _SSE_ADD(v6, _SSE_MUL(a3_6, h_5_3));
-    v6 = _SSE_ADD(v6, _SSE_MUL(a2_6, h_5_2));
-    v6 = _SSE_ADD(v6, _SSE_MUL(a1_6, h_5_1));
-    register __SSE_DATATYPE w6 = _SSE_ADD(a4_6, _SSE_MUL(a3_6, h_4_3));
-    w6 = _SSE_ADD(w6, _SSE_MUL(a2_6, h_4_2));
-    w6 = _SSE_ADD(w6, _SSE_MUL(a1_6, h_4_1));
-    register __SSE_DATATYPE z6 = _SSE_ADD(a3_6, _SSE_MUL(a2_6, h_3_2));
-    z6 = _SSE_ADD(z6, _SSE_MUL(a1_6, h_3_1));
-    register __SSE_DATATYPE y6 = _SSE_ADD(a2_6, _SSE_MUL(a1_6, h_2_1));
+    register __SIMD_DATATYPE t6 = _SIMD_ADD(a6_6, _SIMD_MUL(a5_6, h_6_5));
+    t6 = _SIMD_ADD(t6, _SIMD_MUL(a4_6, h_6_4));
+    t6 = _SIMD_ADD(t6, _SIMD_MUL(a3_6, h_6_3));
+    t6 = _SIMD_ADD(t6, _SIMD_MUL(a2_6, h_6_2));
+    t6 = _SIMD_ADD(t6, _SIMD_MUL(a1_6, h_6_1));
+    register __SIMD_DATATYPE v6 = _SIMD_ADD(a5_6, _SIMD_MUL(a4_6, h_5_4));
+    v6 = _SIMD_ADD(v6, _SIMD_MUL(a3_6, h_5_3));
+    v6 = _SIMD_ADD(v6, _SIMD_MUL(a2_6, h_5_2));
+    v6 = _SIMD_ADD(v6, _SIMD_MUL(a1_6, h_5_1));
+    register __SIMD_DATATYPE w6 = _SIMD_ADD(a4_6, _SIMD_MUL(a3_6, h_4_3));
+    w6 = _SIMD_ADD(w6, _SIMD_MUL(a2_6, h_4_2));
+    w6 = _SIMD_ADD(w6, _SIMD_MUL(a1_6, h_4_1));
+    register __SIMD_DATATYPE z6 = _SIMD_ADD(a3_6, _SIMD_MUL(a2_6, h_3_2));
+    z6 = _SIMD_ADD(z6, _SIMD_MUL(a1_6, h_3_1));
+    register __SIMD_DATATYPE y6 = _SIMD_ADD(a2_6, _SIMD_MUL(a1_6, h_2_1));
 
-    register __SSE_DATATYPE x6 = a1_6;
+    register __SIMD_DATATYPE x6 = a1_6;
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
-    __SSE_DATATYPE q3;
-    __SSE_DATATYPE q4;
-    __SSE_DATATYPE q5;
-    __SSE_DATATYPE q6;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
+    __SIMD_DATATYPE q3;
+    __SIMD_DATATYPE q4;
+    __SIMD_DATATYPE q5;
+    __SIMD_DATATYPE q6;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
-    __SSE_DATATYPE h5;
-    __SSE_DATATYPE h6;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
+    __SIMD_DATATYPE h5;
+    __SIMD_DATATYPE h6;
 
 #endif /* BLOCK6 */
 
 
     for(i = BLOCK; i < nb; i++)
       {
-#ifdef HAVE_SSE_INTRINSICS
+
+#if VEC_SET == 128
         h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
         h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
         h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if  VEC_SET == 256
+        h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+        h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif /*   VEC_SET == 256 */
 
-        q1 = _SSE_LOAD(&q[i*ldq]);
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-        q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-        x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-        y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-        q3 = _SSE_LOAD(&q[(i*ldq)+2*offset]);
-        x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-        y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-        q4 = _SSE_LOAD(&q[(i*ldq)+3*offset]);
-        x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-        y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-        q5 = _SSE_LOAD(&q[(i*ldq)+4*offset]);
-        x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-        y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
-        q6 = _SSE_LOAD(&q[(i*ldq)+5*offset]);
-        x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
-        y6 = _SSE_ADD(y6, _SSE_MUL(q6,h2));
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_FMA(q1, h1, x1);
+        y1 = _SIMD_FMA(q1, h2, y1);
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_FMA(q2, h1, x2);
+        y2 = _SIMD_FMA(q2, h2, y2);
+        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        x3 = _SIMD_FMA(q3, h1, x3);
+        y3 = _SIMD_FMA(q3, h2, y3);
+        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+        x4 = _SIMD_FMA(q4, h1, x4);
+        y4 = _SIMD_FMA(q4, h2, y4);
+        q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
+        x5 = _SIMD_FMA(q5, h1, x5);
+        y5 = _SIMD_FMA(q5, h2, y5);
+        q6 = _SIMD_LOAD(&q[(i*ldq)+5*offset]);
+        x6 = _SIMD_FMA(q6, h1, x6);
+        y6 = _SIMD_FMA(q6, h2, y6);
+#else
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+        y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+        x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+        y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+        q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
+        x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+        y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+        q6 = _SIMD_LOAD(&q[(i*ldq)+5*offset]);
+        x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+        y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-        z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-        z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-        z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-        z5 = _SSE_ADD(z5, _SSE_MUL(q5,h3));
-        z6 = _SSE_ADD(z6, _SSE_MUL(q6,h3));
-#ifdef HAVE_SSE_INTRINSICS
+        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+        z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+        z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+        z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+        z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
+#if VEC_SET == 128
         h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-        w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-        w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-        w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
-        w5 = _SSE_ADD(w5, _SSE_MUL(q5,h4));
-        w6 = _SSE_ADD(w6, _SSE_MUL(q6,h4));
+        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+        w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+        w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+        w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
+        w6 = _SIMD_ADD(w6, _SIMD_MUL(q6,h4));
 	
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
-        v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-        v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-        v3 = _SSE_ADD(v3, _SSE_MUL(q3,h5));
-        v4 = _SSE_ADD(v4, _SSE_MUL(q4,h5));
-        v5 = _SSE_ADD(v5, _SSE_MUL(q5,h5));
-        v6 = _SSE_ADD(v6, _SSE_MUL(q6,h5));
+        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+        v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+        v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
+        v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
+        v6 = _SIMD_ADD(v6, _SIMD_MUL(q6,h5));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-        t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
-        t2 = _SSE_ADD(t2, _SSE_MUL(q2,h6));
-        t3 = _SSE_ADD(t3, _SSE_MUL(q3,h6));
-        t4 = _SSE_ADD(t4, _SSE_MUL(q4,h6));
-        t5 = _SSE_ADD(t5, _SSE_MUL(q5,h6));
-        t6 = _SSE_ADD(t6, _SSE_MUL(q6,h6));
+        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
+        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
+        t3 = _SIMD_ADD(t3, _SIMD_MUL(q3,h6));
+        t4 = _SIMD_ADD(t4, _SIMD_MUL(q4,h6));
+        t5 = _SIMD_ADD(t5, _SIMD_MUL(q5,h6));
+        t6 = _SIMD_ADD(t6, _SIMD_MUL(q6,h6));
 	
 #endif /* BLOCK6 */
       }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
+#endif
 
-    q1 = _SSE_LOAD(&q[nb*ldq]);
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    q3 = _SSE_LOAD(&q[(nb*ldq)+2*offset]);
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    q4 = _SSE_LOAD(&q[(nb*ldq)+3*offset]);
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    q5 = _SSE_LOAD(&q[(nb*ldq)+4*offset]);
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-    q6 = _SSE_LOAD(&q[(nb*ldq)+5*offset]);
-    x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
+#ifdef __ELPA_USE_FMA__
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_FMA(q1, h1, x1);
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_FMA(q2, h1, x2);
+    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    x3 = _SIMD_FMA(q3, h1, x3);
+    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+    x4 = _SIMD_FMA(q4, h1, x4);
+    q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
+    x5 = _SIMD_FMA(q5, h1, x5);
+    q6 = _SIMD_LOAD(&q[(nb*ldq)+5*offset]);
+    x6 = _SIMD_FMA(q6, h1, x6);
+#else
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    q6 = _SIMD_LOAD(&q[(nb*ldq)+5*offset]);
+    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
-    y6 = _SSE_ADD(y6, _SSE_MUL(q6,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-    z5 = _SSE_ADD(z5, _SSE_MUL(q5,h3));
-    z6 = _SSE_ADD(z6, _SSE_MUL(q6,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+    z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+1)*ldq)+4*offset]);
-    q6 = _SSE_LOAD(&q[((nb+1)*ldq)+5*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
+    q6 = _SIMD_LOAD(&q[((nb+1)*ldq)+5*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-    x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[(ldh*1)+nb-1], hh[(ldh*1)+nb-1]);
 #endif
 
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
-    y6 = _SSE_ADD(y6, _SSE_MUL(q6,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+2)*ldq)+4*offset]);
-    q6 = _SSE_LOAD(&q[((nb+2)*ldq)+5*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
+    q6 = _SIMD_LOAD(&q[((nb+2)*ldq)+5*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-    x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 
 #endif /* BLOCK4 */
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4)); 
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-    w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-    w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
-    w5 = _SSE_ADD(w5, _SSE_MUL(q5,h4));
-    w6 = _SSE_ADD(w6, _SSE_MUL(q6,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
+    w6 = _SIMD_ADD(w6, _SIMD_MUL(q6,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-    v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-    v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-    v3 = _SSE_ADD(v3, _SSE_MUL(q3,h5));
-    v4 = _SSE_ADD(v4, _SSE_MUL(q4,h5));
-    v5 = _SSE_ADD(v5, _SSE_MUL(q5,h5));
-    v6 = _SSE_ADD(v6, _SSE_MUL(q6,h5));
-#ifdef HAVE_SSE_INTRINSICS
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
+    v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
+    v6 = _SIMD_ADD(v6, _SIMD_MUL(q6,h5));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+1)*ldq)+4*offset]);
-    q6 = _SSE_LOAD(&q[((nb+1)*ldq)+5*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
+    q6 = _SIMD_LOAD(&q[((nb+1)*ldq)+5*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-    x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
-#ifdef HAVE_SSE_INTRINSICS
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
-    y6 = _SSE_ADD(y6, _SSE_MUL(q6,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-    z5 = _SSE_ADD(z5, _SSE_MUL(q5,h3));
-    z6 = _SSE_ADD(z6, _SSE_MUL(q6,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+    z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-    w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-    w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
-    w5 = _SSE_ADD(w5, _SSE_MUL(q5,h4));
-    w6 = _SSE_ADD(w6, _SSE_MUL(q6,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
+    w6 = _SIMD_ADD(w6, _SIMD_MUL(q6,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+2)*ldq)+4*offset]);
-    q6 = _SSE_LOAD(&q[((nb+2)*ldq)+5*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
+    q6 = _SIMD_LOAD(&q[((nb+2)*ldq)+5*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-    x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
-    y6 = _SSE_ADD(y6, _SSE_MUL(q6,h2));
-#ifdef HAVE_SSE_INTRINSICS
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-    z5 = _SSE_ADD(z5, _SSE_MUL(q5,h3));
-    z6 = _SSE_ADD(z6, _SSE_MUL(q6,h3));
-#ifdef HAVE_SSE_INTRINSICS
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+    z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+3)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+3)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+3)*ldq)+4*offset]);
-    q6 = _SSE_LOAD(&q[((nb+3)*ldq)+5*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+3)*ldq)+4*offset]);
+    q6 = _SIMD_LOAD(&q[((nb+3)*ldq)+5*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-    x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
-    y6 = _SSE_ADD(y6, _SSE_MUL(q6,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+4)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+4)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+4)*ldq)+4*offset]);
-    q6 = _SSE_LOAD(&q[((nb+4)*ldq)+5*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+4)*ldq)+4*offset]);
+    q6 = _SIMD_LOAD(&q[((nb+4)*ldq)+5*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-    x6 = _SSE_ADD(x6, _SSE_MUL(q6,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 #endif /* BLOCK6 */
 
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Rank-2 update of Q [6 x nb+1]
+    // Rank-2 update of Q [ROW_LENGTH x nb+1]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK4
@@ -1648,796 +1971,874 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE tau1 = _SSE_SET1(hh[0]);
 
-    __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+    __SIMD_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
+   __SIMD_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
 #endif
 
 #ifdef BLOCK2    
-    __SSE_DATATYPE vs = _SSE_SET1(s);
+    __SIMD_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
 #endif
 #endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
 
-    __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+    __SIMD_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
+   __SIMD_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
 #endif
 
 #ifdef BLOCK2
-    __SSE_DATATYPE vs = _SSE_SET(s, s);
+    __SIMD_DATATYPE vs = _SSE_SET(s, s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
 
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
 #endif
 #endif /* HAVE_SPARC64_SSE */
 
-#ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-    h1 = _SSE_XOR(tau1, sign);
+#if VEC_SET == 256
+   __SIMD_DATATYPE tau1 = _SIMD_BROADCAST(hh);
+   __SIMD_DATATYPE tau2 = _SIMD_BROADCAST(&hh[ldh]);
+#if defined(BLOCK4) || defined(BLOCK6)
 #endif
-#ifdef HAVE_SPARC64_SSE
+#ifdef BLOCK6
+#endif
+
+#ifdef BLOCK2  
+   __SIMD_DATATYPE vs = _SIMD_BROADCAST(&s);
+#endif
+
+#ifdef BLOCK4
+#endif
+#ifdef BLOCK6
+#endif
+#endif /* VEC_SET == 256 */
+
+#ifdef BLOCK2
+#if VEC_SET == 128
+    h1 = _SIMD_XOR(tau1, sign);
+#endif
+#if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_XOR(tau1, sign);
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau1;
 #endif
 
-   x1 = _SSE_MUL(x1, h1);
-   x2 = _SSE_MUL(x2, h1);
-   x3 = _SSE_MUL(x3, h1);
-   x4 = _SSE_MUL(x4, h1);
-   x5 = _SSE_MUL(x5, h1);
-   x6 = _SSE_MUL(x6, h1);
+   x1 = _SIMD_MUL(x1, h1);
+   x2 = _SIMD_MUL(x2, h1);
+   x3 = _SIMD_MUL(x3, h1);
+   x4 = _SIMD_MUL(x4, h1);
+   x5 = _SIMD_MUL(x5, h1);
+   x6 = _SIMD_MUL(x6, h1);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-   h1 = _SSE_XOR(tau2, sign);
+#if VEC_SET == 128
+   h1 = _SIMD_XOR(tau2, sign);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-   h2 = _SSE_MUL(h1, vs);
+#if VEC_SET == 256
+   h1 = _SIMD_XOR(tau2, sign);
+#endif
+   h2 = _SIMD_MUL(h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SSE_MUL(h1, vs_1_2);
+   h2 = _SIMD_MUL(h1, vs_1_2);
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK2
-   y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_ADD(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-   y3 = _SSE_ADD(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
-   y4 = _SSE_ADD(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
-   y5 = _SSE_ADD(_SSE_MUL(y5,h1), _SSE_MUL(x5,h2));
-   y6 = _SSE_ADD(_SSE_MUL(y6,h1), _SSE_MUL(x6,h2));
+
+#ifdef __ELPA_USE_FMA__
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
+   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL(x3,h2));
+   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL(x4,h2));
+   y5 = _SIMD_FMA(y5, h1, _SIMD_MUL(x5,h2));
+   y6 = _SIMD_FMA(y6, h1, _SIMD_MUL(x6,h2));
+#else
+   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y3 = _SIMD_ADD(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
+   y4 = _SIMD_ADD(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
+   y5 = _SIMD_ADD(_SIMD_MUL(y5,h1), _SIMD_MUL(x5,h2));
+   y6 = _SIMD_ADD(_SIMD_MUL(y6,h1), _SIMD_MUL(x6,h2));
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-   y1 = _SSE_SUB(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_SUB(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-   y3 = _SSE_SUB(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
-   y4 = _SSE_SUB(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
-   y5 = _SSE_SUB(_SSE_MUL(y5,h1), _SSE_MUL(x5,h2));
-   y6 = _SSE_SUB(_SSE_MUL(y6,h1), _SSE_MUL(x6,h2));
+   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y3 = _SIMD_SUB(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
+   y4 = _SIMD_SUB(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
+   y5 = _SIMD_SUB(_SIMD_MUL(y5,h1), _SIMD_MUL(x5,h2));
+   y6 = _SIMD_SUB(_SIMD_MUL(y6,h1), _SIMD_MUL(x6,h2));
 
    h1 = tau3;
-   h2 = _SSE_MUL(h1, vs_1_3);
-   h3 = _SSE_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL(h1, vs_1_3);
+   h3 = _SIMD_MUL(h1, vs_2_3);
 
-   z1 = _SSE_SUB(_SSE_MUL(z1,h1), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
-   z2 = _SSE_SUB(_SSE_MUL(z2,h1), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)));
-   z3 = _SSE_SUB(_SSE_MUL(z3,h1), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2)));
-   z4 = _SSE_SUB(_SSE_MUL(z4,h1), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2)));
-   z5 = _SSE_SUB(_SSE_MUL(z5,h1), _SSE_ADD(_SSE_MUL(y5,h3), _SSE_MUL(x5,h2)));
-   z6 = _SSE_SUB(_SSE_MUL(z6,h1), _SSE_ADD(_SSE_MUL(y6,h3), _SSE_MUL(x6,h2)));
+   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
+   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
+   z3 = _SIMD_SUB(_SIMD_MUL(z3,h1), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)));
+   z4 = _SIMD_SUB(_SIMD_MUL(z4,h1), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)));
+   z5 = _SIMD_SUB(_SIMD_MUL(z5,h1), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2)));
+   z6 = _SIMD_SUB(_SIMD_MUL(z6,h1), _SIMD_ADD(_SIMD_MUL(y6,h3), _SIMD_MUL(x6,h2)));
 
    h1 = tau4;
-   h2 = _SSE_MUL(h1, vs_1_4);
-   h3 = _SSE_MUL(h1, vs_2_4);
-   h4 = _SSE_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL(h1, vs_1_4);
+   h3 = _SIMD_MUL(h1, vs_2_4);
+   h4 = _SIMD_MUL(h1, vs_3_4);
 
-   w1 = _SSE_SUB(_SSE_MUL(w1,h1), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
-   w2 = _SSE_SUB(_SSE_MUL(w2,h1), _SSE_ADD(_SSE_MUL(z2,h4), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-   w3 = _SSE_SUB(_SSE_MUL(w3,h1), _SSE_ADD(_SSE_MUL(z3,h4), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2))));
-   w4 = _SSE_SUB(_SSE_MUL(w4,h1), _SSE_ADD(_SSE_MUL(z4,h4), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2))));
-   w5 = _SSE_SUB(_SSE_MUL(w5,h1), _SSE_ADD(_SSE_MUL(z5,h4), _SSE_ADD(_SSE_MUL(y5,h3), _SSE_MUL(x5,h2))));
-   w6 = _SSE_SUB(_SSE_MUL(w6,h1), _SSE_ADD(_SSE_MUL(z6,h4), _SSE_ADD(_SSE_MUL(y6,h3), _SSE_MUL(x6,h2))));
+   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   w3 = _SIMD_SUB(_SIMD_MUL(w3,h1), _SIMD_ADD(_SIMD_MUL(z3,h4), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
+   w4 = _SIMD_SUB(_SIMD_MUL(w4,h1), _SIMD_ADD(_SIMD_MUL(z4,h4), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
+   w5 = _SIMD_SUB(_SIMD_MUL(w5,h1), _SIMD_ADD(_SIMD_MUL(z5,h4), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2))));
+   w6 = _SIMD_SUB(_SIMD_MUL(w6,h1), _SIMD_ADD(_SIMD_MUL(z6,h4), _SIMD_ADD(_SIMD_MUL(y6,h3), _SIMD_MUL(x6,h2))));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SSE_MUL(tau5, vs_1_5); 
-   h3 = _SSE_MUL(tau5, vs_2_5);
-   h4 = _SSE_MUL(tau5, vs_3_5);
-   h5 = _SSE_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL(tau5, vs_1_5); 
+   h3 = _SIMD_MUL(tau5, vs_2_5);
+   h4 = _SIMD_MUL(tau5, vs_3_5);
+   h5 = _SIMD_MUL(tau5, vs_4_5);
 
-   v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
-   v2 = _SSE_SUB(_SSE_MUL(v2,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-   v3 = _SSE_SUB(_SSE_MUL(v3,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w3,h5), _SSE_MUL(z3,h4)), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2))));
-   v4 = _SSE_SUB(_SSE_MUL(v4,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w4,h5), _SSE_MUL(z4,h4)), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2))));
-   v5 = _SSE_SUB(_SSE_MUL(v5,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w5,h5), _SSE_MUL(z5,h4)), _SSE_ADD(_SSE_MUL(y5,h3), _SSE_MUL(x5,h2))));
-   v6 = _SSE_SUB(_SSE_MUL(v6,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w6,h5), _SSE_MUL(z6,h4)), _SSE_ADD(_SSE_MUL(y6,h3), _SSE_MUL(x6,h2))));
+   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   v3 = _SIMD_SUB(_SIMD_MUL(v3,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
+   v4 = _SIMD_SUB(_SIMD_MUL(v4,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
+   v5 = _SIMD_SUB(_SIMD_MUL(v5,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w5,h5), _SIMD_MUL(z5,h4)), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2))));
+   v6 = _SIMD_SUB(_SIMD_MUL(v6,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w6,h5), _SIMD_MUL(z6,h4)), _SIMD_ADD(_SIMD_MUL(y6,h3), _SIMD_MUL(x6,h2))));
 
-   h2 = _SSE_MUL(tau6, vs_1_6);
-   h3 = _SSE_MUL(tau6, vs_2_6);
-   h4 = _SSE_MUL(tau6, vs_3_6);
-   h5 = _SSE_MUL(tau6, vs_4_6);
-   h6 = _SSE_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL(tau6, vs_1_6);
+   h3 = _SIMD_MUL(tau6, vs_2_6);
+   h4 = _SIMD_MUL(tau6, vs_3_6);
+   h5 = _SIMD_MUL(tau6, vs_4_6);
+   h6 = _SIMD_MUL(tau6, vs_5_6);
 
-   t1 = _SSE_SUB(_SSE_MUL(t1,tau6), _SSE_ADD( _SSE_MUL(v1,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))));
-   t2 = _SSE_SUB(_SSE_MUL(t2,tau6), _SSE_ADD( _SSE_MUL(v2,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)))));
-   t3 = _SSE_SUB(_SSE_MUL(t3,tau6), _SSE_ADD( _SSE_MUL(v3,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w3,h5), _SSE_MUL(z3,h4)), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2)))));
-   t4 = _SSE_SUB(_SSE_MUL(t4,tau6), _SSE_ADD( _SSE_MUL(v4,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w4,h5), _SSE_MUL(z4,h4)), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2)))));
-   t5 = _SSE_SUB(_SSE_MUL(t5,tau6), _SSE_ADD( _SSE_MUL(v5,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w5,h5), _SSE_MUL(z5,h4)), _SSE_ADD(_SSE_MUL(y5,h3), _SSE_MUL(x5,h2)))));
-   t6 = _SSE_SUB(_SSE_MUL(t6,tau6), _SSE_ADD( _SSE_MUL(v6,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w6,h5), _SSE_MUL(z6,h4)), _SSE_ADD(_SSE_MUL(y6,h3), _SSE_MUL(x6,h2)))));
+   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
+   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
+   t3 = _SIMD_SUB(_SIMD_MUL(t3,tau6), _SIMD_ADD( _SIMD_MUL(v3,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)))));
+   t4 = _SIMD_SUB(_SIMD_MUL(t4,tau6), _SIMD_ADD( _SIMD_MUL(v4,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)))));
+   t5 = _SIMD_SUB(_SIMD_MUL(t5,tau6), _SIMD_ADD( _SIMD_MUL(v5,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w5,h5), _SIMD_MUL(z5,h4)), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2)))));
+   t6 = _SIMD_SUB(_SIMD_MUL(t6,tau6), _SIMD_ADD( _SIMD_MUL(v6,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w6,h5), _SIMD_MUL(z6,h4)), _SIMD_ADD(_SIMD_MUL(y6,h3), _SIMD_MUL(x6,h2)))));
 
    /////////////////////////////////////////////////////
    // Rank-1 update of Q [4 x nb+3]
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
-   q1 = _SSE_LOAD(&q[0]);
+
+   q1 = _SIMD_LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SSE_ADD(q1, y1);
+   q1 = _SIMD_ADD(q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SSE_SUB(q1, w1);
+   q1 = _SIMD_SUB(q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SSE_SUB(q1, t1); 
+   q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SSE_STORE(&q[0],q1);
-   q2 = _SSE_LOAD(&q[offset]);
+   _SIMD_STORE(&q[0],q1);
+   q2 = _SIMD_LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SSE_ADD(q2, y2);
+   q2 = _SIMD_ADD(q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SSE_SUB(q2, w2);
+   q2 = _SIMD_SUB(q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SSE_SUB(q2, t2);
+   q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SSE_STORE(&q[offset],q2);
-   q3 = _SSE_LOAD(&q[2*offset]);
+   _SIMD_STORE(&q[offset],q2);
+   q3 = _SIMD_LOAD(&q[2*offset]);
 #ifdef BLOCK2
-   q3 = _SSE_ADD(q3, y3);
+   q3 = _SIMD_ADD(q3, y3);
 #endif
 #ifdef BLOCK4
-   q3 = _SSE_SUB(q3, w3);
+   q3 = _SIMD_SUB(q3, w3);
 #endif
 #ifdef BLOCK6
-   q3 = _SSE_SUB(q3, t3);
+   q3 = _SIMD_SUB(q3, t3);
 #endif
-   _SSE_STORE(&q[2*offset],q3);
-   q4 = _SSE_LOAD(&q[3*offset]);
+   _SIMD_STORE(&q[2*offset],q3);
+   q4 = _SIMD_LOAD(&q[3*offset]);
 #ifdef BLOCK2
-   q4 = _SSE_ADD(q4, y4);
+   q4 = _SIMD_ADD(q4, y4);
 #endif
 #ifdef BLOCK4
-   q4 = _SSE_SUB(q4, w4);
+   q4 = _SIMD_SUB(q4, w4);
 #endif
 #ifdef BLOCK6
-   q4 = _SSE_SUB(q4, t4);
+   q4 = _SIMD_SUB(q4, t4);
 #endif
-   _SSE_STORE(&q[3*offset],q4);
-   q5 = _SSE_LOAD(&q[4*offset]);
+   _SIMD_STORE(&q[3*offset],q4);
+   q5 = _SIMD_LOAD(&q[4*offset]);
 #ifdef BLOCK2
-   q5 = _SSE_ADD(q5, y5);
+   q5 = _SIMD_ADD(q5, y5);
 #endif
 #ifdef BLOCK4
-   q5 = _SSE_SUB(q5, w5);
+   q5 = _SIMD_SUB(q5, w5);
 #endif
 #ifdef BLOCK6
-   q5 = _SSE_SUB(q5, t5);
+   q5 = _SIMD_SUB(q5, t5);
 #endif
-   _SSE_STORE(&q[4*offset],q5);
-   q6 = _SSE_LOAD(&q[5*offset]);
+   _SIMD_STORE(&q[4*offset],q5);
+   q6 = _SIMD_LOAD(&q[5*offset]);
 #ifdef BLOCK2
-   q6 = _SSE_ADD(q6, y6);
+   q6 = _SIMD_ADD(q6, y6);
 #endif
 #ifdef BLOCK4
-   q6 = _SSE_SUB(q6, w6);
+   q6 = _SIMD_SUB(q6, w6);
 #endif
 #ifdef BLOCK6
-   q6 = _SSE_SUB(q6, t6);
+   q6 = _SIMD_SUB(q6, t6);
 #endif
-   _SSE_STORE(&q[5*offset],q6);
+   _SIMD_STORE(&q[5*offset],q6);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
+#if VEC_SET == 256
+   h2 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-   _SSE_STORE(&q[ldq],q1);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-   _SSE_STORE(&q[ldq+offset],q2);
-   q3 = _SSE_LOAD(&q[ldq+2*offset]);
-   q3 = _SSE_ADD(q3, _SSE_ADD(x3, _SSE_MUL(y3, h2)));
-   _SSE_STORE(&q[ldq+2*offset],q3);
-   q4 = _SSE_LOAD(&q[ldq+3*offset]);
-   q4 = _SSE_ADD(q4, _SSE_ADD(x4, _SSE_MUL(y4, h2)));
-   _SSE_STORE(&q[ldq+3*offset],q4);
-   q5 = _SSE_LOAD(&q[ldq+4*offset]);
-   q5 = _SSE_ADD(q5, _SSE_ADD(x5, _SSE_MUL(y5, h2)));
-   _SSE_STORE(&q[ldq+4*offset],q5);
-   q6 = _SSE_LOAD(&q[ldq+5*offset]);
-   q6 = _SSE_ADD(q6, _SSE_ADD(x6, _SSE_MUL(y6, h2)));
-   _SSE_STORE(&q[ldq+5*offset],q6);
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
+   _SIMD_STORE(&q[ldq+offset],q2);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q3 = _SIMD_ADD(q3, _SIMD_FMA(y3, h2, x3));
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q4 = _SIMD_ADD(q4, _SIMD_FMA(y4, h2, x4));
+   _SIMD_STORE(&q[ldq+3*offset],q4);
+   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
+   q5 = _SIMD_ADD(q5, _SIMD_FMA(y5, h2, x5));
+   _SIMD_STORE(&q[ldq+4*offset],q5);
+   q6 = _SIMD_LOAD(&q[ldq+5*offset]);
+   q6 = _SIMD_ADD(q6, _SIMD_FMA(y6, h2, x6));
+   _SIMD_STORE(&q[ldq+5*offset],q6);
+#else
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
+   _SIMD_STORE(&q[ldq+offset],q2);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q4 = _SIMD_ADD(q4, _SIMD_ADD(x4, _SIMD_MUL(y4, h2)));
+   _SIMD_STORE(&q[ldq+3*offset],q4);
+   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
+   q5 = _SIMD_ADD(q5, _SIMD_ADD(x5, _SIMD_MUL(y5, h2)));
+   _SIMD_STORE(&q[ldq+4*offset],q5);
+   q6 = _SIMD_LOAD(&q[ldq+5*offset]);
+   q6 = _SIMD_ADD(q6, _SIMD_ADD(x6, _SIMD_MUL(y6, h2)));
+   _SIMD_STORE(&q[ldq+5*offset],q6);
+#endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q3 = _SSE_LOAD(&q[ldq+2*offset]);
-   q4 = _SSE_LOAD(&q[ldq+3*offset]);
-   q5 = _SSE_LOAD(&q[ldq+4*offset]);
-   q6 = _SSE_LOAD(&q[ldq+5*offset]);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
+   q6 = _SIMD_LOAD(&q[ldq+5*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_ADD(z1, _SSE_MUL(w1, h4)));
-   q2 = _SSE_SUB(q2, _SSE_ADD(z2, _SSE_MUL(w2, h4)));
-   q3 = _SSE_SUB(q3, _SSE_ADD(z3, _SSE_MUL(w3, h4)));
-   q4 = _SSE_SUB(q4, _SSE_ADD(z4, _SSE_MUL(w4, h4)));
-   q5 = _SSE_SUB(q5, _SSE_ADD(z5, _SSE_MUL(w5, h4)));
-   q6 = _SSE_SUB(q6, _SSE_ADD(z6, _SSE_MUL(w6, h4)));
+   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
+   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
+   q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
+   q4 = _SIMD_SUB(q4, _SIMD_ADD(z4, _SIMD_MUL(w4, h4)));
+   q5 = _SIMD_SUB(q5, _SIMD_ADD(z5, _SIMD_MUL(w5, h4)));
+   q6 = _SIMD_SUB(q6, _SIMD_ADD(z6, _SIMD_MUL(w6, h4)));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[ldq+offset],q2);
-   _SSE_STORE(&q[ldq+2*offset],q3);
-   _SSE_STORE(&q[ldq+3*offset],q4);
-   _SSE_STORE(&q[ldq+4*offset],q5);
-   _SSE_STORE(&q[ldq+5*offset],q6);
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[ldq+offset],q2);
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   _SIMD_STORE(&q[ldq+3*offset],q4);
+   _SIMD_STORE(&q[ldq+4*offset],q5);
+   _SIMD_STORE(&q[ldq+5*offset],q6);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*2)+4*offset]);
-   q6 = _SSE_LOAD(&q[(ldq*2)+5*offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
-   q3 = _SSE_SUB(q3, y3);
-   q4 = _SSE_SUB(q4, y4);
-   q5 = _SSE_SUB(q5, y5);
-   q6 = _SSE_SUB(q6, y6);
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+   q6 = _SIMD_LOAD(&q[(ldq*2)+5*offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
+   q3 = _SIMD_SUB(q3, y3);
+   q4 = _SIMD_SUB(q4, y4);
+   q5 = _SIMD_SUB(q5, y5);
+   q6 = _SIMD_SUB(q6, y6);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-   q6 = _SSE_SUB(q6, _SSE_MUL(w6, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-   q6 = _SSE_SUB(q6, _SSE_MUL(z6, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
-   _SSE_STORE(&q[(ldq*2)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*2)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*2)+4*offset],q5);
-   _SSE_STORE(&q[(ldq*2)+5*offset],q6);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*2)+4*offset],q5);
+   _SIMD_STORE(&q[(ldq*2)+5*offset],q6);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*3)+4*offset]);
-   q6 = _SSE_LOAD(&q[(ldq*3)+5*offset]);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+   q6 = _SIMD_LOAD(&q[(ldq*3)+5*offset]);
 
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
-   q3 = _SSE_SUB(q3, x3);
-   q4 = _SSE_SUB(q4, x4);
-   q5 = _SSE_SUB(q5, x5);
-   q6 = _SSE_SUB(q6, x6);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
+   q3 = _SIMD_SUB(q3, x3);
+   q4 = _SIMD_SUB(q4, x4);
+   q5 = _SIMD_SUB(q5, x5);
+   q6 = _SIMD_SUB(q6, x6);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-   q6 = _SSE_SUB(q6, _SSE_MUL(w6, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
-   q6 = _SSE_SUB(q6, _SSE_MUL(y6, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-   q6 = _SSE_SUB(q6, _SSE_MUL(z6, h3));
-   _SSE_STORE(&q[ldq*3], q1);
-   _SSE_STORE(&q[(ldq*3)+offset], q2);
-   _SSE_STORE(&q[(ldq*3)+2*offset], q3);
-   _SSE_STORE(&q[(ldq*3)+3*offset], q4);
-   _SSE_STORE(&q[(ldq*3)+4*offset], q5);
-   _SSE_STORE(&q[(ldq*3)+5*offset], q6);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+   _SIMD_STORE(&q[ldq*3], q1);
+   _SIMD_STORE(&q[(ldq*3)+offset], q2);
+   _SIMD_STORE(&q[(ldq*3)+2*offset], q3);
+   _SIMD_STORE(&q[(ldq*3)+3*offset], q4);
+   _SIMD_STORE(&q[(ldq*3)+4*offset], q5);
+   _SIMD_STORE(&q[(ldq*3)+5*offset], q6);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[(ldq+offset)]);
-   q3 = _SSE_LOAD(&q[(ldq+2*offset)]);
-   q4 = _SSE_LOAD(&q[(ldq+3*offset)]);
-   q5 = _SSE_LOAD(&q[(ldq+4*offset)]);
-   q6 = _SSE_LOAD(&q[(ldq+5*offset)]);
-   q1 = _SSE_SUB(q1, v1);
-   q2 = _SSE_SUB(q2, v2);
-   q3 = _SSE_SUB(q3, v3);
-   q4 = _SSE_SUB(q4, v4);
-   q5 = _SSE_SUB(q5, v5);
-   q6 = _SSE_SUB(q6, v6);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
+   q3 = _SIMD_LOAD(&q[(ldq+2*offset)]);
+   q4 = _SIMD_LOAD(&q[(ldq+3*offset)]);
+   q5 = _SIMD_LOAD(&q[(ldq+4*offset)]);
+   q6 = _SIMD_LOAD(&q[(ldq+5*offset)]);
+   q1 = _SIMD_SUB(q1, v1);
+   q2 = _SIMD_SUB(q2, v2);
+   q3 = _SIMD_SUB(q3, v3);
+   q4 = _SIMD_SUB(q4, v4);
+   q5 = _SIMD_SUB(q5, v5);
+   q6 = _SIMD_SUB(q6, v6);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
-   q6 = _SSE_SUB(q6, _SSE_MUL(t6, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[(ldq+offset)],q2);
-   _SSE_STORE(&q[(ldq+2*offset)],q3);
-   _SSE_STORE(&q[(ldq+3*offset)],q4);
-   _SSE_STORE(&q[(ldq+4*offset)],q5);
-   _SSE_STORE(&q[(ldq+5*offset)],q6);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[(ldq+offset)],q2);
+   _SIMD_STORE(&q[(ldq+2*offset)],q3);
+   _SIMD_STORE(&q[(ldq+3*offset)],q4);
+   _SIMD_STORE(&q[(ldq+4*offset)],q5);
+   _SIMD_STORE(&q[(ldq+5*offset)],q6);
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*2)+4*offset]);
-   q6 = _SSE_LOAD(&q[(ldq*2)+5*offset]);
-   q1 = _SSE_SUB(q1, w1); 
-   q2 = _SSE_SUB(q2, w2);
-   q3 = _SSE_SUB(q3, w3);
-   q4 = _SSE_SUB(q4, w4);
-   q5 = _SSE_SUB(q5, w5);
-   q6 = _SSE_SUB(q6, w6);
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5)); 
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));  
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));  
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));  
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));  
-   q6 = _SSE_SUB(q6, _SSE_MUL(v6, h5));  
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+   q6 = _SIMD_LOAD(&q[(ldq*2)+5*offset]);
+   q1 = _SIMD_SUB(q1, w1); 
+   q2 = _SIMD_SUB(q2, w2);
+   q3 = _SIMD_SUB(q3, w3);
+   q4 = _SIMD_SUB(q4, w4);
+   q5 = _SIMD_SUB(q5, w5);
+   q6 = _SIMD_SUB(q6, w6);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));  
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));  
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));  
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));  
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
-   q6 = _SSE_SUB(q6, _SSE_MUL(t6, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
-   _SSE_STORE(&q[(ldq*2)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*2)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*2)+4*offset],q5);
-   _SSE_STORE(&q[(ldq*2)+5*offset],q6);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*2)+4*offset],q5);
+   _SIMD_STORE(&q[(ldq*2)+5*offset],q6);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*3)+4*offset]);
-   q6 = _SSE_LOAD(&q[(ldq*3)+5*offset]);
-   q1 = _SSE_SUB(q1, z1);
-   q2 = _SSE_SUB(q2, z2);
-   q3 = _SSE_SUB(q3, z3);
-   q4 = _SSE_SUB(q4, z4);
-   q5 = _SSE_SUB(q5, z5);
-   q6 = _SSE_SUB(q6, z6);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+   q6 = _SIMD_LOAD(&q[(ldq*3)+5*offset]);
+   q1 = _SIMD_SUB(q1, z1);
+   q2 = _SIMD_SUB(q2, z2);
+   q3 = _SIMD_SUB(q3, z3);
+   q4 = _SIMD_SUB(q4, z4);
+   q5 = _SIMD_SUB(q5, z5);
+   q6 = _SIMD_SUB(q6, z6);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-   q6 = _SSE_SUB(q6, _SSE_MUL(w6, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-   q6 = _SSE_SUB(q6, _SSE_MUL(v6, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
-   q6 = _SSE_SUB(q6, _SSE_MUL(t6, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 
-   _SSE_STORE(&q[ldq*3],q1);
-   _SSE_STORE(&q[(ldq*3)+offset],q2);
-   _SSE_STORE(&q[(ldq*3)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*3)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*3)+4*offset],q5);
-   _SSE_STORE(&q[(ldq*3)+5*offset],q6);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*3],q1);
+   _SIMD_STORE(&q[(ldq*3)+offset],q2);
+   _SIMD_STORE(&q[(ldq*3)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*3)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*3)+4*offset],q5);
+   _SIMD_STORE(&q[(ldq*3)+5*offset],q6);
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*4]);
-   q2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*4)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*4)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*4)+4*offset]);
-   q6 = _SSE_LOAD(&q[(ldq*4)+5*offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
-   q3 = _SSE_SUB(q3, y3);
-   q4 = _SSE_SUB(q4, y4);
-   q5 = _SSE_SUB(q5, y5);
-   q6 = _SSE_SUB(q6, y6);
+   q1 = _SIMD_LOAD(&q[ldq*4]);
+   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*4)+4*offset]);
+   q6 = _SIMD_LOAD(&q[(ldq*4)+5*offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
+   q3 = _SIMD_SUB(q3, y3);
+   q4 = _SIMD_SUB(q4, y4);
+   q5 = _SIMD_SUB(q5, y5);
+   q6 = _SIMD_SUB(q6, y6);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-   q6 = _SSE_SUB(q6, _SSE_MUL(z6, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-   q6 = _SSE_SUB(q6, _SSE_MUL(w6, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-   q6 = _SSE_SUB(q6, _SSE_MUL(v6, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
-   q6 = _SSE_SUB(q6, _SSE_MUL(t6, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 
-   _SSE_STORE(&q[ldq*4],q1);
-   _SSE_STORE(&q[(ldq*4)+offset],q2);
-   _SSE_STORE(&q[(ldq*4)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*4)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*4)+4*offset],q5);
-   _SSE_STORE(&q[(ldq*4)+5*offset],q6);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*4],q1);
+   _SIMD_STORE(&q[(ldq*4)+offset],q2);
+   _SIMD_STORE(&q[(ldq*4)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*4)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*4)+4*offset],q5);
+   _SIMD_STORE(&q[(ldq*4)+5*offset],q6);
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[(ldh)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[(ldh)+1], hh[(ldh)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*5]);
-   q2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*5)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*5)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*5)+4*offset]);
-   q6 = _SSE_LOAD(&q[(ldq*5)+5*offset]);
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
-   q3 = _SSE_SUB(q3, x3);
-   q4 = _SSE_SUB(q4, x4);
-   q5 = _SSE_SUB(q5, x5);
-   q6 = _SSE_SUB(q6, x6);
+   q1 = _SIMD_LOAD(&q[ldq*5]);
+   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*5)+4*offset]);
+   q6 = _SIMD_LOAD(&q[(ldq*5)+5*offset]);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
+   q3 = _SIMD_SUB(q3, x3);
+   q4 = _SIMD_SUB(q4, x4);
+   q5 = _SIMD_SUB(q5, x5);
+   q6 = _SIMD_SUB(q6, x6);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
-   q6 = _SSE_SUB(q6, _SSE_MUL(y6, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-   q6 = _SSE_SUB(q6, _SSE_MUL(z6, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-   q6 = _SSE_SUB(q6, _SSE_MUL(w6, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-   q6 = _SSE_SUB(q6, _SSE_MUL(v6, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
-   q6 = _SSE_SUB(q6, _SSE_MUL(t6, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 
-   _SSE_STORE(&q[ldq*5],q1);
-   _SSE_STORE(&q[(ldq*5)+offset],q2);
-   _SSE_STORE(&q[(ldq*5)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*5)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*5)+4*offset],q5);
-   _SSE_STORE(&q[(ldq*5)+5*offset],q6);
+   _SIMD_STORE(&q[ldq*5],q1);
+   _SIMD_STORE(&q[(ldq*5)+offset],q2);
+   _SIMD_STORE(&q[(ldq*5)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*5)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*5)+4*offset],q5);
+   _SIMD_STORE(&q[(ldq*5)+5*offset],q6);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
      h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
      h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+    h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif
 
-     q1 = _SSE_LOAD(&q[i*ldq]);
-     q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-     q3 = _SSE_LOAD(&q[(i*ldq)+2*offset]);
-     q4 = _SSE_LOAD(&q[(i*ldq)+3*offset]);
-     q5 = _SSE_LOAD(&q[(i*ldq)+4*offset]);
-     q6 = _SSE_LOAD(&q[(i*ldq)+5*offset]);
+     q1 = _SIMD_LOAD(&q[i*ldq]);
+     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+     q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+     q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+     q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
+     q6 = _SIMD_LOAD(&q[(i*ldq)+5*offset]);
 
 #ifdef BLOCK2
-     q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-     q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-     q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
-     q4 = _SSE_ADD(q4, _SSE_ADD(_SSE_MUL(x4,h1), _SSE_MUL(y4, h2)));
-     q5 = _SSE_ADD(q5, _SSE_ADD(_SSE_MUL(x5,h1), _SSE_MUL(y5, h2)));
-     q6 = _SSE_ADD(q6, _SSE_ADD(_SSE_MUL(x6,h1), _SSE_MUL(y6, h2)));
-#endif
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_FMA(x1, h1, q1);
+     q1 = _SIMD_FMA(y1, h2, q1);
+     q2 = _SIMD_FMA(x2, h1, q2);
+     q2 = _SIMD_FMA(y2, h2, q2);
+     q3 = _SIMD_FMA(x3, h1, q3);
+     q3 = _SIMD_FMA(y3, h2, q3);
+     q4 = _SIMD_FMA(x4, h1, q4);
+     q4 = _SIMD_FMA(y4, h2, q4);
+     q5 = _SIMD_FMA(x5, h1, q5);
+     q5 = _SIMD_FMA(y5, h2, q5);
+     q6 = _SIMD_FMA(x6, h1, q6);
+     q6 = _SIMD_FMA(y6, h2, q6);
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
+     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
+     q3 = _SIMD_ADD(q3, _SIMD_ADD(_SIMD_MUL(x3,h1), _SIMD_MUL(y3, h2)));
+     q4 = _SIMD_ADD(q4, _SIMD_ADD(_SIMD_MUL(x4,h1), _SIMD_MUL(y4, h2)));
+     q5 = _SIMD_ADD(q5, _SIMD_ADD(_SIMD_MUL(x5,h1), _SIMD_MUL(y5, h2)));
+     q6 = _SIMD_ADD(q6, _SIMD_ADD(_SIMD_MUL(x6,h1), _SIMD_MUL(y6, h2)));
+#endif /* __ELPA_USE_FMA__ */
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
      
-     q1 = _SSE_SUB(q1, _SSE_MUL(x1,h1));
-     q2 = _SSE_SUB(q2, _SSE_MUL(x2,h1));
-     q3 = _SSE_SUB(q3, _SSE_MUL(x3,h1));
-     q4 = _SSE_SUB(q4, _SSE_MUL(x4,h1));
-     q5 = _SSE_SUB(q5, _SSE_MUL(x5,h1));
-     q6 = _SSE_SUB(q6, _SSE_MUL(x6,h1));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(x3,h1));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(x4,h1));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(x5,h1));
+     q6 = _SIMD_SUB(q6, _SIMD_MUL(x6,h1));
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(y1,h2));
-     q2 = _SSE_SUB(q2, _SSE_MUL(y2,h2));
-     q3 = _SSE_SUB(q3, _SSE_MUL(y3,h2));
-     q4 = _SSE_SUB(q4, _SSE_MUL(y4,h2));
-     q5 = _SSE_SUB(q5, _SSE_MUL(y5,h2));
-     q6 = _SSE_SUB(q6, _SSE_MUL(y6,h2));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(y4,h2));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(y5,h2));
+     q6 = _SIMD_SUB(q6, _SIMD_MUL(y6,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(z1,h3));
-     q2 = _SSE_SUB(q2, _SSE_MUL(z2,h3));
-     q3 = _SSE_SUB(q3, _SSE_MUL(z3,h3));
-     q4 = _SSE_SUB(q4, _SSE_MUL(z4,h3));
-     q5 = _SSE_SUB(q5, _SSE_MUL(z5,h3));
-     q6 = _SSE_SUB(q6, _SSE_MUL(z6,h3));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(z4,h3));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(z5,h3));
+     q6 = _SIMD_SUB(q6, _SIMD_MUL(z6,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -2445,365 +2846,398 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(w1,h4));
-     q2 = _SSE_SUB(q2, _SSE_MUL(w2,h4));
-     q3 = _SSE_SUB(q3, _SSE_MUL(w3,h4));
-     q4 = _SSE_SUB(q4, _SSE_MUL(w4,h4));
-     q5 = _SSE_SUB(q5, _SSE_MUL(w5,h4));
-     q6 = _SSE_SUB(q6, _SSE_MUL(w6,h4));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(w3,h4));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(w4,h4));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(w5,h4));
+     q6 = _SIMD_SUB(q6, _SIMD_MUL(w6,h4));
 
 #endif /* BLOCK4 || BLOCK6  */
 
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-     q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-     q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-     q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-     q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-     q6 = _SSE_SUB(q6, _SSE_MUL(v6, h5));
-#ifdef HAVE_SSE_INTRINSICS
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+     q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+#if VEC_SET == 128
      h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-     q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-     q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-     q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-     q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
-     q6 = _SSE_SUB(q6, _SSE_MUL(t6, h6));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+     q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 
 #endif /* BLOCK6 */
-     _SSE_STORE(&q[i*ldq],q1);
-     _SSE_STORE(&q[(i*ldq)+offset],q2);
-     _SSE_STORE(&q[(i*ldq)+2*offset],q3);
-     _SSE_STORE(&q[(i*ldq)+3*offset],q4);
-     _SSE_STORE(&q[(i*ldq)+4*offset],q5);
-     _SSE_STORE(&q[(i*ldq)+5*offset],q6);
+
+     _SIMD_STORE(&q[i*ldq],q1);
+     _SIMD_STORE(&q[(i*ldq)+offset],q2);
+     _SIMD_STORE(&q[(i*ldq)+2*offset],q3);
+     _SIMD_STORE(&q[(i*ldq)+3*offset],q4);
+     _SIMD_STORE(&q[(i*ldq)+4*offset],q5);
+     _SIMD_STORE(&q[(i*ldq)+5*offset],q6);
 
    }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
-
-   q1 = _SSE_LOAD(&q[nb*ldq]);
-   q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[(nb*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[(nb*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[(nb*ldq)+4*offset]);
-   q6 = _SSE_LOAD(&q[(nb*ldq)+5*offset]);
-
-#ifdef BLOCK2
-   q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_ADD(q5, _SSE_MUL(x5, h1));
-   q6 = _SSE_ADD(q6, _SSE_MUL(x6, h1));
+#if VEC_SET == 256
+   h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-#if defined(BLOCK4) || defined(BLOCK6)
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
-   q6 = _SSE_SUB(q6, _SSE_MUL(x6, h1));
+   q1 = _SIMD_LOAD(&q[nb*ldq]);
+   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
+   q6 = _SIMD_LOAD(&q[(nb*ldq)+5*offset]);
 
-#ifdef HAVE_SSE_INTRINSICS
+#ifdef BLOCK2
+
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_FMA(x1, h1, q1);
+   q2 = _SIMD_FMA(x2, h1, q2);
+   q3 = _SIMD_FMA(x3, h1, q3);
+   q4 = _SIMD_FMA(x4, h1, q4);
+   q5 = _SIMD_FMA(x5, h1, q5);
+   q6 = _SIMD_FMA(x6, h1, q6);
+#else
+   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
+   q6 = _SIMD_ADD(q6, _SIMD_MUL(x6, h1));
+#endif
+#endif /* BLOCK2 */
+
+#if defined(BLOCK4) || defined(BLOCK6)
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
+
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-   q6 = _SSE_SUB(q6, _SSE_MUL(z6, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
 
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-   q6 = _SSE_SUB(q6, _SSE_MUL(w6, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-   q6 = _SSE_SUB(q6, _SSE_MUL(v6, h5));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[nb*ldq],q1);
-   _SSE_STORE(&q[(nb*ldq)+offset],q2);
-   _SSE_STORE(&q[(nb*ldq)+2*offset],q3);
-   _SSE_STORE(&q[(nb*ldq)+3*offset],q4);
-   _SSE_STORE(&q[(nb*ldq)+4*offset],q5);
-   _SSE_STORE(&q[(nb*ldq)+5*offset],q6);
+   _SIMD_STORE(&q[nb*ldq],q1);
+   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
+   _SIMD_STORE(&q[(nb*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[(nb*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[(nb*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[(nb*ldq)+5*offset],q6);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-2)], hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[((nb+1)*ldq)+4*offset]);
-   q6 = _SSE_LOAD(&q[((nb+1)*ldq)+5*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
+   q6 = _SIMD_LOAD(&q[((nb+1)*ldq)+5*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
-   q6 = _SSE_SUB(q6, _SSE_MUL(x6, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-3)], hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
-   q6 = _SSE_SUB(q6, _SSE_MUL(y6, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-   q6 = _SSE_SUB(q6, _SSE_MUL(z6, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-   q6 = _SSE_SUB(q6, _SSE_MUL(w6, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+1)*ldq],q1);
-   _SSE_STORE(&q[((nb+1)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+1)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+1)*ldq)+3*offset],q4);
-   _SSE_STORE(&q[((nb+1)*ldq)+4*offset],q5);
-   _SSE_STORE(&q[((nb+1)*ldq)+5*offset],q6);
+   _SIMD_STORE(&q[(nb+1)*ldq],q1);
+   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+1)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+1)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[((nb+1)*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[((nb+1)*ldq)+5*offset],q6);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-3)], hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[((nb+2)*ldq)+4*offset]);
-   q6 = _SSE_LOAD(&q[((nb+2)*ldq)+5*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
+   q6 = _SIMD_LOAD(&q[((nb+2)*ldq)+5*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
-   q6 = _SSE_SUB(q6, _SSE_MUL(x6, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
-   q6 = _SSE_SUB(q6, _SSE_MUL(y6, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-   q6 = _SSE_SUB(q6, _SSE_MUL(z6, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+2)*ldq],q1);
-   _SSE_STORE(&q[((nb+2)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+2)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+2)*ldq)+3*offset],q4);
-   _SSE_STORE(&q[((nb+2)*ldq)+4*offset],q5);
-   _SSE_STORE(&q[((nb+2)*ldq)+5*offset],q6);
+   _SIMD_STORE(&q[(nb+2)*ldq],q1);
+   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+2)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+2)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[((nb+2)*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[((nb+2)*ldq)+5*offset],q6);
 
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+3)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+3)*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[((nb+3)*ldq)+4*offset]);
-   q6 = _SSE_LOAD(&q[((nb+3)*ldq)+5*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[((nb+3)*ldq)+4*offset]);
+   q6 = _SIMD_LOAD(&q[((nb+3)*ldq)+5*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
-   q6 = _SSE_SUB(q6, _SSE_MUL(x6, h1));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
-   q6 = _SSE_SUB(q6, _SSE_MUL(y6, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
 
-   _SSE_STORE(&q[(nb+3)*ldq],q1);
-   _SSE_STORE(&q[((nb+3)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+3)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+3)*ldq)+3*offset],q4);
-   _SSE_STORE(&q[((nb+3)*ldq)+4*offset],q5);
-   _SSE_STORE(&q[((nb+3)*ldq)+5*offset],q6);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[(nb+3)*ldq],q1);
+   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+3)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+3)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[((nb+3)*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[((nb+3)*ldq)+5*offset],q6);
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+4)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+4)*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[((nb+4)*ldq)+4*offset]);
-   q6 = _SSE_LOAD(&q[((nb+4)*ldq)+5*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[((nb+4)*ldq)+4*offset]);
+   q6 = _SIMD_LOAD(&q[((nb+4)*ldq)+5*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
-   q6 = _SSE_SUB(q6, _SSE_MUL(x6, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
 
-   _SSE_STORE(&q[(nb+4)*ldq],q1);
-   _SSE_STORE(&q[((nb+4)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+4)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+4)*ldq)+3*offset],q4);
-   _SSE_STORE(&q[((nb+4)*ldq)+4*offset],q5);
-   _SSE_STORE(&q[((nb+4)*ldq)+5*offset],q6);
+   _SIMD_STORE(&q[(nb+4)*ldq],q1);
+   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+4)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+4)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[((nb+4)*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[((nb+4)*ldq)+5*offset],q6);
 
 #endif /* BLOCK6 */
 }
+
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 10
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 20
+#endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 20
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 40
+#endif
+#endif /* VEC_SET == 256 */
 
 
 /*
  * Unrolled kernel that computes
 #ifdef DOUBLE_PRECISION_REAL
- * 10 rows of Q simultaneously, a
+ * ROW_LENGTH rows of Q simultaneously, a
 #endif
 #ifdef SINGLE_PRECISION_REAL
- * 20 rows of Q simultaneously, a
+ * ROW_LENGTH rows of Q simultaneously, a
 #endif
  * matrix Vector product with two householder
  */
@@ -2816,14 +3250,6 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 /*
  * vectors + a rank 1 update is performed
  */
-#endif
-#ifdef DOUBLE_PRECISION_REAL
-#undef ROW_LENGTH
-#define ROW_LENGTH 10
-#endif
-#ifdef SINGLE_PRECISION_REAL
-#undef ROW_LENGTH
-#define ROW_LENGTH 20
 #endif
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
 #ifdef BLOCK2
@@ -2838,740 +3264,804 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
   {
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Matrix Vector Multiplication, Q [10 x nb+1] * hh
+    // Matrix Vector Multiplication, Q [ ROW_LENGTH x nb+1] * hh
     // hh contains two householder vectors, with offset 1
     /////////////////////////////////////////////////////
 #endif
 #if defined(BLOCK4) || defined(BLOCK6)
     /////////////////////////////////////////////////////
-    // Matrix Vector Multiplication, Q [10 x nb+3] * hh
+    // Matrix Vector Multiplication, Q [ ROW_LENGTH x nb+3] * hh
     // hh contains four householder vectors
     /////////////////////////////////////////////////////
 #endif
 
     int i;
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
-    __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+    __SIMD_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 #endif
-#endif
-    __SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
-    __SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE x3 = _SSE_LOAD(&q[ldq+2*offset]);
-    __SSE_DATATYPE x4 = _SSE_LOAD(&q[ldq+3*offset]);
-    __SSE_DATATYPE x5 = _SSE_LOAD(&q[ldq+4*offset]);
+#endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
 #endif
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#ifdef SINGLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi32(0x80000000);
 #endif
-    __SSE_DATATYPE h2;
+#endif /* VEC_SET == 256 */
 
-    __SSE_DATATYPE q1 = _SSE_LOAD(q);
-    __SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-    __SSE_DATATYPE q2 = _SSE_LOAD(&q[offset]);
-    __SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-    __SSE_DATATYPE q3 = _SSE_LOAD(&q[2*offset]);
-    __SSE_DATATYPE y3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-    __SSE_DATATYPE q4 = _SSE_LOAD(&q[3*offset]);
-    __SSE_DATATYPE y4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
-    __SSE_DATATYPE q5 = _SSE_LOAD(&q[4*offset]);
-    __SSE_DATATYPE y5 = _SSE_ADD(q5, _SSE_MUL(x5, h1));
+    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x3 = _SIMD_LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE x4 = _SIMD_LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE x5 = _SIMD_LOAD(&q[ldq+4*offset]);
+
+#if VEC_SET == 128
+    __SIMD_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#endif
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#endif
+#if VEC_SET == 256
+    __SIMD_DATATYPE h1 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
+    __SIMD_DATATYPE h2;
+
+#ifdef __ELPA_USE_FMA__
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
+    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE y3 = _SIMD_FMA(x3, h1, q3);
+    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE y4 = _SIMD_FMA(x4, h1, q4);
+    __SIMD_DATATYPE q5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE y5 = _SIMD_FMA(x5, h1, q5);
+#else
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+    __SIMD_DATATYPE q5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE y5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
+#endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));                          
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));                          
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));                          
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1));
-    register __SSE_DATATYPE x1 = a1_1; 
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE x1 = a1_1; 
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*3)+offset]);                  
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
 
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE a1_3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-    __SSE_DATATYPE a2_3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-    __SSE_DATATYPE a3_3 = _SSE_LOAD(&q[ldq+2*offset]);
-    __SSE_DATATYPE a4_3 = _SSE_LOAD(&q[0+2*offset]);
+    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[0+2*offset]);
 
-    register __SSE_DATATYPE w3 = _SSE_ADD(a4_3, _SSE_MUL(a3_3, h_4_3));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a2_3, h_4_2));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a1_3, h_4_1));
-    register __SSE_DATATYPE z3 = _SSE_ADD(a3_3, _SSE_MUL(a2_3, h_3_2));
-    z3 = _SSE_ADD(z3, _SSE_MUL(a1_3, h_3_1));
-    register __SSE_DATATYPE y3 = _SSE_ADD(a2_3, _SSE_MUL(a1_3, h_2_1));
-    register __SSE_DATATYPE x3 = a1_3;
+    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE x3 = a1_3;
 
-    __SSE_DATATYPE a1_4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-    __SSE_DATATYPE a2_4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-    __SSE_DATATYPE a3_4 = _SSE_LOAD(&q[ldq+3*offset]);
-    __SSE_DATATYPE a4_4 = _SSE_LOAD(&q[0+3*offset]);
+    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[0+3*offset]);
 
-    register __SSE_DATATYPE w4 = _SSE_ADD(a4_4, _SSE_MUL(a3_4, h_4_3));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a2_4, h_4_2));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a1_4, h_4_1));
-    register __SSE_DATATYPE z4 = _SSE_ADD(a3_4, _SSE_MUL(a2_4, h_3_2));
-    z4 = _SSE_ADD(z4, _SSE_MUL(a1_4, h_3_1));
-    register __SSE_DATATYPE y4 = _SSE_ADD(a2_4, _SSE_MUL(a1_4, h_2_1));
-    register __SSE_DATATYPE x4 = a1_4;
+    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE x4 = a1_4;
 
-    __SSE_DATATYPE a1_5 = _SSE_LOAD(&q[(ldq*3)+4*offset]);
-    __SSE_DATATYPE a2_5 = _SSE_LOAD(&q[(ldq*2)+4*offset]);
-    __SSE_DATATYPE a3_5 = _SSE_LOAD(&q[ldq+4*offset]);
-    __SSE_DATATYPE a4_5 = _SSE_LOAD(&q[0+4*offset]);
+    __SIMD_DATATYPE a1_5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+    __SIMD_DATATYPE a2_5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+    __SIMD_DATATYPE a3_5 = _SIMD_LOAD(&q[ldq+4*offset]);
+    __SIMD_DATATYPE a4_5 = _SIMD_LOAD(&q[0+4*offset]);
 
-    register __SSE_DATATYPE w5 = _SSE_ADD(a4_5, _SSE_MUL(a3_5, h_4_3));
-    w5 = _SSE_ADD(w5, _SSE_MUL(a2_5, h_4_2));
-    w5 = _SSE_ADD(w5, _SSE_MUL(a1_5, h_4_1));
-    register __SSE_DATATYPE z5 = _SSE_ADD(a3_5, _SSE_MUL(a2_5, h_3_2));
-    z5 = _SSE_ADD(z5, _SSE_MUL(a1_5, h_3_1));
-    register __SSE_DATATYPE y5 = _SSE_ADD(a2_5, _SSE_MUL(a1_5, h_2_1));
-    register __SSE_DATATYPE x5 = a1_5;
+    register __SIMD_DATATYPE w5 = _SIMD_ADD(a4_5, _SIMD_MUL(a3_5, h_4_3));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(a2_5, h_4_2));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(a1_5, h_4_1));
+    register __SIMD_DATATYPE z5 = _SIMD_ADD(a3_5, _SIMD_MUL(a2_5, h_3_2));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(a1_5, h_3_1));
+    register __SIMD_DATATYPE y5 = _SIMD_ADD(a2_5, _SIMD_MUL(a1_5, h_2_1));
+    register __SIMD_DATATYPE x5 = a1_5;
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
-    __SSE_DATATYPE q3;
-    __SSE_DATATYPE q4;
-    __SSE_DATATYPE q5;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
+    __SIMD_DATATYPE q3;
+    __SIMD_DATATYPE q4;
+    __SIMD_DATATYPE q5;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
     
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*5]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*4]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a5_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-    register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5)); 
-    t1 = _SSE_ADD(t1, _SSE_MUL(a4_1, h_6_4));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a3_1, h_6_3));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-    register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4)); 
-    v1 = _SSE_ADD(v1, _SSE_MUL(a3_1, h_5_3));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3)); 
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
 
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a5_2 = _SSE_LOAD(&q[(ldq)+offset]);
-    __SSE_DATATYPE a6_2 = _SSE_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
 
-    register __SSE_DATATYPE t2 = _SSE_ADD(a6_2, _SSE_MUL(a5_2, h_6_5));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a4_2, h_6_4));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a3_2, h_6_3));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a2_2, h_6_2));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a1_2, h_6_1));
-    register __SSE_DATATYPE v2 = _SSE_ADD(a5_2, _SSE_MUL(a4_2, h_5_4));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a3_2, h_5_3));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a2_2, h_5_2));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a1_2, h_5_1));
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
 
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE a1_3 = _SSE_LOAD(&q[(ldq*5)+2*offset]);
-    __SSE_DATATYPE a2_3 = _SSE_LOAD(&q[(ldq*4)+2*offset]);
-    __SSE_DATATYPE a3_3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-    __SSE_DATATYPE a4_3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-    __SSE_DATATYPE a5_3 = _SSE_LOAD(&q[(ldq)+2*offset]);
-    __SSE_DATATYPE a6_3 = _SSE_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a5_3 = _SIMD_LOAD(&q[(ldq)+2*offset]);
+    __SIMD_DATATYPE a6_3 = _SIMD_LOAD(&q[2*offset]);
 
-    register __SSE_DATATYPE t3 = _SSE_ADD(a6_3, _SSE_MUL(a5_3, h_6_5));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a4_3, h_6_4));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a3_3, h_6_3));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a2_3, h_6_2));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a1_3, h_6_1));
-    register __SSE_DATATYPE v3 = _SSE_ADD(a5_3, _SSE_MUL(a4_3, h_5_4));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a3_3, h_5_3));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a2_3, h_5_2));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a1_3, h_5_1));
-    register __SSE_DATATYPE w3 = _SSE_ADD(a4_3, _SSE_MUL(a3_3, h_4_3));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a2_3, h_4_2));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a1_3, h_4_1));
-    register __SSE_DATATYPE z3 = _SSE_ADD(a3_3, _SSE_MUL(a2_3, h_3_2));
-    z3 = _SSE_ADD(z3, _SSE_MUL(a1_3, h_3_1));
-    register __SSE_DATATYPE y3 = _SSE_ADD(a2_3, _SSE_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE t3 = _SIMD_ADD(a6_3, _SIMD_MUL(a5_3, h_6_5));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a4_3, h_6_4));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a3_3, h_6_3));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a2_3, h_6_2));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a1_3, h_6_1));
+    register __SIMD_DATATYPE v3 = _SIMD_ADD(a5_3, _SIMD_MUL(a4_3, h_5_4));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a3_3, h_5_3));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a2_3, h_5_2));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a1_3, h_5_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
 
-    register __SSE_DATATYPE x3 = a1_3;
+    register __SIMD_DATATYPE x3 = a1_3;
 
-    __SSE_DATATYPE a1_4 = _SSE_LOAD(&q[(ldq*5)+3*offset]);
-    __SSE_DATATYPE a2_4 = _SSE_LOAD(&q[(ldq*4)+3*offset]);
-    __SSE_DATATYPE a3_4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-    __SSE_DATATYPE a4_4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-    __SSE_DATATYPE a5_4 = _SSE_LOAD(&q[(ldq)+3*offset]);
-    __SSE_DATATYPE a6_4 = _SSE_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a5_4 = _SIMD_LOAD(&q[(ldq)+3*offset]);
+    __SIMD_DATATYPE a6_4 = _SIMD_LOAD(&q[3*offset]);
 
-    register __SSE_DATATYPE t4 = _SSE_ADD(a6_4, _SSE_MUL(a5_4, h_6_5));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a4_4, h_6_4));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a3_4, h_6_3));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a2_4, h_6_2));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a1_4, h_6_1));
-    register __SSE_DATATYPE v4 = _SSE_ADD(a5_4, _SSE_MUL(a4_4, h_5_4));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a3_4, h_5_3));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a2_4, h_5_2));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a1_4, h_5_1));
-    register __SSE_DATATYPE w4 = _SSE_ADD(a4_4, _SSE_MUL(a3_4, h_4_3));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a2_4, h_4_2));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a1_4, h_4_1));
-    register __SSE_DATATYPE z4 = _SSE_ADD(a3_4, _SSE_MUL(a2_4, h_3_2));
-    z4 = _SSE_ADD(z4, _SSE_MUL(a1_4, h_3_1));
-    register __SSE_DATATYPE y4 = _SSE_ADD(a2_4, _SSE_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE t4 = _SIMD_ADD(a6_4, _SIMD_MUL(a5_4, h_6_5));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a4_4, h_6_4));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a3_4, h_6_3));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a2_4, h_6_2));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a1_4, h_6_1));
+    register __SIMD_DATATYPE v4 = _SIMD_ADD(a5_4, _SIMD_MUL(a4_4, h_5_4));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a3_4, h_5_3));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a2_4, h_5_2));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a1_4, h_5_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
 
-    register __SSE_DATATYPE x4 = a1_4;
+    register __SIMD_DATATYPE x4 = a1_4;
 
-    __SSE_DATATYPE a1_5 = _SSE_LOAD(&q[(ldq*5)+4*offset]);
-    __SSE_DATATYPE a2_5 = _SSE_LOAD(&q[(ldq*4)+4*offset]);
-    __SSE_DATATYPE a3_5 = _SSE_LOAD(&q[(ldq*3)+4*offset]);
-    __SSE_DATATYPE a4_5 = _SSE_LOAD(&q[(ldq*2)+4*offset]);
-    __SSE_DATATYPE a5_5 = _SSE_LOAD(&q[(ldq)+4*offset]);
-    __SSE_DATATYPE a6_5 = _SSE_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE a1_5 = _SIMD_LOAD(&q[(ldq*5)+4*offset]);
+    __SIMD_DATATYPE a2_5 = _SIMD_LOAD(&q[(ldq*4)+4*offset]);
+    __SIMD_DATATYPE a3_5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+    __SIMD_DATATYPE a4_5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+    __SIMD_DATATYPE a5_5 = _SIMD_LOAD(&q[(ldq)+4*offset]);
+    __SIMD_DATATYPE a6_5 = _SIMD_LOAD(&q[4*offset]);
 
-    register __SSE_DATATYPE t5 = _SSE_ADD(a6_5, _SSE_MUL(a5_5, h_6_5));
-    t5 = _SSE_ADD(t5, _SSE_MUL(a4_5, h_6_4));
-    t5 = _SSE_ADD(t5, _SSE_MUL(a3_5, h_6_3));
-    t5 = _SSE_ADD(t5, _SSE_MUL(a2_5, h_6_2));
-    t5 = _SSE_ADD(t5, _SSE_MUL(a1_5, h_6_1));
-    register __SSE_DATATYPE v5 = _SSE_ADD(a5_5, _SSE_MUL(a4_5, h_5_4));
-    v5 = _SSE_ADD(v5, _SSE_MUL(a3_5, h_5_3));
-    v5 = _SSE_ADD(v5, _SSE_MUL(a2_5, h_5_2));
-    v5 = _SSE_ADD(v5, _SSE_MUL(a1_5, h_5_1));
-    register __SSE_DATATYPE w5 = _SSE_ADD(a4_5, _SSE_MUL(a3_5, h_4_3));
-    w5 = _SSE_ADD(w5, _SSE_MUL(a2_5, h_4_2));
-    w5 = _SSE_ADD(w5, _SSE_MUL(a1_5, h_4_1));
-    register __SSE_DATATYPE z5 = _SSE_ADD(a3_5, _SSE_MUL(a2_5, h_3_2));
-    z5 = _SSE_ADD(z5, _SSE_MUL(a1_5, h_3_1));
-    register __SSE_DATATYPE y5 = _SSE_ADD(a2_5, _SSE_MUL(a1_5, h_2_1));
+    register __SIMD_DATATYPE t5 = _SIMD_ADD(a6_5, _SIMD_MUL(a5_5, h_6_5));
+    t5 = _SIMD_ADD(t5, _SIMD_MUL(a4_5, h_6_4));
+    t5 = _SIMD_ADD(t5, _SIMD_MUL(a3_5, h_6_3));
+    t5 = _SIMD_ADD(t5, _SIMD_MUL(a2_5, h_6_2));
+    t5 = _SIMD_ADD(t5, _SIMD_MUL(a1_5, h_6_1));
+    register __SIMD_DATATYPE v5 = _SIMD_ADD(a5_5, _SIMD_MUL(a4_5, h_5_4));
+    v5 = _SIMD_ADD(v5, _SIMD_MUL(a3_5, h_5_3));
+    v5 = _SIMD_ADD(v5, _SIMD_MUL(a2_5, h_5_2));
+    v5 = _SIMD_ADD(v5, _SIMD_MUL(a1_5, h_5_1));
+    register __SIMD_DATATYPE w5 = _SIMD_ADD(a4_5, _SIMD_MUL(a3_5, h_4_3));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(a2_5, h_4_2));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(a1_5, h_4_1));
+    register __SIMD_DATATYPE z5 = _SIMD_ADD(a3_5, _SIMD_MUL(a2_5, h_3_2));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(a1_5, h_3_1));
+    register __SIMD_DATATYPE y5 = _SIMD_ADD(a2_5, _SIMD_MUL(a1_5, h_2_1));
 
-    register __SSE_DATATYPE x5 = a1_5;
+    register __SIMD_DATATYPE x5 = a1_5;
 
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
-    __SSE_DATATYPE q3;
-    __SSE_DATATYPE q4;
-    __SSE_DATATYPE q5;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
+    __SIMD_DATATYPE q3;
+    __SIMD_DATATYPE q4;
+    __SIMD_DATATYPE q5;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
-    __SSE_DATATYPE h5;
-    __SSE_DATATYPE h6;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
+    __SIMD_DATATYPE h5;
+    __SIMD_DATATYPE h6;
 
 #endif /* BLOCK6 */
 
 
     for(i = BLOCK; i < nb; i++)
       {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
         h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
         h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if  VEC_SET == 256
+        h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+        h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif /*   VEC_SET == 256 */
 
-        q1 = _SSE_LOAD(&q[i*ldq]);
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-        q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-        x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-        y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-        q3 = _SSE_LOAD(&q[(i*ldq)+2*offset]);
-        x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-        y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-        q4 = _SSE_LOAD(&q[(i*ldq)+3*offset]);
-        x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-        y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-        q5 = _SSE_LOAD(&q[(i*ldq)+4*offset]);
-        x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-        y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_FMA(q1, h1, x1);
+        y1 = _SIMD_FMA(q1, h2, y1);
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_FMA(q2, h1, x2);
+        y2 = _SIMD_FMA(q2, h2, y2);
+        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        x3 = _SIMD_FMA(q3, h1, x3);
+        y3 = _SIMD_FMA(q3, h2, y3);
+        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+        x4 = _SIMD_FMA(q4, h1, x4);
+        y4 = _SIMD_FMA(q4, h2, y4);
+        q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
+        x5 = _SIMD_FMA(q5, h1, x5);
+        y5 = _SIMD_FMA(q5, h2, y5);
+#else
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+        y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+        x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+        y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+        q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
+        x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+        y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+#endif
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-        z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-        z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-        z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-        z5 = _SSE_ADD(z5, _SSE_MUL(q5,h3));
-#ifdef HAVE_SSE_INTRINSICS
+        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+        z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+        z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+        z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+#if VEC_SET == 128
         h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-        w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-        w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-        w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
-        w5 = _SSE_ADD(w5, _SSE_MUL(q5,h4));
+        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+        w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+        w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+        w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
 	
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
-        v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-        v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-        v3 = _SSE_ADD(v3, _SSE_MUL(q3,h5));
-        v4 = _SSE_ADD(v4, _SSE_MUL(q4,h5));
-        v5 = _SSE_ADD(v5, _SSE_MUL(q5,h5));
+        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+        v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+        v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
+        v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-        t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
-        t2 = _SSE_ADD(t2, _SSE_MUL(q2,h6));
-        t3 = _SSE_ADD(t3, _SSE_MUL(q3,h6));
-        t4 = _SSE_ADD(t4, _SSE_MUL(q4,h6));
-        t5 = _SSE_ADD(t5, _SSE_MUL(q5,h6));
+        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
+        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
+        t3 = _SIMD_ADD(t3, _SIMD_MUL(q3,h6));
+        t4 = _SIMD_ADD(t4, _SIMD_MUL(q4,h6));
+        t5 = _SIMD_ADD(t5, _SIMD_MUL(q5,h6));
 	
 #endif /* BLOCK6 */
       }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif 
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
+#endif
 
-    q1 = _SSE_LOAD(&q[nb*ldq]);
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    q3 = _SSE_LOAD(&q[(nb*ldq)+2*offset]);
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    q4 = _SSE_LOAD(&q[(nb*ldq)+3*offset]);
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    q5 = _SSE_LOAD(&q[(nb*ldq)+4*offset]);
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
+#ifdef __ELPA_USE_FMA__
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_FMA(q1, h1, x1);
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_FMA(q2, h1, x2);
+    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    x3 = _SIMD_FMA(q3, h1, x3);
+    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+    x4 = _SIMD_FMA(q4, h1, x4);
+    q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
+    x5 = _SIMD_FMA(q5, h1, x5);
+#else
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-    z5 = _SSE_ADD(z5, _SSE_MUL(q5,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+1)*ldq)+4*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[(ldh*1)+nb-1], hh[(ldh*1)+nb-1]);
 #endif
 
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+2)*ldq)+4*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 
 #endif /* BLOCK4 */
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4)); 
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-    w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-    w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
-    w5 = _SSE_ADD(w5, _SSE_MUL(q5,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-    v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-    v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-    v3 = _SSE_ADD(v3, _SSE_MUL(q3,h5));
-    v4 = _SSE_ADD(v4, _SSE_MUL(q4,h5));
-    v5 = _SSE_ADD(v5, _SSE_MUL(q5,h5));
-#ifdef HAVE_SSE_INTRINSICS
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
+    v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+1)*ldq)+4*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
-#ifdef HAVE_SSE_INTRINSICS
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-    z5 = _SSE_ADD(z5, _SSE_MUL(q5,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-    w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-    w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
-    w5 = _SSE_ADD(w5, _SSE_MUL(q5,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+    w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+2)*ldq)+4*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
-#ifdef HAVE_SSE_INTRINSICS
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-    z5 = _SSE_ADD(z5, _SSE_MUL(q5,h3));
-#ifdef HAVE_SSE_INTRINSICS
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+3)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+3)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+3)*ldq)+4*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+3)*ldq)+4*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-    y5 = _SSE_ADD(y5, _SSE_MUL(q5,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+4)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+4)*ldq)+3*offset]);
-    q5 = _SSE_LOAD(&q[((nb+4)*ldq)+4*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
+    q5 = _SIMD_LOAD(&q[((nb+4)*ldq)+4*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-    x5 = _SSE_ADD(x5, _SSE_MUL(q5,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 #endif /* BLOCK6 */
 
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Rank-2 update of Q [6 x nb+1]
+    // Rank-2 update of Q [ROW_LENGTH x nb+1]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK4
     /////////////////////////////////////////////////////
-    // Rank-1 update of Q [6 x nb+3]
+    // Rank-1 update of Q [ROW_LENGTH x nb+3]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK6
@@ -3580,727 +4070,798 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE tau1 = _SSE_SET1(hh[0]);
 
-    __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+    __SIMD_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
+   __SIMD_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
 #endif
 
 #ifdef BLOCK2    
-    __SSE_DATATYPE vs = _SSE_SET1(s);
+    __SIMD_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
 #endif
 #endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
 
-    __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+    __SIMD_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
+   __SIMD_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
 #endif
 
 #ifdef BLOCK2
-    __SSE_DATATYPE vs = _SSE_SET(s, s);
+    __SIMD_DATATYPE vs = _SSE_SET(s, s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
 
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
 #endif
 #endif /* HAVE_SPARC64_SSE */
 
-#ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-    h1 = _SSE_XOR(tau1, sign);
+#if VEC_SET == 256
+   __SIMD_DATATYPE tau1 = _SIMD_BROADCAST(hh);
+   __SIMD_DATATYPE tau2 = _SIMD_BROADCAST(&hh[ldh]);
+#if defined(BLOCK4) || defined(BLOCK6)
 #endif
-#ifdef HAVE_SPARC64_SSE
+#ifdef BLOCK6
+#endif
+
+#ifdef BLOCK2  
+   __SIMD_DATATYPE vs = _SIMD_BROADCAST(&s);
+#endif
+
+#ifdef BLOCK4
+#endif
+#ifdef BLOCK6
+#endif
+#endif /* VEC_SET == 256 */
+
+#ifdef BLOCK2
+#if VEC_SET == 128
+    h1 = _SIMD_XOR(tau1, sign);
+#endif
+#if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_XOR(tau1, sign);
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau1;
 #endif
 
-   x1 = _SSE_MUL(x1, h1);
-   x2 = _SSE_MUL(x2, h1);
-   x3 = _SSE_MUL(x3, h1);
-   x4 = _SSE_MUL(x4, h1);
-   x5 = _SSE_MUL(x5, h1);
+   x1 = _SIMD_MUL(x1, h1);
+   x2 = _SIMD_MUL(x2, h1);
+   x3 = _SIMD_MUL(x3, h1);
+   x4 = _SIMD_MUL(x4, h1);
+   x5 = _SIMD_MUL(x5, h1);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-   h1 = _SSE_XOR(tau2, sign);
+#if VEC_SET == 128
+   h1 = _SIMD_XOR(tau2, sign);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-   h2 = _SSE_MUL(h1, vs);
+#if VEC_SET == 256
+   h1 = _SIMD_XOR(tau2, sign);
+#endif
+   h2 = _SIMD_MUL(h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SSE_MUL(h1, vs_1_2);
+   h2 = _SIMD_MUL(h1, vs_1_2);
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
-   y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_ADD(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-   y3 = _SSE_ADD(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
-   y4 = _SSE_ADD(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
-   y5 = _SSE_ADD(_SSE_MUL(y5,h1), _SSE_MUL(x5,h2));
+
+#ifdef __ELPA_USE_FMA__
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
+   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL(x3,h2));
+   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL(x4,h2));
+   y5 = _SIMD_FMA(y5, h1, _SIMD_MUL(x5,h2));
+#else
+   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y3 = _SIMD_ADD(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
+   y4 = _SIMD_ADD(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
+   y5 = _SIMD_ADD(_SIMD_MUL(y5,h1), _SIMD_MUL(x5,h2));
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-   y1 = _SSE_SUB(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_SUB(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-   y3 = _SSE_SUB(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
-   y4 = _SSE_SUB(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
-   y5 = _SSE_SUB(_SSE_MUL(y5,h1), _SSE_MUL(x5,h2));
+   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y3 = _SIMD_SUB(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
+   y4 = _SIMD_SUB(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
+   y5 = _SIMD_SUB(_SIMD_MUL(y5,h1), _SIMD_MUL(x5,h2));
 
    h1 = tau3;
-   h2 = _SSE_MUL(h1, vs_1_3);
-   h3 = _SSE_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL(h1, vs_1_3);
+   h3 = _SIMD_MUL(h1, vs_2_3);
 
-   z1 = _SSE_SUB(_SSE_MUL(z1,h1), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
-   z2 = _SSE_SUB(_SSE_MUL(z2,h1), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)));
-   z3 = _SSE_SUB(_SSE_MUL(z3,h1), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2)));
-   z4 = _SSE_SUB(_SSE_MUL(z4,h1), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2)));
-   z5 = _SSE_SUB(_SSE_MUL(z5,h1), _SSE_ADD(_SSE_MUL(y5,h3), _SSE_MUL(x5,h2)));
+   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
+   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
+   z3 = _SIMD_SUB(_SIMD_MUL(z3,h1), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)));
+   z4 = _SIMD_SUB(_SIMD_MUL(z4,h1), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)));
+   z5 = _SIMD_SUB(_SIMD_MUL(z5,h1), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2)));
 
    h1 = tau4;
-   h2 = _SSE_MUL(h1, vs_1_4);
-   h3 = _SSE_MUL(h1, vs_2_4);
-   h4 = _SSE_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL(h1, vs_1_4);
+   h3 = _SIMD_MUL(h1, vs_2_4);
+   h4 = _SIMD_MUL(h1, vs_3_4);
 
-   w1 = _SSE_SUB(_SSE_MUL(w1,h1), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
-   w2 = _SSE_SUB(_SSE_MUL(w2,h1), _SSE_ADD(_SSE_MUL(z2,h4), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-   w3 = _SSE_SUB(_SSE_MUL(w3,h1), _SSE_ADD(_SSE_MUL(z3,h4), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2))));
-   w4 = _SSE_SUB(_SSE_MUL(w4,h1), _SSE_ADD(_SSE_MUL(z4,h4), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2))));
-   w5 = _SSE_SUB(_SSE_MUL(w5,h1), _SSE_ADD(_SSE_MUL(z5,h4), _SSE_ADD(_SSE_MUL(y5,h3), _SSE_MUL(x5,h2))));
+   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   w3 = _SIMD_SUB(_SIMD_MUL(w3,h1), _SIMD_ADD(_SIMD_MUL(z3,h4), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
+   w4 = _SIMD_SUB(_SIMD_MUL(w4,h1), _SIMD_ADD(_SIMD_MUL(z4,h4), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
+   w5 = _SIMD_SUB(_SIMD_MUL(w5,h1), _SIMD_ADD(_SIMD_MUL(z5,h4), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2))));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SSE_MUL(tau5, vs_1_5); 
-   h3 = _SSE_MUL(tau5, vs_2_5);
-   h4 = _SSE_MUL(tau5, vs_3_5);
-   h5 = _SSE_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL(tau5, vs_1_5); 
+   h3 = _SIMD_MUL(tau5, vs_2_5);
+   h4 = _SIMD_MUL(tau5, vs_3_5);
+   h5 = _SIMD_MUL(tau5, vs_4_5);
 
-   v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
-   v2 = _SSE_SUB(_SSE_MUL(v2,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-   v3 = _SSE_SUB(_SSE_MUL(v3,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w3,h5), _SSE_MUL(z3,h4)), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2))));
-   v4 = _SSE_SUB(_SSE_MUL(v4,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w4,h5), _SSE_MUL(z4,h4)), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2))));
-   v5 = _SSE_SUB(_SSE_MUL(v5,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w5,h5), _SSE_MUL(z5,h4)), _SSE_ADD(_SSE_MUL(y5,h3), _SSE_MUL(x5,h2))));
+   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   v3 = _SIMD_SUB(_SIMD_MUL(v3,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
+   v4 = _SIMD_SUB(_SIMD_MUL(v4,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
+   v5 = _SIMD_SUB(_SIMD_MUL(v5,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w5,h5), _SIMD_MUL(z5,h4)), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2))));
 
-   h2 = _SSE_MUL(tau6, vs_1_6);
-   h3 = _SSE_MUL(tau6, vs_2_6);
-   h4 = _SSE_MUL(tau6, vs_3_6);
-   h5 = _SSE_MUL(tau6, vs_4_6);
-   h6 = _SSE_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL(tau6, vs_1_6);
+   h3 = _SIMD_MUL(tau6, vs_2_6);
+   h4 = _SIMD_MUL(tau6, vs_3_6);
+   h5 = _SIMD_MUL(tau6, vs_4_6);
+   h6 = _SIMD_MUL(tau6, vs_5_6);
 
-   t1 = _SSE_SUB(_SSE_MUL(t1,tau6), _SSE_ADD( _SSE_MUL(v1,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))));
-   t2 = _SSE_SUB(_SSE_MUL(t2,tau6), _SSE_ADD( _SSE_MUL(v2,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)))));
-   t3 = _SSE_SUB(_SSE_MUL(t3,tau6), _SSE_ADD( _SSE_MUL(v3,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w3,h5), _SSE_MUL(z3,h4)), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2)))));
-   t4 = _SSE_SUB(_SSE_MUL(t4,tau6), _SSE_ADD( _SSE_MUL(v4,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w4,h5), _SSE_MUL(z4,h4)), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2)))));
-   t5 = _SSE_SUB(_SSE_MUL(t5,tau6), _SSE_ADD( _SSE_MUL(v5,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w5,h5), _SSE_MUL(z5,h4)), _SSE_ADD(_SSE_MUL(y5,h3), _SSE_MUL(x5,h2)))));
+   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
+   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
+   t3 = _SIMD_SUB(_SIMD_MUL(t3,tau6), _SIMD_ADD( _SIMD_MUL(v3,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)))));
+   t4 = _SIMD_SUB(_SIMD_MUL(t4,tau6), _SIMD_ADD( _SIMD_MUL(v4,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)))));
+   t5 = _SIMD_SUB(_SIMD_MUL(t5,tau6), _SIMD_ADD( _SIMD_MUL(v5,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w5,h5), _SIMD_MUL(z5,h4)), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2)))));
 
    /////////////////////////////////////////////////////
    // Rank-1 update of Q [4 x nb+3]
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SSE_LOAD(&q[0]);
+   q1 = _SIMD_LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SSE_ADD(q1, y1);
+   q1 = _SIMD_ADD(q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SSE_SUB(q1, w1);
+   q1 = _SIMD_SUB(q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SSE_SUB(q1, t1); 
+   q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SSE_STORE(&q[0],q1);
-   q2 = _SSE_LOAD(&q[offset]);
+   _SIMD_STORE(&q[0],q1);
+   q2 = _SIMD_LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SSE_ADD(q2, y2);
+   q2 = _SIMD_ADD(q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SSE_SUB(q2, w2);
+   q2 = _SIMD_SUB(q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SSE_SUB(q2, t2);
+   q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SSE_STORE(&q[offset],q2);
-   q3 = _SSE_LOAD(&q[2*offset]);
+   _SIMD_STORE(&q[offset],q2);
+   q3 = _SIMD_LOAD(&q[2*offset]);
 #ifdef BLOCK2
-   q3 = _SSE_ADD(q3, y3);
+   q3 = _SIMD_ADD(q3, y3);
 #endif
 #ifdef BLOCK4
-   q3 = _SSE_SUB(q3, w3);
+   q3 = _SIMD_SUB(q3, w3);
 #endif
 #ifdef BLOCK6
-   q3 = _SSE_SUB(q3, t3);
+   q3 = _SIMD_SUB(q3, t3);
 #endif
-   _SSE_STORE(&q[2*offset],q3);
-   q4 = _SSE_LOAD(&q[3*offset]);
+   _SIMD_STORE(&q[2*offset],q3);
+   q4 = _SIMD_LOAD(&q[3*offset]);
 #ifdef BLOCK2
-   q4 = _SSE_ADD(q4, y4);
+   q4 = _SIMD_ADD(q4, y4);
 #endif
 #ifdef BLOCK4
-   q4 = _SSE_SUB(q4, w4);
+   q4 = _SIMD_SUB(q4, w4);
 #endif
 #ifdef BLOCK6
-   q4 = _SSE_SUB(q4, t4);
+   q4 = _SIMD_SUB(q4, t4);
 #endif
-   _SSE_STORE(&q[3*offset],q4);
-   q5 = _SSE_LOAD(&q[4*offset]);
+   _SIMD_STORE(&q[3*offset],q4);
+   q5 = _SIMD_LOAD(&q[4*offset]);
 #ifdef BLOCK2
-   q5 = _SSE_ADD(q5, y5);
+   q5 = _SIMD_ADD(q5, y5);
 #endif
 #ifdef BLOCK4
-   q5 = _SSE_SUB(q5, w5);
+   q5 = _SIMD_SUB(q5, w5);
 #endif
 #ifdef BLOCK6
-   q5 = _SSE_SUB(q5, t5);
+   q5 = _SIMD_SUB(q5, t5);
 #endif
-   _SSE_STORE(&q[4*offset],q5);
+   _SIMD_STORE(&q[4*offset],q5);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
+#if VEC_SET == 256
+   h2 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-   _SSE_STORE(&q[ldq],q1);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-   _SSE_STORE(&q[ldq+offset],q2);
-   q3 = _SSE_LOAD(&q[ldq+2*offset]);
-   q3 = _SSE_ADD(q3, _SSE_ADD(x3, _SSE_MUL(y3, h2)));
-   _SSE_STORE(&q[ldq+2*offset],q3);
-   q4 = _SSE_LOAD(&q[ldq+3*offset]);
-   q4 = _SSE_ADD(q4, _SSE_ADD(x4, _SSE_MUL(y4, h2)));
-   _SSE_STORE(&q[ldq+3*offset],q4);
-   q5 = _SSE_LOAD(&q[ldq+4*offset]);
-   q5 = _SSE_ADD(q5, _SSE_ADD(x5, _SSE_MUL(y5, h2)));
-   _SSE_STORE(&q[ldq+4*offset],q5);
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
+   _SIMD_STORE(&q[ldq+offset],q2);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q3 = _SIMD_ADD(q3, _SIMD_FMA(y3, h2, x3));
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q4 = _SIMD_ADD(q4, _SIMD_FMA(y4, h2, x4));
+   _SIMD_STORE(&q[ldq+3*offset],q4);
+   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
+   q5 = _SIMD_ADD(q5, _SIMD_FMA(y5, h2, x5));
+   _SIMD_STORE(&q[ldq+4*offset],q5);
+#else
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
+   _SIMD_STORE(&q[ldq+offset],q2);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q4 = _SIMD_ADD(q4, _SIMD_ADD(x4, _SIMD_MUL(y4, h2)));
+   _SIMD_STORE(&q[ldq+3*offset],q4);
+   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
+   q5 = _SIMD_ADD(q5, _SIMD_ADD(x5, _SIMD_MUL(y5, h2)));
+   _SIMD_STORE(&q[ldq+4*offset],q5);
+#endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q3 = _SSE_LOAD(&q[ldq+2*offset]);
-   q4 = _SSE_LOAD(&q[ldq+3*offset]);
-   q5 = _SSE_LOAD(&q[ldq+4*offset]);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_ADD(z1, _SSE_MUL(w1, h4)));
-   q2 = _SSE_SUB(q2, _SSE_ADD(z2, _SSE_MUL(w2, h4)));
-   q3 = _SSE_SUB(q3, _SSE_ADD(z3, _SSE_MUL(w3, h4)));
-   q4 = _SSE_SUB(q4, _SSE_ADD(z4, _SSE_MUL(w4, h4)));
-   q5 = _SSE_SUB(q5, _SSE_ADD(z5, _SSE_MUL(w5, h4)));
+   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
+   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
+   q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
+   q4 = _SIMD_SUB(q4, _SIMD_ADD(z4, _SIMD_MUL(w4, h4)));
+   q5 = _SIMD_SUB(q5, _SIMD_ADD(z5, _SIMD_MUL(w5, h4)));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[ldq+offset],q2);
-   _SSE_STORE(&q[ldq+2*offset],q3);
-   _SSE_STORE(&q[ldq+3*offset],q4);
-   _SSE_STORE(&q[ldq+4*offset],q5);
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[ldq+offset],q2);
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   _SIMD_STORE(&q[ldq+3*offset],q4);
+   _SIMD_STORE(&q[ldq+4*offset],q5);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*2)+4*offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
-   q3 = _SSE_SUB(q3, y3);
-   q4 = _SSE_SUB(q4, y4);
-   q5 = _SSE_SUB(q5, y5);
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
+   q3 = _SIMD_SUB(q3, y3);
+   q4 = _SIMD_SUB(q4, y4);
+   q5 = _SIMD_SUB(q5, y5);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
-   _SSE_STORE(&q[(ldq*2)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*2)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*2)+4*offset],q5);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*2)+4*offset],q5);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*3)+4*offset]);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
 
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
-   q3 = _SSE_SUB(q3, x3);
-   q4 = _SSE_SUB(q4, x4);
-   q5 = _SSE_SUB(q5, x5);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
+   q3 = _SIMD_SUB(q3, x3);
+   q4 = _SIMD_SUB(q4, x4);
+   q5 = _SIMD_SUB(q5, x5);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-   _SSE_STORE(&q[ldq*3], q1);
-   _SSE_STORE(&q[(ldq*3)+offset], q2);
-   _SSE_STORE(&q[(ldq*3)+2*offset], q3);
-   _SSE_STORE(&q[(ldq*3)+3*offset], q4);
-   _SSE_STORE(&q[(ldq*3)+4*offset], q5);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   _SIMD_STORE(&q[ldq*3], q1);
+   _SIMD_STORE(&q[(ldq*3)+offset], q2);
+   _SIMD_STORE(&q[(ldq*3)+2*offset], q3);
+   _SIMD_STORE(&q[(ldq*3)+3*offset], q4);
+   _SIMD_STORE(&q[(ldq*3)+4*offset], q5);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[(ldq+offset)]);
-   q3 = _SSE_LOAD(&q[(ldq+2*offset)]);
-   q4 = _SSE_LOAD(&q[(ldq+3*offset)]);
-   q5 = _SSE_LOAD(&q[(ldq+4*offset)]);
-   q1 = _SSE_SUB(q1, v1);
-   q2 = _SSE_SUB(q2, v2);
-   q3 = _SSE_SUB(q3, v3);
-   q4 = _SSE_SUB(q4, v4);
-   q5 = _SSE_SUB(q5, v5);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
+   q3 = _SIMD_LOAD(&q[(ldq+2*offset)]);
+   q4 = _SIMD_LOAD(&q[(ldq+3*offset)]);
+   q5 = _SIMD_LOAD(&q[(ldq+4*offset)]);
+   q1 = _SIMD_SUB(q1, v1);
+   q2 = _SIMD_SUB(q2, v2);
+   q3 = _SIMD_SUB(q3, v3);
+   q4 = _SIMD_SUB(q4, v4);
+   q5 = _SIMD_SUB(q5, v5);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[(ldq+offset)],q2);
-   _SSE_STORE(&q[(ldq+2*offset)],q3);
-   _SSE_STORE(&q[(ldq+3*offset)],q4);
-   _SSE_STORE(&q[(ldq+4*offset)],q5);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[(ldq+offset)],q2);
+   _SIMD_STORE(&q[(ldq+2*offset)],q3);
+   _SIMD_STORE(&q[(ldq+3*offset)],q4);
+   _SIMD_STORE(&q[(ldq+4*offset)],q5);
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*2)+4*offset]);
-   q1 = _SSE_SUB(q1, w1); 
-   q2 = _SSE_SUB(q2, w2);
-   q3 = _SSE_SUB(q3, w3);
-   q4 = _SSE_SUB(q4, w4);
-   q5 = _SSE_SUB(q5, w5);
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5)); 
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));  
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));  
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));  
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));  
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+   q1 = _SIMD_SUB(q1, w1); 
+   q2 = _SIMD_SUB(q2, w2);
+   q3 = _SIMD_SUB(q3, w3);
+   q4 = _SIMD_SUB(q4, w4);
+   q5 = _SIMD_SUB(q5, w5);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));  
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));  
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));  
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
-   _SSE_STORE(&q[(ldq*2)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*2)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*2)+4*offset],q5);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*2)+4*offset],q5);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*3)+4*offset]);
-   q1 = _SSE_SUB(q1, z1);
-   q2 = _SSE_SUB(q2, z2);
-   q3 = _SSE_SUB(q3, z3);
-   q4 = _SSE_SUB(q4, z4);
-   q5 = _SSE_SUB(q5, z5);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+   q1 = _SIMD_SUB(q1, z1);
+   q2 = _SIMD_SUB(q2, z2);
+   q3 = _SIMD_SUB(q3, z3);
+   q4 = _SIMD_SUB(q4, z4);
+   q5 = _SIMD_SUB(q5, z5);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 
-   _SSE_STORE(&q[ldq*3],q1);
-   _SSE_STORE(&q[(ldq*3)+offset],q2);
-   _SSE_STORE(&q[(ldq*3)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*3)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*3)+4*offset],q5);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*3],q1);
+   _SIMD_STORE(&q[(ldq*3)+offset],q2);
+   _SIMD_STORE(&q[(ldq*3)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*3)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*3)+4*offset],q5);
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*4]);
-   q2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*4)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*4)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*4)+4*offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
-   q3 = _SSE_SUB(q3, y3);
-   q4 = _SSE_SUB(q4, y4);
-   q5 = _SSE_SUB(q5, y5);
+   q1 = _SIMD_LOAD(&q[ldq*4]);
+   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*4)+4*offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
+   q3 = _SIMD_SUB(q3, y3);
+   q4 = _SIMD_SUB(q4, y4);
+   q5 = _SIMD_SUB(q5, y5);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 
-   _SSE_STORE(&q[ldq*4],q1);
-   _SSE_STORE(&q[(ldq*4)+offset],q2);
-   _SSE_STORE(&q[(ldq*4)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*4)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*4)+4*offset],q5);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*4],q1);
+   _SIMD_STORE(&q[(ldq*4)+offset],q2);
+   _SIMD_STORE(&q[(ldq*4)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*4)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*4)+4*offset],q5);
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[(ldh)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[(ldh)+1], hh[(ldh)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*5]);
-   q2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*5)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*5)+3*offset]);
-   q5 = _SSE_LOAD(&q[(ldq*5)+4*offset]);
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
-   q3 = _SSE_SUB(q3, x3);
-   q4 = _SSE_SUB(q4, x4);
-   q5 = _SSE_SUB(q5, x5);
+   q1 = _SIMD_LOAD(&q[ldq*5]);
+   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(ldq*5)+4*offset]);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
+   q3 = _SIMD_SUB(q3, x3);
+   q4 = _SIMD_SUB(q4, x4);
+   q5 = _SIMD_SUB(q5, x5);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-   q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 
-   _SSE_STORE(&q[ldq*5],q1);
-   _SSE_STORE(&q[(ldq*5)+offset],q2);
-   _SSE_STORE(&q[(ldq*5)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*5)+3*offset],q4);
-   _SSE_STORE(&q[(ldq*5)+4*offset],q5);
+   _SIMD_STORE(&q[ldq*5],q1);
+   _SIMD_STORE(&q[(ldq*5)+offset],q2);
+   _SIMD_STORE(&q[(ldq*5)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*5)+3*offset],q4);
+   _SIMD_STORE(&q[(ldq*5)+4*offset],q5);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
      h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
      h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+    h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif
 
-     q1 = _SSE_LOAD(&q[i*ldq]);
-     q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-     q3 = _SSE_LOAD(&q[(i*ldq)+2*offset]);
-     q4 = _SSE_LOAD(&q[(i*ldq)+3*offset]);
-     q5 = _SSE_LOAD(&q[(i*ldq)+4*offset]);
+     q1 = _SIMD_LOAD(&q[i*ldq]);
+     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+     q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+     q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+     q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
 
 #ifdef BLOCK2
-     q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-     q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-     q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
-     q4 = _SSE_ADD(q4, _SSE_ADD(_SSE_MUL(x4,h1), _SSE_MUL(y4, h2)));
-     q5 = _SSE_ADD(q5, _SSE_ADD(_SSE_MUL(x5,h1), _SSE_MUL(y5, h2)));
-#endif
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_FMA(x1, h1, q1);
+     q1 = _SIMD_FMA(y1, h2, q1);
+     q2 = _SIMD_FMA(x2, h1, q2);
+     q2 = _SIMD_FMA(y2, h2, q2);
+     q3 = _SIMD_FMA(x3, h1, q3);
+     q3 = _SIMD_FMA(y3, h2, q3);
+     q4 = _SIMD_FMA(x4, h1, q4);
+     q4 = _SIMD_FMA(y4, h2, q4);
+     q5 = _SIMD_FMA(x5, h1, q5);
+     q5 = _SIMD_FMA(y5, h2, q5);
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
+     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
+     q3 = _SIMD_ADD(q3, _SIMD_ADD(_SIMD_MUL(x3,h1), _SIMD_MUL(y3, h2)));
+     q4 = _SIMD_ADD(q4, _SIMD_ADD(_SIMD_MUL(x4,h1), _SIMD_MUL(y4, h2)));
+     q5 = _SIMD_ADD(q5, _SIMD_ADD(_SIMD_MUL(x5,h1), _SIMD_MUL(y5, h2)));
+#endif /* __ELPA_USE_FMA__ */
+#endif /* BLOCK6 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
      
-     q1 = _SSE_SUB(q1, _SSE_MUL(x1,h1));
-     q2 = _SSE_SUB(q2, _SSE_MUL(x2,h1));
-     q3 = _SSE_SUB(q3, _SSE_MUL(x3,h1));
-     q4 = _SSE_SUB(q4, _SSE_MUL(x4,h1));
-     q5 = _SSE_SUB(q5, _SSE_MUL(x5,h1));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(x3,h1));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(x4,h1));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(x5,h1));
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(y1,h2));
-     q2 = _SSE_SUB(q2, _SSE_MUL(y2,h2));
-     q3 = _SSE_SUB(q3, _SSE_MUL(y3,h2));
-     q4 = _SSE_SUB(q4, _SSE_MUL(y4,h2));
-     q5 = _SSE_SUB(q5, _SSE_MUL(y5,h2));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(y4,h2));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(y5,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(z1,h3));
-     q2 = _SSE_SUB(q2, _SSE_MUL(z2,h3));
-     q3 = _SSE_SUB(q3, _SSE_MUL(z3,h3));
-     q4 = _SSE_SUB(q4, _SSE_MUL(z4,h3));
-     q5 = _SSE_SUB(q5, _SSE_MUL(z5,h3));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(z4,h3));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(z5,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -4308,335 +4869,365 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(w1,h4));
-     q2 = _SSE_SUB(q2, _SSE_MUL(w2,h4));
-     q3 = _SSE_SUB(q3, _SSE_MUL(w3,h4));
-     q4 = _SSE_SUB(q4, _SSE_MUL(w4,h4));
-     q5 = _SSE_SUB(q5, _SSE_MUL(w5,h4));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(w3,h4));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(w4,h4));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(w5,h4));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-     q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-     q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-     q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-     q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
-#ifdef HAVE_SSE_INTRINSICS
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+#if VEC_SET == 128
      h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-     q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-     q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-     q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
-     q5 = _SSE_SUB(q5, _SSE_MUL(t5, h6));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+     q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 #endif /* BLOCK6 */
 
-     _SSE_STORE(&q[i*ldq],q1);
-     _SSE_STORE(&q[(i*ldq)+offset],q2);
-     _SSE_STORE(&q[(i*ldq)+2*offset],q3);
-     _SSE_STORE(&q[(i*ldq)+3*offset],q4);
-     _SSE_STORE(&q[(i*ldq)+4*offset],q5);
+     _SIMD_STORE(&q[i*ldq],q1);
+     _SIMD_STORE(&q[(i*ldq)+offset],q2);
+     _SIMD_STORE(&q[(i*ldq)+2*offset],q3);
+     _SIMD_STORE(&q[(i*ldq)+3*offset],q4);
+     _SIMD_STORE(&q[(i*ldq)+4*offset],q5);
 
    }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
-
-   q1 = _SSE_LOAD(&q[nb*ldq]);
-   q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[(nb*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[(nb*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[(nb*ldq)+4*offset]);
-
-#ifdef BLOCK2
-   q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_ADD(q5, _SSE_MUL(x5, h1));
+#if VEC_SET == 256
+   h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-#if defined(BLOCK4) || defined(BLOCK6)
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
+   q1 = _SIMD_LOAD(&q[nb*ldq]);
+   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
 
-#ifdef HAVE_SSE_INTRINSICS
+#ifdef BLOCK2
+
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_FMA(x1, h1, q1);
+   q2 = _SIMD_FMA(x2, h1, q2);
+   q3 = _SIMD_FMA(x3, h1, q3);
+   q4 = _SIMD_FMA(x4, h1, q4);
+   q5 = _SIMD_FMA(x5, h1, q5);
+#else
+   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
+#endif
+#endif /* BLOCK2 */
+
+#if defined(BLOCK4) || defined(BLOCK6)
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-   q5 = _SSE_SUB(q5, _SSE_MUL(v5, h5));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[nb*ldq],q1);
-   _SSE_STORE(&q[(nb*ldq)+offset],q2);
-   _SSE_STORE(&q[(nb*ldq)+2*offset],q3);
-   _SSE_STORE(&q[(nb*ldq)+3*offset],q4);
-   _SSE_STORE(&q[(nb*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[nb*ldq],q1);
+   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
+   _SIMD_STORE(&q[(nb*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[(nb*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[(nb*ldq)+4*offset],q5);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-2)], hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[((nb+1)*ldq)+4*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-3)], hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-   q5 = _SSE_SUB(q5, _SSE_MUL(w5, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+1)*ldq],q1);
-   _SSE_STORE(&q[((nb+1)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+1)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+1)*ldq)+3*offset],q4);
-   _SSE_STORE(&q[((nb+1)*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[(nb+1)*ldq],q1);
+   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+1)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+1)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[((nb+1)*ldq)+4*offset],q5);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-3)], hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[((nb+2)*ldq)+4*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   q5 = _SSE_SUB(q5, _SSE_MUL(z5, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+2)*ldq],q1);
-   _SSE_STORE(&q[((nb+2)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+2)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+2)*ldq)+3*offset],q4);
-   _SSE_STORE(&q[((nb+2)*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[(nb+2)*ldq],q1);
+   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+2)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+2)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[((nb+2)*ldq)+4*offset],q5);
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+3)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+3)*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[((nb+3)*ldq)+4*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[((nb+3)*ldq)+4*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-   q5 = _SSE_SUB(q5, _SSE_MUL(y5, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 
-   _SSE_STORE(&q[(nb+3)*ldq],q1);
-   _SSE_STORE(&q[((nb+3)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+3)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+3)*ldq)+3*offset],q4);
-   _SSE_STORE(&q[((nb+3)*ldq)+4*offset],q5);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[(nb+3)*ldq],q1);
+   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+3)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+3)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[((nb+3)*ldq)+4*offset],q5);
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+4)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+4)*ldq)+3*offset]);
-   q5 = _SSE_LOAD(&q[((nb+4)*ldq)+4*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
+   q5 = _SIMD_LOAD(&q[((nb+4)*ldq)+4*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-   q5 = _SSE_SUB(q5, _SSE_MUL(x5, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
 
-   _SSE_STORE(&q[(nb+4)*ldq],q1);
-   _SSE_STORE(&q[((nb+4)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+4)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+4)*ldq)+3*offset],q4);
-   _SSE_STORE(&q[((nb+4)*ldq)+4*offset],q5);
+   _SIMD_STORE(&q[(nb+4)*ldq],q1);
+   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+4)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+4)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[((nb+4)*ldq)+4*offset],q5);
 
 #endif /* BLOCK6 */
 }
 
 
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 16
+#endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 16
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 32
+#endif
+#endif /* VEC_SET == 256 */
 /*
  * Unrolled kernel that computes
 #ifdef DOUBLE_PRECISION_REAL
- * 8 rows of Q simultaneously, a
+ * 8 ROW_LENGTH of Q simultaneously, a
 #endif
 #ifdef SINGLE_PRECISION_REAL
- * 16 rows of Q simultaneously, a
+ * 16 ROW_LENGTH of Q simultaneously, a
 #endif
  * matrix Vector product with two householder
  */
@@ -4649,14 +5240,6 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 /*
  * vectors + a rank 1 update is performed
  */
-#endif
-#ifdef DOUBLE_PRECISION_REAL
-#undef ROW_LENGTH
-#define ROW_LENGTH 8
-#endif
-#ifdef SINGLE_PRECISION_REAL
-#undef ROW_LENGTH
-#define ROW_LENGTH 16
 #endif
 
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
@@ -4685,639 +5268,697 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     int i;
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
-    __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+    __SIMD_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 #endif
-#endif
-    __SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
-    __SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE x3 = _SSE_LOAD(&q[ldq+2*offset]);
-    __SSE_DATATYPE x4 = _SSE_LOAD(&q[ldq+3*offset]);
+#endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
 #endif
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#ifdef SINGLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi32(0x80000000);
 #endif
-    __SSE_DATATYPE h2;
+#endif /* VEC_SET == 256 */
 
-    __SSE_DATATYPE q1 = _SSE_LOAD(q);
-    __SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-    __SSE_DATATYPE q2 = _SSE_LOAD(&q[offset]);
-    __SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-    __SSE_DATATYPE q3 = _SSE_LOAD(&q[2*offset]);
-    __SSE_DATATYPE y3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-    __SSE_DATATYPE q4 = _SSE_LOAD(&q[3*offset]);
-    __SSE_DATATYPE y4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
+    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x3 = _SIMD_LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE x4 = _SIMD_LOAD(&q[ldq+3*offset]);
+
+#if VEC_SET == 128
+    __SIMD_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#endif
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#endif
+#if VEC_SET == 256
+    __SIMD_DATATYPE h1 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
+    __SIMD_DATATYPE h2;
+
+#ifdef __ELPA_USE_FMA__
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
+    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE y3 = _SIMD_FMA(x3, h1, q3);
+    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE y4 = _SIMD_FMA(x4, h1, q4);
+#else
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+#endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));                          
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));                          
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));                          
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1));
-    register __SSE_DATATYPE x1 = a1_1; 
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE x1 = a1_1; 
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*3)+offset]);                  
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
 
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE a1_3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-    __SSE_DATATYPE a2_3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-    __SSE_DATATYPE a3_3 = _SSE_LOAD(&q[ldq+2*offset]);
-    __SSE_DATATYPE a4_3 = _SSE_LOAD(&q[0+2*offset]);
+    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[0+2*offset]);
 
-    register __SSE_DATATYPE w3 = _SSE_ADD(a4_3, _SSE_MUL(a3_3, h_4_3));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a2_3, h_4_2));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a1_3, h_4_1));
-    register __SSE_DATATYPE z3 = _SSE_ADD(a3_3, _SSE_MUL(a2_3, h_3_2));
-    z3 = _SSE_ADD(z3, _SSE_MUL(a1_3, h_3_1));
-    register __SSE_DATATYPE y3 = _SSE_ADD(a2_3, _SSE_MUL(a1_3, h_2_1));
-    register __SSE_DATATYPE x3 = a1_3;
+    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE x3 = a1_3;
 
-    __SSE_DATATYPE a1_4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-    __SSE_DATATYPE a2_4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-    __SSE_DATATYPE a3_4 = _SSE_LOAD(&q[ldq+3*offset]);
-    __SSE_DATATYPE a4_4 = _SSE_LOAD(&q[0+3*offset]);
+    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[0+3*offset]);
 
-    register __SSE_DATATYPE w4 = _SSE_ADD(a4_4, _SSE_MUL(a3_4, h_4_3));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a2_4, h_4_2));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a1_4, h_4_1));
-    register __SSE_DATATYPE z4 = _SSE_ADD(a3_4, _SSE_MUL(a2_4, h_3_2));
-    z4 = _SSE_ADD(z4, _SSE_MUL(a1_4, h_3_1));
-    register __SSE_DATATYPE y4 = _SSE_ADD(a2_4, _SSE_MUL(a1_4, h_2_1));
-    register __SSE_DATATYPE x4 = a1_4;
+    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE x4 = a1_4;
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
-    __SSE_DATATYPE q3;
-    __SSE_DATATYPE q4;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
+    __SIMD_DATATYPE q3;
+    __SIMD_DATATYPE q4;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
     
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*5]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*4]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a5_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-    register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5)); 
-    t1 = _SSE_ADD(t1, _SSE_MUL(a4_1, h_6_4));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a3_1, h_6_3));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-    register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4)); 
-    v1 = _SSE_ADD(v1, _SSE_MUL(a3_1, h_5_3));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3)); 
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
 
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a5_2 = _SSE_LOAD(&q[(ldq)+offset]);
-    __SSE_DATATYPE a6_2 = _SSE_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
 
-    register __SSE_DATATYPE t2 = _SSE_ADD(a6_2, _SSE_MUL(a5_2, h_6_5));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a4_2, h_6_4));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a3_2, h_6_3));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a2_2, h_6_2));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a1_2, h_6_1));
-    register __SSE_DATATYPE v2 = _SSE_ADD(a5_2, _SSE_MUL(a4_2, h_5_4));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a3_2, h_5_3));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a2_2, h_5_2));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a1_2, h_5_1));
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
 
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE a1_3 = _SSE_LOAD(&q[(ldq*5)+2*offset]);
-    __SSE_DATATYPE a2_3 = _SSE_LOAD(&q[(ldq*4)+2*offset]);
-    __SSE_DATATYPE a3_3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-    __SSE_DATATYPE a4_3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-    __SSE_DATATYPE a5_3 = _SSE_LOAD(&q[(ldq)+2*offset]);
-    __SSE_DATATYPE a6_3 = _SSE_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a5_3 = _SIMD_LOAD(&q[(ldq)+2*offset]);
+    __SIMD_DATATYPE a6_3 = _SIMD_LOAD(&q[2*offset]);
 
-    register __SSE_DATATYPE t3 = _SSE_ADD(a6_3, _SSE_MUL(a5_3, h_6_5));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a4_3, h_6_4));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a3_3, h_6_3));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a2_3, h_6_2));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a1_3, h_6_1));
-    register __SSE_DATATYPE v3 = _SSE_ADD(a5_3, _SSE_MUL(a4_3, h_5_4));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a3_3, h_5_3));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a2_3, h_5_2));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a1_3, h_5_1));
-    register __SSE_DATATYPE w3 = _SSE_ADD(a4_3, _SSE_MUL(a3_3, h_4_3));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a2_3, h_4_2));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a1_3, h_4_1));
-    register __SSE_DATATYPE z3 = _SSE_ADD(a3_3, _SSE_MUL(a2_3, h_3_2));
-    z3 = _SSE_ADD(z3, _SSE_MUL(a1_3, h_3_1));
-    register __SSE_DATATYPE y3 = _SSE_ADD(a2_3, _SSE_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE t3 = _SIMD_ADD(a6_3, _SIMD_MUL(a5_3, h_6_5));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a4_3, h_6_4));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a3_3, h_6_3));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a2_3, h_6_2));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a1_3, h_6_1));
+    register __SIMD_DATATYPE v3 = _SIMD_ADD(a5_3, _SIMD_MUL(a4_3, h_5_4));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a3_3, h_5_3));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a2_3, h_5_2));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a1_3, h_5_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
 
-    register __SSE_DATATYPE x3 = a1_3;
+    register __SIMD_DATATYPE x3 = a1_3;
 
-    __SSE_DATATYPE a1_4 = _SSE_LOAD(&q[(ldq*5)+3*offset]);
-    __SSE_DATATYPE a2_4 = _SSE_LOAD(&q[(ldq*4)+3*offset]);
-    __SSE_DATATYPE a3_4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-    __SSE_DATATYPE a4_4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-    __SSE_DATATYPE a5_4 = _SSE_LOAD(&q[(ldq)+3*offset]);
-    __SSE_DATATYPE a6_4 = _SSE_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a5_4 = _SIMD_LOAD(&q[(ldq)+3*offset]);
+    __SIMD_DATATYPE a6_4 = _SIMD_LOAD(&q[3*offset]);
 
-    register __SSE_DATATYPE t4 = _SSE_ADD(a6_4, _SSE_MUL(a5_4, h_6_5));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a4_4, h_6_4));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a3_4, h_6_3));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a2_4, h_6_2));
-    t4 = _SSE_ADD(t4, _SSE_MUL(a1_4, h_6_1));
-    register __SSE_DATATYPE v4 = _SSE_ADD(a5_4, _SSE_MUL(a4_4, h_5_4));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a3_4, h_5_3));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a2_4, h_5_2));
-    v4 = _SSE_ADD(v4, _SSE_MUL(a1_4, h_5_1));
-    register __SSE_DATATYPE w4 = _SSE_ADD(a4_4, _SSE_MUL(a3_4, h_4_3));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a2_4, h_4_2));
-    w4 = _SSE_ADD(w4, _SSE_MUL(a1_4, h_4_1));
-    register __SSE_DATATYPE z4 = _SSE_ADD(a3_4, _SSE_MUL(a2_4, h_3_2));
-    z4 = _SSE_ADD(z4, _SSE_MUL(a1_4, h_3_1));
-    register __SSE_DATATYPE y4 = _SSE_ADD(a2_4, _SSE_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE t4 = _SIMD_ADD(a6_4, _SIMD_MUL(a5_4, h_6_5));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a4_4, h_6_4));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a3_4, h_6_3));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a2_4, h_6_2));
+    t4 = _SIMD_ADD(t4, _SIMD_MUL(a1_4, h_6_1));
+    register __SIMD_DATATYPE v4 = _SIMD_ADD(a5_4, _SIMD_MUL(a4_4, h_5_4));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a3_4, h_5_3));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a2_4, h_5_2));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(a1_4, h_5_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
 
-    register __SSE_DATATYPE x4 = a1_4;
+    register __SIMD_DATATYPE x4 = a1_4;
 
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
-    __SSE_DATATYPE q3;
-    __SSE_DATATYPE q4;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
+    __SIMD_DATATYPE q3;
+    __SIMD_DATATYPE q4;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
-    __SSE_DATATYPE h5;
-    __SSE_DATATYPE h6;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
+    __SIMD_DATATYPE h5;
+    __SIMD_DATATYPE h6;
 
 #endif /* BLOCK6 */
 
     for(i = BLOCK; i < nb; i++)
       {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
         h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
         h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if  VEC_SET == 256
+        h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+        h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif /*   VEC_SET == 256 */
 
-        q1 = _SSE_LOAD(&q[i*ldq]);
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-        q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-        x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-        y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-        q3 = _SSE_LOAD(&q[(i*ldq)+2*offset]);
-        x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-        y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-        q4 = _SSE_LOAD(&q[(i*ldq)+3*offset]);
-        x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-        y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_FMA(q1, h1, x1);
+        y1 = _SIMD_FMA(q1, h2, y1);
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_FMA(q2, h1, x2);
+        y2 = _SIMD_FMA(q2, h2, y2);
+        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        x3 = _SIMD_FMA(q3, h1, x3);
+        y3 = _SIMD_FMA(q3, h2, y3);
+        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+        x4 = _SIMD_FMA(q4, h1, x4);
+        y4 = _SIMD_FMA(q4, h2, y4);
+#else
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+        y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+        x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+        y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+#endif /* __ELPA_USE_FMA__ */
+
 #if defined(BLOCK4) || defined(BLOCK6)
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-        z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-        z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-        z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-#ifdef HAVE_SSE_INTRINSICS
+        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+        z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+        z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+#if VEC_SET == 128
         h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-        w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-        w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-        w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
+        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+        w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+        w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
 	
 #endif /* BLOCK4 || BLOCK6 */
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
-        v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-        v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-        v3 = _SSE_ADD(v3, _SSE_MUL(q3,h5));
-        v4 = _SSE_ADD(v4, _SSE_MUL(q4,h5));
+        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+        v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+        v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-        t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
-        t2 = _SSE_ADD(t2, _SSE_MUL(q2,h6));
-        t3 = _SSE_ADD(t3, _SSE_MUL(q3,h6));
-        t4 = _SSE_ADD(t4, _SSE_MUL(q4,h6));
+        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
+        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
+        t3 = _SIMD_ADD(t3, _SIMD_MUL(q3,h6));
+        t4 = _SIMD_ADD(t4, _SIMD_MUL(q4,h6));
 	
 #endif /* BLOCK6 */
       }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
+#endif
 
-    q1 = _SSE_LOAD(&q[nb*ldq]);
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    q3 = _SSE_LOAD(&q[(nb*ldq)+2*offset]);
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    q4 = _SSE_LOAD(&q[(nb*ldq)+3*offset]);
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
+#ifdef __ELPA_USE_FMA__
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_FMA(q1, h1, x1);
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_FMA(q2, h1, x2);
+    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    x3 = _SIMD_FMA(q3, h1, x3);
+    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+    x4 = _SIMD_FMA(q4, h1, x4);
+#else
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[(ldh*1)+nb-1], hh[(ldh*1)+nb-1]);
 #endif
 
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 
 #endif /* BLOCK4 */
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4)); 
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-    w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-    w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-    v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-    v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-    v3 = _SSE_ADD(v3, _SSE_MUL(q3,h5));
-    v4 = _SSE_ADD(v4, _SSE_MUL(q4,h5));
-#ifdef HAVE_SSE_INTRINSICS
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+    v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
-#ifdef HAVE_SSE_INTRINSICS
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-    w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
-    w4 = _SSE_ADD(w4, _SSE_MUL(q4,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
-#ifdef HAVE_SSE_INTRINSICS
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-    z4 = _SSE_ADD(z4, _SSE_MUL(q4,h3));
-#ifdef HAVE_SSE_INTRINSICS
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+3)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+3)*ldq)+3*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-    y4 = _SSE_ADD(y4, _SSE_MUL(q4,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+4)*ldq)+2*offset]);
-    q4 = _SSE_LOAD(&q[((nb+4)*ldq)+3*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
+    q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-    x4 = _SSE_ADD(x4, _SSE_MUL(q4,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 #endif /* BLOCK6 */
 
 #ifdef BLOCK2
@@ -5336,99 +5977,120 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE tau1 = _SSE_SET1(hh[0]);
 
-    __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+    __SIMD_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
+   __SIMD_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
 #endif
 
 #ifdef BLOCK2    
-    __SSE_DATATYPE vs = _SSE_SET1(s);
+    __SIMD_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
 #endif
 #endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
 
-    __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+    __SIMD_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
+   __SIMD_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
 #endif
 
 #ifdef BLOCK2
-    __SSE_DATATYPE vs = _SSE_SET(s, s);
+    __SIMD_DATATYPE vs = _SSE_SET(s, s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
 
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
 #endif
 #endif /* HAVE_SPARC64_SSE */
 
-#ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-    h1 = _SSE_XOR(tau1, sign);
+#if VEC_SET == 256
+   __SIMD_DATATYPE tau1 = _SIMD_BROADCAST(hh);
+   __SIMD_DATATYPE tau2 = _SIMD_BROADCAST(&hh[ldh]);
+#if defined(BLOCK4) || defined(BLOCK6)
 #endif
-#ifdef HAVE_SPARC64_SSE
+#ifdef BLOCK6
+#endif
+
+#ifdef BLOCK2  
+   __SIMD_DATATYPE vs = _SIMD_BROADCAST(&s);
+#endif
+
+#ifdef BLOCK4
+#endif
+#ifdef BLOCK6
+#endif
+#endif /* VEC_SET == 256 */
+
+#ifdef BLOCK2
+#if VEC_SET == 128
+    h1 = _SIMD_XOR(tau1, sign);
+#endif
+#if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
+#endif
+#if VEC_SET == 256
+    h1 = _SIMD_XOR(tau1, sign);
 #endif
 #endif
 
@@ -5436,558 +6098,602 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = tau1;
 #endif
 
-   x1 = _SSE_MUL(x1, h1);
-   x2 = _SSE_MUL(x2, h1);
-   x3 = _SSE_MUL(x3, h1);
-   x4 = _SSE_MUL(x4, h1);
+   x1 = _SIMD_MUL(x1, h1);
+   x2 = _SIMD_MUL(x2, h1);
+   x3 = _SIMD_MUL(x3, h1);
+   x4 = _SIMD_MUL(x4, h1);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-   h1 = _SSE_XOR(tau2, sign);
+#if VEC_SET == 128
+   h1 = _SIMD_XOR(tau2, sign);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-   h2 = _SSE_MUL(h1, vs);
+#if VEC_SET == 256
+   h1 = _SIMD_XOR(tau2, sign);
+#endif
+   h2 = _SIMD_MUL(h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SSE_MUL(h1, vs_1_2);
+   h2 = _SIMD_MUL(h1, vs_1_2);
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
-   y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_ADD(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-   y3 = _SSE_ADD(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
-   y4 = _SSE_ADD(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
+
+#ifdef __ELPA_USE_FMA__
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
+   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL(x3,h2));
+   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL(x4,h2));
+#else
+   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y3 = _SIMD_ADD(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
+   y4 = _SIMD_ADD(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-   y1 = _SSE_SUB(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_SUB(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-   y3 = _SSE_SUB(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
-   y4 = _SSE_SUB(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
+   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y3 = _SIMD_SUB(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
+   y4 = _SIMD_SUB(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
 
    h1 = tau3;
-   h2 = _SSE_MUL(h1, vs_1_3);
-   h3 = _SSE_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL(h1, vs_1_3);
+   h3 = _SIMD_MUL(h1, vs_2_3);
 
-   z1 = _SSE_SUB(_SSE_MUL(z1,h1), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
-   z2 = _SSE_SUB(_SSE_MUL(z2,h1), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)));
-   z3 = _SSE_SUB(_SSE_MUL(z3,h1), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2)));
-   z4 = _SSE_SUB(_SSE_MUL(z4,h1), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2)));
+   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
+   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
+   z3 = _SIMD_SUB(_SIMD_MUL(z3,h1), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)));
+   z4 = _SIMD_SUB(_SIMD_MUL(z4,h1), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)));
 
    h1 = tau4;
-   h2 = _SSE_MUL(h1, vs_1_4);
-   h3 = _SSE_MUL(h1, vs_2_4);
-   h4 = _SSE_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL(h1, vs_1_4);
+   h3 = _SIMD_MUL(h1, vs_2_4);
+   h4 = _SIMD_MUL(h1, vs_3_4);
 
-   w1 = _SSE_SUB(_SSE_MUL(w1,h1), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
-   w2 = _SSE_SUB(_SSE_MUL(w2,h1), _SSE_ADD(_SSE_MUL(z2,h4), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-   w3 = _SSE_SUB(_SSE_MUL(w3,h1), _SSE_ADD(_SSE_MUL(z3,h4), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2))));
-   w4 = _SSE_SUB(_SSE_MUL(w4,h1), _SSE_ADD(_SSE_MUL(z4,h4), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2))));
+   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   w3 = _SIMD_SUB(_SIMD_MUL(w3,h1), _SIMD_ADD(_SIMD_MUL(z3,h4), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
+   w4 = _SIMD_SUB(_SIMD_MUL(w4,h1), _SIMD_ADD(_SIMD_MUL(z4,h4), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SSE_MUL(tau5, vs_1_5); 
-   h3 = _SSE_MUL(tau5, vs_2_5);
-   h4 = _SSE_MUL(tau5, vs_3_5);
-   h5 = _SSE_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL(tau5, vs_1_5); 
+   h3 = _SIMD_MUL(tau5, vs_2_5);
+   h4 = _SIMD_MUL(tau5, vs_3_5);
+   h5 = _SIMD_MUL(tau5, vs_4_5);
 
-   v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
-   v2 = _SSE_SUB(_SSE_MUL(v2,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-   v3 = _SSE_SUB(_SSE_MUL(v3,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w3,h5), _SSE_MUL(z3,h4)), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2))));
-   v4 = _SSE_SUB(_SSE_MUL(v4,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w4,h5), _SSE_MUL(z4,h4)), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2))));
+   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   v3 = _SIMD_SUB(_SIMD_MUL(v3,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
+   v4 = _SIMD_SUB(_SIMD_MUL(v4,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
 
-   h2 = _SSE_MUL(tau6, vs_1_6);
-   h3 = _SSE_MUL(tau6, vs_2_6);
-   h4 = _SSE_MUL(tau6, vs_3_6);
-   h5 = _SSE_MUL(tau6, vs_4_6);
-   h6 = _SSE_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL(tau6, vs_1_6);
+   h3 = _SIMD_MUL(tau6, vs_2_6);
+   h4 = _SIMD_MUL(tau6, vs_3_6);
+   h5 = _SIMD_MUL(tau6, vs_4_6);
+   h6 = _SIMD_MUL(tau6, vs_5_6);
 
-   t1 = _SSE_SUB(_SSE_MUL(t1,tau6), _SSE_ADD( _SSE_MUL(v1,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))));
-   t2 = _SSE_SUB(_SSE_MUL(t2,tau6), _SSE_ADD( _SSE_MUL(v2,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)))));
-   t3 = _SSE_SUB(_SSE_MUL(t3,tau6), _SSE_ADD( _SSE_MUL(v3,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w3,h5), _SSE_MUL(z3,h4)), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2)))));
-   t4 = _SSE_SUB(_SSE_MUL(t4,tau6), _SSE_ADD( _SSE_MUL(v4,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w4,h5), _SSE_MUL(z4,h4)), _SSE_ADD(_SSE_MUL(y4,h3), _SSE_MUL(x4,h2)))));
+   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
+   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
+   t3 = _SIMD_SUB(_SIMD_MUL(t3,tau6), _SIMD_ADD( _SIMD_MUL(v3,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)))));
+   t4 = _SIMD_SUB(_SIMD_MUL(t4,tau6), _SIMD_ADD( _SIMD_MUL(v4,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)))));
 
    /////////////////////////////////////////////////////
    // Rank-1 update of Q [4 x nb+3]
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SSE_LOAD(&q[0]);
+   q1 = _SIMD_LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SSE_ADD(q1, y1);
+   q1 = _SIMD_ADD(q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SSE_SUB(q1, w1);
+   q1 = _SIMD_SUB(q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SSE_SUB(q1, t1); 
+   q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SSE_STORE(&q[0],q1);
-   q2 = _SSE_LOAD(&q[offset]);
+   _SIMD_STORE(&q[0],q1);
+   q2 = _SIMD_LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SSE_ADD(q2, y2);
+   q2 = _SIMD_ADD(q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SSE_SUB(q2, w2);
+   q2 = _SIMD_SUB(q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SSE_SUB(q2, t2);
+   q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SSE_STORE(&q[offset],q2);
-   q3 = _SSE_LOAD(&q[2*offset]);
+   _SIMD_STORE(&q[offset],q2);
+   q3 = _SIMD_LOAD(&q[2*offset]);
 #ifdef BLOCK2
-   q3 = _SSE_ADD(q3, y3);
+   q3 = _SIMD_ADD(q3, y3);
 #endif
 #ifdef BLOCK4
-   q3 = _SSE_SUB(q3, w3);
+   q3 = _SIMD_SUB(q3, w3);
 #endif
 #ifdef BLOCK6
-   q3 = _SSE_SUB(q3, t3);
+   q3 = _SIMD_SUB(q3, t3);
 #endif
-   _SSE_STORE(&q[2*offset],q3);
-   q4 = _SSE_LOAD(&q[3*offset]);
+   _SIMD_STORE(&q[2*offset],q3);
+   q4 = _SIMD_LOAD(&q[3*offset]);
 #ifdef BLOCK2
-   q4 = _SSE_ADD(q4, y4);
+   q4 = _SIMD_ADD(q4, y4);
 #endif
 #ifdef BLOCK4
-   q4 = _SSE_SUB(q4, w4);
+   q4 = _SIMD_SUB(q4, w4);
 #endif
 #ifdef BLOCK6
-   q4 = _SSE_SUB(q4, t4);
+   q4 = _SIMD_SUB(q4, t4);
 #endif
 
-   _SSE_STORE(&q[3*offset],q4);
+   _SIMD_STORE(&q[3*offset],q4);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
+#if VEC_SET == 256
+   h2 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-   _SSE_STORE(&q[ldq],q1);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-   _SSE_STORE(&q[ldq+offset],q2);
-   q3 = _SSE_LOAD(&q[ldq+2*offset]);
-   q3 = _SSE_ADD(q3, _SSE_ADD(x3, _SSE_MUL(y3, h2)));
-   _SSE_STORE(&q[ldq+2*offset],q3);
-   q4 = _SSE_LOAD(&q[ldq+3*offset]);
-   q4 = _SSE_ADD(q4, _SSE_ADD(x4, _SSE_MUL(y4, h2)));
-   _SSE_STORE(&q[ldq+3*offset],q4);
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
+   _SIMD_STORE(&q[ldq+offset],q2);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q3 = _SIMD_ADD(q3, _SIMD_FMA(y3, h2, x3));
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q4 = _SIMD_ADD(q4, _SIMD_FMA(y4, h2, x4));
+   _SIMD_STORE(&q[ldq+3*offset],q4);
+#else
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
+   _SIMD_STORE(&q[ldq+offset],q2);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q4 = _SIMD_ADD(q4, _SIMD_ADD(x4, _SIMD_MUL(y4, h2)));
+   _SIMD_STORE(&q[ldq+3*offset],q4);
+#endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q3 = _SSE_LOAD(&q[ldq+2*offset]);
-   q4 = _SSE_LOAD(&q[ldq+3*offset]);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_ADD(z1, _SSE_MUL(w1, h4)));
-   q2 = _SSE_SUB(q2, _SSE_ADD(z2, _SSE_MUL(w2, h4)));
-   q3 = _SSE_SUB(q3, _SSE_ADD(z3, _SSE_MUL(w3, h4)));
-   q4 = _SSE_SUB(q4, _SSE_ADD(z4, _SSE_MUL(w4, h4)));
+   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
+   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
+   q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
+   q4 = _SIMD_SUB(q4, _SIMD_ADD(z4, _SIMD_MUL(w4, h4)));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[ldq+offset],q2);
-   _SSE_STORE(&q[ldq+2*offset],q3);
-   _SSE_STORE(&q[ldq+3*offset],q4);
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[ldq+offset],q2);
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+   _SIMD_STORE(&q[ldq+3*offset],q4);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
-   q3 = _SSE_SUB(q3, y3);
-   q4 = _SSE_SUB(q4, y4);
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
+   q3 = _SIMD_SUB(q3, y3);
+   q4 = _SIMD_SUB(q4, y4);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
-   _SSE_STORE(&q[(ldq*2)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*2)+3*offset],q4);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
 
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
-   q3 = _SSE_SUB(q3, x3);
-   q4 = _SSE_SUB(q4, x4);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
+   q3 = _SIMD_SUB(q3, x3);
+   q4 = _SIMD_SUB(q4, x4);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-   _SSE_STORE(&q[ldq*3], q1);
-   _SSE_STORE(&q[(ldq*3)+offset], q2);
-   _SSE_STORE(&q[(ldq*3)+2*offset], q3);
-   _SSE_STORE(&q[(ldq*3)+3*offset], q4);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   _SIMD_STORE(&q[ldq*3], q1);
+   _SIMD_STORE(&q[(ldq*3)+offset], q2);
+   _SIMD_STORE(&q[(ldq*3)+2*offset], q3);
+   _SIMD_STORE(&q[(ldq*3)+3*offset], q4);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[(ldq+offset)]);
-   q3 = _SSE_LOAD(&q[(ldq+2*offset)]);
-   q4 = _SSE_LOAD(&q[(ldq+3*offset)]);
-   q1 = _SSE_SUB(q1, v1);
-   q2 = _SSE_SUB(q2, v2);
-   q3 = _SSE_SUB(q3, v3);
-   q4 = _SSE_SUB(q4, v4);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
+   q3 = _SIMD_LOAD(&q[(ldq+2*offset)]);
+   q4 = _SIMD_LOAD(&q[(ldq+3*offset)]);
+   q1 = _SIMD_SUB(q1, v1);
+   q2 = _SIMD_SUB(q2, v2);
+   q3 = _SIMD_SUB(q3, v3);
+   q4 = _SIMD_SUB(q4, v4);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[(ldq+offset)],q2);
-   _SSE_STORE(&q[(ldq+2*offset)],q3);
-   _SSE_STORE(&q[(ldq+3*offset)],q4);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[(ldq+offset)],q2);
+   _SIMD_STORE(&q[(ldq+2*offset)],q3);
+   _SIMD_STORE(&q[(ldq+3*offset)],q4);
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*2)+3*offset]);
-   q1 = _SSE_SUB(q1, w1); 
-   q2 = _SSE_SUB(q2, w2);
-   q3 = _SSE_SUB(q3, w3);
-   q4 = _SSE_SUB(q4, w4);
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5)); 
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));  
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));  
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));  
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+   q1 = _SIMD_SUB(q1, w1); 
+   q2 = _SIMD_SUB(q2, w2);
+   q3 = _SIMD_SUB(q3, w3);
+   q4 = _SIMD_SUB(q4, w4);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));  
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));  
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
-   _SSE_STORE(&q[(ldq*2)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*2)+3*offset],q4);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*3)+3*offset]);
-   q1 = _SSE_SUB(q1, z1);
-   q2 = _SSE_SUB(q2, z2);
-   q3 = _SSE_SUB(q3, z3);
-   q4 = _SSE_SUB(q4, z4);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+   q1 = _SIMD_SUB(q1, z1);
+   q2 = _SIMD_SUB(q2, z2);
+   q3 = _SIMD_SUB(q3, z3);
+   q4 = _SIMD_SUB(q4, z4);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 
-   _SSE_STORE(&q[ldq*3],q1);
-   _SSE_STORE(&q[(ldq*3)+offset],q2);
-   _SSE_STORE(&q[(ldq*3)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*3)+3*offset],q4);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*3],q1);
+   _SIMD_STORE(&q[(ldq*3)+offset],q2);
+   _SIMD_STORE(&q[(ldq*3)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*3)+3*offset],q4);
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*4]);
-   q2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*4)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*4)+3*offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
-   q3 = _SSE_SUB(q3, y3);
-   q4 = _SSE_SUB(q4, y4);
+   q1 = _SIMD_LOAD(&q[ldq*4]);
+   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
+   q3 = _SIMD_SUB(q3, y3);
+   q4 = _SIMD_SUB(q4, y4);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 
-   _SSE_STORE(&q[ldq*4],q1);
-   _SSE_STORE(&q[(ldq*4)+offset],q2);
-   _SSE_STORE(&q[(ldq*4)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*4)+3*offset],q4);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*4],q1);
+   _SIMD_STORE(&q[(ldq*4)+offset],q2);
+   _SIMD_STORE(&q[(ldq*4)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*4)+3*offset],q4);
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[(ldh)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[(ldh)+1], hh[(ldh)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*5]);
-   q2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*5)+2*offset]);
-   q4 = _SSE_LOAD(&q[(ldq*5)+3*offset]);
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
-   q3 = _SSE_SUB(q3, x3);
-   q4 = _SSE_SUB(q4, x4);
+   q1 = _SIMD_LOAD(&q[ldq*5]);
+   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
+   q3 = _SIMD_SUB(q3, x3);
+   q4 = _SIMD_SUB(q4, x4);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-   q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 
-   _SSE_STORE(&q[ldq*5],q1);
-   _SSE_STORE(&q[(ldq*5)+offset],q2);
-   _SSE_STORE(&q[(ldq*5)+2*offset],q3);
-   _SSE_STORE(&q[(ldq*5)+3*offset],q4);
+   _SIMD_STORE(&q[ldq*5],q1);
+   _SIMD_STORE(&q[(ldq*5)+offset],q2);
+   _SIMD_STORE(&q[(ldq*5)+2*offset],q3);
+   _SIMD_STORE(&q[(ldq*5)+3*offset],q4);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
      h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
      h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+    h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif
 
-     q1 = _SSE_LOAD(&q[i*ldq]);
-     q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-     q3 = _SSE_LOAD(&q[(i*ldq)+2*offset]);
-     q4 = _SSE_LOAD(&q[(i*ldq)+3*offset]);
+     q1 = _SIMD_LOAD(&q[i*ldq]);
+     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+     q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+     q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
 
 #ifdef BLOCK2
-     q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-     q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-     q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
-     q4 = _SSE_ADD(q4, _SSE_ADD(_SSE_MUL(x4,h1), _SSE_MUL(y4, h2)));
-#endif
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_FMA(x1, h1, q1);
+     q1 = _SIMD_FMA(y1, h2, q1);
+     q2 = _SIMD_FMA(x2, h1, q2);
+     q2 = _SIMD_FMA(y2, h2, q2);
+     q3 = _SIMD_FMA(x3, h1, q3);
+     q3 = _SIMD_FMA(y3, h2, q3);
+     q4 = _SIMD_FMA(x4, h1, q4);
+     q4 = _SIMD_FMA(y4, h2, q4);
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
+     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
+     q3 = _SIMD_ADD(q3, _SIMD_ADD(_SIMD_MUL(x3,h1), _SIMD_MUL(y3, h2)));
+     q4 = _SIMD_ADD(q4, _SIMD_ADD(_SIMD_MUL(x4,h1), _SIMD_MUL(y4, h2)));
+#endif /* __ELPA_USE_FMA__ */
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
      
-     q1 = _SSE_SUB(q1, _SSE_MUL(x1,h1));
-     q2 = _SSE_SUB(q2, _SSE_MUL(x2,h1));
-     q3 = _SSE_SUB(q3, _SSE_MUL(x3,h1));
-     q4 = _SSE_SUB(q4, _SSE_MUL(x4,h1));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(x3,h1));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(x4,h1));
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(y1,h2));
-     q2 = _SSE_SUB(q2, _SSE_MUL(y2,h2));
-     q3 = _SSE_SUB(q3, _SSE_MUL(y3,h2));
-     q4 = _SSE_SUB(q4, _SSE_MUL(y4,h2));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(y4,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(z1,h3));
-     q2 = _SSE_SUB(q2, _SSE_MUL(z2,h3));
-     q3 = _SSE_SUB(q3, _SSE_MUL(z3,h3));
-     q4 = _SSE_SUB(q4, _SSE_MUL(z4,h3));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(z4,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -5995,298 +6701,309 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(w1,h4));
-     q2 = _SSE_SUB(q2, _SSE_MUL(w2,h4));
-     q3 = _SSE_SUB(q3, _SSE_MUL(w3,h4));
-     q4 = _SSE_SUB(q4, _SSE_MUL(w4,h4));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(w3,h4));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(w4,h4));
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-     q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-     q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-     q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
-#ifdef HAVE_SSE_INTRINSICS
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+#if VEC_SET == 128
      h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-     q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-     q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
-     q4 = _SSE_SUB(q4, _SSE_MUL(t4, h6));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+     q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 #endif /* BLOCK6 */
 
-     _SSE_STORE(&q[i*ldq],q1);
-     _SSE_STORE(&q[(i*ldq)+offset],q2);
-     _SSE_STORE(&q[(i*ldq)+2*offset],q3);
-     _SSE_STORE(&q[(i*ldq)+3*offset],q4);
+     _SIMD_STORE(&q[i*ldq],q1);
+     _SIMD_STORE(&q[(i*ldq)+offset],q2);
+     _SIMD_STORE(&q[(i*ldq)+2*offset],q3);
+     _SIMD_STORE(&q[(i*ldq)+3*offset],q4);
 
    }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
-
-   q1 = _SSE_LOAD(&q[nb*ldq]);
-   q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[(nb*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[(nb*ldq)+3*offset]);
-
-#ifdef BLOCK2
-   q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
+#if VEC_SET == 256
+   h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-#if defined(BLOCK4) || defined(BLOCK6)
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
+   q1 = _SIMD_LOAD(&q[nb*ldq]);
+   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
 
-#ifdef HAVE_SSE_INTRINSICS
+#ifdef BLOCK2
+
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_FMA(x1, h1, q1);
+   q2 = _SIMD_FMA(x2, h1, q2);
+   q3 = _SIMD_FMA(x3, h1, q3);
+   q4 = _SIMD_FMA(x4, h1, q4);
+#else
+   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+#endif
+#endif /* BLOCK2 */
+
+#if defined(BLOCK4) || defined(BLOCK6)
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-   q4 = _SSE_SUB(q4, _SSE_MUL(v4, h5));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[nb*ldq],q1);
-   _SSE_STORE(&q[(nb*ldq)+offset],q2);
-   _SSE_STORE(&q[(nb*ldq)+2*offset],q3);
-   _SSE_STORE(&q[(nb*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[nb*ldq],q1);
+   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
+   _SIMD_STORE(&q[(nb*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[(nb*ldq)+3*offset],q4);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-2)], hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+1)*ldq)+3*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-3)], hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-   q4 = _SSE_SUB(q4, _SSE_MUL(w4, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+1)*ldq],q1);
-   _SSE_STORE(&q[((nb+1)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+1)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+1)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[(nb+1)*ldq],q1);
+   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+1)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+1)*ldq)+3*offset],q4);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-3)], hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+2)*ldq)+3*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   q4 = _SSE_SUB(q4, _SSE_MUL(z4, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
 #endif /* BLOCK6 */
-   _SSE_STORE(&q[(nb+2)*ldq],q1);
-   _SSE_STORE(&q[((nb+2)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+2)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+2)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[(nb+2)*ldq],q1);
+   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+2)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+2)*ldq)+3*offset],q4);
 
 #endif /* BLOCK4 || BLOCK6*/
 
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+3)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+3)*ldq)+3*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-   q4 = _SSE_SUB(q4, _SSE_MUL(y4, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 
-   _SSE_STORE(&q[(nb+3)*ldq],q1);
-   _SSE_STORE(&q[((nb+3)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+3)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+3)*ldq)+3*offset],q4);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[(nb+3)*ldq],q1);
+   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+3)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+3)*ldq)+3*offset],q4);
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+4)*ldq)+2*offset]);
-   q4 = _SSE_LOAD(&q[((nb+4)*ldq)+3*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
+   q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-   q4 = _SSE_SUB(q4, _SSE_MUL(x4, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
 
-   _SSE_STORE(&q[(nb+4)*ldq],q1);
-   _SSE_STORE(&q[((nb+4)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+4)*ldq)+2*offset],q3);
-   _SSE_STORE(&q[((nb+4)*ldq)+3*offset],q4);
+   _SIMD_STORE(&q[(nb+4)*ldq],q1);
+   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+4)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[((nb+4)*ldq)+3*offset],q4);
 
 #endif /* BLOCK6 */
 }
 
-
+           
 /*
  * Unrolled kernel that computes
 #ifdef DOUBLE_PRECISION_REAL
@@ -6307,15 +7024,27 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
  * vectors + a rank 1 update is performed
  */
 #endif
-#ifdef DOUBLE_PRECISION_REAL
+
+
 #undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
+#ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 6
 #endif
 #ifdef SINGLE_PRECISION_REAL
-#undef ROW_LENGTH
 #define ROW_LENGTH 12
 #endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
 
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 24
+#endif
+#endif /* VEC_SET == 256 */    
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
 #ifdef BLOCK2
                DATA_TYPE s)
@@ -6329,589 +7058,639 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
   {
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Matrix Vector Multiplication, Q [6 x nb+1] * hh
+    // Matrix Vector Multiplication, Q [ ROW_LENGTH x nb+1] * hh
     // hh contains two householder vectors, with offset 1
     /////////////////////////////////////////////////////
 #endif
 #if defined(BLOCK4) || defined(BLOCK6)
     /////////////////////////////////////////////////////
-    // Matrix Vector Multiplication, Q [6 x nb+3] * hh
+    // Matrix Vector Multiplication, Q [ ROW_LENGTH x nb+3] * hh
     // hh contains four householder vectors
     /////////////////////////////////////////////////////
 #endif
 
     int i;
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
-    __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+    __SIMD_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 #endif
-#endif
-    __SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
-    __SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE x3 = _SSE_LOAD(&q[ldq+2*offset]);
+#endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
 #endif
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#ifdef SINGLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi32(0x80000000);
 #endif
-    __SSE_DATATYPE h2;
+#endif /* VEC_SET == 256 */
 
-    __SSE_DATATYPE q1 = _SSE_LOAD(q);
-    __SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-    __SSE_DATATYPE q2 = _SSE_LOAD(&q[offset]);
-    __SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-    __SSE_DATATYPE q3 = _SSE_LOAD(&q[2*offset]);
-    __SSE_DATATYPE y3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
+    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x3 = _SIMD_LOAD(&q[ldq+2*offset]);
+
+#if VEC_SET == 128
+    __SIMD_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#endif
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#endif
+#if VEC_SET == 256
+    __SIMD_DATATYPE h1 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
+    __SIMD_DATATYPE h2;
+
+#ifdef __ELPA_USE_FMA__
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
+    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE y3 = _SIMD_FMA(x3, h1, q3);
+#else
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+#endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));                          
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));                          
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));                          
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1));
-    register __SSE_DATATYPE x1 = a1_1;                                 
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE x1 = a1_1;                                 
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*3)+offset]);                  
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
 
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE a1_3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-    __SSE_DATATYPE a2_3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-    __SSE_DATATYPE a3_3 = _SSE_LOAD(&q[ldq+2*offset]);
-    __SSE_DATATYPE a4_3 = _SSE_LOAD(&q[0+2*offset]);
+    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[0+2*offset]);
 
-    register __SSE_DATATYPE w3 = _SSE_ADD(a4_3, _SSE_MUL(a3_3, h_4_3));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a2_3, h_4_2));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a1_3, h_4_1));
-    register __SSE_DATATYPE z3 = _SSE_ADD(a3_3, _SSE_MUL(a2_3, h_3_2));
-    z3 = _SSE_ADD(z3, _SSE_MUL(a1_3, h_3_1));
-    register __SSE_DATATYPE y3 = _SSE_ADD(a2_3, _SSE_MUL(a1_3, h_2_1));
-    register __SSE_DATATYPE x3 = a1_3;
+    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE x3 = a1_3;
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
-    __SSE_DATATYPE q3;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
+    __SIMD_DATATYPE q3;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
     
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*5]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*4]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a5_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-    register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5)); 
-    t1 = _SSE_ADD(t1, _SSE_MUL(a4_1, h_6_4));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a3_1, h_6_3));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-    register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4)); 
-    v1 = _SSE_ADD(v1, _SSE_MUL(a3_1, h_5_3));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3)); 
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
 
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a5_2 = _SSE_LOAD(&q[(ldq)+offset]);
-    __SSE_DATATYPE a6_2 = _SSE_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
 
-    register __SSE_DATATYPE t2 = _SSE_ADD(a6_2, _SSE_MUL(a5_2, h_6_5));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a4_2, h_6_4));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a3_2, h_6_3));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a2_2, h_6_2));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a1_2, h_6_1));
-    register __SSE_DATATYPE v2 = _SSE_ADD(a5_2, _SSE_MUL(a4_2, h_5_4));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a3_2, h_5_3));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a2_2, h_5_2));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a1_2, h_5_1));
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
 
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE a1_3 = _SSE_LOAD(&q[(ldq*5)+2*offset]);
-    __SSE_DATATYPE a2_3 = _SSE_LOAD(&q[(ldq*4)+2*offset]);
-    __SSE_DATATYPE a3_3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-    __SSE_DATATYPE a4_3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-    __SSE_DATATYPE a5_3 = _SSE_LOAD(&q[(ldq)+2*offset]);
-    __SSE_DATATYPE a6_3 = _SSE_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a5_3 = _SIMD_LOAD(&q[(ldq)+2*offset]);
+    __SIMD_DATATYPE a6_3 = _SIMD_LOAD(&q[2*offset]);
 
-    register __SSE_DATATYPE t3 = _SSE_ADD(a6_3, _SSE_MUL(a5_3, h_6_5));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a4_3, h_6_4));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a3_3, h_6_3));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a2_3, h_6_2));
-    t3 = _SSE_ADD(t3, _SSE_MUL(a1_3, h_6_1));
-    register __SSE_DATATYPE v3 = _SSE_ADD(a5_3, _SSE_MUL(a4_3, h_5_4));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a3_3, h_5_3));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a2_3, h_5_2));
-    v3 = _SSE_ADD(v3, _SSE_MUL(a1_3, h_5_1));
-    register __SSE_DATATYPE w3 = _SSE_ADD(a4_3, _SSE_MUL(a3_3, h_4_3));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a2_3, h_4_2));
-    w3 = _SSE_ADD(w3, _SSE_MUL(a1_3, h_4_1));
-    register __SSE_DATATYPE z3 = _SSE_ADD(a3_3, _SSE_MUL(a2_3, h_3_2));
-    z3 = _SSE_ADD(z3, _SSE_MUL(a1_3, h_3_1));
-    register __SSE_DATATYPE y3 = _SSE_ADD(a2_3, _SSE_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE t3 = _SIMD_ADD(a6_3, _SIMD_MUL(a5_3, h_6_5));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a4_3, h_6_4));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a3_3, h_6_3));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a2_3, h_6_2));
+    t3 = _SIMD_ADD(t3, _SIMD_MUL(a1_3, h_6_1));
+    register __SIMD_DATATYPE v3 = _SIMD_ADD(a5_3, _SIMD_MUL(a4_3, h_5_4));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a3_3, h_5_3));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a2_3, h_5_2));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(a1_3, h_5_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
 
-    register __SSE_DATATYPE x3 = a1_3;
+    register __SIMD_DATATYPE x3 = a1_3;
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
-    __SSE_DATATYPE q3;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
+    __SIMD_DATATYPE q3;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
-    __SSE_DATATYPE h5;
-    __SSE_DATATYPE h6;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
+    __SIMD_DATATYPE h5;
+    __SIMD_DATATYPE h6;
 
 #endif /* BLOCK6 */
 
 
     for(i = BLOCK; i < nb; i++)
       {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
         h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
         h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if  VEC_SET == 256
+        h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+        h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif /*   VEC_SET == 256 */
 
-        q1 = _SSE_LOAD(&q[i*ldq]);
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-        q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-        x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-        y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-        q3 = _SSE_LOAD(&q[(i*ldq)+2*offset]);
-        x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-        y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_FMA(q1, h1, x1);
+        y1 = _SIMD_FMA(q1, h2, y1);
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_FMA(q2, h1, x2);
+        y2 = _SIMD_FMA(q2, h2, y2);
+        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        x3 = _SIMD_FMA(q3, h1, x3);
+        y3 = _SIMD_FMA(q3, h2, y3);
+#else
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+        y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-        z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-        z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-#ifdef HAVE_SSE_INTRINSICS
+        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+        z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+#if VEC_SET == 128
         h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-        w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-        w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
+        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+        w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
 	
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
-        v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-        v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-        v3 = _SSE_ADD(v3, _SSE_MUL(q3,h5));
+        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+        v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-        t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
-        t2 = _SSE_ADD(t2, _SSE_MUL(q2,h6));
-        t3 = _SSE_ADD(t3, _SSE_MUL(q3,h6));
+        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
+        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
+        t3 = _SIMD_ADD(t3, _SIMD_MUL(q3,h6));
 	
 #endif /* BLOCK6 */
       }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
+#endif
 
-    q1 = _SSE_LOAD(&q[nb*ldq]);
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    q3 = _SSE_LOAD(&q[(nb*ldq)+2*offset]);
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
+#ifdef __ELPA_USE_FMA__
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_FMA(q1, h1, x1);
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_FMA(q2, h1, x2);
+    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    x3 = _SIMD_FMA(q3, h1, x3);
+#else
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[(ldh*1)+nb-1], hh[(ldh*1)+nb-1]);
 #endif
 
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 
 #endif /* BLOCK4 */
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4)); 
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-    w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-    v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-    v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-    v3 = _SSE_ADD(v3, _SSE_MUL(q3,h5));
-#ifdef HAVE_SSE_INTRINSICS
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+    v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
-#ifdef HAVE_SSE_INTRINSICS
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
-    w3 = _SSE_ADD(w3, _SSE_MUL(q3,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
-#ifdef HAVE_SSE_INTRINSICS
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-    z3 = _SSE_ADD(z3, _SSE_MUL(q3,h3));
-#ifdef HAVE_SSE_INTRINSICS
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+3)*ldq)+2*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-    y3 = _SSE_ADD(y3, _SSE_MUL(q3,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
-    q3 = _SSE_LOAD(&q[((nb+4)*ldq)+2*offset]);
+    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+    q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-    x3 = _SSE_ADD(x3, _SSE_MUL(q3,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 #endif /* BLOCK6 */
 
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Rank-2 update of Q [6 x nb+1]
+    // Rank-2 update of Q [ ROW_LENGTH x nb+1]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK4
     /////////////////////////////////////////////////////
-    // Rank-1 update of Q [6 x nb+3]
+    // Rank-1 update of Q [ ROW_LENGTH x nb+3]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK6
@@ -6920,585 +7699,644 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
-    __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE tau1 = _SSE_SET1(hh[0]);
+    __SIMD_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
+   __SIMD_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
 #endif
 
 #ifdef BLOCK2    
-    __SSE_DATATYPE vs = _SSE_SET1(s);
+    __SIMD_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
 #endif
 #endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
-    __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+    __SIMD_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
+   __SIMD_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
 #endif
 
 #ifdef BLOCK2
-    __SSE_DATATYPE vs = _SSE_SET(s, s);
+    __SIMD_DATATYPE vs = _SSE_SET(s, s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
 
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
 #endif
 #endif /* HAVE_SPARC64_SSE */
 
-#ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-    h1 = _SSE_XOR(tau1, sign);
+#if VEC_SET == 256
+   __SIMD_DATATYPE tau1 = _SIMD_BROADCAST(hh);
+   __SIMD_DATATYPE tau2 = _SIMD_BROADCAST(&hh[ldh]);
+#if defined(BLOCK4) || defined(BLOCK6)
 #endif
-#ifdef HAVE_SPARC64_SSE
+#ifdef BLOCK6
+#endif
+
+#ifdef BLOCK2  
+   __SIMD_DATATYPE vs = _SIMD_BROADCAST(&s);
+#endif
+
+#ifdef BLOCK4
+#endif
+#ifdef BLOCK6
+#endif
+#endif /* VEC_SET == 256 */
+
+#ifdef BLOCK2
+#if VEC_SET == 128
+    h1 = _SIMD_XOR(tau1, sign);
+#endif
+#if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_XOR(tau1, sign);
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau1;
 #endif
 
-   x1 = _SSE_MUL(x1, h1);
-   x2 = _SSE_MUL(x2, h1);
-   x3 = _SSE_MUL(x3, h1);
+   x1 = _SIMD_MUL(x1, h1);
+   x2 = _SIMD_MUL(x2, h1);
+   x3 = _SIMD_MUL(x3, h1);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-   h1 = _SSE_XOR(tau2, sign);
+#if VEC_SET == 128
+   h1 = _SIMD_XOR(tau2, sign);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-   h2 = _SSE_MUL(h1, vs);
+#if VEC_SET == 256
+   h1 = _SIMD_XOR(tau2, sign);
+#endif
+   h2 = _SIMD_MUL(h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SSE_MUL(h1, vs_1_2);
+   h2 = _SIMD_MUL(h1, vs_1_2);
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
-   y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_ADD(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-   y3 = _SSE_ADD(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
+
+#ifdef __ELPA_USE_FMA__
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
+   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL(x3,h2));
+#else
+   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y3 = _SIMD_ADD(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-   y1 = _SSE_SUB(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_SUB(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-   y3 = _SSE_SUB(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
+   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y3 = _SIMD_SUB(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
 
    h1 = tau3;
-   h2 = _SSE_MUL(h1, vs_1_3);
-   h3 = _SSE_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL(h1, vs_1_3);
+   h3 = _SIMD_MUL(h1, vs_2_3);
 
-   z1 = _SSE_SUB(_SSE_MUL(z1,h1), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
-   z2 = _SSE_SUB(_SSE_MUL(z2,h1), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)));
-   z3 = _SSE_SUB(_SSE_MUL(z3,h1), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2)));
+   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
+   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
+   z3 = _SIMD_SUB(_SIMD_MUL(z3,h1), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)));
 
    h1 = tau4;
-   h2 = _SSE_MUL(h1, vs_1_4);
-   h3 = _SSE_MUL(h1, vs_2_4);
-   h4 = _SSE_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL(h1, vs_1_4);
+   h3 = _SIMD_MUL(h1, vs_2_4);
+   h4 = _SIMD_MUL(h1, vs_3_4);
 
-   w1 = _SSE_SUB(_SSE_MUL(w1,h1), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))); 
-   w2 = _SSE_SUB(_SSE_MUL(w2,h1), _SSE_ADD(_SSE_MUL(z2,h4), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-   w3 = _SSE_SUB(_SSE_MUL(w3,h1), _SSE_ADD(_SSE_MUL(z3,h4), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2))));
+   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))); 
+   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   w3 = _SIMD_SUB(_SIMD_MUL(w3,h1), _SIMD_ADD(_SIMD_MUL(z3,h4), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-   h2 = _SSE_MUL(tau5, vs_1_5); 
-   h3 = _SSE_MUL(tau5, vs_2_5);
-   h4 = _SSE_MUL(tau5, vs_3_5);
-   h5 = _SSE_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL(tau5, vs_1_5); 
+   h3 = _SIMD_MUL(tau5, vs_2_5);
+   h4 = _SIMD_MUL(tau5, vs_3_5);
+   h5 = _SIMD_MUL(tau5, vs_4_5);
 
-   v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
-   v2 = _SSE_SUB(_SSE_MUL(v2,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
-   v3 = _SSE_SUB(_SSE_MUL(v3,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w3,h5), _SSE_MUL(z3,h4)), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2))));
+   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   v3 = _SIMD_SUB(_SIMD_MUL(v3,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
 
-   h2 = _SSE_MUL(tau6, vs_1_6);
-   h3 = _SSE_MUL(tau6, vs_2_6);
-   h4 = _SSE_MUL(tau6, vs_3_6);
-   h5 = _SSE_MUL(tau6, vs_4_6);
-   h6 = _SSE_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL(tau6, vs_1_6);
+   h3 = _SIMD_MUL(tau6, vs_2_6);
+   h4 = _SIMD_MUL(tau6, vs_3_6);
+   h5 = _SIMD_MUL(tau6, vs_4_6);
+   h6 = _SIMD_MUL(tau6, vs_5_6);
 
-   t1 = _SSE_SUB(_SSE_MUL(t1,tau6), _SSE_ADD( _SSE_MUL(v1,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))));
-   t2 = _SSE_SUB(_SSE_MUL(t2,tau6), _SSE_ADD( _SSE_MUL(v2,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)))));
-   t3 = _SSE_SUB(_SSE_MUL(t3,tau6), _SSE_ADD( _SSE_MUL(v3,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w3,h5), _SSE_MUL(z3,h4)), _SSE_ADD(_SSE_MUL(y3,h3), _SSE_MUL(x3,h2)))));
+   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
+   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
+   t3 = _SIMD_SUB(_SIMD_MUL(t3,tau6), _SIMD_ADD( _SIMD_MUL(v3,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)))));
 
    /////////////////////////////////////////////////////
    // Rank-1 update of Q [4 x nb+3]
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SSE_LOAD(&q[0]);
+   q1 = _SIMD_LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SSE_ADD(q1, y1);
+   q1 = _SIMD_ADD(q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SSE_SUB(q1, w1);
+   q1 = _SIMD_SUB(q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SSE_SUB(q1, t1); 
+   q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SSE_STORE(&q[0],q1);
-   q2 = _SSE_LOAD(&q[offset]);
+   _SIMD_STORE(&q[0],q1);
+   q2 = _SIMD_LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SSE_ADD(q2, y2);
+   q2 = _SIMD_ADD(q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SSE_SUB(q2, w2);
+   q2 = _SIMD_SUB(q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SSE_SUB(q2, t2);
+   q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SSE_STORE(&q[offset],q2);
-   q3 = _SSE_LOAD(&q[2*offset]);
+   _SIMD_STORE(&q[offset],q2);
+   q3 = _SIMD_LOAD(&q[2*offset]);
 #ifdef BLOCK2
-   q3 = _SSE_ADD(q3, y3);
+   q3 = _SIMD_ADD(q3, y3);
 #endif
 #ifdef BLOCK4
-   q3 = _SSE_SUB(q3, w3);
+   q3 = _SIMD_SUB(q3, w3);
 #endif
 #ifdef BLOCK6
-   q3 = _SSE_SUB(q3, t3);
+   q3 = _SIMD_SUB(q3, t3);
 #endif
 
-   _SSE_STORE(&q[2*offset],q3);
+   _SIMD_STORE(&q[2*offset],q3);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
+#if VEC_SET == 256
+   h2 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-   _SSE_STORE(&q[ldq],q1);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-   _SSE_STORE(&q[ldq+offset],q2);
-   q3 = _SSE_LOAD(&q[ldq+2*offset]);
-   q3 = _SSE_ADD(q3, _SSE_ADD(x3, _SSE_MUL(y3, h2)));
-   _SSE_STORE(&q[ldq+2*offset],q3);
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
+   _SIMD_STORE(&q[ldq+offset],q2);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q3 = _SIMD_ADD(q3, _SIMD_FMA(y3, h2, x3));
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+#else
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
+   _SIMD_STORE(&q[ldq+offset],q2);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
+   _SIMD_STORE(&q[ldq+2*offset],q3);
+#endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q3 = _SSE_LOAD(&q[ldq+2*offset]);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_ADD(z1, _SSE_MUL(w1, h4)));
-   q2 = _SSE_SUB(q2, _SSE_ADD(z2, _SSE_MUL(w2, h4)));
-   q3 = _SSE_SUB(q3, _SSE_ADD(z3, _SSE_MUL(w3, h4)));
+   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
+   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
+   q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[ldq+offset],q2);
-   _SSE_STORE(&q[ldq+2*offset],q3);
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[ldq+offset],q2);
+   _SIMD_STORE(&q[ldq+2*offset],q3);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
-   q3 = _SSE_SUB(q3, y3);
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
+   q3 = _SIMD_SUB(q3, y3);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
-   _SSE_STORE(&q[(ldq*2)+2*offset],q3);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
-   q3 = _SSE_SUB(q3, x3);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
+   q3 = _SIMD_SUB(q3, x3);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-   _SSE_STORE(&q[ldq*3], q1);
-   _SSE_STORE(&q[(ldq*3)+offset], q2);
-   _SSE_STORE(&q[(ldq*3)+2*offset], q3);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   _SIMD_STORE(&q[ldq*3], q1);
+   _SIMD_STORE(&q[(ldq*3)+offset], q2);
+   _SIMD_STORE(&q[(ldq*3)+2*offset], q3);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[(ldq+offset)]);
-   q3 = _SSE_LOAD(&q[(ldq+2*offset)]);
-   q1 = _SSE_SUB(q1, v1);
-   q2 = _SSE_SUB(q2, v2);
-   q3 = _SSE_SUB(q3, v3);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
+   q3 = _SIMD_LOAD(&q[(ldq+2*offset)]);
+   q1 = _SIMD_SUB(q1, v1);
+   q2 = _SIMD_SUB(q2, v2);
+   q3 = _SIMD_SUB(q3, v3);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[(ldq+offset)],q2);
-   _SSE_STORE(&q[(ldq+2*offset)],q3);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[(ldq+offset)],q2);
+   _SIMD_STORE(&q[(ldq+2*offset)],q3);
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*2)+2*offset]);
-   q1 = _SSE_SUB(q1, w1); 
-   q2 = _SSE_SUB(q2, w2);
-   q3 = _SSE_SUB(q3, w3);
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5)); 
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));  
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));  
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q1 = _SIMD_SUB(q1, w1); 
+   q2 = _SIMD_SUB(q2, w2);
+   q3 = _SIMD_SUB(q3, w3);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));  
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
-   _SSE_STORE(&q[(ldq*2)+2*offset],q3);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*3)+2*offset]);
-   q1 = _SSE_SUB(q1, z1);
-   q2 = _SSE_SUB(q2, z2);
-   q3 = _SSE_SUB(q3, z3);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q1 = _SIMD_SUB(q1, z1);
+   q2 = _SIMD_SUB(q2, z2);
+   q3 = _SIMD_SUB(q3, z3);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 
-   _SSE_STORE(&q[ldq*3],q1);
-   _SSE_STORE(&q[(ldq*3)+offset],q2);
-   _SSE_STORE(&q[(ldq*3)+2*offset],q3);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*3],q1);
+   _SIMD_STORE(&q[(ldq*3)+offset],q2);
+   _SIMD_STORE(&q[(ldq*3)+2*offset],q3);
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*4]);
-   q2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*4)+2*offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
-   q3 = _SSE_SUB(q3, y3);
+   q1 = _SIMD_LOAD(&q[ldq*4]);
+   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
+   q3 = _SIMD_SUB(q3, y3);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 
-   _SSE_STORE(&q[ldq*4],q1);
-   _SSE_STORE(&q[(ldq*4)+offset],q2);
-   _SSE_STORE(&q[(ldq*4)+2*offset],q3);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*4],q1);
+   _SIMD_STORE(&q[(ldq*4)+offset],q2);
+   _SIMD_STORE(&q[(ldq*4)+2*offset],q3);
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[(ldh)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[(ldh)+1], hh[(ldh)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*5]);
-   q2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-   q3 = _SSE_LOAD(&q[(ldq*5)+2*offset]);
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
-   q3 = _SSE_SUB(q3, x3);
+   q1 = _SIMD_LOAD(&q[ldq*5]);
+   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+   q3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
+   q3 = _SIMD_SUB(q3, x3);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-   q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 
-   _SSE_STORE(&q[ldq*5],q1);
-   _SSE_STORE(&q[(ldq*5)+offset],q2);
-   _SSE_STORE(&q[(ldq*5)+2*offset],q3);
+   _SIMD_STORE(&q[ldq*5],q1);
+   _SIMD_STORE(&q[(ldq*5)+offset],q2);
+   _SIMD_STORE(&q[(ldq*5)+2*offset],q3);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
      h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
      h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+    h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif
 
-     q1 = _SSE_LOAD(&q[i*ldq]);
-     q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-     q3 = _SSE_LOAD(&q[(i*ldq)+2*offset]);
+     q1 = _SIMD_LOAD(&q[i*ldq]);
+     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+     q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
 
 #ifdef BLOCK2
-     q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-     q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-     q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
-#endif
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_FMA(x1, h1, q1);
+     q1 = _SIMD_FMA(y1, h2, q1);
+     q2 = _SIMD_FMA(x2, h1, q2);
+     q2 = _SIMD_FMA(y2, h2, q2);
+     q3 = _SIMD_FMA(x3, h1, q3);
+     q3 = _SIMD_FMA(y3, h2, q3);
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
+     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
+     q3 = _SIMD_ADD(q3, _SIMD_ADD(_SIMD_MUL(x3,h1), _SIMD_MUL(y3, h2)));
+#endif /* __ELPA_USE_FMA__ */
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
      
-     q1 = _SSE_SUB(q1, _SSE_MUL(x1,h1));
-     q2 = _SSE_SUB(q2, _SSE_MUL(x2,h1));
-     q3 = _SSE_SUB(q3, _SSE_MUL(x3,h1));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(x3,h1));
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(y1,h2));
-     q2 = _SSE_SUB(q2, _SSE_MUL(y2,h2));
-     q3 = _SSE_SUB(q3, _SSE_MUL(y3,h2));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(z1,h3));
-     q2 = _SSE_SUB(q2, _SSE_MUL(z2,h3));
-     q3 = _SSE_SUB(q3, _SSE_MUL(z3,h3));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -7506,262 +8344,272 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(w1,h4));
-     q2 = _SSE_SUB(q2, _SSE_MUL(w2,h4));
-     q3 = _SSE_SUB(q3, _SSE_MUL(w3,h4));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(w3,h4));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-     q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-     q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
-#ifdef HAVE_SSE_INTRINSICS
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+#if VEC_SET == 128
      h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-     q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
-     q3 = _SSE_SUB(q3, _SSE_MUL(t3, h6));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+     q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 #endif /* BLOCK6 */
-     _SSE_STORE(&q[i*ldq],q1);
-     _SSE_STORE(&q[(i*ldq)+offset],q2);
-     _SSE_STORE(&q[(i*ldq)+2*offset],q3);
+     _SIMD_STORE(&q[i*ldq],q1);
+     _SIMD_STORE(&q[(i*ldq)+offset],q2);
+     _SIMD_STORE(&q[(i*ldq)+2*offset],q3);
 
    }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
-
-   q1 = _SSE_LOAD(&q[nb*ldq]);
-   q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[(nb*ldq)+2*offset]);
-
-#ifdef BLOCK2
-   q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
+#if VEC_SET == 256
+   h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-#if defined(BLOCK4) || defined(BLOCK6)
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
+   q1 = _SIMD_LOAD(&q[nb*ldq]);
+   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
 
-#ifdef HAVE_SSE_INTRINSICS
+#ifdef BLOCK2
+
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_FMA(x1, h1, q1);
+   q2 = _SIMD_FMA(x2, h1, q2);
+   q3 = _SIMD_FMA(x3, h1, q3);
+#else
+   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+#endif
+#endif /* BLOCK2 */
+
+#if defined(BLOCK4) || defined(BLOCK6)
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-   q3 = _SSE_SUB(q3, _SSE_MUL(v3, h5));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[nb*ldq],q1);
-   _SSE_STORE(&q[(nb*ldq)+offset],q2);
-   _SSE_STORE(&q[(nb*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[nb*ldq],q1);
+   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
+   _SIMD_STORE(&q[(nb*ldq)+2*offset],q3);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-2)], hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+1)*ldq)+2*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-3)], hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-   q3 = _SSE_SUB(q3, _SSE_MUL(w3, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+1)*ldq],q1);
-   _SSE_STORE(&q[((nb+1)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+1)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[(nb+1)*ldq],q1);
+   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+1)*ldq)+2*offset],q3);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-3)], hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+2)*ldq)+2*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   q3 = _SSE_SUB(q3, _SSE_MUL(z3, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+2)*ldq],q1);
-   _SSE_STORE(&q[((nb+2)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+2)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[(nb+2)*ldq],q1);
+   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+2)*ldq)+2*offset],q3);
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+3)*ldq)+2*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-   q3 = _SSE_SUB(q3, _SSE_MUL(y3, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 
-   _SSE_STORE(&q[(nb+3)*ldq],q1);
-   _SSE_STORE(&q[((nb+3)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+3)*ldq)+2*offset],q3);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[(nb+3)*ldq],q1);
+   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+3)*ldq)+2*offset],q3);
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
-   q3 = _SSE_LOAD(&q[((nb+4)*ldq)+2*offset]);
+   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+   q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-   q3 = _SSE_SUB(q3, _SSE_MUL(x3, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
 
-   _SSE_STORE(&q[(nb+4)*ldq],q1);
-   _SSE_STORE(&q[((nb+4)*ldq)+offset],q2);
-   _SSE_STORE(&q[((nb+4)*ldq)+2*offset],q3);
+   _SIMD_STORE(&q[(nb+4)*ldq],q1);
+   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
+   _SIMD_STORE(&q[((nb+4)*ldq)+2*offset],q3);
 
 #endif /* BLOCK6 */
 }
@@ -7787,6 +8635,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
  * vectors + a rank 1 update is performed
  */
 #endif
+
+
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 4
@@ -7795,6 +8647,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 8
 #endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET == 256 */
 
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
 #ifdef BLOCK2
@@ -7809,512 +8671,556 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
   {
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Matrix Vector Multiplication, Q [4 x nb+1] * hh
+    // Matrix Vector Multiplication, Q [ ROW_LENGTH x nb+1] * hh
     // hh contains two householder vectors, with offset 1
     /////////////////////////////////////////////////////
 #endif
 #if defined(BLOCK4) || defined(BLOCK6)
     /////////////////////////////////////////////////////
-    // Matrix Vector Multiplication, Q [4 x nb+3] * hh
+    // Matrix Vector Multiplication, Q [ ROW_LENGTH x nb+3] * hh
     // hh contains four householder vectors
     /////////////////////////////////////////////////////
 #endif
 
     int i;
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
-    __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+    __SIMD_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 #endif
-#endif
-    __SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
-    __SSE_DATATYPE x2 = _SSE_LOAD(&q[ldq+offset]);
+#endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
 #endif
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#ifdef SINGLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi32(0x80000000);
 #endif
-    __SSE_DATATYPE h2;
+#endif /* VEC_SET == 256 */
 
-    __SSE_DATATYPE q1 = _SSE_LOAD(q);
-    __SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-    __SSE_DATATYPE q2 = _SSE_LOAD(&q[offset]);
-    __SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
+    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
+
+#if VEC_SET == 128
+    __SIMD_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#endif
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#endif
+#if VEC_SET == 256
+    __SIMD_DATATYPE h1 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
+
+    __SIMD_DATATYPE h2;
+#ifdef __ELPA_USE_FMA__
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
+#else
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+#endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));                          
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));                          
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));                          
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1));
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*3)+offset]);                  
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[ldq+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
 
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
     
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*5]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*4]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a5_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-    register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5)); 
-    t1 = _SSE_ADD(t1, _SSE_MUL(a4_1, h_6_4));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a3_1, h_6_3));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-    register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4)); 
-    v1 = _SSE_ADD(v1, _SSE_MUL(a3_1, h_5_3));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3)); 
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
 
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE a1_2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-    __SSE_DATATYPE a2_2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-    __SSE_DATATYPE a3_2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-    __SSE_DATATYPE a4_2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-    __SSE_DATATYPE a5_2 = _SSE_LOAD(&q[(ldq)+offset]);
-    __SSE_DATATYPE a6_2 = _SSE_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
 
-    register __SSE_DATATYPE t2 = _SSE_ADD(a6_2, _SSE_MUL(a5_2, h_6_5));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a4_2, h_6_4));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a3_2, h_6_3));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a2_2, h_6_2));
-    t2 = _SSE_ADD(t2, _SSE_MUL(a1_2, h_6_1));
-    register __SSE_DATATYPE v2 = _SSE_ADD(a5_2, _SSE_MUL(a4_2, h_5_4));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a3_2, h_5_3));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a2_2, h_5_2));
-    v2 = _SSE_ADD(v2, _SSE_MUL(a1_2, h_5_1));
-    register __SSE_DATATYPE w2 = _SSE_ADD(a4_2, _SSE_MUL(a3_2, h_4_3));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a2_2, h_4_2));
-    w2 = _SSE_ADD(w2, _SSE_MUL(a1_2, h_4_1));
-    register __SSE_DATATYPE z2 = _SSE_ADD(a3_2, _SSE_MUL(a2_2, h_3_2));
-    z2 = _SSE_ADD(z2, _SSE_MUL(a1_2, h_3_1));
-    register __SSE_DATATYPE y2 = _SSE_ADD(a2_2, _SSE_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
+    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
 
-    register __SSE_DATATYPE x2 = a1_2;
+    register __SIMD_DATATYPE x2 = a1_2;
 
-    __SSE_DATATYPE q1;
-    __SSE_DATATYPE q2;
+    __SIMD_DATATYPE q1;
+    __SIMD_DATATYPE q2;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
-    __SSE_DATATYPE h5;
-    __SSE_DATATYPE h6;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
+    __SIMD_DATATYPE h5;
+    __SIMD_DATATYPE h6;
 
 #endif /* BLOCK6 */
 
     for(i = BLOCK; i < nb; i++)
       {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
         h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
         h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if  VEC_SET == 256
+        h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+        h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif /*   VEC_SET == 256 */
 
-        q1 = _SSE_LOAD(&q[i*ldq]);
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-        q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-        x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-        y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_FMA(q1, h1, x1);
+        y1 = _SIMD_FMA(q1, h2, y1);
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_FMA(q2, h1, x2);
+        y2 = _SIMD_FMA(q2, h2, y2);
+#else
+
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-        z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
+        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-        w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
+        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
-        v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-        v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
+        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-        t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
-        t2 = _SSE_ADD(t2, _SSE_MUL(q2,h6));
+        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
+        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
 	
 #endif /* BLOCK6 */
       }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
+#endif
 
-    q1 = _SSE_LOAD(&q[nb*ldq]);
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
+#ifdef __ELPA_USE_FMA__
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_FMA(q1, h1, x1);
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_FMA(q2, h1, x2);
+#else
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
 
 #ifdef BLOCK4
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[(ldh*1)+nb-1], hh[(ldh*1)+nb-1]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 #endif /* BLOCK4 */
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4)); 
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-    v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-    v2 = _SSE_ADD(v2, _SSE_MUL(q2,h5));
-#ifdef HAVE_SSE_INTRINSICS
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
-#ifdef HAVE_SSE_INTRINSICS
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
-    w2 = _SSE_ADD(w2, _SSE_MUL(q2,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
-#ifdef HAVE_SSE_INTRINSICS
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-    z2 = _SSE_ADD(z2, _SSE_MUL(q2,h3));
-#ifdef HAVE_SSE_INTRINSICS
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
+    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-    y2 = _SSE_ADD(y2, _SSE_MUL(q2,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
+    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-    x2 = _SSE_ADD(x2, _SSE_MUL(q2,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 #endif /* BLOCK6 */
 
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Rank-2 update of Q [4 x nb+1]
+    // Rank-2 update of Q [ ROW_LENGTH x nb+1]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK4
     /////////////////////////////////////////////////////
-    // Rank-1 update of Q [4 x nb+3]
+    // Rank-1 update of Q [ ROW_LENGTH x nb+3]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK6
@@ -8323,516 +9229,569 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
-    __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE tau1 = _SSE_SET1(hh[0]);
+    __SIMD_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
+   __SIMD_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
 #endif
 
 #ifdef BLOCK2    
-    __SSE_DATATYPE vs = _SSE_SET1(s);
+    __SIMD_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
 #endif
 #endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
-    __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+    __SIMD_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
+   __SIMD_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
 #endif
 
 #ifdef BLOCK2
-    __SSE_DATATYPE vs = _SSE_SET(s, s);
+    __SIMD_DATATYPE vs = _SSE_SET(s, s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
 
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
 #endif
 #endif /* HAVE_SPARC64_SSE */
 
-#ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-    h1 = _SSE_XOR(tau1, sign);
+#if VEC_SET == 256
+   __SIMD_DATATYPE tau1 = _SIMD_BROADCAST(hh);
+   __SIMD_DATATYPE tau2 = _SIMD_BROADCAST(&hh[ldh]);
+#if defined(BLOCK4) || defined(BLOCK6)
 #endif
-#ifdef HAVE_SPARC64_SSE
+#ifdef BLOCK6
+#endif
+
+#ifdef BLOCK2  
+   __SIMD_DATATYPE vs = _SIMD_BROADCAST(&s);
+#endif
+
+#ifdef BLOCK4
+#endif
+#ifdef BLOCK6
+#endif
+#endif /* VEC_SET == 256 */
+
+#ifdef BLOCK2
+#if VEC_SET == 128
+    h1 = _SIMD_XOR(tau1, sign);
+#endif
+#if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_XOR(tau1, sign);
 #endif
+#endif  /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau1;
 #endif
 
-   x1 = _SSE_MUL(x1, h1);
-   x2 = _SSE_MUL(x2, h1);
+   x1 = _SIMD_MUL(x1, h1);
+   x2 = _SIMD_MUL(x2, h1);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-   h1 = _SSE_XOR(tau2, sign);
+#if VEC_SET == 128
+   h1 = _SIMD_XOR(tau2, sign);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-   h2 = _SSE_MUL(h1, vs);
+#if VEC_SET == 256
+   h1 = _SIMD_XOR(tau2, sign);
+#endif
+   h2 = _SIMD_MUL(h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SSE_MUL(h1, vs_1_2); 
+   h2 = _SIMD_MUL(h1, vs_1_2); 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
-   y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_ADD(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
+
+#ifdef __ELPA_USE_FMA__
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
+#else
+   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-   y1 = _SSE_SUB(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-   y2 = _SSE_SUB(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
+   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
 #endif
 
 #if defined(BLOCK4) || defined(BLOCK6)
 
    h1 = tau3;
-   h2 = _SSE_MUL(h1, vs_1_3);
-   h3 = _SSE_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL(h1, vs_1_3);
+   h3 = _SIMD_MUL(h1, vs_2_3);
 
-   z1 = _SSE_SUB(_SSE_MUL(z1,h1), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
-   z2 = _SSE_SUB(_SSE_MUL(z2,h1), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)));
+   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
+   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
 
    h1 = tau4;
-   h2 = _SSE_MUL(h1, vs_1_4);
-   h3 = _SSE_MUL(h1, vs_2_4);
-   h4 = _SSE_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL(h1, vs_1_4);
+   h3 = _SIMD_MUL(h1, vs_2_4);
+   h4 = _SIMD_MUL(h1, vs_3_4);
 
-   w1 = _SSE_SUB(_SSE_MUL(w1,h1), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))); 
-   w2 = _SSE_SUB(_SSE_MUL(w2,h1), _SSE_ADD(_SSE_MUL(z2,h4), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
+   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))); 
+   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SSE_MUL(tau5, vs_1_5); 
-   h3 = _SSE_MUL(tau5, vs_2_5);
-   h4 = _SSE_MUL(tau5, vs_3_5);
-   h5 = _SSE_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL(tau5, vs_1_5); 
+   h3 = _SIMD_MUL(tau5, vs_2_5);
+   h4 = _SIMD_MUL(tau5, vs_3_5);
+   h5 = _SIMD_MUL(tau5, vs_4_5);
 
-   v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
-   v2 = _SSE_SUB(_SSE_MUL(v2,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2))));
+   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
 
-   h2 = _SSE_MUL(tau6, vs_1_6);
-   h3 = _SSE_MUL(tau6, vs_2_6);
-   h4 = _SSE_MUL(tau6, vs_3_6);
-   h5 = _SSE_MUL(tau6, vs_4_6);
-   h6 = _SSE_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL(tau6, vs_1_6);
+   h3 = _SIMD_MUL(tau6, vs_2_6);
+   h4 = _SIMD_MUL(tau6, vs_3_6);
+   h5 = _SIMD_MUL(tau6, vs_4_6);
+   h6 = _SIMD_MUL(tau6, vs_5_6);
 
-   t1 = _SSE_SUB(_SSE_MUL(t1,tau6), _SSE_ADD( _SSE_MUL(v1,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))));
-   t2 = _SSE_SUB(_SSE_MUL(t2,tau6), _SSE_ADD( _SSE_MUL(v2,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w2,h5), _SSE_MUL(z2,h4)), _SSE_ADD(_SSE_MUL(y2,h3), _SSE_MUL(x2,h2)))));
+   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
+   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
 
    /////////////////////////////////////////////////////
    // Rank-1 update of Q [4 x nb+3]
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SSE_LOAD(&q[0]);
+   q1 = _SIMD_LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SSE_ADD(q1, y1);
+   q1 = _SIMD_ADD(q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SSE_SUB(q1, w1);
+   q1 = _SIMD_SUB(q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SSE_SUB(q1, t1); 
+   q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SSE_STORE(&q[0],q1);
-   q2 = _SSE_LOAD(&q[offset]);
+   _SIMD_STORE(&q[0],q1);
+   q2 = _SIMD_LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SSE_ADD(q2, y2);
+   q2 = _SIMD_ADD(q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SSE_SUB(q2, w2);
+   q2 = _SIMD_SUB(q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SSE_SUB(q2, t2);
+   q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SSE_STORE(&q[offset],q2);
+   _SIMD_STORE(&q[offset],q2);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
+#if VEC_SET == 256
+   h2 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-   _SSE_STORE(&q[ldq],q1);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
-   q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-   _SSE_STORE(&q[ldq+offset],q2);
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
+   _SIMD_STORE(&q[ldq+offset],q2);
+#else
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
+   _SIMD_STORE(&q[ldq],q1);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
+   _SIMD_STORE(&q[ldq+offset],q2);
+#endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[ldq+offset]);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[ldq+offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_ADD(z1, _SSE_MUL(w1, h4)));
-   q2 = _SSE_SUB(q2, _SSE_ADD(z2, _SSE_MUL(w2, h4)));
+   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
+   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[ldq+offset],q2);
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[ldq+offset],q2);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-   _SSE_STORE(&q[ldq*3], q1);
-   _SSE_STORE(&q[(ldq*3)+offset], q2);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   _SIMD_STORE(&q[ldq*3], q1);
+   _SIMD_STORE(&q[(ldq*3)+offset], q2);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q2 = _SSE_LOAD(&q[(ldq+offset)]);
-   q1 = _SSE_SUB(q1, v1);
-   q2 = _SSE_SUB(q2, v2);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
+   q1 = _SIMD_SUB(q1, v1);
+   q2 = _SIMD_SUB(q2, v2);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 
-   _SSE_STORE(&q[ldq],q1);
-   _SSE_STORE(&q[(ldq+offset)],q2);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[(ldq+offset)],q2);
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q2 = _SSE_LOAD(&q[(ldq*2)+offset]);
-   q1 = _SSE_SUB(q1, w1); 
-   q2 = _SSE_SUB(q2, w2);
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5)); 
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));  
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q1 = _SIMD_SUB(q1, w1); 
+   q2 = _SIMD_SUB(q2, w2);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 
-   _SSE_STORE(&q[ldq*2],q1);
-   _SSE_STORE(&q[(ldq*2)+offset],q2);
+   _SIMD_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[(ldq*2)+offset],q2);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q2 = _SSE_LOAD(&q[(ldq*3)+offset]);
-   q1 = _SSE_SUB(q1, z1);
-   q2 = _SSE_SUB(q2, z2);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q1 = _SIMD_SUB(q1, z1);
+   q2 = _SIMD_SUB(q2, z2);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 
-   _SSE_STORE(&q[ldq*3],q1);
-   _SSE_STORE(&q[(ldq*3)+offset],q2);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*3],q1);
+   _SIMD_STORE(&q[(ldq*3)+offset],q2);
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*4]);
-   q2 = _SSE_LOAD(&q[(ldq*4)+offset]);
-   q1 = _SSE_SUB(q1, y1);
-   q2 = _SSE_SUB(q2, y2);
+   q1 = _SIMD_LOAD(&q[ldq*4]);
+   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+   q1 = _SIMD_SUB(q1, y1);
+   q2 = _SIMD_SUB(q2, y2);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 
-   _SSE_STORE(&q[ldq*4],q1);
-   _SSE_STORE(&q[(ldq*4)+offset],q2);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*4],q1);
+   _SIMD_STORE(&q[(ldq*4)+offset],q2);
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[(ldh)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[(ldh)+1], hh[(ldh)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*5]);
-   q2 = _SSE_LOAD(&q[(ldq*5)+offset]);
-   q1 = _SSE_SUB(q1, x1);
-   q2 = _SSE_SUB(q2, x2);
+   q1 = _SIMD_LOAD(&q[ldq*5]);
+   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+   q1 = _SIMD_SUB(q1, x1);
+   q2 = _SIMD_SUB(q2, x2);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-   q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 
-   _SSE_STORE(&q[ldq*5],q1);
-   _SSE_STORE(&q[(ldq*5)+offset],q2);
+   _SIMD_STORE(&q[ldq*5],q1);
+   _SIMD_STORE(&q[(ldq*5)+offset],q2);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
      h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
      h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
-
-     q1 = _SSE_LOAD(&q[i*ldq]);
-     q2 = _SSE_LOAD(&q[(i*ldq)+offset]);
-
-#ifdef BLOCK2
-     q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-     q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+    h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif
 
+     q1 = _SIMD_LOAD(&q[i*ldq]);
+     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+
+#ifdef BLOCK2
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_FMA(x1, h1, q1);
+     q1 = _SIMD_FMA(y1, h2, q1);
+     q2 = _SIMD_FMA(x2, h1, q2);
+     q2 = _SIMD_FMA(y2, h2, q2);
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
+     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
+#endif /* __ELPA_USE_FMA__ */
+#endif /* BLOCK2 */
+
 #if defined(BLOCK4) || defined(BLOCK6)
-     q1 = _SSE_SUB(q1, _SSE_MUL(x1,h1));
-     q2 = _SSE_SUB(q2, _SSE_MUL(x2,h1));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(y1,h2));
-     q2 = _SSE_SUB(q2, _SSE_MUL(y2,h2));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(z1,h3));
-     q2 = _SSE_SUB(q2, _SSE_MUL(z2,h3));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -8840,232 +9799,241 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(w1,h4));
-     q2 = _SSE_SUB(q2, _SSE_MUL(w2,h4));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-     q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
-#ifdef HAVE_SSE_INTRINSICS
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+#if VEC_SET == 128
      h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
-     q2 = _SSE_SUB(q2, _SSE_MUL(t2, h6));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 #endif /* BLOCK6 */
 
-     _SSE_STORE(&q[i*ldq],q1);
-     _SSE_STORE(&q[(i*ldq)+offset],q2);
+     _SIMD_STORE(&q[i*ldq],q1);
+     _SIMD_STORE(&q[(i*ldq)+offset],q2);
 
    }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
-
-   q1 = _SSE_LOAD(&q[nb*ldq]);
-   q2 = _SSE_LOAD(&q[(nb*ldq)+offset]);
-
-#ifdef BLOCK2
-   q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
+#if VEC_SET == 256
+   h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-#if defined(BLOCK4) || defined(BLOCK6)
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
+   q1 = _SIMD_LOAD(&q[nb*ldq]);
+   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
 
-#ifdef HAVE_SSE_INTRINSICS
+#ifdef BLOCK2
+
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_FMA(x1, h1, q1);
+   q2 = _SIMD_FMA(x2, h1, q2);
+#else
+   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+#endif
+#endif /* BLOCK2 */
+
+#if defined(BLOCK4) || defined(BLOCK6)
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-   q2 = _SSE_SUB(q2, _SSE_MUL(v2, h5));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[nb*ldq],q1);
-   _SSE_STORE(&q[(nb*ldq)+offset],q2);
+   _SIMD_STORE(&q[nb*ldq],q1);
+   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-2)], hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+1)*ldq)+offset]);
+   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-3)], hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-   q2 = _SSE_SUB(q2, _SSE_MUL(w2, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 
 #endif /* BLOCK6 */
-   _SSE_STORE(&q[(nb+1)*ldq],q1);
-   _SSE_STORE(&q[((nb+1)*ldq)+offset],q2);
+   _SIMD_STORE(&q[(nb+1)*ldq],q1);
+   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-3)], hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+2)*ldq)+offset]);
+   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   q2 = _SSE_SUB(q2, _SSE_MUL(z2, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+2)*ldq],q1);
-   _SSE_STORE(&q[((nb+2)*ldq)+offset],q2);
+   _SIMD_STORE(&q[(nb+2)*ldq],q1);
+   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+3)*ldq)+offset]);
+   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-   q2 = _SSE_SUB(q2, _SSE_MUL(y2, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 
-   _SSE_STORE(&q[(nb+3)*ldq],q1);
-   _SSE_STORE(&q[((nb+3)*ldq)+offset],q2);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[(nb+3)*ldq],q1);
+   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SSE_LOAD(&q[((nb+4)*ldq)+offset]);
+   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-   q2 = _SSE_SUB(q2, _SSE_MUL(x2, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
 
-   _SSE_STORE(&q[(nb+4)*ldq],q1);
-   _SSE_STORE(&q[((nb+4)*ldq)+offset],q2);
+   _SIMD_STORE(&q[(nb+4)*ldq],q1);
+   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
 
 #endif /* BLOCK6 */
 
@@ -9094,6 +10062,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 
+#undef ROW_LENGTH
+#if  VEC_SET == 128 || VEC_SET == 1281
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 2
@@ -9102,7 +10072,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 4
 #endif
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
 
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET == 256 */
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
 #ifdef BLOCK2
                DATA_TYPE s)
@@ -9116,437 +10095,473 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
   {
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Matrix Vector Multiplication, Q [2 x nb+1] * hh
+    // Matrix Vector Multiplication, Q [ ROW_LENGTH x nb+1] * hh
     // hh contains two householder vectors, with offset 1
     /////////////////////////////////////////////////////
 #endif
 #if defined(BLOCK4) || defined(BLOCK6)
     /////////////////////////////////////////////////////
-    // Matrix Vector Multiplication, Q [2 x nb+3] * hh
+    // Matrix Vector Multiplication, Q [ ROW_LENGTH x nb+3] * hh
     // hh contains four householder vectors
     /////////////////////////////////////////////////////
 #endif
 
     int i;
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
-    __SSE_DATATYPE sign = (__SSE_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SSE_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
+    __SIMD_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 #endif
-#endif
-    __SSE_DATATYPE x1 = _SSE_LOAD(&q[ldq]);
+#endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#if  VEC_SET == 256
+#ifdef DOUBLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
 #endif
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#ifdef SINGLE_PRECISION_REAL
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi32(0x80000000);
 #endif
-    __SSE_DATATYPE h2;
+#endif /* VEC_SET == 256 */
 
-    __SSE_DATATYPE q1 = _SSE_LOAD(q);
-    __SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
+    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
+
+#if VEC_SET == 128
+    __SIMD_DATATYPE h1 = _SSE_SET1(hh[ldh+1]);
+#endif
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+#endif
+#if VEC_SET == 256
+    __SIMD_DATATYPE h1 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
+ 
+    __SIMD_DATATYPE h2;
+#ifdef __ELPA_USE_FMA__
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
+#else
+    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+#endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));                          
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));                          
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));                          
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1));
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE q1;
+    __SIMD_DATATYPE q1;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
     
-    __SSE_DATATYPE a1_1 = _SSE_LOAD(&q[ldq*5]);
-    __SSE_DATATYPE a2_1 = _SSE_LOAD(&q[ldq*4]);
-    __SSE_DATATYPE a3_1 = _SSE_LOAD(&q[ldq*3]);
-    __SSE_DATATYPE a4_1 = _SSE_LOAD(&q[ldq*2]);
-    __SSE_DATATYPE a5_1 = _SSE_LOAD(&q[ldq]);  
-    __SSE_DATATYPE a6_1 = _SSE_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_6_5 = _SSE_SET1(hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET1(hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET1(hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET1(hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
-    __SSE_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
-    __SSE_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
-    __SSE_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
-    __SSE_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_6_5 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
+    __SIMD_DATATYPE h_6_4 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
+    __SIMD_DATATYPE h_6_3 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
+    __SIMD_DATATYPE h_6_2 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
+    __SIMD_DATATYPE h_6_1 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-    register __SSE_DATATYPE t1 = _SSE_ADD(a6_1, _SSE_MUL(a5_1, h_6_5)); 
-    t1 = _SSE_ADD(t1, _SSE_MUL(a4_1, h_6_4));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a3_1, h_6_3));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a2_1, h_6_2));
-    t1 = _SSE_ADD(t1, _SSE_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
+    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_5_4 = _SSE_SET1(hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET1(hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET1(hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
-    __SSE_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
-    __SSE_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
-    __SSE_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_5_4 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
+    __SIMD_DATATYPE h_5_3 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
+    __SIMD_DATATYPE h_5_2 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
+    __SIMD_DATATYPE h_5_1 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-    register __SSE_DATATYPE v1 = _SSE_ADD(a5_1, _SSE_MUL(a4_1, h_5_4)); 
-    v1 = _SSE_ADD(v1, _SSE_MUL(a3_1, h_5_3));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a2_1, h_5_2));
-    v1 = _SSE_ADD(v1, _SSE_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_4_3 = _SSE_SET1(hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET1(hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
-    __SSE_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
-    __SSE_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_4_3 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
+    __SIMD_DATATYPE h_4_2 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
+    __SIMD_DATATYPE h_4_1 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-    register __SSE_DATATYPE w1 = _SSE_ADD(a4_1, _SSE_MUL(a3_1, h_4_3)); 
-    w1 = _SSE_ADD(w1, _SSE_MUL(a2_1, h_4_2));
-    w1 = _SSE_ADD(w1, _SSE_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
-    __SSE_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE h_2_1 = _SSE_SET1(hh[ldh+1]);    
+    __SIMD_DATATYPE h_3_2 = _SSE_SET1(hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
-    __SSE_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
-    __SSE_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE h_2_1 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
+    __SIMD_DATATYPE h_3_2 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
+    __SIMD_DATATYPE h_3_1 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-    register __SSE_DATATYPE z1 = _SSE_ADD(a3_1, _SSE_MUL(a2_1, h_3_2));
-    z1 = _SSE_ADD(z1, _SSE_MUL(a1_1, h_3_1));
-    register __SSE_DATATYPE y1 = _SSE_ADD(a2_1, _SSE_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
 
-    register __SSE_DATATYPE x1 = a1_1;
+    register __SIMD_DATATYPE x1 = a1_1;
 
-    __SSE_DATATYPE q1;
+    __SIMD_DATATYPE q1;
 
-    __SSE_DATATYPE h1;
-    __SSE_DATATYPE h2;
-    __SSE_DATATYPE h3;
-    __SSE_DATATYPE h4;
-    __SSE_DATATYPE h5;
-    __SSE_DATATYPE h6;
+    __SIMD_DATATYPE h1;
+    __SIMD_DATATYPE h2;
+    __SIMD_DATATYPE h3;
+    __SIMD_DATATYPE h4;
+    __SIMD_DATATYPE h5;
+    __SIMD_DATATYPE h6;
 
 #endif /* BLOCK6 */
 
     for(i = BLOCK; i < nb; i++)
       {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
         h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
         h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
+#if  VEC_SET == 256
+        h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+        h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
+#endif /*   VEC_SET == 256 */
 
-        q1 = _SSE_LOAD(&q[i*ldq]);
-        x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-        y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_FMA(q1, h1, x1);
+        y1 = _SIMD_FMA(q1, h2, y1);
+#else
+        q1 = _SIMD_LOAD(&q[i*ldq]);
+        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-        z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
+        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-        w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
+        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
-        v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
+        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
         h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
         h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-        t1 = _SSE_ADD(t1, _SSE_MUL(q1,h6));
+        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
 	
 #endif /* BLOCK6 */
       }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
+#endif
 
-    q1 = _SSE_LOAD(&q[nb*ldq]);
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
+#ifdef __ELPA_USE_FMA__
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_FMA(q1, h1, x1);
+#else
+    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+#endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
 
 #ifdef BLOCK4
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[(ldh*1)+nb-1], hh[(ldh*1)+nb-1]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 #endif /* BLOCK4 */
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4)); 
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-    v1 = _SSE_ADD(v1, _SSE_MUL(q1,h5));
-#ifdef HAVE_SSE_INTRINSICS
+    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-4], hh[nb-4]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
+    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
-#ifdef HAVE_SSE_INTRINSICS
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-3], hh[ldh+nb-3]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-    w1 = _SSE_ADD(w1, _SSE_MUL(q1,h4));
+    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-3], hh[nb-3]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
+    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
-#ifdef HAVE_SSE_INTRINSICS
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+#if VEC_SET == 128
     h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-    z1 = _SSE_ADD(z1, _SSE_MUL(q1,h3));
-#ifdef HAVE_SSE_INTRINSICS
+    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
+    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-    y1 = _SSE_ADD(y1, _SSE_MUL(q1,h2));
+    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
     h1 = _SSE_SET1(hh[nb-1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
     h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-    q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
+    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
 
-    x1 = _SSE_ADD(x1, _SSE_MUL(q1,h1));
+    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 #endif /* BLOCK6 */
 
 #ifdef BLOCK2
     /////////////////////////////////////////////////////
-    // Rank-2 update of Q [4 x nb+1]
+    // Rank-2 update of Q [ ROW_LENGTH x nb+1]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK4
     /////////////////////////////////////////////////////
-    // Rank-1 update of Q [4 x nb+3]
+    // Rank-1 update of Q [ ROW_LENGTH x nb+3]
     /////////////////////////////////////////////////////
 #endif
 #ifdef BLOCK6
@@ -9556,447 +10571,494 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 
-#ifdef HAVE_SSE_INTRINSICS
-    __SSE_DATATYPE tau1 = _SSE_SET1(hh[0]);
-    __SSE_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
+#if VEC_SET == 128
+    __SIMD_DATATYPE tau1 = _SSE_SET1(hh[0]);
+    __SIMD_DATATYPE tau2 = _SSE_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET1(hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET1(hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
+   __SIMD_DATATYPE tau5 = _SSE_SET1(hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET1(hh[ldh*5]);       
 #endif
 
 #ifdef BLOCK2    
-    __SSE_DATATYPE vs = _SSE_SET1(s);
+    __SIMD_DATATYPE vs = _SSE_SET1(s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(s_1_3);  
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(s_1_4);  
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(s_2_4);  
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(s_3_4);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET1(scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET1(scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET1(scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET1(scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET1(scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET1(scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET1(scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET1(scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET1(scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET1(scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET1(scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET1(scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET1(scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET1(scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET1(scalarprods[14]);
 #endif
 #endif /* HAVE_SSE_INTRINSICS */
 
-#ifdef HAVE_SPARC64_SSE
-    __SSE_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
-    __SSE_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
+#if VEC_SET == 1281
+    __SIMD_DATATYPE tau1 = _SSE_SET(hh[0], hh[0]);
+    __SIMD_DATATYPE tau2 = _SSE_SET(hh[ldh], hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
-   __SSE_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
-   __SSE_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
+   __SIMD_DATATYPE tau3 = _SSE_SET(hh[ldh*2], hh[ldh*2]);
+   __SIMD_DATATYPE tau4 = _SSE_SET(hh[ldh*3], hh[ldh*3]);
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
-   __SSE_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
+   __SIMD_DATATYPE tau5 = _SSE_SET(hh[ldh*4], hh[ldh*4]);
+   __SIMD_DATATYPE tau6 = _SSE_SET(hh[ldh*5], hh[ldh*5]);
 #endif
 
 #ifdef BLOCK2
-    __SSE_DATATYPE vs = _SSE_SET(s, s);
+    __SIMD_DATATYPE vs = _SSE_SET(s, s);
 #endif
 #ifdef BLOCK4
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(s_1_2, s_1_2);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(s_1_3, s_1_3);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(s_2_3, s_2_3);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(s_1_4, s_1_4);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(s_2_4, s_2_4);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(s_3_4, s_3_4);
 
 #endif
 #ifdef BLOCK6
-   __SSE_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
-   __SSE_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
-   __SSE_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
-   __SSE_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
-   __SSE_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
-   __SSE_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
-   __SSE_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
-   __SSE_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
-   __SSE_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
-   __SSE_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
-   __SSE_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
-   __SSE_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
-   __SSE_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
-   __SSE_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
-   __SSE_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
+   __SIMD_DATATYPE vs_1_2 = _SSE_SET(scalarprods[0], scalarprods[0]);
+   __SIMD_DATATYPE vs_1_3 = _SSE_SET(scalarprods[1], scalarprods[1]);
+   __SIMD_DATATYPE vs_2_3 = _SSE_SET(scalarprods[2], scalarprods[2]);
+   __SIMD_DATATYPE vs_1_4 = _SSE_SET(scalarprods[3], scalarprods[3]);
+   __SIMD_DATATYPE vs_2_4 = _SSE_SET(scalarprods[4], scalarprods[4]);
+   __SIMD_DATATYPE vs_3_4 = _SSE_SET(scalarprods[5], scalarprods[5]);
+   __SIMD_DATATYPE vs_1_5 = _SSE_SET(scalarprods[6], scalarprods[6]);
+   __SIMD_DATATYPE vs_2_5 = _SSE_SET(scalarprods[7], scalarprods[7]);
+   __SIMD_DATATYPE vs_3_5 = _SSE_SET(scalarprods[8], scalarprods[8]);
+   __SIMD_DATATYPE vs_4_5 = _SSE_SET(scalarprods[9], scalarprods[9]);
+   __SIMD_DATATYPE vs_1_6 = _SSE_SET(scalarprods[10], scalarprods[10]);
+   __SIMD_DATATYPE vs_2_6 = _SSE_SET(scalarprods[11], scalarprods[11]);
+   __SIMD_DATATYPE vs_3_6 = _SSE_SET(scalarprods[12], scalarprods[12]);
+   __SIMD_DATATYPE vs_4_6 = _SSE_SET(scalarprods[13], scalarprods[13]);
+   __SIMD_DATATYPE vs_5_6 = _SSE_SET(scalarprods[14], scalarprods[14]);
 #endif
 #endif /* HAVE_SPARC64_SSE */
 
-#ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-    h1 = _SSE_XOR(tau1, sign);
+#if VEC_SET == 256
+   __SIMD_DATATYPE tau1 = _SIMD_BROADCAST(hh);
+   __SIMD_DATATYPE tau2 = _SIMD_BROADCAST(&hh[ldh]);
+#if defined(BLOCK4) || defined(BLOCK6)
 #endif
-#ifdef HAVE_SPARC64_SSE
+#ifdef BLOCK6
+#endif
+
+#ifdef BLOCK2  
+   __SIMD_DATATYPE vs = _SIMD_BROADCAST(&s);
+#endif
+
+#ifdef BLOCK4
+#endif
+#ifdef BLOCK6
+#endif
+#endif /* VEC_SET == 256 */
+
+#ifdef BLOCK2
+#if VEC_SET == 128
+    h1 = _SIMD_XOR(tau1, sign);
+#endif
+#if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
+#if VEC_SET == 256
+    h1 = _SIMD_XOR(tau1, sign);
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau1;
 #endif
 
-   x1 = _SSE_MUL(x1, h1);
+   x1 = _SIMD_MUL(x1, h1);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
-   h1 = _SSE_XOR(tau2, sign);
+#if VEC_SET == 128
+   h1 = _SIMD_XOR(tau2, sign);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-   h2 = _SSE_MUL(h1, vs);
+#if VEC_SET == 256
+   h1 = _SIMD_XOR(tau2, sign);
+#endif
+   h2 = _SIMD_MUL(h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SSE_MUL(h1, vs_1_2); 
+   h2 = _SIMD_MUL(h1, vs_1_2); 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
-   y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
+
+#ifdef __ELPA_USE_FMA__
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
+#else
+   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
 #endif
+#endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-   y1 = _SSE_SUB(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
+   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
 #endif
 
 #if defined(BLOCK4) || defined(BLOCK6)
 
    h1 = tau3;
-   h2 = _SSE_MUL(h1, vs_1_3);
-   h3 = _SSE_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL(h1, vs_1_3);
+   h3 = _SIMD_MUL(h1, vs_2_3);
 
-   z1 = _SSE_SUB(_SSE_MUL(z1,h1), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)));
+   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
 
    h1 = tau4;
-   h2 = _SSE_MUL(h1, vs_1_4);
-   h3 = _SSE_MUL(h1, vs_2_4);
-   h4 = _SSE_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL(h1, vs_1_4);
+   h3 = _SIMD_MUL(h1, vs_2_4);
+   h4 = _SIMD_MUL(h1, vs_3_4);
 
-   w1 = _SSE_SUB(_SSE_MUL(w1,h1), _SSE_ADD(_SSE_MUL(z1,h4), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))); 
+   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))); 
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SSE_MUL(tau5, vs_1_5); 
-   h3 = _SSE_MUL(tau5, vs_2_5);
+   h2 = _SIMD_MUL(tau5, vs_1_5); 
+   h3 = _SIMD_MUL(tau5, vs_2_5);
 
-   h4 = _SSE_MUL(tau5, vs_3_5);
-   h5 = _SSE_MUL(tau5, vs_4_5);
+   h4 = _SIMD_MUL(tau5, vs_3_5);
+   h5 = _SIMD_MUL(tau5, vs_4_5);
 
-   v1 = _SSE_SUB(_SSE_MUL(v1,tau5), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2))));
+   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
 
-   h2 = _SSE_MUL(tau6, vs_1_6);
-   h3 = _SSE_MUL(tau6, vs_2_6);
-   h4 = _SSE_MUL(tau6, vs_3_6);
-   h5 = _SSE_MUL(tau6, vs_4_6);
-   h6 = _SSE_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL(tau6, vs_1_6);
+   h3 = _SIMD_MUL(tau6, vs_2_6);
+   h4 = _SIMD_MUL(tau6, vs_3_6);
+   h5 = _SIMD_MUL(tau6, vs_4_6);
+   h6 = _SIMD_MUL(tau6, vs_5_6);
 
-   t1 = _SSE_SUB(_SSE_MUL(t1,tau6), _SSE_ADD( _SSE_MUL(v1,h6), _SSE_ADD(_SSE_ADD(_SSE_MUL(w1,h5), _SSE_MUL(z1,h4)), _SSE_ADD(_SSE_MUL(y1,h3), _SSE_MUL(x1,h2)))));
+   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
 
    /////////////////////////////////////////////////////
    // Rank-1 update of Q [4 x nb+3]
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SSE_LOAD(&q[0]);
+   q1 = _SIMD_LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SSE_ADD(q1, y1);
+   q1 = _SIMD_ADD(q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SSE_SUB(q1, w1);
+   q1 = _SIMD_SUB(q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SSE_SUB(q1, t1); 
+   q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SSE_STORE(&q[0],q1);
+   _SIMD_STORE(&q[0],q1);
 
 #ifdef BLOCK2
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
+#if VEC_SET == 256
+   h2 = _SIMD_BROADCAST(&hh[ldh+1]);
+#endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-   _SSE_STORE(&q[ldq],q1);
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
+   _SIMD_STORE(&q[ldq],q1);
+#else
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
+   _SIMD_STORE(&q[ldq],q1);
+#endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
+   q1 = _SIMD_LOAD(&q[ldq]);
 
-   q1 = _SSE_SUB(q1, _SSE_ADD(z1, _SSE_MUL(w1, h4)));
+   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
 
-   _SSE_STORE(&q[ldq],q1);
+   _SIMD_STORE(&q[ldq],q1);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q1 = _SSE_SUB(q1, y1);
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q1 = _SIMD_SUB(q1, y1);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
 
-   _SSE_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[ldq*2],q1);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q1 = _SSE_SUB(q1, x1);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q1 = _SIMD_SUB(q1, x1);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+1], hh[ldh+1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-   _SSE_STORE(&q[ldq*3], q1);
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   _SIMD_STORE(&q[ldq*3], q1);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+1], hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq]);
-   q1 = _SSE_SUB(q1, v1);
+   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _SIMD_SUB(q1, v1);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 
-   _SSE_STORE(&q[ldq],q1);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq],q1);
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+1], hh[(ldh*4)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*2]);
-   q1 = _SSE_SUB(q1, w1); 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5)); 
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q1 = _SIMD_SUB(q1, w1); 
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+2], hh[(ldh*5)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 
-   _SSE_STORE(&q[ldq*2],q1);
+   _SIMD_STORE(&q[ldq*2],q1);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+1]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+1], hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[ldq*3]);
-   q1 = _SSE_SUB(q1, z1);
+   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q1 = _SIMD_SUB(q1, z1);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+2], hh[(ldh*4)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+3], hh[(ldh*5)+3]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 
-   _SSE_STORE(&q[ldq*3],q1);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*3],q1);
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+1], hh[(ldh*2)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*4]);
-   q1 = _SSE_SUB(q1, y1);
+   q1 = _SIMD_LOAD(&q[ldq*4]);
+   q1 = _SIMD_SUB(q1, y1);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+2], hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+3], hh[(ldh*4)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+4], hh[(ldh*5)+4]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 
-   _SSE_STORE(&q[ldq*4],q1);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[ldq*4],q1);
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[(ldh)+1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[(ldh)+1], hh[(ldh)+1]);
 #endif
-   q1 = _SSE_LOAD(&q[ldq*5]);
-   q1 = _SSE_SUB(q1, x1);
+   q1 = _SIMD_LOAD(&q[ldq*5]);
+   q1 = _SIMD_SUB(q1, x1);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+2], hh[(ldh*2)+2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+3]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+3], hh[(ldh*3)+3]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+4]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+4], hh[(ldh*4)+4]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+#if VEC_SET == 128
    h6 = _SSE_SET1(hh[(ldh*5)+5]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h6 = _SSE_SET(hh[(ldh*5)+5], hh[(ldh*5)+5]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 
-   _SSE_STORE(&q[ldq*5],q1);
+   _SIMD_STORE(&q[ldq*5],q1);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h1 = _SSE_SET1(hh[i-(BLOCK-1)]);
      h2 = _SSE_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h1 = _SSE_SET(hh[i-(BLOCK-1)], hh[i-(BLOCK-1)]);
      h2 = _SSE_SET(hh[ldh+i-(BLOCK-2)], hh[ldh+i-(BLOCK-2)]);
 #endif
-
-     q1 = _SSE_LOAD(&q[i*ldq]);
-
-#ifdef BLOCK2
-     q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
+#if VEC_SET == 256
+    h1 = _SIMD_BROADCAST(&hh[i-(BLOCK-1)]);
+    h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif
 
+     q1 = _SIMD_LOAD(&q[i*ldq]);
+
+#ifdef BLOCK2
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_FMA(x1, h1, q1);
+     q1 = _SIMD_FMA(y1, h2, q1);
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
+#endif /* __ELPA_USE_FMA__ */
+#endif /* BLOCK2 */
+
 #if defined(BLOCK4) || defined(BLOCK6)
-     q1 = _SSE_SUB(q1, _SSE_MUL(x1,h1));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(y1,h2));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h3 = _SSE_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h3 = _SSE_SET(hh[(ldh*2)+i-(BLOCK-3)], hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(z1,h3));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h4 = _SSE_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -10004,204 +11066,214 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      h4 = _SSE_SET(hh[(ldh*3)+i-(BLOCK-4)], hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(w1,h4));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
      h5 = _SSE_SET1(hh[(ldh*4)+i-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h5 = _SSE_SET(hh[(ldh*4)+i-1], hh[(ldh*4)+i-1]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
-#ifdef HAVE_SSE_INTRINSICS
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+#if VEC_SET == 128
      h6 = _SSE_SET1(hh[(ldh*5)+i]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
      h6 = _SSE_SET(hh[(ldh*5)+i], hh[(ldh*5)+i]);
 #endif
 
-     q1 = _SSE_SUB(q1, _SSE_MUL(t1, h6));
+     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 #endif /* BLOCK6 */
 
-     _SSE_STORE(&q[i*ldq],q1);
+     _SIMD_STORE(&q[i*ldq],q1);
 
    }
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-1)]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-1)], hh[nb-(BLOCK-1)]);
 #endif
-
-   q1 = _SSE_LOAD(&q[nb*ldq]);
-
-#ifdef BLOCK2
-   q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
+#if VEC_SET == 256
+   h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-#if defined(BLOCK4) || defined(BLOCK6)
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
+   q1 = _SIMD_LOAD(&q[nb*ldq]);
 
-#ifdef HAVE_SSE_INTRINSICS
+#ifdef BLOCK2
+
+#ifdef __ELPA_USE_FMA__
+   q1 = _SIMD_FMA(x1, h1, q1);
+#else
+   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+#endif
+#endif /* BLOCK2 */
+
+#if defined(BLOCK4) || defined(BLOCK6)
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-2)], hh[ldh+nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-(BLOCK-3)], hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-2], hh[(ldh*3)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+#if VEC_SET == 128
    h5 = _SSE_SET1(hh[(ldh*4)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h5 = _SSE_SET(hh[(ldh*4)+nb-1], hh[(ldh*4)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(v1, h5));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[nb*ldq],q1);
+   _SIMD_STORE(&q[nb*ldq],q1);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-2)], hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+1)*ldq]);
+   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-(BLOCK-3)], hh[ldh+nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-2], hh[(ldh*2)+nb-2]);
 #endif
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+#if VEC_SET == 128
    h4 = _SSE_SET1(hh[(ldh*3)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h4 = _SSE_SET(hh[(ldh*3)+nb-1], hh[(ldh*3)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(w1, h4));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 
 #endif /* BLOCK6 */
-   _SSE_STORE(&q[(nb+1)*ldq],q1);
+   _SIMD_STORE(&q[(nb+1)*ldq],q1);
 
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-(BLOCK-3)], hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+2)*ldq]);
+   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-2], hh[ldh+nb-2]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+#if VEC_SET == 128
    h3 = _SSE_SET1(hh[(ldh*2)+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h3 = _SSE_SET(hh[(ldh*2)+nb-1], hh[(ldh*2)+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(z1, h3));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
 #endif /* BLOCK6 */
 
-   _SSE_STORE(&q[(nb+2)*ldq],q1);
+   _SIMD_STORE(&q[(nb+2)*ldq],q1);
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#ifdef HAVE_SSE_INTRINSICS
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-2]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-2], hh[nb-2]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+3)*ldq]);
+   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
-#ifdef HAVE_SSE_INTRINSICS
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+#if VEC_SET == 128
    h2 = _SSE_SET1(hh[ldh+nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h2 = _SSE_SET(hh[ldh+nb-1], hh[ldh+nb-1]);
 #endif
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(y1, h2));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 
-   _SSE_STORE(&q[(nb+3)*ldq],q1);
-#ifdef HAVE_SSE_INTRINSICS
+   _SIMD_STORE(&q[(nb+3)*ldq],q1);
+#if VEC_SET == 128
    h1 = _SSE_SET1(hh[nb-1]);
 #endif
-#ifdef HAVE_SPARC64_SSE
+#if VEC_SET == 1281
    h1 = _SSE_SET(hh[nb-1], hh[nb-1]);
 #endif
 
-   q1 = _SSE_LOAD(&q[(nb+4)*ldq]);
+   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
 
-   q1 = _SSE_SUB(q1, _SSE_MUL(x1, h1));
+   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
 
-   _SSE_STORE(&q[(nb+4)*ldq],q1);
+   _SIMD_STORE(&q[(nb+4)*ldq],q1);
 
 #endif /* BLOCK6 */
 
 }
 
+#undef SIMD_SET
+#undef OFFSET

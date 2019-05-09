@@ -149,37 +149,6 @@ void double_hh_trafo_real_avx_avx2_2hv_single(float* q, float* hh, int* pnb, int
 #endif
 
 #ifdef DOUBLE_PRECISION_REAL
-/*
-!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
-!f> interface
-!f>   subroutine double_hh_trafo_real_avx_avx2_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
-!f>                             bind(C, name="double_hh_trafo_real_avx_avx2_2hv_double")
-!f>     use, intrinsic :: iso_c_binding
-!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
-!f>     type(c_ptr), value      :: q
-!f>     real(kind=c_double)     :: hh(pnb,6)
-!f>   end subroutine
-!f> end interface
-!f>#endif
-*/
-#endif
-#ifdef SINGLE_PRECISION_REAL
-/*
-!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
-!f> interface
-!f>   subroutine double_hh_trafo_real_avx_avx2_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
-!f>                             bind(C, name="double_hh_trafo_real_avx_avx2_2hv_single")
-!f>     use, intrinsic :: iso_c_binding
-!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
-!f>     type(c_ptr), value      :: q
-!f>     real(kind=c_float)      :: hh(pnb,6)
-!f>   end subroutine
-!f> end interface
-!f>#endif
-*/
-#endif
-
-#ifdef DOUBLE_PRECISION_REAL
 void double_hh_trafo_real_avx_avx2_2hv_double(double* q, double* hh, int* pnb, int* pnq, int* pldq, int* pldh)
 #endif
 #ifdef SINGLE_PRECISION_REAL
