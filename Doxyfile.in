@@ -939,7 +939,6 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/elpa2/kernels/complex_avx512_1hv_template.c \
 			@top_srcdir@/src/elpa2/kernels/real_sse_2hv_double_precision.c \
 			@top_srcdir@/src/elpa2/kernels/complex_sse_2hv_double_precision.c \
-			@top_srcdir@/src/elpa2/kernels/real_avx-avx2_4hv_template.c \
 			@top_srcdir@/src/elpa2/kernels/real_bgp.f90 \
 			@top_srcdir@/src/elpa2/kernels/real_sse_4hv_double_precision.c \
 			@top_srcdir@/src/elpa2/kernels/real_avx512_6hv_double_precision.c \
