@@ -530,7 +530,7 @@ dnl Test possibility of 'use mpi', if requested
 if test x"${with_mpi}" = x"yes" ; then
   AC_ARG_ENABLE([mpi-module],
                 AS_HELP_STRING([--disable-mpi-module],
-                               [do not use the Fortran MPI module, get interfaces by 'include "mpif.h')]),
+                               [do not use the Fortran MPI module, get interfaces by 'include "mpif.h']),
                 [
                  if test x"$enableval" = x"yes"; then
                    enable_mpi_module=yes
