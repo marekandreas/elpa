@@ -3665,7 +3665,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(t3, h6, q3);
    q4 = _SIMD_NFMA(t4, h6, q4);
    q5 = _SIMD_NFMA(t5, h6, q5);
-   q6 = _SIMD_NFMA(t6, h6, q46);
+   q6 = _SIMD_NFMA(t6, h6, q6);
 #else
    q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
    q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
@@ -6347,8 +6347,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
    _SIMD_STORE(&q[4*offset],q5);
 
-#ifdef BLOCK2 || VEC_SET == 512
-#if VEC_SET == 128
+#ifdef BLOCK2
+#if VEC_SET == 128 || VEC_SET == 512
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -12041,7 +12041,6 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(v1, h5, q1);
    q2 = _SIMD_NFMA(v2, h5, q2);
    q3 = _SIMD_NFMA(v3, h5, q3);
-   q4 = _SIMD_NFMA(v4, h5, q4);
 #else
    q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
    q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
@@ -12855,7 +12854,6 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(y1, h2, q1);
    q2 = _SIMD_NFMA(y2, h2, q2);
    q3 = _SIMD_NFMA(y3, h2, q3);
-   q4 = _SIMD_NFMA(y4, h2, q4);
 #else
    q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
    q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
