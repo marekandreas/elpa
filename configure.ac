@@ -995,7 +995,7 @@ if test x"${need_avx512}" = x"yes"; then
 
   if test x"$can_compile_avx512" = x"yes"; then
     AC_MSG_CHECKING([whether we compile for Xeon])
-    AC_RUN_IFELSE([AC_LANG_SOURCE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
      #include <x86intrin.h>
      int main(int argc, char **argv){
      __m512d sign;
@@ -1011,7 +1011,7 @@ if test x"${need_avx512}" = x"yes"; then
     AC_MSG_RESULT([${can_compile_avx512_xeon}])
 
     AC_MSG_CHECKING([whether we compile for Xeon PHI])
-    AC_RUN_IFELSE([AC_LANG_SOURCE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
      #include <x86intrin.h>
      int main(int argc, char **argv){
      __m512d sign;
