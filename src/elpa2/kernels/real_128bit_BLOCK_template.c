@@ -102,6 +102,11 @@
 #define SIMD_SET AVX_AVX2
 #endif
 
+#if VEC_SET == 512
+#define SIMD_SET AVX512
+#endif
+
+
 #define __forceinline __attribute__((always_inline)) static
 
 #if VEC_SET == 128 || VEC_SET == 1281
@@ -1441,7 +1446,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if  VEC_SET == 512
 #ifdef DOUBLE_PRECISION_REAL
-        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64x(0x8000000000000000);
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
@@ -4755,7 +4760,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if  VEC_SET == 512
 #ifdef DOUBLE_PRECISION_REAL
-        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64x(0x8000000000000000);
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
@@ -7787,7 +7792,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if  VEC_SET == 512
 #ifdef DOUBLE_PRECISION_REAL
-        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64x(0x8000000000000000);
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
@@ -10513,7 +10518,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if  VEC_SET == 512
 #ifdef DOUBLE_PRECISION_REAL
-        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64x(0x8000000000000000);
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
@@ -12960,7 +12965,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if  VEC_SET == 512
 #ifdef DOUBLE_PRECISION_REAL
-        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64x(0x8000000000000000);
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
@@ -15128,7 +15133,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if  VEC_SET == 512
 #ifdef DOUBLE_PRECISION_REAL
-        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64x(0x8000000000000000);
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
