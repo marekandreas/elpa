@@ -48,8 +48,12 @@
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
+#define VEC_SET 512
+#define BLOCK6 1
 #include "../../general/precision_macros.h"
-#include "real_avx512_6hv_template.c"
+#include "real_128bit_BLOCK_template.c"
+#undef BLOCK6
+#undef VEC_SET
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
