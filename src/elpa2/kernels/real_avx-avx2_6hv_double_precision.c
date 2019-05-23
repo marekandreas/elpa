@@ -51,7 +51,7 @@
 #define BLOCK6 1
 #define VEC_SET 256
 #include "../../general/precision_macros.h"
-#include "real_128bit_BLOCK_template.c"
+#include "real_128bit_256bit_512bit_BLOCK_template.c"
 #undef REALCASE
 #undef BLOCK6
 #undef VEC_SET
