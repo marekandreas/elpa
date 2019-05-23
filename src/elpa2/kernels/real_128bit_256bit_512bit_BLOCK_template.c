@@ -72,6 +72,10 @@
 #include <fjmfunc.h>
 #include <emmintrin.h>
 #endif
+#if VEC_SET == 1282
+#include <altivec.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -96,6 +100,10 @@
 
 #if VEC_SET == 1281
 #define SIMD_SET SPARC64
+#endif
+
+#if VEC_SET == 1282
+#define SIMD_SET VSX
 #endif
 
 #if VEC_SET == 256
@@ -138,6 +146,27 @@
 #endif 
 #endif /* SINGLE_PRECISION_REAL */
 #endif /* VEC_SET == 128 || VEC_SET == 1281 */
+
+#if VEC_SET == 1282
+
+#ifdef DOUBLE_PRECISION_REAL
+#define offset 2
+#define __SIMD_DATATYPE __vector double
+#define __SIMD_LOAD (__vector double) vec_ld
+#endif
+
+#ifdef SINGLE_PRECISION_REAL
+#define offset 4
+#define __SIMD_DATATYPE __vector float
+#define _SIMD_LOAD  (__vector float) vec_ld
+#endif
+
+#define _SIMD_STORE vec_st
+#define _SIMD_ADD vec_add
+#define _SIMD_MUL vec_mul
+#define _SIMD_SET1 vec_splats
+
+#endif /*  VEC_SET == 1281 */
 
 #if VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -274,6 +303,24 @@
 
 #if VEC_SET == 128
 #undef __AVX__
+#endif
+
+#if VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 256 || VEC_SET == 512
+#undef _LOAD
+#undef _STORE
+#undef _XOR
+#define _LOAD(x) _SIMD_LOAD(x)
+#define _STORE(a, b) _SIMD_STORE(a, b)
+#define _XOR(a, b) _SIMD_XOR(a, b)
+#endif
+
+#if VEC_SET == 1282
+#undef _LOAD
+#undef _STORE
+#undef _XOR
+#define _LOAD(x) _SIMD_LOAD(0, (unsigned long int *) x)
+#define _STORE(a, b) _SIMD_STORE((__vector unsigned int) b, 0, (unsigned int *) a)
+#define _XOR(a, b) vec_mul(b, a)
 #endif
 
 
@@ -596,6 +643,35 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 !f> end interface
 !f>#endif
 */
+
+/*
+!f>#ifdef HAVE_VSX_SSE
+!f> interface
+!f>   subroutine double_hh_trafo_real_VSX_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="double_hh_trafo_real_VSX_2hv_double")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int) :: pnb, pnq, pldq, pldh
+!f>        type(c_ptr), value  :: q
+!f>        real(kind=c_double) :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#ifdef HAVE_VSX_SSE
+!f> interface
+!f>   subroutine double_hh_trafo_real_VSX_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="double_hh_trafo_real_VSX_2hv_single")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
+!f>        type(c_ptr), value        :: q
+!f>        real(kind=c_float)        :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
 
 /*
 !f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
@@ -1035,7 +1111,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
   // Production level kernel calls with padding
 #ifdef BLOCK2
 
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282
 #ifdef DOUBLE_PRECISION_REAL
 #define STEP_SIZE 12
 #define ROW_LENGTH 12
@@ -1046,7 +1122,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define ROW_LENGTH 24
 #define UPPER_BOUND 20
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -1087,14 +1163,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
     }
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 10
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 20
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -1121,14 +1197,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
     }
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281  || VEC_SET == 1282 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -1156,14 +1232,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
     }
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 6
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 12
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -1191,14 +1267,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #if VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 256
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -1217,14 +1293,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
     }
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 2
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -1241,7 +1317,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
       worked_on += ROW_LENGTH;
     }
 
-#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 256 */
+#endif /* VEC_SET == 128 || VEC_SET == 1281  || VEC_SET == 1282 || VEC_SET == 256 */
 
 #endif /* BLOCK2 */
 
@@ -1601,6 +1677,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 128 */
 
+#ifdef VEC_SET == 1282
+    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+#endif
+
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -1619,14 +1699,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 512 */
 
-    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
-    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE x3 = _SIMD_LOAD(&q[ldq+2*offset]);
-    __SIMD_DATATYPE x4 = _SIMD_LOAD(&q[ldq+3*offset]);
-    __SIMD_DATATYPE x5 = _SIMD_LOAD(&q[ldq+4*offset]);
-    __SIMD_DATATYPE x6 = _SIMD_LOAD(&q[ldq+5*offset]);
+    __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE x4 = _LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE x5 = _LOAD(&q[ldq+4*offset]);
+    __SIMD_DATATYPE x6 = _LOAD(&q[ldq+5*offset]);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -1638,41 +1718,41 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
  
     __SIMD_DATATYPE h2;
 #ifdef __ELPA_USE_FMA__
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
     __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
-    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
     __SIMD_DATATYPE y3 = _SIMD_FMA(x3, h1, q3);
-    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
     __SIMD_DATATYPE y4 = _SIMD_FMA(x4, h1, q4);
-    __SIMD_DATATYPE q5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE q5 = _LOAD(&q[4*offset]);
     __SIMD_DATATYPE y5 = _SIMD_FMA(x5, h1, q5);
-    __SIMD_DATATYPE q6 = _SIMD_LOAD(&q[5*offset]);
+    __SIMD_DATATYPE q6 = _LOAD(&q[5*offset]);
     __SIMD_DATATYPE y6 = _SIMD_FMA(x6, h1, q6);
 #else
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
     __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
-    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
     __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
-    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
     __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
-    __SIMD_DATATYPE q5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE q5 = _LOAD(&q[4*offset]);
     __SIMD_DATATYPE y5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
-    __SIMD_DATATYPE q6 = _SIMD_LOAD(&q[5*offset]);
+    __SIMD_DATATYPE q6 = _LOAD(&q[5*offset]);
     __SIMD_DATATYPE y6 = _SIMD_ADD(q6, _SIMD_MUL(x6, h1));
 #endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -1717,10 +1797,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[0+offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w2 = _SIMD_FMA(a3_2, h_4_3, a4_2);
@@ -1740,10 +1820,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[ldq+2*offset]);
-    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[0+2*offset]);
+    __SIMD_DATATYPE a1_3 = _LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE a4_3 = _LOAD(&q[0+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w3 = _SIMD_FMA(a3_3, h_4_3, a4_3);
@@ -1763,10 +1843,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x3 = a1_3;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[ldq+3*offset]);
-    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[0+3*offset]);
+    __SIMD_DATATYPE a1_4 = _LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE a4_4 = _LOAD(&q[0+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w4 = _SIMD_FMA(a3_4, h_4_3, a4_4);
@@ -1786,10 +1866,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x4 = a1_4;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
-    __SIMD_DATATYPE a2_5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
-    __SIMD_DATATYPE a3_5 = _SIMD_LOAD(&q[ldq+4*offset]);
-    __SIMD_DATATYPE a4_5 = _SIMD_LOAD(&q[0+4*offset]);
+    __SIMD_DATATYPE a1_5 = _LOAD(&q[(ldq*3)+4*offset]);
+    __SIMD_DATATYPE a2_5 = _LOAD(&q[(ldq*2)+4*offset]);
+    __SIMD_DATATYPE a3_5 = _LOAD(&q[ldq+4*offset]);
+    __SIMD_DATATYPE a4_5 = _LOAD(&q[0+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w5 = _SIMD_FMA(a3_5, h_4_3, a4_5);
@@ -1809,10 +1889,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x5 = a1_5;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_6 = _SIMD_LOAD(&q[(ldq*3)+5*offset]);
-    __SIMD_DATATYPE a2_6 = _SIMD_LOAD(&q[(ldq*2)+5*offset]);
-    __SIMD_DATATYPE a3_6 = _SIMD_LOAD(&q[ldq+5*offset]);
-    __SIMD_DATATYPE a4_6 = _SIMD_LOAD(&q[0+5*offset]);
+    __SIMD_DATATYPE a1_6 = _LOAD(&q[(ldq*3)+5*offset]);
+    __SIMD_DATATYPE a2_6 = _LOAD(&q[(ldq*2)+5*offset]);
+    __SIMD_DATATYPE a3_6 = _LOAD(&q[ldq+5*offset]);
+    __SIMD_DATATYPE a4_6 = _LOAD(&q[0+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w6 = _SIMD_FMA(a3_6, h_4_3, a4_6);
@@ -1847,14 +1927,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
     
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -1892,7 +1972,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -1925,7 +2005,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -1953,7 +2033,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -1983,12 +2063,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x1 = a1_1;
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
-    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _LOAD(&q[offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t2 = _SIMD_FMA(a5_2, h_6_5, a6_2);
@@ -2026,12 +2106,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x2 = a1_2;
 
-    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
-    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
-    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-    __SIMD_DATATYPE a5_3 = _SIMD_LOAD(&q[(ldq)+2*offset]);
-    __SIMD_DATATYPE a6_3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE a1_3 = _LOAD(&q[(ldq*5)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _LOAD(&q[(ldq*4)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a4_3 = _LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a5_3 = _LOAD(&q[(ldq)+2*offset]);
+    __SIMD_DATATYPE a6_3 = _LOAD(&q[2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t3 = _SIMD_FMA(a5_3, h_6_5, a6_3);
@@ -2069,12 +2149,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x3 = a1_3;
 
-    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
-    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
-    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-    __SIMD_DATATYPE a5_4 = _SIMD_LOAD(&q[(ldq)+3*offset]);
-    __SIMD_DATATYPE a6_4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE a1_4 = _LOAD(&q[(ldq*5)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _LOAD(&q[(ldq*4)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a4_4 = _LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a5_4 = _LOAD(&q[(ldq)+3*offset]);
+    __SIMD_DATATYPE a6_4 = _LOAD(&q[3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t4 = _SIMD_FMA(a5_4, h_6_5, a6_4);
@@ -2112,12 +2192,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x4 = a1_4;
 
-    __SIMD_DATATYPE a1_5 = _SIMD_LOAD(&q[(ldq*5)+4*offset]);
-    __SIMD_DATATYPE a2_5 = _SIMD_LOAD(&q[(ldq*4)+4*offset]);
-    __SIMD_DATATYPE a3_5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
-    __SIMD_DATATYPE a4_5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
-    __SIMD_DATATYPE a5_5 = _SIMD_LOAD(&q[(ldq)+4*offset]);
-    __SIMD_DATATYPE a6_5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE a1_5 = _LOAD(&q[(ldq*5)+4*offset]);
+    __SIMD_DATATYPE a2_5 = _LOAD(&q[(ldq*4)+4*offset]);
+    __SIMD_DATATYPE a3_5 = _LOAD(&q[(ldq*3)+4*offset]);
+    __SIMD_DATATYPE a4_5 = _LOAD(&q[(ldq*2)+4*offset]);
+    __SIMD_DATATYPE a5_5 = _LOAD(&q[(ldq)+4*offset]);
+    __SIMD_DATATYPE a6_5 = _LOAD(&q[4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t5 = _SIMD_FMA(a5_5, h_6_5, a6_5);
@@ -2155,12 +2235,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x5 = a1_5;
 
-    __SIMD_DATATYPE a1_6 = _SIMD_LOAD(&q[(ldq*5)+5*offset]);
-    __SIMD_DATATYPE a2_6 = _SIMD_LOAD(&q[(ldq*4)+5*offset]);
-    __SIMD_DATATYPE a3_6 = _SIMD_LOAD(&q[(ldq*3)+5*offset]);
-    __SIMD_DATATYPE a4_6 = _SIMD_LOAD(&q[(ldq*2)+5*offset]);
-    __SIMD_DATATYPE a5_6 = _SIMD_LOAD(&q[(ldq)+5*offset]);
-    __SIMD_DATATYPE a6_6 = _SIMD_LOAD(&q[5*offset]);
+    __SIMD_DATATYPE a1_6 = _LOAD(&q[(ldq*5)+5*offset]);
+    __SIMD_DATATYPE a2_6 = _LOAD(&q[(ldq*4)+5*offset]);
+    __SIMD_DATATYPE a3_6 = _LOAD(&q[(ldq*3)+5*offset]);
+    __SIMD_DATATYPE a4_6 = _LOAD(&q[(ldq*2)+5*offset]);
+    __SIMD_DATATYPE a5_6 = _LOAD(&q[(ldq)+5*offset]);
+    __SIMD_DATATYPE a6_6 = _LOAD(&q[5*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t6 = _SIMD_FMA(a5_6, h_6_5, a6_6);
@@ -2218,7 +2298,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     for(i = BLOCK; i < nb; i++)
       {
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -2231,12 +2311,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif /*   VEC_SET == 256 */
 
-        q1 = _SIMD_LOAD(&q[i*ldq]);
-        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
-        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
-        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
-        q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
-        q6 = _SIMD_LOAD(&q[(i*ldq)+5*offset]);
+        q1 = _LOAD(&q[i*ldq]);
+        q2 = _LOAD(&q[(i*ldq)+offset]);
+        q3 = _LOAD(&q[(i*ldq)+2*offset]);
+        q4 = _LOAD(&q[(i*ldq)+3*offset]);
+        q5 = _LOAD(&q[(i*ldq)+4*offset]);
+        q6 = _LOAD(&q[(i*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
         x1 = _SIMD_FMA(q1, h1, x1);
@@ -2267,7 +2347,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -2295,7 +2375,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -2327,7 +2407,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -2353,7 +2433,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v6 = _SIMD_ADD(v6, _SIMD_MUL(q6,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 
@@ -2384,7 +2464,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -2394,12 +2474,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[nb*ldq]);
-    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
-    q6 = _SIMD_LOAD(&q[(nb*ldq)+5*offset]);
+    q1 = _LOAD(&q[nb*ldq]);
+    q2 = _LOAD(&q[(nb*ldq)+offset]);
+    q3 = _LOAD(&q[(nb*ldq)+2*offset]);
+    q4 = _LOAD(&q[(nb*ldq)+3*offset]);
+    q5 = _LOAD(&q[(nb*ldq)+4*offset]);
+    q6 = _LOAD(&q[(nb*ldq)+5*offset]);
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
@@ -2418,7 +2498,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -2446,7 +2526,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -2475,7 +2555,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -2487,12 +2567,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
-    q6 = _SIMD_LOAD(&q[((nb+1)*ldq)+5*offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+1)*ldq)+4*offset]);
+    q6 = _LOAD(&q[((nb+1)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -2510,7 +2590,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -2538,7 +2618,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -2550,12 +2630,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
-    q6 = _SIMD_LOAD(&q[((nb+2)*ldq)+5*offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+2)*ldq)+4*offset]);
+    q6 = _LOAD(&q[((nb+2)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -2578,7 +2658,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
@@ -2606,7 +2686,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w6 = _SIMD_ADD(w6, _SIMD_MUL(q6,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
@@ -2634,7 +2714,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v6 = _SIMD_ADD(v6, _SIMD_MUL(q6,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-4]);
 #endif
 #if VEC_SET == 1281
@@ -2644,12 +2724,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
-    q6 = _SIMD_LOAD(&q[((nb+1)*ldq)+5*offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+1)*ldq)+4*offset]);
+    q6 = _LOAD(&q[((nb+1)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -2667,7 +2747,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-3]);
 #endif
 #if VEC_SET == 1281
@@ -2693,7 +2773,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -2719,7 +2799,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -2745,7 +2825,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w6 = _SIMD_ADD(w6, _SIMD_MUL(q6,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-3]);
 #endif
 #if VEC_SET == 1281
@@ -2755,12 +2835,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-3]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
-    q6 = _SIMD_LOAD(&q[((nb+2)*ldq)+5*offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+2)*ldq)+4*offset]);
+    q6 = _LOAD(&q[((nb+2)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -2778,7 +2858,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 
@@ -2806,7 +2886,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
@@ -2834,7 +2914,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -2845,12 +2925,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-4)]);
 #endif
-    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+3)*ldq)+4*offset]);
-    q6 = _SIMD_LOAD(&q[((nb+3)*ldq)+5*offset]);
+    q1 = _LOAD(&q[(nb+3)*ldq]);
+    q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+3)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+3)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+3)*ldq)+4*offset]);
+    q6 = _LOAD(&q[((nb+3)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -2868,7 +2948,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 
@@ -2896,7 +2976,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -2908,12 +2988,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-5)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+4)*ldq)+4*offset]);
-    q6 = _SIMD_LOAD(&q[((nb+4)*ldq)+5*offset]);
+    q1 = _LOAD(&q[(nb+4)*ldq]);
+    q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+4)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+4)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+4)*ldq)+4*offset]);
+    q6 = _LOAD(&q[((nb+4)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -2949,7 +3029,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
 
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
@@ -3080,15 +3160,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == 256 */
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-    h1 = _SIMD_XOR(tau1, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+    h1 = _XOR(tau1, sign);
 #endif
+
 #if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
-#if VEC_SET == 256
-    h1 = _SIMD_XOR(tau1, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -3100,7 +3179,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau1, sign);
+    h1 = _XOR(tau1, sign);
 #endif
 #endif /* VEC_SET == 512 */
 #endif /* BLOCK2 */
@@ -3117,15 +3196,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    x6 = _SIMD_MUL(x6, h1);
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-   h1 = _SIMD_XOR(tau2, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+   h1 = _XOR(tau2, sign);
 #endif
+
 #if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-#if VEC_SET == 256
-   h1 = _SIMD_XOR(tau2, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -3137,7 +3215,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau2, sign);
+    h1 = _XOR(tau2, sign);
 #endif
 #endif /* VEC_SET == 512 */
    h2 = _SIMD_MUL(h1, vs);
@@ -3277,7 +3355,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SIMD_LOAD(&q[0]);
+   q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
    q1 = _SIMD_ADD(q1, y1);
 #endif
@@ -3287,8 +3365,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SIMD_STORE(&q[0],q1);
-   q2 = _SIMD_LOAD(&q[offset]);
+   _STORE(&q[0],q1);
+   q2 = _LOAD(&q[offset]);
 #ifdef BLOCK2
    q2 = _SIMD_ADD(q2, y2);
 #endif
@@ -3298,8 +3376,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SIMD_STORE(&q[offset],q2);
-   q3 = _SIMD_LOAD(&q[2*offset]);
+   _STORE(&q[offset],q2);
+   q3 = _LOAD(&q[2*offset]);
 #ifdef BLOCK2
    q3 = _SIMD_ADD(q3, y3);
 #endif
@@ -3309,8 +3387,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q3 = _SIMD_SUB(q3, t3);
 #endif
-   _SIMD_STORE(&q[2*offset],q3);
-   q4 = _SIMD_LOAD(&q[3*offset]);
+   _STORE(&q[2*offset],q3);
+   q4 = _LOAD(&q[3*offset]);
 #ifdef BLOCK2
    q4 = _SIMD_ADD(q4, y4);
 #endif
@@ -3320,8 +3398,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q4 = _SIMD_SUB(q4, t4);
 #endif
-   _SIMD_STORE(&q[3*offset],q4);
-   q5 = _SIMD_LOAD(&q[4*offset]);
+   _STORE(&q[3*offset],q4);
+   q5 = _LOAD(&q[4*offset]);
 #ifdef BLOCK2
    q5 = _SIMD_ADD(q5, y5);
 #endif
@@ -3331,8 +3409,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q5 = _SIMD_SUB(q5, t5);
 #endif
-   _SIMD_STORE(&q[4*offset],q5);
-   q6 = _SIMD_LOAD(&q[5*offset]);
+   _STORE(&q[4*offset],q5);
+   q6 = _LOAD(&q[5*offset]);
 #ifdef BLOCK2
    q6 = _SIMD_ADD(q6, y6);
 #endif
@@ -3342,10 +3420,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q6 = _SIMD_SUB(q6, t6);
 #endif
-   _SIMD_STORE(&q[5*offset],q6);
+   _STORE(&q[5*offset],q6);
 
 #ifdef BLOCK2
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -3355,12 +3433,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h2 = _SIMD_BROADCAST(&hh[ldh+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
-   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
-   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
-   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
-   q6 = _SIMD_LOAD(&q[ldq+5*offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
+   q3 = _LOAD(&q[ldq+2*offset]);
+   q4 = _LOAD(&q[ldq+3*offset]);
+   q5 = _LOAD(&q[ldq+4*offset]);
+   q6 = _LOAD(&q[ldq+5*offset]);
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
    q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
@@ -3376,16 +3454,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_ADD(q5, _SIMD_ADD(x5, _SIMD_MUL(y5, h2)));
    q6 = _SIMD_ADD(q6, _SIMD_ADD(x6, _SIMD_MUL(y6, h2)));
 #endif /* __ELPA_USE_FMA__ */
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
-   _SIMD_STORE(&q[ldq+2*offset],q3);
-   _SIMD_STORE(&q[ldq+3*offset],q4);
-   _SIMD_STORE(&q[ldq+4*offset],q5);
-   _SIMD_STORE(&q[ldq+5*offset],q6);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+2*offset],q3);
+   _STORE(&q[ldq+3*offset],q4);
+   _STORE(&q[ldq+4*offset],q5);
+   _STORE(&q[ldq+5*offset],q6);
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -3397,12 +3475,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
-   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
-   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
-   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
-   q6 = _SIMD_LOAD(&q[ldq+5*offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
+   q3 = _LOAD(&q[ldq+2*offset]);
+   q4 = _LOAD(&q[ldq+3*offset]);
+   q5 = _LOAD(&q[ldq+4*offset]);
+   q6 = _LOAD(&q[ldq+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
@@ -3420,14 +3498,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_ADD(z6, _SIMD_MUL(w6, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
-   _SIMD_STORE(&q[ldq+2*offset],q3);
-   _SIMD_STORE(&q[ldq+3*offset],q4);
-   _SIMD_STORE(&q[ldq+4*offset],q5);
-   _SIMD_STORE(&q[ldq+5*offset],q6);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+2*offset],q3);
+   _STORE(&q[ldq+3*offset],q4);
+   _STORE(&q[ldq+4*offset],q5);
+   _STORE(&q[ldq+5*offset],q6);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -3438,12 +3516,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+2]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
-   q6 = _SIMD_LOAD(&q[(ldq*2)+5*offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
+   q3 = _LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _LOAD(&q[(ldq*2)+3*offset]);
+   q5 = _LOAD(&q[(ldq*2)+4*offset]);
+   q6 = _LOAD(&q[(ldq*2)+5*offset]);
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
    q3 = _SIMD_SUB(q3, y3);
@@ -3467,7 +3545,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -3495,14 +3573,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
-   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*2)+4*offset],q5);
-   _SIMD_STORE(&q[(ldq*2)+5*offset],q6);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[(ldq*2)+2*offset],q3);
+   _STORE(&q[(ldq*2)+3*offset],q4);
+   _STORE(&q[(ldq*2)+4*offset],q5);
+   _STORE(&q[(ldq*2)+5*offset],q6);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -3514,12 +3592,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
-   q6 = _SIMD_LOAD(&q[(ldq*3)+5*offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
+   q3 = _LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _LOAD(&q[(ldq*3)+3*offset]);
+   q5 = _LOAD(&q[(ldq*3)+4*offset]);
+   q6 = _LOAD(&q[(ldq*3)+5*offset]);
 
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
@@ -3544,7 +3622,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -3572,7 +3650,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -3600,18 +3678,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*3], q1);
-   _SIMD_STORE(&q[(ldq*3)+offset], q2);
-   _SIMD_STORE(&q[(ldq*3)+2*offset], q3);
-   _SIMD_STORE(&q[(ldq*3)+3*offset], q4);
-   _SIMD_STORE(&q[(ldq*3)+4*offset], q5);
-   _SIMD_STORE(&q[(ldq*3)+5*offset], q6);
+   _STORE(&q[ldq*3], q1);
+   _STORE(&q[(ldq*3)+offset], q2);
+   _STORE(&q[(ldq*3)+2*offset], q3);
+   _STORE(&q[(ldq*3)+3*offset], q4);
+   _STORE(&q[(ldq*3)+4*offset], q5);
+   _STORE(&q[(ldq*3)+5*offset], q6);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == 1281
@@ -3621,12 +3699,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h6 = _SIMD_BROADCAST(&hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
-   q3 = _SIMD_LOAD(&q[(ldq+2*offset)]);
-   q4 = _SIMD_LOAD(&q[(ldq+3*offset)]);
-   q5 = _SIMD_LOAD(&q[(ldq+4*offset)]);
-   q6 = _SIMD_LOAD(&q[(ldq+5*offset)]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[(ldq+offset)]);
+   q3 = _LOAD(&q[(ldq+2*offset)]);
+   q4 = _LOAD(&q[(ldq+3*offset)]);
+   q5 = _LOAD(&q[(ldq+4*offset)]);
+   q6 = _LOAD(&q[(ldq+5*offset)]);
    q1 = _SIMD_SUB(q1, v1);
    q2 = _SIMD_SUB(q2, v2);
    q3 = _SIMD_SUB(q3, v3);
@@ -3650,14 +3728,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[(ldq+offset)],q2);
-   _SIMD_STORE(&q[(ldq+2*offset)],q3);
-   _SIMD_STORE(&q[(ldq+3*offset)],q4);
-   _SIMD_STORE(&q[(ldq+4*offset)],q5);
-   _SIMD_STORE(&q[(ldq+5*offset)],q6);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[(ldq+offset)],q2);
+   _STORE(&q[(ldq+2*offset)],q3);
+   _STORE(&q[(ldq+3*offset)],q4);
+   _STORE(&q[(ldq+4*offset)],q5);
+   _STORE(&q[(ldq+5*offset)],q6);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == 1281
@@ -3667,12 +3745,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h5 = _SIMD_BROADCAST(&hh[(ldh*4)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
-   q6 = _SIMD_LOAD(&q[(ldq*2)+5*offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
+   q3 = _LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _LOAD(&q[(ldq*2)+3*offset]);
+   q5 = _LOAD(&q[(ldq*2)+4*offset]);
+   q6 = _LOAD(&q[(ldq*2)+5*offset]);
    q1 = _SIMD_SUB(q1, w1); 
    q2 = _SIMD_SUB(q2, w2);
    q3 = _SIMD_SUB(q3, w3);
@@ -3696,7 +3774,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == 1281
@@ -3722,14 +3800,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
-   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*2)+4*offset],q5);
-   _SIMD_STORE(&q[(ldq*2)+5*offset],q6);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[(ldq*2)+2*offset],q3);
+   _STORE(&q[(ldq*2)+3*offset],q4);
+   _STORE(&q[(ldq*2)+4*offset],q5);
+   _STORE(&q[(ldq*2)+5*offset],q6);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -3741,12 +3819,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
-   q6 = _SIMD_LOAD(&q[(ldq*3)+5*offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
+   q3 = _LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _LOAD(&q[(ldq*3)+3*offset]);
+   q5 = _LOAD(&q[(ldq*3)+4*offset]);
+   q6 = _LOAD(&q[(ldq*3)+5*offset]);
    q1 = _SIMD_SUB(q1, z1);
    q2 = _SIMD_SUB(q2, z2);
    q3 = _SIMD_SUB(q3, z3);
@@ -3770,7 +3848,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == 1281
@@ -3796,7 +3874,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == 1281
@@ -3822,14 +3900,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*3],q1);
-   _SIMD_STORE(&q[(ldq*3)+offset],q2);
-   _SIMD_STORE(&q[(ldq*3)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*3)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*3)+4*offset],q5);
-   _SIMD_STORE(&q[(ldq*3)+5*offset],q6);
+   _STORE(&q[ldq*3],q1);
+   _STORE(&q[(ldq*3)+offset],q2);
+   _STORE(&q[(ldq*3)+2*offset],q3);
+   _STORE(&q[(ldq*3)+3*offset],q4);
+   _STORE(&q[(ldq*3)+4*offset],q5);
+   _STORE(&q[(ldq*3)+5*offset],q6);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == 1281
@@ -3838,12 +3916,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h3 = _SIMD_BROADCAST(&hh[(ldh*2)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*4]);
-   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*4)+4*offset]);
-   q6 = _SIMD_LOAD(&q[(ldq*4)+5*offset]);
+   q1 = _LOAD(&q[ldq*4]);
+   q2 = _LOAD(&q[(ldq*4)+offset]);
+   q3 = _LOAD(&q[(ldq*4)+2*offset]);
+   q4 = _LOAD(&q[(ldq*4)+3*offset]);
+   q5 = _LOAD(&q[(ldq*4)+4*offset]);
+   q6 = _LOAD(&q[(ldq*4)+5*offset]);
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
    q3 = _SIMD_SUB(q3, y3);
@@ -3867,7 +3945,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == 1281
@@ -3893,7 +3971,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == 1281
@@ -3919,7 +3997,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == 1281
@@ -3945,14 +4023,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*4],q1);
-   _SIMD_STORE(&q[(ldq*4)+offset],q2);
-   _SIMD_STORE(&q[(ldq*4)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*4)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*4)+4*offset],q5);
-   _SIMD_STORE(&q[(ldq*4)+5*offset],q6);
+   _STORE(&q[ldq*4],q1);
+   _STORE(&q[(ldq*4)+offset],q2);
+   _STORE(&q[(ldq*4)+2*offset],q3);
+   _STORE(&q[(ldq*4)+3*offset],q4);
+   _STORE(&q[(ldq*4)+4*offset],q5);
+   _STORE(&q[(ldq*4)+5*offset],q6);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == 1281
@@ -3961,12 +4039,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h2 = _SIMD_BROADCAST(&hh[(ldh)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*5]);
-   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*5)+4*offset]);
-   q6 = _SIMD_LOAD(&q[(ldq*5)+5*offset]);
+   q1 = _LOAD(&q[ldq*5]);
+   q2 = _LOAD(&q[(ldq*5)+offset]);
+   q3 = _LOAD(&q[(ldq*5)+2*offset]);
+   q4 = _LOAD(&q[(ldq*5)+3*offset]);
+   q5 = _LOAD(&q[(ldq*5)+4*offset]);
+   q6 = _LOAD(&q[(ldq*5)+5*offset]);
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
    q3 = _SIMD_SUB(q3, x3);
@@ -3990,7 +4068,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == 1281
@@ -4016,7 +4094,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == 1281
@@ -4042,7 +4120,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == 1281
@@ -4068,7 +4146,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == 1281
@@ -4094,18 +4172,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*5],q1);
-   _SIMD_STORE(&q[(ldq*5)+offset],q2);
-   _SIMD_STORE(&q[(ldq*5)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*5)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*5)+4*offset],q5);
-   _SIMD_STORE(&q[(ldq*5)+5*offset],q6);
+   _STORE(&q[ldq*5],q1);
+   _STORE(&q[(ldq*5)+offset],q2);
+   _STORE(&q[(ldq*5)+2*offset],q3);
+   _STORE(&q[(ldq*5)+3*offset],q4);
+   _STORE(&q[(ldq*5)+4*offset],q5);
+   _STORE(&q[(ldq*5)+5*offset],q6);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -4118,12 +4196,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif
 
-     q1 = _SIMD_LOAD(&q[i*ldq]);
-     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
-     q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
-     q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
-     q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
-     q6 = _SIMD_LOAD(&q[(i*ldq)+5*offset]);
+     q1 = _LOAD(&q[i*ldq]);
+     q2 = _LOAD(&q[(i*ldq)+offset]);
+     q3 = _LOAD(&q[(i*ldq)+2*offset]);
+     q4 = _LOAD(&q[(i*ldq)+3*offset]);
+     q5 = _LOAD(&q[(i*ldq)+4*offset]);
+     q6 = _LOAD(&q[(i*ldq)+5*offset]);
 
 #ifdef BLOCK2
 #ifdef __ELPA_USE_FMA__
@@ -4183,7 +4261,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q6 = _SIMD_SUB(q6, _SIMD_MUL(y6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -4211,7 +4289,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q6 = _SIMD_SUB(q6, _SIMD_MUL(z6,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -4242,7 +4320,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -4269,7 +4347,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == 1281
@@ -4297,15 +4375,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-     _SIMD_STORE(&q[i*ldq],q1);
-     _SIMD_STORE(&q[(i*ldq)+offset],q2);
-     _SIMD_STORE(&q[(i*ldq)+2*offset],q3);
-     _SIMD_STORE(&q[(i*ldq)+3*offset],q4);
-     _SIMD_STORE(&q[(i*ldq)+4*offset],q5);
-     _SIMD_STORE(&q[(i*ldq)+5*offset],q6);
+     _STORE(&q[i*ldq],q1);
+     _STORE(&q[(i*ldq)+offset],q2);
+     _STORE(&q[(i*ldq)+2*offset],q3);
+     _STORE(&q[(i*ldq)+3*offset],q4);
+     _STORE(&q[(i*ldq)+4*offset],q5);
+     _STORE(&q[(i*ldq)+5*offset],q6);
 
    }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -4315,12 +4393,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[nb*ldq]);
-   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
-   q6 = _SIMD_LOAD(&q[(nb*ldq)+5*offset]);
+   q1 = _LOAD(&q[nb*ldq]);
+   q2 = _LOAD(&q[(nb*ldq)+offset]);
+   q3 = _LOAD(&q[(nb*ldq)+2*offset]);
+   q4 = _LOAD(&q[(nb*ldq)+3*offset]);
+   q5 = _LOAD(&q[(nb*ldq)+4*offset]);
+   q6 = _LOAD(&q[(nb*ldq)+5*offset]);
 
 #ifdef BLOCK2
 
@@ -4359,7 +4437,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -4386,7 +4464,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -4417,7 +4495,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -4443,7 +4521,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -4471,16 +4549,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[nb*ldq],q1);
-   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
-   _SIMD_STORE(&q[(nb*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[(nb*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[(nb*ldq)+4*offset],q5);
-   _SIMD_STORE(&q[(nb*ldq)+5*offset],q6);
+   _STORE(&q[nb*ldq],q1);
+   _STORE(&q[(nb*ldq)+offset],q2);
+   _STORE(&q[(nb*ldq)+2*offset],q3);
+   _STORE(&q[(nb*ldq)+3*offset],q4);
+   _STORE(&q[(nb*ldq)+4*offset],q5);
+   _STORE(&q[(nb*ldq)+5*offset],q6);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -4492,12 +4570,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
-   q6 = _SIMD_LOAD(&q[((nb+1)*ldq)+5*offset]);
+   q1 = _LOAD(&q[(nb+1)*ldq]);
+   q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
+   q5 = _LOAD(&q[((nb+1)*ldq)+4*offset]);
+   q6 = _LOAD(&q[((nb+1)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -4515,7 +4593,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -4544,7 +4622,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -4570,7 +4648,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -4597,14 +4675,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+1)*ldq],q1);
-   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+1)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+1)*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[((nb+1)*ldq)+4*offset],q5);
-   _SIMD_STORE(&q[((nb+1)*ldq)+5*offset],q6);
+   _STORE(&q[(nb+1)*ldq],q1);
+   _STORE(&q[((nb+1)*ldq)+offset],q2);
+   _STORE(&q[((nb+1)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+1)*ldq)+3*offset],q4);
+   _STORE(&q[((nb+1)*ldq)+4*offset],q5);
+   _STORE(&q[((nb+1)*ldq)+5*offset],q6);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -4616,12 +4694,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
-   q6 = _SIMD_LOAD(&q[((nb+2)*ldq)+5*offset]);
+   q1 = _LOAD(&q[(nb+2)*ldq]);
+   q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
+   q5 = _LOAD(&q[((nb+2)*ldq)+4*offset]);
+   q6 = _LOAD(&q[((nb+2)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -4640,7 +4718,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -4667,7 +4745,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -4695,17 +4773,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
  
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+2)*ldq],q1);
-   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+2)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+2)*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[((nb+2)*ldq)+4*offset],q5);
-   _SIMD_STORE(&q[((nb+2)*ldq)+5*offset],q6);
+   _STORE(&q[(nb+2)*ldq],q1);
+   _STORE(&q[((nb+2)*ldq)+offset],q2);
+   _STORE(&q[((nb+2)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+2)*ldq)+3*offset],q4);
+   _STORE(&q[((nb+2)*ldq)+4*offset],q5);
+   _STORE(&q[((nb+2)*ldq)+5*offset],q6);
 
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -4715,12 +4793,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[((nb+3)*ldq)+4*offset]);
-   q6 = _SIMD_LOAD(&q[((nb+3)*ldq)+5*offset]);
+   q1 = _LOAD(&q[(nb+3)*ldq]);
+   q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+3)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+3)*ldq)+3*offset]);
+   q5 = _LOAD(&q[((nb+3)*ldq)+4*offset]);
+   q6 = _LOAD(&q[((nb+3)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -4738,7 +4816,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -4764,14 +4842,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+3)*ldq],q1);
-   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+3)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+3)*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[((nb+3)*ldq)+4*offset],q5);
-   _SIMD_STORE(&q[((nb+3)*ldq)+5*offset],q6);
+   _STORE(&q[(nb+3)*ldq],q1);
+   _STORE(&q[((nb+3)*ldq)+offset],q2);
+   _STORE(&q[((nb+3)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+3)*ldq)+3*offset],q4);
+   _STORE(&q[((nb+3)*ldq)+4*offset],q5);
+   _STORE(&q[((nb+3)*ldq)+5*offset],q6);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -4781,12 +4859,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[((nb+4)*ldq)+4*offset]);
-   q6 = _SIMD_LOAD(&q[((nb+4)*ldq)+5*offset]);
+   q1 = _LOAD(&q[(nb+4)*ldq]);
+   q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+4)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+4)*ldq)+3*offset]);
+   q5 = _LOAD(&q[((nb+4)*ldq)+4*offset]);
+   q6 = _LOAD(&q[((nb+4)*ldq)+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -4804,12 +4882,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+4)*ldq],q1);
-   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+4)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+4)*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[((nb+4)*ldq)+4*offset],q5);
-   _SIMD_STORE(&q[((nb+4)*ldq)+5*offset],q6);
+   _STORE(&q[(nb+4)*ldq],q1);
+   _STORE(&q[((nb+4)*ldq)+offset],q2);
+   _STORE(&q[((nb+4)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+4)*ldq)+3*offset],q4);
+   _STORE(&q[((nb+4)*ldq)+4*offset],q5);
+   _STORE(&q[((nb+4)*ldq)+5*offset],q6);
 
 #endif /* BLOCK6 */
 }
@@ -4893,6 +4971,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 128 */
 
+#ifdef VEC_SET == 1282
+    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+#endif
+
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -4911,13 +4993,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 256 */
 
-    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
-    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE x3 = _SIMD_LOAD(&q[ldq+2*offset]);
-    __SIMD_DATATYPE x4 = _SIMD_LOAD(&q[ldq+3*offset]);
-    __SIMD_DATATYPE x5 = _SIMD_LOAD(&q[ldq+4*offset]);
+    __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE x4 = _LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE x5 = _LOAD(&q[ldq+4*offset]);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -4929,37 +5011,37 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE h2;
 
 #ifdef __ELPA_USE_FMA__
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
     __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
-    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
     __SIMD_DATATYPE y3 = _SIMD_FMA(x3, h1, q3);
-    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
     __SIMD_DATATYPE y4 = _SIMD_FMA(x4, h1, q4);
-    __SIMD_DATATYPE q5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE q5 = _LOAD(&q[4*offset]);
     __SIMD_DATATYPE y5 = _SIMD_FMA(x5, h1, q5);
 #else
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
     __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
-    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
     __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
-    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
     __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
-    __SIMD_DATATYPE q5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE q5 = _LOAD(&q[4*offset]);
     __SIMD_DATATYPE y5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
 #endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -5004,10 +5086,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x1 = a1_1; 
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[0+offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w2 = _SIMD_FMA(a3_2, h_4_3, a4_2);
@@ -5027,10 +5109,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[ldq+2*offset]);
-    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[0+2*offset]);
+    __SIMD_DATATYPE a1_3 = _LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE a4_3 = _LOAD(&q[0+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w3 = _SIMD_FMA(a3_3, h_4_3, a4_3);
@@ -5050,10 +5132,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x3 = a1_3;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[ldq+3*offset]);
-    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[0+3*offset]);
+    __SIMD_DATATYPE a1_4 = _LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE a4_4 = _LOAD(&q[0+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w4 = _SIMD_FMA(a3_4, h_4_3, a4_4);
@@ -5073,10 +5155,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x4 = a1_4;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
-    __SIMD_DATATYPE a2_5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
-    __SIMD_DATATYPE a3_5 = _SIMD_LOAD(&q[ldq+4*offset]);
-    __SIMD_DATATYPE a4_5 = _SIMD_LOAD(&q[0+4*offset]);
+    __SIMD_DATATYPE a1_5 = _LOAD(&q[(ldq*3)+4*offset]);
+    __SIMD_DATATYPE a2_5 = _LOAD(&q[(ldq*2)+4*offset]);
+    __SIMD_DATATYPE a3_5 = _LOAD(&q[ldq+4*offset]);
+    __SIMD_DATATYPE a4_5 = _LOAD(&q[0+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w5 = _SIMD_FMA(a3_5, h_4_3, a4_5);
@@ -5110,14 +5192,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
     
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -5155,7 +5237,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -5189,7 +5271,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -5217,7 +5299,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -5247,12 +5329,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x1 = a1_1;
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
-    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _LOAD(&q[offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t2 = _SIMD_FMA(a5_2, h_6_5, a6_2);
@@ -5290,12 +5372,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x2 = a1_2;
 
-    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
-    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
-    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-    __SIMD_DATATYPE a5_3 = _SIMD_LOAD(&q[(ldq)+2*offset]);
-    __SIMD_DATATYPE a6_3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE a1_3 = _LOAD(&q[(ldq*5)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _LOAD(&q[(ldq*4)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a4_3 = _LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a5_3 = _LOAD(&q[(ldq)+2*offset]);
+    __SIMD_DATATYPE a6_3 = _LOAD(&q[2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t3 = _SIMD_FMA(a5_3, h_6_5, a6_3);
@@ -5333,12 +5415,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x3 = a1_3;
 
-    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
-    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
-    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-    __SIMD_DATATYPE a5_4 = _SIMD_LOAD(&q[(ldq)+3*offset]);
-    __SIMD_DATATYPE a6_4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE a1_4 = _LOAD(&q[(ldq*5)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _LOAD(&q[(ldq*4)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a4_4 = _LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a5_4 = _LOAD(&q[(ldq)+3*offset]);
+    __SIMD_DATATYPE a6_4 = _LOAD(&q[3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t4 = _SIMD_FMA(a5_4, h_6_5, a6_4);
@@ -5376,12 +5458,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x4 = a1_4;
 
-    __SIMD_DATATYPE a1_5 = _SIMD_LOAD(&q[(ldq*5)+4*offset]);
-    __SIMD_DATATYPE a2_5 = _SIMD_LOAD(&q[(ldq*4)+4*offset]);
-    __SIMD_DATATYPE a3_5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
-    __SIMD_DATATYPE a4_5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
-    __SIMD_DATATYPE a5_5 = _SIMD_LOAD(&q[(ldq)+4*offset]);
-    __SIMD_DATATYPE a6_5 = _SIMD_LOAD(&q[4*offset]);
+    __SIMD_DATATYPE a1_5 = _LOAD(&q[(ldq*5)+4*offset]);
+    __SIMD_DATATYPE a2_5 = _LOAD(&q[(ldq*4)+4*offset]);
+    __SIMD_DATATYPE a3_5 = _LOAD(&q[(ldq*3)+4*offset]);
+    __SIMD_DATATYPE a4_5 = _LOAD(&q[(ldq*2)+4*offset]);
+    __SIMD_DATATYPE a5_5 = _LOAD(&q[(ldq)+4*offset]);
+    __SIMD_DATATYPE a6_5 = _LOAD(&q[4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t5 = _SIMD_FMA(a5_5, h_6_5, a6_5);
@@ -5438,7 +5520,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -5451,11 +5533,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif /*   VEC_SET == 256 */
 
-        q1 = _SIMD_LOAD(&q[i*ldq]);
-        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
-        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
-        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
-        q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
+        q1 = _LOAD(&q[i*ldq]);
+        q2 = _LOAD(&q[(i*ldq)+offset]);
+        q3 = _LOAD(&q[(i*ldq)+2*offset]);
+        q4 = _LOAD(&q[(i*ldq)+3*offset]);
+        q5 = _LOAD(&q[(i*ldq)+4*offset]);
 #ifdef __ELPA_USE_FMA__
         x1 = _SIMD_FMA(q1, h1, x1);
         y1 = _SIMD_FMA(q1, h2, y1);
@@ -5481,7 +5563,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -5507,7 +5589,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -5537,7 +5619,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -5561,7 +5643,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 
@@ -5590,7 +5672,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -5600,11 +5682,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[nb*ldq]);
-    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
+    q1 = _LOAD(&q[nb*ldq]);
+    q2 = _LOAD(&q[(nb*ldq)+offset]);
+    q3 = _LOAD(&q[(nb*ldq)+2*offset]);
+    q4 = _LOAD(&q[(nb*ldq)+3*offset]);
+    q5 = _LOAD(&q[(nb*ldq)+4*offset]);
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
@@ -5621,7 +5703,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -5647,7 +5729,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -5674,7 +5756,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -5686,11 +5768,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+1)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -5706,7 +5788,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -5732,7 +5814,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -5744,11 +5826,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+2)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -5769,7 +5851,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
@@ -5795,7 +5877,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
@@ -5821,7 +5903,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-4]);
 #endif
 #if VEC_SET == 1281
@@ -5831,11 +5913,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+1)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -5851,7 +5933,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-3]);
 #endif
 #if VEC_SET == 1281
@@ -5875,7 +5957,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -5899,7 +5981,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -5923,7 +6005,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-3]);
 #endif
 #if VEC_SET == 1281
@@ -5933,11 +6015,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-3]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+2)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -5953,7 +6035,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 
@@ -5979,7 +6061,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
@@ -6005,7 +6087,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -6017,11 +6099,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-4)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+3)*ldq)+4*offset]);
+    q1 = _LOAD(&q[(nb+3)*ldq]);
+    q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+3)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+3)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+3)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -6037,7 +6119,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 
@@ -6063,7 +6145,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -6075,11 +6157,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-5)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
-    q5 = _SIMD_LOAD(&q[((nb+4)*ldq)+4*offset]);
+    q1 = _LOAD(&q[(nb+4)*ldq]);
+    q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+4)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+4)*ldq)+3*offset]);
+    q5 = _LOAD(&q[((nb+4)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -6113,7 +6195,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
 
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
@@ -6154,7 +6236,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 512 */
+#endif /* VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282 */
 
 #if VEC_SET == 1281
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -6244,15 +6326,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == 256 */
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-    h1 = _SIMD_XOR(tau1, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+    h1 = _XOR(tau1, sign);
 #endif
+
 #if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
-#if VEC_SET == 256
-    h1 = _SIMD_XOR(tau1, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -6264,7 +6345,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau1, sign);
+    h1 = _XOR(tau1, sign);
 #endif
 #endif /* VEC_SET == 512 */
 
@@ -6281,15 +6362,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    x5 = _SIMD_MUL(x5, h1);
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-   h1 = _SIMD_XOR(tau2, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+   h1 = _XOR(tau2, sign);
 #endif
+
 #if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-#if VEC_SET == 256
-   h1 = _SIMD_XOR(tau2, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -6301,7 +6381,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau2, sign);
+    h1 = _XOR(tau2, sign);
 #endif
 #endif /* VEC_SET == 512 */
    h2 = _SIMD_MUL(h1, vs);
@@ -6429,7 +6509,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SIMD_LOAD(&q[0]);
+   q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
    q1 = _SIMD_ADD(q1, y1);
 #endif
@@ -6439,8 +6519,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SIMD_STORE(&q[0],q1);
-   q2 = _SIMD_LOAD(&q[offset]);
+   _STORE(&q[0],q1);
+   q2 = _LOAD(&q[offset]);
 #ifdef BLOCK2
    q2 = _SIMD_ADD(q2, y2);
 #endif
@@ -6450,8 +6530,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SIMD_STORE(&q[offset],q2);
-   q3 = _SIMD_LOAD(&q[2*offset]);
+   _STORE(&q[offset],q2);
+   q3 = _LOAD(&q[2*offset]);
 #ifdef BLOCK2
    q3 = _SIMD_ADD(q3, y3);
 #endif
@@ -6461,8 +6541,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q3 = _SIMD_SUB(q3, t3);
 #endif
-   _SIMD_STORE(&q[2*offset],q3);
-   q4 = _SIMD_LOAD(&q[3*offset]);
+   _STORE(&q[2*offset],q3);
+   q4 = _LOAD(&q[3*offset]);
 #ifdef BLOCK2
    q4 = _SIMD_ADD(q4, y4);
 #endif
@@ -6472,8 +6552,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q4 = _SIMD_SUB(q4, t4);
 #endif
-   _SIMD_STORE(&q[3*offset],q4);
-   q5 = _SIMD_LOAD(&q[4*offset]);
+   _STORE(&q[3*offset],q4);
+   q5 = _LOAD(&q[4*offset]);
 #ifdef BLOCK2
    q5 = _SIMD_ADD(q5, y5);
 #endif
@@ -6483,10 +6563,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q5 = _SIMD_SUB(q5, t5);
 #endif
-   _SIMD_STORE(&q[4*offset],q5);
+   _STORE(&q[4*offset],q5);
 
 #ifdef BLOCK2
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -6496,11 +6576,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h2 = _SIMD_BROADCAST(&hh[ldh+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
-   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
-   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
-   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
+   q3 = _LOAD(&q[ldq+2*offset]);
+   q4 = _LOAD(&q[ldq+3*offset]);
+   q5 = _LOAD(&q[ldq+4*offset]);
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
    q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
@@ -6514,15 +6594,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_ADD(q4, _SIMD_ADD(x4, _SIMD_MUL(y4, h2)));
    q5 = _SIMD_ADD(q5, _SIMD_ADD(x5, _SIMD_MUL(y5, h2)));
 #endif /* __ELPA_USE_FMA__ */
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
-   _SIMD_STORE(&q[ldq+2*offset],q3);
-   _SIMD_STORE(&q[ldq+3*offset],q4);
-   _SIMD_STORE(&q[ldq+4*offset],q5);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+2*offset],q3);
+   _STORE(&q[ldq+3*offset],q4);
+   _STORE(&q[ldq+4*offset],q5);
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -6533,11 +6613,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
-   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
-   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
-   q5 = _SIMD_LOAD(&q[ldq+4*offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
+   q3 = _LOAD(&q[ldq+2*offset]);
+   q4 = _LOAD(&q[ldq+3*offset]);
+   q5 = _LOAD(&q[ldq+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
@@ -6553,13 +6633,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_ADD(z5, _SIMD_MUL(w5, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
-   _SIMD_STORE(&q[ldq+2*offset],q3);
-   _SIMD_STORE(&q[ldq+3*offset],q4);
-   _SIMD_STORE(&q[ldq+4*offset],q5);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+2*offset],q3);
+   _STORE(&q[ldq+3*offset],q4);
+   _STORE(&q[ldq+4*offset],q5);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -6570,11 +6650,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+2]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
+   q3 = _LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _LOAD(&q[(ldq*2)+3*offset]);
+   q5 = _LOAD(&q[(ldq*2)+4*offset]);
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
    q3 = _SIMD_SUB(q3, y3);
@@ -6595,7 +6675,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -6621,13 +6701,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
-   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*2)+4*offset],q5);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[(ldq*2)+2*offset],q3);
+   _STORE(&q[(ldq*2)+3*offset],q4);
+   _STORE(&q[(ldq*2)+4*offset],q5);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -6639,11 +6719,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
+   q3 = _LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _LOAD(&q[(ldq*3)+3*offset]);
+   q5 = _LOAD(&q[(ldq*3)+4*offset]);
 
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
@@ -6665,7 +6745,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -6691,7 +6771,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -6717,17 +6797,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*3], q1);
-   _SIMD_STORE(&q[(ldq*3)+offset], q2);
-   _SIMD_STORE(&q[(ldq*3)+2*offset], q3);
-   _SIMD_STORE(&q[(ldq*3)+3*offset], q4);
-   _SIMD_STORE(&q[(ldq*3)+4*offset], q5);
+   _STORE(&q[ldq*3], q1);
+   _STORE(&q[(ldq*3)+offset], q2);
+   _STORE(&q[(ldq*3)+2*offset], q3);
+   _STORE(&q[(ldq*3)+3*offset], q4);
+   _STORE(&q[(ldq*3)+4*offset], q5);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == 1281
@@ -6737,11 +6817,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h6 = _SIMD_BROADCAST(&hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
-   q3 = _SIMD_LOAD(&q[(ldq+2*offset)]);
-   q4 = _SIMD_LOAD(&q[(ldq+3*offset)]);
-   q5 = _SIMD_LOAD(&q[(ldq+4*offset)]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[(ldq+offset)]);
+   q3 = _LOAD(&q[(ldq+2*offset)]);
+   q4 = _LOAD(&q[(ldq+3*offset)]);
+   q5 = _LOAD(&q[(ldq+4*offset)]);
    q1 = _SIMD_SUB(q1, v1);
    q2 = _SIMD_SUB(q2, v2);
    q3 = _SIMD_SUB(q3, v3);
@@ -6762,13 +6842,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[(ldq+offset)],q2);
-   _SIMD_STORE(&q[(ldq+2*offset)],q3);
-   _SIMD_STORE(&q[(ldq+3*offset)],q4);
-   _SIMD_STORE(&q[(ldq+4*offset)],q5);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[(ldq+offset)],q2);
+   _STORE(&q[(ldq+2*offset)],q3);
+   _STORE(&q[(ldq+3*offset)],q4);
+   _STORE(&q[(ldq+4*offset)],q5);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == 1281
@@ -6777,11 +6857,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h5 = _SIMD_BROADCAST(&hh[(ldh*4)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*2)+4*offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
+   q3 = _LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _LOAD(&q[(ldq*2)+3*offset]);
+   q5 = _LOAD(&q[(ldq*2)+4*offset]);
    q1 = _SIMD_SUB(q1, w1); 
    q2 = _SIMD_SUB(q2, w2);
    q3 = _SIMD_SUB(q3, w3);
@@ -6803,7 +6883,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == 1281
@@ -6827,13 +6907,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
-   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*2)+4*offset],q5);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[(ldq*2)+2*offset],q3);
+   _STORE(&q[(ldq*2)+3*offset],q4);
+   _STORE(&q[(ldq*2)+4*offset],q5);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -6845,11 +6925,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*3)+4*offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
+   q3 = _LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _LOAD(&q[(ldq*3)+3*offset]);
+   q5 = _LOAD(&q[(ldq*3)+4*offset]);
    q1 = _SIMD_SUB(q1, z1);
    q2 = _SIMD_SUB(q2, z2);
    q3 = _SIMD_SUB(q3, z3);
@@ -6870,7 +6950,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == 1281
@@ -6894,7 +6974,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == 1281
@@ -6918,13 +6998,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*3],q1);
-   _SIMD_STORE(&q[(ldq*3)+offset],q2);
-   _SIMD_STORE(&q[(ldq*3)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*3)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*3)+4*offset],q5);
+   _STORE(&q[ldq*3],q1);
+   _STORE(&q[(ldq*3)+offset],q2);
+   _STORE(&q[(ldq*3)+2*offset],q3);
+   _STORE(&q[(ldq*3)+3*offset],q4);
+   _STORE(&q[(ldq*3)+4*offset],q5);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == 1281
@@ -6934,11 +7014,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h3 = _SIMD_BROADCAST(&hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*4]);
-   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*4)+4*offset]);
+   q1 = _LOAD(&q[ldq*4]);
+   q2 = _LOAD(&q[(ldq*4)+offset]);
+   q3 = _LOAD(&q[(ldq*4)+2*offset]);
+   q4 = _LOAD(&q[(ldq*4)+3*offset]);
+   q5 = _LOAD(&q[(ldq*4)+4*offset]);
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
    q3 = _SIMD_SUB(q3, y3);
@@ -6959,7 +7039,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == 1281
@@ -6983,7 +7063,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == 1281
@@ -7007,7 +7087,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == 1281
@@ -7031,13 +7111,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*4],q1);
-   _SIMD_STORE(&q[(ldq*4)+offset],q2);
-   _SIMD_STORE(&q[(ldq*4)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*4)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*4)+4*offset],q5);
+   _STORE(&q[ldq*4],q1);
+   _STORE(&q[(ldq*4)+offset],q2);
+   _STORE(&q[(ldq*4)+2*offset],q3);
+   _STORE(&q[(ldq*4)+3*offset],q4);
+   _STORE(&q[(ldq*4)+4*offset],q5);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == 1281
@@ -7046,11 +7126,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h2 = _SIMD_BROADCAST(&hh[(ldh)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*5]);
-   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(ldq*5)+4*offset]);
+   q1 = _LOAD(&q[ldq*5]);
+   q2 = _LOAD(&q[(ldq*5)+offset]);
+   q3 = _LOAD(&q[(ldq*5)+2*offset]);
+   q4 = _LOAD(&q[(ldq*5)+3*offset]);
+   q5 = _LOAD(&q[(ldq*5)+4*offset]);
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
    q3 = _SIMD_SUB(q3, x3);
@@ -7071,7 +7151,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == 1281
@@ -7095,7 +7175,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == 1281
@@ -7119,7 +7199,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == 1281
@@ -7143,7 +7223,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == 1281
@@ -7167,17 +7247,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*5],q1);
-   _SIMD_STORE(&q[(ldq*5)+offset],q2);
-   _SIMD_STORE(&q[(ldq*5)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*5)+3*offset],q4);
-   _SIMD_STORE(&q[(ldq*5)+4*offset],q5);
+   _STORE(&q[ldq*5],q1);
+   _STORE(&q[(ldq*5)+offset],q2);
+   _STORE(&q[(ldq*5)+2*offset],q3);
+   _STORE(&q[(ldq*5)+3*offset],q4);
+   _STORE(&q[(ldq*5)+4*offset],q5);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -7190,11 +7270,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif
 
-     q1 = _SIMD_LOAD(&q[i*ldq]);
-     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
-     q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
-     q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
-     q5 = _SIMD_LOAD(&q[(i*ldq)+4*offset]);
+     q1 = _LOAD(&q[i*ldq]);
+     q2 = _LOAD(&q[(i*ldq)+offset]);
+     q3 = _LOAD(&q[(i*ldq)+2*offset]);
+     q4 = _LOAD(&q[(i*ldq)+3*offset]);
+     q5 = _LOAD(&q[(i*ldq)+4*offset]);
 
 #ifdef BLOCK2
 #ifdef __ELPA_USE_FMA__
@@ -7247,7 +7327,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_SUB(q5, _SIMD_MUL(y5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -7273,7 +7353,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_SUB(q5, _SIMD_MUL(z5,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -7302,7 +7382,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -7327,7 +7407,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == 1281
@@ -7354,14 +7434,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-     _SIMD_STORE(&q[i*ldq],q1);
-     _SIMD_STORE(&q[(i*ldq)+offset],q2);
-     _SIMD_STORE(&q[(i*ldq)+2*offset],q3);
-     _SIMD_STORE(&q[(i*ldq)+3*offset],q4);
-     _SIMD_STORE(&q[(i*ldq)+4*offset],q5);
+     _STORE(&q[i*ldq],q1);
+     _STORE(&q[(i*ldq)+offset],q2);
+     _STORE(&q[(i*ldq)+2*offset],q3);
+     _STORE(&q[(i*ldq)+3*offset],q4);
+     _STORE(&q[(i*ldq)+4*offset],q5);
 
    }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -7371,11 +7451,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[nb*ldq]);
-   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[(nb*ldq)+4*offset]);
+   q1 = _LOAD(&q[nb*ldq]);
+   q2 = _LOAD(&q[(nb*ldq)+offset]);
+   q3 = _LOAD(&q[(nb*ldq)+2*offset]);
+   q4 = _LOAD(&q[(nb*ldq)+3*offset]);
+   q5 = _LOAD(&q[(nb*ldq)+4*offset]);
 
 #ifdef BLOCK2
 
@@ -7410,7 +7490,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -7436,7 +7516,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -7465,7 +7545,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -7489,7 +7569,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -7515,15 +7595,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[nb*ldq],q1);
-   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
-   _SIMD_STORE(&q[(nb*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[(nb*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[(nb*ldq)+4*offset],q5);
+   _STORE(&q[nb*ldq],q1);
+   _STORE(&q[(nb*ldq)+offset],q2);
+   _STORE(&q[(nb*ldq)+2*offset],q3);
+   _STORE(&q[(nb*ldq)+3*offset],q4);
+   _STORE(&q[(nb*ldq)+4*offset],q5);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -7535,11 +7615,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[((nb+1)*ldq)+4*offset]);
+   q1 = _LOAD(&q[(nb+1)*ldq]);
+   q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
+   q5 = _LOAD(&q[((nb+1)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -7555,7 +7635,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -7582,7 +7662,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -7606,7 +7686,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -7631,13 +7711,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+1)*ldq],q1);
-   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+1)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+1)*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[((nb+1)*ldq)+4*offset],q5);
+   _STORE(&q[(nb+1)*ldq],q1);
+   _STORE(&q[((nb+1)*ldq)+offset],q2);
+   _STORE(&q[((nb+1)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+1)*ldq)+3*offset],q4);
+   _STORE(&q[((nb+1)*ldq)+4*offset],q5);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -7649,11 +7729,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[((nb+2)*ldq)+4*offset]);
+   q1 = _LOAD(&q[(nb+2)*ldq]);
+   q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
+   q5 = _LOAD(&q[((nb+2)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -7670,7 +7750,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -7694,7 +7774,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -7720,16 +7800,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+2)*ldq],q1);
-   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+2)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+2)*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[((nb+2)*ldq)+4*offset],q5);
+   _STORE(&q[(nb+2)*ldq],q1);
+   _STORE(&q[((nb+2)*ldq)+offset],q2);
+   _STORE(&q[((nb+2)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+2)*ldq)+3*offset],q4);
+   _STORE(&q[((nb+2)*ldq)+4*offset],q5);
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -7739,11 +7819,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[((nb+3)*ldq)+4*offset]);
+   q1 = _LOAD(&q[(nb+3)*ldq]);
+   q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+3)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+3)*ldq)+3*offset]);
+   q5 = _LOAD(&q[((nb+3)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -7759,7 +7839,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -7783,13 +7863,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+3)*ldq],q1);
-   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+3)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+3)*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[((nb+3)*ldq)+4*offset],q5);
+   _STORE(&q[(nb+3)*ldq],q1);
+   _STORE(&q[((nb+3)*ldq)+offset],q2);
+   _STORE(&q[((nb+3)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+3)*ldq)+3*offset],q4);
+   _STORE(&q[((nb+3)*ldq)+4*offset],q5);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -7799,11 +7879,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
-   q5 = _SIMD_LOAD(&q[((nb+4)*ldq)+4*offset]);
+   q1 = _LOAD(&q[(nb+4)*ldq]);
+   q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+4)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+4)*ldq)+3*offset]);
+   q5 = _LOAD(&q[((nb+4)*ldq)+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -7819,11 +7899,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+4)*ldq],q1);
-   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+4)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+4)*ldq)+3*offset],q4);
-   _SIMD_STORE(&q[((nb+4)*ldq)+4*offset],q5);
+   _STORE(&q[(nb+4)*ldq],q1);
+   _STORE(&q[((nb+4)*ldq)+offset],q2);
+   _STORE(&q[((nb+4)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+4)*ldq)+3*offset],q4);
+   _STORE(&q[((nb+4)*ldq)+4*offset],q5);
 
 #endif /* BLOCK6 */
 }
@@ -7908,6 +7988,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 128 */
 
+#ifdef VEC_SET == 1282
+    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+#endif
+
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -7926,12 +8010,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 256 */
 
-    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
-    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE x3 = _SIMD_LOAD(&q[ldq+2*offset]);
-    __SIMD_DATATYPE x4 = _SIMD_LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE x4 = _LOAD(&q[ldq+3*offset]);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -7943,33 +8027,33 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE h2;
 
 #ifdef __ELPA_USE_FMA__
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
     __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
-    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
     __SIMD_DATATYPE y3 = _SIMD_FMA(x3, h1, q3);
-    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
     __SIMD_DATATYPE y4 = _SIMD_FMA(x4, h1, q4);
 #else
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
     __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
-    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
     __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
-    __SIMD_DATATYPE q4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
     __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
 #endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -8014,10 +8098,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[0+offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w2 = _SIMD_FMA(a3_2, h_4_3, a4_2);
@@ -8037,10 +8121,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[ldq+2*offset]);
-    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[0+2*offset]);
+    __SIMD_DATATYPE a1_3 = _LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE a4_3 = _LOAD(&q[0+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w3 = _SIMD_FMA(a3_3, h_4_3, a4_3);
@@ -8060,10 +8144,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x3 = a1_3;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[ldq+3*offset]);
-    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[0+3*offset]);
+    __SIMD_DATATYPE a1_4 = _LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _LOAD(&q[ldq+3*offset]);
+    __SIMD_DATATYPE a4_4 = _LOAD(&q[0+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w4 = _SIMD_FMA(a3_4, h_4_3, a4_4);
@@ -8096,14 +8180,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
     
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -8141,7 +8225,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -8174,7 +8258,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -8202,7 +8286,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -8232,12 +8316,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x1 = a1_1;
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
-    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _LOAD(&q[offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t2 = _SIMD_FMA(a5_2, h_6_5, a6_2);
@@ -8275,12 +8359,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x2 = a1_2;
 
-    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
-    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
-    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-    __SIMD_DATATYPE a5_3 = _SIMD_LOAD(&q[(ldq)+2*offset]);
-    __SIMD_DATATYPE a6_3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE a1_3 = _LOAD(&q[(ldq*5)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _LOAD(&q[(ldq*4)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a4_3 = _LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a5_3 = _LOAD(&q[(ldq)+2*offset]);
+    __SIMD_DATATYPE a6_3 = _LOAD(&q[2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t3 = _SIMD_FMA(a5_3, h_6_5, a6_3);
@@ -8318,12 +8402,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
  
     register __SIMD_DATATYPE x3 = a1_3;
 
-    __SIMD_DATATYPE a1_4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
-    __SIMD_DATATYPE a2_4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
-    __SIMD_DATATYPE a3_4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
-    __SIMD_DATATYPE a4_4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
-    __SIMD_DATATYPE a5_4 = _SIMD_LOAD(&q[(ldq)+3*offset]);
-    __SIMD_DATATYPE a6_4 = _SIMD_LOAD(&q[3*offset]);
+    __SIMD_DATATYPE a1_4 = _LOAD(&q[(ldq*5)+3*offset]);
+    __SIMD_DATATYPE a2_4 = _LOAD(&q[(ldq*4)+3*offset]);
+    __SIMD_DATATYPE a3_4 = _LOAD(&q[(ldq*3)+3*offset]);
+    __SIMD_DATATYPE a4_4 = _LOAD(&q[(ldq*2)+3*offset]);
+    __SIMD_DATATYPE a5_4 = _LOAD(&q[(ldq)+3*offset]);
+    __SIMD_DATATYPE a6_4 = _LOAD(&q[3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t4 = _SIMD_FMA(a5_4, h_6_5, a6_4);
@@ -8378,7 +8462,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -8391,10 +8475,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif /*   VEC_SET == 256 */
 
-        q1 = _SIMD_LOAD(&q[i*ldq]);
-        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
-        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
-        q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+        q1 = _LOAD(&q[i*ldq]);
+        q2 = _LOAD(&q[(i*ldq)+offset]);
+        q3 = _LOAD(&q[(i*ldq)+2*offset]);
+        q4 = _LOAD(&q[(i*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
         x1 = _SIMD_FMA(q1, h1, x1);
@@ -8417,7 +8501,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -8441,7 +8525,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -8468,7 +8552,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h5 = _SIMD_SET1(hh[(ldh*4)+i-(BLOCK-5)]);
 #endif
 #if VEC_SET == 1281
@@ -8490,7 +8574,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 
@@ -8516,7 +8600,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -8526,10 +8610,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[nb*ldq]);
-    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+    q1 = _LOAD(&q[nb*ldq]);
+    q2 = _LOAD(&q[(nb*ldq)+offset]);
+    q3 = _LOAD(&q[(nb*ldq)+2*offset]);
+    q4 = _LOAD(&q[(nb*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -8545,7 +8629,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -8569,7 +8653,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -8594,7 +8678,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -8606,10 +8690,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -8623,7 +8707,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -8647,7 +8731,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -8659,10 +8743,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -8681,7 +8765,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-4)]);
 #endif
 
@@ -8705,7 +8789,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-(BLOCK-5)]);
 #endif
 
@@ -8729,7 +8813,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 #if VEC_SET == 1281
@@ -8739,10 +8823,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -8756,7 +8840,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == 1281
@@ -8778,7 +8862,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == 1281
@@ -8800,7 +8884,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == 1281
@@ -8822,7 +8906,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == 1281
@@ -8832,10 +8916,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -8849,7 +8933,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-4)]);
 #endif
 
@@ -8873,7 +8957,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-5)]);
 #endif
 
@@ -8897,7 +8981,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-4)]);
 #endif
 
@@ -8909,10 +8993,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-4)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
+    q1 = _LOAD(&q[(nb+3)*ldq]);
+    q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+3)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+3)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -8926,7 +9010,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-5)]);
 #endif
 
@@ -8950,7 +9034,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-5)]);
 #endif
 
@@ -8962,10 +9046,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-5)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
-    q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
+    q1 = _LOAD(&q[(nb+4)*ldq]);
+    q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+4)*ldq)+2*offset]);
+    q4 = _LOAD(&q[((nb+4)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -8997,7 +9081,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
 
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
@@ -9038,7 +9122,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 512 */
+#endif /* VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282 */
 
 #if VEC_SET == 1281
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -9128,15 +9212,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == 256 */
 
 #ifdef BLOCK2
-#if VEC_SET == 128 
-    h1 = _SIMD_XOR(tau1, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+    h1 = _XOR(tau1, sign);
 #endif
+
 #if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
-#if VEC_SET == 256
-    h1 = _SIMD_XOR(tau1, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -9148,7 +9231,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau1, sign);
+    h1 = _XOR(tau1, sign);
 #endif
 #endif /* VEC_SET == 512 */
 
@@ -9164,15 +9247,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    x4 = _SIMD_MUL(x4, h1);
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-   h1 = _SIMD_XOR(tau2, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+   h1 = _XOR(tau2, sign);
 #endif
+
 #if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-#if VEC_SET == 256
-   h1 = _SIMD_XOR(tau2, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -9184,7 +9266,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau2, sign);
+    h1 = _XOR(tau2, sign);
 #endif
 #endif /* VEC_SET == 512 */
 
@@ -9301,10 +9383,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SIMD_LOAD(&q[0]);
-   q2 = _SIMD_LOAD(&q[offset]);
-   q3 = _SIMD_LOAD(&q[2*offset]);
-   q4 = _SIMD_LOAD(&q[3*offset]);
+   q1 = _LOAD(&q[0]);
+   q2 = _LOAD(&q[offset]);
+   q3 = _LOAD(&q[2*offset]);
+   q4 = _LOAD(&q[3*offset]);
 
 #ifdef BLOCK2
    q1 = _SIMD_ADD(q1, y1);
@@ -9325,13 +9407,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, t4);
 #endif
 
-   _SIMD_STORE(&q[0],q1);
-   _SIMD_STORE(&q[offset],q2);
-   _SIMD_STORE(&q[2*offset],q3);
-   _SIMD_STORE(&q[3*offset],q4);
+   _STORE(&q[0],q1);
+   _STORE(&q[offset],q2);
+   _STORE(&q[2*offset],q3);
+   _STORE(&q[3*offset],q4);
 
 #ifdef BLOCK2
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -9341,10 +9423,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h2 = _SIMD_BROADCAST(&hh[ldh+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
-   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
-   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
+   q3 = _LOAD(&q[ldq+2*offset]);
+   q4 = _LOAD(&q[ldq+3*offset]);
  
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
@@ -9358,14 +9440,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_ADD(q4, _SIMD_ADD(x4, _SIMD_MUL(y4, h2)));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
-   _SIMD_STORE(&q[ldq+2*offset],q3);
-   _SIMD_STORE(&q[ldq+3*offset],q4);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+2*offset],q3);
+   _STORE(&q[ldq+3*offset],q4);
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -9376,10 +9458,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
-   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
-   q4 = _SIMD_LOAD(&q[ldq+3*offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
+   q3 = _LOAD(&q[ldq+2*offset]);
+   q4 = _LOAD(&q[ldq+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
@@ -9393,12 +9475,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_ADD(z4, _SIMD_MUL(w4, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
-   _SIMD_STORE(&q[ldq+2*offset],q3);
-   _SIMD_STORE(&q[ldq+3*offset],q4);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+2*offset],q3);
+   _STORE(&q[ldq+3*offset],q4);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -9410,10 +9492,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
+   q3 = _LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _LOAD(&q[(ldq*2)+3*offset]);
 
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
@@ -9432,7 +9514,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -9456,12 +9538,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
-   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[(ldq*2)+2*offset],q3);
+   _STORE(&q[(ldq*2)+3*offset],q4);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -9473,10 +9555,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
+   q3 = _LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _LOAD(&q[(ldq*3)+3*offset]);
 
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
@@ -9495,7 +9577,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -9519,7 +9601,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -9543,16 +9625,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*3], q1);
-   _SIMD_STORE(&q[(ldq*3)+offset], q2);
-   _SIMD_STORE(&q[(ldq*3)+2*offset], q3);
-   _SIMD_STORE(&q[(ldq*3)+3*offset], q4);
+   _STORE(&q[ldq*3], q1);
+   _STORE(&q[(ldq*3)+offset], q2);
+   _STORE(&q[(ldq*3)+2*offset], q3);
+   _STORE(&q[(ldq*3)+3*offset], q4);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == 1281
@@ -9562,10 +9644,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h6 = _SIMD_BROADCAST(&hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
-   q3 = _SIMD_LOAD(&q[(ldq+2*offset)]);
-   q4 = _SIMD_LOAD(&q[(ldq+3*offset)]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[(ldq+offset)]);
+   q3 = _LOAD(&q[(ldq+2*offset)]);
+   q4 = _LOAD(&q[(ldq+3*offset)]);
 
    q1 = _SIMD_SUB(q1, v1);
    q2 = _SIMD_SUB(q2, v2);
@@ -9584,12 +9666,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[(ldq+offset)],q2);
-   _SIMD_STORE(&q[(ldq+2*offset)],q3);
-   _SIMD_STORE(&q[(ldq+3*offset)],q4);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[(ldq+offset)],q2);
+   _STORE(&q[(ldq+2*offset)],q3);
+   _STORE(&q[(ldq+3*offset)],q4);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == 1281
@@ -9598,10 +9680,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h5 = _SIMD_BROADCAST(&hh[(ldh*4)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*2)+3*offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
+   q3 = _LOAD(&q[(ldq*2)+2*offset]);
+   q4 = _LOAD(&q[(ldq*2)+3*offset]);
  
    q1 = _SIMD_SUB(q1, w1); 
    q2 = _SIMD_SUB(q2, w2);
@@ -9620,7 +9702,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == 1281
@@ -9642,12 +9724,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
-   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*2)+3*offset],q4);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[(ldq*2)+2*offset],q3);
+   _STORE(&q[(ldq*2)+3*offset],q4);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -9659,10 +9741,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*3)+3*offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
+   q3 = _LOAD(&q[(ldq*3)+2*offset]);
+   q4 = _LOAD(&q[(ldq*3)+3*offset]);
 
    q1 = _SIMD_SUB(q1, z1);
    q2 = _SIMD_SUB(q2, z2);
@@ -9681,7 +9763,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == 1281
@@ -9703,7 +9785,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == 1281
@@ -9725,12 +9807,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*3],q1);
-   _SIMD_STORE(&q[(ldq*3)+offset],q2);
-   _SIMD_STORE(&q[(ldq*3)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*3)+3*offset],q4);
+   _STORE(&q[ldq*3],q1);
+   _STORE(&q[(ldq*3)+offset],q2);
+   _STORE(&q[(ldq*3)+2*offset],q3);
+   _STORE(&q[(ldq*3)+3*offset],q4);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == 1281
@@ -9740,10 +9822,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h3 = _SIMD_BROADCAST(&hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*4]);
-   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*4)+3*offset]);
+   q1 = _LOAD(&q[ldq*4]);
+   q2 = _LOAD(&q[(ldq*4)+offset]);
+   q3 = _LOAD(&q[(ldq*4)+2*offset]);
+   q4 = _LOAD(&q[(ldq*4)+3*offset]);
 
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
@@ -9762,7 +9844,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == 1281
@@ -9784,7 +9866,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == 1281
@@ -9806,7 +9888,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == 1281
@@ -9828,12 +9910,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*4],q1);
-   _SIMD_STORE(&q[(ldq*4)+offset],q2);
-   _SIMD_STORE(&q[(ldq*4)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*4)+3*offset],q4);
+   _STORE(&q[ldq*4],q1);
+   _STORE(&q[(ldq*4)+offset],q2);
+   _STORE(&q[(ldq*4)+2*offset],q3);
+   _STORE(&q[(ldq*4)+3*offset],q4);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == 1281
@@ -9842,10 +9924,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h2 = _SIMD_BROADCAST(&hh[(ldh)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*5]);
-   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(ldq*5)+3*offset]);
+   q1 = _LOAD(&q[ldq*5]);
+   q2 = _LOAD(&q[(ldq*5)+offset]);
+   q3 = _LOAD(&q[(ldq*5)+2*offset]);
+   q4 = _LOAD(&q[(ldq*5)+3*offset]);
 
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
@@ -9864,7 +9946,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == 1281
@@ -9886,7 +9968,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == 1281
@@ -9908,7 +9990,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == 1281
@@ -9930,7 +10012,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == 1281
@@ -9952,16 +10034,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*5],q1);
-   _SIMD_STORE(&q[(ldq*5)+offset],q2);
-   _SIMD_STORE(&q[(ldq*5)+2*offset],q3);
-   _SIMD_STORE(&q[(ldq*5)+3*offset],q4);
+   _STORE(&q[ldq*5],q1);
+   _STORE(&q[(ldq*5)+offset],q2);
+   _STORE(&q[(ldq*5)+2*offset],q3);
+   _STORE(&q[(ldq*5)+3*offset],q4);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -9974,10 +10056,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif
 
-     q1 = _SIMD_LOAD(&q[i*ldq]);
-     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
-     q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
-     q4 = _SIMD_LOAD(&q[(i*ldq)+3*offset]);
+     q1 = _LOAD(&q[i*ldq]);
+     q2 = _LOAD(&q[(i*ldq)+offset]);
+     q3 = _LOAD(&q[(i*ldq)+2*offset]);
+     q4 = _LOAD(&q[(i*ldq)+3*offset]);
 
 #ifdef BLOCK2
 #ifdef __ELPA_USE_FMA__
@@ -10023,7 +10105,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_SUB(q4, _SIMD_MUL(y4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -10047,7 +10129,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_SUB(q4, _SIMD_MUL(z4,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -10074,7 +10156,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -10096,7 +10178,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == 1281
@@ -10120,13 +10202,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-     _SIMD_STORE(&q[i*ldq],q1);
-     _SIMD_STORE(&q[(i*ldq)+offset],q2);
-     _SIMD_STORE(&q[(i*ldq)+2*offset],q3);
-     _SIMD_STORE(&q[(i*ldq)+3*offset],q4);
+     _STORE(&q[i*ldq],q1);
+     _STORE(&q[(i*ldq)+offset],q2);
+     _STORE(&q[(i*ldq)+2*offset],q3);
+     _STORE(&q[(i*ldq)+3*offset],q4);
 
    }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -10136,10 +10218,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[nb*ldq]);
-   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[(nb*ldq)+3*offset]);
+   q1 = _LOAD(&q[nb*ldq]);
+   q2 = _LOAD(&q[(nb*ldq)+offset]);
+   q3 = _LOAD(&q[(nb*ldq)+2*offset]);
+   q4 = _LOAD(&q[(nb*ldq)+3*offset]);
 
 #ifdef BLOCK2
 
@@ -10170,7 +10252,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -10194,7 +10276,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -10221,7 +10303,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -10243,7 +10325,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -10267,14 +10349,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[nb*ldq],q1);
-   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
-   _SIMD_STORE(&q[(nb*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[(nb*ldq)+3*offset],q4);
+   _STORE(&q[nb*ldq],q1);
+   _STORE(&q[(nb*ldq)+offset],q2);
+   _STORE(&q[(nb*ldq)+2*offset],q3);
+   _STORE(&q[(nb*ldq)+3*offset],q4);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -10286,10 +10368,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+1)*ldq)+3*offset]);
+   q1 = _LOAD(&q[(nb+1)*ldq]);
+   q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+1)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -10303,7 +10385,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -10328,7 +10410,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -10350,7 +10432,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -10373,12 +10455,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+1)*ldq],q1);
-   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+1)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+1)*ldq)+3*offset],q4);
+   _STORE(&q[(nb+1)*ldq],q1);
+   _STORE(&q[((nb+1)*ldq)+offset],q2);
+   _STORE(&q[((nb+1)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+1)*ldq)+3*offset],q4);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -10390,10 +10472,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+2)*ldq)+3*offset]);
+   q1 = _LOAD(&q[(nb+2)*ldq]);
+   q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+2)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -10408,7 +10490,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -10430,7 +10512,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -10453,16 +10535,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
-   _SIMD_STORE(&q[(nb+2)*ldq],q1);
-   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+2)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+2)*ldq)+3*offset],q4);
+   _STORE(&q[(nb+2)*ldq],q1);
+   _STORE(&q[((nb+2)*ldq)+offset],q2);
+   _STORE(&q[((nb+2)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+2)*ldq)+3*offset],q4);
 
 #endif /* BLOCK4 || BLOCK6*/
 
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -10472,10 +10554,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+3)*ldq)+3*offset]);
+   q1 = _LOAD(&q[(nb+3)*ldq]);
+   q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+3)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+3)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -10489,7 +10571,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -10511,12 +10593,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+3)*ldq],q1);
-   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+3)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+3)*ldq)+3*offset],q4);
+   _STORE(&q[(nb+3)*ldq],q1);
+   _STORE(&q[((nb+3)*ldq)+offset],q2);
+   _STORE(&q[((nb+3)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+3)*ldq)+3*offset],q4);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -10526,10 +10608,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
-   q4 = _SIMD_LOAD(&q[((nb+4)*ldq)+3*offset]);
+   q1 = _LOAD(&q[(nb+4)*ldq]);
+   q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+4)*ldq)+2*offset]);
+   q4 = _LOAD(&q[((nb+4)*ldq)+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -10543,10 +10625,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+4)*ldq],q1);
-   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+4)*ldq)+2*offset],q3);
-   _SIMD_STORE(&q[((nb+4)*ldq)+3*offset],q4);
+   _STORE(&q[(nb+4)*ldq],q1);
+   _STORE(&q[((nb+4)*ldq)+offset],q2);
+   _STORE(&q[((nb+4)*ldq)+2*offset],q3);
+   _STORE(&q[((nb+4)*ldq)+3*offset],q4);
 
 #endif /* BLOCK6 */
 }
@@ -10620,7 +10702,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     int i;
 #ifdef BLOCK2
-#if VEC_SET == 128
+#if VEC_SET == 128 
     // Needed bit mask for floating point sign flip
 #ifdef DOUBLE_PRECISION_REAL
     __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set1_epi64x(0x8000000000000000LL);
@@ -10629,6 +10711,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE sign = _mm_castsi128_ps(_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000));
 #endif
 #endif /* VEC_SET == 128 */
+
+#ifdef VEC_SET == 1282
+    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+#endif
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -10648,11 +10734,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 512 */
 
-    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
-    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE x3 = _SIMD_LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -10663,9 +10749,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
     __SIMD_DATATYPE h2;
 
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
-    __SIMD_DATATYPE q3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE q1 = _LOAD(q);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
+    __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
@@ -10679,12 +10765,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -10729,10 +10815,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[0+offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w2 = _SIMD_FMA(a3_2, h_4_3, a4_2);
@@ -10752,10 +10838,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[ldq+2*offset]);
-    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[0+2*offset]);
+    __SIMD_DATATYPE a1_3 = _LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _LOAD(&q[ldq+2*offset]);
+    __SIMD_DATATYPE a4_3 = _LOAD(&q[0+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w3 = _SIMD_FMA(a3_3, h_4_3, a4_3);
@@ -10787,14 +10873,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
     
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -10832,7 +10918,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -10865,7 +10951,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -10893,7 +10979,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -10923,12 +11009,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x1 = a1_1;
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
-    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _LOAD(&q[offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t2 = _SIMD_FMA(a5_2, h_6_5, a6_2);
@@ -10966,12 +11052,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x2 = a1_2;
 
-    __SIMD_DATATYPE a1_3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
-    __SIMD_DATATYPE a2_3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
-    __SIMD_DATATYPE a3_3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
-    __SIMD_DATATYPE a4_3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
-    __SIMD_DATATYPE a5_3 = _SIMD_LOAD(&q[(ldq)+2*offset]);
-    __SIMD_DATATYPE a6_3 = _SIMD_LOAD(&q[2*offset]);
+    __SIMD_DATATYPE a1_3 = _LOAD(&q[(ldq*5)+2*offset]);
+    __SIMD_DATATYPE a2_3 = _LOAD(&q[(ldq*4)+2*offset]);
+    __SIMD_DATATYPE a3_3 = _LOAD(&q[(ldq*3)+2*offset]);
+    __SIMD_DATATYPE a4_3 = _LOAD(&q[(ldq*2)+2*offset]);
+    __SIMD_DATATYPE a5_3 = _LOAD(&q[(ldq)+2*offset]);
+    __SIMD_DATATYPE a6_3 = _LOAD(&q[2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t3 = _SIMD_FMA(a5_3, h_6_5, a6_3);
@@ -11025,7 +11111,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -11038,9 +11124,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif /*   VEC_SET == 256 */
 
-        q1 = _SIMD_LOAD(&q[i*ldq]);
-        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
-        q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+        q1 = _LOAD(&q[i*ldq]);
+        q2 = _LOAD(&q[(i*ldq)+offset]);
+        q3 = _LOAD(&q[(i*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
         x1 = _SIMD_FMA(q1, h1, x1);
@@ -11059,7 +11145,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -11081,7 +11167,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -11107,7 +11193,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -11127,7 +11213,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h6 = _SIMD_SET1(hh[(ldh*5)+i-(BLOCK-6)]);
 #endif
 
@@ -11151,7 +11237,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -11161,9 +11247,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[nb*ldq]);
-    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+    q1 = _LOAD(&q[nb*ldq]);
+    q2 = _LOAD(&q[(nb*ldq)+offset]);
+    q3 = _LOAD(&q[(nb*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -11177,7 +11263,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -11199,7 +11285,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -11222,7 +11308,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -11233,9 +11319,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
     h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -11247,7 +11333,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -11269,7 +11355,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -11281,9 +11367,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -11300,7 +11386,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-4)]);
 #endif
 
@@ -11322,7 +11408,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-(BLOCK-5)]);
 #endif
 
@@ -11344,7 +11430,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 #if VEC_SET == 1281
@@ -11354,9 +11440,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -11368,7 +11454,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == 1281
@@ -11388,7 +11474,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == 1281
@@ -11408,7 +11494,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == 1281
@@ -11428,7 +11514,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == 1281
@@ -11438,9 +11524,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -11452,7 +11538,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-4)]);
 #endif
 
@@ -11474,7 +11560,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-5)]);
 #endif
 
@@ -11496,7 +11582,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-4)]);
 #endif
 
@@ -11508,9 +11594,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-4)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
+    q1 = _LOAD(&q[(nb+3)*ldq]);
+    q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+3)*ldq)+2*offset]);
 
 
 #ifdef __ELPA_USE_FMA__
@@ -11523,7 +11609,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-5)]);
 #endif
 
@@ -11545,7 +11631,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-5)]);
 #endif
 
@@ -11557,9 +11643,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-5)]);
 #endif
  
-    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
-    q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
+    q1 = _LOAD(&q[(nb+4)*ldq]);
+    q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
+    q3 = _LOAD(&q[((nb+4)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -11589,7 +11675,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
@@ -11629,7 +11715,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 512 */
+#endif /* VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282 */
 
 #if VEC_SET == 1281
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -11718,15 +11804,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == 256 */
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-    h1 = _SIMD_XOR(tau1, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+    h1 = _XOR(tau1, sign);
 #endif
+
 #if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
-#if VEC_SET == 256
-    h1 = _SIMD_XOR(tau1, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -11738,7 +11823,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau1, sign);
+    h1 = _XOR(tau1, sign);
 #endif
 #endif /* VEC_SET == 512 */
 
@@ -11753,15 +11838,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    x3 = _SIMD_MUL(x3, h1);
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-   h1 = _SIMD_XOR(tau2, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+   h1 = _XOR(tau2, sign);
 #endif
+
 #if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-#if VEC_SET == 256
-   h1 = _SIMD_XOR(tau2, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -11773,7 +11857,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau2, sign);
+    h1 = _XOR(tau2, sign);
 #endif
 #endif /* VEC_SET == 512 */
    h2 = _SIMD_MUL(h1, vs);
@@ -11878,7 +11962,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SIMD_LOAD(&q[0]);
+   q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
    q1 = _SIMD_ADD(q1, y1);
 #endif
@@ -11888,8 +11972,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SIMD_STORE(&q[0],q1);
-   q2 = _SIMD_LOAD(&q[offset]);
+   _STORE(&q[0],q1);
+   q2 = _LOAD(&q[offset]);
 #ifdef BLOCK2
    q2 = _SIMD_ADD(q2, y2);
 #endif
@@ -11899,8 +11983,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SIMD_STORE(&q[offset],q2);
-   q3 = _SIMD_LOAD(&q[2*offset]);
+   _STORE(&q[offset],q2);
+   q3 = _LOAD(&q[2*offset]);
 #ifdef BLOCK2
    q3 = _SIMD_ADD(q3, y3);
 #endif
@@ -11911,10 +11995,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, t3);
 #endif
 
-   _SIMD_STORE(&q[2*offset],q3);
+   _STORE(&q[2*offset],q3);
 
 #ifdef BLOCK2
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -11924,9 +12008,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h2 = _SIMD_BROADCAST(&hh[ldh+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
-   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
+   q3 = _LOAD(&q[ldq+2*offset]);
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
    q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
@@ -11937,14 +12021,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
-   _SIMD_STORE(&q[ldq+2*offset],q3);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+2*offset],q3);
 
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -11955,9 +12039,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
-   q3 = _SIMD_LOAD(&q[ldq+2*offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
+   q3 = _LOAD(&q[ldq+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
@@ -11969,11 +12053,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
 #endif /* __ELPA_USE_FMA__ */
  
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
-   _SIMD_STORE(&q[ldq+2*offset],q3);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+2*offset],q3);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -11985,9 +12069,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
+   q3 = _LOAD(&q[(ldq*2)+2*offset]);
 
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
@@ -12003,7 +12087,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -12025,11 +12109,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
-   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[(ldq*2)+2*offset],q3);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -12040,9 +12124,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+3]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
+   q3 = _LOAD(&q[(ldq*3)+2*offset]);
 
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
@@ -12058,7 +12142,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -12080,7 +12164,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -12102,15 +12186,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*3], q1);
-   _SIMD_STORE(&q[(ldq*3)+offset], q2);
-   _SIMD_STORE(&q[(ldq*3)+2*offset], q3);
+   _STORE(&q[ldq*3], q1);
+   _STORE(&q[(ldq*3)+offset], q2);
+   _STORE(&q[(ldq*3)+2*offset], q3);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == 1281
@@ -12120,9 +12204,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h6 = _SIMD_BROADCAST(&hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
-   q3 = _SIMD_LOAD(&q[(ldq+2*offset)]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[(ldq+offset)]);
+   q3 = _LOAD(&q[(ldq+2*offset)]);
 
    q1 = _SIMD_SUB(q1, v1);
    q2 = _SIMD_SUB(q2, v2);
@@ -12138,11 +12222,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 #endif /* __ELPA_USE_FMA__ */
  
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[(ldq+offset)],q2);
-   _SIMD_STORE(&q[(ldq+2*offset)],q3);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[(ldq+offset)],q2);
+   _STORE(&q[(ldq+2*offset)],q3);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == 1281
@@ -12152,9 +12236,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h5 = _SIMD_BROADCAST(&hh[(ldh*4)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*2)+2*offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
+   q3 = _LOAD(&q[(ldq*2)+2*offset]);
 
    q1 = _SIMD_SUB(q1, w1); 
    q2 = _SIMD_SUB(q2, w2);
@@ -12170,7 +12254,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == 1281
@@ -12190,11 +12274,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
-   _SIMD_STORE(&q[(ldq*2)+2*offset],q3);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[(ldq*2)+2*offset],q3);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -12206,9 +12290,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
  
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*3)+2*offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
+   q3 = _LOAD(&q[(ldq*3)+2*offset]);
 
    q1 = _SIMD_SUB(q1, z1);
    q2 = _SIMD_SUB(q2, z2);
@@ -12224,7 +12308,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == 1281
@@ -12244,7 +12328,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == 1281
@@ -12264,11 +12348,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*3],q1);
-   _SIMD_STORE(&q[(ldq*3)+offset],q2);
-   _SIMD_STORE(&q[(ldq*3)+2*offset],q3);
+   _STORE(&q[ldq*3],q1);
+   _STORE(&q[(ldq*3)+offset],q2);
+   _STORE(&q[(ldq*3)+2*offset],q3);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == 1281
@@ -12278,9 +12362,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h3 = _SIMD_BROADCAST(&hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*4]);
-   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*4)+2*offset]);
+   q1 = _LOAD(&q[ldq*4]);
+   q2 = _LOAD(&q[(ldq*4)+offset]);
+   q3 = _LOAD(&q[(ldq*4)+2*offset]);
 
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
@@ -12296,7 +12380,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == 1281
@@ -12316,7 +12400,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == 1281
@@ -12336,7 +12420,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == 1281
@@ -12356,11 +12440,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*4],q1);
-   _SIMD_STORE(&q[(ldq*4)+offset],q2);
-   _SIMD_STORE(&q[(ldq*4)+2*offset],q3);
+   _STORE(&q[ldq*4],q1);
+   _STORE(&q[(ldq*4)+offset],q2);
+   _STORE(&q[(ldq*4)+2*offset],q3);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == 1281
@@ -12369,9 +12453,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h2 = _SIMD_BROADCAST(&hh[(ldh)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*5]);
-   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-   q3 = _SIMD_LOAD(&q[(ldq*5)+2*offset]);
+   q1 = _LOAD(&q[ldq*5]);
+   q2 = _LOAD(&q[(ldq*5)+offset]);
+   q3 = _LOAD(&q[(ldq*5)+2*offset]);
 
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
@@ -12387,7 +12471,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == 1281
@@ -12407,7 +12491,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == 1281
@@ -12427,7 +12511,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == 1281
@@ -12447,7 +12531,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == 1281
@@ -12467,15 +12551,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*5],q1);
-   _SIMD_STORE(&q[(ldq*5)+offset],q2);
-   _SIMD_STORE(&q[(ldq*5)+2*offset],q3);
+   _STORE(&q[ldq*5],q1);
+   _STORE(&q[(ldq*5)+offset],q2);
+   _STORE(&q[(ldq*5)+2*offset],q3);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -12488,9 +12572,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif
 
-     q1 = _SIMD_LOAD(&q[i*ldq]);
-     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
-     q3 = _SIMD_LOAD(&q[(i*ldq)+2*offset]);
+     q1 = _LOAD(&q[i*ldq]);
+     q2 = _LOAD(&q[(i*ldq)+offset]);
+     q3 = _LOAD(&q[(i*ldq)+2*offset]);
 
 #ifdef BLOCK2
 #ifdef __ELPA_USE_FMA__
@@ -12529,7 +12613,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -12551,7 +12635,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -12576,7 +12660,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -12596,7 +12680,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == 1281
@@ -12617,12 +12701,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
-     _SIMD_STORE(&q[i*ldq],q1);
-     _SIMD_STORE(&q[(i*ldq)+offset],q2);
-     _SIMD_STORE(&q[(i*ldq)+2*offset],q3);
+     _STORE(&q[i*ldq],q1);
+     _STORE(&q[(i*ldq)+offset],q2);
+     _STORE(&q[(i*ldq)+2*offset],q3);
 
    }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -12632,9 +12716,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[nb*ldq]);
-   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[(nb*ldq)+2*offset]);
+   q1 = _LOAD(&q[nb*ldq]);
+   q2 = _LOAD(&q[(nb*ldq)+offset]);
+   q3 = _LOAD(&q[(nb*ldq)+2*offset]);
 
 #ifdef BLOCK2
 
@@ -12661,7 +12745,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -12683,7 +12767,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -12708,7 +12792,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -12729,7 +12813,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -12751,13 +12835,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[nb*ldq],q1);
-   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
-   _SIMD_STORE(&q[(nb*ldq)+2*offset],q3);
+   _STORE(&q[nb*ldq],q1);
+   _STORE(&q[(nb*ldq)+offset],q2);
+   _STORE(&q[(nb*ldq)+2*offset],q3);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -12769,9 +12853,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+1)*ldq)+2*offset]);
+   q1 = _LOAD(&q[(nb+1)*ldq]);
+   q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+1)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -12783,7 +12867,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -12806,7 +12890,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -12826,7 +12910,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -12847,11 +12931,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+1)*ldq],q1);
-   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+1)*ldq)+2*offset],q3);
+   _STORE(&q[(nb+1)*ldq],q1);
+   _STORE(&q[((nb+1)*ldq)+offset],q2);
+   _STORE(&q[((nb+1)*ldq)+2*offset],q3);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -12863,9 +12947,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+2)*ldq)+2*offset]);
+   q1 = _LOAD(&q[(nb+2)*ldq]);
+   q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+2)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -12878,7 +12962,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -12898,7 +12982,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -12919,14 +13003,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+2)*ldq],q1);
-   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+2)*ldq)+2*offset],q3);
+   _STORE(&q[(nb+2)*ldq],q1);
+   _STORE(&q[((nb+2)*ldq)+offset],q2);
+   _STORE(&q[((nb+2)*ldq)+2*offset],q3);
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -12936,9 +13020,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+3)*ldq)+2*offset]);
+   q1 = _LOAD(&q[(nb+3)*ldq]);
+   q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+3)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -12950,7 +13034,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -12970,11 +13054,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+3)*ldq],q1);
-   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+3)*ldq)+2*offset],q3);
+   _STORE(&q[(nb+3)*ldq],q1);
+   _STORE(&q[((nb+3)*ldq)+offset],q2);
+   _STORE(&q[((nb+3)*ldq)+2*offset],q3);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -12984,9 +13068,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
-   q3 = _SIMD_LOAD(&q[((nb+4)*ldq)+2*offset]);
+   q1 = _LOAD(&q[(nb+4)*ldq]);
+   q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
+   q3 = _LOAD(&q[((nb+4)*ldq)+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -12998,9 +13082,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+4)*ldq],q1);
-   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
-   _SIMD_STORE(&q[((nb+4)*ldq)+2*offset],q3);
+   _STORE(&q[(nb+4)*ldq],q1);
+   _STORE(&q[((nb+4)*ldq)+offset],q2);
+   _STORE(&q[((nb+4)*ldq)+2*offset],q3);
 
 #endif /* BLOCK6 */
 }
@@ -13087,6 +13171,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 128 */
 
+#ifdef VEC_SET == 1282
+    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+#endif
+
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -13105,10 +13193,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 512 */
 
-    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
-    __SIMD_DATATYPE x2 = _SIMD_LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
+    __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -13120,25 +13208,25 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     __SIMD_DATATYPE h2;
 #ifdef __ELPA_USE_FMA__
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
     __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
 #else
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-    __SIMD_DATATYPE q2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
     __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
 #endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -13183,10 +13271,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);                  
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[ldq+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[0+offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*3)+offset]);                  
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[ldq+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[0+offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE w2 = _SIMD_FMA(a3_2, h_4_3, a4_2);
@@ -13217,14 +13305,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
     
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -13262,7 +13350,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -13295,7 +13383,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -13323,7 +13411,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -13353,12 +13441,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     register __SIMD_DATATYPE x1 = a1_1;
 
-    __SIMD_DATATYPE a1_2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
-    __SIMD_DATATYPE a2_2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
-    __SIMD_DATATYPE a3_2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
-    __SIMD_DATATYPE a4_2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
-    __SIMD_DATATYPE a5_2 = _SIMD_LOAD(&q[(ldq)+offset]);
-    __SIMD_DATATYPE a6_2 = _SIMD_LOAD(&q[offset]);
+    __SIMD_DATATYPE a1_2 = _LOAD(&q[(ldq*5)+offset]);
+    __SIMD_DATATYPE a2_2 = _LOAD(&q[(ldq*4)+offset]);
+    __SIMD_DATATYPE a3_2 = _LOAD(&q[(ldq*3)+offset]);
+    __SIMD_DATATYPE a4_2 = _LOAD(&q[(ldq*2)+offset]);
+    __SIMD_DATATYPE a5_2 = _LOAD(&q[(ldq)+offset]);
+    __SIMD_DATATYPE a6_2 = _LOAD(&q[offset]);
 
 #ifdef __ELPA_USE_FMA__
     register __SIMD_DATATYPE t2 = _SIMD_FMA(a5_2, h_6_5, a6_2);
@@ -13410,7 +13498,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -13423,8 +13511,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif /*   VEC_SET == 256 */
 
-        q1 = _SIMD_LOAD(&q[i*ldq]);
-        q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+        q1 = _LOAD(&q[i*ldq]);
+        q2 = _LOAD(&q[(i*ldq)+offset]);
 #ifdef __ELPA_USE_FMA__
         x1 = _SIMD_FMA(q1, h1, x1);
         y1 = _SIMD_FMA(q1, h2, y1);
@@ -13438,7 +13526,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -13458,7 +13546,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -13482,7 +13570,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -13500,7 +13588,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h6 = _SIMD_SET1(hh[(ldh*5)+i-(BLOCK-6)]);
 #endif
 
@@ -13522,7 +13610,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -13532,8 +13620,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[nb*ldq]);
-    q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+    q1 = _LOAD(&q[nb*ldq]);
+    q2 = _LOAD(&q[(nb*ldq)+offset]);
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
@@ -13544,7 +13632,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -13564,7 +13652,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -13586,7 +13674,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK4
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -13598,8 +13686,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -13609,7 +13697,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -13629,7 +13717,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -13641,8 +13729,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -13657,7 +13745,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-4)]);
 #endif
 
@@ -13677,7 +13765,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
@@ -13697,7 +13785,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 #if VEC_SET == 1281
@@ -13707,8 +13795,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
+    q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -13718,7 +13806,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == 1281
@@ -13736,7 +13824,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == 1281
@@ -13754,7 +13842,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == 1281
@@ -13772,7 +13860,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == 1281
@@ -13782,8 +13870,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
+    q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -13793,7 +13881,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-4)]);
 #endif
 
@@ -13813,7 +13901,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-5)]);
 #endif
 
@@ -13833,7 +13921,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -13845,8 +13933,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-4)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+    q1 = _LOAD(&q[(nb+3)*ldq]);
+    q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -13856,7 +13944,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 
@@ -13876,7 +13964,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -13888,8 +13976,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-5)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-    q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+    q1 = _LOAD(&q[(nb+4)*ldq]);
+    q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -13916,7 +14004,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
@@ -13956,7 +14044,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 512 */
+#endif /* VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282 */
 
 #if VEC_SET == 1281
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -14045,15 +14133,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == 256 */
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-    h1 = _SIMD_XOR(tau1, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+    h1 = _XOR(tau1, sign);
 #endif
+
 #if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
-#if VEC_SET == 256
-    h1 = _SIMD_XOR(tau1, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -14065,7 +14152,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau1, sign);
+    h1 = _XOR(tau1, sign);
 #endif
 #endif /* VEC_SET == 512 */
 
@@ -14079,15 +14166,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    x2 = _SIMD_MUL(x2, h1);
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-   h1 = _SIMD_XOR(tau2, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+   h1 = _XOR(tau2, sign);
 #endif
+
 #if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-#if VEC_SET == 256
-   h1 = _SIMD_XOR(tau2, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -14099,7 +14185,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau2, sign);
+    h1 = _XOR(tau2, sign);
 #endif
 #endif /* VEC_SET == 512 */
    h2 = _SIMD_MUL(h1, vs);
@@ -14191,7 +14277,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SIMD_LOAD(&q[0]);
+   q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
    q1 = _SIMD_ADD(q1, y1);
 #endif
@@ -14201,8 +14287,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SIMD_STORE(&q[0],q1);
-   q2 = _SIMD_LOAD(&q[offset]);
+   _STORE(&q[0],q1);
+   q2 = _LOAD(&q[offset]);
 #ifdef BLOCK2
    q2 = _SIMD_ADD(q2, y2);
 #endif
@@ -14212,10 +14298,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q2 = _SIMD_SUB(q2, t2);
 #endif
-   _SIMD_STORE(&q[offset],q2);
+   _STORE(&q[offset],q2);
 
 #ifdef BLOCK2
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -14226,24 +14312,24 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _LOAD(&q[ldq]);
    q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
-   _SIMD_STORE(&q[ldq],q1);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   _STORE(&q[ldq],q1);
+   q2 = _LOAD(&q[ldq+offset]);
    q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
-   _SIMD_STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+offset],q2);
 #else
-   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _LOAD(&q[ldq]);
    q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
-   _SIMD_STORE(&q[ldq],q1);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   _STORE(&q[ldq],q1);
+   q2 = _LOAD(&q[ldq+offset]);
    q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
-   _SIMD_STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq+offset],q2);
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -14255,8 +14341,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[ldq+offset]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[ldq+offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
@@ -14266,10 +14352,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[ldq+offset],q2);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[ldq+offset],q2);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -14281,8 +14367,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
 
@@ -14294,7 +14380,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -14314,10 +14400,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -14329,8 +14415,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
 
@@ -14342,7 +14428,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -14362,7 +14448,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -14382,14 +14468,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*3], q1);
-   _SIMD_STORE(&q[(ldq*3)+offset], q2);
+   _STORE(&q[ldq*3], q1);
+   _STORE(&q[(ldq*3)+offset], q2);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == 1281
@@ -14399,8 +14485,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h6 = _SIMD_BROADCAST(&hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
-   q2 = _SIMD_LOAD(&q[(ldq+offset)]);
+   q1 = _LOAD(&q[ldq]);
+   q2 = _LOAD(&q[(ldq+offset)]);
    q1 = _SIMD_SUB(q1, v1);
    q2 = _SIMD_SUB(q2, v2);
 
@@ -14412,10 +14498,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq],q1);
-   _SIMD_STORE(&q[(ldq+offset)],q2);
+   _STORE(&q[ldq],q1);
+   _STORE(&q[(ldq+offset)],q2);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == 1281
@@ -14424,8 +14510,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h5 = _SIMD_BROADCAST(&hh[(ldh*4)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*2]);
-   q2 = _SIMD_LOAD(&q[(ldq*2)+offset]);
+   q1 = _LOAD(&q[ldq*2]);
+   q2 = _LOAD(&q[(ldq*2)+offset]);
    q1 = _SIMD_SUB(q1, w1); 
    q2 = _SIMD_SUB(q2, w2);
 
@@ -14437,7 +14523,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == 1281
@@ -14455,10 +14541,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
-   _SIMD_STORE(&q[(ldq*2)+offset],q2);
+   _STORE(&q[ldq*2],q1);
+   _STORE(&q[(ldq*2)+offset],q2);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -14470,8 +14556,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
-   q2 = _SIMD_LOAD(&q[(ldq*3)+offset]);
+   q1 = _LOAD(&q[ldq*3]);
+   q2 = _LOAD(&q[(ldq*3)+offset]);
 
    q1 = _SIMD_SUB(q1, z1);
    q2 = _SIMD_SUB(q2, z2);
@@ -14484,7 +14570,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == 1281
@@ -14502,7 +14588,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == 1281
@@ -14520,10 +14606,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*3],q1);
-   _SIMD_STORE(&q[(ldq*3)+offset],q2);
+   _STORE(&q[ldq*3],q1);
+   _STORE(&q[(ldq*3)+offset],q2);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == 1281
@@ -14532,8 +14618,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h3 = _SIMD_BROADCAST(&hh[(ldh*2)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*4]);
-   q2 = _SIMD_LOAD(&q[(ldq*4)+offset]);
+   q1 = _LOAD(&q[ldq*4]);
+   q2 = _LOAD(&q[(ldq*4)+offset]);
 
    q1 = _SIMD_SUB(q1, y1);
    q2 = _SIMD_SUB(q2, y2);
@@ -14546,7 +14632,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == 1281
@@ -14564,7 +14650,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == 1281
@@ -14582,7 +14668,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == 1281
@@ -14600,10 +14686,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*4],q1);
-   _SIMD_STORE(&q[(ldq*4)+offset],q2);
+   _STORE(&q[ldq*4],q1);
+   _STORE(&q[(ldq*4)+offset],q2);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == 1281
@@ -14612,8 +14698,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h2 = _SIMD_BROADCAST(&hh[(ldh)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*5]);
-   q2 = _SIMD_LOAD(&q[(ldq*5)+offset]);
+   q1 = _LOAD(&q[ldq*5]);
+   q2 = _LOAD(&q[(ldq*5)+offset]);
    q1 = _SIMD_SUB(q1, x1);
    q2 = _SIMD_SUB(q2, x2);
 
@@ -14625,7 +14711,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == 1281
@@ -14643,7 +14729,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == 1281
@@ -14661,7 +14747,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == 1281
@@ -14679,7 +14765,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == 1281
@@ -14696,14 +14782,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
    q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
 #endif
-   _SIMD_STORE(&q[ldq*5],q1);
-   _SIMD_STORE(&q[(ldq*5)+offset],q2);
+   _STORE(&q[ldq*5],q1);
+   _STORE(&q[(ldq*5)+offset],q2);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -14716,8 +14802,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif
 
-     q1 = _SIMD_LOAD(&q[i*ldq]);
-     q2 = _SIMD_LOAD(&q[(i*ldq)+offset]);
+     q1 = _LOAD(&q[i*ldq]);
+     q2 = _LOAD(&q[(i*ldq)+offset]);
 
 #ifdef BLOCK2
 #ifdef __ELPA_USE_FMA__
@@ -14749,7 +14835,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -14769,7 +14855,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -14792,7 +14878,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == 1281
@@ -14810,7 +14896,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == 1281
@@ -14829,11 +14915,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
-     _SIMD_STORE(&q[i*ldq],q1);
-     _SIMD_STORE(&q[(i*ldq)+offset],q2);
+     _STORE(&q[i*ldq],q1);
+     _STORE(&q[(i*ldq)+offset],q2);
 
    }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -14843,8 +14929,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[nb*ldq]);
-   q2 = _SIMD_LOAD(&q[(nb*ldq)+offset]);
+   q1 = _LOAD(&q[nb*ldq]);
+   q2 = _LOAD(&q[(nb*ldq)+offset]);
 
 #ifdef BLOCK2
 
@@ -14867,7 +14953,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -14887,7 +14973,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -14910,7 +14996,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -14928,7 +15014,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -14948,12 +15034,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[nb*ldq],q1);
-   _SIMD_STORE(&q[(nb*ldq)+offset],q2);
+   _STORE(&q[nb*ldq],q1);
+   _STORE(&q[(nb*ldq)+offset],q2);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -14965,8 +15051,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+1)*ldq)+offset]);
+   q1 = _LOAD(&q[(nb+1)*ldq]);
+   q2 = _LOAD(&q[((nb+1)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -14976,7 +15062,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -14997,7 +15083,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -15015,7 +15101,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -15034,10 +15120,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+1)*ldq],q1);
-   _SIMD_STORE(&q[((nb+1)*ldq)+offset],q2);
+   _STORE(&q[(nb+1)*ldq],q1);
+   _STORE(&q[((nb+1)*ldq)+offset],q2);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -15049,8 +15135,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+2)*ldq)+offset]);
+   q1 = _LOAD(&q[(nb+2)*ldq]);
+   q2 = _LOAD(&q[((nb+2)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -15061,7 +15147,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -15079,7 +15165,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -15099,13 +15185,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+2)*ldq],q1);
-   _SIMD_STORE(&q[((nb+2)*ldq)+offset],q2);
+   _STORE(&q[(nb+2)*ldq],q1);
+   _STORE(&q[((nb+2)*ldq)+offset],q2);
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -15115,8 +15201,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+3)*ldq)+offset]);
+   q1 = _LOAD(&q[(nb+3)*ldq]);
+   q2 = _LOAD(&q[((nb+3)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -15126,7 +15212,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -15144,10 +15230,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+3)*ldq],q1);
-   _SIMD_STORE(&q[((nb+3)*ldq)+offset],q2);
+   _STORE(&q[(nb+3)*ldq],q1);
+   _STORE(&q[((nb+3)*ldq)+offset],q2);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -15157,8 +15243,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
-   q2 = _SIMD_LOAD(&q[((nb+4)*ldq)+offset]);
+   q1 = _LOAD(&q[(nb+4)*ldq]);
+   q2 = _LOAD(&q[((nb+4)*ldq)+offset]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -15168,8 +15254,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+4)*ldq],q1);
-   _SIMD_STORE(&q[((nb+4)*ldq)+offset],q2);
+   _STORE(&q[(nb+4)*ldq],q1);
+   _STORE(&q[((nb+4)*ldq)+offset],q2);
 
 #endif /* BLOCK6 */
 
@@ -15258,6 +15344,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == 128 */
 
+#ifdef VEC_SET == 1282
+    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+#endif
+
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -15275,9 +15365,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
 #endif /* VEC_SET == 512 */
-    __SIMD_DATATYPE x1 = _SIMD_LOAD(&q[ldq]);
+    __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -15289,21 +15379,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
  
     __SIMD_DATATYPE h2;
 #ifdef __ELPA_USE_FMA__
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
 #else
-    __SIMD_DATATYPE q1 = _SIMD_LOAD(q);
+    __SIMD_DATATYPE q1 = _LOAD(q);
     __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
 #endif
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -15358,14 +15448,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
     
-    __SIMD_DATATYPE a1_1 = _SIMD_LOAD(&q[ldq*5]);
-    __SIMD_DATATYPE a2_1 = _SIMD_LOAD(&q[ldq*4]);
-    __SIMD_DATATYPE a3_1 = _SIMD_LOAD(&q[ldq*3]);
-    __SIMD_DATATYPE a4_1 = _SIMD_LOAD(&q[ldq*2]);
-    __SIMD_DATATYPE a5_1 = _SIMD_LOAD(&q[ldq]);  
-    __SIMD_DATATYPE a6_1 = _SIMD_LOAD(&q[0]);    
+    __SIMD_DATATYPE a1_1 = _LOAD(&q[ldq*5]);
+    __SIMD_DATATYPE a2_1 = _LOAD(&q[ldq*4]);
+    __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq*3]);
+    __SIMD_DATATYPE a4_1 = _LOAD(&q[ldq*2]);
+    __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
+    __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -15403,7 +15493,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -15436,7 +15526,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -15464,7 +15554,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -15507,7 +15597,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -15521,17 +15611,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /*   VEC_SET == 256 */
 
 #ifdef __ELPA_USE_FMA__
-        q1 = _SIMD_LOAD(&q[i*ldq]);
+        q1 = _LOAD(&q[i*ldq]);
         x1 = _SIMD_FMA(q1, h1, x1);
         y1 = _SIMD_FMA(q1, h2, y1);
 #else
-        q1 = _SIMD_LOAD(&q[i*ldq]);
+        q1 = _LOAD(&q[i*ldq]);
         x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
         y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -15549,7 +15639,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -15570,7 +15660,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h5 = _SIMD_SET1(hh[(ldh*4)+i-(BLOCK-5)]);
 #endif
 #if VEC_SET == 1281
@@ -15586,7 +15676,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
         h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 
@@ -15606,7 +15696,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -15617,16 +15707,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef __ELPA_USE_FMA__
-    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    q1 = _LOAD(&q[nb*ldq]);
     x1 = _SIMD_FMA(q1, h1, x1);
 #else
-    q1 = _SIMD_LOAD(&q[nb*ldq]);
+    q1 = _LOAD(&q[nb*ldq]);
     x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -15644,7 +15734,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -15664,7 +15754,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK4
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -15676,7 +15766,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -15684,7 +15774,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -15702,7 +15792,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -15714,7 +15804,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -15726,7 +15816,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
@@ -15744,7 +15834,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
@@ -15762,7 +15852,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-4]);
 #endif
 #if VEC_SET == 1281
@@ -15772,7 +15862,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+    q1 = _LOAD(&q[(nb+1)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -15780,7 +15870,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-3]);
 #endif
 #if VEC_SET == 1281
@@ -15796,7 +15886,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -15812,7 +15902,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -15828,7 +15918,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-3]);
 #endif
 #if VEC_SET == 1281
@@ -15838,7 +15928,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-3]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+    q1 = _LOAD(&q[(nb+2)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -15846,7 +15936,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 
@@ -15864,7 +15954,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
@@ -15882,7 +15972,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -15894,7 +15984,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-4)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+    q1 = _LOAD(&q[(nb+3)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -15902,7 +15992,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 
@@ -15920,7 +16010,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -15932,7 +16022,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-5)]);
 #endif
 
-    q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+    q1 = _LOAD(&q[(nb+4)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
@@ -15959,7 +16049,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
@@ -15999,7 +16089,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 512 */
+#endif /* VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282 */
 
 #if VEC_SET == 1281
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -16088,15 +16178,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == 256 */
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-    h1 = _SIMD_XOR(tau1, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+    h1 = _XOR(tau1, sign);
 #endif
+
 #if VEC_SET == 1281
     h1 = _fjsp_neg_v2r8(tau1);
 #endif
-#if VEC_SET == 256
-    h1 = _SIMD_XOR(tau1, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -16108,7 +16197,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau1, sign);
+    h1 = _XOR(tau1, sign);
 #endif
 #endif /* VEC_SET == 512 */
 #endif /* BLOCK2 */
@@ -16120,15 +16209,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    x1 = _SIMD_MUL(x1, h1);
 
 #ifdef BLOCK2
-#if VEC_SET == 128
-   h1 = _SIMD_XOR(tau2, sign);
+#if VEC_SET == 128 || VEC_SET == 1282 || VEC_SET == 256
+   h1 = _XOR(tau2, sign);
 #endif
+
 #if VEC_SET == 1281
    h1 = _fjsp_neg_v2r8(tau2);
 #endif
-#if VEC_SET == 256
-   h1 = _SIMD_XOR(tau2, sign);
-#endif
+
 #if VEC_SET == 512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
@@ -16140,7 +16228,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-    h1 = _SIMD_XOR(tau2, sign);
+    h1 = _XOR(tau2, sign);
 #endif
 #endif /* VEC_SET == 512 */
    h2 = _SIMD_MUL(h1, vs);
@@ -16222,7 +16310,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    /////////////////////////////////////////////////////
 #endif /* BLOCK6 */
 
-   q1 = _SIMD_LOAD(&q[0]);
+   q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
    q1 = _SIMD_ADD(q1, y1);
 #endif
@@ -16232,10 +16320,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
    q1 = _SIMD_SUB(q1, t1); 
 #endif
-   _SIMD_STORE(&q[0],q1);
+   _STORE(&q[0],q1);
 
 #ifdef BLOCK2
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == 1281
@@ -16246,18 +16334,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _LOAD(&q[ldq]);
    q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
-   _SIMD_STORE(&q[ldq],q1);
+   _STORE(&q[ldq],q1);
 #else
-   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _LOAD(&q[ldq]);
    q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
-   _SIMD_STORE(&q[ldq],q1);
+   _STORE(&q[ldq],q1);
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -16269,7 +16357,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _LOAD(&q[ldq]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
@@ -16277,9 +16365,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq],q1);
+   _STORE(&q[ldq],q1);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -16291,7 +16379,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q1 = _LOAD(&q[ldq*2]);
    q1 = _SIMD_SUB(q1, y1);
 
 #ifdef __ELPA_USE_FMA__
@@ -16300,7 +16388,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -16318,9 +16406,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
+   _STORE(&q[ldq*2],q1);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -16332,7 +16420,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+3]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q1 = _LOAD(&q[ldq*3]);
    q1 = _SIMD_SUB(q1, x1);
 
 #ifdef __ELPA_USE_FMA__
@@ -16341,7 +16429,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -16359,7 +16447,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -16377,13 +16465,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*3], q1);
+   _STORE(&q[ldq*3], q1);
 
 #endif /* BLOCK4 */
 
 #ifdef BLOCK6
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == 1281
@@ -16393,7 +16481,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h6 = _SIMD_BROADCAST(&hh[(ldh*5)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq]);
+   q1 = _LOAD(&q[ldq]);
    q1 = _SIMD_SUB(q1, v1);
 
 #ifdef __ELPA_USE_FMA__
@@ -16402,9 +16490,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq],q1);
+   _STORE(&q[ldq],q1);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == 1281
@@ -16413,7 +16501,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h5 = _SIMD_BROADCAST(&hh[(ldh*4)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*2]);
+   q1 = _LOAD(&q[ldq*2]);
    q1 = _SIMD_SUB(q1, w1);
 
 #ifdef __ELPA_USE_FMA__
@@ -16422,7 +16510,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == 1281
@@ -16438,9 +16526,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[ldq*2],q1);
+   _STORE(&q[ldq*2],q1);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -16451,7 +16539,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*3]);
+   q1 = _LOAD(&q[ldq*3]);
    q1 = _SIMD_SUB(q1, z1);
 
 #ifdef __ELPA_USE_FMA__
@@ -16460,7 +16548,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == 1281
@@ -16476,7 +16564,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == 1281
@@ -16492,9 +16580,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*3],q1);
+   _STORE(&q[ldq*3],q1);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == 1281
@@ -16504,7 +16592,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h3 = _SIMD_BROADCAST(&hh[(ldh*2)+1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[ldq*4]);
+   q1 = _LOAD(&q[ldq*4]);
    q1 = _SIMD_SUB(q1, y1);
 
 #ifdef __ELPA_USE_FMA__
@@ -16513,7 +16601,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == 1281
@@ -16529,7 +16617,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == 1281
@@ -16545,7 +16633,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == 1281
@@ -16561,9 +16649,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*4],q1);
+   _STORE(&q[ldq*4],q1);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == 1281
@@ -16572,7 +16660,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == 256
    h2 = _SIMD_BROADCAST(&hh[(ldh)+1]);
 #endif
-   q1 = _SIMD_LOAD(&q[ldq*5]);
+   q1 = _LOAD(&q[ldq*5]);
    q1 = _SIMD_SUB(q1, x1);
 
 #ifdef __ELPA_USE_FMA__
@@ -16581,7 +16669,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == 1281
@@ -16597,7 +16685,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == 1281
@@ -16613,7 +16701,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == 1281
@@ -16629,7 +16717,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == 1281
@@ -16645,13 +16733,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
 #endif
 
-   _SIMD_STORE(&q[ldq*5],q1);
+   _STORE(&q[ldq*5],q1);
 
 #endif /* BLOCK6 */
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -16664,7 +16752,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h2 = _SIMD_BROADCAST(&hh[ldh+i-(BLOCK-2)]);
 #endif
 
-     q1 = _SIMD_LOAD(&q[i*ldq]);
+     q1 = _LOAD(&q[i*ldq]);
 
 #ifdef BLOCK2
 #ifdef __ELPA_USE_FMA__
@@ -16689,7 +16777,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -16707,7 +16795,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -16728,7 +16816,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h5 = _SIMD_SET1(hh[(ldh*4)+i-(BLOCK-5)]);
 #endif
 #if VEC_SET == 1281
@@ -16745,7 +16833,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
      h6 = _SIMD_SET1(hh[(ldh*5)+i-(BLOCK-6)]);
 #endif
 #if VEC_SET == 1281
@@ -16763,10 +16851,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-     _SIMD_STORE(&q[i*ldq],q1);
+     _STORE(&q[i*ldq],q1);
 
    }
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == 1281
@@ -16776,7 +16864,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-1)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[nb*ldq]);
+   q1 = _LOAD(&q[nb*ldq]);
 
 #ifdef BLOCK2
 
@@ -16795,7 +16883,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -16813,7 +16901,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -16834,7 +16922,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == 1281
@@ -16850,7 +16938,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == 1281
@@ -16868,11 +16956,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[nb*ldq],q1);
+   _STORE(&q[nb*ldq],q1);
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -16884,7 +16972,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-2)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+1)*ldq]);
+   q1 = _LOAD(&q[(nb+1)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -16892,7 +16980,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -16911,7 +16999,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == 1281
@@ -16927,7 +17015,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == 1281
@@ -16944,9 +17032,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
-   _SIMD_STORE(&q[(nb+1)*ldq],q1);
+   _STORE(&q[(nb+1)*ldq],q1);
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -16958,7 +17046,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-(BLOCK-3)]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+2)*ldq]);
+   q1 = _LOAD(&q[(nb+2)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -16967,7 +17055,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -16984,7 +17072,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -17002,12 +17090,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #endif /* BLOCK6 */
 
-   _SIMD_STORE(&q[(nb+2)*ldq],q1);
+   _STORE(&q[(nb+2)*ldq],q1);
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == 1281
@@ -17017,7 +17105,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-2]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+3)*ldq]);
+   q1 = _LOAD(&q[(nb+3)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -17025,7 +17113,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == 128 || VEC_SET == 512
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -17041,8 +17129,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+3)*ldq],q1);
-#if VEC_SET == 128 || VEC_SET == 512
+   _STORE(&q[(nb+3)*ldq],q1);
+#if VEC_SET == 128 || VEC_SET == 512 || VEC_SET == 1282
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == 1281
@@ -17052,7 +17140,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _SIMD_BROADCAST(&hh[nb-1]);
 #endif
 
-   q1 = _SIMD_LOAD(&q[(nb+4)*ldq]);
+   q1 = _LOAD(&q[(nb+4)*ldq]);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
@@ -17060,7 +17148,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-   _SIMD_STORE(&q[(nb+4)*ldq],q1);
+   _STORE(&q[(nb+4)*ldq],q1);
 
 #endif /* BLOCK6 */
 
