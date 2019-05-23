@@ -13,7 +13,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program, which prints all
 the available kernels.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.11.001/html/index.html)
+Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.001.rc1/html/index.html)
 for each *ELPA* release is available.
 
 
@@ -36,9 +36,9 @@ The old, obsolete legacy API will be deprecated in the future !
 Allready now, all new features of ELPA are only available with the new API. Thus, there
 is no reason to keep the legacy API arround for too long.
 
-The release ELPA 2018.11.001 will be the last release, where the legacy API is
+The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
-With release ELPA 2019.05.001 the legacy API will be disabled by default, however,
+With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
 Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and
 not supported anymore.
@@ -200,7 +200,7 @@ The following table gives a list of all supported parameters which can be used t
 
 ## III) List of computational routines ##
 
-The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.11.001/html/index.html) for details.
+The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.001.rc1/html/index.html) for details.
 
 
 | Name         | Purpose                                                                 | since API version |

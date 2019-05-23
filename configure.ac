@@ -52,8 +52,8 @@ fi
 
 AC_MSG_CHECKING(whether legacy interface should be provided)
 AC_ARG_ENABLE([legacy-interface],
-              AS_HELP_STRING([--disable-legacy-interface],
-                             [do not build legacy API, default yes]),
+              AS_HELP_STRING([--enable-legacy-interface],
+                             [build legacy API, default no]),
               [
 	       if test x"$enableval" = x"yes"; then
 	         enable_legayc=yes
@@ -61,7 +61,7 @@ AC_ARG_ENABLE([legacy-interface],
 	         enable_legacy=no
 	       fi
 	       ],
-              [enable_legacy=yes])
+              [enable_legacy=no])
 AC_MSG_RESULT([${enable_legacy}])
 AM_CONDITIONAL([ENABLE_LEGACY],[test x"$enable_legacy" = x"yes"])
 if test x"${enable_legacy}" = x"yes"; then
@@ -1448,21 +1448,21 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         ])
 ])
 
-echo " "
-echo "***********************************************************************"
-echo "*  ELPA 2018.11.001 will be the last release where the old, obsolete, *"
-echo "*  legacy API is enabled by default! In the 2019.05.001 release       *"
-echo "*  the legacy API will be still available (but as default switched    *"
-echo "*  off). With the 2019.11.001 release it will be abolished!	    *"					 
-echo "***********************************************************************"
-echo " "
-echo " "
+#echo " "
 #echo "***********************************************************************"
-#echo "*  This is a the first release candidate of ELPA 2018.11.001.rc1      *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2018.11.001                                                   *"
+#echo "*  ELPA 2018.11.001 will be the last release where the old, obsolete, *"
+#echo "*  legacy API is enabled by default! In the 2019.05.001 release       *"
+#echo "*  the legacy API will be still available (but as default switched    *"
+#echo "*  off). With the 2019.11.001 release it will be abolished!	    *"					 
 #echo "***********************************************************************"
 #echo " "
+#echo " "
+echo "***********************************************************************"
+echo "*  This is a the first release candidate of ELPA 2019.05.001.rc1      *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2019.05.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
