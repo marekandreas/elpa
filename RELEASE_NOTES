@@ -8,6 +8,7 @@ For detailed information about changes since release ELPA 2018.11 please have a 
 - ELPA VERSION number is exported to the C-header
 - C functions can have an optional error argument, if compiler supports this
    => ABI and API change
+- as anounced, removal of deprecated routines
 
 ABI change
 ---------------------
@@ -17,11 +18,11 @@ Since release 2018.10.001 the ABI has changed.
 Any incompatibilities to previous version?
 ---------------------------------------
 For Fortran:
-Break of ABI compatibility, since all functions obtained an optional, integer
-argument of the error code.
+Break of ABI compatibility, since all routines announced as deperecated have been removed
 
 For C:
 Break of ABI and API compatibility, since all functions obtained a required int* argument of the error code.
+
 
 
 
