@@ -381,7 +381,7 @@
 #endif
 
 
-#if VEC_SET == 128 || VEC_SET == 1281 ||  VEC_SET == NEON_ARCH64_128
+#if VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 ||  VEC_SET == NEON_ARCH64_128
 //Forward declaration
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
@@ -391,7 +391,7 @@
 #undef ROW_LENGTH
 #define ROW_LENGTH 4
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128 */
+#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -425,7 +425,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 4
@@ -434,7 +434,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 8
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128 */
+#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -468,7 +468,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 1281  || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 6
@@ -477,7 +477,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 12
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128  */
+#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128  */
 
 #if VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -512,7 +512,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
-#if VEC_SET == 128 || VEC_SET == 1281  || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 8
@@ -521,7 +521,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128  */
+#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128  */
 
 #if VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -556,7 +556,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
-#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 10
@@ -565,7 +565,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 20
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -600,7 +600,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 	DATA_TYPE_PTR scalarprods);
 #endif
 
-#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 12
@@ -609,7 +609,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 24
 #endif
-#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128 */
+#endif /* VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -982,7 +982,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 /*
 !f>#ifdef HAVE_NEON_ARCH64_SSE
 !f> interface
-!f>   subroutine hexa_hh_trafo_real_NEON64_6hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>   subroutine hexa_hh_trafo_real_NEON_ARCH64_6hv_double(q, hh, pnb, pnq, pldq, pldh) &
 !f>                                bind(C, name="hexa_hh_trafo_real_NEON_ARCH64_6hv_double")
 !f>        use, intrinsic :: iso_c_binding
 !f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
@@ -1744,14 +1744,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 }
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 12
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 24
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281  || VEC_SET == NEON_ARCH64_128 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -3312,7 +3312,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128
-    h1 = SIMD_NEG(tau1);
+    h1 = _SIMD_NEG(tau1);
 #endif
 
 #if VEC_SET == 512
@@ -5040,14 +5040,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 }
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 10
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 20
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -8057,14 +8057,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -10781,14 +10781,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 }
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 6
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 12
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -11956,7 +11956,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == 1281 || VEC_SET == NEON_ARCH64_128
-    h1 = _(tau1);
+    h1 = _SIMD_NEG(tau1);
 #endif
 
 #if VEC_SET == 512
@@ -13238,7 +13238,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 4
@@ -13247,7 +13247,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 8
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL
@@ -15409,7 +15409,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 }
 
 #undef ROW_LENGTH
-#if  VEC_SET == 128 || VEC_SET == 1281
+#if  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 2
@@ -15418,7 +15418,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 4
 #endif
-#endif /*  VEC_SET == 128 || VEC_SET == 1281 */
+#endif /*  VEC_SET == 128 || VEC_SET == 1281 || VEC_SET == 1282 || VEC_SET == NEON_ARCH64_128 */
 
 #if  VEC_SET == 256
 #ifdef DOUBLE_PRECISION_REAL

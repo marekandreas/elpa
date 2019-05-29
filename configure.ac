@@ -227,9 +227,9 @@ fi
 
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
-  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun], [no])
+  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun aprun], [no])
   if test x"$MPI_BINARY" = x"no"; then
-    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun])
+    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
   fi
 fi
 
@@ -929,7 +929,7 @@ if test x"${need_neon_arch64}" = x"yes"; then
 #include <arm_neon.h>
 int main(int argc, char **argv) {
   __Float64x2_t  x1, x2, x3, x4;
-  x4 = vfmaq_64(x1, x2, x3);
+  x4 = vfmaq_f64(x1, x2, x3);
   return 0;
 }
     ])],

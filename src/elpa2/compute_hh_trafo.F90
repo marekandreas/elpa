@@ -2192,7 +2192,7 @@
 #else
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
-                    &neon_arch64_4hv_&
+                    &_neon_arch64_4hv_&
                     &PRECISION&
                     & (c_loc(a(1,jj+off+a_off-3,istripe)), w, &
                                                   nbw, nl, stripe_width, nbw)
