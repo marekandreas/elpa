@@ -56,6 +56,9 @@ module elpa_impl
   use elpa_mpi
   use elpa_generated_fortran_interfaces
   use elpa_utilities, only : error_unit
+#ifdef HAVE_LIKWID
+  use likwid
+#endif
 
   use elpa_abstract_impl
 #ifdef ENABLE_AUTOTUNING
@@ -73,6 +76,9 @@ module elpa_impl
    private
    integer :: communicators_owned
 
+   !This object has been created through the legacy api.
+   integer :: from_legacy_api
+
    !> \brief methods available with the elpa_impl_t type
    contains
      !> \brief the puplic methods
@@ -86,6 +92,9 @@ module elpa_impl
      procedure, public :: can_set => elpa_can_set               !< a method to check whether a key/value pair can be set : implemented
                                                                 !< in elpa_can_set
 
+     ! call before setup if created from the legacy api
+     ! remove this function completely after the legacy api is dropped
+     procedure, public :: creating_from_legacy_api => elpa_creating_from_legacy_api
 
      ! timer
      procedure, public :: get_time => elpa_get_time
@@ -187,10 +196,13 @@ module elpa_impl
 #endif
       integer                        :: error2
 
+
       allocate(obj, stat=error2)
       if (error2 .ne. 0) then
         write(error_unit, *) "elpa_allocate(): could not allocate object"
-      endif        
+      endif
+
+      obj%from_legacy_api = 0
 
       ! check whether init has ever been called
       if ( elpa_initialized() .ne. ELPA_OK) then
@@ -514,11 +526,18 @@ module elpa_impl
 #ifdef WITH_MPI
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
                                              mpierr, mpierr2, process_row, process_col, mpi_string_length, &
-                                             present_np_rows, present_np_cols, is_process_id_zero, np_total, legacy_api
+                                             present_np_rows, present_np_cols, np_total
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
       character(*), parameter             :: MPI_CONSISTENCY_MSG = &
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
 
+#endif
+
+#ifdef HAVE_LIKWID
+      !initialize likwid
+      call likwid_markerInit()
+      call likwid_markerThreadInit()
+      call likwid_markerStartRegion("TOTAL")
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
@@ -546,11 +565,6 @@ module elpa_impl
       ! inconsistencies and is rather natural from the user point of view
 
 #ifdef WITH_MPI
-      if (self%is_set("legacy_api") == 1) then
-        call self%get("legacy_api", legacy_api, error)
-        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
-      endif
-
       if (self%is_set("mpi_comm_parent") == 1) then
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
@@ -562,15 +576,8 @@ module elpa_impl
         call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
         call self%set("num_processes", np_total, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-
-        is_process_id_zero = 0
-        if (my_id == 0) &
-          is_process_id_zero = 1
-        call self%set("is_process_id_zero", is_process_id_zero, error)
-        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-
       else
-        if (legacy_api .ne. 1) then
+        if (self%from_legacy_api .ne. 1) then
           write(error_unit,*) MPI_CONSISTENCY_MSG
           error = ELPA_ERROR
           return
@@ -683,7 +690,7 @@ module elpa_impl
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       endif
 
-      if (legacy_api .ne. 1) then
+      if (self%from_legacy_api .ne. 1) then
         if (np_total .ne. np_rows * np_cols) then
           print *,"MPI parent communicator and row/col communicators do not match. Aborting..."
           stop
@@ -696,8 +703,6 @@ module elpa_impl
       call self%set("process_col", 0, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("process_id", 0, error)
-      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-      call self%set("is_process_id_zero", 1, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("num_process_rows", 1, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
@@ -1022,6 +1027,11 @@ module elpa_impl
       if (present(error)) then
         error = ELPA_OK
       endif
+
+#ifdef HAVE_LIKWID
+      call likwid_markerStopRegion("TOTAL")
+      call likwid_markerClose()
+#endif
 
 #ifdef WITH_MPI
       if (self%communicators_owned == 1) then
@@ -1744,4 +1754,10 @@ module elpa_impl
       return
     end function
 
+    subroutine elpa_creating_from_legacy_api(self)
+      implicit none
+      class(elpa_impl_t), intent(inout)          :: self
+
+      self%from_legacy_api = 1
+    end subroutine
 end module

@@ -324,16 +324,28 @@ function elpa_solve_evp_&
 
    if (do_tridiag) then
      call obj%timer%start("forward")
+#ifdef HAVE_LIKWID
+     call likwid_markerStartRegion("tridi")
+#endif
+
      call tridiag_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
      & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
+
+#ifdef HAVE_LIKWID
+     call likwid_markerStopRegion("tridi")
+#endif
      call obj%timer%stop("forward")
     endif  !do_tridiag
 
     if (do_solve) then
      call obj%timer%start("solve")
+#ifdef HAVE_LIKWID
+     call likwid_markerStartRegion("solve")
+#endif
+
      call solve_tridi_&
      &PRECISION&
      & (obj, na, nev, ev, e,  &
@@ -344,6 +356,10 @@ function elpa_solve_evp_&
         q_real, l_rows,  &
 #endif
         nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+
+#ifdef HAVE_LIKWID
+     call likwid_markerStopRegion("solve")
+#endif
      call obj%timer%stop("solve")
      if (.not.(success)) return
    endif !do_solve
@@ -379,11 +395,19 @@ function elpa_solve_evp_&
 #endif
 
      call obj%timer%start("back")
+#ifdef HAVE_LIKWID
+     call likwid_markerStartRegion("trans_ev")
+#endif
+
      call trans_ev_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
      & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+
+#ifdef HAVE_LIKWID
+     call likwid_markerStopRegion("trans_ev")
+#endif
      call obj%timer%stop("back")
    endif ! do_trans_ev
 

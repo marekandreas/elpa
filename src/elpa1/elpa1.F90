@@ -85,6 +85,9 @@ module elpa1_impl
   use, intrinsic :: iso_c_binding
   use elpa_utilities
   use elpa1_auxiliary_impl
+#ifdef HAVE_LIKWID
+  use likwid
+#endif
 
   implicit none
 

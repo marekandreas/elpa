@@ -27,7 +27,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [13:0:0])
+AC_SUBST([ELPA_SO_VERSION], [14:0:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -39,11 +39,11 @@ AC_SUBST([$1], ['$2'])
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20181113, "Current ELPA API version")
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20190524, "Current ELPA API version")
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20181113], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20181113, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20190524], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20190524, "Current ELPA autotune version")
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -52,8 +52,8 @@ fi
 
 AC_MSG_CHECKING(whether legacy interface should be provided)
 AC_ARG_ENABLE([legacy-interface],
-              AS_HELP_STRING([--disable-legacy-interface],
-                             [do not build legacy API, default yes]),
+              AS_HELP_STRING([--enable-legacy-interface],
+                             [build legacy API, default no]),
               [
 	       if test x"$enableval" = x"yes"; then
 	         enable_legayc=yes
@@ -61,7 +61,7 @@ AC_ARG_ENABLE([legacy-interface],
 	         enable_legacy=no
 	       fi
 	       ],
-              [enable_legacy=yes])
+              [enable_legacy=no])
 AC_MSG_RESULT([${enable_legacy}])
 AM_CONDITIONAL([ENABLE_LEGACY],[test x"$enable_legacy" = x"yes"])
 if test x"${enable_legacy}" = x"yes"; then
@@ -308,6 +308,51 @@ if test x"${enable_timings}" = x"yes"; then
 fi
 AC_LANG_POP([C])
 
+dnl Likwid
+AC_LANG_PUSH([Fortran])
+AC_ARG_WITH([likwid],
+            [AS_HELP_STRING([--with-likwid=[[yes|no(default)|PATH]]],
+                            [Use Likwid to measure performance in some parts of the library])],
+            [with_likwid="$withval"],
+            [with_likwid="no"])
+
+if test x"$with_likwid" != x"no" ; then
+  if test -d $with_likwid/lib ; then
+    LDFLAGS="-L$with_likwid/lib $LDFLAGS"
+  fi
+  if test -d $with_likwid/lib64 ; then
+    LDFLAGS="-L$with_likwid/lib64 $LDFLAGS"
+  fi
+  if test -d $with_likwid/include ; then
+    FCFLAGS="-I$with_likwid/include $FCFLAGS"
+  fi
+  AC_SEARCH_LIBS([likwid_markerInit], [likwid], [liblikwid_found="yes"], [liblikwid_found="no"])
+  if test x"$liblikwid_found" = x"no" ; then
+    AC_MSG_ERROR([Could not find a usable likwid library, please adjust LDFLAGS])
+  fi
+  AC_MSG_CHECKING([whether we can use the likwid module in a Fortran program])
+  AC_COMPILE_IFELSE([
+       program foo
+       use likwid
+
+       implicit none
+
+       call likwid_markerInit()
+       call likwid_markerThreadInit()
+
+       call likwid_markerStartRegion("foobar")
+       call likwid_markerStopRegion("foobar")
+
+       call likwid_markerClose()
+       end
+    ],
+    [AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])
+     AC_MSG_ERROR([Could not compile a Fortran program using the likwid module, adjust FCFLAGS])])
+  AC_DEFINE([HAVE_LIKWID], [1], [Use likwid])
+fi
+AC_LANG_POP([Fortran])
+
 save_FCFLAGS=$FCFLAGS
 save_LDFLAGS=$LDFLAGS
 
@@ -530,7 +575,7 @@ dnl Test possibility of 'use mpi', if requested
 if test x"${with_mpi}" = x"yes" ; then
   AC_ARG_ENABLE([mpi-module],
                 AS_HELP_STRING([--disable-mpi-module],
-                               [do not use the Fortran MPI module, get interfaces by 'include "mpif.h')]),
+                               [do not use the Fortran MPI module, get interfaces by 'include "mpif.h']),
                 [
                  if test x"$enableval" = x"yes"; then
                    enable_mpi_module=yes
@@ -995,7 +1040,7 @@ if test x"${need_avx512}" = x"yes"; then
 
   if test x"$can_compile_avx512" = x"yes"; then
     AC_MSG_CHECKING([whether we compile for Xeon])
-    AC_RUN_IFELSE([AC_LANG_SOURCE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
      #include <x86intrin.h>
      int main(int argc, char **argv){
      __m512d sign;
@@ -1011,7 +1056,7 @@ if test x"${need_avx512}" = x"yes"; then
     AC_MSG_RESULT([${can_compile_avx512_xeon}])
 
     AC_MSG_CHECKING([whether we compile for Xeon PHI])
-    AC_RUN_IFELSE([AC_LANG_SOURCE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
      #include <x86intrin.h>
      int main(int argc, char **argv){
      __m512d sign;
@@ -1448,21 +1493,21 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         ])
 ])
 
-echo " "
-echo "***********************************************************************"
-echo "*  ELPA 2018.11.001 will be the last release where the old, obsolete, *"
-echo "*  legacy API is enabled by default! In the 2019.05.001 release       *"
-echo "*  the legacy API will be still available (but as default switched    *"
-echo "*  off). With the 2019.11.001 release it will be abolished!	    *"					 
-echo "***********************************************************************"
-echo " "
-echo " "
+#echo " "
 #echo "***********************************************************************"
-#echo "*  This is a the first release candidate of ELPA 2018.11.001.rc1      *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2018.11.001                                                   *"
+#echo "*  ELPA 2018.11.001 will be the last release where the old, obsolete, *"
+#echo "*  legacy API is enabled by default! In the 2019.05.001 release       *"
+#echo "*  the legacy API will be still available (but as default switched    *"
+#echo "*  off). With the 2019.11.001 release it will be abolished!	    *"					 
 #echo "***********************************************************************"
 #echo " "
+#echo " "
+echo "***********************************************************************"
+echo "*  This is a the first release candidate of ELPA 2019.05.001.rc1      *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2019.05.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

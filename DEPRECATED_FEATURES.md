@@ -26,16 +26,17 @@ have been replaced by new names. The old interfaces will be removed
 | get_elpa_communicators   | elpa_get_communicators                | (removed since 2017.11.001)   | 
 | solve_evp_real           | elpa_solve_evp_real_1stage_double     | (removed since 2017.11.001)   | 
 | solve_evp_complex        | elpa_solve_evp_complex_1stage_double  | (removed since 2017.11.001)   | 
-| solve_evp_real_1stage    | elpa_solve_evp_real_1stage_double     | will be removed 2018.11.001   | 
-| solve_evp_complex_1stage | elpa_solve_evp_complex_1stage_double  | will be removed 2018.11.001   | 
-| solve_evp_real_2stage    | elpa_solve_evp_real_2stage_double     | will be removed 2018.11.001   | 
-| solve_evp_complex_2stage | elpa_solve_evp_complex_2stage_double  | will be removed 2018.11.001   | 
-| mult_at_b_real           | elpa_mult_at_b_real_double            | will be removed 2018.11.001   | 
-| mult_ah_b_complex        | elpa_mult_ah_b_complex_double         | will be removed 2018.11.001   | 
-| invert_trm_real          | elpa_invert_trm_real_double           | will be removed 2018.11.001   | 
-| invert_trm_complex       | elpa_invert_trm_complex_double        | will be removed 2018.11.001   | 
-| cholesky_real            | elpa_cholesky_real_double             | will be removed 2018.11.001   | 
-| cholesky_complex         | elpa_cholesky_complex_double          | will be removed 2018.11.001   | 
+| solve_evp_real_1stage    | elpa_solve_evp_real_1stage_double     | (removed since 2019.05.001)   | 
+| solve_evp_complex_1stage | elpa_solve_evp_complex_1stage_double  | (removed since 2019.05.001)   | 
+| solve_evp_real_2stage    | elpa_solve_evp_real_2stage_double     | (removed since 2019.05.001)   | 
+| solve_evp_complex_2stage | elpa_solve_evp_complex_2stage_double  | (removed since 2019.05.001)   | 
+| mult_at_b_real           | elpa_mult_at_b_real_double            | (removed since 2019.05.001)   | 
+| mult_ah_b_complex        | elpa_mult_ah_b_complex_double         | (removed since 2019.05.001)   | 
+| invert_trm_real          | elpa_invert_trm_real_double           | (removed since 2019.05.001)   | 
+| invert_trm_complex       | elpa_invert_trm_complex_double        | (removed since 2019.05.001)   | 
+| cholesky_real            | elpa_cholesky_real_double             | (removed since 2019.05.001)   | 
+| cholesky_complex         | elpa_cholesky_complex_double          | (removed since 2019.05.001)   | 
+| solve_tridi              | elpa_solve_tridi_double               | (removed since 2019.05.001)   |
 
 For all symbols also the corresponding "_single" routines are available
 

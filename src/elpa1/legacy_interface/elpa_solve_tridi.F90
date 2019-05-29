@@ -134,11 +134,8 @@
          print *,"Problem setting option. Aborting..."
          stop
       endif
-      call obj%set("legacy_api", 1, error)
-      if (error .ne. ELPA_OK) then
-         print *,"Problem setting option.  Aborting..."
-         stop
-      endif
+
+      call obj%creating_from_legacy_api()
 
       if (obj%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
