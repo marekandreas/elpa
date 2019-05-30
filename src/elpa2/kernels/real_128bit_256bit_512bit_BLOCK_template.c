@@ -193,6 +193,7 @@
 #endif /*  VEC_SET == 1281 */
 
 #if VEC_SET == NEON_ARCH64_128
+#define __ELPA_USE_FMA__
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 2
 #define __SIMD_DATATYPE __Float64x2_t
@@ -202,7 +203,9 @@
 #define _SIMD_MUL vmulq_f64
 #define _SIMD_SUB vsubq_f64
 #define _SIMD_NEG vnegq_f64
-// FMA 
+#define _SIMD_FMA(a, b, c) vfmaq_f64(c ,b, a)
+#define _SIMD_NFMA(a, b, c) vnegq_f64(vfmaq_f64(c ,b, a))
+#define _SIMD_FMSUB(a, b, c) vfmsq_f64(c, b, a)
 //#define _SIMD_XOR _mm_xor_pd
 #define _SIMD_SET1 vdupq_n_f64
 #endif /* DOUBLE_PRECISION_REAL */
@@ -215,7 +218,9 @@
 #define _SIMD_MUL vmulq_f32
 #define _SIMD_SUB vsubq_f32
 #define _SIMD_NEG vnegq_f32
-//FMA
+#define _SIMD_FMA(a, b, c) vfmaq_f32(c ,b, a)
+#define _SIMD_NFMA(a, b, c) vnegq_f32(vfmaq_f32(c ,b, a))
+#define _SIMD_FMSUB(a, b, c) vfmsq_f32(c, b, a)
 //#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_SET1 vdupq_n_f32
 #endif /* SINGLE_PRECISION_REAL */
