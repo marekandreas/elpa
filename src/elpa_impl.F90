@@ -543,7 +543,6 @@ module elpa_impl
 #ifdef HAVE_DETAILED_TIMINGS
       call self%get("timings",timings, error)
       call self%get("measure_performance",performance, error)
-      print *,error
       if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
       if (timings == 1) then
         call self%timer%enable()
