@@ -1,8 +1,26 @@
 Changelog for upcoming release
 
-- user can define the default kernels
-- simple block4 and block6 real kernel
+- not yet decided
+
+Changelog for ELPA 2019.05.001.rc1
+- elpa_print_kernels supports GPU usage
+- fix an error if PAPI measurements are activated
+- new simple real kernels: block4 and block6
+- c functions can be build with optional arguments if compiler supports it
+(configure option)
+- allow measurements with the likwid tool
+- users can define the default-kernel at build time
 - ELPA versioning number is provided in the C header files
+- as announced a year ago, the following deprecated routines have been finally
+removed; see DEPRECATED_FEATURES for the replacement routines , which have
+been introduced a year ago. Removed routines:
+  -> mult_at_b_real
+  -> mult_ah_b_complex
+  -> invert_trm_real
+  -> invert_trm_complex
+  -> cholesky_real
+  -> cholesky_complex
+  -> solve_tridi
 
 Changelog for ELPA 2018.11.001
 

@@ -180,7 +180,7 @@ program test
                                   do_test_hermitian_multiply
 
 #ifdef WITH_OPENMP
-   integer                    :: max_threads
+   integer                    :: max_threads, threads_caller
 #endif
 
 #ifdef SPLIT_COMM_MYSELF
@@ -532,6 +532,14 @@ program test
      do_test_cholesky = .false.
    endif
 
+
+#ifdef WITH_OPENMP
+   threads_caller = omp_get_max_threads()
+   if (myid == 0) then
+     print *,"The calling program uses ",threads_caller," threads"
+   endif
+#endif
+
    e => elpa_allocate(error)
    assert_elpa_ok(error)
 
@@ -789,6 +797,15 @@ program test
      endif
 #endif
 
+
+#ifdef WITH_OPENMP
+     if (threads_caller .ne. omp_get_max_threads()) then
+       if (myid .eq. 0) then
+         print *, " ERROR! the number of OpenMP threads has not been restored correctly"
+       endif
+       status = 1
+     endif
+#endif
      if (myid == 0) then
        print *, ""
      endif

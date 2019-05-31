@@ -1,30 +1,28 @@
-This file contains the release notes for the ELPA 2018.11.001 version
+This file contains the release notes for the ELPA 2019.05.001.rc1 version
 
 What is new?
 -------------
-For detailed information about changes since release ELPA 2018.05 please have a look at the Changelog file
+For detailed information about changes since release ELPA 2018.11 please have a look at the Changelog file
 
-- improved autotuning
-- improved performance of generalized problem via Cannon's algorithm
-- check pointing functionality of elpa objects
-- store/read/resume of autotuning
-- Python interface for ELPA
-- more ELPA functions have an optional error argument (Fortran) or required
-error argument (C) => ABI and API change
+- user can define a default kernel at build time
+- ELPA VERSION number is exported to the C-header
+- C functions can have an optional error argument, if compiler supports this
+   => ABI and API change
+- as anounced, removal of deprecated routines
 
 ABI change
 ---------------------
 
-Since release 2018.05.001 the ABI has changed.
+Since release 2018.10.001 the ABI has changed.
 
 Any incompatibilities to previous version?
 ---------------------------------------
 For Fortran:
-Break of ABI compatibility, since all functions obtained an optional, integer
-argument of the error code.
+Break of ABI compatibility, since all routines announced as deperecated have been removed
 
 For C:
 Break of ABI and API compatibility, since all functions obtained a required int* argument of the error code.
+
 
 
 

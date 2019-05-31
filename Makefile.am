@@ -40,6 +40,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/helpers/mod_precision.F90 \
   src/helpers/mod_mpi.F90 \
   src/helpers/mod_mpi_stubs.F90 \
+  src/helpers/mod_omp.F90 \
   src/elpa_generated_fortran_interfaces.F90 \
   src/elpa2/mod_redist_band.F90 \
   src/elpa2/mod_pack_unpack_cpu.F90 \
@@ -454,6 +455,7 @@ nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_version.h \
   elpa/elpa_constants.h \
   elpa/elpa_generated.h \
+  elpa/elpa_generated_c_api.h \
   elpa/elpa_generated_legacy.h
 
 dist_man_MANS = \
@@ -685,7 +687,8 @@ test_python.sh:
 include doxygen.am
 
 CLEANFILES = \
-  elpa-generated.h \
+  elpa_generated.h \
+  elpa_generated_c_api.h \
   elpa1_test* \
   elpa2_test*\
   elpa2_real* \
@@ -717,16 +720,14 @@ clean-local:
 	-rm -rf $(generated_headers)
 
 distclean-local:
+	-rm -rf ./m4
+	-rm -rf ./src
+	-rm -rf ./test
+	-rm -rf ./modules
+	-rm -rf .fortran_dependencies
 	-rm config-f90.h
-	-rm -rf ./src/elpa2/kernels/.deps
-	-rm -rf ./src/.deps
 	-rm -rf ./test/.deps
-	-rmdir ./src/elpa2/kernels/
-	-rmdir ./src
-	-rmdir ./test
-	-rmdir ./m4
-	-rmdir modules/
-	-rmdir .fortran_dependencies/
+	-rm -rf elpa/elpa_generated_c_api.h
 
 EXTRA_DIST = \
   elpa.spec \

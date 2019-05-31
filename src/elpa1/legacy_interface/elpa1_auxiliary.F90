@@ -60,25 +60,18 @@ module ELPA1_AUXILIARY
   implicit none
 
   public :: elpa_mult_at_b_real_double      !< Multiply double-precision real matrices A**T * B
-  public :: mult_at_b_real                  !< Old, deprecated interface to multiply double-precision real matrices A**T * B. DO NOT USE
 
   public :: elpa_mult_ah_b_complex_double   !< Multiply double-precision complex matrices A**H * B
-  public :: mult_ah_b_complex               !< Old, deprecated interface to multiply double-precision complex matrices A**H * B. DO NOT USE
 
   public :: elpa_invert_trm_real_double     !< Invert double-precision real triangular matrix
-  public :: invert_trm_real                 !< Old, deprecated interface for inversion of double-precision real triangular matrix. DO NOT USE
 
   public :: elpa_invert_trm_complex_double  !< Invert double-precision complex triangular matrix
-  public :: invert_trm_complex              !< Old, deprecated interface to invert double-precision complex triangular matrix. DO NOT USE
 
   public :: elpa_cholesky_real_double       !< Cholesky factorization of a double-precision real matrix
-  public :: cholesky_real                   !< Old, deprecated name for Cholesky factorization of a double-precision real matrix. DO NOT USE
 
   public :: elpa_cholesky_complex_double    !< Cholesky factorization of a double-precision complex matrix
-  public :: cholesky_complex                !< Old, deprecated interface for a Cholesky factorization of a double-precision complex matrix. DO NOT USE
 
   public :: elpa_solve_tridi_double         !< Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
-  public :: solve_tridi                     !< Old, deprecated interface to solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: elpa_cholesky_real_single       !< Cholesky factorization of a single-precision real matrix
@@ -93,193 +86,8 @@ module ELPA1_AUXILIARY
   public :: elpa_mult_ah_b_complex_single   !< Multiply single-precision complex matrices A**H * B
 #endif
 
-!> \brief  cholesky_real: old, deprecated interface for Cholesky factorization of a double-precision real symmetric matrix
-!> \details
-!>
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              On return, the upper triangle contains the Cholesky factor
-!>                              and the lower triangle is set to 0.
-!> \param  lda                  Leading dimension of a
-!> \param                       matrixCols  local columns of matrix a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes                logical, reports success or failure
-  interface cholesky_real
-    module procedure elpa_cholesky_real_double
-  end interface
-
-!> \brief  Old, deprecated interface invert_trm_real: Inverts a upper double-precision triangular matrix
-!> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              The lower triangle is not referenced.
-!> \param  lda                  Leading dimension of a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  matrixCols           local columns of matrix a
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \param result                logical, reports success or failure
-
-  interface invert_trm_real
-    module procedure elpa_invert_trm_real_double
-  end interface
-
-!> \brief  old, deprecated interface cholesky_complex: Cholesky factorization of a double-precision complex hermitian matrix
-!> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              On return, the upper triangle contains the Cholesky factor
-!>                              and the lower triangle is set to 0.
-!> \param  lda                  Leading dimension of a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  matrixCols           local columns of matrix a
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes               logical, reports success or failure
-
-
-  interface cholesky_complex
-    module procedure elpa_cholesky_complex_double
-  end interface
-
-!> \brief  old, deprecated interface invert_trm_complex: Inverts a double-precision complex upper triangular matrix
-!> \details
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be inverted
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              The lower triangle is not referenced.
-!> \param  lda                  Leading dimension of a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  matrixCols           local columns of matrix a
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \result succes               logical, reports success or failure
-
-  interface invert_trm_complex
-    module procedure elpa_invert_trm_complex_double
-  end interface
-
-!> \brief  mult_at_b_real: Performs C : = A**T * B for double matrices
-!> this is the old, deprecated interface for the newer elpa_mult_at_b_real
-!>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-!>                 B is a (na,ncb) matrix
-!>                 C is a (na,ncb) matrix where optionally only the upper or lower
-!>                   triangle may be computed
-!> \details
-
-!> \param  uplo_a               'U' if A is upper triangular
-!>                              'L' if A is lower triangular
-!>                              anything else if A is a full matrix
-!>                              Please note: This pertains to the original A (as set in the calling program)
-!>                                           whereas the transpose of A is used for calculations
-!>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
-!>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
-!>                              'L' if only the upper diagonal part of C is needed
-!>                              anything else if the full matrix C is needed
-!>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-!>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-!> \param na                    Number of rows/columns of A, number of rows of B and C
-!> \param ncb                   Number of columns  of B and C
-!> \param a                     matrix a
-!> \param lda                   leading dimension of matrix a
-!> \param b                     matrix b
-!> \param ldb                   leading dimension of matrix b
-!> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param c                     matrix c
-!> \param ldc                   leading dimension of matrix c
-  interface mult_at_b_real
-    module procedure elpa_mult_at_b_real_double
-  end interface
-
-!> \brief  Old, deprecated interface mult_ah_b_complex: Performs C : = A**H * B for double-precision matrices
-!>         where   A is a square matrix (na,na) which is optionally upper or lower triangular
-!>                 B is a (na,ncb) matrix
-!>                 C is a (na,ncb) matrix where optionally only the upper or lower
-!>                   triangle may be computed
-!> \details
-!>
-!> \param  uplo_a               'U' if A is upper triangular
-!>                              'L' if A is lower triangular
-!>                              anything else if A is a full matrix
-!>                              Please note: This pertains to the original A (as set in the calling program)
-!>                                           whereas the transpose of A is used for calculations
-!>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
-!>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
-!>                              'L' if only the upper diagonal part of C is needed
-!>                              anything else if the full matrix C is needed
-!>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
-!>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-!> \param na                    Number of rows/columns of A, number of rows of B and C
-!> \param ncb                   Number of columns  of B and C
-!> \param a                     matrix a
-!> \param lda                   leading dimension of matrix a
-!> \param b                     matrix b
-!> \param ldb                   leading dimension of matrix b
-!> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param c                     matrix c
-!> \param ldc                   leading dimension of matrix c
-  interface mult_ah_b_complex
-    module procedure elpa_mult_ah_b_complex_double
-  end interface
-
-
-!> \brief  solve_tridi: Old, deprecated interface to solve a double-precision tridiagonal eigensystem for a double-precision matrix with divide and conquer method
-!> \details
-!>
-!> \param na                    Matrix dimension
-!> \param nev                   number of eigenvalues/vectors to be computed
-!> \param d                     array d(na) on input diagonal elements of tridiagonal matrix, on
-!>                              output the eigenvalues in ascending order
-!> \param e                     array e(na) on input subdiagonal elements of matrix, on exit destroyed
-!> \param q                     on exit : matrix q(ldq,matrixCols) contains the eigenvectors
-!> \param ldq                   leading dimension of matrix q
-!> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
-!> \param matrixCols            columns of matrix q
-!> \param mpi_comm_rows         MPI communicator for rows
-!> \param mpi_comm_cols         MPI communicator for columns
-!> \param wantDebug             logical, give more debug information if .true.
-!> \result success              logical, .true. on success, else .false.
-  interface solve_tridi
-    module procedure elpa_solve_tridi_double
-  end interface
-
   contains
 
-!> \brief  cholesky_real_double: Cholesky factorization of a double-precision real symmetric matrix
-!> \details
-!>
-!> \param  na                   Order of matrix
-!> \param  a(lda,matrixCols)    Distributed matrix which should be factorized.
-!>                              Distribution is like in Scalapack.
-!>                              Only upper triangle needs to be set.
-!>                              On return, the upper triangle contains the Cholesky factor
-!>                              and the lower triangle is set to 0.
-!> \param  lda                  Leading dimension of a
-!> \param  nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!> \param  matrixCols           local columns of matrix a
-!> \param  mpi_comm_rows        MPI communicator for rows
-!> \param  mpi_comm_cols        MPI communicator for columns
-!> \param wantDebug             logical, more debug information on failure
-!> \param succes                logical, reports success or failure
 
 #define REALCASE 1
 #define DOUBLE_PRECISION

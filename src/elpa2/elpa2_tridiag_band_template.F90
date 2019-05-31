@@ -228,7 +228,7 @@
         stop 1
       endif
 
-      ab = 0 ! needed for lower half, the extra block should also be set to 0 for safety
+      ab = 0.0_rck ! needed for lower half, the extra block should also be set to 0 for safety
 
       ! n_off: Offset of ab within band
       n_off = block_limits(my_pe)*nb
@@ -470,7 +470,7 @@
 #else
           vnorm2 = sum(real(ab(3:n+1,na_s-n_off),kind=rk4)**2+aimag(ab(3:n+1,na_s-n_off))**2)
 #endif
-          if (n<2) vnorm2 = 0. ! Safety only
+          if (n<2) vnorm2 = 0.0_rk ! Safety only
 #endif /* COMPLEXCASE */
 
             call hh_transform_&

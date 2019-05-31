@@ -48,9 +48,8 @@
      use elpa_mpi
      use precision
      use elpa_abstract_impl
-#ifdef WITH_OPENMP
-     use omp_lib
-#endif
+     use elpa_omp
+
      implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -80,7 +79,11 @@
       &")
 
 #ifdef WITH_OPENMP
-      !nrThreads=omp_get_max_threads()
+      ! store the number of OpenMP threads used in the calling function
+      ! restore this at the end of ELPA 2
+      omp_threads_caller = omp_get_max_threads()
+
+      ! check the number of threads that ELPA should use internally
       call obj%get("omp_threads",nrThreads,error)
       call omp_set_num_threads(nrThreads)
 #else
@@ -333,6 +336,14 @@
           a(l_row1:l_rows,l_col1) = 0
         endif
       enddo
+
+      ! restore original OpenMP settings
+#ifdef WITH_OPENMP
+      ! store the number of OpenMP threads used in the calling function
+      ! restore this at the end of ELPA 2
+      call omp_set_num_threads(omp_threads_caller)
+#endif
+      
       call obj%timer%stop("elpa_cholesky_&
       &MATH_DATATYPE&
       &_&

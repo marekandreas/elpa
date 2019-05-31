@@ -319,7 +319,7 @@ print("  tags:")
 print("    - avx")
 print("  script:")
 print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CFLAGS=\\\"-O3 -mavx\\\" FCFLAGS=\\\"-O3 -axAVX\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"  \
-        SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2 || { cat config.log; exit 1; } \" -j 8 \
+        SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2 --enable-optional-argument-in-C-API || { cat config.log; exit 1; } \" -j 8 \
         -t 2 -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
 print("\n\n")
 
@@ -451,21 +451,40 @@ for comp, s, a in product(
         projectBinary="test_real2"
 
     if (comp == "intel"):
-        print("    - ./ci_test_scripts/run_project_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-march=native \\\" CFLAGS=\\\"-march=native\\\" \
-                SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
-                SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
-                --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
-                -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
-                -C \" FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig  \
-                 --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
+        if (a == "new_api"):
+            print("    - ./ci_test_scripts/run_project_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-march=native \\\" CFLAGS=\\\"-march=native\\\" \
+                    SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+                    SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+                    --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
+                    -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                    -C \" FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig  \
+                     --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
+        if (a == "legacy_api"):
+            print("    - ./ci_test_scripts/run_project_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-march=native \\\" CFLAGS=\\\"-march=native\\\" \
+                    SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+                    SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+                    --enable-option-checking=fatal  --enable-legacy-interface --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
+                    -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                    -C \" FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig  \
+                     --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
+
     if (comp == "gnu"):
-        print("    - ./ci_test_scripts/run_project_tests.sh -c \" FC=mpif90 FCFLAGS=\\\"-march=native \\\" CFLAGS=\\\"-march=native\\\" \
-                SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
-                SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
-                --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
-                -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
-                -C \" FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig \
-                 --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
+        if (a == "new_api"):
+            print("    - ./ci_test_scripts/run_project_tests.sh -c \" FC=mpif90 FCFLAGS=\\\"-march=native \\\" CFLAGS=\\\"-march=native\\\" \
+                    SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+                    SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+                    --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
+                    -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                    -C \" FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig \
+                     --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
+        if (a == "legacy_api"):
+            print("    - ./ci_test_scripts/run_project_tests.sh -c \" FC=mpif90 FCFLAGS=\\\"-march=native \\\" CFLAGS=\\\"-march=native\\\" \
+                    SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+                    SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+                    --enable-option-checking=fatal  --enable-legacy-interface  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
+                    -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                    -C \" FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig \
+                     --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
     print("\n\n")
 
 print("#The tests follow here")
@@ -528,6 +547,7 @@ address_sanitize_flag = {
         "address-sanitize" : "address-sanitize",
         "no-address-sanitize" : "no-address-sanitize",
 }
+
 
 #matrix_size = {
 #        "small"   : "150",
