@@ -795,7 +795,7 @@ EXTRA_DIST = \
   src/elpa2/kernels/complex_avx-avx2_2hv_template.c \
   src/elpa2/kernels/complex_avx512_1hv_template.c \
   src/elpa2/kernels/complex_avx512_2hv_template.c \
-  src/elpa2/kernels/complex_sse_1hv_template.c \
+  src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/complex_sse_2hv_template.c \
   src/elpa2/kernels/complex_template.F90 \
   src/elpa2/kernels/real_vsx_4hv_template.c \

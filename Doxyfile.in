@@ -926,7 +926,7 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/elpa2/kernels/complex_avx-avx2_1hv_double_precision.c \
 			@top_srcdir@/src/elpa2/kernels/complex_avx512_2hv_single_precision.c \
 			@top_srcdir@/src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
-			@top_srcdir@/src/elpa2/kernels/complex_sse_1hv_template.c \
+			@top_srcdir@/src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c \
 			@top_srcdir@/src/elpa2/kernels/real_avx-avx2_4hv_double_precision.c \
 			@top_srcdir@/src/elpa2/kernels/complex_avx512_2hv_double_precision.c \
 			@top_srcdir@/src/elpa2/kernels/complex_sse_2hv_template.c \
