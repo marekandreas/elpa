@@ -126,17 +126,17 @@ then
     echo "Exit Code of sbatch: $exitCode"
     echo " "
     cat ./ELPA_CI.out.*
-    if [ $exitCode -ne 0 ]
-    then
+    #if [ $exitCode -ne 0 ]
+    #then
       cat ./ELPA_CI.err.*
-    fi
+    #fi
 
   fi
 
-  if [ $exitCode -ne 0 ]
-  then
+  #if [ $exitCode -ne 0 ]
+  #then
     cat ./test-suite.log
-  fi
+  #fi
 
   exit $exitCode
 

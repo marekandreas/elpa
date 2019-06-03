@@ -50,13 +50,15 @@ if test x$_cv_gnu_make_command = x ; then
         AC_MSG_ERROR([Need GNU Make])
 fi
 
+enable_legacy=no
+
 AC_MSG_CHECKING(whether legacy interface should be provided)
 AC_ARG_ENABLE([legacy-interface],
               AS_HELP_STRING([--enable-legacy-interface],
                              [build legacy API, default no]),
               [
 	       if test x"$enableval" = x"yes"; then
-	         enable_legayc=yes
+	         enable_legacy=yes
 	       else
 	         enable_legacy=no
 	       fi
@@ -613,6 +615,7 @@ m4_define(elpa_m4_generic_kernels, [
         real_generic
         real_generic_simple
         real_generic_simple_block4
+        real_generic_simple_block6
         complex_generic
         complex_generic_simple
 ])

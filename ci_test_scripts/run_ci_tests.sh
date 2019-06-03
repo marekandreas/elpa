@@ -150,10 +150,10 @@ then
     echo " "
     echo "Exit Code of sbatch: $exitCode"
     echo " "
-    if (( $exitCode > 0 ))
-    then
+    #if (( $exitCode > 0 ))
+    #then
       cat ./ELPA_CI_2gpu.err.*
-    fi
+    #fi
     
   fi
 
@@ -181,17 +181,17 @@ then
     echo "Exit Code of sbatch: $exitCode"
     echo " "
     cat ./ELPA_CI.out.*
-    if [ $exitCode -ne 0 ]
-    then
+    #if [ $exitCode -ne 0 ]
+    #then
       cat ./ELPA_CI.err.*
-    fi
+    #fi
 
   fi
 
-  if [ $exitCode -ne 0 ]
-  then
+  #if [ $exitCode -ne 0 ]
+  #then
     cat ./test-suite.log
-  fi
+  #fi
 
   exit $exitCode
 

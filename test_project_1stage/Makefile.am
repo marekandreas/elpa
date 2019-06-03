@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-AM_FCFLAGS = @FC_MODINC@modules @FC_MODOUT@modules $(ELPA_FCFLAGS)
+AM_FCFLAGS = @FC_MODINC@modules $(ELPA_FCFLAGS)
 AM_LDFLAGS = $(ELPA_LIBS)
 
 #bindir = $(abs_top_builddir)
