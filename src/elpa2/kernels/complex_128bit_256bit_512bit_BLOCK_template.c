@@ -74,6 +74,9 @@
 #ifdef BLOCK2
 #include <pmmintrin.h>
 #endif
+
+#define __forceinline __attribute__((always_inline))
+
 #endif
 
 
@@ -102,6 +105,7 @@
 #define _SIMD_LOAD _mm_load_pd
 #define _SIMD_LOADU _mm_loadu_pd
 #define _SIMD_STORE _mm_store_pd
+#define _SIMD_STOREU _mm_storeu_pd
 #define _SIMD_MUL _mm_mul_pd
 #define _SIMD_ADD _mm_add_pd
 #define _SIMD_XOR _mm_xor_pd
@@ -116,6 +120,7 @@
 #define _SIMD_LOAD _mm_load_ps
 #define _SIMD_LOADU _mm_loadu_ps
 #define _SIMD_STORE _mm_store_ps
+#define _SIMD_STOREU _mm_storeu_ps
 #define _SIMD_MUL _mm_mul_ps
 #define _SIMD_ADD _mm_add_ps
 #define _SIMD_XOR _mm_xor_ps
@@ -234,6 +239,37 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 !f>#endif
 */
 
+/*
+!f>#ifdef HAVE_SSE_INTRINSICS
+!f> interface
+!f>   subroutine double_hh_trafo_complex_SSE_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="double_hh_trafo_complex_SSE_2hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     ! complex(kind=c_double_complex)     :: q(*)
+!f>     type(c_ptr), value                   :: q
+!f>     complex(kind=c_double_complex)     :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#ifdef HAVE_SSE_INTRINSICS
+!f> interface
+!f>   subroutine double_hh_trafo_complex_SSE_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="double_hh_trafo_complex_SSE_2hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     ! complex(kind=c_float_complex)   :: q(*)
+!f>     type(c_ptr), value                :: q
+!f>     complex(kind=c_float_complex)   :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+
 void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int* pnb, int* pnq, int* pldq
 #ifdef BLOCK1
 		  )
@@ -259,6 +295,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 
      worked_on = 0;
+
 #ifdef BLOCK1
 
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -860,13 +897,24 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     q5 = _SIMD_LOAD(&q_dbl[4*offset]);
     q6 = _SIMD_LOAD(&q_dbl[5*offset]);
 
+#ifdef BLOCK1
     q1 = _SIMD_ADD(q1, x1);
     q2 = _SIMD_ADD(q2, x2);
     q3 = _SIMD_ADD(q3, x3);
     q4 = _SIMD_ADD(q4, x4);
     q5 = _SIMD_ADD(q5, x5);
     q6 = _SIMD_ADD(q6, x6);
+#endif
 
+
+#ifdef BLOCK2
+    q1 = _SIMD_ADD(q1, y1);
+    q2 = _SIMD_ADD(q2, y2);
+    q3 = _SIMD_ADD(q3, y3);
+    q4 = _SIMD_ADD(q4, y4);
+    q5 = _SIMD_ADD(q5, y5);
+    q6 = _SIMD_ADD(q6, y6);
+#endif
     _SIMD_STORE(&q_dbl[0], q1);
     _SIMD_STORE(&q_dbl[offset], q2);
     _SIMD_STORE(&q_dbl[2*offset], q3);
@@ -1209,6 +1257,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
+
      tmp2 = _SIMD_MUL(h2_imag, x2);
 #ifdef __ELPA_USE_FMA__
      y2 = _SIMD_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
@@ -1222,6 +1271,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      y3 = _SIMD_ADD(y3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
+
      tmp4 = _SIMD_MUL(h2_imag, x4);
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_ADD(y4, _mm_msubadd_pd(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
@@ -1362,6 +1412,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
+
      tmp2 = _SIMD_MUL(h1_imag, q2);
 #ifdef __ELPA_USE_FMA__
      x2 = _SIMD_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
@@ -1375,6 +1426,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      x3 = _SIMD_ADD(x3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
+
      tmp4 = _SIMD_MUL(h1_imag, q4);
 #ifdef __ELPA_USE_FMA__
      x4 = _SIMD_ADD(x4, _mm_msubadd_pd(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
@@ -1405,6 +1457,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      x1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
+
      tmp2 = _SIMD_MUL(h1_imag, x2);
 #ifdef __ELPA_USE_FMA__
      x2 = _SIMD_MADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
@@ -1418,6 +1471,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      x3 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
 #endif
+
      tmp4 = _SIMD_MUL(h1_imag, x4);
 #ifdef __ELPA_USE_FMA__
      x4 = _SIMD_MADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE));
@@ -1478,6 +1532,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      y1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
+
      tmp2 = _SIMD_MUL(h1_imag, y2);
 #ifdef __ELPA_USE_FMA__
      y2 = _mm_maddsub_pd(h1_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
@@ -1491,6 +1546,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      y3 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
 #endif
+
      tmp4 = _SIMD_MUL(h1_imag, y4);
 #ifdef __ELPA_USE_FMA__
      y4 = _mm_maddsub_pd(h1_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE));
@@ -1504,6 +1560,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
+
      tmp2 = _SIMD_MUL(h2_imag, x2);
 #ifdef __ELPA_USE_FMA__
      y2 = _SIMD_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
@@ -1517,6 +1574,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      y3 = _SIMD_ADD(y3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
+
      tmp4 = _SIMD_MUL(h2_imag, x4);
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_ADD(y4, _mm_maddsub_pd(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
@@ -1531,10 +1589,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q3 = _SIMD_LOAD(&q_dbl[2*offset]);
      q4 = _SIMD_LOAD(&q_dbl[3*offset]);
 
+#ifdef BLOCK1
      q1 = _SIMD_ADD(q1, x1);
      q2 = _SIMD_ADD(q2, x2);
      q3 = _SIMD_ADD(q3, x3);
      q4 = _SIMD_ADD(q4, x4);
+#endif
+
+#ifdef BLOCK2
+     q1 = _SIMD_ADD(q1, y1);
+     q2 = _SIMD_ADD(q2, y2);
+     q3 = _SIMD_ADD(q3, y3);
+     q4 = _SIMD_ADD(q4, y4);
+#endif
 
      _SIMD_STORE(&q_dbl[0], q1);
      _SIMD_STORE(&q_dbl[offset], q2);
@@ -1569,6 +1636,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
+
      tmp2 = _SIMD_MUL(h2_imag, y2);
 #ifdef __ELPA_USE_FMA__
      q2 = _SIMD_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
@@ -1582,6 +1650,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #else
      q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
 #endif
+
      tmp4 = _SIMD_MUL(h2_imag, y4);
 #ifdef __ELPA_USE_FMA__
      q4 = _SIMD_ADD(q4, _mm_maddsub_pd(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
@@ -1614,6 +1683,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
           q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
           q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
           q4 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
+
           tmp1 = _SIMD_MUL(h1_imag, x1);
 
 #ifdef __ELPA_USE_FMA__
@@ -2030,8 +2100,16 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      q1 = _SIMD_LOAD(&q_dbl[0]);
      q2 = _SIMD_LOAD(&q_dbl[offset]);
+
+#ifdef BLOCK1
      q1 = _SIMD_ADD(q1, x1);
      q2 = _SIMD_ADD(q2, x2);
+#endif
+
+#ifdef BLOCK2
+     q1 = _SIMD_ADD(q1, y1);
+     q2 = _SIMD_ADD(q2, y2);
+#endif
      _SIMD_STORE(&q_dbl[0], q1);
      _SIMD_STORE(&q_dbl[offset], q2);
 
