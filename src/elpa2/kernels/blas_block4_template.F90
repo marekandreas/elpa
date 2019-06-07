@@ -85,10 +85,12 @@
     real(kind=C_DATATYPE_KIND)                :: a_1_1(nq), a_2_1(nq), a_3_1(nq), a_4_1(nq)
     real(kind=C_DATATYPE_KIND)                :: h1, h2, h3, h4
     real(kind=C_DATATYPE_KIND)                :: w(nq), z(nq), x(nq), y(nq)
+    real(kind=C_DATATYPE_KIND)                :: w_orig(nq), z_orig(nq), x_orig(nq), y_orig(nq)
 
     real(kind=C_DATATYPE_KIND)                :: w_comb(nq, 4)
     real(kind=C_DATATYPE_KIND)                :: h_comb(4)
     real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
+    real(kind=C_DATATYPE_KIND)                :: h4m(4, 4)
     real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
 
     real(kind=C_DATATYPE_KIND)                :: tau1, tau2, tau3, tau4
@@ -176,24 +178,31 @@
     tau3 = hh(1,3)
     tau4 = hh(1,4)
 
-    h1 = tau1
-    x(1:nq) = x(1:nq) * h1
+    x_orig = x
+    y_orig = y
+    z_orig = z
+    w_orig = w
 
-    h1 = tau2
-    h2 = tau2 * s_mat(1,2)
-    y(1:nq) = y(1:nq) * h1 - x(1:nq) * h2
+    h4m = 0.0
 
-    h1 = tau3
-    h2 = tau3 * s_mat(1,3)
-    h3 = tau3 * s_mat(2,3)
-    z(1:nq) = z(1:nq) * h1  - (y(1:nq) * h3 + x(1:nq) * h2)
+    h4m(1,1) = tau1
+    x(1:nq) = x(1:nq) * h4m(1,1)
 
-    h1 = tau4
-    h2 = tau4 * s_mat(1,4)
-    h3 = tau4 * s_mat(2,4)
-    h4 = tau4 * s_mat(3,4)
+    h4m(2,1) = - tau2 * s_mat(1,2)
+    h4m(2,2) = tau2
+    y(1:nq) = x(1:nq) * h4m(2,1) + y(1:nq) * h4m(2,2)
 
-    w(1:nq) = w(1:nq) * h1 - ( z(1:nq) * h4 + y(1:nq) * h3 + x(1:nq) * h2)
+    h4m(3,1) = - tau3 * s_mat(1,3)
+    h4m(3,2) = - tau3 * s_mat(2,3)
+    h4m(3,3) = tau3
+    z(1:nq) = x(1:nq) * h4m(3,1) + y(1:nq) * h4m(3,2) + z(1:nq) * h4m(3,3)
+
+    h4m(4,1) = - tau4 * s_mat(1,4)
+    h4m(4,2) = - tau4 * s_mat(2,4)
+    h4m(4,3) = - tau4 * s_mat(3,4)
+    h4m(4,4) = tau4
+
+    w(1:nq) = x(1:nq) * h4m(4,1) + y(1:nq) * h4m(4,2) + z(1:nq) * h4m(4,3) + w(1:nq) * h4m(4,4)
 
     w_comb(:,1) = x
     w_comb(:,2) = y
