@@ -120,7 +120,7 @@ then
     CLUSTER="draco"
   fi
 
-  echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS"
+  echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS on $mpiTasks tasks"
 
   #project_test
   if [[ "$CI_RUNNER_TAGS" =~ "project_test" ]]
