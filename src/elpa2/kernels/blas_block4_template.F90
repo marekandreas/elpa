@@ -72,7 +72,6 @@
 
     !class(elpa_abstract_impl_t), intent(inout) :: obj
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
-#if REALCASE==1
 
 #ifdef USE_ASSUMED_SIZE
     real(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
@@ -82,8 +81,6 @@
     real(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:ldh,1:6)
 #endif
 
-    real(kind=C_DATATYPE_KIND)                :: s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4
-    real(kind=C_DATATYPE_KIND)                :: vs_1_2, vs_1_3, vs_2_3, vs_1_4, vs_2_4, vs_3_4
     real(kind=C_DATATYPE_KIND)                :: h_2_1, h_3_2, h_3_1, h_4_3, h_4_2, h_4_1
     real(kind=C_DATATYPE_KIND)                :: a_1_1(nq), a_2_1(nq), a_3_1(nq), a_4_1(nq)
     real(kind=C_DATATYPE_KIND)                :: h1, h2, h3, h4
@@ -95,25 +92,7 @@
     real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
 
     real(kind=C_DATATYPE_KIND)                :: tau1, tau2, tau3, tau4
-#endif /* REALCASE==1 */
 
-#if COMPLEXCASE==1
-
-#ifdef USE_ASSUMED_SIZE
-    complex(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
-    complex(kind=C_DATATYPE_KIND), intent(in)    :: hh(ldh,*)
-#else
-    complex(kind=C_DATATYPE_KIND), intent(inout) :: q(1:ldq,1:nb+3)
-    complex(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:ldh,1:6)
-#endif
-    complex(kind=C_DATATYPE_KIND)                :: s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4
-    complex(kind=C_DATATYPE_KIND)                :: vs_1_2, vs_1_3, vs_2_3, vs_1_4, vs_2_4, vs_3_4
-    complex(kind=C_DATATYPE_KIND)                :: h_2_1, h_3_2, h_3_1, h_4_3, h_4_2, h_4_1
-    complex(kind=C_DATATYPE_KIND)                :: a_1_1(nq), a_2_1(nq), a_3_1(nq), a_4_1(nq)
-    complex(kind=C_DATATYPE_KIND)                :: w(nq), z(nq), x(nq), y(nq)
-    complex(kind=C_DATATYPE_KIND)                :: h1, h2, h3, h4
-    complex(kind=C_DATATYPE_KIND)                :: tau1, tau2, tau3, tau4
-#endif /* COMPLEXCASE==1 */
     integer(kind=ik)                             :: i
 
 
@@ -136,12 +115,6 @@
    ! TODO we do not even need diagonal, which might not be achievable by blas.
    ! TODO lets see how much does it matter
    s_mat = matmul(h_mat, transpose(h_mat))
-    s_1_2 = s_mat(1,2)
-    s_1_3 = s_mat(1,3)
-    s_1_4 = s_mat(1,4)
-    s_2_3 = s_mat(2,3)
-    s_2_4 = s_mat(2,4)
-    s_3_4 = s_mat(3,4)
 
     ! Do the Householder transformations
     a_1_1(1:nq) = q(1:nq,4)
@@ -203,29 +176,22 @@
     tau3 = hh(1,3)
     tau4 = hh(1,4)
 
-    vs_1_2 = s_1_2
-    vs_1_3 = s_1_3
-    vs_2_3 = s_2_3
-    vs_1_4 = s_1_4
-    vs_2_4 = s_2_4
-    vs_3_4 = s_3_4
-
     h1 = tau1
     x(1:nq) = x(1:nq) * h1
 
     h1 = tau2
-    h2 = tau2 * vs_1_2
+    h2 = tau2 * s_mat(1,2)
     y(1:nq) = y(1:nq) * h1 - x(1:nq) * h2
 
     h1 = tau3
-    h2 = tau3 * vs_1_3
-    h3 = tau3 * vs_2_3
+    h2 = tau3 * s_mat(1,3)
+    h3 = tau3 * s_mat(2,3)
     z(1:nq) = z(1:nq) * h1  - (y(1:nq) * h3 + x(1:nq) * h2)
 
     h1 = tau4
-    h2 = tau4 * vs_1_4
-    h3 = tau4 * vs_2_4
-    h4 = tau4 * vs_3_4
+    h2 = tau4 * s_mat(1,4)
+    h3 = tau4 * s_mat(2,4)
+    h4 = tau4 * s_mat(3,4)
 
     w(1:nq) = w(1:nq) * h1 - ( z(1:nq) * h4 + y(1:nq) * h3 + x(1:nq) * h2)
 
