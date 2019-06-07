@@ -92,6 +92,7 @@
     real(kind=C_DATATYPE_KIND)                :: w_comb(nq, 4)
     real(kind=C_DATATYPE_KIND)                :: h_comb(4)
     real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
+    real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
 
     real(kind=C_DATATYPE_KIND)                :: tau1, tau2, tau3, tau4
 #endif /* REALCASE==1 */
@@ -130,36 +131,17 @@
    h_mat(3,3:nb+1) = -hh(2:nb, 3)
    h_mat(4,2:nb)   = -hh(2:nb, 4)
 
-    s_1_2 = hh(2,2)
-    s_1_3 = hh(3,3)
-    s_2_3 = hh(2,3) 
-    s_1_4 = hh(4,4)
-    s_2_4 = hh(3,4)
-    s_3_4 = hh(2,4)
-
-    s_1_2 = s_1_2 + hh(2,1) * hh(3,2)
-    s_2_3 = s_2_3 + hh(2,2) * hh(3,3)
-    s_3_4 = s_3_4 + hh(2,3) * hh(3,4)
-
-    s_1_2 = s_1_2 + hh(3,1) * hh(4,2)
-    s_2_3 = s_2_3 + hh(3,2) * hh(4,3)
-    s_3_4 = s_3_4 + hh(3,3) * hh(4,4)
-
-    s_1_3 = s_1_3 + hh(2,1) * hh(4,3)
-    s_2_4 = s_2_4 + hh(2,2) * hh(4,4)
-
-    !DIR$ IVDEP
-    do i=5,nb
-       s_1_2 = s_1_2 + hh(i-1,1) * hh(i,2)
-       s_2_3 = s_2_3 + hh(i-1,2) * hh(i,3)
-       s_3_4 = s_3_4 + hh(i-1,3) * hh(i,4)
-
-       s_1_3 = s_1_3 + hh(i-2,1) * hh(i,3)
-       s_2_4 = s_2_4 + hh(i-2,2) * hh(i,4)
-
-       s_1_4 = s_1_4 + hh(i-3,1) * hh(i,4)
-    enddo
-
+   ! TODO we actually need just the strictly upper triangle of s_mat
+   ! TODO take care when changing to BLAS
+   ! TODO we do not even need diagonal, which might not be achievable by blas.
+   ! TODO lets see how much does it matter
+   s_mat = matmul(h_mat, transpose(h_mat))
+    s_1_2 = s_mat(1,2)
+    s_1_3 = s_mat(1,3)
+    s_1_4 = s_mat(1,4)
+    s_2_3 = s_mat(2,3)
+    s_2_4 = s_mat(2,4)
+    s_3_4 = s_mat(3,4)
 
     ! Do the Householder transformations
     a_1_1(1:nq) = q(1:nq,4)
@@ -251,7 +233,6 @@
     w_comb(:,2) = y
     w_comb(:,3) = z
     w_comb(:,4) = w
-
 
    q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
 
