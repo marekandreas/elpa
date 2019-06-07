@@ -270,41 +270,10 @@
 
     w(1:nq) = w(1:nq) * h1 - ( z(1:nq) * h4 + y(1:nq) * h3 + x(1:nq) * h2)
 
-!    q(1:nq,1) = q(1:nq,1) - w(1:nq)
-!    q(1:nq,2) = q(1:nq,2) - z(1:nq)
-!    q(1:nq,3) = q(1:nq,3) - y(1:nq)
-!    q(1:nq,4) =  q(1:nq,4) - x(1:nq)
-
-!    h4 = hh(2,4)
-!    q(1:nq,2) = q(1:nq,2) - (w(1:nq) * h4)
-!
-!    h3 = hh(2,3)
-!    h4 = hh(3,4)
-!    q(1:nq,3) = -( z(1:nq) * h3) + q(1:nq,3)
-!    q(1:nq,3) = -( w(1:nq) * h4) + q(1:nq,3)
-!
-!    h2 = hh(2,2)
-!    h3 = hh(3,3)
-!    h4 = hh(4,4)
-!    q(1:nq,4) = -(y(1:nq) * h2) + q(1:nq,4)
-!    q(1:nq,4) = -(z(1:nq) * h3) + q(1:nq,4)
-!    q(1:nq,4) = -(w(1:nq) * h4) + q(1:nq,4)
-
     w_comb(:,1) = x
     w_comb(:,2) = y
     w_comb(:,3) = z
     w_comb(:,4) = w
-!    do i=5,nb
-!       h1 = hh(i-3,1)
-!       h2 = hh(i-2,2)
-!       h3 = hh(i-1,3)
-!       h4 = hh(i  ,4)
-!
-!       h_comb = (/-h1, -h2, -h3, -h4/)
-!
-!       q(1:nq,i) = matmul(w_comb, h_comb) + q(1:nq,i)
-!
-!   enddo
 
    h_mat(:,:) = 0.0
    h_mat(1,4) = -1.0
@@ -316,7 +285,6 @@
    h_mat(3,3:nb) = -hh(2:nb-1, 3)
    h_mat(4,2:nb) = -hh(2:nb,   4)
    q(1:nq, 1:nb) = matmul(w_comb, h_mat) + q(1:nq, 1:nb)
-   
 
 
    h1 = hh(nb-2,1)
