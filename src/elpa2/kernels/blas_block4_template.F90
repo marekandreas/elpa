@@ -115,14 +115,21 @@
 #endif /* COMPLEXCASE==1 */
     integer(kind=ik)                             :: i
 
-    print *, "SIMPLE BLOCK4, nb, nq, ldq, ldh ", nb, nq, ldq, ldh
-    print *, "Q:", q(1:ldq,1:nb+3)
-    print *, "HH:", hh(1:ldh,1:6)
-
 
     ! Calculate dot product of the two Householder vectors
 
-#if REALCASE==1
+   h_mat(:,:) = 0.0
+
+   h_mat(1,4) = -1.0
+   h_mat(2,3) = -1.0
+   h_mat(3,2) = -1.0
+   h_mat(4,1) = -1.0
+
+   h_mat(1,5:nb+3) = -hh(2:nb, 1)
+   h_mat(2,4:nb+2) = -hh(2:nb, 2)
+   h_mat(3,3:nb+1) = -hh(2:nb, 3)
+   h_mat(4,2:nb)   = -hh(2:nb, 4)
+
     s_1_2 = hh(2,2)
     s_1_3 = hh(3,3)
     s_2_3 = hh(2,3) 
@@ -152,15 +159,7 @@
 
        s_1_4 = s_1_4 + hh(i-3,1) * hh(i,4)
     enddo
-#endif
 
-#if COMPLEXCASE==1
-    stop
-    !s = conjg(hh(2,2))*1.0
-    !do i=3,nb
-    !   s = s+(conjg(hh(i,2))*hh(i-1,1))
-    !enddo
-#endif
 
     ! Do the Householder transformations
     a_1_1(1:nq) = q(1:nq,4)
@@ -175,7 +174,6 @@
     h_4_2 = hh(3,4)
     h_4_1 = hh(4,4)
 
-#if REALCASE == 1
     w(1:nq) = a_3_1(1:nq) * h_4_3 + a_4_1(1:nq)
     w(1:nq) = a_2_1(1:nq) * h_4_2 +     w(1:nq)
     w(1:nq) = a_1_1(1:nq) * h_4_1 +     w(1:nq)
@@ -186,25 +184,12 @@
     y(1:nq) = a_1_1(1:nq) * h_2_1 + a_2_1(1:nq)
 
     x(1:nq) = a_1_1(1:nq)
-#endif
-
-#if COMPLEXCASE==1
-    stop
-    !y(1:nq) = q(1:nq,1) + q(1:nq,2)*conjg(hh(2,2))
-#endif
 
     do i=5,nb
-#if REALCASE == 1
       h1 = hh(i-3,1)
       h2 = hh(i-2,2)
       h3 = hh(i-1,3)
       h4 = hh(i  ,4)
-#endif
-#if COMPLEXCASE==1
-       stop
-    !   h1 = conjg(hh(i-1,1))
-    !   h2 = conjg(hh(i,2))
-#endif
 
       x(1:nq) = x(1:nq) + q(1:nq,i) * h1
       y(1:nq) = y(1:nq) + q(1:nq,i) * h2
@@ -216,16 +201,9 @@
     h2 = hh(nb-1,2)
     h3 = hh(nb  ,3)
 
-#if REALCASE==1
     x(1:nq) = x(1:nq) + q(1:nq,nb+1) * h1 
     y(1:nq) = y(1:nq) + q(1:nq,nb+1) * h2
     z(1:nq) = z(1:nq) + q(1:nq,nb+1) * h3
-#endif
-
-#if COMPLEXCASE==1
-    stop
-    !x(1:nq) = x(1:nq) + q(1:nq,nb+1)*conjg(hh(nb,1))
-#endif
 
     h1 = hh(nb-1,1)
     h2 = hh(nb  ,2)
@@ -236,7 +214,6 @@
     h1 = hh(nb,1)
 
     x(1:nq) = x(1:nq) + q(1:nq,nb+3) * h1
-
 
     ! Rank-1 update
     tau1 = hh(1,1)
@@ -275,17 +252,6 @@
     w_comb(:,3) = z
     w_comb(:,4) = w
 
-   h_mat(:,:) = 0.0
-
-   h_mat(1,4) = -1.0
-   h_mat(2,3) = -1.0
-   h_mat(3,2) = -1.0
-   h_mat(4,1) = -1.0
-
-   h_mat(1,5:nb+3) = -hh(2:nb, 1)
-   h_mat(2,4:nb+2) = -hh(2:nb, 2)
-   h_mat(3,3:nb+1) = -hh(2:nb, 3)
-   h_mat(4,2:nb)   = -hh(2:nb, 4)
 
    q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
 

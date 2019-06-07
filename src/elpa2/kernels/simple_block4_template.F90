@@ -114,8 +114,8 @@
 
     !TODO remove
     print *, "SIMPLE BLOCK4, nb, nq, ldq, ldh ", nb, nq, ldq, ldh
-    print *, "Q:", q(1:ldq,1:nb+3)
-    print *, "HH:", hh(1:ldh,1:6)
+    !print *, "Q:", q(1:ldq,1:nb+3)
+    !print *, "HH:", hh(1:ldh,1:6)
 
 
  ! call the blas kernel for future comparison
