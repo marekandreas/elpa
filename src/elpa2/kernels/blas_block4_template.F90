@@ -58,9 +58,11 @@
 ! --------------------------------------------------------------------------------------------------
 #endif
 
+
+#if REALCASE==1
   subroutine quad_hh_trafo_&
   &MATH_DATATYPE&
-  &_generic_simple_4hv_&
+  &_generic_blas_4hv_&
   &PRECISION&
   & (q, hh, nb, nq, ldq, ldh)
 
@@ -80,16 +82,17 @@
     real(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:ldh,1:6)
 #endif
 
-    !TODO remove
-    real(kind=C_DATATYPE_KIND)                :: q_copy(1:ldq,1:nb+3)
-    real(kind=C_DATATYPE_KIND)                :: diff
-
     real(kind=C_DATATYPE_KIND)                :: s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4
     real(kind=C_DATATYPE_KIND)                :: vs_1_2, vs_1_3, vs_2_3, vs_1_4, vs_2_4, vs_3_4
     real(kind=C_DATATYPE_KIND)                :: h_2_1, h_3_2, h_3_1, h_4_3, h_4_2, h_4_1
     real(kind=C_DATATYPE_KIND)                :: a_1_1(nq), a_2_1(nq), a_3_1(nq), a_4_1(nq)
     real(kind=C_DATATYPE_KIND)                :: h1, h2, h3, h4
     real(kind=C_DATATYPE_KIND)                :: w(nq), z(nq), x(nq), y(nq)
+
+    real(kind=C_DATATYPE_KIND)                :: w_comb(nq, 4)
+    real(kind=C_DATATYPE_KIND)                :: h_comb(4)
+    real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb-4)
+
     real(kind=C_DATATYPE_KIND)                :: tau1, tau2, tau3, tau4
 #endif /* REALCASE==1 */
 
@@ -112,22 +115,9 @@
 #endif /* COMPLEXCASE==1 */
     integer(kind=ik)                             :: i
 
-    !TODO remove
     print *, "SIMPLE BLOCK4, nb, nq, ldq, ldh ", nb, nq, ldq, ldh
     print *, "Q:", q(1:ldq,1:nb+3)
     print *, "HH:", hh(1:ldh,1:6)
-
-
- ! call the blas kernel for future comparison
- ! TODO remove
-#if REALCASE==1
-  q_copy(:,:) = q(:,1:nb+3)
-  call quad_hh_trafo_&
-  &MATH_DATATYPE&
-  &_generic_blas_4hv_&
-  &PRECISION&
-  & (q_copy, hh, nb, nq, ldq, ldh)
-#endif
 
 
     ! Calculate dot product of the two Householder vectors
@@ -302,17 +292,30 @@
     q(1:nq,4) = -(z(1:nq) * h3) + q(1:nq,4)
     q(1:nq,4) = -(w(1:nq) * h4) + q(1:nq,4)
 
-    do i=5,nb
-       h1 = hh(i-3,1)
-       h2 = hh(i-2,2)
-       h3 = hh(i-1,3)
-       h4 = hh(i  ,4)
+    w_comb(:,1) = x
+    w_comb(:,2) = y
+    w_comb(:,3) = z
+    w_comb(:,4) = w
+!    do i=5,nb
+!       h1 = hh(i-3,1)
+!       h2 = hh(i-2,2)
+!       h3 = hh(i-1,3)
+!       h4 = hh(i  ,4)
+!
+!       h_comb = (/-h1, -h2, -h3, -h4/)
+!
+!       q(1:nq,i) = matmul(w_comb, h_comb) + q(1:nq,i)
+!
+!   enddo
 
-       q(1:nq,i) = -(x(1:nq) * h1) + q(1:nq,i)
-       q(1:nq,i) = -(y(1:nq) * h2) + q(1:nq,i)
-       q(1:nq,i) = -(z(1:nq) * h3) + q(1:nq,i)
-       q(1:nq,i) = -(w(1:nq) * h4) + q(1:nq,i)
-   enddo
+   !h_mat(:,:) = 0.0
+   h_mat(1,1:nb-4) = -hh(2:nb-3, 1)
+   h_mat(2,1:nb-4) = -hh(3:nb-2, 2)
+   h_mat(3,1:nb-4) = -hh(4:nb-1, 3)
+   h_mat(4,1:nb-4) = -hh(5:nb,   4)
+   q(1:nq, 5:nb) = matmul(w_comb, h_mat) + q(1:nq, 5:nb)
+   
+
 
    h1 = hh(nb-2,1)
    h2 = hh(nb-1,2)
@@ -331,13 +334,6 @@
    h1 = hh(nb,1)
    q(1:nq,nb+3) = - (x(1:nq) * h1) + q(1:nq,nb+3)
 
-
-   !TODO remove
-   diff = maxval(abs(q(:,1:nb+3) - q_copy(:, 1:nb+3)))
-   print *, "DIFFERENCE: ", diff
-
   end subroutine
 
-
-! TODO remove
-#include "blas_block4_template.F90"
+#endif
