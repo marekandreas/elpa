@@ -67,9 +67,10 @@
 
 //define instruction set numbers
 #define SSE_128 128
+#define AVX_256 256
 #define NEON_ARCH64_128 1285
 
-#if VEC_SET == SSE_128 || VEC_SET == 256 || VEC_SET == 512
+#if VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == 512
 #include <x86intrin.h>
 #ifdef BLOCK2
 #include <pmmintrin.h>
@@ -98,6 +99,12 @@
 #if VEC_SET == SSE_128
 #define SIMD_SET SSE
 #endif
+
+#if VEC_SET == AVX_256
+#define SIMD_SET AVX_AVX2
+#endif
+
+#if VEC_SET == SSE_128
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define offset 2
@@ -129,6 +136,87 @@
 #define _SIMD_SHUFFLE _mm_shuffle_ps
 #define _SHUFFLE 0xb1
 #endif
+
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define offset 4
+#define __SIMD_DATATYPE __m256d
+#define _SIMD_LOAD _mm256_load_pd
+#define _SIMD_LOADU 1
+#define _SIMD_STORE _mm256_store_pd
+#define _SIMD_STOREU 1
+#define _SIMD_MUL _mm256_mul_pd
+#define _SIMD_ADD _mm256_add_pd
+#define _SIMD_XOR _mm256_xor_pd
+#define _SIMD_BROADCAST _mm256_broadcast_sd
+#define _SIMD_MADDSUB 1
+#define _SIMD_ADDSUB _mm256_addsub_pd
+#define _SIMD_SHUFFLE _mm256_shuffle_pd
+#define _SHUFFLE 0x5
+#ifdef HAVE_AVX2
+
+#ifdef __FMA4__
+#define __ELPA_USE_FMA__
+#define _mm256_FMADDSUB_pd(a,b,c) _mm256_maddsub_pd(a,b,c)
+#define _mm256_FMSUBADD_pd(a,b,c) _mm256_msubadd_pd(a,b,c)
+#endif
+
+#ifdef __AVX2__
+#define __ELPA_USE_FMA__
+#define _mm256_FMADDSUB_pd(a,b,c) _mm256_fmaddsub_pd(a,b,c)
+#define _mm256_FMSUBADD_pd(a,b,c) _mm256_fmsubadd_pd(a,b,c)
+#endif
+
+#endif /* HAVE_AVX2 */
+
+#define _SIMD_FMADDSUB _mm256_FMADDSUB_pd
+#define _SIMD_FMSUBADD _mm256_FMSUBADD_pd
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+#ifdef SINGLE_PRECISION_COMPLEX
+#define offset 8
+#define __SIMD_DATATYPE __m256
+#define _SIMD_LOAD _mm256_load_ps
+#define _SIMD_LOADU 1
+#define _SIMD_STORE _mm256_store_ps
+#define _SIMD_STOREU 1
+#define _SIMD_MUL _mm256_mul_ps
+#define _SIMD_ADD _mm256_add_ps
+#define _SIMD_XOR _mm256_xor_ps
+#define _SIMD_BROADCAST  _mm256_broadcast_ss
+#define _SIMD_MADDSUB 1
+#define _SIMD_ADDSUB _mm256_addsub_ps
+#define _SIMD_SHUFFLE _mm_shuffle_ps
+#define _SHUFFLE 0xb1
+
+#ifdef HAVE_AVX2
+
+#ifdef __FMA4__
+#define __ELPA_USE_FMA__
+#define _mm256_FMADDSUB_ps(a,b,c) _mm256_maddsub_ps(a,b,c)
+#define _mm256_FMSUBADD_ps(a,b,c) _mm256_msubadd_ps(a,b,c)
+#endif
+
+#ifdef __AVX2__
+#define __ELPA_USE_FMA__
+#define _mm256_FMADDSUB_ps(a,b,c) _mm256_fmaddsub_ps(a,b,c)
+#define _mm256_FMSUBADD_ps(a,b,c) _mm256_fmsubadd_ps(a,b,c)
+#endif
+
+#endif /* HAVE_AVX2 */
+
+#define _SIMD_FMADDSUB _mm256_FMADDSUB_ps
+#define _SIMD_FMSUBADD _mm256_FMSUBADD_ps
+
+#endif /* SINGLE_PRECISION_COMPLEX */
+
+#endif /* VEC_SET == AVX_256 */
+
+
 
 #define __forceinline __attribute__((always_inline))
 
@@ -164,6 +252,17 @@
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
+#if VEC_SET  == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 24
+#endif
+#endif /* VEC_SET  == AVX_256 */
+
 //Forward declaration
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq 
 #ifdef BLOCK1
@@ -176,6 +275,39 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #if VEC_SET  == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
+#define ROW_LENGTH 5
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 10
+#endif
+#endif /* VEC_SET  == SSE_128 */
+
+
+#if VEC_SET  == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 10
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 20
+#endif
+#endif /* VEC_SET  == AVX_256 */
+
+
+static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
+#ifdef BLOCK1
+		                       );
+#endif
+#ifdef BLOCK2
+                                       ,int ldh, DATA_TYPE s);
+#endif
+
+
+#if VEC_SET  == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
 #define ROW_LENGTH 4
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
@@ -183,6 +315,52 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #define ROW_LENGTH 8
 #endif
 #endif /* VEC_SET  == SSE_128 */
+
+
+#if VEC_SET  == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET  == AVX_256 */
+
+
+static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
+#ifdef BLOCK1
+		                       );
+#endif
+#ifdef BLOCK2
+                                       ,int ldh, DATA_TYPE s);
+#endif
+
+#if VEC_SET  == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 3
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 6
+#endif
+#endif /* VEC_SET  == SSE_128 */
+
+
+#if VEC_SET  == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 6
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 12
+#endif
+#endif /* VEC_SET  == AVX_256 */
+
+
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		                       );
@@ -201,6 +379,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #define ROW_LENGTH 4
 #endif
 #endif /* VEC_SET  == SSE_128 */
+
+#if VEC_SET  == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET  == AVX_256 */
+
+
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		                       );
@@ -208,6 +399,37 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef BLOCK2
                                        ,int ldh, DATA_TYPE s);
 #endif
+
+#if VEC_SET  == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 1
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 2
+#endif
+#endif /* VEC_SET  == SSE_128 */
+
+#if VEC_SET  == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 2
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 4
+#endif
+#endif /* VEC_SET  == AVX_256 */
+
+static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
+#ifdef BLOCK1
+		                       );
+#endif
+#ifdef BLOCK2
+                                       ,int ldh, DATA_TYPE s);
+#endif
+
 
 /*
 !f>#ifdef HAVE_SSE_INTRINSICS
@@ -238,6 +460,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 !f> end interface
 !f>#endif
 */
+
 
 /*
 !f>#ifdef HAVE_SSE_INTRINSICS
@@ -298,16 +521,32 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 
 #ifdef BLOCK1
 
+#if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 6
 #define STEP_SIZE 6
-#define UPPER_BOUND 4
+#define UPPER_BOUND 5
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #define STEP_SIZE 12
-#define UPPER_BOUND 8
+#define UPPER_BOUND 10
 #endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 12
+#define STEP_SIZE 12
+#define UPPER_BOUND 10
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 24
+#define STEP_SIZE 24
+#define UPPER_BOUND 20
+#endif
+#endif /* VEC_SET == AVX_256 */
+
         for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE)
         {
 
@@ -318,6 +557,34 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
           return;
         }
 
+#if VEC_SET == SSE_128
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 5
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 10
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 10
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 20
+#endif
+#endif /* VEC_SET == AVX_256 */
+
+        if (nq-i == ROW_LENGTH)
+        {
+            CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
+	    worked_on += ROW_LENGTH;
+        }
+
+
+#if VEC_SET == SSE_128
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
@@ -325,12 +592,51 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
 #endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET == AVX_256 */
+
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
 
+#if VEC_SET == SSE_128
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 3
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 6
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 6
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 12
+#endif
+#endif /* VEC_SET == AVX_256 */
+
+        if (nq-i == ROW_LENGTH)
+        {
+            CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
+	    worked_on += ROW_LENGTH;
+        }
+
+#if VEC_SET == SSE_128
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 2
@@ -338,11 +644,50 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET == AVX_256 */
+
+
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
+
+#if VEC_SET == SSE_128
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 1
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 2
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 2
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 4
+#endif
+#endif /* VEC_SET == AVX_256 */
+        if (nq-i == ROW_LENGTH)
+        {
+            CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
+	    worked_on += ROW_LENGTH;
+        }
+
 #endif /* BLOCK1 */
 
 #ifdef BLOCK2
@@ -372,11 +717,9 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 2
-#define STEP_SIZE 2
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
-#define STEP_SIZE 4
 #endif
     if (nq-i == ROW_LENGTH)
     {
@@ -384,26 +727,49 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
         worked_on += ROW_LENGTH;
     }
 
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 1
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 2
+#endif
+    if (nq-i == ROW_LENGTH)
+    {
+        CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
+        worked_on += ROW_LENGTH;
+    }
 #endif /* BLOCK2 */
 
-#ifdef WITH_DEBUG
+//#ifdef WITH_DEBUG
     if (worked_on != nq)
     {
       printf("Error in complex SIMD_SET BLOCK BLOCK kernel %d %d\n", worked_on, nq);
       abort();
     }
-#endif
+//#endif
 
 
 }
 
-
+#if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 6
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 24
+#endif
+#endif /* VEC_SET == AVX_256 */
+
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -1178,18 +1544,749 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      _SIMD_STORE(&q_dbl[(2*nb*ldq)+offset], q2);
      _SIMD_STORE(&q_dbl[(2*nb*ldq)+2*offset], q3);
      _SIMD_STORE(&q_dbl[(2*nb*ldq)+3*offset], q4);
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+4*offset], q5);
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+5*offset], q6);
 
 #endif /* BLOCK2 */
 
 }
 
 
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 5
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 10
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 10
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 20
+#endif
+#endif /* VEC_SET == AVX_256 */
+
+static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
+#ifdef BLOCK1
+		)
+#endif
+#ifdef BLOCK2
+                ,int ldh, DATA_TYPE s)
+#endif
+{
+
+    DATA_TYPE_REAL_PTR q_dbl = (DATA_TYPE_REAL_PTR)q;
+    DATA_TYPE_REAL_PTR hh_dbl = (DATA_TYPE_REAL_PTR)hh;
+#ifdef BLOCK2
+    DATA_TYPE_REAL_PTR s_dbl = (DATA_TYPE_REAL_PTR)(&s);
+#endif
+
+    __SIMD_DATATYPE x1, x2, x3, x4, x5;
+    __SIMD_DATATYPE q1, q2, q3, q4, q5;
+#ifdef BLOCK2
+    __SIMD_DATATYPE y1, y2, y3, y4, y5;
+    __SIMD_DATATYPE h2_real, h2_imag;
+#endif
+    __SIMD_DATATYPE h1_real, h1_imag;
+    __SIMD_DATATYPE tmp1, tmp2, tmp3, tmp4, tmp5;
+    int i=0;
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000);
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifdef BLOCK2
+     x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
+     x2 = _SIMD_LOAD(&q_dbl[(2*ldq)+offset]);
+     x3 = _SIMD_LOAD(&q_dbl[(2*ldq)+2*offset]);
+     x4 = _SIMD_LOAD(&q_dbl[(2*ldq)+3*offset]);
+     x5 = _SIMD_LOAD(&q_dbl[(2*ldq)+4*offset]);
+
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+     // conjugate
+     h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
+
+     y1 = _SIMD_LOAD(&q_dbl[0]);
+     y2 = _SIMD_LOAD(&q_dbl[offset]);
+     y3 = _SIMD_LOAD(&q_dbl[2*offset]);
+     y4 = _SIMD_LOAD(&q_dbl[3*offset]);
+     y5 = _SIMD_LOAD(&q_dbl[4*offset]);
+
+     tmp1 = _SIMD_MUL(h2_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+     tmp2 = _SIMD_MUL(h2_imag, x2);
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     y2 = _SIMD_ADD(y2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h2_imag, x3);
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD(y3, _mm_msubadd_pd(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     y3 = _SIMD_ADD(y3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+     tmp4 = _SIMD_MUL(h2_imag, x4);
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_ADD(y4, _mm_msubadd_pd(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+     y4 = _SIMD_ADD(y4, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+
+     tmp5 = _SIMD_MUL(h2_imag, x5);
+#ifdef __ELPA_USE_FMA__
+     y5 = _SIMD_ADD(y5, _mm_msubadd_pd(h2_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+     y5 = _SIMD_ADD(y5, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+#ifdef BLOCK1
+    x1 = _SIMD_LOAD(&q_dbl[0]);
+    x2 = _SIMD_LOAD(&q_dbl[offset]);
+    x3 = _SIMD_LOAD(&q_dbl[2*offset]);
+    x4 = _SIMD_LOAD(&q_dbl[3*offset]);
+    x5 = _SIMD_LOAD(&q_dbl[4*offset]);
+#endif
+
+    for (i = BLOCK; i < nb; i++)
+    {
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = _mm_loaddup_pd(&hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-BLOCK+1)*2]) )));
+        h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-BLOCK+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+        // conjugate
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+
+        q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
+        q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
+        q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+        q4 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
+        q5 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+4*offset]);
+
+        tmp1 = _SIMD_MUL(h1_imag, q1);
+
+#ifdef __ELPA_USE_FMA__
+        x1 = _SIMD_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+        tmp2 = _SIMD_MUL(h1_imag, q2);
+#ifdef __ELPA_USE_FMA__
+        x2 = _SIMD_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+        x2 = _SIMD_ADD(x2, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+        tmp3 = _SIMD_MUL(h1_imag, q3);
+#ifdef __ELPA_USE_FMA__
+        x3 = _SIMD_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+        x3 = _SIMD_ADD(x3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+        tmp4 = _SIMD_MUL(h1_imag, q4);
+#ifdef __ELPA_USE_FMA__
+        x4 = _SIMD_ADD(x4, _mm_msubadd_pd(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+        x4 = _SIMD_ADD(x4, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+        tmp5 = _SIMD_MUL(h1_imag, q5);
+#ifdef __ELPA_USE_FMA__
+        x5 = _SIMD_ADD(x5, _mm_msubadd_pd(h1_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+        x5 = _SIMD_ADD(x5, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+
+#ifdef BLOCK2
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+          h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
+          h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+          // conjugate
+          h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
+
+          tmp1 = _SIMD_MUL(h2_imag, q1);
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+          tmp2 = _SIMD_MUL(h2_imag, q2);
+#ifdef __ELPA_USE_FMA__
+          y2 = _SIMD_ADD(y2, _mm_msubadd_pd(h2_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+          y2 = _SIMD_ADD(y2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+          tmp3 = _SIMD_MUL(h2_imag, q3);
+#ifdef __ELPA_USE_FMA__
+          y3 = _SIMD_ADD(y3, _mm_msubadd_pd(h2_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+          y3 = _SIMD_ADD(y3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+          tmp4 = _SIMD_MUL(h2_imag, q4);
+#ifdef __ELPA_USE_FMA__
+          y4 = _SIMD_ADD(y4, _mm_msubadd_pd(h2_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+          y4 = _SIMD_ADD(y4, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+
+          tmp5 = _SIMD_MUL(h2_imag, q5);
+#ifdef __ELPA_USE_FMA__
+          y5 = _SIMD_ADD(y5, _mm_msubadd_pd(h2_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+          y5 = _SIMD_ADD(y5, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+	
+#endif /* BLOCK2 */
+
+    }
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
+#endif
+
+#ifndef __ELPA_USE_FMA__
+     // conjugate
+     h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
+     q2 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+offset]);
+     q3 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
+     q4 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+3*offset]);
+     q5 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+4*offset]);
+
+     tmp1 = _SIMD_MUL(h1_imag, q1);
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+     tmp2 = _SIMD_MUL(h1_imag, q2);
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     x2 = _SIMD_ADD(x2, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h1_imag, q3);
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     x3 = _SIMD_ADD(x3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+     tmp4 = _SIMD_MUL(h1_imag, q4);
+#ifdef __ELPA_USE_FMA__
+     x4 = _SIMD_ADD(x4, _mm_msubadd_pd(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+     x4 = _SIMD_ADD(x4, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+
+     tmp5 = _SIMD_MUL(h1_imag, q5);
+#ifdef __ELPA_USE_FMA__
+     x5 = _SIMD_ADD(x5, _mm_msubadd_pd(h1_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+     x5 = _SIMD_ADD(x5, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+    h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+    h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+    h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[0]) )));
+    h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[1]) )));
+#endif
+#endif /*  VEC_SET == SSE_128 */
+
+    h1_real = _SIMD_XOR(h1_real, sign);
+    h1_imag = _SIMD_XOR(h1_imag, sign);
+
+    tmp1 = _SIMD_MUL(h1_imag, x1);
+
+#ifdef __ELPA_USE_FMA__
+    x1 = _SIMD_MADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+    x1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+    tmp2 = _SIMD_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+    x2 = _SIMD_MADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#else
+    x2 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#endif
+    tmp3 = _SIMD_MUL(h1_imag, x3);
+#ifdef __ELPA_USE_FMA__
+    x3 = _SIMD_MADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#else
+    x3 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#endif
+
+    tmp4 = _SIMD_MUL(h1_imag, x4);
+#ifdef __ELPA_USE_FMA__
+    x4 = _SIMD_MADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+#else
+    x4 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+#endif
+    tmp5 = _SIMD_MUL(h1_imag, x5);
+#ifdef __ELPA_USE_FMA__
+    x5 = _SIMD_MADDSUB(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE));
+#else
+    x5 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE));
+#endif
+
+#ifdef BLOCK2
+     
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
+#endif
+
+     h1_real = _SIMD_XOR(h1_real, sign);
+     h1_imag = _SIMD_XOR(h1_imag, sign);
+     h2_real = _SIMD_XOR(h2_real, sign);
+     h2_imag = _SIMD_XOR(h2_imag, sign);
+
+#ifdef SINGLE_PRECISION_COMPLEX
+     tmp2 = _mm_castpd_ps(_mm_load_pd1((double *) s_dbl));
+#else
+     tmp2 = _SIMD_LOADU(s_dbl);
+#endif
+     tmp1 = _SIMD_MUL(h2_imag, tmp2);
+
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL(h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_movedup_pd(tmp2);
+     h2_imag = _mm_set1_pd(tmp2[1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(tmp2);
+     h2_imag = _mm_movehdup_ps(tmp2);
+#endif
+
+     tmp1 = _SIMD_MUL(h1_imag, y1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _mm_maddsub_pd(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+     tmp2 = _SIMD_MUL(h1_imag, y2);
+#ifdef __ELPA_USE_FMA__
+     y2 = _mm_maddsub_pd(h1_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#else
+     y2 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#endif
+
+     tmp3 = _SIMD_MUL(h1_imag, y3);
+#ifdef __ELPA_USE_FMA__
+     y3 = _mm_maddsub_pd(h1_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#else
+     y3 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#endif
+     tmp4 = _SIMD_MUL(h1_imag, y4);
+#ifdef __ELPA_USE_FMA__
+     y4 = _mm_maddsub_pd(h1_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+#else
+     y4 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE));
+#endif
+
+     tmp5 = _SIMD_MUL(h1_imag, y5);
+#ifdef __ELPA_USE_FMA__
+     y5 = _mm_maddsub_pd(h1_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE));
+#else
+     y5 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE));
+#endif
+
+     tmp1 = _SIMD_MUL(h2_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+     tmp2 = _SIMD_MUL(h2_imag, x2);
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     y2 = _SIMD_ADD(y2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h2_imag, x3);
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD(y3, _mm_maddsub_pd(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     y3 = _SIMD_ADD(y3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+     tmp4 = _SIMD_MUL(h2_imag, x4);
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_ADD(y4, _mm_maddsub_pd(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+     y4 = _SIMD_ADD(y4, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+
+     tmp5 = _SIMD_MUL(h2_imag, x5);
+#ifdef __ELPA_USE_FMA__
+     y5 = _SIMD_ADD(y5, _mm_maddsub_pd(h2_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+     y5 = _SIMD_ADD(y5, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+    q1 = _SIMD_LOAD(&q_dbl[0]);
+    q2 = _SIMD_LOAD(&q_dbl[offset]);
+    q3 = _SIMD_LOAD(&q_dbl[2*offset]);
+    q4 = _SIMD_LOAD(&q_dbl[3*offset]);
+    q5 = _SIMD_LOAD(&q_dbl[4*offset]);
+
+#ifdef BLOCK1
+    q1 = _SIMD_ADD(q1, x1);
+    q2 = _SIMD_ADD(q2, x2);
+    q3 = _SIMD_ADD(q3, x3);
+    q4 = _SIMD_ADD(q4, x4);
+    q5 = _SIMD_ADD(q5, x5);
+#endif
+
+
+#ifdef BLOCK2
+    q1 = _SIMD_ADD(q1, y1);
+    q2 = _SIMD_ADD(q2, y2);
+    q3 = _SIMD_ADD(q3, y3);
+    q4 = _SIMD_ADD(q4, y4);
+    q5 = _SIMD_ADD(q5, y5);
+#endif
+    _SIMD_STORE(&q_dbl[0], q1);
+    _SIMD_STORE(&q_dbl[offset], q2);
+    _SIMD_STORE(&q_dbl[2*offset], q3);
+    _SIMD_STORE(&q_dbl[3*offset], q4);
+    _SIMD_STORE(&q_dbl[4*offset], q5);
+
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(ldq*2)+0]);
+     q2 = _SIMD_LOAD(&q_dbl[(ldq*2)+offset]);
+     q3 = _SIMD_LOAD(&q_dbl[(ldq*2)+2*offset]);
+     q4 = _SIMD_LOAD(&q_dbl[(ldq*2)+3*offset]);
+     q5 = _SIMD_LOAD(&q_dbl[(ldq*2)+4*offset]);
+
+     q1 = _SIMD_ADD(q1, x1);
+     q2 = _SIMD_ADD(q2, x2);
+     q3 = _SIMD_ADD(q3, x3);
+     q4 = _SIMD_ADD(q4, x4);
+     q5 = _SIMD_ADD(q5, x5);
+
+     tmp1 = _SIMD_MUL(h2_imag, y1);
+
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+     tmp2 = _SIMD_MUL(h2_imag, y2);
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     q2 = _SIMD_ADD(q2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h2_imag, y3);
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+     tmp4 = _SIMD_MUL(h2_imag, y4);
+#ifdef __ELPA_USE_FMA__
+     q4 = _SIMD_ADD(q4, _mm_maddsub_pd(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+     q4 = _SIMD_ADD(q4, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+
+     tmp5 = _SIMD_MUL(h2_imag, y5);
+#ifdef __ELPA_USE_FMA__
+     q5 = _SIMD_ADD(q5, _mm_maddsub_pd(h2_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+     q5 = _SIMD_ADD(q5, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+
+     _SIMD_STORE(&q_dbl[(ldq*2)+0], q1);
+     _SIMD_STORE(&q_dbl[(ldq*2)+offset], q2);
+     _SIMD_STORE(&q_dbl[(ldq*2)+2*offset], q3);
+     _SIMD_STORE(&q_dbl[(ldq*2)+3*offset], q4);
+     _SIMD_STORE(&q_dbl[(ldq*2)+4*offset], q5);
+
+#endif /* BLOCK2 */
+
+
+    for (i = BLOCK; i < nb; i++)
+    {
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = _mm_loaddup_pd(&hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-BLOCK+1)*2]) )));
+        h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-BLOCK+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+        q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
+        q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
+        q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+        q4 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+3*offset]);
+        q5 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+4*offset]);
+
+	tmp1 = _SIMD_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_ADD(q1, _SIMD_MADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+        tmp2 = _SIMD_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+        q2 = _SIMD_ADD(q2, _SIMD_MADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+        q2 = _SIMD_ADD(q2, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+        tmp3 = _SIMD_MUL(h1_imag, x3);
+#ifdef __ELPA_USE_FMA__
+        q3 = _SIMD_ADD(q3, _SIMD_MADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+        q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+         tmp4 = _SIMD_MUL(h1_imag, x4);
+#ifdef __ELPA_USE_FMA__
+         q4 = _SIMD_ADD(q4, _SIMD_MADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+         q4 = _SIMD_ADD(q4, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+         tmp5 = _SIMD_MUL(h1_imag, x5);
+#ifdef __ELPA_USE_FMA__
+         q5 = _SIMD_ADD(q5, _SIMD_MADDSUB(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+         q5 = _SIMD_ADD(q5, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+          h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
+          h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
+#endif
+
+          tmp1 = _SIMD_MUL(h2_imag, y1);
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+          tmp2 = _SIMD_MUL(h2_imag, y2);
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+          q2 = _SIMD_ADD(q2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+          tmp3 = _SIMD_MUL(h2_imag, y3);
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+          q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+          tmp4 = _SIMD_MUL(h2_imag, y4);
+#ifdef __ELPA_USE_FMA__
+          q4 = _SIMD_ADD(q4, _mm_maddsub_pd(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+          q4 = _SIMD_ADD(q4, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+
+          tmp5 = _SIMD_MUL(h2_imag, y5);
+#ifdef __ELPA_USE_FMA__
+          q5 = _SIMD_ADD(q5, _mm_maddsub_pd(h2_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+          q5 = _SIMD_ADD(q5, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+
+         _SIMD_STORE(&q_dbl[(2*i*ldq)+0], q1);
+         _SIMD_STORE(&q_dbl[(2*i*ldq)+offset], q2);
+         _SIMD_STORE(&q_dbl[(2*i*ldq)+2*offset], q3);
+         _SIMD_STORE(&q_dbl[(2*i*ldq)+3*offset], q4);
+         _SIMD_STORE(&q_dbl[(2*i*ldq)+4*offset], q5);
+    }
+#ifdef BLOCK2
+     
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
+     q2 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+offset]);
+     q3 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
+     q4 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+3*offset]);
+     q5 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+4*offset]);
+
+     tmp1 = _SIMD_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+     tmp2 = _SIMD_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     q2 = _SIMD_ADD(q2, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h1_imag, x3);
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+     tmp4 = _SIMD_MUL(h1_imag, x4);
+#ifdef __ELPA_USE_FMA__
+     q4 = _SIMD_ADD(q4, _mm_maddsub_pd(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#else
+     q4 = _SIMD_ADD(q4, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE)));
+#endif
+
+     tmp5 = _SIMD_MUL(h1_imag, x5);
+#ifdef __ELPA_USE_FMA__
+     q5 = _SIMD_ADD(q5, _mm_maddsub_pd(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#else
+     q5 = _SIMD_ADD(q5, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE)));
+#endif
+
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+0], q1);
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+offset], q2);
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+2*offset], q3);
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+3*offset], q4);
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+4*offset], q5);
+
+#endif /* BLOCK2 */
+
+}
+
+#if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
 #endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET == AVX_256 */
+
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -1807,12 +2904,568 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 }
 
 
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 3
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 6
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 6
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 12
+#endif
+#endif /* VEC_SET == AVX_256 */
+static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
+#ifdef BLOCK1
+		)
+#endif
+#ifdef BLOCK2
+                ,int ldh, DATA_TYPE s)
+#endif
+{
+    DATA_TYPE_REAL_PTR q_dbl = (DATA_TYPE_REAL_PTR)q;
+    DATA_TYPE_REAL_PTR hh_dbl = (DATA_TYPE_REAL_PTR)hh;
+#ifdef BLOCK2
+    DATA_TYPE_REAL_PTR s_dbl = (DATA_TYPE_REAL_PTR)(&s);
+#endif
+
+    __SIMD_DATATYPE x1, x2, x3;
+    __SIMD_DATATYPE q1, q2, q3;
+#ifdef BLOCK2
+    __SIMD_DATATYPE y1, y2, y3;
+    __SIMD_DATATYPE h2_real, h2_imag;
+#endif
+    __SIMD_DATATYPE h1_real, h1_imag;
+    __SIMD_DATATYPE tmp1, tmp2, tmp3;
+    int i=0;
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+    __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000);
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+
+#ifdef BLOCK2
+     x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
+     x2 = _SIMD_LOAD(&q_dbl[(2*ldq)+offset]);
+     x3 = _SIMD_LOAD(&q_dbl[(2*ldq)+2*offset]);
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+     // conjugate
+     h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
+
+     y1 = _SIMD_LOAD(&q_dbl[0]);
+     y2 = _SIMD_LOAD(&q_dbl[offset]);
+     y3 = _SIMD_LOAD(&q_dbl[2*offset]);
+
+     tmp1 = _SIMD_MUL(h2_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+     tmp2 = _SIMD_MUL(h2_imag, x2);
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD(y2, _mm_msubadd_pd(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     y2 = _SIMD_ADD(y2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h2_imag, x3);
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD(y3, _mm_msubadd_pd(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     y3 = _SIMD_ADD(y3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+#ifdef BLOCK1
+     x1 = _SIMD_LOAD(&q_dbl[0]);
+     x2 = _SIMD_LOAD(&q_dbl[offset]);
+     x3 = _SIMD_LOAD(&q_dbl[2*offset]);
+#endif
+
+     for (i = BLOCK; i < nb; i++)
+     {
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h1_real = _mm_loaddup_pd(&hh_dbl[(i-BLOCK+1)*2]);
+          h1_imag = _mm_loaddup_pd(&hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-BLOCK+1)*2]) )));
+          h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-BLOCK+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+          // conjugate
+          h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+
+          q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
+          q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
+          q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+
+          tmp1 = _SIMD_MUL(h1_imag, q1);
+
+#ifdef __ELPA_USE_FMA__
+          x1 = _SIMD_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+          tmp2 = _SIMD_MUL(h1_imag, q2);
+#ifdef __ELPA_USE_FMA__
+          x2 = _SIMD_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+          x2 = _SIMD_ADD(x2, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+          tmp3 = _SIMD_MUL(h1_imag, q3);
+#ifdef __ELPA_USE_FMA__
+          x3 = _SIMD_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+          x3 = _SIMD_ADD(x3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+#ifdef BLOCK2
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+          h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
+          h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+          // conjugate
+          h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
+
+          tmp1 = _SIMD_MUL(h2_imag, q1);
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+          tmp2 = _SIMD_MUL(h2_imag, q2);
+#ifdef __ELPA_USE_FMA__
+          y2 = _SIMD_ADD(y2, _mm_msubadd_pd(h2_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+          y2 = _SIMD_ADD(y2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+          tmp3 = _SIMD_MUL(h2_imag, q3);
+#ifdef __ELPA_USE_FMA__
+          y3 = _SIMD_ADD(y3, _mm_msubadd_pd(h2_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+          y3 = _SIMD_ADD(y3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+#endif /* BLOCK2 */
+     }
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
+#endif
+
+#ifndef __ELPA_USE_FMA__
+     // conjugate
+     h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
+     q2 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+offset]);
+     q3 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
+
+     tmp1 = _SIMD_MUL(h1_imag, q1);
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+     tmp2 = _SIMD_MUL(h1_imag, q2);
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_ADD(x2, _mm_msubadd_pd(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     x2 = _SIMD_ADD(x2, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h1_imag, q3);
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_ADD(x3, _mm_msubadd_pd(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     x3 = _SIMD_ADD(x3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[0]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+     h1_real = _SIMD_XOR(h1_real, sign);
+     h1_imag = _SIMD_XOR(h1_imag, sign);
+
+     tmp1 = _SIMD_MUL(h1_imag, x1);
+
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_MADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+     x1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+     tmp2 = _SIMD_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_MADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#else
+     x2 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#endif
+
+     tmp3 = _SIMD_MUL(h1_imag, x3);
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_MADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#else
+     x3 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#endif
+
+#ifdef BLOCK2
+     
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
+#endif
+
+     h1_real = _SIMD_XOR(h1_real, sign);
+     h1_imag = _SIMD_XOR(h1_imag, sign);
+     h2_real = _SIMD_XOR(h2_real, sign);
+     h2_imag = _SIMD_XOR(h2_imag, sign);
+
+#ifdef SINGLE_PRECISION_COMPLEX
+     tmp2 = _mm_castpd_ps(_mm_load_pd1((double *) s_dbl));
+#else
+     tmp2 = _SIMD_LOADU(s_dbl);
+#endif
+     tmp1 = _SIMD_MUL(h2_imag, tmp2);
+
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL(h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_movedup_pd(tmp2);
+     h2_imag = _mm_set1_pd(tmp2[1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(tmp2);
+     h2_imag = _mm_movehdup_ps(tmp2);
+#endif
+
+     tmp1 = _SIMD_MUL(h1_imag, y1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _mm_maddsub_pd(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+     tmp2 = _SIMD_MUL(h1_imag, y2);
+#ifdef __ELPA_USE_FMA__
+     y2 = _mm_maddsub_pd(h1_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#else
+     y2 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE));
+#endif
+
+     tmp3 = _SIMD_MUL(h1_imag, y3);
+#ifdef __ELPA_USE_FMA__
+     y3 = _mm_maddsub_pd(h1_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#else
+     y3 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE));
+#endif
+
+     tmp1 = _SIMD_MUL(h2_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+     tmp2 = _SIMD_MUL(h2_imag, x2);
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD(y2, _mm_maddsub_pd(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     y2 = _SIMD_ADD(y2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h2_imag, x3);
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD(y3, _mm_maddsub_pd(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     y3 = _SIMD_ADD(y3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+     q1 = _SIMD_LOAD(&q_dbl[0]);
+     q2 = _SIMD_LOAD(&q_dbl[offset]);
+     q3 = _SIMD_LOAD(&q_dbl[2*offset]);
+
+#ifdef BLOCK1
+     q1 = _SIMD_ADD(q1, x1);
+     q2 = _SIMD_ADD(q2, x2);
+     q3 = _SIMD_ADD(q3, x3);
+#endif
+
+#ifdef BLOCK2
+     q1 = _SIMD_ADD(q1, y1);
+     q2 = _SIMD_ADD(q2, y2);
+     q3 = _SIMD_ADD(q3, y3);
+#endif
+
+     _SIMD_STORE(&q_dbl[0], q1);
+     _SIMD_STORE(&q_dbl[offset], q2);
+     _SIMD_STORE(&q_dbl[2*offset], q3);
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(ldq*2)+0]);
+     q2 = _SIMD_LOAD(&q_dbl[(ldq*2)+offset]);
+     q3 = _SIMD_LOAD(&q_dbl[(ldq*2)+2*offset]);
+
+     q1 = _SIMD_ADD(q1, x1);
+     q2 = _SIMD_ADD(q2, x2);
+     q3 = _SIMD_ADD(q3, x3);
+
+     tmp1 = _SIMD_MUL(h2_imag, y1);
+
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+     tmp2 = _SIMD_MUL(h2_imag, y2);
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     q2 = _SIMD_ADD(q2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h2_imag, y3);
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+     _SIMD_STORE(&q_dbl[(ldq*2)+0], q1);
+     _SIMD_STORE(&q_dbl[(ldq*2)+offset], q2);
+     _SIMD_STORE(&q_dbl[(ldq*2)+2*offset], q3);
+
+#endif /* BLOCK2 */
+
+     for (i = BLOCK; i < nb; i++)
+     {
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h1_real = _mm_loaddup_pd(&hh_dbl[(i-BLOCK+1)*2]);
+          h1_imag = _mm_loaddup_pd(&hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-BLOCK+1)*2]) )));
+          h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-BLOCK+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+          q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
+          q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
+          q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
+
+          tmp1 = _SIMD_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD(q1, _SIMD_MADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+          tmp2 = _SIMD_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD(q2, _SIMD_MADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+          q2 = _SIMD_ADD(q2, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+          tmp3 = _SIMD_MUL(h1_imag, x3);
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD(q3, _SIMD_MADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+          q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+          h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
+          h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
+#endif
+
+          tmp1 = _SIMD_MUL(h2_imag, y1);
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+          tmp2 = _SIMD_MUL(h2_imag, y2);
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD(q2, _mm_maddsub_pd(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+          q2 = _SIMD_ADD(q2, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+          tmp3 = _SIMD_MUL(h2_imag, y3);
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD(q3, _mm_maddsub_pd(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+          q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+          _SIMD_STORE(&q_dbl[(2*i*ldq)+0], q1);
+          _SIMD_STORE(&q_dbl[(2*i*ldq)+offset], q2);
+          _SIMD_STORE(&q_dbl[(2*i*ldq)+2*offset], q3);
+
+     }
+#ifdef BLOCK2
+     
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
+     q2 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+offset]);
+     q3 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
+
+     tmp1 = _SIMD_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+     tmp2 = _SIMD_MUL(h1_imag, x2);
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD(q2, _mm_maddsub_pd(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#else
+     q2 = _SIMD_ADD(q2, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE)));
+#endif
+
+     tmp3 = _SIMD_MUL(h1_imag, x3);
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD(q3, _mm_maddsub_pd(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#else
+     q3 = _SIMD_ADD(q3, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE)));
+#endif
+
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+0], q1);
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+offset], q2);
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+2*offset], q3);
+
+#endif /* BLOCK2 */
+}
+
+
+#if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 2
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET == AVX_256 */
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -2238,6 +3891,366 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      _SIMD_STORE(&q_dbl[(2*nb*ldq)+0], q1);
      _SIMD_STORE(&q_dbl[(2*nb*ldq)+offset], q2);
+
+#endif /* BLOCK2 */
+
+}
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 1
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 2
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == AVX_256
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 2
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 4
+#endif
+#endif /* VEC_SET == AVX_256 */
+static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
+#ifdef BLOCK1
+		)
+#endif
+#ifdef BLOCK2
+                ,int ldh, DATA_TYPE s)
+#endif
+{
+
+     DATA_TYPE_REAL_PTR q_dbl = (DATA_TYPE_REAL_PTR)q;
+     DATA_TYPE_REAL_PTR hh_dbl = (DATA_TYPE_REAL_PTR)hh;
+#ifdef BLOCK2
+     DATA_TYPE_REAL_PTR s_dbl = (DATA_TYPE_REAL_PTR)(&s);
+#endif
+
+     __SIMD_DATATYPE x1;
+     __SIMD_DATATYPE q1;
+#ifdef BLOCK2
+     __SIMD_DATATYPE y1;
+     __SIMD_DATATYPE h2_real, h2_imag;
+#endif
+     __SIMD_DATATYPE h1_real, h1_imag;
+     __SIMD_DATATYPE tmp1, tmp2;
+     int i=0;
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+     __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set_epi64x(0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000);
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifdef BLOCK2
+     x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+     // conjugate
+     h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
+
+     y1 = _SIMD_LOAD(&q_dbl[0]);
+
+     tmp1 = _SIMD_MUL(h2_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD(y1, _mm_msubadd_pd(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+#ifdef BLOCK1
+     x1 = _SIMD_LOAD(&q_dbl[0]);
+#endif
+
+     for (i = BLOCK; i < nb; i++)
+     {
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h1_real = _mm_loaddup_pd(&hh_dbl[(i-BLOCK+1)*2]);
+          h1_imag = _mm_loaddup_pd(&hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-BLOCK+1)*2]) )));
+          h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-BLOCK+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+          // conjugate
+          h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+
+          q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
+          tmp1 = _SIMD_MUL(h1_imag, q1);
+
+#ifdef __ELPA_USE_FMA__
+          x1 = _SIMD_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+#ifdef BLOCK2
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+          h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
+          h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+#ifndef __ELPA_USE_FMA__
+          // conjugate
+          h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
+
+          tmp1 = _SIMD_MUL(h2_imag, q1);
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD(y1, _mm_msubadd_pd(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+     }
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
+#endif
+
+#ifndef __ELPA_USE_FMA__
+     // conjugate
+     h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
+
+     tmp1 = _SIMD_MUL(h1_imag, q1);
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD(x1, _mm_msubadd_pd(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[0]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[0]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+     h1_real = _SIMD_XOR(h1_real, sign);
+     h1_imag = _SIMD_XOR(h1_imag, sign);
+
+     tmp1 = _SIMD_MUL(h1_imag, x1);
+
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_MADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+     x1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+#ifdef BLOCK2
+     
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[ldh*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[(ldh*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[ldh*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh*2)+1]) )));
+#endif
+
+     h1_real = _SIMD_XOR(h1_real, sign);
+     h1_imag = _SIMD_XOR(h1_imag, sign);
+     h2_real = _SIMD_XOR(h2_real, sign);
+     h2_imag = _SIMD_XOR(h2_imag, sign);
+
+#ifdef SINGLE_PRECISION_COMPLEX
+     tmp2 = _mm_castpd_ps(_mm_load_pd1((double *) s_dbl));
+#else
+     tmp2 = _SIMD_LOADU(s_dbl);
+#endif
+     tmp1 = _SIMD_MUL(h2_imag, tmp2);
+
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _mm_maddsub_pd(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL(h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_movedup_pd(tmp2);
+     h2_imag = _mm_set1_pd(tmp2[1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(tmp2);
+     h2_imag = _mm_movehdup_ps(tmp2);
+#endif
+
+     tmp1 = _SIMD_MUL(h1_imag, y1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _mm_maddsub_pd(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+#endif
+
+     tmp1 = _SIMD_MUL(h2_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD(y1, _mm_maddsub_pd(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+#endif /* BLOCK2 */
+
+     q1 = _SIMD_LOAD(&q_dbl[0]);
+
+#ifdef BLOCK1
+     q1 = _SIMD_ADD(q1, x1);
+#endif
+
+#ifdef BLOCK2
+     q1 = _SIMD_ADD(q1, y1);
+#endif
+     _SIMD_STORE(&q_dbl[0], q1);
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+1)*2]);
+     h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+1)*2]) )));
+     h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+1)*2)+1]) )));
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(ldq*2)+0]);
+
+     q1 = _SIMD_ADD(q1, x1);
+
+     tmp1 = _SIMD_MUL(h2_imag, y1);
+
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+     _SIMD_STORE(&q_dbl[(ldq*2)+0], q1);
+
+#endif /* BLOCK2 */
+
+     for (i = BLOCK; i < nb; i++)
+     {
+#if VEC_SET == SSE_128
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h1_real = _mm_loaddup_pd(&hh_dbl[(i-BLOCK+1)*2]);
+          h1_imag = _mm_loaddup_pd(&hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-BLOCK+1)*2]) )));
+          h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-BLOCK+1)*2)+1]) )));
+#endif
+#endif /* VEC_SET == SSE_128 */
+
+          q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
+          tmp1 = _SIMD_MUL(h1_imag, x1);
+
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD(q1, _SIMD_MADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+#ifdef BLOCK2
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+          h2_real = _mm_loaddup_pd(&hh_dbl[(ldh+i)*2]);
+          h2_imag = _mm_loaddup_pd(&hh_dbl[((ldh+i)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+          h2_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(ldh+i)*2]) )));
+          h2_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((ldh+i)*2)+1]) )));
+#endif
+
+          tmp1 = _SIMD_MUL(h2_imag, y1);
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+          q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+#endif /* BLOCK2 */
+
+          _SIMD_STORE(&q_dbl[(2*i*ldq)+0], q1);
+    }
+#ifdef BLOCK2
+     
+#ifdef DOUBLE_PRECISION_COMPLEX
+     h1_real = _mm_loaddup_pd(&hh_dbl[(nb-1)*2]);
+     h1_imag = _mm_loaddup_pd(&hh_dbl[((nb-1)*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+     h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(nb-1)*2]) )));
+     h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((nb-1)*2)+1]) )));
+#endif
+
+     q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
+
+     tmp1 = _SIMD_MUL(h1_imag, x1);
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD(q1, _mm_maddsub_pd(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+     q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+     _SIMD_STORE(&q_dbl[(2*nb*ldq)+0], q1);
 
 #endif /* BLOCK2 */
 
