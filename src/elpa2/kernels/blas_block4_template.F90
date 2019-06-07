@@ -91,7 +91,7 @@
 
     real(kind=C_DATATYPE_KIND)                :: w_comb(nq, 4)
     real(kind=C_DATATYPE_KIND)                :: h_comb(4)
-    real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb-1)
+    real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb)
 
     real(kind=C_DATATYPE_KIND)                :: tau1, tau2, tau3, tau4
 #endif /* REALCASE==1 */
@@ -270,10 +270,10 @@
 
     w(1:nq) = w(1:nq) * h1 - ( z(1:nq) * h4 + y(1:nq) * h3 + x(1:nq) * h2)
 
-    q(1:nq,1) = q(1:nq,1) - w(1:nq)
-    q(1:nq,2) = q(1:nq,2) - z(1:nq)
-    q(1:nq,3) = q(1:nq,3) - y(1:nq)
-    q(1:nq,4) =  q(1:nq,4) - x(1:nq)
+!    q(1:nq,1) = q(1:nq,1) - w(1:nq)
+!    q(1:nq,2) = q(1:nq,2) - z(1:nq)
+!    q(1:nq,3) = q(1:nq,3) - y(1:nq)
+!    q(1:nq,4) =  q(1:nq,4) - x(1:nq)
 
 !    h4 = hh(2,4)
 !    q(1:nq,2) = q(1:nq,2) - (w(1:nq) * h4)
@@ -307,11 +307,15 @@
 !   enddo
 
    h_mat(:,:) = 0.0
-   h_mat(1,4:nb-1) = -hh(2:nb-3, 1)
-   h_mat(2,3:nb-1) = -hh(2:nb-2, 2)
-   h_mat(3,2:nb-1) = -hh(2:nb-1, 3)
-   h_mat(4,1:nb-1) = -hh(2:nb,   4)
-   q(1:nq, 2:nb) = matmul(w_comb, h_mat) + q(1:nq, 2:nb)
+   h_mat(1,4) = -1.0
+   h_mat(2,3) = -1.0
+   h_mat(3,2) = -1.0
+   h_mat(4,1) = -1.0
+   h_mat(1,5:nb) = -hh(2:nb-3, 1)
+   h_mat(2,4:nb) = -hh(2:nb-2, 2)
+   h_mat(3,3:nb) = -hh(2:nb-1, 3)
+   h_mat(4,2:nb) = -hh(2:nb,   4)
+   q(1:nq, 1:nb) = matmul(w_comb, h_mat) + q(1:nq, 1:nb)
    
 
 
