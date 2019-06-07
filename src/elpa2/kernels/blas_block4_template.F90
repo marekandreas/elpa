@@ -91,7 +91,7 @@
 
     real(kind=C_DATATYPE_KIND)                :: w_comb(nq, 4)
     real(kind=C_DATATYPE_KIND)                :: h_comb(4)
-    real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb)
+    real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
 
     real(kind=C_DATATYPE_KIND)                :: tau1, tau2, tau3, tau4
 #endif /* REALCASE==1 */
@@ -276,33 +276,18 @@
     w_comb(:,4) = w
 
    h_mat(:,:) = 0.0
+
    h_mat(1,4) = -1.0
    h_mat(2,3) = -1.0
    h_mat(3,2) = -1.0
    h_mat(4,1) = -1.0
-   h_mat(1,5:nb) = -hh(2:nb-3, 1)
-   h_mat(2,4:nb) = -hh(2:nb-2, 2)
-   h_mat(3,3:nb) = -hh(2:nb-1, 3)
-   h_mat(4,2:nb) = -hh(2:nb,   4)
-   q(1:nq, 1:nb) = matmul(w_comb, h_mat) + q(1:nq, 1:nb)
 
+   h_mat(1,5:nb+3) = -hh(2:nb, 1)
+   h_mat(2,4:nb+2) = -hh(2:nb, 2)
+   h_mat(3,3:nb+1) = -hh(2:nb, 3)
+   h_mat(4,2:nb)   = -hh(2:nb, 4)
 
-   h1 = hh(nb-2,1)
-   h2 = hh(nb-1,2)
-   h3 = hh(nb  ,3)
-
-   q(1:nq,nb+1) = -(x(1:nq) * h1) + q(1:nq,nb+1)
-   q(1:nq,nb+1) = -(y(1:nq) * h2) + q(1:nq,nb+1)
-   q(1:nq,nb+1) = -(z(1:nq) * h3) + q(1:nq,nb+1)
-
-   h1 = hh(nb-1,1)
-   h2 = hh(nb  ,2)
-
-   q(1:nq,nb+2) = - (x(1:nq) * h1) + q(1:nq,nb+2)
-   q(1:nq,nb+2) = - (y(1:nq) * h2) + q(1:nq,nb+2)
-
-   h1 = hh(nb,1)
-   q(1:nq,nb+3) = - (x(1:nq) * h1) + q(1:nq,nb+3)
+   q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
 
   end subroutine
 
