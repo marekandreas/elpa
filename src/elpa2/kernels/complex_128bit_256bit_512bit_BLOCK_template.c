@@ -178,10 +178,9 @@
 #define _mm256_FMSUBADD_pd(a,b,c) _mm256_fmsubadd_pd(a,b,c)
 #endif
 
-#endif /* HAVE_AVX2 */
-
 #define _SIMD_FMADDSUB _mm256_FMADDSUB_pd
 #define _SIMD_FMSUBADD _mm256_FMSUBADD_pd
+#endif /* HAVE_AVX2 */
 
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
@@ -215,10 +214,9 @@
 #define _mm256_FMSUBADD_ps(a,b,c) _mm256_fmsubadd_ps(a,b,c)
 #endif
 
-#endif /* HAVE_AVX2 */
-
 #define _SIMD_FMADDSUB _mm256_FMADDSUB_ps
 #define _SIMD_FMSUBADD _mm256_FMSUBADD_ps
+#endif /* HAVE_AVX2 */
 
 #endif /* SINGLE_PRECISION_COMPLEX */
 
@@ -525,36 +523,6 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 !f>     ! complex(kind=c_float_complex)   :: q(*)
 !f>     type(c_ptr), value                :: q
 !f>     complex(kind=c_float_complex)   :: hh(pnb,2)
-!f>   end subroutine
-!f> end interface
-!f>#endif
-*/
-
-/*
-!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
-!f> interface
-!f>   subroutine double_hh_trafo_complex_AVX_AVX2_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
-!f>                                bind(C, name="double_hh_trafo_complex_AVX_AVX2_2hv_double")
-!f>        use, intrinsic :: iso_c_binding
-!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
-!f>        ! complex(kind=c_double_complex)     :: q(*)
-!f>        type(c_ptr), value                     :: q
-!f>        complex(kind=c_double_complex)           :: hh(pnb,2)
-!f>   end subroutine
-!f> end interface
-!f>#endif
-*/
-
-/*
-!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
-!f> interface
-!f>   subroutine double_hh_trafo_complex_AVX_AVX2_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
-!f>                                bind(C, name="double_hh_trafo_complex_AVX_AVX2_2hv_single")
-!f>        use, intrinsic :: iso_c_binding
-!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
-!f>        ! complex(kind=c_float_complex)   :: q(*)
-!f>        type(c_ptr), value                  :: q
-!f>        complex(kind=c_float_complex)        :: hh(pnb,2)
 !f>   end subroutine
 !f> end interface
 !f>#endif
