@@ -188,6 +188,10 @@ then
     #then
       cat ./ELPA_CI.err.*
     #fi
+    if [ -f ./test-suite.log ]
+    then
+      cat ./test-suite.log
+    fi
 
   fi
 
