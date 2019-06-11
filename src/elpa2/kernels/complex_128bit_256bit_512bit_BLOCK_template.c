@@ -4502,7 +4502,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 }
 
-#if VEC_SET == SSE_128 || (VEC_SET == AVX_256 && BLOCK == 1)
+//if VEC_SET == SSE_128 || (VEC_SET == AVX_256 && BLOCK == 1)
 
 
 
@@ -4619,8 +4619,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == AVX_256
-       h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
-       h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
+          h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
+          h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
 
 #ifndef __ELPA_USE_FMA__
@@ -4785,7 +4785,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      tmp1 = _SIMD_MUL(h2_imag, tmp2);
 #ifdef __ELPA_USE_FMA__
-     tmp2 = _SIMD_FMSUBADD(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
      tmp2 = _SIMD_ADDSUB( _SIMD_MUL(h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
@@ -4808,14 +4808,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      tmp1 = _SIMD_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_FMSUBADD(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
      y1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 
      tmp1 = _SIMD_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD(y1, _SIMD_FMSUBADD(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+     y1 = _SIMD_ADD(y1, _SIMD_FMADDSUB(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
      y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
@@ -4857,7 +4857,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      tmp1 = _SIMD_MUL(h2_imag, y1);
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD(q1, _SIMD_FMSUBADD(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+     q1 = _SIMD_ADD(q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
      q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
@@ -4913,7 +4913,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
         tmp1 = _SIMD_MUL(h2_imag, y1);
 #ifdef __ELPA_USE_FMA__
-        q1 = _SIMD_ADD(q1, _SIMD_FMSUBADD(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SIMD_ADD(q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
         q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
@@ -4943,7 +4943,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD(q1, _SIMD_FMSUBADD(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+     q1 = _SIMD_ADD(q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
      q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
@@ -4954,9 +4954,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 }
 
-#endif
+//#endif
 
-#if VEC_SET == AVX_256 && BLOCK == 2
+#if 0
+//if VEC_SET == AVX_256 && BLOCK == 2
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 static __forceinline void hh_trafo_complex_kernel_2_AVX_AVX2_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
@@ -4976,108 +4977,108 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_AVX2_2hv_single(float co
         float* hh_dbl = (float*)hh;
         float* s_dbl = (float*)(&s);
 #endif
-        __AVX_DATATYPE x1;
-        __AVX_DATATYPE y1;
-        __AVX_DATATYPE q1;
-        __AVX_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
-        __AVX_DATATYPE tmp1;
+        __SIMD_DATATYPE x1;
+        __SIMD_DATATYPE y1;
+        __SIMD_DATATYPE q1;
+        __SIMD_DATATYPE h1_real, h1_imag, h2_real, h2_imag;
+        __SIMD_DATATYPE tmp1;
         int i=0;
 #ifdef DOUBLE_PRECISION_COMPLEX
-        __AVX_DATATYPE sign = (__AVX_DATATYPE)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-        __AVX_DATATYPE sign = (__AVX_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
-        x1 = _AVX_LOAD(&q_dbl[(2*ldq)+0]);
+        x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
 
-        h2_real = _AVX_BROADCAST(&hh_dbl[(ldh+1)*2]);
-        h2_imag = _AVX_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
+        h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
         // conjugate
-        h2_imag = _AVX_XOR(h2_imag, sign);
+        h2_imag = _SIMD_XOR(h2_imag, sign);
 #endif
 
-        y1 = _AVX_LOAD(&q_dbl[0]);
+        y1 = _SIMD_LOAD(&q_dbl[0]);
 
-        tmp1 = _AVX_MUL(h2_imag, x1);
+        tmp1 = _SIMD_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-        y1 = _AVX_ADD(y1, _AVX_FMSUBADD(h2_real, x1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SIMD_ADD(y1, _SIMD_FMSUBADD(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-        y1 = _AVX_ADD(y1, _AVX_ADDSUB( _AVX_MUL(h2_real, x1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
 
         for (i = 2; i < nb; i++)
         {
-                q1 = _AVX_LOAD(&q_dbl[(2*i*ldq)+0]);
+                q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
 
-                h1_real = _AVX_BROADCAST(&hh_dbl[(i-1)*2]);
-                h1_imag = _AVX_BROADCAST(&hh_dbl[((i-1)*2)+1]);
+                h1_real = _SIMD_BROADCAST(&hh_dbl[(i-1)*2]);
+                h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
                 // conjugate
-                h1_imag = _AVX_XOR(h1_imag, sign);
+                h1_imag = _SIMD_XOR(h1_imag, sign);
 #endif
 
-                tmp1 = _AVX_MUL(h1_imag, q1);
+                tmp1 = _SIMD_MUL(h1_imag, q1);
 #ifdef __ELPA_USE_FMA__
-                x1 = _AVX_ADD(x1, _AVX_FMSUBADD(h1_real, q1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                x1 = _SIMD_ADD(x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-                x1 = _AVX_ADD(x1, _AVX_ADDSUB( _AVX_MUL(h1_real, q1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
 
-                h2_real = _AVX_BROADCAST(&hh_dbl[(ldh+i)*2]);
-                h2_imag = _AVX_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
+                h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
 #ifndef __ELPA_USE_FMA__
                 // conjugate
-                h2_imag = _AVX_XOR(h2_imag, sign);
+                h2_imag = _SIMD_XOR(h2_imag, sign);
 #endif
 
-                tmp1 = _AVX_MUL(h2_imag, q1);
+                tmp1 = _SIMD_MUL(h2_imag, q1);
 #ifdef __ELPA_USE_FMA__
-                y1 = _AVX_ADD(y1, _AVX_FMSUBADD(h2_real, q1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                y1 = _SIMD_ADD(y1, _SIMD_FMSUBADD(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-                y1 = _AVX_ADD(y1, _AVX_ADDSUB( _AVX_MUL(h2_real, q1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
         }
 
-        h1_real = _AVX_BROADCAST(&hh_dbl[(nb-1)*2]);
-        h1_imag = _AVX_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
+        h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
+        h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
 #ifndef __ELPA_USE_FMA__
         // conjugate
-        h1_imag = _AVX_XOR(h1_imag, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
 #endif
 
-        q1 = _AVX_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
 
-        tmp1 = _AVX_MUL(h1_imag, q1);
+        tmp1 = _SIMD_MUL(h1_imag, q1);
 #ifdef __ELPA_USE_FMA__
-        x1 = _AVX_ADD(x1, _AVX_FMSUBADD(h1_real, q1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        x1 = _SIMD_ADD(x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-        x1 = _AVX_ADD(x1, _AVX_ADDSUB( _AVX_MUL(h1_real, q1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        x1 = _SIMD_ADD(x1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
 
-        h1_real = _AVX_BROADCAST(&hh_dbl[0]);
-        h1_imag = _AVX_BROADCAST(&hh_dbl[1]);
-        h1_real = _AVX_XOR(h1_real, sign);
-        h1_imag = _AVX_XOR(h1_imag, sign);
+        h1_real = _SIMD_BROADCAST(&hh_dbl[0]);
+        h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
 
-        tmp1 = _AVX_MUL(h1_imag, x1);
+        tmp1 = _SIMD_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-        x1 = _AVX_FMADDSUB(h1_real, x1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-        x1 = _AVX_ADDSUB( _AVX_MUL(h1_real, x1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        x1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 
-        h1_real = _AVX_BROADCAST(&hh_dbl[ldh*2]);
-        h1_imag = _AVX_BROADCAST(&hh_dbl[(ldh*2)+1]);
-        h2_real = _AVX_BROADCAST(&hh_dbl[ldh*2]);
-        h2_imag = _AVX_BROADCAST(&hh_dbl[(ldh*2)+1]);
+        h1_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
+        h1_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
+        h2_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
+        h2_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
 
-        h1_real = _AVX_XOR(h1_real, sign);
-        h1_imag = _AVX_XOR(h1_imag, sign);
-        h2_real = _AVX_XOR(h2_real, sign);
-        h2_imag = _AVX_XOR(h2_imag, sign);
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+        h2_real = _SIMD_XOR(h2_real, sign);
+        h2_imag = _SIMD_XOR(h2_imag, sign);
 
-        __AVX_DATATYPE tmp2;
+        __SIMD_DATATYPE tmp2;
 #ifdef DOUBLE_PRECISION_COMPLEX
         tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
@@ -5085,89 +5086,89 @@ static __forceinline void hh_trafo_complex_kernel_4_AVX_AVX2_2hv_single(float co
         tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
                              s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
-        tmp1 = _AVX_MUL(h2_imag, tmp2);
+        tmp1 = _SIMD_MUL(h2_imag, tmp2);
 #ifdef __ELPA_USE_FMA__
-        tmp2 = _AVX_FMADDSUB(h2_real, tmp2, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-        tmp2 = _AVX_ADDSUB( _AVX_MUL(h2_real, tmp2), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        tmp2 = _SIMD_ADDSUB( _SIMD_MUL(h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
-        h2_real = _AVX_SET1(tmp2[0]);
-        h2_imag = _AVX_SET1(tmp2[1]);
+        h2_real = _SIMD_SET1(tmp2[0]);
+        h2_imag = _SIMD_SET1(tmp2[1]);
 
-        tmp1 = _AVX_MUL(h1_imag, y1);
+        tmp1 = _SIMD_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
-        y1 = _AVX_FMADDSUB(h1_real, y1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+        y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
-        y1 = _AVX_ADDSUB( _AVX_MUL(h1_real, y1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE));
-#endif
-
-        tmp1 = _AVX_MUL(h2_imag, x1);
-#ifdef __ELPA_USE_FMA__
-        y1 = _AVX_ADD(y1, _AVX_FMADDSUB(h2_real, x1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
-#else
-        y1 = _AVX_ADD(y1, _AVX_ADDSUB( _AVX_MUL(h2_real, x1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SIMD_ADDSUB( _SIMD_MUL(h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #endif
 
-        q1 = _AVX_LOAD(&q_dbl[0]);
-
-        q1 = _AVX_ADD(q1, y1);
-
-        _AVX_STORE(&q_dbl[0], q1);
-
-        h2_real = _AVX_BROADCAST(&hh_dbl[(ldh+1)*2]);
-        h2_imag = _AVX_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-
-        q1 = _AVX_LOAD(&q_dbl[(ldq*2)+0]);
-
-        q1 = _AVX_ADD(q1, x1);
-
-        tmp1 = _AVX_MUL(h2_imag, y1);
+        tmp1 = _SIMD_MUL(h2_imag, x1);
 #ifdef __ELPA_USE_FMA__
-        q1 = _AVX_ADD(q1, _AVX_FMADDSUB(h2_real, y1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SIMD_ADD(y1, _SIMD_FMADDSUB(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-        q1 = _AVX_ADD(q1, _AVX_ADDSUB( _AVX_MUL(h2_real, y1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        y1 = _SIMD_ADD(y1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
 
-        _AVX_STORE(&q_dbl[(ldq*2)+0], q1);
+        q1 = _SIMD_LOAD(&q_dbl[0]);
+
+        q1 = _SIMD_ADD(q1, y1);
+
+        _SIMD_STORE(&q_dbl[0], q1);
+
+        h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
+        h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
+
+        q1 = _SIMD_LOAD(&q_dbl[(ldq*2)+0]);
+
+        q1 = _SIMD_ADD(q1, x1);
+
+        tmp1 = _SIMD_MUL(h2_imag, y1);
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_ADD(q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#else
+        q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+#endif
+
+        _SIMD_STORE(&q_dbl[(ldq*2)+0], q1);
 
         for (i = 2; i < nb; i++)
         {
-                q1 = _AVX_LOAD(&q_dbl[(2*i*ldq)+0]);
+                q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
 
-                h1_real = _AVX_BROADCAST(&hh_dbl[(i-1)*2]);
-                h1_imag = _AVX_BROADCAST(&hh_dbl[((i-1)*2)+1]);
+                h1_real = _SIMD_BROADCAST(&hh_dbl[(i-1)*2]);
+                h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-1)*2)+1]);
 
-                tmp1 = _AVX_MUL(h1_imag, x1);
+                tmp1 = _SIMD_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-                q1 = _AVX_ADD(q1, _AVX_FMADDSUB(h1_real, x1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SIMD_ADD(q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-                q1 = _AVX_ADD(q1, _AVX_ADDSUB( _AVX_MUL(h1_real, x1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
 
-                h2_real = _AVX_BROADCAST(&hh_dbl[(ldh+i)*2]);
-                h2_imag = _AVX_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
+                h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
+                h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
 
-                tmp1 = _AVX_MUL(h2_imag, y1);
+                tmp1 = _SIMD_MUL(h2_imag, y1);
 #ifdef __ELPA_USE_FMA__
-                q1 = _AVX_ADD(q1, _AVX_FMADDSUB(h2_real, y1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SIMD_ADD(q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-                q1 = _AVX_ADD(q1, _AVX_ADDSUB( _AVX_MUL(h2_real, y1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+                q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
 
-                _AVX_STORE(&q_dbl[(2*i*ldq)+0], q1);
+                _SIMD_STORE(&q_dbl[(2*i*ldq)+0], q1);
         }
-        h1_real = _AVX_BROADCAST(&hh_dbl[(nb-1)*2]);
-        h1_imag = _AVX_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
+        h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
+        h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
 
-        q1 = _AVX_LOAD(&q_dbl[(2*nb*ldq)+0]);
+        q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
 
-        tmp1 = _AVX_MUL(h1_imag, x1);
+        tmp1 = _SIMD_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
-        q1 = _AVX_ADD(q1, _AVX_FMADDSUB(h1_real, x1, _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SIMD_ADD(q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #else
-        q1 = _AVX_ADD(q1, _AVX_ADDSUB( _AVX_MUL(h1_real, x1), _AVX_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        q1 = _SIMD_ADD(q1, _SIMD_ADDSUB( _SIMD_MUL(h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
 #endif
 
-        _AVX_STORE(&q_dbl[(2*nb*ldq)+0], q1);
+        _SIMD_STORE(&q_dbl[(2*nb*ldq)+0], q1);
 }
 #endif
