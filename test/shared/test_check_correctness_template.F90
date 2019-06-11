@@ -105,6 +105,7 @@
 !       if(present(bs)) then
 !           tol_res = generalized_penalty * tol_res
 !       endif
+      call MPI_BARRIER(MPI_COMM_WORLD, status)
       status = 0
       
       ! Setup complex matrices and eigenvalues
@@ -138,7 +139,7 @@
       ! tmp1 = Zi*EVi
       tmp1(:,:) = z(:,:)
       do i=1,nev
-        xc = ev(i)
+        xc = dcmplx(ev(i),0)
 #ifdef WITH_MPI
         call pzscal(na, xc, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
@@ -192,7 +193,7 @@
 ! #endif /* REALCASE */
 ! 
 ! #if COMPLEXCASE == 1
-        xc = 0
+        xc = 0.0_rck
 #ifdef WITH_MPI
         call scal_PRECISION_DOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
