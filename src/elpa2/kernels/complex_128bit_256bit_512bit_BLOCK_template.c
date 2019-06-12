@@ -68,9 +68,10 @@
 //define instruction set numbers
 #define SSE_128 128
 #define AVX_256 256
+#define AVX_512 512
 #define NEON_ARCH64_128 1285
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == 512
+#if VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX_512
 #include <x86intrin.h>
 #ifdef BLOCK2
 #if VEC_SET == SSE_128 
@@ -105,6 +106,11 @@
 #if VEC_SET == AVX_256
 #define SIMD_SET AVX_AVX2
 #endif
+
+#if VEC_SET == AVX_512
+#define SIMD_SET AVX512
+#endif
+
 
 #if VEC_SET == SSE_128
 
@@ -225,6 +231,72 @@
 
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define offset 8
+#define __SIMD_DATATYPE __m512d
+#define _SIMD_LOAD _mm512_load_pd
+#define _SIMD_LOADU 1
+#define _SIMD_STORE _mm512_store_pd
+#define _SIMD_STOREU 1
+#define _SIMD_MUL _mm512_mul_pd
+#define _SIMD_ADD _mm512_add_pd
+#ifdef HAVE_AVX512_XEON
+#define _SIMD_XOR _mm512_xor_pd
+#endif
+#define _SIMD_BROADCAST 1
+#define _SIMD_SET1 _mm512_set1_pd
+#define _SIMD_XOR_EPI _mm512_xor_epi64
+#define _SIMD_ADDSUB 1
+#define _SIMD_SHUFFLE _mm512_shuffle_pd
+#define _SHUFFLE 0x55
+
+#ifdef HAVE_AVX512
+#define __ELPA_USE_FMA__
+#define _mm512_FMADDSUB_pd(a,b,c) _mm512_fmaddsub_pd(a,b,c)
+#define _mm512_FMSUBADD_pd(a,b,c) _mm512_fmsubadd_pd(a,b,c)
+
+#define _SIMD_FMADDSUB _mm512_FMADDSUB_pd
+#define _SIMD_FMSUBADD _mm512_FMSUBADD_pd
+#endif /* HAVE_AVX512 */
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+#ifdef SINGLE_PRECISION_COMPLEX
+#define offset 16
+#define __SIMD_DATATYPE __m512
+#define _SIMD_LOAD _mm512_load_ps
+#define _SIMD_LOADU 1
+#define _SIMD_STORE _mm512_store_ps
+#define _SIMD_STOREU 1
+#define _SIMD_MUL _mm512_mul_ps
+#define _SIMD_ADD _mm512_add_ps
+#ifdef HAVE_AVX512_XEON
+#define _SIMD_XOR _mm512_xor_ps
+#endif
+#define _SIMD_BROADCAST 1
+#define _SIMD_SET1 _mm512_set1_ps
+#define _SIMD_ADDSUB 1
+#define _SIMD_SHUFFLE _mm512_shuffle_ps
+#define _SIMD_XOR_EPI _mm512_xor_epi32
+#define _SHUFFLE 0xb1
+
+#ifdef HAVE_AVX512
+
+#define __ELPA_USE_FMA__
+#define _mm512_FMADDSUB_ps(a,b,c) _mm512_fmaddsub_ps(a,b,c)
+#define _mm512_FMSUBADD_ps(a,b,c) _mm512_fmsubadd_ps(a,b,c)
+
+#define _SIMD_FMADDSUB _mm512_FMADDSUB_ps
+#define _SIMD_FMSUBADD _mm512_FMSUBADD_ps
+#endif /* HAVE_AVX512 */
+
+#endif /* SINGLE_PRECISION_COMPLEX */
+
+#endif /* VEC_SET == AVX_512 */
+
+
 
 
 #define __forceinline __attribute__((always_inline))
@@ -250,6 +322,8 @@
 #endif
 
 
+//Forward declaration
+
 #if VEC_SET  == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
@@ -272,7 +346,16 @@
 #endif
 #endif /* VEC_SET  == AVX_256 */
 
-//Forward declaration
+#if VEC_SET  == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 24
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 48
+#endif
+#endif /* VEC_SET  == AVX_512 */
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq 
 #ifdef BLOCK1
 		                       );
@@ -292,7 +375,6 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-
 #if VEC_SET  == AVX_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
@@ -304,6 +386,16 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == AVX_256 */
 
+#if VEC_SET  == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 20
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 40
+#endif
+#endif /* VEC_SET  == AVX_512 */
 
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
@@ -325,7 +417,6 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-
 #if VEC_SET  == AVX_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
@@ -337,6 +428,16 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == AVX_256 */
 
+#if VEC_SET  == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 16
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 32
+#endif
+#endif /* VEC_SET  == AVX_512 */
 
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
@@ -357,7 +458,6 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-
 #if VEC_SET  == AVX_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
@@ -369,6 +469,16 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == AVX_256 */
 
+#if VEC_SET  == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 24
+#endif
+#endif /* VEC_SET  == AVX_512 */
 
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
@@ -400,6 +510,16 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == AVX_256 */
 
+#if VEC_SET  == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET  == AVX_512 */
 
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
@@ -430,6 +550,17 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #define ROW_LENGTH 4
 #endif
 #endif /* VEC_SET  == AVX_256 */
+
+#if VEC_SET  == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH 
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET  == AVX_512 */
 
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH)(DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
@@ -500,6 +631,37 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 !f> end interface
 !f>#endif
 */
+
+/*
+!f>#if defined(HAVE_AVX512)
+!f> interface
+!f>   subroutine single_hh_trafo_complex_AVX512_1hv_double(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_AVX512_1hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     ! complex(kind=c_double_complex)     :: q(*)
+!f>     type(c_ptr), value                 :: q
+!f>     complex(kind=c_double_complex)     :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#if defined(HAVE_AVX512)
+!f> interface
+!f>   subroutine single_hh_trafo_complex_AVX512_1hv_single(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_AVX512_1hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     ! complex(kind=c_float_complex)     :: q(*)
+!f>     type(c_ptr), value                  :: q
+!f>     complex(kind=c_float_complex)     :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
 
 /*
 !f>#ifdef HAVE_SSE_INTRINSICS
@@ -615,12 +777,52 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 24
+#define STEP_SIZE 24
+#define UPPER_BOUND 20
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 48
+#define STEP_SIZE 48
+#define UPPER_BOUND 40
+#endif
+#endif /* VEC_SET == AVX_512 */
+
+
+//#if VEC_SET != AVX_512
         for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE)
         {
 
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
+//#else
+//        for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE)
+//        {
+//
+//#ifdef DOUBLE_PRECISION_COMPLEX
+//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
+//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
+//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+8], hh, nb, ldq);
+//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+12], hh, nb, ldq);
+//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+16], hh, nb, ldq);
+//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+20], hh, nb, ldq);
+//#endif
+//#ifdef SINGLE_PRECISION_COMPLEX
+//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
+//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
+//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+16], hh, nb, ldq);
+//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+24], hh, nb, ldq);
+//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+32], hh, nb, ldq);
+//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+40], hh, nb, ldq);
+//#endif
+//	    worked_on += ROW_LENGTH;
+//        }
+//#endif
+
+
         if (nq == i) {
           return;
         }
@@ -645,11 +847,42 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 20
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 40
+#endif
+#endif /* VEC_SET == AVX_512 */
+
+//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
+//#else
+//        if (nq-i == ROW_LENGTH)
+//        {
+//#ifdef DOUBLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+8], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+12], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+16], hh, nb, ldq);
+//#endif
+//#ifdef SINGLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+16], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+24], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+32], hh, nb, ldq);
+//#endif
+//	    worked_on += ROW_LENGTH;
+//        }
+//#endif
 
 
 #if VEC_SET == SSE_128
@@ -672,11 +905,42 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 16
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 32
+#endif
+#endif /* VEC_SET == AVX_512 */
+
+//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
+//#else
+//        if (nq-i == ROW_LENGTH)
+//        {
+//#ifdef DOUBLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+8], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+12], hh, nb, ldq);
+//#endif
+//#ifdef SINGLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+16], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+24], hh, nb, ldq);
+//#endif
+//
+//	    worked_on += ROW_LENGTH;
+//        }
+//#endif
+
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -698,11 +962,38 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 24
+#endif
+#endif /* VEC_SET == AVX_512 */
+
+//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
+//#else
+//        if (nq-i == ROW_LENGTH)
+//        {
+//#ifdef DOUBLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+8], hh, nb, ldq);
+//#endif
+//#ifdef SINGLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+16], hh, nb, ldq);
+//#endif
+//	    worked_on += ROW_LENGTH;
+//        }
+//#endif
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -724,12 +1015,36 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET == AVX_512 */
 
+//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
+//#else
+//        if (nq-i == ROW_LENGTH)
+//        {
+//#ifdef DOUBLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
+//#endif
+//#ifdef SINGLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
+//#endif
+//	    worked_on += ROW_LENGTH;
+//        }
+//#endif
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -750,11 +1065,35 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #define ROW_LENGTH 4
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#undef ROW_LENGTH
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET == AVX_512 */
+
+//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
+//#else
+//        if (nq-i == ROW_LENGTH)
+//        {
+//#ifdef DOUBLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
+//#endif
+//#ifdef SINGLE_PRECISION_COMPLEX
+//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
+//#endif
+//	    worked_on += ROW_LENGTH;
+//        }
+//#endif
 
 #endif /* BLOCK1 */
 
@@ -908,6 +1247,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 24
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 48
+#endif
+#endif /* VEC_SET == AVX_512 */
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -950,6 +1297,15 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+#endif /* VEC_SET == AVX_512 */
 
 #ifdef BLOCK2
      x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
@@ -1055,6 +1411,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
        h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
        h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+       h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+       h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
 
 #ifndef __ELPA_USE_FMA__
         // conjugate
@@ -1259,8 +1620,34 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+    h1_real = _SIMD_SET1(hh_dbl[0]);
+    h1_imag = _SIMD_SET1(hh_dbl[1]);
+
+#ifdef HAVE_AVX512_XEON_PHI
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+#endif
+
+#endif /* VEC_SET == AVX_512 */
+
+
+#if VEC_SET != AVX_512
     h1_real = _SIMD_XOR(h1_real, sign);
     h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif /* VEC_SET != AVX_512 */
 
     tmp1 = _SIMD_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
@@ -1589,6 +1976,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+        h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
+
         q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
         q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
         q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
@@ -1795,6 +2187,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 20
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 40
+#endif
+#endif /* VEC_SET == AVX_512 */
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -1837,6 +2237,15 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+#endif /* VEC_SET == AVX_512 */
 
 #ifdef BLOCK2
      x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
@@ -1933,6 +2342,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
        h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
        h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+       h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+       h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
 
 #ifndef __ELPA_USE_FMA__
         // conjugate
@@ -2118,11 +2532,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
 #endif /* AVX_256 */
 
+#if VEC_SET == AVX_512
+    h1_real = _SIMD_SET1(hh_dbl[0]);
+    h1_imag = _SIMD_SET1(hh_dbl[1]);
+
+#ifdef HAVE_AVX512_XEON_PHI
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+#endif
+
+#endif /* VEC_SET == AVX_512 */
+
+#if VEC_SET != AVX_512
     h1_real = _SIMD_XOR(h1_real, sign);
     h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif /* VEC_SET != AVX_512 */
 
     tmp1 = _SIMD_MUL(h1_imag, x1);
-
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
@@ -2418,6 +2856,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+        h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
+
         q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
         q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
         q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
@@ -2601,6 +3044,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 16
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 32
+#endif
+#endif /* VEC_SET == AVX_512 */
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -2642,6 +3093,15 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+#endif /* VEC_SET == AVX_512 */
 
 #ifdef BLOCK2
      x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
@@ -2729,6 +3189,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
        h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
        h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+       h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+       h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
@@ -2893,11 +3358,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
 #endif /* AVX_256 */
 
+#if VEC_SET == AVX_512
+    h1_real = _SIMD_SET1(hh_dbl[0]);
+    h1_imag = _SIMD_SET1(hh_dbl[1]);
+
+#ifdef HAVE_AVX512_XEON_PHI
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+#endif
+
+#endif /* VEC_SET == AVX_512 */
+
+#if VEC_SET != AVX_512
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif /* VEC_SET != AVX_512 */
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
-
 #ifdef __ELPA_USE_FMA__
      x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
@@ -3164,6 +3653,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+        h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
+
           q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
           q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
           q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
@@ -3323,6 +3817,16 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #define ROW_LENGTH 12
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 12
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 24
+#endif
+#endif /* VEC_SET == AVX_512 */
+
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -3364,6 +3868,15 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+#endif /* VEC_SET == AVX_512 */
 
 #ifdef BLOCK2
      x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
@@ -3441,6 +3954,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
        h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
        h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+       h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+       h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
@@ -3584,11 +4102,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+    h1_real = _SIMD_SET1(hh_dbl[0]);
+    h1_imag = _SIMD_SET1(hh_dbl[1]);
+
+#ifdef HAVE_AVX512_XEON_PHI
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+#endif
+
+#endif /* VEC_SET == AVX_512 */
+
+#if VEC_SET != AVX_512
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif /* VEC_SET != AVX_512 */
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
-
 #ifdef __ELPA_USE_FMA__
      x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
 #else
@@ -3821,6 +4363,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+        h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
+
           q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
           q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
           q3 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+2*offset]);
@@ -3957,6 +4504,16 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #define ROW_LENGTH 8
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 8
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 16
+#endif
+#endif /* VEC_SET == AVX_512 */
+
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -3999,6 +4556,15 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+#endif /* VEC_SET == AVX_512 */
 
 #ifdef BLOCK2
      x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
@@ -4065,6 +4631,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
        h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
        h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+       h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+       h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
@@ -4185,8 +4756,33 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+    h1_real = _SIMD_SET1(hh_dbl[0]);
+    h1_imag = _SIMD_SET1(hh_dbl[1]);
+
+#ifdef HAVE_AVX512_XEON_PHI
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+#endif
+
+#endif /* VEC_SET == AVX_512 */
+
+#if VEC_SET != AVX_512
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif /* VEC_SET != AVX_512 */
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
@@ -4381,6 +4977,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+        h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
+
           q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
           q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
           tmp1 = _SIMD_MUL(h1_imag, x1);
@@ -4493,6 +5094,18 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #define ROW_LENGTH 4
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define ROW_LENGTH 4
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define ROW_LENGTH 8
+#endif
+#endif /* VEC_SET == AVX_512 */
+
+//#if VEC_SET != AVX_512
+
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -4535,6 +5148,15 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+#ifdef DOUBLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+#endif /* VEC_SET == AVX_512 */
 
 #ifdef BLOCK2
      x1 = _SIMD_LOAD(&q_dbl[(2*ldq)+0]);
@@ -4592,6 +5214,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
           h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
           h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
+
+#if VEC_SET == AVX_512
+       h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+       h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
@@ -4691,8 +5318,33 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
 #endif /*  VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+    h1_real = _SIMD_SET1(hh_dbl[0]);
+    h1_imag = _SIMD_SET1(hh_dbl[1]);
+
+#ifdef HAVE_AVX512_XEON_PHI
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+#endif
+
+#endif /* VEC_SET == AVX_512 */
+
+#if VEC_SET != AVX_512
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif /* VEC_SET != AVX_512 */
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
 #ifdef __ELPA_USE_FMA__
@@ -4854,6 +5506,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif /* VEC_SET == AVX_256 */
 
+#if VEC_SET == AVX_512
+        h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _SIMD_SET1(hh_dbl[((i-BLOCK+1)*2)+1]);
+#endif /* VEC_SET == AVX_512 */
+
         q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
 
         tmp1 = _SIMD_MUL(h1_imag, x1);
@@ -4923,3 +5580,93 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* BLOCK2 */
 
 }
+//#endif
+
+#if 0
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_4_AVX512_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+#endif
+{
+       printf("calling it \n" );
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+        double* q_dbl = (double*)q;
+        double* hh_dbl = (double*)hh;
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        float* q_dbl = (float*)q;
+        float* hh_dbl = (float*)hh;
+#endif
+        __SIMD_DATATYPE x1, x2;
+        __SIMD_DATATYPE q1, q2;
+        __SIMD_DATATYPE h1_real, h1_imag;
+        __SIMD_DATATYPE tmp1, tmp2;
+        int i=0;
+       
+#ifdef DOUBLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set_epi64(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
+#endif
+
+        x1 = _SIMD_LOAD(&q_dbl[0]);
+
+        for (i = 1; i < nb; i++)
+        {
+                h1_real = _SIMD_SET1(hh_dbl[i*2]);
+                h1_imag = _SIMD_SET1(hh_dbl[(i*2)+1]);
+
+                q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
+
+                tmp1 = _SIMD_MUL(h1_imag, q1);
+                x1 = _SIMD_ADD(x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+        }
+
+	h1_real = _SIMD_SET1(hh_dbl[0]);
+	h1_imag = _SIMD_SET1(hh_dbl[1]);
+
+#ifdef HAVE_AVX512_XEON_PHI
+#ifdef DOUBLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+        h1_real = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_real, (__m512i) sign);
+        h1_imag = (__SIMD_DATATYPE) _SIMD_XOR_EPI((__m512i) h1_imag, (__m512i) sign);
+#endif
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _SIMD_XOR(h1_real, sign);
+        h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
+#endif
+
+        tmp1 = _SIMD_MUL(h1_imag, x1);
+        x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
+
+        q1 = _SIMD_LOAD(&q_dbl[0]);
+
+        q1 = _SIMD_ADD(q1, x1);
+
+        _SIMD_STORE(&q_dbl[0], q1);
+
+        for (i = 1; i < nb; i++)
+        {
+                h1_real = _SIMD_SET1(hh_dbl[i*2]);
+                h1_imag = _SIMD_SET1(hh_dbl[(i*2)+1]);
+
+                q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
+
+                tmp1 = _SIMD_MUL(h1_imag, x1);
+                q1 = _SIMD_ADD(q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE)));
+
+                _SIMD_STORE(&q_dbl[(2*i*ldq)+0], q1);
+        }
+}
+#endif
