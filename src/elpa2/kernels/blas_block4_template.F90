@@ -120,38 +120,32 @@
 
    w_comb = matmul(q(1:ldq, 1:nb+3), -transpose(h_mat))
 
-    ! Rank-1 update
-    tau1 = hh(1,1)
-    tau2 = hh(1,2)
-    tau3 = hh(1,3)
-    tau4 = hh(1,4)
+   ! Rank-1 update
+   tau1 = hh(1,1)
+   tau2 = hh(1,2)
+   tau3 = hh(1,3)
+   tau4 = hh(1,4)
 
-!    x_orig = x
-!    y_orig = y
-!    z_orig = z
-!    w_orig = w
+   h4m = 0.0
 
-    h4m = 0.0
+   h4m(1,1) = tau1
 
-    h4m(1,1) = tau1
-    w_comb(1:nq,1) = w_comb(1:nq,1) * h4m(1,1)
+   h4m(2,1) = - tau2 * s_mat(1,2)
+   h4m(2,2) = tau2
 
-    h4m(2,1) = - tau2 * s_mat(1,2)
-    h4m(2,2) = tau2
-    w_comb(1:nq,2) = w_comb(1:nq,1) * h4m(2,1) + w_comb(1:nq,2) * h4m(2,2)
+   h4m(3,1) = - tau3 * s_mat(1,3)
+   h4m(3,2) = - tau3 * s_mat(2,3)
+   h4m(3,3) = tau3
 
-    h4m(3,1) = - tau3 * s_mat(1,3)
-    h4m(3,2) = - tau3 * s_mat(2,3)
-    h4m(3,3) = tau3
-    w_comb(1:nq,3) = w_comb(1:nq,1) * h4m(3,1) + w_comb(1:nq,2) * h4m(3,2) + w_comb(1:nq,3) * h4m(3,3)
+   h4m(4,1) = - tau4 * s_mat(1,4)
+   h4m(4,2) = - tau4 * s_mat(2,4)
+   h4m(4,3) = - tau4 * s_mat(3,4)
+   h4m(4,4) = tau4
 
-    h4m(4,1) = - tau4 * s_mat(1,4)
-    h4m(4,2) = - tau4 * s_mat(2,4)
-    h4m(4,3) = - tau4 * s_mat(3,4)
-    h4m(4,4) = tau4
-
-    w_comb(1:nq,4) = w_comb(1:nq,1) * h4m(4,1) + w_comb(1:nq,2) * h4m(4,2) + w_comb(1:nq,3) * h4m(4,3) + w_comb(1:nq,4) * h4m(4,4)
-
+   w_comb(1:nq,1) = w_comb(1:nq,1) * h4m(1,1)
+   w_comb(1:nq,2) = matmul(w_comb(1:nq,1:2),h4m(2,1:2))
+   w_comb(1:nq,3) = matmul(w_comb(1:nq,1:3),h4m(3,1:3))
+   w_comb(1:nq,4) = matmul(w_comb(1:nq,1:4),h4m(4,1:4))
 
    q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
 
