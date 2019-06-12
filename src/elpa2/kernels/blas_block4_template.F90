@@ -108,11 +108,6 @@
               -1.0_rk8, h_mat, 4, &
               0.0_rk8, s_mat, 4)
 
-   s_mat(1,1) = 1
-   s_mat(2,2) = 1
-   s_mat(3,3) = 1
-   s_mat(4,4) = 1
-
 !   w_comb = - matmul(q(1:nq, 1:nb+3), transpose(h_mat))
    call DGEMM('N', 'T', nq, 4, nb+3, &
               -1.0_rk8, q, ldq, &
@@ -121,7 +116,7 @@
 
    ! Rank-1 update
    do i = 1, 4
-     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i), hh(1,i) * s_mat(i,1:i))
+     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
    enddo
 
    !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
