@@ -193,9 +193,9 @@ program test
    allocate(z_complex (na_rows,na_cols))
    allocate(ev_complex(na))
 
-   a_complex(:,:) = 0.0
-   z_complex(:,:) = 0.0
-   as_complex(:,:) = 0.0
+   a_complex(1:na_rows,1:na_cols) = 0.0
+   z_complex(1:na_rows,1:na_cols) = 0.0
+   as_complex(1:na_rows,1:na_cols) = 0.0
    
 
       do j=1, na_cols
@@ -204,8 +204,8 @@ program test
          enddo
       enddo
    
-   z_complex(:,:)  = a_complex(:,:)
-   as_complex(:,:) = a_complex(:,:)
+   z_complex(1:na_rows,1:na_cols)  = a_complex(1:na_rows,1:na_cols)
+   as_complex(1:na_rows,1:na_cols) = a_complex(1:na_rows,1:na_cols)
 
    ! first set up and solve the brute force problem
    e_complex => elpa_allocate()
@@ -225,12 +225,16 @@ program test
 
    if (myid .eq. 0) then
      print *, ""
-!      call e_complex%print_times("eigenvectors: brute force")
+     call e_complex%print_times("eigenvectors: brute force")
    endif 
-
-   status = check_correctness_evp_numeric_residuals(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
+#ifdef WITH_MPI
+     call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+#endif     
+!      as_complex(:,:) = z_complex(:,:)
+   status = check_correctness_evp_numeric_residuals_complex_double(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
                                                     nblk, myid, np_rows,np_cols, my_prow, my_pcol)
-   call check_status(status, myid)
+!    status = 0
+!    call check_status(status, myid)
 
 #ifdef WITH_MPI
      call MPI_BARRIER(MPI_COMM_WORLD, ierr)
@@ -257,7 +261,7 @@ program test
 
    if (myid .eq. 0) then
      print *, ""
-!      call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
+     call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
    endif
    
    

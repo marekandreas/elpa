@@ -51,13 +51,13 @@
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status, na_cols, na_rows
       integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-      MATH_DATATYPE(kind=rck), intent(in)           :: as(:,:)
-      MATH_DATATYPE(kind=rck)                       :: tmpr
+      real(kind=rk), intent(in)           :: as(:,:)
+      real(kind=rk)                       :: tmpr
       complex(kind=rck), intent(in)                 :: z(:,:)
 !       MATH_DATATYPE(kind=rck), intent(in), optional :: bs(:,:)
       real(kind=rk)                 :: ev(:)
       complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      MATH_DATATYPE(kind=rck)                :: xc
+      complex(kind=rck)                :: xc
       
       complex(kind=rck), allocatable   :: as_complex(:,:)
 !       complex(kind=rck), allocatable   :: ev_complex(:)
@@ -101,11 +101,14 @@
                                                                           &MATH_DATATYPE&
                                                                           &_&
                                                                           &PRECISION
+                                                  
+      complex(kind=rck), parameter   :: CZERO = (0.0_rck,0.0_rck), CONE = (1.0_rck,0.0_rck)
+
 
 !       if(present(bs)) then
 !           tol_res = generalized_penalty * tol_res
 !       endif
-      call MPI_BARRIER(MPI_COMM_WORLD, status)
+!       call MPI_BARRIER(MPI_COMM_WORLD, status)
       status = 0
       
       ! Setup complex matrices and eigenvalues
@@ -139,7 +142,7 @@
       ! tmp1 = Zi*EVi
       tmp1(:,:) = z(:,:)
       do i=1,nev
-        xc = dcmplx(ev(i),0)
+        xc = dcmplx(ev(i),0.0)
 #ifdef WITH_MPI
         call pzscal(na, xc, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
@@ -164,10 +167,10 @@
       ! tmp1 =  A * Z
       ! as is original stored matrix, Z are the EVs
 #ifdef WITH_MPI
-      call PZGEMM('N', 'N', na, nev, na, ONE, as_complex, 1, 1, sc_desc, &
-                  z, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+      call PZGEMM('N', 'N', na, nev, na, CONE, as_complex, 1, 1, sc_desc, &
+                  z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
 #else /* WITH_MPI */
-      call ZGEMM('N','N',na,nev,na,ONE,as_complex,na,z,na,ZERO,tmp1,na)
+      call ZGEMM('N','N',na,nev,na,CONE,as_complex,na,z,na,CZERO,tmp1,na)
 #endif /* WITH_MPI */
 ! #ifdef WITH_MPI
 !      call MPI_BARRIER(MPI_COMM_WORLD, status)
@@ -193,11 +196,11 @@
 ! #endif /* REALCASE */
 ! 
 ! #if COMPLEXCASE == 1
-        xc = 0.0_rck
+        xc = (0.0_rck,0.0_rck)
 #ifdef WITH_MPI
-        call scal_PRECISION_DOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
+        call PZDOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
-        xc = PRECISION_DOTC(na,tmp1,1,tmp1,1)
+        xc = ZDOTC(na,tmp1,1,tmp1,1)
 #endif /* WITH_MPI */
         errmax = max(errmax, sqrt(real(xc,kind=REAL_DATATYPE)))
 ! #endif /* COMPLEXCASE */
@@ -241,16 +244,16 @@
       ! actually tmp1 = Z**T * Z for standard case and tmp1 = Z**T * B * Z for generalized
       tmp1 = 0
 #ifdef WITH_MPI
-      call PZGEMM('C', 'N', nev, nev, na, ONE, z, 1, 1, &
-                        sc_desc, tmp2, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+      call PZGEMM('C', 'N', nev, nev, na, CONE, z, 1, 1, &
+                        sc_desc, tmp2, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
 #else /* WITH_MPI */
-      call ZGEMM('C','N',nev,nev,na,ONE,z,na,tmp2,na,ZERO,tmp1,na)
+      call ZGEMM('C','N',nev,nev,na,CONE,z,na,tmp2,na,CZERO,tmp1,na)
 #endif /* WITH_MPI */
       ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
       err = 0.0_rk
       do i=1, nev
         if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-           err = max(err, abs(tmp1(rowLocal,colLocal) - 1.0_rk))
+           err = max(err, abs(tmp1(rowLocal,colLocal) - CONE))
          endif
       end do
 #ifdef WITH_MPI
@@ -264,9 +267,9 @@
       ! Initialize tmp2 to unit matrix
       tmp2 = 0
 #ifdef WITH_MPI
-      call PZLASET('A', nev, nev, ZERO, ONE, tmp2, 1, 1, sc_desc)
+      call PZLASET('A', nev, nev, CZERO, CONE, tmp2, 1, 1, sc_desc)
 #else /* WITH_MPI */
-      call ZLASET('A',nev,nev,ZERO,ONE,tmp2,na)
+      call ZLASET('A',nev,nev,CZERO,CONE,tmp2,na)
 #endif /* WITH_MPI */
 
       !      ! tmp1 = Z**T * Z - Unit Matrix
@@ -379,8 +382,8 @@ function check_correctness_evp_numeric_residuals_&
       status = 0
 
       ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
-
-      ! tmp1 = Zi*EVi
+     
+!       tmp1 = Zi*EVi
       tmp1(:,:) = z(:,:)
       do i=1,nev
         xc = ev(i)
