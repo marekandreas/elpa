@@ -118,59 +118,7 @@
    ! TODO lets see how much does it matter
    s_mat = matmul(h_mat, transpose(h_mat))
 
-    ! Do the Householder transformations
-    a_1_1(1:nq) = q(1:nq,4)
-    a_2_1(1:nq) = q(1:nq,3)
-    a_3_1(1:nq) = q(1:nq,2)
-    a_4_1(1:nq) = q(1:nq,1)
-
-    h_2_1 = hh(2,2)
-    h_3_2 = hh(2,3)
-    h_3_1 = hh(3,3)
-    h_4_3 = hh(2,4)
-    h_4_2 = hh(3,4)
-    h_4_1 = hh(4,4)
-
-    w_comb(1:nq,4) = a_3_1(1:nq) * h_4_3 + a_4_1(1:nq)
-    w_comb(1:nq,4) = a_2_1(1:nq) * h_4_2 +     w_comb(1:nq,4)
-    w_comb(1:nq,4) = a_1_1(1:nq) * h_4_1 +     w_comb(1:nq,4)
-
-    w_comb(1:nq,3) = a_2_1(1:nq) * h_3_2 + a_3_1(1:nq)
-    w_comb(1:nq,3) = a_1_1(1:nq) * h_3_1 +     w_comb(1:nq,3)
-
-    w_comb(1:nq,2) = a_1_1(1:nq) * h_2_1 + a_2_1(1:nq)
-
-    w_comb(1:nq,1) = a_1_1(1:nq)
-
-    do i=5,nb
-      h1 = hh(i-3,1)
-      h2 = hh(i-2,2)
-      h3 = hh(i-1,3)
-      h4 = hh(i  ,4)
-
-      w_comb(1:nq,1) = w_comb(1:nq,1) + q(1:nq,i) * h1
-      w_comb(1:nq,2) = w_comb(1:nq,2) + q(1:nq,i) * h2
-      w_comb(1:nq,3) = w_comb(1:nq,3) + q(1:nq,i) * h3
-      w_comb(1:nq,4) = w_comb(1:nq,4) + q(1:nq,i) * h4
-    enddo
-
-    h1 = hh(nb-2,1)
-    h2 = hh(nb-1,2)
-    h3 = hh(nb  ,3)
-
-    w_comb(1:nq,1) = w_comb(1:nq,1) + q(1:nq,nb+1) * h1 
-    w_comb(1:nq,2) = w_comb(1:nq,2) + q(1:nq,nb+1) * h2
-    w_comb(1:nq,3) = w_comb(1:nq,3) + q(1:nq,nb+1) * h3
-
-    h1 = hh(nb-1,1)
-    h2 = hh(nb  ,2)
-
-    w_comb(1:nq,1) = w_comb(1:nq,1) + q(1:nq,nb+2) * h1
-    w_comb(1:nq,2) = w_comb(1:nq,2) + q(1:nq,nb+2) * h2
-
-    h1 = hh(nb,1)
-
-    w_comb(1:nq,1) = w_comb(1:nq,1) + q(1:nq,nb+3) * h1
+   w_comb = matmul(q(1:ldq, 1:nb+3), -transpose(h_mat))
 
     ! Rank-1 update
     tau1 = hh(1,1)
