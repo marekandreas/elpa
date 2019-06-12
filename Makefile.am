@@ -111,6 +111,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/kernels/simple_template.F90 \
   src/elpa2/kernels/simple_block4_template.F90 \
   src/elpa2/kernels/simple_block6_template.F90 \
+  src/elpa2/kernels/blas_block4_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/compute_hh_trafo.F90 \
@@ -800,6 +801,7 @@ EXTRA_DIST = \
   src/elpa2/kernels/simple_template.F90 \
   src/elpa2/kernels/simple_block4_template.F90 \
   src/elpa2/kernels/simple_block6_template.F90 \
+  src/elpa2/kernels/blas_block4_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/qr/elpa_pdgeqrf_template.F90 \
