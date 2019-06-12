@@ -131,16 +131,16 @@
     h_4_2 = hh(3,4)
     h_4_1 = hh(4,4)
 
-    w(1:nq) = a_3_1(1:nq) * h_4_3 + a_4_1(1:nq)
-    w(1:nq) = a_2_1(1:nq) * h_4_2 +     w(1:nq)
-    w(1:nq) = a_1_1(1:nq) * h_4_1 +     w(1:nq)
+    w_comb(1:nq,4) = a_3_1(1:nq) * h_4_3 + a_4_1(1:nq)
+    w_comb(1:nq,4) = a_2_1(1:nq) * h_4_2 +     w_comb(1:nq,4)
+    w_comb(1:nq,4) = a_1_1(1:nq) * h_4_1 +     w_comb(1:nq,4)
 
-    z(1:nq) = a_2_1(1:nq) * h_3_2 + a_3_1(1:nq)
-    z(1:nq) = a_1_1(1:nq) * h_3_1 +     z(1:nq)
+    w_comb(1:nq,3) = a_2_1(1:nq) * h_3_2 + a_3_1(1:nq)
+    w_comb(1:nq,3) = a_1_1(1:nq) * h_3_1 +     w_comb(1:nq,3)
 
-    y(1:nq) = a_1_1(1:nq) * h_2_1 + a_2_1(1:nq)
+    w_comb(1:nq,2) = a_1_1(1:nq) * h_2_1 + a_2_1(1:nq)
 
-    x(1:nq) = a_1_1(1:nq)
+    w_comb(1:nq,1) = a_1_1(1:nq)
 
     do i=5,nb
       h1 = hh(i-3,1)
@@ -148,29 +148,29 @@
       h3 = hh(i-1,3)
       h4 = hh(i  ,4)
 
-      x(1:nq) = x(1:nq) + q(1:nq,i) * h1
-      y(1:nq) = y(1:nq) + q(1:nq,i) * h2
-      z(1:nq) = z(1:nq) + q(1:nq,i) * h3
-      w(1:nq) = w(1:nq) + q(1:nq,i) * h4
+      w_comb(1:nq,1) = w_comb(1:nq,1) + q(1:nq,i) * h1
+      w_comb(1:nq,2) = w_comb(1:nq,2) + q(1:nq,i) * h2
+      w_comb(1:nq,3) = w_comb(1:nq,3) + q(1:nq,i) * h3
+      w_comb(1:nq,4) = w_comb(1:nq,4) + q(1:nq,i) * h4
     enddo
 
     h1 = hh(nb-2,1)
     h2 = hh(nb-1,2)
     h3 = hh(nb  ,3)
 
-    x(1:nq) = x(1:nq) + q(1:nq,nb+1) * h1 
-    y(1:nq) = y(1:nq) + q(1:nq,nb+1) * h2
-    z(1:nq) = z(1:nq) + q(1:nq,nb+1) * h3
+    w_comb(1:nq,1) = w_comb(1:nq,1) + q(1:nq,nb+1) * h1 
+    w_comb(1:nq,2) = w_comb(1:nq,2) + q(1:nq,nb+1) * h2
+    w_comb(1:nq,3) = w_comb(1:nq,3) + q(1:nq,nb+1) * h3
 
     h1 = hh(nb-1,1)
     h2 = hh(nb  ,2)
 
-    x(1:nq) = x(1:nq) + q(1:nq,nb+2) * h1
-    y(1:nq) = y(1:nq) + q(1:nq,nb+2) * h2
+    w_comb(1:nq,1) = w_comb(1:nq,1) + q(1:nq,nb+2) * h1
+    w_comb(1:nq,2) = w_comb(1:nq,2) + q(1:nq,nb+2) * h2
 
     h1 = hh(nb,1)
 
-    x(1:nq) = x(1:nq) + q(1:nq,nb+3) * h1
+    w_comb(1:nq,1) = w_comb(1:nq,1) + q(1:nq,nb+3) * h1
 
     ! Rank-1 update
     tau1 = hh(1,1)
@@ -178,36 +178,32 @@
     tau3 = hh(1,3)
     tau4 = hh(1,4)
 
-    x_orig = x
-    y_orig = y
-    z_orig = z
-    w_orig = w
+!    x_orig = x
+!    y_orig = y
+!    z_orig = z
+!    w_orig = w
 
     h4m = 0.0
 
     h4m(1,1) = tau1
-    x(1:nq) = x(1:nq) * h4m(1,1)
+    w_comb(1:nq,1) = w_comb(1:nq,1) * h4m(1,1)
 
     h4m(2,1) = - tau2 * s_mat(1,2)
     h4m(2,2) = tau2
-    y(1:nq) = x(1:nq) * h4m(2,1) + y(1:nq) * h4m(2,2)
+    w_comb(1:nq,2) = w_comb(1:nq,1) * h4m(2,1) + w_comb(1:nq,2) * h4m(2,2)
 
     h4m(3,1) = - tau3 * s_mat(1,3)
     h4m(3,2) = - tau3 * s_mat(2,3)
     h4m(3,3) = tau3
-    z(1:nq) = x(1:nq) * h4m(3,1) + y(1:nq) * h4m(3,2) + z(1:nq) * h4m(3,3)
+    w_comb(1:nq,3) = w_comb(1:nq,1) * h4m(3,1) + w_comb(1:nq,2) * h4m(3,2) + w_comb(1:nq,3) * h4m(3,3)
 
     h4m(4,1) = - tau4 * s_mat(1,4)
     h4m(4,2) = - tau4 * s_mat(2,4)
     h4m(4,3) = - tau4 * s_mat(3,4)
     h4m(4,4) = tau4
 
-    w(1:nq) = x(1:nq) * h4m(4,1) + y(1:nq) * h4m(4,2) + z(1:nq) * h4m(4,3) + w(1:nq) * h4m(4,4)
+    w_comb(1:nq,4) = w_comb(1:nq,1) * h4m(4,1) + w_comb(1:nq,2) * h4m(4,2) + w_comb(1:nq,3) * h4m(4,3) + w_comb(1:nq,4) * h4m(4,4)
 
-    w_comb(:,1) = x
-    w_comb(:,2) = y
-    w_comb(:,3) = z
-    w_comb(:,4) = w
 
    q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
 
