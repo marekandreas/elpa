@@ -115,10 +115,9 @@
    w_comb = matmul(q(1:ldq, 1:nb+3), -transpose(h_mat))
 
    ! Rank-1 update
-   w_comb(1:nq,1) = w_comb(1:nq,1) * hh(1,1) * s_mat(1,1)
-   w_comb(1:nq,2) = matmul(w_comb(1:nq,1:2), hh(1,2) * s_mat(2,1:2))
-   w_comb(1:nq,3) = matmul(w_comb(1:nq,1:3), hh(1,3) * s_mat(3,1:3))
-   w_comb(1:nq,4) = matmul(w_comb(1:nq,1:4), hh(1,4) * s_mat(4,1:4))
+   do i = 1, 4
+     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i), hh(1,i) * s_mat(i,1:i))
+   enddo
 
    q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
 
