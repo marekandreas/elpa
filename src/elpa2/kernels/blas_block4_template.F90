@@ -85,7 +85,7 @@
     real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
     real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
 
-    integer(kind=ik)                             :: i
+    integer(kind=ik)                             :: i, j, k
 
 
     ! Calculate dot product of the two Householder vectors
@@ -102,24 +102,33 @@
    h_mat(3,3:nb+1) = -hh(2:nb, 3)
    h_mat(4,2:nb)   = -hh(2:nb, 4)
 
-   ! TODO we actually need just the strictly upper triangle of s_mat
-   ! TODO take care when changing to BLAS
-   ! TODO we do not even need diagonal, which might not be achievable by blas.
-   ! TODO lets see how much does it matter
-   s_mat = - matmul(h_mat, transpose(h_mat))
+   ! TODO we do not need the diagonal, but how to do it with BLAS?
+   !s_mat = - matmul(h_mat, transpose(h_mat))
+   call DSYRK('L', 'N', 4, nb+3, &
+              -1.0_rk8, h_mat, 4, &
+              0.0_rk8, s_mat, 4)
+
    s_mat(1,1) = 1
    s_mat(2,2) = 1
    s_mat(3,3) = 1
    s_mat(4,4) = 1
 
-   w_comb = matmul(q(1:ldq, 1:nb+3), -transpose(h_mat))
+!   w_comb = - matmul(q(1:nq, 1:nb+3), transpose(h_mat))
+   call DGEMM('N', 'T', nq, 4, nb+3, &
+              -1.0_rk8, q, ldq, &
+              h_mat, 4, &
+              0.0_rk8, w_comb, nq)
 
    ! Rank-1 update
    do i = 1, 4
      w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i), hh(1,i) * s_mat(i,1:i))
    enddo
 
-   q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
+   !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
+   call DGEMM('N', 'N', nq, nb+3, 4, &
+              1.0_rk8, w_comb, nq, &
+              h_mat, 4, &
+              1.0_rk8, q, ldq)
 
   end subroutine
 
