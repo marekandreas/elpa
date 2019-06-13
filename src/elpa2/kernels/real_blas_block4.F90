@@ -57,80 +57,39 @@
 !
 ! --------------------------------------------------------------------------------------------------
 #endif
+#include "config-f90.h"
 
+!TODO why this ifndef???
+#ifndef USE_ASSUMED_SIZE
+module real_blas_block4_kernel
 
-#if REALCASE==1
-  subroutine quad_hh_trafo_&
-  &MATH_DATATYPE&
-  &_blas_4hv_&
-  &PRECISION&
-  & (q, hh, nb, nq, ldq, ldh)
+  private
+  public quad_hh_trafo_real_blas_4hv_double
 
-    use precision
-    use elpa_abstract_impl
-    implicit none
-
-    !class(elpa_abstract_impl_t), intent(inout) :: obj
-    integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
-
-#ifdef USE_ASSUMED_SIZE
-    real(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
-    real(kind=C_DATATYPE_KIND), intent(in)    :: hh(ldh,*)
-#else
-    real(kind=C_DATATYPE_KIND), intent(inout) :: q(1:ldq,1:nb+3)
-    real(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:ldh,1:6)
+#ifdef WANT_SINGLE_PRECISION_REAL
+ public quad_hh_trafo_real_blas_4hv_single
 #endif
 
-    real(kind=C_DATATYPE_KIND)                :: w_comb(nq, 4)
-    real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
-    real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
-
-    integer(kind=ik)                             :: i, j, k
-
-
-    ! Calculate dot product of the two Householder vectors
-
-   h_mat(:,:) = 0.0
-
-   h_mat(1,4) = -1.0
-   h_mat(2,3) = -1.0
-   h_mat(3,2) = -1.0
-   h_mat(4,1) = -1.0
-
-   h_mat(1,5:nb+3) = -hh(2:nb, 1)
-   h_mat(2,4:nb+2) = -hh(2:nb, 2)
-   h_mat(3,3:nb+1) = -hh(2:nb, 3)
-   h_mat(4,2:nb)   = -hh(2:nb, 4)
-
-   ! TODO we do not need the diagonal, but how to do it with BLAS?
-   !s_mat = - matmul(h_mat, transpose(h_mat))
-   call DSYRK('L', 'N', 4, nb+3, &
-              -1.0_rk8, h_mat, 4, &
-              0.0_rk8, s_mat, 4)
-
-!   w_comb = - matmul(q(1:nq, 1:nb+3), transpose(h_mat))
-   call DGEMM('N', 'T', nq, 4, nb+3, &
-              -1.0_rk8, q, ldq, &
-              h_mat, 4, &
-              0.0_rk8, w_comb, nq)
-
-   ! Rank-1 update
-   !w_comb(1:nq,1) = hh(1,1) * w_comb(1:nq, 1)
-   call DSCAL(nq, hh(1,1), w_comb(1:nq, 1), 1)
-   do i = 2, 4
-!     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
-     call DGEMV('N', nq, i-1, &
-                hh(1,i), w_comb(1:nq, 1:i-1), nq, &
-                s_mat(i,1:i-1), 1, &
-                hh(1,i), w_comb(1:nq,i), 1)
-   enddo
-
-   !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
-   call DGEMM('N', 'N', nq, nb+3, 4, &
-              1.0_rk8, w_comb, nq, &
-              h_mat, 4, &
-              1.0_rk8, q, ldq)
-
-  end subroutine
-
+  contains
 #endif
+
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../../general/precision_macros.h"
+#include "blas_block4_template.F90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../../general/precision_macros.h"
+#include "blas_block4_template.F90"
+#undef REALCASE
+#undef SINGLE_PRECISION
+#endif
+
+#ifndef USE_ASSUMED_SIZE
+end module real_blas_block4_kernel
+#endif
+! --------------------------------------------------------------------------------------------------

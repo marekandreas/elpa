@@ -618,6 +618,7 @@ m4_define(elpa_m4_generic_kernels, [
         real_generic_simple_block6
         complex_generic
         complex_generic_simple
+        real_blas_block4
 ])
 
 m4_define(elpa_m4_sse_assembly_kernels, [

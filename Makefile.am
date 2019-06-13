@@ -200,6 +200,10 @@ if WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block6.F90
 endif
 
+if WITH_REAL_BLAS_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_blas_block4.F90
+endif
+
 if WITH_REAL_BGP_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_bgp.f90
 endif

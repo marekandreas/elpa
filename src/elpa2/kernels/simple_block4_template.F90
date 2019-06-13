@@ -80,9 +80,9 @@
     real(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:ldh,1:6)
 #endif
 
-    !TODO remove
-    real(kind=C_DATATYPE_KIND)                :: q_copy(1:ldq,1:nb+3)
-    real(kind=C_DATATYPE_KIND)                :: diff
+!    !TODO remove
+!    real(kind=C_DATATYPE_KIND)                :: q_copy(1:ldq,1:nb+3)
+!    real(kind=C_DATATYPE_KIND)                :: diff
 
     real(kind=C_DATATYPE_KIND)                :: s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4
     real(kind=C_DATATYPE_KIND)                :: vs_1_2, vs_1_3, vs_2_3, vs_1_4, vs_2_4, vs_3_4
@@ -112,22 +112,22 @@
 #endif /* COMPLEXCASE==1 */
     integer(kind=ik)                             :: i
 
-    !TODO remove
-    print *, "SIMPLE BLOCK4, nb, nq, ldq, ldh ", nb, nq, ldq, ldh
-    !print *, "Q:", q(1:ldq,1:nb+3)
-    !print *, "HH:", hh(1:ldh,1:6)
+!    !TODO remove
+!    print *, "SIMPLE BLOCK4, nb, nq, ldq, ldh ", nb, nq, ldq, ldh
+!    !print *, "Q:", q(1:ldq,1:nb+3)
+!    !print *, "HH:", hh(1:ldh,1:6)
 
-
- ! call the blas kernel for future comparison
- ! TODO remove
-#if REALCASE==1
-  q_copy(:,:) = q(:,1:nb+3)
-  call quad_hh_trafo_&
-  &MATH_DATATYPE&
-  &_generic_blas_4hv_&
-  &PRECISION&
-  & (q_copy, hh, nb, nq, ldq, ldh)
-#endif
+!
+! ! call the blas kernel for future comparison
+! ! TODO remove
+!#if REALCASE==1
+!  q_copy(:,:) = q(:,1:nb+3)
+!  call quad_hh_trafo_&
+!  &MATH_DATATYPE&
+!  &_generic_blas_4hv_&
+!  &PRECISION&
+!  & (q_copy, hh, nb, nq, ldq, ldh)
+!#endif
 
 
     ! Calculate dot product of the two Householder vectors
@@ -332,12 +332,12 @@
    q(1:nq,nb+3) = - (x(1:nq) * h1) + q(1:nq,nb+3)
 
 
-   !TODO remove
-   diff = maxval(abs(q(:,1:nb+3) - q_copy(:, 1:nb+3)))
-   print *, "DIFFERENCE: ", diff
+!   !TODO remove
+!   diff = maxval(abs(q(:,1:nb+3) - q_copy(:, 1:nb+3)))
+!   print *, "DIFFERENCE: ", diff
 
   end subroutine
 
 
-! TODO remove
-#include "blas_block4_template.F90"
+!! TODO remove
+!#include "blas_block4_template.F90"
