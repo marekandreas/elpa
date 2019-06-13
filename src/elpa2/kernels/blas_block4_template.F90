@@ -115,8 +115,14 @@
               0.0_rk8, w_comb, nq)
 
    ! Rank-1 update
-   do i = 1, 4
-     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
+   !w_comb(1:nq,1) = hh(1,1) * w_comb(1:nq, 1)
+   call DSCAL(nq, hh(1,1), w_comb(1:nq, 1), 1)
+   do i = 2, 4
+!     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
+     call DGEMV('N', nq, i-1, &
+                hh(1,i), w_comb(1:nq, 1:i-1), nq, &
+                s_mat(i,1:i-1), 1, &
+                hh(1,i), w_comb(1:nq,i), 1)
    enddo
 
    !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
