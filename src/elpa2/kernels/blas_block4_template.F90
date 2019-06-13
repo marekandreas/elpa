@@ -69,6 +69,7 @@
     use precision
     use elpa_abstract_impl
     implicit none
+#include "../../general/precision_kinds.F90"
 
     !class(elpa_abstract_impl_t), intent(inout) :: obj
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
@@ -90,12 +91,12 @@
 
     ! Calculate dot product of the two Householder vectors
 
-   h_mat(:,:) = 0.0
+   h_mat(:,:) = 0.0_rk
 
-   h_mat(1,4) = -1.0
-   h_mat(2,3) = -1.0
-   h_mat(3,2) = -1.0
-   h_mat(4,1) = -1.0
+   h_mat(1,4) = -1.0_rk
+   h_mat(2,3) = -1.0_rk
+   h_mat(3,2) = -1.0_rk
+   h_mat(4,1) = -1.0_rk
 
    h_mat(1,5:nb+3) = -hh(2:nb, 1)
    h_mat(2,4:nb+2) = -hh(2:nb, 2)
@@ -104,32 +105,32 @@
 
    ! TODO we do not need the diagonal, but how to do it with BLAS?
    !s_mat = - matmul(h_mat, transpose(h_mat))
-   call DSYRK('L', 'N', 4, nb+3, &
-              -1.0_rk8, h_mat, 4, &
-              0.0_rk8, s_mat, 4)
+   call PRECISION_SYRK('L', 'N', 4, nb+3, &
+                       -ONE, h_mat, 4, &
+                       ZERO, s_mat, 4)
 
 !   w_comb = - matmul(q(1:nq, 1:nb+3), transpose(h_mat))
-   call DGEMM('N', 'T', nq, 4, nb+3, &
-              -1.0_rk8, q, ldq, &
-              h_mat, 4, &
-              0.0_rk8, w_comb, nq)
+   call PRECISION_GEMM('N', 'T', nq, 4, nb+3, &
+                       -ONE, q, ldq, &
+                       h_mat, 4, &
+                       ZERO, w_comb, nq)
 
    ! Rank-1 update
    !w_comb(1:nq,1) = hh(1,1) * w_comb(1:nq, 1)
-   call DSCAL(nq, hh(1,1), w_comb(1:nq, 1), 1)
+   call PRECISION_SCAL(nq, hh(1,1), w_comb(1:nq, 1), 1)
    do i = 2, 4
 !     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
-     call DGEMV('N', nq, i-1, &
-                hh(1,i), w_comb(1:nq, 1:i-1), nq, &
-                s_mat(i,1:i-1), 1, &
-                hh(1,i), w_comb(1:nq,i), 1)
+     call PRECISION_GEMV('N', nq, i-1, &
+                         hh(1,i), w_comb(1:nq, 1:i-1), nq, &
+                         s_mat(i,1:i-1), 1, &
+                         hh(1,i), w_comb(1:nq,i), 1)
    enddo
 
    !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
-   call DGEMM('N', 'N', nq, nb+3, 4, &
-              1.0_rk8, w_comb, nq, &
-              h_mat, 4, &
-              1.0_rk8, q, ldq)
+   call PRECISION_GEMM('N', 'N', nq, nb+3, 4, &
+                       ONE, w_comb, nq, &
+                       h_mat, 4, &
+                       ONE, q, ldq)
 
   end subroutine
 
