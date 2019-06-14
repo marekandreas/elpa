@@ -1490,24 +1490,24 @@
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
                w(:,3) = bcast_buffer(1:nbw,j+off-2)
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
-!#ifdef WITH_OPENMP
-!
-!#ifdef USE_ASSUMED_SIZE
-!               call quad_hh_trafo_&
-!                    &MATH_DATATYPE&
-!                    &_blas_4hv_&
-!                    &PRECISION&
-!                    & (a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
-!#else
-!               call quad_hh_trafo_&
-!                    &MATH_DATATYPE&
-!                    &_blas_4hv_&
-!                    &PRECISION&
-!                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, &
-!                       stripe_width, nbw)
-!#endif
-!
-!#else
+#ifdef WITH_OPENMP
+
+#ifdef USE_ASSUMED_SIZE
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_blas_4hv_&
+                    &PRECISION&
+                    & (a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_blas_4hv_&
+                    &PRECISION&
+                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, &
+                       stripe_width, nbw)
+#endif
+
+#else
 
 #ifdef USE_ASSUMED_SIZE
                call quad_hh_trafo_&
@@ -1524,7 +1524,7 @@
                        stripe_width, nbw)
 #endif
 
-!#endif
+#endif
              enddo
 
 !             do jj = j, 2, -2
@@ -1567,17 +1567,26 @@
 !!#endif
 !             enddo
 
-!#ifdef WITH_OPENMP
-!
-!             if (jj==1) call single_hh_trafo_&
-!                  &MATH_DATATYPE&
-!                  &_cpu_openmp_&
-!                  &PRECISION&
-!                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
-!                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
-!
-!#else
+#ifdef WITH_OPENMP
+!TODO use this after blas kernel for 2 vectors developed
+!!!!             if (jj==1) call single_hh_trafo_&
+!!!!                  &MATH_DATATYPE&
+!!!!                  &_cpu_openmp_&
+!!!!                  &PRECISION&
+!!!!                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+!!!!                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 
+! transform more of the remaining vectors by single kernel before the double is introduced
+             do jj = j, 1, -1
+               call single_hh_trafo_&
+                  &MATH_DATATYPE&
+                  &_cpu_openmp_&
+                  &PRECISION&
+                  & (a(1:stripe_width,jj+off+a_off:jj+off+a_off+nbw-1, istripe,my_thread), &
+                           bcast_buffer(1:nbw,off+jj), nbw, nl, stripe_width)
+            enddo
+#else
+!TODO use this after blas kernel for 2 vectors developed
 !!!!             if (jj==1) call single_hh_trafo_&
 !!!!                  &MATH_DATATYPE&
 !!!!                  &_cpu_&
@@ -1594,10 +1603,8 @@
                   & (a(1:stripe_width,jj+off+a_off:jj+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+jj), &
                      nbw, nl, stripe_width)
             enddo
+#endif
 
-
-
-!#endif
 #endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_BLAS_BLOCK6_KERNEL)) */
 
 #ifndef WITH_FIXED_REAL_KERNEL
