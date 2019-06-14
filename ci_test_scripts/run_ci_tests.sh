@@ -144,12 +144,13 @@ then
     cat ./run_${CLUSTER}_1node_2GPU.sh
     echo " "
     echo "Submitting to SLURM"
-    sbatch -W ./run_${CLUSTER}_1node_2GPU.sh
-    exitCode=$?
+    if sbatch -W ./run_${CLUSTER}_1node_2GPU.sh; then
+      exitCode=$?
+    else
+      exitCode=$?
+      echo "Submission exited with exitCode $exitCode"
+    fi
 
-    echo " "
-    echo "Exit Code of sbatch: $exitCode"
-    echo " "
     #if (( $exitCode > 0 ))
     #then
       cat ./ELPA_CI_2gpu.err.*
@@ -174,8 +175,12 @@ then
     cat ./run_${CLUSTER}_1node.sh
     echo " "
     echo "Submitting to SLURM"
-    sbatch -W ./run_${CLUSTER}_1node.sh
-    exitCode=$?
+    if sbatch -W ./run_${CLUSTER}_1node.sh; then
+      exitCode=$?
+    else
+      exitCode=$?
+      echo "Submission excited with exitCode $exitCode"
+    fi
 
     echo " "
     echo "Exit Code of sbatch: $exitCode"
