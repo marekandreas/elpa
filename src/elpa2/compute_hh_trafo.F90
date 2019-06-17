@@ -65,7 +65,7 @@
 #else
        last_stripe_width, &
 #endif
-       kernel)
+       kernel, h_dev, s_dev, q_dev, w_dev)
 
          use precision
          use elpa_abstract_impl
@@ -164,7 +164,11 @@
          integer(kind=ik), intent(in)               :: kernel
 
          integer(kind=c_intptr_t)                   :: a_dev
-   integer(kind=c_intptr_t)                         :: bcast_buffer_dev
+
+         ! for the blas kernel
+         integer(kind=c_intptr_t)                   :: h_dev, s_dev, q_dev, w_dev
+
+         integer(kind=c_intptr_t)                         :: bcast_buffer_dev
 #if REALCASE == 1
          integer(kind=c_intptr_t)                   :: hh_dot_dev ! why not needed in complex case
 #endif
@@ -1490,6 +1494,7 @@
                w(:,2) = bcast_buffer(1:nbw,j+off-1)
                w(:,3) = bcast_buffer(1:nbw,j+off-2)
                w(:,4) = bcast_buffer(1:nbw,j+off-3)
+
 #ifdef WITH_OPENMP
 
 #ifdef USE_ASSUMED_SIZE
@@ -1497,13 +1502,13 @@
                     &MATH_DATATYPE&
                     &_blas_4hv_&
                     &PRECISION&
-                    & (a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
+                    & (useGPU, a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
                     &_blas_4hv_&
                     &PRECISION&
-                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, &
+                    & (useGPU, a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, &
                        stripe_width, nbw)
 #endif
 
@@ -1514,13 +1519,13 @@
                     &MATH_DATATYPE&
                     &_blas_4hv_&
                     &PRECISION&
-                    & (a(1,j+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw)
+                    & (useGPU, a(1,j+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
                     &_blas_4hv_&
                     &PRECISION&
-                    & (a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), nbw, nl, &
+                    & (useGPU, a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), nbw, nl, &
                        stripe_width, nbw)
 #endif
 

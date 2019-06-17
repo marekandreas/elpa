@@ -64,14 +64,13 @@
   &MATH_DATATYPE&
   &_blas_4hv_&
   &PRECISION&
-  & (q, hh, nb, nq, ldq, ldh)
+  & (useGPU, q, hh, nb, nq, ldq, ldh)
 
     use precision
-    use elpa_abstract_impl
     implicit none
 #include "../../general/precision_kinds.F90"
 
-    !class(elpa_abstract_impl_t), intent(inout) :: obj
+    logical, intent(in)                        :: useGPU
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
 
 #ifdef USE_ASSUMED_SIZE
@@ -102,6 +101,7 @@
    h_mat(2,4:nb+2) = -hh(2:nb, 2)
    h_mat(3,3:nb+1) = -hh(2:nb, 3)
    h_mat(4,2:nb)   = -hh(2:nb, 4)
+
 
    ! TODO we do not need the diagonal, but how to do it with BLAS?
    !s_mat = - matmul(h_mat, transpose(h_mat))
