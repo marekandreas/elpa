@@ -5703,7 +5703,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 
-#if (VEC_SET == AVX_512 && BLOCK == 1) || VEC_SET != AVX_512
+//#if (VEC_SET == AVX_512 && BLOCK == 1) || VEC_SET != AVX_512
 
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
@@ -6263,7 +6263,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* BLOCK2 */
 
 }
-#endif
+// #endif
 
 #if 0
 
@@ -6354,8 +6354,7 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_1hv_single(float comp
 }
 #endif
 
-#if VEC_SET == AVX_512 && BLOCK == 2
-
+#if 0
 #ifdef DOUBLE_PRECISION_COMPLEX
 static __forceinline void hh_trafo_complex_kernel_4_AVX512_2hv_double(double complex* q, double complex* hh, int nb, int ldq, int ldh, double complex s)
 #endif
@@ -6564,5 +6563,5 @@ static __forceinline void hh_trafo_complex_kernel_8_AVX512_2hv_single(float comp
 
         _SIMD_STORE(&q_dbl[(2*nb*ldq)+0], q1);
 }
-
 #endif
+
