@@ -826,37 +826,12 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif /* VEC_SET == AVX_512 */
 
 
-//#if VEC_SET != AVX_512
         for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE)
         {
 
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
-//#else
-//        for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE)
-//        {
-//
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
-//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
-//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+8], hh, nb, ldq);
-//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+12], hh, nb, ldq);
-//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+16], hh, nb, ldq);
-//            hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+20], hh, nb, ldq);
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
-//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
-//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+16], hh, nb, ldq);
-//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+24], hh, nb, ldq);
-//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+32], hh, nb, ldq);
-//            hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+40], hh, nb, ldq);
-//#endif
-//	    worked_on += ROW_LENGTH;
-//        }
-//#endif
-
 
         if (nq == i) {
           return;
@@ -892,33 +867,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
-//#else
-//        if (nq-i == ROW_LENGTH)
-//        {
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+8], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+12], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+16], hh, nb, ldq);
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+16], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+24], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+32], hh, nb, ldq);
-//#endif
-//	    worked_on += ROW_LENGTH;
-//        }
-//#endif
-
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -950,32 +903,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
-//#else
-//        if (nq-i == ROW_LENGTH)
-//        {
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+8], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+12], hh, nb, ldq);
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+16], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+24], hh, nb, ldq);
-//#endif
-//
-//	    worked_on += ROW_LENGTH;
-//        }
-//#endif
-
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -1007,28 +939,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
-//#else
-//        if (nq-i == ROW_LENGTH)
-//        {
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+8], hh, nb, ldq);
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+16], hh, nb, ldq);
-//#endif
-//	    worked_on += ROW_LENGTH;
-//        }
-//#endif
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -1060,26 +975,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
-//#else
-//        if (nq-i == ROW_LENGTH)
-//        {
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i+4], hh, nb, ldq);
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i+8], hh, nb, ldq);
-//#endif
-//	    worked_on += ROW_LENGTH;
-//        }
-//#endif
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -1111,24 +1011,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-//#if VEC_SET != AVX_512
         if (nq-i == ROW_LENGTH)
         {
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
-//#else
-//        if (nq-i == ROW_LENGTH)
-//        {
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_4_AVX512_1hv_double (&q[i], hh, nb, ldq);
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//	    hh_trafo_complex_kernel_8_AVX512_1hv_single (&q[i], hh, nb, ldq);
-//#endif
-//	    worked_on += ROW_LENGTH;
-//        }
-//#endif
 
 #endif /* BLOCK1 */
 
@@ -1176,36 +1063,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-
-//#if VEC_SET != AVX_512
     for (i = 0; i < nq - UPPER_BOUND; i+=STEP_SIZE)
     {
          CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
 	 worked_on +=ROW_LENGTH;
     }
-//#endif
-//#if VEC_SET == AVX_512
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//    for (i = 0; i < nq - 12; i+=16)
-//    {
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i+4], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i+8], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i+12], hh, nb, ldq, ldh, s);
-//	 worked_on +=16;
-//    }
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//    for (i = 0; i < nq - 24; i+=32)
-//    {
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i+8], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i+16], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i+24], hh, nb, ldq, ldh, s);
-//	 worked_on +=32;
-//    }
-//#endif
-//#endif
  
     if (nq == i)
     {
@@ -1242,34 +1104,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-//#if VEC_SET != AVX_512
     if (nq-i == ROW_LENGTH)
     {
         CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
         worked_on += ROW_LENGTH;
     }
-//#endif
-//#if VEC_SET == AVX_512
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//    if (nq-i == 12)
-//    {
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i+4], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i+8], hh, nb, ldq, ldh, s);
-//	 worked_on +=12;
-//    }
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//    if (nq-i == 24)
-//    {
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i+8], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i+16], hh, nb, ldq, ldh, s);
-//	 worked_on +=24;
-//    }
-//#endif
-//
-//#endif
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -1301,32 +1140,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-//#if VEC_SET != AVX_512
     if (nq-i == ROW_LENGTH)
     {
         CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
         worked_on += ROW_LENGTH;
     }
-//#endif
-//#if VEC_SET == AVX_512
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//    if (nq-i == 8)
-//    {
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i+4], hh, nb, ldq, ldh, s);
-//	 worked_on +=8;
-//    }
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//    if (nq-i == 16)
-//    {
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i], hh, nb, ldq, ldh, s);
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i+8], hh, nb, ldq, ldh, s);
-//	 worked_on +=16;
-//    }
-//#endif
-//
-//#endif
 
 #if VEC_SET == SSE_128
 #undef ROW_LENGTH
@@ -1358,30 +1176,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == AVX_512 */
 
-//#if VEC_SET != AVX_512
     if (nq-i == ROW_LENGTH)
     {
         CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
         worked_on += ROW_LENGTH;
     }
-//#endif
-//#if VEC_SET == AVX_512
-//#ifdef DOUBLE_PRECISION_COMPLEX
-//    if (nq-i == 4)
-//    {
-//	 hh_trafo_complex_kernel_4_AVX512_2hv_double (&q[i], hh, nb, ldq, ldh, s);
-//	 worked_on +=4;
-//    }
-//#endif
-//#ifdef SINGLE_PRECISION_COMPLEX
-//    if (nq-i == 8)
-//    {
-//	 hh_trafo_complex_kernel_8_AVX512_2hv_single (&q[i], hh, nb, ldq, ldh, s);
-//	 worked_on +=8;
-//    }
-//#endif
-//
-//#endif
 
 #endif /* BLOCK2 */
 
@@ -1392,7 +1191,6 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
       abort();
     }
 #endif
-
 
 }
 
