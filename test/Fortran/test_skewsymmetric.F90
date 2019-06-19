@@ -217,7 +217,7 @@ program test
    call e_complex%set("gpu", 0)
 
    assert_elpa_ok(e_complex%setup())
-   call e_complex%set("solver", elpa_solver_2stage, error)
+   call e_complex%set("solver", elpa_solver_1stage, error)
 
    call e_complex%timer_start("eigenvectors: brute force ")
    call e_complex%eigenvectors(a_complex, ev_complex, z_complex, error)

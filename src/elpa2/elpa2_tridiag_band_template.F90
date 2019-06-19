@@ -496,7 +496,7 @@
 
 #if REALCASE == 1
           if (isSkewsymmetric) then
-            d(istep) = 0
+            d(istep) = 0.0_rk
           else
             d(istep) = ab(1,na_s-n_off)
           endif
