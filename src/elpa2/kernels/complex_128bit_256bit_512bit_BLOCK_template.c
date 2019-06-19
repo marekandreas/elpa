@@ -5857,8 +5857,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_256 */
 
 #if VEC_SET == AVX_512
-          h1_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
-          h1_imag = _SIMD_SET1(hh_dbl[((ldh+i)*2)+1]);
+          h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
+          h2_imag = _SIMD_SET1(hh_dbl[((ldh+i)*2)+1]);
 #endif /* AVX_512 */
 
 #ifndef __ELPA_USE_FMA__
@@ -6165,12 +6165,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      {
 #if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
-          h1_real = _mm_loaddup_pd(&hh_dbl[(i-BLOCK+1)*2]);
-          h1_imag = _mm_loaddup_pd(&hh_dbl[((i-BLOCK+1)*2)+1]);
+        h1_real = _mm_loaddup_pd(&hh_dbl[(i-BLOCK+1)*2]);
+        h1_imag = _mm_loaddup_pd(&hh_dbl[((i-BLOCK+1)*2)+1]);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-          h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-BLOCK+1)*2]) )));
-          h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-BLOCK+1)*2)+1]) )));
+        h1_real = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[(i-BLOCK+1)*2]) )));
+        h1_imag = _mm_moveldup_ps(_mm_castpd_ps(_mm_loaddup_pd( (double *)(&hh_dbl[((i-BLOCK+1)*2)+1]) )));
 #endif
 #endif /* VEC_SET == SSE_128 */
 
