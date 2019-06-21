@@ -268,6 +268,8 @@ print("  - export BLOCK_SIZE=16")
 print("  - if [ \"$MEDIUM_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=1500 && export NUMBER_OF_EIGENVECTORS=750; fi")
 print("  - if [ \"$LARGE_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=5000 && export NUMBER_OF_EIGENVECTORS=500; fi")
 print("  - if [ \"$GPU_BLOCKSIZE\" = \"yes\" ]; then export BLOCK_SIZE=128 ; fi")
+print("  - if [ -z \"$PIPELINE_MPI_TASKS\" ]; then export MPI_TASKS=2; else xport MPI_TASKS=$PIPELINE_MPI_TASKS; fi")
+
 print("  - echo \"This test will run with matrix size na = $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS, on a blacs grid with blocksize nblk= $BLOCK_SIZE \" ")
 print("  - export SKIP_STEP=0")
 print("  - ./autogen.sh")
@@ -320,7 +322,7 @@ print("    - avx")
 print("  script:")
 print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CFLAGS=\\\"-O3 -mavx\\\" FCFLAGS=\\\"-O3 -axAVX\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"  \
         SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2 --enable-optional-argument-in-C-API || { cat config.log; exit 1; } \" -j 8 \
-        -t 2 -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
+        -t $MPI_TASKS -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
 print("\n\n")
 
 print("# test distcheck")
@@ -330,10 +332,10 @@ print("    - distcheck")
 print("  script:")
 print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"  \
         SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
-        --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t 2 -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
+        --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
 print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \"  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\\\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\\\\\"  \
         SCALAPACK_FCFLAGS=\\\\\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
-        --disable-sse --disable-avx --disable-avx2 \" -t 2 -m 150 -n 50 -b 16 -S$SLURM ")
+        --disable-sse --disable-avx --disable-avx2 \" -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM ")
 print("\n\n")
 
 print("distcheck-mpi:")
@@ -344,12 +346,12 @@ print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xH
   SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
   SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
   --enable-option-checking=fatal --with-mpi=yes \
- --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t 2 -m 150 \
+ --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 \
  -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
 print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\\\\\"-xHost\\\\\\\" \
  CFLAGS=\\\\\\\"-march=native\\\\\\\" SCALAPACK_LDFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\\\\\"  \
  SCALAPACK_FCFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal \
- --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 \" -t 2 -m 150 -n 50 -b 16 -S$SLURM ")
+ --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 \" -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM ")
 print("\n\n")
 
 print("distcheck-no-autotune:")
@@ -360,12 +362,12 @@ print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xH
   SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
   SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
   --enable-option-checking=fatal --with-mpi=yes \
-  --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; } \" -t 2 -m 150 \
+  --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 \
   -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
 print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\\\\\"-xHost\\\\\\\" \
  CFLAGS=\\\\\\\"-march=native\\\\\\\" SCALAPACK_LDFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\\\\\"  \
  SCALAPACK_FCFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal \
- --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning \" -t 2 -m 150 -n 50 -b 16 -S$SLURM ")
+ --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning \" -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM ")
 print("\n\n")
 
 
@@ -389,7 +391,7 @@ python_ci_tests = [
     'SCALAPACK_FCFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
     '--disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
-    '" -j 8 -t 2 -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
+    '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
     "python-distcheck:",
@@ -403,7 +405,7 @@ python_ci_tests = [
     'SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP\\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
     '--disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
-    '" -j 8 -t 2 -m 150 -n 50 -b 16 '
+    '" -j 8 -t $MPI_TASKS -m 150 -n 50 -b 16 '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
     '    - ./ci_test_scripts/run_distcheck_tests.sh -c "'
@@ -413,7 +415,7 @@ python_ci_tests = [
     'SCALAPACK_FCFLAGS=\\\\\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\\\\\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
     '--disable-gpu --enable-avx --enable-python --enable-python-tests'
-    '" -t 2 -m 150 -n 50 -b 16 -S $SLURM  || { chmod u+rwX -R . ; exit 1 ; }',
+    '" -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM  || { chmod u+rwX -R . ; exit 1 ; }',
     "\n",
 ]
 print("\n".join(python_ci_tests))
@@ -456,7 +458,7 @@ for comp, s, a in product(
                     SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
                     SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
                     --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
-                    -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                    -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
                     -C \" FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig  \
                      --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
         if (a == "legacy_api"):
@@ -464,7 +466,7 @@ for comp, s, a in product(
                     SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
                     SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
                     --enable-option-checking=fatal  --enable-legacy-interface --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
-                    -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                    -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
                     -C \" FC=mpiifort PKG_CONFIG_PATH=../../installdest/lib/pkgconfig  \
                      --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
 
@@ -474,7 +476,7 @@ for comp, s, a in product(
                     SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
                     SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
                     --enable-option-checking=fatal  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
-                    -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                    -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
                     -C \" FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig \
                      --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
         if (a == "legacy_api"):
@@ -482,7 +484,7 @@ for comp, s, a in product(
                     SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
                     SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
                     --enable-option-checking=fatal  --enable-legacy-interface  --disable-avx2 --prefix=$PWD/installdest --disable-avx2 || { cat config.log; exit 1; } \" \
-                    -t 2 -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
+                    -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM -p test_project_"+stage[s]+api[a]+" -e "+projectBinary+" \
                     -C \" FC=mpif90 PKG_CONFIG_PATH=../../installdest/lib/pkgconfig \
                      --enable-option-checking=fatal || { cat config.log; exit 1; } \" ")
     print("\n\n")
@@ -559,7 +561,8 @@ matrix_size = {
         "small"   : "150",
 }
 
-MPI_TASKS=2
+#MPI_TASKS=2
+
 #                             sorted(coverage.keys()),     
 for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                              sorted(c_compiler.keys()),
@@ -699,9 +702,9 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     print("# " + cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" + a + "-" + b + "-" +g + "-" + cov + "-" + instr + "-" + addr)
     print(cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" +a + "-" +b + "-" +g + "-" + cov + "-" + instr + "-" + addr + "-jobs:")
-    if (MasterOnly):
-        print("  only:")
-        print("    - /.*master.*/")
+    #if (MasterOnly):
+    #    print("  only:")
+    #    print("    - /.*master.*/")
     if (instr == "power8"):
         print("  allow_failure: true")
     print("  tags:")
@@ -741,7 +744,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-+ " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM")
++ " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM")
 
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
         print("    - export REQUESTED_MEMORY="+memory)    
@@ -767,7 +770,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal --enable-scalapack-tests" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -S $SLURM")
+                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -S $SLURM")
             
 
         else:
@@ -775,7 +778,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t " + str(MPI_TASKS) + " -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -i $INTERACTIVE_RUN -S $SLURM")
+                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -i $INTERACTIVE_RUN -S $SLURM")
 
     # do the test
 
@@ -787,12 +790,12 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                 openmp_threads=" 1 "
         else:
             openmp_threads=" 1 "
-        for na in sorted(matrix_size.keys(),reverse=True):
-            cores = set_number_of_cores(MPI_TASKS, o)
-            #print("    - echo \" srun  --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
-            print("    -  echo \"na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE\" ")
-            #print("    - srun --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
-            #                             /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " +"\\\"  || { cat test-suite.log; exit 1; }\"")
+        #for na in sorted(matrix_size.keys(),reverse=True):
+        #    cores = set_number_of_cores(MPI_TASKS, o)
+        #    #print("    - echo \" srun  --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN\" ")
+        #    print("    -  echo \"na= $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS nblock= $BLOCK_SIZE\" ")
+        #    #print("    - srun --ntasks-per-core=1 --ntasks=1 --cpus-per-task="+str(cores)+" $SRUN_COMMANDLINE_RUN \
+        #    #                             /scratch/elpa/bin/run_elpa.sh "+str(MPI_TASKS) + openmp_threads +" \" TEST_FLAGS=\\\" $MATRIX_SIZE $NUMBER_OF_EIGENVECTORS $BLOCK_SIZE " +"\\\"  || { cat test-suite.log; exit 1; }\"")
 
         if (cov == "coverage"):
             print("    - ./ci_test_scripts/ci_coverage_collect")

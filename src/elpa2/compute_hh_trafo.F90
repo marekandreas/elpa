@@ -339,6 +339,7 @@
              kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
              kernel .eq. ELPA_2STAGE_REAL_SSE_BLOCK2 .or. &
              kernel .eq. ELPA_2STAGE_REAL_SPARC64_BLOCK2 .or. &
+             kernel .eq. ELPA_2STAGE_REAL_NEON_ARCH64_BLOCK2 .or. &
              kernel .eq. ELPA_2STAGE_REAL_VSX_BLOCK2 .or. &
              kernel .eq. ELPA_2STAGE_REAL_GENERIC    .or. &
              kernel .eq. ELPA_2STAGE_REAL_GENERIC_SIMPLE .or. &
@@ -849,6 +850,43 @@
 #endif /* WITH_REAL_SPARC64_BLOCK2_KERNEL */
 
 #endif /* REALCASE == 1 */
+
+#if REALCASE == 1
+! implementation of neon_arch64 block 2 real case
+#if defined(WITH_REAL_NEON_ARCH64_BLOCK2_KERNEL)
+
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (kernel .eq. ELPA_2STAGE_REAL_NEON_ARCH64_BLOCK2) then
+
+#endif /* not WITH_FIXED_REAL_KERNEL */
+
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL) && !defined(WITH_REAL_NEON_ARCH64_BLOCK4_KERNEL))
+             do j = ncols, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_2hv_&
+                    &PRECISION &
+                    & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_2hv_&
+                    &PRECISION &
+                    & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL) && !defined(WITH_REAL_NEON_ARCH64_BLOCK4_KERNEL)) */
+
+#ifndef WITH_FIXED_REAL_KERNEL
+           endif
+#endif /* not WITH_FIXED_REAL_KERNEL */
+#endif /* WITH_REAL_NEON_ARCH64_BLOCK2_KERNEL */
+
+#endif /* REALCASE == 1 */
+
 
 
 #if REALCASE == 1
@@ -1657,6 +1695,77 @@
 
 
 #if REALCASE == 1
+! neon_arch64 block 4 real kernel
+
+#if defined(WITH_REAL_NEON_ARCH64_BLOCK4_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (kernel .eq. ELPA_2STAGE_REAL_NEON_ARCH64_BLOCK4) then
+
+#endif /* not WITH_FIXED_REAL_KERNEL */
+
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL))
+             do j = ncols, 4, -4
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               w(:,3) = bcast_buffer(1:nbw,j+off-2)
+               w(:,4) = bcast_buffer(1:nbw,j+off-3)
+#ifdef WITH_OPENMP
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_4hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_4hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+             do jj = j, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,jj+off)
+               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+#ifdef WITH_OPENMP
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+#ifdef WITH_OPENMP
+             if (jj==1) call single_hh_trafo_&
+                  &MATH_DATATYPE&
+                  &_cpu_openmp_&
+                  &PRECISION&
+                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#else
+             if (jj==1) call single_hh_trafo_&
+                  &MATH_DATATYPE&
+                  &_cpu_&
+                  &PRECISION&
+                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#endif
+
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL)) */
+
+#ifndef WITH_FIXED_REAL_KERNEL
+           endif
+#endif /* not WITH_FIXED_REAL_KERNEL */
+#endif /* WITH_REAL_NEON_ARCH64_BLOCK4_KERNEL */
+
+#endif /* REALCASE */
+
+
+#if REALCASE == 1
 ! vsx block4 real kernel
 
 #if defined(WITH_REAL_VSX_BLOCK4_KERNEL)
@@ -2039,6 +2148,94 @@
 #endif /* WITH_REAL_SPARC64_BLOCK6_KERNEL */
 
 #endif /* REALCASE */
+
+#if REALCASE == 1
+!neon_arch64 block6 real kernel
+#if defined(WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
+           if (kernel .eq. ELPA_2STAGE_REAL_NEON_ARCH64_BLOCK6) then
+
+#endif /* not WITH_FIXED_REAL_KERNEL */
+             ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
+             do j = ncols, 6, -6
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               w(:,3) = bcast_buffer(1:nbw,j+off-2)
+               w(:,4) = bcast_buffer(1:nbw,j+off-3)
+               w(:,5) = bcast_buffer(1:nbw,j+off-4)
+               w(:,6) = bcast_buffer(1:nbw,j+off-5)
+#ifdef WITH_OPENMP
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_6hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_6hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+             do jj = j, 4, -4
+               w(:,1) = bcast_buffer(1:nbw,jj+off)
+               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+               w(:,3) = bcast_buffer(1:nbw,jj+off-2)
+               w(:,4) = bcast_buffer(1:nbw,jj+off-3)
+#ifdef WITH_OPENMP
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_4hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_4hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jj+off+a_off-3,istripe)), w, &
+                                                  nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+             do jjj = jj, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,jjj+off)
+               w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
+#ifdef WITH_OPENMP
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_neon_arch64_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+#ifdef WITH_OPENMP
+             if (jjj==1) call single_hh_trafo_&
+                   &MATH_DATATYPE&
+                   &_cpu_openmp_&
+                   &PRECISION&
+                   & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#else
+             if (jjj==1) call single_hh_trafo_&
+                   &MATH_DATATYPE&
+                   &_cpu_&
+                   &PRECISION&
+                   & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#endif
+#ifndef WITH_FIXED_REAL_KERNEL
+           endif
+#endif /* not WITH_FIXED_REAL_KERNEL */
+#endif /* WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL */
+
+#endif /* REALCASE */
+
 
 #if REALCASE == 1
 !vsx block6 real kernel

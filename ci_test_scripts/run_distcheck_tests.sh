@@ -102,7 +102,7 @@ then
     CLUSTER="draco"
   fi
 
-  echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS"
+  echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS on $mpiTasks tasks"
 
   #distcheck
   if [[ "$CI_RUNNER_TAGS" =~ "distcheck" ]]
@@ -126,17 +126,21 @@ then
     echo "Exit Code of sbatch: $exitCode"
     echo " "
     cat ./ELPA_CI.out.*
-    if [ $exitCode -ne 0 ]
-    then
+    #if [ $exitCode -ne 0 ]
+    #then
       cat ./ELPA_CI.err.*
+    #fi
+    if [ -f ./test-suite.log ]
+    then
+      cat ./test-suite.log
     fi
 
   fi
 
-  if [ $exitCode -ne 0 ]
-  then
+  #if [ $exitCode -ne 0 ]
+  #then
     cat ./test-suite.log
-  fi
+  #fi
 
   exit $exitCode
 

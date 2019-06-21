@@ -110,6 +110,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/kernels/complex_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
   src/elpa2/kernels/simple_block4_template.F90 \
+  src/elpa2/kernels/simple_block6_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/compute_hh_trafo.F90 \
@@ -194,9 +195,10 @@ if WITH_REAL_GENERIC_SIMPLE_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block4.F90
 endif
 
-#if WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL
-#  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block6.F90
-#endif
+if WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block6.F90
+endif
+
 if WITH_REAL_BGP_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_bgp.f90
 endif
@@ -225,6 +227,13 @@ if WITH_REAL_SPARC64_BLOCK2_KERNEL
 #if WANT_SINGLE_PRECISION_REAL
 #  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_2hv_single_precision.c
 #endif
+endif
+
+if WITH_REAL_NEON_ARCH64_BLOCK2_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_2hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_2hv_single_precision.c
+endif
 endif
 
 if WITH_REAL_VSX_BLOCK2_KERNEL
@@ -269,6 +278,13 @@ if WITH_REAL_SPARC64_BLOCK4_KERNEL
 #endif
 endif
 
+if WITH_REAL_NEON_ARCH64_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_4hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_4hv_single_precision.c
+endif
+endif
+
 if WITH_REAL_VSX_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
@@ -309,6 +325,13 @@ if WITH_REAL_SPARC64_BLOCK6_KERNEL
 #if WANT_SINGLE_PRECISION_REAL
 #  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_single_precision.c
 #endif
+endif
+
+if WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_6hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_6hv_single_precision.c
+endif
 endif
 
 if WITH_REAL_VSX_BLOCK6_KERNEL
@@ -768,28 +791,15 @@ EXTRA_DIST = \
   src/elpa2/elpa2_trans_ev_band_to_full_template.F90 \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.F90 \
   src/elpa2/elpa2_tridiag_band_template.F90 \
-  src/elpa2/kernels/complex_avx-avx2_1hv_template.c \
-  src/elpa2/kernels/complex_avx-avx2_2hv_template.c \
-  src/elpa2/kernels/complex_avx512_1hv_template.c \
-  src/elpa2/kernels/complex_avx512_2hv_template.c \
-  src/elpa2/kernels/complex_sse_1hv_template.c \
-  src/elpa2/kernels/complex_sse_2hv_template.c \
+  src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/complex_template.F90 \
-  src/elpa2/kernels/real_avx-avx2_2hv_template.c \
-  src/elpa2/kernels/real_avx-avx2_4hv_template.c \
-  src/elpa2/kernels/real_avx-avx2_6hv_template.c \
-  src/elpa2/kernels/real_avx512_2hv_template.c \
-  src/elpa2/kernels/real_avx512_4hv_template.c \
-  src/elpa2/kernels/real_avx512_6hv_template.c \
-  src/elpa2/kernels/real_vsx_2hv_template.c \
   src/elpa2/kernels/real_vsx_4hv_template.c \
   src/elpa2/kernels/real_vsx_6hv_template.c \
-  src/elpa2/kernels/real_sse_2hv_template.c \
-  src/elpa2/kernels/real_sse_4hv_template.c \
-  src/elpa2/kernels/real_sse_6hv_template.c \
+  src/elpa2/kernels/real_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
   src/elpa2/kernels/simple_block4_template.F90 \
+  src/elpa2/kernels/simple_block6_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/qr/elpa_pdgeqrf_template.F90 \
