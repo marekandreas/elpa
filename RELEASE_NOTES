@@ -1,4 +1,4 @@
-This file contains the release notes for the ELPA 2019.05.001.rc1 version
+This file contains the release notes for the ELPA 2019.05.001.rc2 version
 
 What is new?
 -------------
@@ -9,6 +9,7 @@ For detailed information about changes since release ELPA 2018.11 please have a 
 - C functions can have an optional error argument, if compiler supports this
    => ABI and API change
 - as anounced, removal of deprecated routines
+- new kernels for Arm arch64
 
 ABI change
 ---------------------
