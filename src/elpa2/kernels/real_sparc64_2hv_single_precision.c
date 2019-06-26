@@ -49,7 +49,7 @@
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #define BLOCK2 1
-#define VEC_SET 1281
+#define VEC_SET SPARC64_SSE
 #include "../../general/precision_macros.h"
 #include "real_128bit_256bit_512bit_BLOCK_template.c"
 #undef BLOCK2

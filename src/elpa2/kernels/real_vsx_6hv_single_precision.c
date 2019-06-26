@@ -48,8 +48,12 @@
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
+#define BLOCK6 1
+#define VEC_SET VSX_SSE
 #include "../../general/precision_macros.h"
 #include "real_vsx_6hv_template.c"
+#undef VEC_SET
+#undef BLOCK6
 #undef REALCASE
 #undef SINGLE_PRECISION
 
