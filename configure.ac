@@ -1376,6 +1376,28 @@ else
   fi
 fi
 
+dnl store-build-config
+AC_MSG_CHECKING(whether build config should be compiled into the library)
+AC_CHECK_PROG(xxd_CHECK,xxd,yes)
+AS_IF([test x"$xxd_CHECK" != x"yes"], [AC_MSG_ERROR([Please install xxd before configuring.])])
+AC_ARG_ENABLE([store-build-config],
+              AS_HELP_STRING([--enable-store-build-config],
+                             [compile build config into the library object, default no]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         store_build_config=yes
+	       else
+	         store_build_config=no
+	       fi
+	       ],
+              [store_build_config=no])
+AC_MSG_RESULT([${store_build_config}])
+AM_CONDITIONAL([STORE_BUILD_CONFIG],[test x"$store_build_config" = x"yes"])
+if test x"${store_build_config}" = x"yes"; then
+        AC_DEFINE([STORE_BUILD_CONFIG], [1], [compile build config into the library object])
+fi
+
+
 AC_SUBST([SUFFIX])
 AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
 
@@ -1385,6 +1407,7 @@ AC_CONFIG_FILES([
   ${PKG_CONFIG_FILE}:elpa.pc.in
   elpa/elpa_constants.h
   elpa/elpa_version.h
+  elpa/elpa_build_config.h
 ])
 
 m4_include([m4/ax_fc_check_define.m4])
@@ -1501,8 +1524,6 @@ if test x"${enable_python_tests}" = x"yes"; then
           AC_MSG_ERROR([pytest not found.])
         fi
 fi
-
-
 AC_OUTPUT
 
 echo ""
@@ -1552,6 +1573,11 @@ else
   else
     echo "#undef OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
   fi
+  if test x"$store_build_config" = x"yes"; then
+    cat config.log > elpa_build_object
+    xxd -i elpa_build_object >> elpa/elpa_build_config.h
+  fi
+
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi
 

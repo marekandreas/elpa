@@ -454,6 +454,12 @@ if WANT_SINGLE_PRECISION_COMPLEX
 endif
 endif
 
+
+if STORE_BUILD_CONFIG
+  libelpa@SUFFIX@_private_la_SOURCES += src/helpers/print_build_config.c
+endif
+
+
 # Cuda files
 .cu.lo:
 	NVCC="$(NVCC)" libtool --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
@@ -669,7 +675,6 @@ wrapper_la_CFLAGS = $(PYTHON_INCLUDE) $(NUMPY_INCLUDE) $(AM_CFLAGS)
 
 python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $< -o $@
-
 # test scripts
 TASKS ?= 2
 if WITH_MPI

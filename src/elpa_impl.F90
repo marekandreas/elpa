@@ -194,8 +194,7 @@ module elpa_impl
 #else
       integer, intent(out)           :: error
 #endif
-      integer                        :: error2
-
+      integer                        :: error2, output_build_config
 
       allocate(obj, stat=error2)
       if (error2 .ne. 0) then
@@ -460,9 +459,6 @@ module elpa_impl
     end subroutine
 
 
-
-
-
 #ifdef ENABLE_AUTOTUNING
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
     !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
@@ -521,7 +517,7 @@ module elpa_impl
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
       class(elpa_impl_t), intent(inout)   :: self
-      integer                             :: error, timings, performance
+      integer                             :: error, timings, performance, build_config
 
 #ifdef WITH_MPI
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
@@ -532,6 +528,7 @@ module elpa_impl
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
 
 #endif
+
 
 #ifdef HAVE_LIKWID
       !initialize likwid
@@ -711,6 +708,18 @@ module elpa_impl
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 #endif
 
+#if STORE_BUILD_CONFIG
+      call self%get("output_build_config",build_config, error)
+      if ( build_config .eq. 1) then
+#ifdef WITH_MPI
+        if (my_id .eq. 0) then
+#endif
+          call print_build_config()
+#ifdef WITH_MPI
+        endif
+#endif
+      endif
+#endif
     end function
 
 
