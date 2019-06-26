@@ -1532,12 +1532,12 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 #echo "***********************************************************************"
 #echo " "
 #echo " "
-echo "***********************************************************************"
-echo "*  This is a the first release candidate of ELPA 2019.05.001.rc2      *"
-echo "*  There might be still some changes until the final release of       *"
-echo "*  ELPA 2019.05.001                                                   *"
-echo "***********************************************************************"
-echo " "
+#echo "***********************************************************************"
+#echo "*  This is a the first release candidate of ELPA 2019.05.001.rc2      *"
+#echo "*  There might be still some changes until the final release of       *"
+#echo "*  ELPA 2019.05.001                                                   *"
+#echo "***********************************************************************"
+#echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

@@ -2,7 +2,7 @@
 
 ## Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2019.05.001.rc2**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2019.05.001**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
@@ -16,7 +16,7 @@ With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
 Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and not supported anymore.
 
-The release of ELPA 2019.05.001.rc1 changes the ABI and API, since it allows to also build the C-functions with optional error arguments
+The release of ELPA 2019.05.001 changes the ABI and API, since it allows to also build the C-functions with optional error arguments
 
 ## How to install *ELPA* ##
 
