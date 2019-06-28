@@ -906,6 +906,34 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 !f>#endif
 */
 
+/*
+!f>#ifdef HAVE_VSX_SSE
+!f> interface
+!f>   subroutine quad_hh_trafo_real_VSX_4hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="quad_hh_trafo_real_VSX_4hv_double")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
+!f>        type(c_ptr), value        :: q
+!f>        real(kind=c_double)        :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#ifdef HAVE_VSX_SSE
+!f> interface
+!f>   subroutine quad_hh_trafo_real_VSX_4hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="quad_hh_trafo_real_VSX_4hv_single")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
+!f>        type(c_ptr), value        :: q
+!f>        real(kind=c_float)        :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
 
 /*
 !f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
@@ -1035,6 +1063,32 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 !f> interface
 !f>   subroutine hexa_hh_trafo_real_NEON_ARCH64_6hv_single(q, hh, pnb, pnq, pldq, pldh) &
 !f>                                bind(C, name="hexa_hh_trafo_real_NEON_ARCH64_6hv_single")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
+!f>        type(c_ptr), value        :: q
+!f>        real(kind=c_float)        :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+/*
+!f>#ifdef HAVE_VSX_SSE
+!f> interface
+!f>   subroutine hexa_hh_trafo_real_VSX_6hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="hexa_hh_trafo_real_VSX_6hv_double")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
+!f>        type(c_ptr), value        :: q
+!f>        real(kind=c_double)        :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+/*
+!f>#ifdef HAVE_VSX_SSE
+!f> interface
+!f>   subroutine hexa_hh_trafo_real_VSX_6hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="hexa_hh_trafo_real_VSX_6hv_single")
 !f>        use, intrinsic :: iso_c_binding
 !f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
 !f>        type(c_ptr), value        :: q
@@ -1835,7 +1889,6 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == VSX_SSE
     __SIMD_DATATYPE sign = vec_spalts(-1.0);
 #endif
-
 
 #if  VEC_SET == AVX_256
 #ifdef DOUBLE_PRECISION_REAL
