@@ -2,7 +2,8 @@ Changelog for upcoming release
 
 - not yet decided
 
-Changelog for ELPA 2019.05.001.rc1
+Changelog for ELPA 2019.05.001
+
 - elpa_print_kernels supports GPU usage
 - fix an error if PAPI measurements are activated
 - new simple real kernels: block4 and block6
@@ -21,6 +22,9 @@ been introduced a year ago. Removed routines:
   -> cholesky_real
   -> cholesky_complex
   -> solve_tridi
+- new kernels for ARM arch64 added
+- fix an out-of-bound-error in elpa2
+
 
 Changelog for ELPA 2018.11.001
 

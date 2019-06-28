@@ -618,6 +618,8 @@ program test
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
      kernel = elpa_option_enumerate(KERNEL_KEY, i)
+     if (kernel .eq. ELPA_2STAGE_REAL_GPU) continue
+     if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) continue
 #endif
 #ifdef TEST_KERNEL
      kernel = TEST_KERNEL

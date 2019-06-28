@@ -49,7 +49,7 @@
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #define BLOCK6 1
-#define VEC_SET 128
+#define VEC_SET NEON_ARCH64_128
 #include "../../general/precision_macros.h"
 #include "real_128bit_256bit_512bit_BLOCK_template.c"
 #undef REALCASE

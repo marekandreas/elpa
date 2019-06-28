@@ -47,13 +47,13 @@
 #include "config-f90.h"
 
 #define REALCASE 1
-#define DOUBLE_PRECISION 1
-#define BLOCK6 1
-#define VEC_SET 128
+#define SINGLE_PRECISION 1
+#define BLOCK2 1
+#define VEC_SET NEON_ARCH64_128
 #include "../../general/precision_macros.h"
 #include "real_128bit_256bit_512bit_BLOCK_template.c"
-#undef REALCASE
+#undef BLOCK2
 #undef VEC_SET
-#undef BLOCK6
-#undef DOUBLE_PRECISION
+#undef REALCASE
+#undef SINGLE_PRECISION
 

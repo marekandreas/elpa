@@ -125,7 +125,7 @@ then
     CLUSTER="draco"
   fi
 
-  echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS"
+  echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS on $mpiTasks tasks"
 
   # GPU runners
   if [ "$CI_RUNNER_TAGS" == "gpu" ]
@@ -144,16 +144,17 @@ then
     cat ./run_${CLUSTER}_1node_2GPU.sh
     echo " "
     echo "Submitting to SLURM"
-    sbatch -W ./run_${CLUSTER}_1node_2GPU.sh
-    exitCode=$?
-
-    echo " "
-    echo "Exit Code of sbatch: $exitCode"
-    echo " "
-    if (( $exitCode > 0 ))
-    then
-      cat ./ELPA_CI_2gpu.err.*
+    if sbatch -W ./run_${CLUSTER}_1node_2GPU.sh; then
+      exitCode=$?
+    else
+      exitCode=$?
+      echo "Submission exited with exitCode $exitCode"
     fi
+
+    #if (( $exitCode > 0 ))
+    #then
+      cat ./ELPA_CI_2gpu.err.*
+    #fi
     
   fi
 
@@ -174,24 +175,31 @@ then
     cat ./run_${CLUSTER}_1node.sh
     echo " "
     echo "Submitting to SLURM"
-    sbatch -W ./run_${CLUSTER}_1node.sh
-    exitCode=$?
+    if sbatch -W ./run_${CLUSTER}_1node.sh; then
+      exitCode=$?
+    else
+      exitCode=$?
+      echo "Submission excited with exitCode $exitCode"
+    fi
 
     echo " "
     echo "Exit Code of sbatch: $exitCode"
     echo " "
     cat ./ELPA_CI.out.*
-    if [ $exitCode -ne 0 ]
-    then
+    #if [ $exitCode -ne 0 ]
+    #then
       cat ./ELPA_CI.err.*
-    fi
+    #fi
 
   fi
 
-  if [ $exitCode -ne 0 ]
+  #if [ $exitCode -ne 0 ]
+  #then
+  if [ -f ./test-suite.log ]
   then
     cat ./test-suite.log
   fi
+  #fi
 
   exit $exitCode
 
