@@ -798,8 +798,6 @@ EXTRA_DIST = \
   src/elpa2/elpa2_tridiag_band_template.F90 \
   src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/complex_template.F90 \
-  src/elpa2/kernels/real_vsx_4hv_template.c \
-  src/elpa2/kernels/real_vsx_6hv_template.c \
   src/elpa2/kernels/real_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
