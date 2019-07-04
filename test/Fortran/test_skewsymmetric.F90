@@ -214,10 +214,10 @@ program test
    call e_complex%set("timings",1, error)
 
    call e_complex%set("debug",1)
-   call e_complex%set("gpu", 0)
+   call e_complex%set("gpu", 1)
 
    assert_elpa_ok(e_complex%setup())
-   call e_complex%set("solver", elpa_solver_1stage, error)
+   call e_complex%set("solver", elpa_solver_2stage, error)
 
    call e_complex%timer_start("eigenvectors: brute force ")
    call e_complex%eigenvectors(a_complex, ev_complex, z_complex, error)
@@ -246,7 +246,7 @@ program test
    call e_skewsymmetric%set("timings",1, error)
 
    call e_skewsymmetric%set("debug",1)
-   call e_skewsymmetric%set("gpu", 0)
+   call e_skewsymmetric%set("gpu", 1)
 
    call e_skewsymmetric%set("is_skewsymmetric",1)
    assert_elpa_ok(e_skewsymmetric%setup())
@@ -275,7 +275,7 @@ program test
      endif
      endif
    enddo
-   call check_status(status, myid)
+!    call check_status(status, myid)
    
    z_complex(:,:) = 0
    do j=1, na_cols

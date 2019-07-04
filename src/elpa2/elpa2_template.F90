@@ -56,7 +56,7 @@
   &2stage_&
   &PRECISION&
   &_impl (obj, a, ev, q) result(success)
-
+   use matrix_plot
    use elpa_abstract_impl
    use elpa_utilities
    use elpa1_compute
@@ -109,7 +109,7 @@
 
    integer(kind=c_intptr_t)                                           :: tmat_dev, q_dev, a_dev
 
-   integer(kind=c_int)                                                :: i
+   integer(kind=c_int)                                                :: i, j
    logical                                                            :: success, successCUDA
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
@@ -552,8 +552,15 @@
     endif  ! matrix not already banded on input
 
     ! start the computations in 5 steps
-
+!     print *
+!     print *, 'do_useGPU_bandred', do_useGPU_bandred
+!     print *, 'do_useGPU_tridiag_band', do_useGPU_tridiag_band
+!     print *, 'do_useGPU_solve_tridi', do_useGPU_solve_tridi
+!     print *, 'do_useGPU_trans_ev_tridi_to_band', do_useGPU_trans_ev_tridi_to_band
+!     print *, 'do_useGPU_trans_ev_band_to_full', do_useGPU_trans_ev_band_to_full
+!     print *
     if (do_bandred) then
+!       print *, 'do_useGPU_bandred=', do_useGPU_bandred
       call obj%timer%start("bandred")
       ! Reduction full -> band
       call bandred_&
@@ -616,6 +623,7 @@
 
      ! Solve tridiagonal system
      if (do_solve_tridi) then
+!        print *, 'do_useGPU_solve_tridi=', do_useGPU_solve_tridi
        call obj%timer%start("solve")
        call solve_tridi_&
        &PRECISION &
@@ -681,6 +689,8 @@
          stop 1
        endif
 #endif
+     endif
+       
        if (isSkewsymmetric) then
        ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
        ! This makes the eigenvectors complex. 
@@ -705,8 +715,12 @@
            end if
          end do       
        endif
-       
+!        print * , "q="
+!        do i=1,na
+!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
+!        enddo
        ! Backtransform stage 1
+     if (do_trans_to_band) then
        call obj%timer%start("trans_ev_to_band")
 
        ! In the skew-symmetric case this transforms the real part
@@ -718,33 +732,41 @@
        q_dev, &
        ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
-       if (isSkewsymmetric) then
-       ! Transform imaginary part
-       ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
-         call trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &_&
-         &PRECISION &
-         (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
-         q_dev, &
-         ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
-         nrThreads, success=success, kernel=kernel)
-       endif
+!        if (isSkewsymmetric) then
+!        ! Transform imaginary part
+!        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
+!          call trans_ev_tridi_to_band_&
+!          &MATH_DATATYPE&
+!          &_&
+!          &PRECISION &
+!          (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
+!          q_dev, &
+!          ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+!          nrThreads, success=success, kernel=kernel)
+!        endif
+!        print * , "After trans_ev_tridi_to_band: real part of q="
+!        do i=1,na
+!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
+!        enddo
+! #ifdef DOUBLE_PRECISION_REAL
+!        call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',0)
+! #endif
        call obj%timer%stop("trans_ev_to_band")
 
        if (.not.(success)) return
        
-       ! We can now deallocate the stored householder vectors
-       deallocate(hh_trans, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *, "solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage_&
-         &PRECISION " // ": error when deallocating hh_trans "//errorMessage
-         stop 1
-       endif
+!        ! We can now deallocate the stored householder vectors
+!        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
+!        if (istat .ne. 0) then
+!          print *, "solve_evp_&
+!          &MATH_DATATYPE&
+!          &_2stage_&
+!          &PRECISION " // ": error when deallocating hh_trans "//errorMessage
+!          stop 1
+!        endif
      endif ! do_trans_to_band
-
+!      print *, 'after do_useGPU_trans_ev_tridi_to_band', do_useGPU_trans_ev_tridi_to_band
+!      print*, 'do_useGPU_trans_ev_band_to_full=', do_useGPU_trans_ev_band_to_full
      ! the array q might reside on device or host, depending on whether GPU is
      ! used or not. We thus have to transfer he data manually, if one of the
      ! routines is run on GPU and the other not.
@@ -765,27 +787,35 @@
        ! release the memmory allocated on the device
        if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
          successCUDA = cuda_free(q_dev)
+         print *, 'q_dev is freed'
        endif
      endif
 
-     !TODO check that the memory is properly dealocated on the host in case that
+     !TODO check that the memory is properly deallocated on the host in case that
      !the last step is not required
 
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")
        if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
          ! copy to device if we want to continue on GPU
+         
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
-
+!          if (.not.(successCUDA)) then
+!            print *,"elpa2_template, error in cuda_malloc"
+!            stop 1
+!          endif         
+!          print *, 'q_dev=', q_dev, 'loc(q)=', loc(q)&
+!          , 'ldq*matrixCols* size_of_datatype=', ldq*matrixCols* size_of_datatype, ', q(1,1)=', q(1,1)
          successCUDA = cuda_memcpy(q_dev, loc(q), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
-           print *,"elpa2_template, error in copy to device"
+           print *,"elpa2_template, error in copy to device", successCUDA
            stop 1
          endif
        endif
-
+         
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
+       
        call trans_ev_band_to_full_&
        &MATH_DATATYPE&
        &_&
@@ -798,9 +828,89 @@
        , useQRActual  &
 #endif
        )
+!        print * , "After trans_ev_band_to_full: real part of q="
+!        do i=1,na
+!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
+!        enddo
+       call obj%timer%stop("trans_ev_to_full")
+     endif ! do_trans_to_full
+! #ifdef DOUBLE_PRECISION_REAL
+!        call prmat(na,useGPU,q(1:obj%local_nrows, 1:obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
+! #endif
+!        New position:
+     if (do_trans_to_band) then
        if (isSkewsymmetric) then
          ! Transform imaginary part
+         ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
+           call trans_ev_tridi_to_band_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+           (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
+           q_dev, &
+           ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+           nrThreads, success=success, kernel=kernel)
+         endif
+!          print * , "After trans_ev_tridi_to_band: imaginary part of q="
+!          do i=1,na
+!            write(*,"(100g15.5)") ( q(i,j+na), j=1,na )
+!          enddo
+! #ifdef DOUBLE_PRECISION_REAL
+!        call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
+! #endif
+              ! We can now deallocate the stored householder vectors
+       deallocate(hh_trans, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *, "solve_evp_&
+         &MATH_DATATYPE&
+         &_2stage_&
+         &PRECISION " // ": error when deallocating hh_trans "//errorMessage
+         stop 1
+       endif
+     endif
+     if (isSkewsymmetric) then
+       ! first deal with the situation that first backward step was on GPU
+       if(do_useGPU_trans_ev_tridi_to_band) then
+          ! if the second backward step is to be performed, but not on GPU, we have
+          ! to transfer q to the host
+          if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
+            successCUDA = cuda_memcpy(loc(q(1,obj%local_ncols+1)), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
+            if (.not.(successCUDA)) then
+              print *,"elpa2_template, error in copy to host"
+              stop 1
+            endif
+          endif
+
+         ! if the last step is not required at all, or will be performed on CPU,
+         ! release the memmory allocated on the device
+         if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
+           successCUDA = cuda_free(q_dev)
+         endif
+       endif
+     endif
+     
+     if (do_trans_to_full) then
+       call obj%timer%start("trans_ev_to_full")  
+       if (isSkewsymmetric) then
+         if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
+           ! copy to device if we want to continue on GPU
+           successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
+!            if (.not.(successCUDA)) then
+!              print *,"elpa2_template, error in cuda_malloc"
+!              stop 1
+!            endif
+           successCUDA = cuda_memcpy(q_dev, loc(q(1,obj%local_ncols+1)), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+           if (.not.(successCUDA)) then
+             print *,"elpa2_template, error in copy to device"
+             stop 1
+           endif
+         endif
+! #ifdef DOUBLE_PRECISION_REAL
+!          call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',0)
+! #endif
+         ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
+
          call trans_ev_band_to_full_&
          &MATH_DATATYPE&
          &_&
@@ -813,6 +923,13 @@
          , useQRActual  &
 #endif
          )
+!          print * , "After trans_ev_band_to_full: imaginary part of q="
+!          do i=1,na
+!            write(*,"(100g15.5)") ( q(i,j+na), j=1,na )
+!          enddo
+! #ifdef DOUBLE_PRECISION_REAL
+!          call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',1)
+! #endif
        endif
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)
