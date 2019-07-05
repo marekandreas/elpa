@@ -627,22 +627,36 @@
                 ! Transform diagonal block
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                if (isSkewsymmetric) then
+!                   call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                  call dssmv('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                else
+                  call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                endif
 #endif
 #if COMPLEXCASE == 1
                 call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
 #endif
                 if (wantDebug) call obj%timer%stop("blas")
 #if REALCASE == 1
-                x = dot_product(hv(1:nc),hd(1:nc))*tau
+                if (.NOT. isSkewsymmetric) then
+                  x = dot_product(hv(1:nc),hd(1:nc))*tau
+                endif
 #endif
 #if COMPLEXCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
 #endif
-                hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+                if (.NOT. isSkewsymmetric) then
+                  hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+                endif
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                if (isSkewsymmetric) then 
+!                   call PRECISION_SSR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                  call dssr2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                else
+                  call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                endif
 #endif
 #if COMPLEXCASE == 1
                 call PRECISION_HER2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)

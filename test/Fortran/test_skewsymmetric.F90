@@ -214,7 +214,8 @@ program test
    call e_complex%set("timings",1, error)
 
    call e_complex%set("debug",1)
-   call e_complex%set("gpu", 1)
+   call e_complex%set("gpu", 0)
+   call e_complex%set("omp_threads", 8, error)
 
    assert_elpa_ok(e_complex%setup())
    call e_complex%set("solver", elpa_solver_2stage, error)
@@ -246,7 +247,8 @@ program test
    call e_skewsymmetric%set("timings",1, error)
 
    call e_skewsymmetric%set("debug",1)
-   call e_skewsymmetric%set("gpu", 1)
+   call e_skewsymmetric%set("gpu", 0)
+   call e_skewsymmetric%set("omp_threads",8, error)
 
    call e_skewsymmetric%set("is_skewsymmetric",1)
    assert_elpa_ok(e_skewsymmetric%setup())

@@ -1067,10 +1067,17 @@
              !                 B2]
              if ( lre > lrs .and. l_cols > lcs ) then
                call obj%timer%start("blas")
-               call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
-                                   ONE, a_mat(lrs,lcs), ubound(a_mat,dim=1),                 &
-                                   umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
-                                   ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
+               if (isSkewsymmetric) then
+                 call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
+                                     -ONE, a_mat(lrs,lcs), ubound(a_mat,dim=1),                 &
+                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
+                                     ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
+               else
+                 call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
+                                     ONE, a_mat(lrs,lcs), ubound(a_mat,dim=1),                 &
+                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
+                                     ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
+               endif
                call obj%timer%stop("blas")
              endif
 
