@@ -164,13 +164,28 @@ if test x"${enable_openmp}" = x"yes"; then
   CFLAGS="$OPENMP_CFLAGS $CFLAGS"
 fi
 
-
-AX_CHECK_COMPILE_FLAG([-std=c11], [
-  CFLAGS+=" -std=c11"
+c11_standard=no
+AX_CHECK_COMPILE_FLAG([-std=gnu11], [
+  c11_standard=yes
 ], [
-  echo "C compiler cannot compile C11 code"
-  exit -1
+  echo "C compiler cannot compile -std=gnu11 code"
+  echo "testing -std=c11.."
 ])
+if test x"$c11_standard" =x"yes"; then
+  CFLAGS+=" -std=gnu11"
+fi
+
+if test x"$c11_standard" =x"no"; then
+  AX_CHECK_COMPILE_FLAG([-std=c11], [
+    c11_standard=yes
+  ], [
+    echo "C compiler cannot compile C11 code"
+    exit -1
+  ])
+  if test x"$c11_standard" =x"yes"; then
+    CFLAGS+=" -std=c11"
+  fi
+fi
 
 AC_MSG_CHECKING(whether C compiler can use _Generic )
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -1320,6 +1335,29 @@ if test x"${enable_kcomputer}" = x"yes"; then
   fi
   if test x"${enable_fortran2008_features}" = x"yes" ; then
     AC_MSG_ERROR(on K-computer you have to switch off Fortran 2008 features!)
+  fi
+fi
+
+AC_MSG_CHECKING(whether we build for NEC SX-Auroa)
+AC_ARG_ENABLE([SX-Aurora],
+              AS_HELP_STRING([--enable-SX-Aurora],
+                             [enable builds on SX-Aurora, default no.]),
+			     [if test x"$enableval"=x"yes"; then
+			        enable_sxaurora=yes
+		              else
+				enable_sxaurora=no
+			      fi],
+              [enable_kcomputer=no])
+AC_MSG_RESULT([${enable_sxaurora}])
+AM_CONDITIONAL([BUILD_KCOMPUTER],[test x"$enable_sxaurora" = x"yes"])
+if test x"${enable_sxaurora}" = x"yes"; then
+ AC_DEFINE([BUILD_SXAURORA], [1], [build for SX-Aurora])
+ FC_MODINC="-I"
+  #if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
+  #  AC_MSG_ERROR(on K-computer you have to switch off assumed-size arrays!)
+  #fi
+  if test x"${enable_fortran2008_features}" = x"yes" ; then
+    AC_MSG_ERROR(on SX-Aurora you have to switch off Fortran 2008 features!)
   fi
 fi
 

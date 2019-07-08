@@ -897,7 +897,12 @@ module elpa_impl
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
       type(c_ptr) :: ptr
+#ifdef USE_FORTRAN2008
       integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
+
       integer :: val, actual_error
       character(kind=c_char, len=elpa_index_int_value_to_strlen_c(self%index, option_name // C_NULL_CHAR)), pointer :: string
 
@@ -905,9 +910,13 @@ module elpa_impl
 
       call self%get(option_name, val, actual_error)
       if (actual_error /= ELPA_OK) then
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = actual_error
         endif
+#else
+          error = actual_error
+#endif
         return
       endif
 
@@ -916,9 +925,13 @@ module elpa_impl
         call c_f_pointer(ptr, string)
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = actual_error
       endif
+#else
+        error = actual_error
+#endif
     end function
 
 

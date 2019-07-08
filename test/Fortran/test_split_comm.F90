@@ -231,13 +231,13 @@ program test
    call prepare_matrix_random(na, myid_sub, sc_desc, a, z, as)
    as(:,:) = a(:,:)
 
-   e => elpa_allocate()
+   e => elpa_allocate(error)
    call set_basic_params(e, na, nev, na_rows, na_cols, mpi_sub_comm, my_prow, my_pcol)
 
    call e%set("timings",1, error)
 
-   call e%set("debug",1)
-   call e%set("gpu", 0)
+   call e%set("debug",1, error)
+   call e%set("gpu", 0, error)
    !call e%set("max_stored_rows", 15, error)
 
    assert_elpa_ok(e%setup())
@@ -267,14 +267,14 @@ program test
      call e%print_times("eigenvectors")
    endif
 
-   call elpa_deallocate(e)
+   call elpa_deallocate(e, error)
 
    deallocate(a)
    deallocate(as)
    deallocate(z)
    deallocate(ev)
 
-   call elpa_uninit()
+   call elpa_uninit(error)
 
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)

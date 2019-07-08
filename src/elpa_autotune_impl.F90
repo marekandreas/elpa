@@ -31,7 +31,6 @@ module elpa_autotune_impl
 #else
       integer, intent(out)           :: error
 #endif
-      !print *, "Print me"
     end subroutine
 
     !> \brief function to destroy an elpa autotune object
