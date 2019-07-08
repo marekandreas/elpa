@@ -81,8 +81,11 @@
 
 #define __forceinline __attribute__((always_inline))
 
-#endif
+#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX_512 */
 
+#if VEC_SET == NEON_ARCH64_128
+#include <arm_neon.h>
+#endif
 
 #include <complex.h>
 
@@ -101,6 +104,10 @@
 
 #if VEC_SET == SSE_128
 #define SIMD_SET SSE
+#endif
+
+#if VEC_SET == NEON_ARCH64_128
+#define SIMD_SET NEON_ARCH64
 #endif
 
 #if VEC_SET == AVX_256
@@ -154,6 +161,49 @@
 #endif /* SINGLE_PRECISION_COMPLEX */
 
 #endif /* VEC_SET == SSE_128 */
+
+#if VEC_SET == NEON_128
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define offset 2
+#define __SIMD_DATATYPE __Float64x2_t
+#define _SIMD_LOAD vld1q_f64
+#define _SIMD_LOADU _mm_loadu_pd
+#define _SIMD_STORE vst1q_f64
+#define _SIMD_STOREU _mm_storeu_pd
+#define _SIMD_MUL vmulq_f64
+#define _SIMD_ADD vaddq_f64
+#define _SIMD_XOR _mm_xor_pd
+#define _SIMD_ADDSUB _mm_addsub_pd
+#define _SIMD_SHUFFLE _mm_shuffle_pd
+#define _SHUFFLE _MM_SHUFFLE2(0,1)
+
+#ifdef __ELPA_USE_FMA__
+#define _SIMD_FMSUBADD _mm_maddsub_pd
+#endif
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+#ifdef SINGLE_PRECISION_COMPLEX
+#define offset 4
+#define __SIMD_DATATYPE __m128
+#define _SIMD_LOAD _mm_load_ps
+#define _SIMD_LOADU _mm_loadu_ps
+#define _SIMD_STORE _mm_store_ps
+#define _SIMD_STOREU _mm_storeu_ps
+#define _SIMD_MUL _mm_mul_ps
+#define _SIMD_ADD _mm_add_ps
+#define _SIMD_XOR _mm_xor_ps
+#define _SIMD_ADDSUB _mm_addsub_ps
+#define _SIMD_SHUFFLE _mm_shuffle_ps
+#define _SHUFFLE 0xb1
+
+#ifdef __ELPA_USE_FMA__
+#define _SIMD_FMSUBADD _mm_maddsub_ps
+#endif
+
+#endif /* SINGLE_PRECISION_COMPLEX */
+
+#endif /* VEC_SET == NEON_128 */
 
 #if VEC_SET == AVX_256
 
