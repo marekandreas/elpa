@@ -62,9 +62,8 @@
       &_impl
       use elpa
       use elpa_abstract_impl
-#ifdef WITH_OPENMP
-      use omp_lib
-#endif
+      use elpa_omp
+
       implicit none
       integer(kind=ik)            :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE)    :: d(na), e(na)
@@ -135,11 +134,8 @@
          print *,"Problem setting option. Aborting..."
          stop
       endif
-      call obj%set("legacy_api", 1, error)
-      if (error .ne. ELPA_OK) then
-         print *,"Problem setting option.  Aborting..."
-         stop
-      endif
+
+      call obj%creating_from_legacy_api()
 
       if (obj%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
@@ -148,6 +144,12 @@
       endif
 
 #ifdef WITH_OPENMP
+      ! store the number of OpenMP threads used in the calling function
+      ! restore this at the end of ELPA 2
+      omp_threads_caller = omp_get_max_threads()
+      
+      ! check the number of threads that ELPA should use internally
+
       nrThreads = omp_get_max_threads()
       call obj%set("omp_threads", nrThreads, error)
 #else
@@ -167,6 +169,12 @@
       if (error /= ELPA_OK) then
         print *, "Cannot run solve_tridi"
         success = .false.
+        ! restore original OpenMP settings
+#ifdef WITH_OPENMP
+        ! store the number of OpenMP threads used in the calling function
+        ! restore this at the end of ELPA 2
+        call omp_set_num_threads(omp_threads_caller)
+#endif
         return
       else
         success = .true.
@@ -183,6 +191,13 @@
         print *," Cannot uninit the internal ELPA object! This might lead to a memory leak!"
 !        stop
       endif
+
+     ! restore original OpenMP settings
+#ifdef WITH_OPENMP
+     ! store the number of OpenMP threads used in the calling function
+     ! restore this at the end of ELPA 2
+     call omp_set_num_threads(omp_threads_caller)
+#endif
 
      !call timer%stop("elpa_solve_tridi_&
      !&PRECISION&

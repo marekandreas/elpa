@@ -498,3 +498,5 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
  */
 int elpa_index_load_autotune_state(elpa_index_t index, int* autotune_level, int* autotune_domain, int* min_loc,
                                     double* min_val, int* current, int* cardinality, char* filename);
+
+int elpa_index_is_printing_mpi_rank(elpa_index_t index);

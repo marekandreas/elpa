@@ -2,7 +2,7 @@
 
 ## Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2018.11.001**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2019.05.001.rc2**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
@@ -10,13 +10,13 @@ The old, obsolete legacy API will be deprecated in the future !
 Allready now, all new features of ELPA are only available with the new API. Thus, there
 is no reason to keep the legacy API arround for too long.
 
-The release ELPA 2018.11.001 will be the last release, where the legacy API is
+The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
-With release ELPA 2019.05.001 the legacy API will be disabled by default, however,
+With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
 Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and not supported anymore.
 
-The release of ELPA 2018.11.001 changes the ABI and API, since more functions have an error argument. In C this error argument is required, in Fortran it is optional.
+The release of ELPA 2019.05.001.rc1 changes the ABI and API, since it allows to also build the C-functions with optional error arguments
 
 ## How to install *ELPA* ##
 
@@ -49,7 +49,8 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 
 | configure option                     | description                                           |
 |:------------------------------------ |:----------------------------------------------------- |
-|  --disable-legacy                    | do not build legacy API, will be build as default     |
+|  --enable-legacy-interface           | build legacy API, will not be build as default        |
+|  --enable-optional-argument-in-C-API | treat error arguments in C-API as optional            |
 |  --enable-openmp                     | use OpenMP threading, default no.                     |
 |  --enable-redirect                   | for ELPA test programs, allow redirection of <br> stdout/stderr per MPI taks in a file <br> (useful for timing), default no. |
 |  --enable-single-precision           | build with single precision version                   |
@@ -57,6 +58,7 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  --disable-band-to-full-blocking     | build ELPA2 with blocking in band_to_full <br> (default:enabled) |
 |  --disable-mpi-module                | do not use the Fortran MPI module, <br> get interfaces by 'include "mpif.h') |
 |  --disable-generic                   | do not build GENERIC kernels, default: enabled        |
+|  --enable-sparc64                    | do not build SPARC64 kernels, default: disabled        |
 |  --disable-sse                       | do not build SSE kernels, default: enabled            |
 |  --disable-sse-assembly              | do not build SSE_ASSEMBLY kernels, default: enabled   |
 |  --disable-avx                       | do not build AVX kernels, default: enabled            |
@@ -72,14 +74,17 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  --with-fixed-real-kernel=KERNEL     | compile with only a single specific real kernel.      |
 |  --with-fixed-complex-kernel=KERNEL  | compile with only a single specific complex kernel.   |
 |  --with-gpu-support-only             | Compile and always use the GPU version                |
+|  --with-likwid=[yes|no|PATH]         | use the likwid tool to measure performance (has an performance impact!), default: no |
+|  --with-default-real-kernel=KERNEL   | set the real kernel KERNEL as default                 |
+|  --with-default-complex-kernel=KERNEL| set the compplex kernel KERNEL as default             |
 |  --enable-scalapack-tests            | build SCALAPACK test cases for performance <br> omparison, needs MPI, default no. |
 |  --enable-autotuning                 | enables autotuning functionality, default yes         |
 |  --enable-c-tests                    | enables the C tests for elpa, default yes             |
-| --disable-assumed-size               | do NOT use assumed-size Fortran arrays. default use   |
-| --enable-scalapack-tests             | build also ScalaPack tests for performance comparison; needs MPI |
-| --disable-Fortran2008-features       | disable Fortran 2008 if compiler does not support it  |
-| --enable-pyhton                      | build and install python wrapper, default no          |
-| --enable-python-tests                | enable python tests, default no.                      |
+|  --disable-assumed-size              | do NOT use assumed-size Fortran arrays. default use   |
+|  --enable-scalapack-tests            | build also ScalaPack tests for performance comparison; needs MPI |
+|  --disable-Fortran2008-features      | disable Fortran 2008 if compiler does not support it  |
+|  --enable-pyhton                     | build and install python wrapper, default no          |
+|  --enable-python-tests               | enable python tests, default no.                      |
 
 
 We recommend that you do not build ELPA in its main directory but that you use it

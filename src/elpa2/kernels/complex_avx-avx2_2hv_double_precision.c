@@ -48,8 +48,12 @@
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
+#define VEC_SET AVX_256
+#define BLOCK2 1
 #include "../../general/precision_macros.h"
-#include "complex_avx-avx2_2hv_template.c"
+#include "complex_128bit_256bit_512bit_BLOCK_template.c"
+#undef VEC_SET
+#undef BLOCK2
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 

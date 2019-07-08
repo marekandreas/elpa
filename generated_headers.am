@@ -22,6 +22,22 @@ elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
                        $(top_srcdir)/src/elpa_api.F90 | elpa
 	@rm -f $@
 	$(call extract_interface,!c>)
+	$(call extract_interface,!c_o>)
+	$(call extract_interface,!c_no>)
+
+#if OPTIONAL_C_ERROR_ARGUMENT
+#
+#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
+#                       $(top_srcdir)/src/elpa_impl_math_template.F90 \
+#                       $(top_srcdir)/src/elpa_api.F90 | elpa
+#	$(call extract_interface,!c_o>)
+#
+#else
+#elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
+#                       $(top_srcdir)/src/elpa_impl_math_template.F90 \
+#                       $(top_srcdir)/src/elpa_api.F90 | elpa
+#	$(call extract_interface,!c_no>)
+#endif
 
 generated_headers += elpa/elpa_generated_legacy.h
 elpa/elpa_generated_legacy.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \
@@ -37,7 +53,7 @@ test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shar
 	$(call extract_interface,!c>)
 
 generated_headers += src/elpa_generated_fortran_interfaces.h
-src/elpa_generated_fortran_interfaces.h: $(filter-out $(wildcard $(top_srcdir)/src/*generated*), $(wildcard $(top_srcdir)/src/elpa2/kernels/*.c $(top_srcdir)/src/elpa2/kernels/*.s $(top_srcdir)/src/*.[ch] $(top_srcdir)/src/elpa_generalized/*.[ch])) | src
+src/elpa_generated_fortran_interfaces.h: $(filter-out $(wildcard $(top_srcdir)/src/*generated*), $(wildcard $(top_srcdir)/src/helpers/*.c $(top_srcdir)/src/elpa2/kernels/*.c $(top_srcdir)/src/elpa2/kernels/*.s $(top_srcdir)/src/*.[ch] $(top_srcdir)/src/elpa_generalized/*.[ch])) | src
 	@rm -f $@
 	$(call extract_interface,!f>)
 	$(call extract_interface,#!f>)

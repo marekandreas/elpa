@@ -64,6 +64,8 @@ module timings_dummy
       procedure, pass :: enable => timer_enable
       procedure, pass :: free => timer_free
       procedure, pass :: print => timer_print
+      procedure, pass :: measure_flops => timer_measure_flops
+      procedure, pass :: set_print_options => timer_set_print_options
   end type 
 
   type(timer_dummy_t) :: timer
@@ -93,6 +95,34 @@ module timings_dummy
   subroutine timer_enable(self)
     class(timer_dummy_t), intent(inout), target :: self
     
+  end subroutine
+
+  subroutine timer_measure_flops(self, enable)
+    class(timer_dummy_t), intent(inout), target :: self
+    logical                                     :: enable
+  end subroutine
+
+  subroutine timer_set_print_options(self, print_allocated_memory, &
+        print_virtual_memory, &
+        print_max_allocated_memory, &
+        print_flop_count, &
+        print_flop_rate, &
+        print_ldst, &
+        print_memory_bandwidth, &
+        print_ai, &
+        bytes_per_ldst)
+
+    class(timer_dummy_t), intent(inout), target :: self
+    logical, intent(in), optional :: &
+        print_allocated_memory, &
+        print_virtual_memory, &
+        print_max_allocated_memory, &
+        print_flop_count, &
+        print_flop_rate, &
+        print_ldst, &
+        print_memory_bandwidth, &
+        print_ai
+    integer, intent(in), optional :: bytes_per_ldst
   end subroutine
 
   subroutine timer_free(self)

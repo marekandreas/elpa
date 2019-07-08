@@ -56,6 +56,9 @@ module elpa_impl
   use elpa_mpi
   use elpa_generated_fortran_interfaces
   use elpa_utilities, only : error_unit
+#ifdef HAVE_LIKWID
+  use likwid
+#endif
 
   use elpa_abstract_impl
 #ifdef ENABLE_AUTOTUNING
@@ -73,6 +76,9 @@ module elpa_impl
    private
    integer :: communicators_owned
 
+   !This object has been created through the legacy api.
+   integer :: from_legacy_api
+
    !> \brief methods available with the elpa_impl_t type
    contains
      !> \brief the puplic methods
@@ -86,6 +92,9 @@ module elpa_impl
      procedure, public :: can_set => elpa_can_set           !< a method to check whether a key/value pair can be set : implemented
                                                             !< in elpa_can_set
 
+     ! call before setup if created from the legacy api
+     ! remove this function completely after the legacy api is dropped
+     procedure, public :: creating_from_legacy_api => elpa_creating_from_legacy_api
 
      ! timer
      procedure, public :: get_time => elpa_get_time
@@ -185,12 +194,14 @@ module elpa_impl
 #else
       integer, intent(out)           :: error
 #endif
-      integer                        :: error2
+      integer                        :: error2, output_build_config
 
       allocate(obj, stat=error2)
       if (error2 .ne. 0) then
         write(error_unit, *) "elpa_allocate(): could not allocate object"
-      endif        
+      endif
+
+      obj%from_legacy_api = 0
 
       ! check whether init has ever been called
       if ( elpa_initialized() .ne. ELPA_OK) then
@@ -223,30 +234,93 @@ module elpa_impl
 #endif
     end function
 
-
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define elpa_allocate(...) CONC(elpa_allocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
+#endif
     !c> /*! \brief C interface for the implementation of the elpa_allocate method
     !c> *
     !c> *  \param  none
     !c> *  \result elpa_t handle
     !c> */
-    !c> elpa_t elpa_allocate(int *error);
-    function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
-      integer(kind=c_int) :: error
-      type(c_ptr) :: ptr
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> elpa_t elpa_allocate2(int *error);
+    !c_o> elpa_t elpa_allocate1();
+    !c_o> #endif
+    function elpa_impl_allocate_c1() result(ptr) bind(C, name="elpa_allocate1")
+      type(c_ptr)                :: ptr
+      type(elpa_impl_t), pointer :: obj
+
+      obj => elpa_impl_allocate()
+      ptr = c_loc(obj)
+    end function
+
+    function elpa_impl_allocate_c2(error) result(ptr) bind(C, name="elpa_allocate2")
+      integer(kind=c_int)        :: error
+      type(c_ptr)                :: ptr
       type(elpa_impl_t), pointer :: obj
 
       obj => elpa_impl_allocate(error)
       ptr = c_loc(obj)
     end function
+#else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> elpa_t elpa_allocate(int *error);
+    !c_no> #endif
+    function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
+      integer(kind=c_int)        :: error
+      type(c_ptr)                :: ptr
+      type(elpa_impl_t), pointer :: obj
 
+      obj => elpa_impl_allocate(error)
+      ptr = c_loc(obj)
+    end function
+#endif
 
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define NARGS(...) NARGS_(__VA_ARGS__, 5, 4, 3, 2, 1, 0)
+    !c_o> #define NARGS_(_5, _4, _3, _2, _1, N, ...) N
+    !c_o> #define CONC(A, B) CONC_(A, B)
+    !c_o> #define CONC_(A, B) A##B
+    !c_o> #define elpa_deallocate(...) CONC(elpa_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
+#endif
     !c> /*! \brief C interface for the implementation of the elpa_deallocate method
     !c> *
     !c> *  \param  elpa_t  handle of ELPA object to be deallocated
     !c> *  \param  int*    error code
     !c> *  \result void
     !c> */
-    !c> void elpa_deallocate(elpa_t handle, int *error);
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> void elpa_deallocate2(elpa_t handle, int *error);
+    !c_o> void elpa_deallocate1(elpa_t handle);
+    !c_o> #endif
+    subroutine elpa_impl_deallocate_c2(handle, error) bind(C, name="elpa_deallocate2")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+      integer(kind=c_int)        :: error
+
+      call c_f_pointer(handle, self)
+      call self%destroy(error)
+      deallocate(self)
+    end subroutine
+
+    subroutine elpa_impl_deallocate_c1(handle) bind(C, name="elpa_deallocate1")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+
+      call c_f_pointer(handle, self)
+      call self%destroy()
+      deallocate(self)
+    end subroutine
+#else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> void elpa_deallocate(elpa_t handle, int *error);
+    !c_no> #endif
     subroutine elpa_impl_deallocate_c(handle, error) bind(C, name="elpa_deallocate")
       type(c_ptr), value         :: handle
       type(elpa_impl_t), pointer :: self
@@ -256,6 +330,8 @@ module elpa_impl
       call self%destroy(error)
       deallocate(self)
     end subroutine
+
+#endif
 
     !> \brief function to load all the parameters, which have been saved to a file
     !> Parameters
@@ -419,17 +495,23 @@ module elpa_impl
     end subroutine
 
 
-
-
-
 #ifdef ENABLE_AUTOTUNING
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define elpa_autotune_deallocate(...) CONC(elpa_autotune_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
+#endif
     !c> /*! \brief C interface for the implementation of the elpa_autotune_deallocate method
     !c> *
     !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
     !c> *  \result void
     !c> */
-    !c> void elpa_autotune_deallocate(elpa_autotune_t handle, int *error);
-    subroutine elpa_autotune_impl_deallocate_c( autotune_handle) bind(C, name="elpa_autotune_deallocate")
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> void elpa_autotune_deallocate2(elpa_autotune_t handle, int *error);
+    !c_o> void elpa_autotune_deallocate1(elpa_autotune_t handle);
+    !c_o> #endif
+    subroutine elpa_autotune_impl_deallocate_c1( autotune_handle) bind(C, name="elpa_autotune_deallocate1")
       type(c_ptr), value                  :: autotune_handle
 
       type(elpa_autotune_impl_t), pointer :: self
@@ -439,7 +521,32 @@ module elpa_impl
       call self%destroy(error)
       deallocate(self)
     end subroutine
+
+    subroutine elpa_autotune_impl_deallocate_c2( autotune_handle, error) bind(C, name="elpa_autotune_deallocate2")
+      type(c_ptr), value                  :: autotune_handle
+
+      type(elpa_autotune_impl_t), pointer :: self
+      integer(kind=c_int)                 :: error
+      call c_f_pointer(autotune_handle, self)
+      call self%destroy(error)
+      deallocate(self)
+    end subroutine
+#else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> void elpa_autotune_deallocate(elpa_autotune_t handle, int *error);
+    !c_no> #endif
+    subroutine elpa_autotune_impl_deallocate( autotune_handle, error) bind(C, name="elpa_autotune_deallocate")
+      type(c_ptr), value                  :: autotune_handle
+
+      type(elpa_autotune_impl_t), pointer :: self
+      integer(kind=c_int)                 :: error
+      call c_f_pointer(autotune_handle, self)
+      call self%destroy(error)
+      deallocate(self)
+    end subroutine
+
 #endif
+#endif /* ENABLE_AUTOTUNING */
 
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
@@ -447,23 +554,36 @@ module elpa_impl
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
       class(elpa_impl_t), intent(inout)   :: self
-      integer                             :: error, timings
+      integer                             :: error, timings, performance, build_config
 
 #ifdef WITH_MPI
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
                                              mpierr, mpierr2, process_row, process_col, mpi_string_length, &
-                                             present_np_rows, present_np_cols, is_process_id_zero, np_total, legacy_api
+                                             present_np_rows, present_np_cols, np_total
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
       character(*), parameter             :: MPI_CONSISTENCY_MSG = &
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
 
 #endif
 
+
+#ifdef HAVE_LIKWID
+      !initialize likwid
+      call likwid_markerInit()
+      call likwid_markerThreadInit()
+      call likwid_markerStartRegion("TOTAL")
+#endif
+
 #ifdef HAVE_DETAILED_TIMINGS
       call self%get("timings",timings, error)
+      call self%get("measure_performance",performance, error)
       if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
       if (timings == 1) then
         call self%timer%enable()
+        if (performance == 1) then
+          call self%timer%measure_flops(.true.)
+          call self%timer%set_print_options(print_flop_count=.true.,print_flop_rate=.true.)
+        endif
       endif
 #endif
 
@@ -478,11 +598,6 @@ module elpa_impl
       ! inconsistencies and is rather natural from the user point of view
 
 #ifdef WITH_MPI
-      if (self%is_set("legacy_api") == 1) then
-        call self%get("legacy_api", legacy_api, error)
-        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
-      endif
-
       if (self%is_set("mpi_comm_parent") == 1) then
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
@@ -494,15 +609,8 @@ module elpa_impl
         call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
         call self%set("num_processes", np_total, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-
-        is_process_id_zero = 0
-        if (my_id == 0) &
-          is_process_id_zero = 1
-        call self%set("is_process_id_zero", is_process_id_zero, error)
-        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-
       else
-        if (legacy_api .ne. 1) then
+        if (self%from_legacy_api .ne. 1) then
           write(error_unit,*) MPI_CONSISTENCY_MSG
           error = ELPA_ERROR
           return
@@ -615,7 +723,7 @@ module elpa_impl
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       endif
 
-      if (legacy_api .ne. 1) then
+      if (self%from_legacy_api .ne. 1) then
         if (np_total .ne. np_rows * np_cols) then
           print *,"MPI parent communicator and row/col communicators do not match. Aborting..."
           stop
@@ -629,8 +737,6 @@ module elpa_impl
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("process_id", 0, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-      call self%set("is_process_id_zero", 1, error)
-      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("num_process_rows", 1, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("num_process_cols", 1, error)
@@ -639,6 +745,18 @@ module elpa_impl
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 #endif
 
+#if STORE_BUILD_CONFIG
+      call self%get("output_build_config",build_config, error)
+      if ( build_config .eq. 1) then
+#ifdef WITH_MPI
+        if (my_id .eq. 0) then
+#endif
+          call print_build_config()
+#ifdef WITH_MPI
+        endif
+#endif
+      endif
+#endif
     end function
 
 
@@ -957,6 +1075,11 @@ module elpa_impl
       endif
 #else
       error = ELPA_OK
+#endif
+
+#ifdef HAVE_LIKWID
+      call likwid_markerStopRegion("TOTAL")
+      call likwid_markerClose()
 #endif
 
 #ifdef WITH_MPI
@@ -1784,4 +1907,10 @@ module elpa_impl
       return
     end function
 
+    subroutine elpa_creating_from_legacy_api(self)
+      implicit none
+      class(elpa_impl_t), intent(inout)          :: self
+
+      self%from_legacy_api = 1
+    end subroutine
 end module

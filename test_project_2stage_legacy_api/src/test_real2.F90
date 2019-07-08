@@ -76,7 +76,7 @@ program test_real_example
    use iso_c_binding
    use elpa1
    use elpa2
-   !use elpa_utilities, only : error_unit
+   !use elpa_utilities, only : error_units
 #ifdef HAVE_MPI_MODULE
    use mpi
    implicit none
@@ -111,7 +111,7 @@ program test_real_example
    character(len=8)           :: task_suffix
    integer           :: j
 
-   integer, parameter :: error_unit = 0
+   integer, parameter :: error_units = 0
    !-------------------------------------------------------------------------------
 
 
@@ -171,12 +171,12 @@ program test_real_example
    call descinit(sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info)
 
    if (info .ne. 0) then
-     write(error_unit,*) 'Error in BLACS descinit! info=',info
-     write(error_unit,*) 'Most likely this happend since you want to use'
-     write(error_unit,*) 'more MPI tasks than are possible for your'
-     write(error_unit,*) 'problem size (matrix size and blocksize)!'
-     write(error_unit,*) 'The blacsgrid can not be set up properly'
-     write(error_unit,*) 'Try reducing the number of MPI tasks...'
+     write(error_units,*) 'Error in BLACS descinit! info=',info
+     write(error_units,*) 'Most likely this happend since you want to use'
+     write(error_units,*) 'more MPI tasks than are possible for your'
+     write(error_units,*) 'problem size (matrix size and blocksize)!'
+     write(error_units,*) 'The blacsgrid can not be set up properly'
+     write(error_units,*) 'Try reducing the number of MPI tasks...'
      call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 
@@ -216,7 +216,7 @@ program test_real_example
                             na_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_world)
 
    if (.not.(success)) then
-      write(error_unit,*) "elpa_solve_evp_real_2stage_double produced an error! Aborting..."
+      write(error_units,*) "elpa_solve_evp_real_2stage_double produced an error! Aborting..."
       call MPI_ABORT(mpi_comm_world, 1, mpierr)
    endif
 

@@ -92,7 +92,7 @@ module test_blacs_infrastructure
                                        np_rows, np_cols, na_rows,  &
                                        na_cols, sc_desc, my_blacs_ctxt, info)
 
-      use elpa_utilities, only : error_unit
+      !use elpa_utilities, only : error_unit
       !use test_util
       implicit none
 
@@ -101,6 +101,7 @@ module test_blacs_infrastructure
                                        my_blacs_ctxt, info
       integer(kind=ik), intent(out)  :: na_rows, na_cols, sc_desc(1:9)
 
+      integer(kind=ik), parameter    :: error_unit=0
 #ifdef WITH_MPI
       integer(kind=ik), external       :: numroc
       integer(kind=ik)                 :: mpierr

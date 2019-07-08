@@ -2104,7 +2104,7 @@
     endif
 
     a_off = a_off + offset
-    if (a_off + next_local_n + nbw > a_dim2) then
+    if (a_off + next_local_n + nbw >= a_dim2) then
 #ifdef WITH_OPENMP
       if (useGPU) then
         print *,"trans_ev_tridi_to_band_real: not yet implemented"

@@ -49,8 +49,6 @@
 #include <elpa/elpa.h>
 #include "elpa_index.h"
 
-#include <execinfo.h>
-
 #include "config.h"
 
 #ifdef WITH_OPENMP
@@ -118,6 +116,7 @@ static int cannon_buffer_size_is_valid(elpa_index_t index, int n, int new_value)
 static int na_is_valid(elpa_index_t index, int n, int new_value);
 static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
+static int output_build_config_is_valid(elpa_index_t index, int n, int new_value);
 static int gpu_is_valid(elpa_index_t index, int n, int new_value);
 
 static int is_positive(elpa_index_t index, int n, int new_value);
@@ -181,7 +180,6 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("process_row", "Process row number in the 2D domain decomposition", NULL, PRINT_NO),
         INT_PARAMETER_ENTRY("process_col", "Process column number in the 2D domain decomposition", NULL, PRINT_NO),
         INT_PARAMETER_ENTRY("process_id", "Process rank", NULL, PRINT_NO),
-        INT_PARAMETER_ENTRY("is_process_id_zero", "Is it a process with rank zero?", NULL, PRINT_NO),
         INT_PARAMETER_ENTRY("num_process_rows", "Number of process row number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
         INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
         INT_PARAMETER_ENTRY("num_processes", "Total number of processes", NULL, PRINT_STRUCTURE),
@@ -190,60 +188,64 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", PRINT_NO),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator", PRINT_NO),
         INT_ANY_ENTRY("blacs_context", "BLACS context", PRINT_NO),
-        INT_ANY_ENTRY("legacy_api", "This object has been created through the legacy api. Parameter for internal use only", PRINT_NO),
+#ifdef STORE_BUILD_CONFIG
+        INT_ENTRY("output_build_config", "Output the build config", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, output_build_config_is_valid, NULL, PRINT_NO),
+#endif
         INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
-        INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
-        INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
-        INT_ENTRY("gpu_solve_tridi", "Use GPU acceleration for ELPA solve tridi", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("gpu_solve_tridi", "Use GPU acceleration for ELPA solve tridi", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
-        INT_ENTRY("gpu_trans_ev", "Use GPU acceleration for ELPA1 trans ev", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("gpu_trans_ev", "Use GPU acceleration for ELPA1 trans ev", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
-        INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
                         number_of_real_kernels, real_kernel_enumerate, real_kernel_is_valid, real_kernel_name, PRINT_YES),
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
                         number_of_complex_kernels, complex_kernel_enumerate, complex_kernel_is_valid, complex_kernel_name, PRINT_YES),
 
-        INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         min_tile_size_cardinality, min_tile_size_enumerate, min_tile_size_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("intermediate_bandwidth", "Specifies the intermediate bandwidth in ELPA2 full->banded step. Must be a multiple of nblk", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         intermediate_bandwidth_cardinality, intermediate_bandwidth_enumerate, intermediate_bandwidth_is_valid, NULL, PRINT_YES),
 
-        INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("stripewidth_real", "Stripewidth_real, default 48. Must be a multiple of 4", 48, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_REAL,
+        INT_ENTRY("stripewidth_real", "Stripewidth_real, default 48. Must be a multiple of 4", 48, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_REAL, \
                         stripewidth_real_cardinality, stripewidth_real_enumerate, stripewidth_real_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_COMPLEX,
+        INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
                         stripewidth_complex_cardinality, stripewidth_complex_enumerate, stripewidth_complex_is_valid, NULL, PRINT_YES),
 
-        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL, PRINT_YES),
 #ifdef WITH_OPENMP
-        INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL, PRINT_YES),
 #else
-        INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL, PRINT_YES),
 #endif
-        INT_ENTRY("cannon_buffer_size", "Increasing the buffer size might make it faster, but costs memory", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,
+        INT_ENTRY("cannon_buffer_size", "Increasing the buffer size might make it faster, but costs memory", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL, PRINT_YES),
         //BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL),
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL, PRINT_YES),
         BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("debug", "Emit verbose debugging messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("print_flops", "Print FLOP rates on task 0", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
+        BOOL_ENTRY("measure_performance", "Also measure with flops (via papi) with the timings", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
 };
@@ -268,27 +270,17 @@ void elpa_index_free(elpa_index_t index) {
         free(index);
 }
 
-static int compar(const void *key, const void *member) {
-        const char *name = (const char *) key;
-        elpa_index_int_entry_t *entry = (elpa_index_int_entry_t *) member;
-
-        int l1 = strlen(entry->base.name);
-        int l2 = strlen(name);
-        if (l1 != l2) {
-                return 1;
-        }
-        if (strncmp(name, entry->base.name, l1) == 0) {
-                return 0;
-        } else {
-                return 1;
-        }
+static int compar(const void *a, const void *b) {
+        return strcmp(((elpa_index_int_entry_t *) a)->base.name,
+                      ((elpa_index_int_entry_t *) b)->base.name);
 }
 
 #define IMPLEMENT_FIND_ENTRY(TYPE, ...) \
         static int find_##TYPE##_entry(char *name) { \
                 elpa_index_##TYPE##_entry_t *entry; \
+                elpa_index_##TYPE##_entry_t key = { .base = {.name = name} } ; \
                 size_t nmembers = nelements(TYPE##_entries); \
-                entry = lfind((const void*) name, (const void *) TYPE##_entries, &nmembers, sizeof(elpa_index_##TYPE##_entry_t), compar); \
+                entry = lfind((const void*) &key, (const void *) TYPE##_entries, &nmembers, sizeof(elpa_index_##TYPE##_entry_t), compar); \
                 if (entry) { \
                         return (entry - &TYPE##_entries[0]); \
                 } else { \
@@ -301,7 +293,6 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
 #define IMPLEMENT_GETENV(TYPE, PRINTF_SPEC, ...) \
         static int getenv_##TYPE(elpa_index_t index, const char *env_variable, enum NOTIFY_FLAGS notify_flag, int n, TYPE *value, const char *error_string) { \
                 int err; \
-                int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL); \
                 char *env_value = getenv(env_variable); \
                 if (env_value) { \
                         err = elpa_##TYPE##_string_to_value(TYPE##_entries[n].base.name, env_value, value); \
@@ -312,14 +303,14 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
                                 const char *value_string = NULL; \
                                 if (elpa_##TYPE##_value_to_string(TYPE##_entries[n].base.name, *value, &value_string) == ELPA_OK) { \
                                         if (!(index->TYPE##_options.notified[n] & notify_flag)) { \
-                                                if (is_process_id_zero == 1) { \
+                                                if (elpa_index_is_printing_mpi_rank(index)) { \
                                                         fprintf(stderr, "ELPA: %s '%s' is set to %s due to environment variable %s\n", \
                                                                       error_string, TYPE##_entries[n].base.name, value_string, env_variable); \
                                                 } \
                                                 index->TYPE##_options.notified[n] |= notify_flag; \
                                         } \
                                 } else { \
-                                        if (is_process_id_zero == 1) { \
+                                        if (elpa_index_is_printing_mpi_rank(index)) { \
                                                 fprintf(stderr, "ELPA: %s '%s' is set to '" PRINTF_SPEC "' due to environment variable %s\n", \
                                                         error_string, TYPE##_entries[n].base.name, *value, env_variable);\
                                         } \
@@ -747,6 +738,10 @@ static int bw_is_valid(elpa_index_t index, int n, int new_value) {
         return (0 <= new_value) && (new_value < na);
 }
 
+static int output_build_config_is_valid(elpa_index_t index, int n, int new_value) {
+        return new_value == 0 || new_value == 1;
+}
+
 static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value == 0 || new_value == 1;
 }
@@ -1128,24 +1123,23 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
         int current_cpy = current;
         char buff[100];
         int debug = elpa_index_get_int_value(index, "debug", NULL);
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
 
-        //if(is_process_id_zero) fprintf(stderr, "***Trying a new autotuning index %d\n", current);
+        //if(elpa_index_is_printing_mpi_rank(index)) fprintf(stderr, "***Trying a new autotuning index %d\n", current);
         for (int i = 0; i < nelements(int_entries); i++) {
                 if (is_tunable(index, i, autotune_level, autotune_domain)) {
                         int value = int_entries[i].enumerate(index, current_cpy % int_entries[i].cardinality(index));
-                        //if(is_process_id_zero) fprintf(stderr, "  * val[%d] = %d -> %d\n", i, current_cpy % int_entries[i].cardinality(index), value);
+                        //if(elpa_index_is_printing_mpi_rank(index)) fprintf(stderr, "  * val[%d] = %d -> %d\n", i, current_cpy % int_entries[i].cardinality(index), value);
                         /* Try to set option i to that value */
                         if (int_entries[i].valid(index, i, value)) {
                                 index->int_options.values[i] = value;
                         } else {
-                                //if(is_process_id_zero) fprintf(stderr, "  *NOT VALID becaluse of i %d (%s) and value %d translated to %d\n", i, int_entries[i].base.name, current_cpy % int_entries[i].cardinality(index), value);
+                                //if(elpa_index_is_printing_mpi_rank(index)) fprintf(stderr, "  *NOT VALID becaluse of i %d (%s) and value %d translated to %d\n", i, int_entries[i].base.name, current_cpy % int_entries[i].cardinality(index), value);
                                 return 0;
                         }
                         current_cpy /= int_entries[i].cardinality(index);
                 }
         }
-        if (debug == 1 && is_process_id_zero) {
+        if (debug == 1 && elpa_index_is_printing_mpi_rank(index)) {
                 fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d ***\n", current);
                 elpa_index_print_autotune_parameters(index, autotune_level, autotune_domain);
                 fprintf(stderr, "***\n\n");
@@ -1157,8 +1151,7 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
 
 int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain) {
         char buff[100];
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
-        if (is_process_id_zero) {
+        if (elpa_index_is_printing_mpi_rank(index)) {
                 for (int i = 0; i < nelements(int_entries); i++) {
                         if (is_tunable(index, i, autotune_level, autotune_domain)) {
                                 elpa_index_print_int_parameter(index, buff, i);
@@ -1190,8 +1183,7 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
                         }
                 }
         }
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
-        if (is_process_id_zero) {
+        if (elpa_index_is_printing_mpi_rank(index)) {
                 int output_to_file = (strlen(file_name) > 0);
                 if(output_to_file) {
                         f = fopen(file_name, "w");
@@ -1275,7 +1267,7 @@ int elpa_index_load_autotune_state(elpa_index_t index, int* autotune_level, int*
         FILE *f;
 
         //TODO: should be broadcasted, instead of read on all ranks
-        //if(is_process_id_zero){
+        //if(elpa_index_is_printing_mpi_rank(index)){
                 f = fopen(file_name, "r");
 
                 if (f == NULL) {
@@ -1312,8 +1304,7 @@ int elpa_index_print_settings(elpa_index_t index, char *file_name) {
         sprintf(out_set, "%s", EXPLICIT_PARAMETERS);
         sprintf(out_defaults, "%s", DEFAULT_PARAMETERS);
         sprintf(out_nowhere, "Not to be printed:\n");
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
-        if(is_process_id_zero){
+        if(elpa_index_is_printing_mpi_rank(index)){
                 for (int i = 0; i < nelements(int_entries); i++) {
                         if(int_entries[i].base.print_flag == PRINT_STRUCTURE) {
                                 out = &out_structure;
@@ -1353,11 +1344,10 @@ int elpa_index_load_settings(elpa_index_t index, char *file_name) {
         char line[LEN], s[LEN];
         int n;
         FILE *f;
-        int is_process_id_zero = elpa_index_get_int_value(index, "is_process_id_zero", NULL);
         int skip, explicit;
 
         //TODO: should be broadcasted, instead of read on all ranks
-        //if(is_process_id_zero){
+        //if(elpa_index_is_printing_mpi_rank(index)){
                 f = fopen(file_name, "r");
 
                 if (f == NULL) {
@@ -1389,4 +1379,16 @@ int elpa_index_load_settings(elpa_index_t index, char *file_name) {
        // }
 
         return 1;
+}
+
+
+int elpa_index_is_printing_mpi_rank(elpa_index_t index)
+{
+  int process_id;
+  if(elpa_index_int_value_is_set(index, "process_id")){
+    process_id = elpa_index_get_int_value(index, "process_id", NULL);
+    return (process_id == 0);
+  }
+  printf("Warning: process_id not set, printing on all MPI ranks. This can happen with legacy API.");
+  return 1;
 }

@@ -180,7 +180,7 @@ program test
                                   do_test_hermitian_multiply
 
 #ifdef WITH_OPENMP
-   integer                    :: max_threads
+   integer                    :: max_threads, threads_caller
 #endif
 
 #ifdef SPLIT_COMM_MYSELF
@@ -532,6 +532,14 @@ program test
      do_test_cholesky = .false.
    endif
 
+
+#ifdef WITH_OPENMP
+   threads_caller = omp_get_max_threads()
+   if (myid == 0) then
+     print *,"The calling program uses ",threads_caller," threads"
+   endif
+#endif
+
    e => elpa_allocate(error)
    assert_elpa_ok(error)
 
@@ -609,7 +617,11 @@ program test
 
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
-     kernel = elpa_option_enumerate(KERNEL_KEY, i)
+     if (TEST_GPU .eq. 0) then
+       kernel = elpa_option_enumerate(KERNEL_KEY, i)
+       if (kernel .eq. ELPA_2STAGE_REAL_GPU) continue
+       if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) continue
+     endif
 #endif
 #ifdef TEST_KERNEL
      kernel = TEST_KERNEL
@@ -789,6 +801,15 @@ program test
      endif
 #endif
 
+
+#ifdef WITH_OPENMP
+     if (threads_caller .ne. omp_get_max_threads()) then
+       if (myid .eq. 0) then
+         print *, " ERROR! the number of OpenMP threads has not been restored correctly"
+       endif
+       status = 1
+     endif
+#endif
      if (myid == 0) then
        print *, ""
      endif

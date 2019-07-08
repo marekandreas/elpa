@@ -2,24 +2,24 @@
 
 if [ "$(hostname)" == "freya01" ]; then module purge && source /mpcdf/soft/obs_modules.sh && module load git intel/18.0.3 impi/2018.3  mkl/2018.4 anaconda/3/5.1 mpi4py/3.0.0 gcc/8 autoconf automake libtool pkg-config && unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP; fi
 
-if [ "$(hostname)" == "buildtest-rzg" ]; then module load impi/5.1.3 intel/16.0 gcc/6.3 mkl/11.3 autotools pkg-config; fi
+#if [ "$(hostname)" == "buildtest-rzg" ]; then module load impi/5.1.3 intel/16.0 gcc/6.3 mkl/11.3 autotools pkg-config; fi
 
-if [ "$(hostname)" == "knl1" -o "$(hostname)" == "knl2" -o "$(hostname)" == "knl3" -o "$(hostname)" == "knl4" ] ; then module load impi/2017.4 intel/17.0 gcc/7.2 mkl/2017 pkg-config; fi
-if [ "$(hostname)" == "maik" ]; then module load impi/5.1.3 intel intel/17.0 gcc/6.3 mkl/2017 pkg-config/0.29.1; fi
+#if [ "$(hostname)" == "knl1" -o "$(hostname)" == "knl2" -o "$(hostname)" == "knl3" -o "$(hostname)" == "knl4" ] ; then module load impi/2017.4 intel/17.0 gcc/7.2 mkl/2017 pkg-config; fi
+#if [ "$(hostname)" == "maik" ]; then module load impi/5.1.3 intel intel/17.0 gcc/6.3 mkl/2017 pkg-config/0.29.1; fi
 
-if [ "$(hostname)" == "gp02" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config; fi
+#if [ "$(hostname)" == "gp02" ] ; then module load impi/5.1.3 intel/17.0 gcc/6.3 mkl/2017 pkg-config; fi
 
 if [ "$(hostname)" == "amarek-elpa-gitlab-runner-1" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
 if [ "$(hostname)" == "amarek-elpa-gitlab-runner-2" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
 if [ "$(hostname)" == "amarek-elpa-gitlab-runner-3" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
 if [ "$(hostname)" == "amarek-elpa-gitlab-runner-4" ]; then module load intel/16.0 gcc mkl/11.3 autoconf automake libtool impi/5.1.3; fi
 
-if [ "$(hostname)" == "dvl01" ]; then module load intel/17.0 gcc/5.4 mkl/2017 impi/2017.2 gcc/5.4 cuda/8.0; fi
-if [ "$(hostname)" == "dvl02" ]; then module load intel/17.0 gcc/5.4 mkl/2017 impi/2017.2 gcc/5.4 cuda/8.0; fi
+#if [ "$(hostname)" == "dvl01" ]; then module load intel/17.0 gcc/6.4 mkl/2017 impi/2017.4  cuda/9.2; fi
+#if [ "$(hostname)" == "dvl02" ]; then module load intel/17.0 gcc/6.4 mkl/2017 impi/2017.4  cuda/9.2; fi
 
-if [ "$(hostname)" == "miy01" ]; then module purge && module load gcc/5.4 smpi essl/5.5 cuda pgi/17.9 && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH && export OMPI_CC=gcc && export OMPI_FC=gfortran; fi
-if [ "$(hostname)" == "miy02" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
-if [ "$(hostname)" == "miy03" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
+#if [ "$(hostname)" == "miy01" ]; then module purge && module load gcc/5.4 smpi essl/5.5 cuda pgi/17.9 && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH && export OMPI_CC=gcc && export OMPI_FC=gfortran; fi
+#if [ "$(hostname)" == "miy02" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
+#if [ "$(hostname)" == "miy03" ]; then module load gcc/5.4 pgi/17.9 ompi/pgi/17.9/1.10.2 essl/5.5 cuda && export LD_LIBRARY_PATH=/opt/ibm/spectrum_mpi/lib:/opt/ibm/spectrum_mpi/profilesupport/lib:$LD_LIBRARY_PATH && export PATH=/opt/ibm/spectrum_mpi/bin:$PATH; fi
 
 
 if [ "$(hostname)" != "miy01" -a "$(hostname)" != "miy02" -a "$(hostname)" != "miy03" ]; then

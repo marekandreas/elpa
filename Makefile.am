@@ -40,6 +40,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/helpers/mod_precision.F90 \
   src/helpers/mod_mpi.F90 \
   src/helpers/mod_mpi_stubs.F90 \
+  src/helpers/mod_omp.F90 \
   src/elpa_generated_fortran_interfaces.F90 \
   src/elpa2/mod_redist_band.F90 \
   src/elpa2/mod_pack_unpack_cpu.F90 \
@@ -108,6 +109,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/complex_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
+  src/elpa2/kernels/simple_block4_template.F90 \
+  src/elpa2/kernels/simple_block6_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/compute_hh_trafo.F90 \
@@ -188,6 +191,14 @@ if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_simple.F90
 endif
 
+if WITH_REAL_GENERIC_SIMPLE_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block4.F90
+endif
+
+if WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block6.F90
+endif
+
 if WITH_REAL_BGP_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_bgp.f90
 endif
@@ -216,6 +227,13 @@ if WITH_REAL_SPARC64_BLOCK2_KERNEL
 #if WANT_SINGLE_PRECISION_REAL
 #  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_2hv_single_precision.c
 #endif
+endif
+
+if WITH_REAL_NEON_ARCH64_BLOCK2_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_2hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_2hv_single_precision.c
+endif
 endif
 
 if WITH_REAL_VSX_BLOCK2_KERNEL
@@ -260,6 +278,13 @@ if WITH_REAL_SPARC64_BLOCK4_KERNEL
 #endif
 endif
 
+if WITH_REAL_NEON_ARCH64_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_4hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_4hv_single_precision.c
+endif
+endif
+
 if WITH_REAL_VSX_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
@@ -300,6 +325,13 @@ if WITH_REAL_SPARC64_BLOCK6_KERNEL
 #if WANT_SINGLE_PRECISION_REAL
 #  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_single_precision.c
 #endif
+endif
+
+if WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_6hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_6hv_single_precision.c
+endif
 endif
 
 if WITH_REAL_VSX_BLOCK6_KERNEL
@@ -422,6 +454,12 @@ if WANT_SINGLE_PRECISION_COMPLEX
 endif
 endif
 
+
+if STORE_BUILD_CONFIG
+  libelpa@SUFFIX@_private_la_SOURCES += src/helpers/print_build_config.c
+endif
+
+
 # Cuda files
 .cu.lo:
 	NVCC="$(NVCC)" libtool --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
@@ -443,8 +481,10 @@ nobase_elpa_include_HEADERS = \
   elpa/elpa_legacy.h
 
 nobase_nodist_elpa_include_HEADERS = \
+  elpa/elpa_version.h \
   elpa/elpa_constants.h \
   elpa/elpa_generated.h \
+  elpa/elpa_generated_c_api.h \
   elpa/elpa_generated_legacy.h
 
 dist_man_MANS = \
@@ -635,7 +675,6 @@ wrapper_la_CFLAGS = $(PYTHON_INCLUDE) $(NUMPY_INCLUDE) $(AM_CFLAGS)
 
 python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $< -o $@
-
 # test scripts
 TASKS ?= 2
 if WITH_MPI
@@ -676,7 +715,8 @@ test_python.sh:
 include doxygen.am
 
 CLEANFILES = \
-  elpa-generated.h \
+  elpa_generated.h \
+  elpa_generated_c_api.h \
   elpa1_test* \
   elpa2_test*\
   elpa2_real* \
@@ -708,16 +748,14 @@ clean-local:
 	-rm -rf $(generated_headers)
 
 distclean-local:
+	-rm -rf ./m4
+	-rm -rf ./src
+	-rm -rf ./test
+	-rm -rf ./modules
+	-rm -rf .fortran_dependencies
 	-rm config-f90.h
-	-rm -rf ./src/elpa2/kernels/.deps
-	-rm -rf ./src/.deps
 	-rm -rf ./test/.deps
-	-rmdir ./src/elpa2/kernels/
-	-rmdir ./src
-	-rmdir ./test
-	-rmdir ./m4
-	-rmdir modules/
-	-rmdir .fortran_dependencies/
+	-rm -rf elpa/elpa_generated_c_api.h
 
 EXTRA_DIST = \
   elpa.spec \
@@ -758,27 +796,13 @@ EXTRA_DIST = \
   src/elpa2/elpa2_trans_ev_band_to_full_template.F90 \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.F90 \
   src/elpa2/elpa2_tridiag_band_template.F90 \
-  src/elpa2/kernels/complex_avx-avx2_1hv_template.c \
-  src/elpa2/kernels/complex_avx-avx2_2hv_template.c \
-  src/elpa2/kernels/complex_avx512_1hv_template.c \
-  src/elpa2/kernels/complex_avx512_2hv_template.c \
-  src/elpa2/kernels/complex_sse_1hv_template.c \
-  src/elpa2/kernels/complex_sse_2hv_template.c \
+  src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/complex_template.F90 \
-  src/elpa2/kernels/real_avx-avx2_2hv_template.c \
-  src/elpa2/kernels/real_avx-avx2_4hv_template.c \
-  src/elpa2/kernels/real_avx-avx2_6hv_template.c \
-  src/elpa2/kernels/real_avx512_2hv_template.c \
-  src/elpa2/kernels/real_avx512_4hv_template.c \
-  src/elpa2/kernels/real_avx512_6hv_template.c \
-  src/elpa2/kernels/real_vsx_2hv_template.c \
-  src/elpa2/kernels/real_vsx_4hv_template.c \
-  src/elpa2/kernels/real_vsx_6hv_template.c \
-  src/elpa2/kernels/real_sse_2hv_template.c \
-  src/elpa2/kernels/real_sse_4hv_template.c \
-  src/elpa2/kernels/real_sse_6hv_template.c \
+  src/elpa2/kernels/real_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
+  src/elpa2/kernels/simple_block4_template.F90 \
+  src/elpa2/kernels/simple_block6_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/qr/elpa_pdgeqrf_template.F90 \
