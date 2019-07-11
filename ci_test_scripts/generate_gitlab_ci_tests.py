@@ -268,7 +268,7 @@ print("  - export BLOCK_SIZE=16")
 print("  - if [ \"$MEDIUM_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=1500 && export NUMBER_OF_EIGENVECTORS=750; fi")
 print("  - if [ \"$LARGE_MATRIX\" = \"yes\" ]; then export MATRIX_SIZE=5000 && export NUMBER_OF_EIGENVECTORS=500; fi")
 print("  - if [ \"$GPU_BLOCKSIZE\" = \"yes\" ]; then export BLOCK_SIZE=128 ; fi")
-print("  - if [ -z \"$PIPELINE_MPI_TASKS\" ]; then export MPI_TASKS=2; else xport MPI_TASKS=$PIPELINE_MPI_TASKS; fi")
+print("  - if [ -z \"$PIPELINE_MPI_TASKS\" ]; then export MPI_TASKS=2; else export MPI_TASKS=$PIPELINE_MPI_TASKS; fi")
 
 print("  - echo \"This test will run with matrix size na = $MATRIX_SIZE, nev= $NUMBER_OF_EIGENVECTORS, on a blacs grid with blocksize nblk= $BLOCK_SIZE \" ")
 print("  - export SKIP_STEP=0")
