@@ -192,6 +192,10 @@
       integer(kind=ik), parameter                :: top_recv_tag    = 222
       integer(kind=ik), parameter                :: result_recv_tag = 333
 
+      ! at the moment, maximal 4 eigenvector at a time
+      ! TODO increase it
+      integer(kind=ik), parameter                :: max_block_blas = 4
+
       integer(kind=ik), intent(in)               :: max_threads
  
 #ifdef WITH_OPENMP
@@ -610,6 +614,49 @@
         aIntern(:,:,:) = 0.0_rck
 #endif /* WITH_OPENMP */
       endif !useGPU_LEGACY
+
+
+      if(useGPU_BLAS) then
+        ! prepare device memory for the BLAS GPU kennel
+        ! dimmensions correspondence:
+        ! nbw = ldh = nb
+        ! stripe_width = ldq = nq = nl
+        ! max_block_blas = 4 (currently)
+
+        successCUDA = cuda_malloc( h_dev, max_block_blas * (nbw+3) * size_of_datatype)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_&
+          &MATH_DATATYPE&
+          &: error in cudaMalloc "
+          stop 1
+        endif
+
+        successCUDA = cuda_malloc( s_dev, max_block_blas * max_block_blas * size_of_datatype)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_&
+          &MATH_DATATYPE&
+          &: error in cudaMalloc "
+          stop 1
+        endif
+
+        successCUDA = cuda_malloc( q2_dev, stripe_width * (nbw+3) * size_of_datatype)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_&
+          &MATH_DATATYPE&
+          &: error in cudaMalloc "
+          stop 1
+        endif
+
+        successCUDA = cuda_malloc( w_dev, stripe_width * max_block_blas * size_of_datatype)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_tridi_to_band_&
+          &MATH_DATATYPE&
+          &: error in cudaMalloc "
+          stop 1
+        endif
+
+      endif !useGPU_BLAS
+
 
       allocate(row(l_nev), stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
@@ -2218,7 +2265,11 @@
      if (my_prow==0 .and. my_pcol==0 .and.print_flops == 1) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)')  kernel_time, kernel_flops/kernel_time*1.d-6
 
-     if (useGPU_LEGACY) then
+     !if (useGPU_LEGACY) then
+     ! TODO at the moment, create q on device for both GPU implementations 
+     ! it is assumed to be there by the following routines
+     ! TODO rewise this
+     if (useGPU) then
      ! copy q to q_dev needed in trans_ev_band_to_full
         successCUDA = cuda_malloc(q_dev, ldq*matrixCols* size_of_datatype)
         if (.not.(successCUDA)) then
@@ -2417,6 +2468,41 @@
        endif
      endif ! useGPU_LEGACY
 
+     if(useGPU_BLAS) then
+
+       successCUDA = cuda_free( h_dev )
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_&
+                 &MATH_DATATYPE&
+                 &: error in cudaFree "//errorMessage
+         stop 1
+       endif
+
+       successCUDA = cuda_free( s_dev )
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_&
+                 &MATH_DATATYPE&
+                 &: error in cudaFree "//errorMessage
+         stop 1
+       endif
+
+       successCUDA = cuda_free( q2_dev )
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_&
+                 &MATH_DATATYPE&
+                 &: error in cudaFree "//errorMessage
+         stop 1
+       endif
+
+       successCUDA = cuda_free( w_dev )
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_tridi_to_band_&
+                 &MATH_DATATYPE&
+                 &: error in cudaFree "//errorMessage
+         stop 1
+       endif
+
+     endif ! useGPU_BLAS
 
      call obj%timer%stop("trans_ev_tridi_to_band_&
                          &MATH_DATATYPE&

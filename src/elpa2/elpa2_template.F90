@@ -128,16 +128,21 @@
 #undef GPU_KERNEL
 #undef GENERIC_KERNEL
 #undef KERNEL_STRING
+#undef BLAS_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_REAL_GPU
 #define GENERIC_KERNEL ELPA_2STAGE_REAL_GENERIC
+#define BLAS_KERNEL ELPA_2STAGE_REAL_BLAS_BLOCK4
 #define KERNEL_STRING "real_kernel"
 #endif
 #if COMPLEXCASE == 1
 #undef GPU_KERNEL
 #undef GENERIC_KERNEL
 #undef KERNEL_STRING
+#undef BLAS_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_GPU
 #define GENERIC_KERNEL ELPA_2STAGE_COMPLEX_GENERIC
+! TODO blas complex kernel
+#define BLAS_KERNEL ELPA_2STAGE_REAL_BLAS_BLOCK4
 #define KERNEL_STRING "complex_kernel"
 #endif
 
@@ -319,30 +324,34 @@
     ! check consistency between request for GPUs and defined kernel
 
     if (do_useGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. GPU_KERNEL) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-        do_useGPU_trans_ev_tridi_to_band = .false.
-      else if (nblk .ne. 128) then
-        write(error_unit,*) "ELPA: Warning, GPU kernel can run only with scalapack block size 128!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-        do_useGPU_trans_ev_tridi_to_band = .false.
-        kernel = GENERIC_KERNEL
-      endif
+      if (kernel .ne. BLAS_KERNEL) then
+        if (kernel .ne. GPU_KERNEL) then
+          write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+          write(error_unit,*) "The compute kernel will be executed on CPUs!"
+          do_useGPU_trans_ev_tridi_to_band = .false.
+        else if (nblk .ne. 128) then
+          write(error_unit,*) "ELPA: Warning, GPU kernel can run only with scalapack block size 128!"
+          write(error_unit,*) "The compute kernel will be executed on CPUs!"
+          do_useGPU_trans_ev_tridi_to_band = .false.
+          kernel = GENERIC_KERNEL
+        endif
+      endif   ! blas kernel TODO improve this logic
     endif
 
     ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band sould be
     ! finally consistent
     if (do_useGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. GPU_KERNEL) then
-        ! this should never happen, checking as an assert
-        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
-        stop
-      endif
-      if (nblk .ne. 128) then
-        ! this should never happen, checking as an assert
-        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel and blocksize!  Aborting..."
-        stop
+      if (kernel .ne. BLAS_KERNEL) then ! for BLAS kernel both GPU and CPU possible TODO maybe should have BLAS_GPU_KERNEL?
+        if (kernel .ne. GPU_KERNEL) then
+          ! this should never happen, checking as an assert
+          write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
+          stop
+        endif
+        if (nblk .ne. 128) then
+          ! this should never happen, checking as an assert
+          write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel and blocksize!  Aborting..."
+          stop
+        endif
       endif
     else
       if (kernel .eq. GPU_KERNEL) then
