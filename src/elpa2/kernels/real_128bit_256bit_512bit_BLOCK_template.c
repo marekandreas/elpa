@@ -228,7 +228,7 @@
 //#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_SET1 vdupq_n_f32
 #endif /* SINGLE_PRECISION_REAL */
-#endif /* VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE */
+#endif /* VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == AVX_256
 #ifdef DOUBLE_PRECISION_REAL

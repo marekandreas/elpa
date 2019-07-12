@@ -162,18 +162,19 @@
 
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == NEON_128
+#if VEC_SET == NEON_ARCH64_128
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define offset 2
 #define __SIMD_DATATYPE __Float64x2_t
 #define _SIMD_LOAD vld1q_f64
-#define _SIMD_LOADU _mm_loadu_pd
+#define _SIMD_LOADU vld1q_f64
 #define _SIMD_STORE vst1q_f64
-#define _SIMD_STOREU _mm_storeu_pd
+#define _SIMD_STOREU vst1q_f64
 #define _SIMD_MUL vmulq_f64
 #define _SIMD_ADD vaddq_f64
-#define _SIMD_XOR _mm_xor_pd
+//#define _SIMD_XOR _mm_xor_pd
+#define _SIMD_NEG vnegq_f64
 #define _SIMD_ADDSUB _mm_addsub_pd
 #define _SIMD_SHUFFLE _mm_shuffle_pd
 #define _SHUFFLE _MM_SHUFFLE2(0,1)
@@ -192,7 +193,7 @@
 #define _SIMD_STOREU _mm_storeu_ps
 #define _SIMD_MUL _mm_mul_ps
 #define _SIMD_ADD _mm_add_ps
-#define _SIMD_XOR _mm_xor_ps
+//#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_ADDSUB _mm_addsub_ps
 #define _SIMD_SHUFFLE _mm_shuffle_ps
 #define _SHUFFLE 0xb1
@@ -1353,7 +1354,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
      y1 = _SIMD_LOAD(&q_dbl[0]);
@@ -1439,7 +1444,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
         // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+        h1_imag = _SIMD_NEG(h1_imag);
+#else
         h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
         q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -1513,7 +1522,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h2_imag = _SIMD_NEG(h2_imag);
+#else
           h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
           tmp1 = _SIMD_MUL(h2_imag, q1);
@@ -1584,7 +1597,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
      q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -1675,8 +1692,13 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+    h1_real = _SIMD_NEG(h1_real);
+    h1_imag = _SIMD_NEG(h1_imag);
+#else
     h1_real = _SIMD_XOR(h1_real, sign);
     h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
     tmp1 = _SIMD_MUL(h1_imag, x1);
@@ -1784,10 +1806,17 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+     h2_real = _SIMD_NEG(h2_real);
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
      h2_real = _SIMD_XOR(h2_real, sign);
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == SSE_128
@@ -2380,7 +2409,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
      y1 = _SIMD_LOAD(&q_dbl[0]);
@@ -2458,7 +2491,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
         // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+        h1_imag = _SIMD_NEG(h1_imag);
+#else
         h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
         q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -2525,7 +2562,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h2_imag = _SIMD_NEG(h2_imag);
+#else
           h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
           tmp1 = _SIMD_MUL(h2_imag, q1);
@@ -2590,7 +2631,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
      q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -2674,8 +2719,13 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
     h1_real = _SIMD_XOR(h1_real, sign);
     h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
     tmp1 = _SIMD_MUL(h1_imag, x1);
@@ -2777,10 +2827,17 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+     h2_real = _SIMD_NEG(h2_real);
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
      h2_real = _SIMD_XOR(h2_real, sign);
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == SSE_128
@@ -3321,7 +3378,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
      y1 = _SIMD_LOAD(&q_dbl[0]);
@@ -3391,7 +3452,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h1_imag = _SIMD_NEG(h1_imag);
+#else
           h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
           q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -3452,7 +3517,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h2_imag = _SIMD_NEG(h2_imag);
+#else
           h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
           tmp1 = _SIMD_MUL(h2_imag, q1);
@@ -3508,7 +3577,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
      q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -3586,8 +3659,13 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
@@ -3685,10 +3763,17 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+     h2_real = _SIMD_NEG(h2_real);
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
      h2_real = _SIMD_XOR(h2_real, sign);
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == SSE_128
@@ -4182,7 +4267,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
      y1 = _SIMD_LOAD(&q_dbl[0]);
@@ -4243,7 +4332,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h1_imag = _SIMD_NEG(h1_imag);
+#else
           h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
           q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -4297,7 +4390,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h2_imag = _SIMD_NEG(h2_imag);
+#else
           h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
           tmp1 = _SIMD_MUL(h2_imag, q1);
@@ -4347,7 +4444,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
      q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -4416,8 +4517,13 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
@@ -4506,10 +4612,17 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+     h2_real = _SIMD_NEG(h2_real);
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
      h2_real = _SIMD_XOR(h2_real, sign);
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == SSE_128
@@ -4955,7 +5068,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
      y1 = _SIMD_LOAD(&q_dbl[0]);
@@ -5006,9 +5123,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h1_imag = _SIMD_NEG(h1_imag);
+#else
           h1_imag = _SIMD_XOR(h1_imag, sign);
 #endif
-
+#endif
           q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
           q2 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+offset]);
           tmp1 = _SIMD_MUL(h1_imag, q1);
@@ -5051,7 +5171,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h2_imag = _SIMD_NEG(h2_imag);
+#else
           h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
           tmp1 = _SIMD_MUL(h2_imag, q1);
@@ -5096,7 +5220,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
      q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -5155,8 +5283,13 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
@@ -5237,10 +5370,17 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+     h2_real = _SIMD_NEG(h2_real);
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
      h2_real = _SIMD_XOR(h2_real, sign);
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == SSE_128
@@ -5629,7 +5769,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
      y1 = _SIMD_LOAD(&q_dbl[0]);
@@ -5672,7 +5816,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h1_imag = _SIMD_NEG(h1_imag);
+#else
           h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
           q1 = _SIMD_LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -5709,7 +5857,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+          h2_imag = _SIMD_NEG(h2_imag);
+#else
           h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
           tmp1 = _SIMD_MUL(h2_imag, q1);
@@ -5748,7 +5900,11 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif
 
      q1 = _SIMD_LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -5800,8 +5956,13 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
+#endif
 #endif /* VEC_SET != AVX_512 */
 
      tmp1 = _SIMD_MUL(h1_imag, x1);
@@ -5875,10 +6036,17 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET != AVX_512
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+     h1_real = _SIMD_NEG(h1_real);
+     h1_imag = _SIMD_NEG(h1_imag);
+     h2_real = _SIMD_NEG(h2_real);
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h1_real = _SIMD_XOR(h1_real, sign);
      h1_imag = _SIMD_XOR(h1_imag, sign);
      h2_real = _SIMD_XOR(h2_real, sign);
      h2_imag = _SIMD_XOR(h2_imag, sign);
+#endif
 #endif
 
 #if VEC_SET == SSE_128
