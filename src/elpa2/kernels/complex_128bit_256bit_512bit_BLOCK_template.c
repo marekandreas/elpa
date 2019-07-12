@@ -165,6 +165,11 @@
 #if VEC_SET == NEON_ARCH64_128
 
 #ifdef DOUBLE_PRECISION_COMPLEX
+
+__Float64x2_t vaddsubq_f64(__Float64x2_t a, __Float64x2_t b){
+  return vaddq_f64(a, vsetq_lane_f64(-vgetq_lane_f64(b,1),b,1));
+}
+
 #define offset 2
 #define __SIMD_DATATYPE __Float64x2_t
 #define _SIMD_LOAD vld1q_f64
@@ -175,7 +180,7 @@
 #define _SIMD_ADD vaddq_f64
 //#define _SIMD_XOR _mm_xor_pd
 #define _SIMD_NEG vnegq_f64
-#define _SIMD_ADDSUB _mm_addsub_pd
+#define _SIMD_ADDSUB vaddsubq_f64
 #define _SIMD_SHUFFLE _mm_shuffle_pd
 #define _SHUFFLE _MM_SHUFFLE2(0,1)
 
@@ -185,16 +190,23 @@
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
 #ifdef SINGLE_PRECISION_COMPLEX
+
+__Float32x4_t vaddsubq_f32(__Float32x4_t a, __Float32x4_t b){
+  b = vsetq_lane_f32(-vgetq_lane_f32(b,1),b,1);
+  b = vsetq_lane_f32(-vgetq_lane_f32(b,3),b,3);
+  return vaddq_f32(a, b);
+}
+  
 #define offset 4
-#define __SIMD_DATATYPE __m128
-#define _SIMD_LOAD _mm_load_ps
-#define _SIMD_LOADU _mm_loadu_ps
-#define _SIMD_STORE _mm_store_ps
-#define _SIMD_STOREU _mm_storeu_ps
-#define _SIMD_MUL _mm_mul_ps
-#define _SIMD_ADD _mm_add_ps
+#define __SIMD_DATATYPE __Float32x4_t
+#define _SIMD_LOAD _vld1q_f32
+#define _SIMD_LOADU _vld1q_f32
+#define _SIMD_STORE _vst1q_f32
+#define _SIMD_STOREU _vst1q_f32
+#define _SIMD_MUL _vmulq_f32
+#define _SIMD_ADD _vaddq_f32
 //#define _SIMD_XOR _mm_xor_ps
-#define _SIMD_ADDSUB _mm_addsub_ps
+#define _SIMD_ADDSUB vaddsubq_f32
 #define _SIMD_SHUFFLE _mm_shuffle_ps
 #define _SHUFFLE 0xb1
 
