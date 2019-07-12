@@ -387,7 +387,14 @@ extern "C" {
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
-  // TODO so far only double real
+  // TODO so far only real
+  void cublasSsyrk_elpa_wrapper (intptr_t handle, char uplo, char trans, int n, int k,
+                             float alpha, const float *A, int lda, 
+                             float beta, float *C, int ldc) {
+    cublasSsyrk(*((cublasHandle_t*)handle), fill_mode_new_api(uplo), operation_new_api(trans), 
+                n, k, &alpha, A, lda, &beta, C, ldc);
+  }
+
   void cublasDsyrk_elpa_wrapper (intptr_t handle, char uplo, char trans, int n, int k,
                              double alpha, const double *A, int lda, 
                              double beta, double *C, int ldc) {
@@ -395,7 +402,11 @@ extern "C" {
                 n, k, &alpha, A, lda, &beta, C, ldc);
   }
 
-  // TODO so far only double real
+  // TODO so far only  real
+  void cublasSscal_elpa_wrapper (intptr_t handle, int n, float alpha, float *x, int incx) {
+    cublasSscal(*((cublasHandle_t*)handle), n, &alpha, x, incx);
+  }
+
   void cublasDscal_elpa_wrapper (intptr_t handle, int n, double alpha, double *x, int incx) {
     cublasDscal(*((cublasHandle_t*)handle), n, &alpha, x, incx);
   }

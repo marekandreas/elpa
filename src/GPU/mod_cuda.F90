@@ -328,7 +328,7 @@ module cuda_functions
     end subroutine cublas_strmm_c
   end interface
 
-  !TODO so far only double real
+  !TODO so far only real
   interface
     subroutine cublas_dsyrk_c(handle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
                               bind(C,name='cublasDsyrk_elpa_wrapper')
@@ -345,7 +345,38 @@ module cuda_functions
     end subroutine cublas_dsyrk_c
   end interface
 
-  !TODO so far only double real
+  interface
+    subroutine cublas_ssyrk_c(handle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name='cublasSsyrk_elpa_wrapper')
+      use iso_c_binding
+
+      implicit none
+      character(1, C_CHAR), value             :: uplo, trans
+      integer(kind=C_INT), value              :: n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldc
+      real(kind=C_FLOAT), value               :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, c
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_ssyrk_c
+  end interface
+
+  !TODO so far only real
+  interface
+    subroutine cublas_sscal_c(handle, n, alpha, x, incx) &
+                              bind(C,name='cublasSscal_elpa_wrapper')
+      use iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), value              :: n
+      integer(kind=C_INT), intent(in), value  :: incx
+      real(kind=C_FLOAT), value               :: alpha
+      integer(kind=C_intptr_T), value         :: x
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_sscal_c
+  end interface
+
   interface
     subroutine cublas_dscal_c(handle, n, alpha, x, incx) &
                               bind(C,name='cublasDscal_elpa_wrapper')
@@ -793,7 +824,22 @@ module cuda_functions
 #endif
     end subroutine cublas_strmm
 
-  !TODO so far only double real
+  !TODO so far only  real
+    subroutine cublas_ssyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+
+      use iso_c_binding
+
+      implicit none
+      character(1, C_CHAR), value      :: uplo, trans
+      integer(kind=C_INT)              :: n, k
+      integer(kind=C_INT), intent(in)  :: lda, ldc
+      real(kind=C_FLOAT)               :: alpha, beta
+      integer(kind=C_intptr_T)         :: a, c
+#ifdef WITH_GPU_VERSION
+      call cublas_ssyrk_c(cublasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine cublas_ssyrk
+
     subroutine cublas_dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
 
       use iso_c_binding
@@ -809,7 +855,7 @@ module cuda_functions
 #endif
     end subroutine cublas_dsyrk
 
-  !TODO so far only double real
+  !TODO so far only real
     subroutine cublas_dscal(n, alpha, x, incx)
       use iso_c_binding
 
@@ -823,6 +869,20 @@ module cuda_functions
 #endif
 
     end subroutine cublas_dscal
+
+    subroutine cublas_sscal(n, alpha, x, incx)
+      use iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)              :: n
+      integer(kind=C_INT), intent(in)  :: incx
+      real(kind=C_FLOAT)               :: alpha
+      integer(kind=C_intptr_T)         :: x
+#ifdef WITH_GPU_VERSION
+      call cublas_sscal_c(cublasHandle, n, alpha, x, incx)
+#endif
+
+    end subroutine cublas_sscal
 
 
     subroutine cublas_zgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
