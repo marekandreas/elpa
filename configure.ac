@@ -658,6 +658,8 @@ m4_define(elpa_m4_neon_arch64_kernels, [
         real_neon_arch64_block2
         real_neon_arch64_block4
         real_neon_arch64_block6
+        complex_neon_arch64_block1
+        complex_neon_arch64_block2
 ])
 
 m4_define(elpa_m4_vsx_kernels, [

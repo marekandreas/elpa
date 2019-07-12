@@ -56,8 +56,8 @@ module elpa2_utilities
   implicit none
   public
 
-  integer(kind=c_int), parameter :: number_of_real_kernels = ELPA_2STAGE_NUMBER_OF_REAL_KERNELS - 11
-  integer(kind=c_int), parameter :: number_of_complex_kernels = ELPA_2STAGE_NUMBER_OF_COMPLEX_KERNELS
+  integer(kind=c_int), parameter :: number_of_real_kernels = ELPA_2STAGE_NUMBER_OF_REAL_KERNELS - 11      ! 11 kernels only with new API
+  integer(kind=c_int), parameter :: number_of_complex_kernels = ELPA_2STAGE_NUMBER_OF_COMPLEX_KERNELS - 2 ! 2 kernels only with new API
 
 #ifdef WITH_REAL_GENERIC_KERNEL
   integer(kind=c_int), parameter :: REAL_ELPA_KERNEL_GENERIC = ELPA_2STAGE_REAL_GENERIC
