@@ -170,6 +170,15 @@ __Float64x2_t vaddsubq_f64(__Float64x2_t a, __Float64x2_t b){
   return vaddq_f64(a, vsetq_lane_f64(-vgetq_lane_f64(b,1),b,1));
 }
 
+__Float64x2_t vshuffleq_f64(__Float64x2_t a, const int bit) {
+  double p1, p2;
+  p1 = vgetq_lane_f64(a, 0);
+  p2 = vgetq_lane_f64(a, 1);
+  a = vsetq_lane_f64(p2,a,0);
+  a = vsetq_lane_f64(p1,a,1);
+  return a;
+}
+
 #define offset 2
 #define __SIMD_DATATYPE __Float64x2_t
 #define _SIMD_LOAD vld1q_f64
@@ -181,8 +190,8 @@ __Float64x2_t vaddsubq_f64(__Float64x2_t a, __Float64x2_t b){
 //#define _SIMD_XOR _mm_xor_pd
 #define _SIMD_NEG vnegq_f64
 #define _SIMD_ADDSUB vaddsubq_f64
-#define _SIMD_SHUFFLE _mm_shuffle_pd
-#define _SHUFFLE _MM_SHUFFLE2(0,1)
+#define _SIMD_SHUFFLE vshuffleq_f64
+#define _SHUFFLE 1
 
 #ifdef __ELPA_USE_FMA__
 #define _SIMD_FMSUBADD _mm_maddsub_pd
@@ -196,6 +205,18 @@ __Float32x4_t vaddsubq_f32(__Float32x4_t a, __Float32x4_t b){
   b = vsetq_lane_f32(-vgetq_lane_f32(b,3),b,3);
   return vaddq_f32(a, b);
 }
+__Float32x4_t vshuffleq_f32(__Float32x4_t a, const int bit) {
+  double p1, p2, p3, p4;
+  p1 = vgetq_lane_f32(a, 0);
+  p2 = vgetq_lane_f32(a, 1);
+  p3 = vgetq_lane_f32(a, 2);
+  p4 = vgetq_lane_f32(a, 3);
+  a = vsetq_lane_f32(p2,a,0);
+  a = vsetq_lane_f32(p1,a,1);
+  a = vsetq_lane_f32(p4,a,2);
+  a = vsetq_lane_f32(p3,a,3);
+  return a;
+}
   
 #define offset 4
 #define __SIMD_DATATYPE __Float32x4_t
@@ -207,8 +228,8 @@ __Float32x4_t vaddsubq_f32(__Float32x4_t a, __Float32x4_t b){
 #define _SIMD_ADD _vaddq_f32
 //#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_ADDSUB vaddsubq_f32
-#define _SIMD_SHUFFLE _mm_shuffle_ps
-#define _SHUFFLE 0xb1
+#define _SIMD_SHUFFLE vshuffleq_f32
+#define _SHUFFLE 1
 
 #ifdef __ELPA_USE_FMA__
 #define _SIMD_FMSUBADD _mm_maddsub_ps
