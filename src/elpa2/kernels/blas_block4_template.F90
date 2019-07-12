@@ -64,13 +64,15 @@
   &MATH_DATATYPE&
   &_blas_4hv_&
   &PRECISION&
-  & (useGPU, q, hh, nb, nq, ldq, ldh)
+  & (useGPU, q, hh, nb, nq, ldq, ldh, h_dev, s_dev, q_dev, w_dev)
 
     use precision
+    use iso_c_binding
+    use cuda_functions
     implicit none
 #include "../../general/precision_kinds.F90"
 
-    logical, intent(in)                        :: useGPU
+    logical                         :: useGPU
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
 
 #ifdef USE_ASSUMED_SIZE
@@ -85,7 +87,21 @@
     real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
     real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
 
-    integer(kind=ik)                             :: i, j, k
+
+    !TODO remove
+    !real(kind=C_DATATYPE_KIND)                :: q_extra(1:ldq,1:nb+3)
+
+
+    integer(kind=c_intptr_t)                  :: h_dev, s_dev, q_dev, w_dev
+    logical                                   :: successCUDA
+    integer(kind=c_intptr_t), parameter       :: size_of_datatype = size_of_&
+                                                                            &PRECISION&
+                                                                            &_&
+                                                                            &MATH_DATATYPE
+
+    integer(kind=ik)                          :: i, j, k
+
+    integer(kind=ik), parameter               :: max_block_blas = 4
 
 
     ! Calculate dot product of the two Householder vectors
@@ -102,36 +118,138 @@
    h_mat(3,3:nb+1) = -hh(2:nb, 3)
    h_mat(4,2:nb)   = -hh(2:nb, 4)
 
+   if(useGPU) then
+      !    nb == nbw
+      successCUDA =  cuda_memcpy(h_dev, loc(h_mat(1,1)),  &
+                            max_block_blas * (nb+3) * size_of_datatype, &
+                            cudaMemcpyHostToDevice)
+      if (.not.(successCUDA)) then
+        print *,"blas_block4_kernel: error in cudaMemcpy, h_dev host to device"
+        stop 1
+      endif
+      !    nq == stripe_width
+      successCUDA =  cuda_memcpy(q_dev, loc(q(1,1)),  &
+                            ldq * (nb+3) * size_of_datatype, &
+                            cudaMemcpyHostToDevice)
+      if (.not.(successCUDA)) then
+        print *,"blas_block4_kernel: error in cudaMemcpy, q_dev host to device"
+        stop 1
+      endif
+   endif
+
 
    ! TODO we do not need the diagonal, but how to do it with BLAS?
    !s_mat = - matmul(h_mat, transpose(h_mat))
-   call PRECISION_SYRK('L', 'N', 4, nb+3, &
-                       -ONE, h_mat, 4, &
-                       ZERO, s_mat, 4)
+   if(useGPU) then
+     call cublas_PRECISION_SYRK('L', 'N', 4, nb+3, &
+                         -ONE, h_dev, 4, &
+                         ZERO, s_dev, 4)
+   else
+     call PRECISION_SYRK('L', 'N', 4, nb+3, &
+                         -ONE, h_mat, 4, &
+                         ZERO, s_mat, 4)
+   endif
 
    !w_comb = - matmul(q(1:nq, 1:nb+3), transpose(h_mat))
-   call PRECISION_GEMM('N', 'T', nq, 4, nb+3, &
-                       -ONE, q, ldq, &
-                       h_mat, 4, &
-                       ZERO, w_comb, ldq)
+   if(useGPU) then
+     call cublas_PRECISION_GEMM('N', 'T', nq, 4, nb+3, &
+                         -ONE, q_dev, ldq, &
+                         h_dev, 4, &
+                         ZERO, w_dev, ldq)
+   else
+     call PRECISION_GEMM('N', 'T', nq, 4, nb+3, &
+                         -ONE, q, ldq, &
+                         h_mat, 4, &
+                         ZERO, w_comb, ldq)
+   endif
 
    ! Rank-1 update
    !w_comb(1:nq,1) = hh(1,1) * w_comb(1:nq, 1)
-   call PRECISION_SCAL(nq, hh(1,1), w_comb(1:nq, 1), 1)
-
+   if(useGPU) then
+     call cublas_PRECISION_SCAL(nq, hh(1,1), w_dev, 1)
+   else
+     call PRECISION_SCAL(nq, hh(1,1), w_comb(1, 1), 1)
+   endif
    do i = 2, 4
-     !w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
-     call PRECISION_GEMV('N', nq, i-1, &
-                         hh(1,i), w_comb(1, 1), ldq, &
-                         s_mat(i,1), 4, &
-                         hh(1,i), w_comb(1,i), 1)
+!     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
+     if(useGPU) then
+       call cublas_PRECISION_GEMV('N', nq, i-1, &
+                           hh(1,i), w_dev, ldq, &
+                           s_dev + (i - 1) * size_of_datatype, 4, &
+                           hh(1,i), w_dev + (i-1) * ldq * size_of_datatype, 1)
+     else
+       call PRECISION_GEMV('N', nq, i-1, &
+                           hh(1,i), w_comb(1, 1), ldq, &
+                           s_mat(i,1), 4, &
+                           hh(1,i), w_comb(1,i), 1)
+     endif
    enddo
 
+   !  ---------------------
+   if(useGPU) then
+!      successCUDA =  cuda_memcpy(loc(s_mat(1,1)), s_dev,  &
+!                            4 * 4 * size_of_datatype, &
+!                            cudaMemcpyDeviceToHost)
+!      if (.not.(successCUDA)) then
+!        print *,"blas_block4_kernel: error in cudaMemcpy, q_dev device to host"
+!        stop 1
+!      endif
+
+
+
+      successCUDA =  cuda_memcpy(loc(w_comb(1,1)), w_dev,  &
+                            nq * 4 * size_of_datatype, &
+                            cudaMemcpyDeviceToHost)
+      if (.not.(successCUDA)) then
+        print *,"blas_block4_kernel: error in cudaMemcpy, w_dev device to host"
+        stop 1
+      endif
+
+      successCUDA =  cuda_memcpy(loc(h_mat(1,1)), h_dev,  &
+                              max_block_blas * (nb+3) * size_of_datatype, &
+                              cudaMemcpyDeviceToHost)
+        if (.not.(successCUDA)) then
+          print *,"blas_block4_kernel: error in cudaMemcpy, w_dev device to host"
+          stop 1
+        endif
+     endif
+
+
+   useGPU = .false.
+   !  ---------------------
+
+
+
+
    !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
-   call PRECISION_GEMM('N', 'N', nq, nb+3, 4, &
-                       ONE, w_comb, ldq, &
-                       h_mat, 4, &
-                       ONE, q, ldq)
+   if(useGPU) then
+     call cublas_PRECISION_GEMM('N', 'N', nq, nb+3, 4, &
+                         ONE, w_dev, ldq, &
+                         h_dev, 4, &
+                         ONE, q_dev, ldq)
+   else
+     call PRECISION_GEMM('N', 'N', nq, nb+3, 4, &
+                         ONE, w_comb, ldq, &
+                         h_mat, 4, &
+                         ONE, q, ldq)
+   endif
+
+
+   if(useGPU) then
+      !successCUDA =  cuda_memcpy(loc(q_extra(1,1)), q_dev,  &
+      successCUDA =  cuda_memcpy(loc(q(1,1)), q_dev,  &
+                            ldq * (nb+3) * size_of_datatype, &
+                            cudaMemcpyDeviceToHost)
+      if (.not.(successCUDA)) then
+        print *,"blas_block4_kernel: error in cudaMemcpy, q_dev device to host"
+        stop 1
+      endif
+   endif
+
+!   print *, "difference ", norm2(q(1:ldq,1:nb+3)-q_extra(1:ldq,1:nb+3)), ", ldq ", ldq, ", nq ", nq, ", nb ", nb
+
+!   print *, q(1:ldq,1:nb+3)
+!   stop 1
 
   end subroutine
 

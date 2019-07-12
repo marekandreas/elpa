@@ -387,6 +387,19 @@ extern "C" {
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
+  // TODO so far only double real
+  void cublasDsyrk_elpa_wrapper (intptr_t handle, char uplo, char trans, int n, int k,
+                             double alpha, const double *A, int lda, 
+                             double beta, double *C, int ldc) {
+    cublasDsyrk(*((cublasHandle_t*)handle), fill_mode_new_api(uplo), operation_new_api(trans), 
+                n, k, &alpha, A, lda, &beta, C, ldc);
+  }
+
+  // TODO so far only double real
+  void cublasDscal_elpa_wrapper (intptr_t handle, int n, double alpha, double *x, int incx) {
+    cublasDscal(*((cublasHandle_t*)handle), n, &alpha, x, incx);
+  }
+
   
   // todo: new CUBLAS API diverged from standard BLAS api for these functions
   // todo: it provides out-of-place (and apparently more efficient) implementation

@@ -46,6 +46,8 @@
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
+#undef  cublas_PRECISION_SYRK
+#undef  cublas_PRECISION_SCAL
 #undef  scal_PRECISION_GEMM
 #undef  scal_PRECISION_NRM2
 #undef  scal_PRECISION_LASET
@@ -106,6 +108,8 @@
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
 #define  cublas_PRECISION_SYMV cublas_DSYMV
+#define  cublas_PRECISION_SYRK cublas_DSYRK
+#define  cublas_PRECISION_SCAL cublas_DSCAL
 #define  scal_PRECISION_GEMM PDGEMM
 #define  scal_PRECISION_NRM2 PDNRM2
 #define  scal_PRECISION_LASET PDLASET
@@ -167,6 +171,8 @@
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
 #define  cublas_PRECISION_SYMV cublas_SSYMV
+#define  cublas_PRECISION_SYRK cublas_SSYRK
+#define  cublas_PRECISION_SCAL cublas_SSCAL
 #define  scal_PRECISION_GEMM PSGEMM
 #define  scal_PRECISION_NRM2 PSNRM2
 #define  scal_PRECISION_LASET PSLASET
@@ -236,6 +242,8 @@
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
+#undef  cublas_PRECISION_SYRK
+#undef  cublas_PRECISION_SCAL
 #undef  scal_PRECISION_GEMM
 #undef  scal_PRECISION_DOTC
 #undef  scal_PRECISION_LASET
@@ -307,6 +315,8 @@
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
 #define  cublas_PRECISION_SYMV cublas_ZSYMV
+#define  cublas_PRECISION_SYRK cublas_ZSYRK
+#define  cublas_PRECISION_SCAL cublas_ZSCAL
 #define  scal_PRECISION_GEMM PZGEMM
 #define  scal_PRECISION_DOTC PZDOTC
 #define  scal_PRECISION_LASET PZLASET
@@ -372,6 +382,8 @@
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
 #define  cublas_PRECISION_SYMV cublas_CSYMV
+#define  cublas_PRECISION_SYRK cublas_CSYRK
+#define  cublas_PRECISION_SCAL cublas_CSCAL
 #define  scal_PRECISION_GEMM PCGEMM
 #define  scal_PRECISION_DOTC PCDOTC
 #define  scal_PRECISION_LASET PCLASET

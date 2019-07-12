@@ -1534,7 +1534,7 @@
             &MATH_DATATYPE&
             &_openmp_&
             &PRECISION &
-                              (obj, useGPU_LEGACY, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                              (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
                                hh_dot_dev, &
@@ -1551,7 +1551,7 @@
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION&
-     & (obj, useGPU_LEGACY, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,      &
+     & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,      &
               a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
               hh_dot_dev, &
@@ -1639,7 +1639,7 @@
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-               & (obj, useGPU_LEGACY, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+               & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
                  nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
             hh_dot_dev,  &
@@ -1682,7 +1682,7 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU_LEGACY, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,      &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,      &
                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
 #if REALCASE == 1
             hh_dot_dev, &
@@ -1753,7 +1753,7 @@
           &MATH_DATATYPE&
           &_openmp_&
           &PRECISION&
-          & (obj, useGPU_LEGACY, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
+          & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
              nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
              hh_dot_dev, &
@@ -1771,7 +1771,7 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU_LEGACY, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
                       a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
             hh_dot_dev,     &
@@ -1833,7 +1833,7 @@
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-               & (obj, useGPU_LEGACY, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+               & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
                   nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
              hh_dot_dev, &
@@ -1850,7 +1850,7 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU_LEGACY, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
+             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
                       a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
 #if REALCASE == 1
                hh_dot_dev,     &
