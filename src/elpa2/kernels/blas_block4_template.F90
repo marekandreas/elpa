@@ -82,7 +82,7 @@
     real(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:ldh,1:6)
 #endif
 
-    real(kind=C_DATATYPE_KIND)                :: w_comb(nq, 4)
+    real(kind=C_DATATYPE_KIND)                :: w_comb(ldq, 4)
     real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
     real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
 
@@ -109,26 +109,27 @@
                        -ONE, h_mat, 4, &
                        ZERO, s_mat, 4)
 
-!   w_comb = - matmul(q(1:nq, 1:nb+3), transpose(h_mat))
+   !w_comb = - matmul(q(1:nq, 1:nb+3), transpose(h_mat))
    call PRECISION_GEMM('N', 'T', nq, 4, nb+3, &
                        -ONE, q, ldq, &
                        h_mat, 4, &
-                       ZERO, w_comb, nq)
+                       ZERO, w_comb, ldq)
 
    ! Rank-1 update
    !w_comb(1:nq,1) = hh(1,1) * w_comb(1:nq, 1)
    call PRECISION_SCAL(nq, hh(1,1), w_comb(1:nq, 1), 1)
+
    do i = 2, 4
-!     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
+     !w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
      call PRECISION_GEMV('N', nq, i-1, &
-                         hh(1,i), w_comb(1:nq, 1:i-1), nq, &
-                         s_mat(i,1:i-1), 1, &
-                         hh(1,i), w_comb(1:nq,i), 1)
+                         hh(1,i), w_comb(1, 1), ldq, &
+                         s_mat(i,1), 4, &
+                         hh(1,i), w_comb(1,i), 1)
    enddo
 
    !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
    call PRECISION_GEMM('N', 'N', nq, nb+3, 4, &
-                       ONE, w_comb, nq, &
+                       ONE, w_comb, ldq, &
                        h_mat, 4, &
                        ONE, q, ldq)
 
