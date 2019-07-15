@@ -110,6 +110,9 @@ module elpa2_utilities
 #ifdef WITH_REAL_AVX512_BLOCK6_KERNEL
   integer(kind=c_int), parameter :: REAL_ELPA_KERNEL_AVX512_BLOCK6 = ELPA_2STAGE_REAL_AVX512_BLOCK6
 #endif
+#ifdef WITH_REAL_BLAS_BLOCK4_KERNEL
+  integer(kind=c_int), parameter :: REAL_ELPA_KERNEL_BLAS_BLOCK4 = ELPA_2STAGE_REAL_BLAS_BLOCK4
+#endif
 #ifdef WITH_GPU_KERNEL
   integer(kind=c_int), parameter :: REAL_ELPA_KERNEL_GPU = ELPA_2STAGE_REAL_GPU
 #endif
@@ -179,6 +182,7 @@ module elpa2_utilities
                                 "REAL_ELPA_KERNEL_AVX512_BLOCK2     ", &
                                 "REAL_ELPA_KERNEL_AVX512_BLOCK4     ", &
                                 "REAL_ELPA_KERNEL_AVX512_BLOCK6     ", &
+                                "REAL_ELPA_KERNEL_BLAS_BLOCK4       ", &
                                 "REAL_ELPA_KERNEL_GPU               "/)
 
   character(35), parameter, dimension(number_of_complex_kernels) :: &
@@ -282,6 +286,12 @@ module elpa2_utilities
                                                                    ,0  &
 #endif
 #if WITH_REAL_AVX512_BLOCK6_KERNEL
+                                                                     ,1  &
+#else
+                                                                     ,0  &
+#endif
+
+#if WITH_REAL_BLAS_BLOCK4_KERNEL
                                                                      ,1  &
 #else
                                                                      ,0  &
