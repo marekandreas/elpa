@@ -87,11 +87,6 @@
     real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
     real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
 
-
-    !TODO remove
-    !real(kind=C_DATATYPE_KIND)                :: q_extra(1:ldq,1:nb+3)
-
-
     integer(kind=c_intptr_t)                  :: h_dev, s_dev, q_dev, w_dev
     logical                                   :: successCUDA
     integer(kind=c_intptr_t), parameter       :: size_of_datatype = size_of_&
@@ -119,7 +114,8 @@
    h_mat(4,2:nb)   = -hh(2:nb, 4)
 
    if(useGPU) then
-      !    nb == nbw
+      !    nb <-> nbw
+      !    nq (actual) <-> ldq (maximal) <-> stripe_width
       successCUDA =  cuda_memcpy(h_dev, loc(h_mat(1,1)),  &
                             max_block_blas * (nb+3) * size_of_datatype, &
                             cudaMemcpyHostToDevice)
@@ -127,7 +123,6 @@
         print *,"blas_block4_kernel: error in cudaMemcpy, h_dev host to device"
         stop 1
       endif
-      !    nq == stripe_width
       successCUDA =  cuda_memcpy(q_dev, loc(q(1,1)),  &
                             ldq * (nb+3) * size_of_datatype, &
                             cudaMemcpyHostToDevice)
@@ -163,6 +158,7 @@
                          ZERO, w_comb, ldq)
    endif
 
+
    ! Rank-1 update
    !w_comb(1:nq,1) = hh(1,1) * w_comb(1:nq, 1)
    if(useGPU) then
@@ -170,6 +166,7 @@
    else
      call PRECISION_SCAL(nq, hh(1,1), w_comb(1, 1), 1)
    endif
+
    do i = 2, 4
 !     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
      if(useGPU) then
@@ -184,42 +181,6 @@
                            hh(1,i), w_comb(1,i), 1)
      endif
    enddo
-
-   !  ---------------------
-   if(useGPU) then
-!      successCUDA =  cuda_memcpy(loc(s_mat(1,1)), s_dev,  &
-!                            4 * 4 * size_of_datatype, &
-!                            cudaMemcpyDeviceToHost)
-!      if (.not.(successCUDA)) then
-!        print *,"blas_block4_kernel: error in cudaMemcpy, q_dev device to host"
-!        stop 1
-!      endif
-
-
-
-      successCUDA =  cuda_memcpy(loc(w_comb(1,1)), w_dev,  &
-                            nq * 4 * size_of_datatype, &
-                            cudaMemcpyDeviceToHost)
-      if (.not.(successCUDA)) then
-        print *,"blas_block4_kernel: error in cudaMemcpy, w_dev device to host"
-        stop 1
-      endif
-
-      successCUDA =  cuda_memcpy(loc(h_mat(1,1)), h_dev,  &
-                              max_block_blas * (nb+3) * size_of_datatype, &
-                              cudaMemcpyDeviceToHost)
-        if (.not.(successCUDA)) then
-          print *,"blas_block4_kernel: error in cudaMemcpy, w_dev device to host"
-          stop 1
-        endif
-     endif
-
-
-   useGPU = .false.
-   !  ---------------------
-
-
-
 
    !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
    if(useGPU) then
@@ -236,7 +197,6 @@
 
 
    if(useGPU) then
-      !successCUDA =  cuda_memcpy(loc(q_extra(1,1)), q_dev,  &
       successCUDA =  cuda_memcpy(loc(q(1,1)), q_dev,  &
                             ldq * (nb+3) * size_of_datatype, &
                             cudaMemcpyDeviceToHost)
@@ -245,11 +205,6 @@
         stop 1
       endif
    endif
-
-!   print *, "difference ", norm2(q(1:ldq,1:nb+3)-q_extra(1:ldq,1:nb+3)), ", ldq ", ldq, ", nq ", nq, ", nb ", nb
-
-!   print *, q(1:ldq,1:nb+3)
-!   stop 1
 
   end subroutine
 
