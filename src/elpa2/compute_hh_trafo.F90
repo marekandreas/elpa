@@ -1502,14 +1502,15 @@
                     &MATH_DATATYPE&
                     &_blas_4hv_&
                     &PRECISION&
-                    & (useGPU, a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, nbw, h_dev, s_dev, q_dev, w_dev)
+                    & (useGPU, a(1,j+off+a_off-3,istripe,my_thread), w, nbw, nl, stripe_width, &
+                                 nbw, h_dev, s_dev, q_dev, w_dev, 4, 4)
 #else
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
                     &_blas_4hv_&
                     &PRECISION&
-                    & (useGPU, a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), nbw, nl, &
-                       stripe_width, nbw, h_dev, s_dev, q_dev, w_dev)
+                    & (useGPU, a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe,my_thread), w(1:nbw,1:6), &
+                       nbw, nl, stripe_width, nbw, h_dev, s_dev, q_dev, w_dev, 4, 4)
 #endif
 
 #else
@@ -1519,14 +1520,14 @@
                     &MATH_DATATYPE&
                     &_blas_4hv_&
                     &PRECISION&
-                    & (useGPU, a(1,j+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw, h_dev, s_dev, q_dev, w_dev)
+                    & (useGPU, a(1,j+off+a_off-3,istripe), w, nbw, nl, stripe_width, nbw, h_dev, s_dev, q_dev, w_dev, 4, 4)
 #else
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
                     &_blas_4hv_&
                     &PRECISION&
                     & (useGPU, a(1:stripe_width,j+off+a_off-3:j+off+a_off+nbw-1,istripe), w(1:nbw,1:6), nbw, nl, &
-                       stripe_width, nbw, h_dev, s_dev, q_dev, w_dev)
+                       stripe_width, nbw, h_dev, s_dev, q_dev, w_dev, 4, 4)
 #endif
 
 #endif

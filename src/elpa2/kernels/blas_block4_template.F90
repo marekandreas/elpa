@@ -64,7 +64,7 @@
   &MATH_DATATYPE&
   &_blas_4hv_&
   &PRECISION&
-  & (useGPU, q, hh, nb, nq, ldq, ldh, h_dev, s_dev, q_dev, w_dev)
+  & (useGPU, q, hh, nb, nq, ldq, ldh, h_dev, s_dev, q_dev, w_dev, block_size, max_block_size)
 
     use precision
     use iso_c_binding
@@ -75,6 +75,11 @@
     logical                         :: useGPU
     integer(kind=ik), intent(in)    :: nb, nq, ldq, ldh
 
+    ! the number of eigenvectors processed in parallel
+    integer(kind=ik), intent(in)              :: block_size
+    ! the maximal number of eigenvectors processed in parallel, determines the sizes of the arrays and memory transfers
+    integer(kind=ik), intent(in)              :: max_block_size
+
 #ifdef USE_ASSUMED_SIZE
     real(kind=C_DATATYPE_KIND), intent(inout) :: q(ldq,*)
     real(kind=C_DATATYPE_KIND), intent(in)    :: hh(ldh,*)
@@ -83,9 +88,9 @@
     real(kind=C_DATATYPE_KIND), intent(in)    :: hh(1:ldh,1:6)
 #endif
 
-    real(kind=C_DATATYPE_KIND)                :: w_comb(ldq, 4)
-    real(kind=C_DATATYPE_KIND)                :: h_mat(4, nb+3)
-    real(kind=C_DATATYPE_KIND)                :: s_mat(4, 4)
+    real(kind=C_DATATYPE_KIND)                :: w_comb(ldq, max_block_size)
+    real(kind=C_DATATYPE_KIND)                :: h_mat(max_block_size, nb+3)
+    real(kind=C_DATATYPE_KIND)                :: s_mat(max_block_size, max_block_size)
 
     integer(kind=c_intptr_t)                  :: h_dev, s_dev, q_dev, w_dev
     logical                                   :: successCUDA
@@ -96,28 +101,20 @@
 
     integer(kind=ik)                          :: i, j, k
 
-    integer(kind=ik), parameter               :: max_block_blas = 4
-
-
     ! Calculate dot product of the two Householder vectors
 
    h_mat(:,:) = 0.0_rk
 
-   h_mat(1,4) = -1.0_rk
-   h_mat(2,3) = -1.0_rk
-   h_mat(3,2) = -1.0_rk
-   h_mat(4,1) = -1.0_rk
-
-   h_mat(1,5:nb+3) = -hh(2:nb, 1)
-   h_mat(2,4:nb+2) = -hh(2:nb, 2)
-   h_mat(3,3:nb+1) = -hh(2:nb, 3)
-   h_mat(4,2:nb)   = -hh(2:nb, 4)
+   do i = 1, block_size
+     h_mat(i, block_size-i+1) = -1.0_rk
+     h_mat(i, block_size-i+2 : nb+block_size-i) = -hh(2:nb, i)
+   enddo
 
    if(useGPU) then
       !    nb <-> nbw
       !    nq (actual) <-> ldq (maximal) <-> stripe_width
       successCUDA =  cuda_memcpy(h_dev, loc(h_mat(1,1)),  &
-                            max_block_blas * (nb+3) * size_of_datatype, &
+                            max_block_size * (nb+3) * size_of_datatype, &
                             cudaMemcpyHostToDevice)
       if (.not.(successCUDA)) then
         print *,"blas_block4_kernel: error in cudaMemcpy, h_dev host to device"
@@ -136,25 +133,25 @@
    ! TODO we do not need the diagonal, but how to do it with BLAS?
    !s_mat = - matmul(h_mat, transpose(h_mat))
    if(useGPU) then
-     call cublas_PRECISION_SYRK('L', 'N', 4, nb+3, &
-                         -ONE, h_dev, 4, &
-                         ZERO, s_dev, 4)
+     call cublas_PRECISION_SYRK('L', 'N', block_size, nb+3, &
+                         -ONE, h_dev, max_block_size, &
+                         ZERO, s_dev, max_block_size)
    else
-     call PRECISION_SYRK('L', 'N', 4, nb+3, &
-                         -ONE, h_mat, 4, &
-                         ZERO, s_mat, 4)
+     call PRECISION_SYRK('L', 'N', block_size, nb+3, &
+                         -ONE, h_mat, max_block_size, &
+                         ZERO, s_mat, max_block_size)
    endif
 
    !w_comb = - matmul(q(1:nq, 1:nb+3), transpose(h_mat))
    if(useGPU) then
-     call cublas_PRECISION_GEMM('N', 'T', nq, 4, nb+3, &
+     call cublas_PRECISION_GEMM('N', 'T', nq, block_size, nb+3, &
                          -ONE, q_dev, ldq, &
-                         h_dev, 4, &
+                         h_dev, max_block_size, &
                          ZERO, w_dev, ldq)
    else
-     call PRECISION_GEMM('N', 'T', nq, 4, nb+3, &
+     call PRECISION_GEMM('N', 'T', nq, block_size, nb+3, &
                          -ONE, q, ldq, &
-                         h_mat, 4, &
+                         h_mat, max_block_size, &
                          ZERO, w_comb, ldq)
    endif
 
@@ -167,31 +164,31 @@
      call PRECISION_SCAL(nq, hh(1,1), w_comb(1, 1), 1)
    endif
 
-   do i = 2, 4
+   do i = 2, block_size
 !     w_comb(1:nq,i) = matmul(w_comb(1:nq,1:i-1), hh(1,i) * s_mat(i,1:i-1)) + hh(1,i) * w_comb(1:nq, i)
      if(useGPU) then
        call cublas_PRECISION_GEMV('N', nq, i-1, &
                            hh(1,i), w_dev, ldq, &
-                           s_dev + (i - 1) * size_of_datatype, 4, &
+                           s_dev + (i - 1) * size_of_datatype, max_block_size, &
                            hh(1,i), w_dev + (i-1) * ldq * size_of_datatype, 1)
      else
        call PRECISION_GEMV('N', nq, i-1, &
                            hh(1,i), w_comb(1, 1), ldq, &
-                           s_mat(i,1), 4, &
+                           s_mat(i,1), max_block_size, &
                            hh(1,i), w_comb(1,i), 1)
      endif
    enddo
 
    !q(1:nq, 1:nb+3) = matmul(w_comb, h_mat) + q(1:nq, 1:nb+3)
    if(useGPU) then
-     call cublas_PRECISION_GEMM('N', 'N', nq, nb+3, 4, &
+     call cublas_PRECISION_GEMM('N', 'N', nq, nb+3, block_size, &
                          ONE, w_dev, ldq, &
-                         h_dev, 4, &
+                         h_dev, max_block_size, &
                          ONE, q_dev, ldq)
    else
-     call PRECISION_GEMM('N', 'N', nq, nb+3, 4, &
+     call PRECISION_GEMM('N', 'N', nq, nb+3, block_size, &
                          ONE, w_comb, ldq, &
-                         h_mat, 4, &
+                         h_mat, max_block_size, &
                          ONE, q, ldq)
    endif
 
