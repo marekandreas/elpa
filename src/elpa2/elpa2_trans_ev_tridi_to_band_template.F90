@@ -158,7 +158,6 @@
       integer(kind=c_intptr_t)                   :: bcast_buffer_dev
       integer(kind=c_intptr_t)                   :: num
       integer(kind=c_intptr_t)                   :: dev_offset, dev_offset_1
-      integer(kind=c_intptr_t)                   :: row_dev
       integer(kind=c_intptr_t)                   :: row_group_dev
       integer(kind=c_intptr_t)                   :: hh_tau_dev
       integer(kind=c_intptr_t)                   :: hh_dot_dev
@@ -508,23 +507,6 @@
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &: error in cudaMemset"//errorMessage
-          stop 1
-        endif
-
-        num =  (l_nev)* size_of_datatype
-        successCUDA = cuda_malloc( row_dev,num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMalloc "
-          stop 1
-        endif
-
-        successCUDA = cuda_memset(row_dev , 0, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMemset "
           stop 1
         endif
 
@@ -2359,14 +2341,6 @@
        endif
 
        successCUDA = cuda_free(hh_tau_dev)
-       if (.not.(successCUDA)) then
-         print *,"trans_ev_tridi_to_band_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree "//errorMessage
-         stop 1
-       endif
-
-       successCUDA = cuda_free(row_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
