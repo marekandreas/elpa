@@ -112,16 +112,6 @@ extern "C" {
     }                
   }
 
-  int cudaThreadSynchronizeFromC() {
-    cudaError_t cuerr = cudaDeviceSynchronize();
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaDeviceSynchronize: %s\n",cudaGetErrorString(cuerr));
-      return 0;
-    }
-    return 1;
-  }
-
-
   int cudaSetDeviceFromC(int n) {
 
     cudaError_t cuerr = cudaSetDevice(n);

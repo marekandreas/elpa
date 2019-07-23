@@ -209,29 +209,6 @@
       unpack_idx = next_unpack_idx
     end subroutine
 
-    ! The host wrapper for computing the dot products between consecutive HH reflectors (see the kernel below)
-    subroutine compute_hh_dot_products_&
-    &MATH_DATATYPE&
-    &_gpu_&
-    &PRECISION&
-    & (bcast_buffer_dev, hh_dot_dev, nbw, n)
-      use cuda_c_kernel
-      use precision
-      use iso_c_binding
-      implicit none
-      integer(kind=c_intptr_t) :: bcast_buffer_dev, hh_dot_dev
-      integer(kind=ik), value  :: nbw, n
-
-      if (n .le. 1) return
-      call launch_compute_hh_dotp_gpu_kernel_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      & ( bcast_buffer_dev, hh_dot_dev, nbw, n)
-
-
-    end subroutine
-
     ! The host wrapper for extracting "tau" from the HH reflectors (see the kernel below)
     subroutine extract_hh_tau_&
     &MATH_DATATYPE&
@@ -258,40 +235,3 @@
       &PRECISION&
       & (bcast_buffer_dev, hh_tau_dev, nbw, n, val_is_zero)
     end subroutine
-
-    ! -------------------------------------------
-    ! Fortran back-transformation support kernels
-    ! -------------------------------------------
-
-    ! Reset a reduction block
-    ! Limitation: the thread-block size must be a divider of the reduction block's size
-    ! Reset 2 reduction blocks without an explicit synchronization at the end
-    ! Limitation: : the thread-block size must be a divider of the reduction block's size
-    ! Perform a reduction on an initialized, 128-element shared block
-    ! Compute the dot-product between 2 consecutive HH vectors
-    ! Limitation 1: the size of the thread block must be at most 128 and a power-of-2
-    ! Limitation 2: the size of the warp must be equal to 32
-    !
-    ! Extract "tau" from the HH matrix and replace it with 1.0 or 0.0 (depending on case)
-    ! Having "tau" as the first element in a HH reflector reduces space requirements, but causes undesired branching in the kernels
-    !
-    ! -------------------------------------------
-    ! Fortran back-transformation support kernels
-    ! -------------------------------------------
-    !
-    ! This is the simplest and slowest available backtransformation kernel
-    !
-    ! This is an improved version of the simple backtransformation kernel; here, we halve the number of iterations and apply
-    ! 2 Householder reflectors per iteration
-    !
-    ! ---------------------------------
-    ! Row packing and unpacking kernels
-    ! ---------------------------------
-    !
-    ! The row group packing kernel
-
-        ! Host wrapper for the Householder backtransformation step. Several kernels are available. Performance note:
-        ! - "compute_hh_trafo_c_kernel" is the C kernel for the backtransformation (this exhibits best performance)
-        ! - "compute_hh_trafo_kernel" is the Fortran equivalent of the C kernel
-        ! - "compute_hh_trafo_single_kernel" is the reference Fortran kernel
-

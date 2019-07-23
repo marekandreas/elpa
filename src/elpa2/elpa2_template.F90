@@ -122,6 +122,7 @@
 
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
+    logical                                                           :: good_nblk_gpu
 
     integer(kind=ik)                                                  :: nrThreads
 #if REALCASE == 1
@@ -269,6 +270,17 @@
       call obj%timer%stop("check_for_gpu")
     endif
 
+    if (nblk*(max(np_rows,np_cols)-1) >= na) then
+      write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
+      write(error_unit,*) "Choose a smaller block size if possible."
+
+      do_useGPU = .false.
+
+      if (kernel == GPU_KERNEL) then
+        kernel = GENERIC_KERNEL
+      endif
+    endif
+
     do_useGPU_bandred = do_useGPU
     do_useGPU_tridiag_band = do_useGPU
     do_useGPU_solve_tridi = do_useGPU
@@ -323,11 +335,23 @@
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
         write(error_unit,*) "The compute kernel will be executed on CPUs!"
         do_useGPU_trans_ev_tridi_to_band = .false.
-      else if (nblk .ne. 128) then
-        write(error_unit,*) "ELPA: Warning, GPU kernel can run only with scalapack block size 128!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-        do_useGPU_trans_ev_tridi_to_band = .false.
-        kernel = GENERIC_KERNEL
+      else
+        good_nblk_gpu = .false.
+
+        ! Accepted values are 2,4,8,16,...,512
+        do i = 1,10
+           if (nblk == 2**i) then
+              good_nblk_gpu = .true.
+              exit
+           endif
+        enddo
+
+        if (.not. good_nblk_gpu) then
+           write(error_unit,*) "ELPA: Warning, CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
+           write(error_unit,*) "The compute kernel will be executed on CPUs!"
+           do_useGPU_trans_ev_tridi_to_band = .false.
+           kernel = GENERIC_KERNEL
+        endif
       endif
     endif
 
@@ -337,11 +361,6 @@
       if (kernel .ne. GPU_KERNEL) then
         ! this should never happen, checking as an assert
         write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
-        stop
-      endif
-      if (nblk .ne. 128) then
-        ! this should never happen, checking as an assert
-        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel and blocksize!  Aborting..."
         stop
       endif
     else
@@ -442,7 +461,7 @@
     endif
 
     if (obj%is_set("bandwidth") == 1) then
-      ! bandwidth is set. That means, that the inputed matrix is actually banded and thus the 
+      ! bandwidth is set. That means, that the inputed matrix is actually banded and thus the
       ! first step of ELPA2 should be skipped
       call obj%get("bandwidth",nbw,error)
       if (nbw == 0) then

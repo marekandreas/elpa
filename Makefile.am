@@ -68,7 +68,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/helpers/matrix_plot.F90 \
   src/elpa_index.c
 
-libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c 
+libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c
 
 
 # elpa_utilities.F90 is private in new API, public in legacy
@@ -166,8 +166,7 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES +=  src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2.cu
-  EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_real.cu src/elpa2/GPU/ev_tridi_band_gpu_complex.cu
 endif
 
 if !WITH_MPI
@@ -776,8 +775,6 @@ EXTRA_DIST = \
   src/elpa1/elpa_reduce_add_vectors.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/elpa1/elpa_transpose_vectors.F90 \
-  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu \
-  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu \
   src/elpa2/compute_hh_trafo.F90 \
   src/elpa2/elpa2_bandred_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \

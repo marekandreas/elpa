@@ -160,7 +160,6 @@
       integer(kind=c_intptr_t)                   :: dev_offset, dev_offset_1
       integer(kind=c_intptr_t)                   :: row_group_dev
       integer(kind=c_intptr_t)                   :: hh_tau_dev
-      integer(kind=c_intptr_t)                   :: hh_dot_dev
       integer(kind=ik)                           :: row_group_size, unpack_idx
 
       integer(kind=ik)                           :: n_times
@@ -182,7 +181,7 @@
       integer(kind=ik), parameter                :: result_recv_tag = 333
 
       integer(kind=ik), intent(in)               :: max_threads
- 
+
 #ifdef WITH_OPENMP
       integer(kind=ik)                           :: my_thread
 #endif
@@ -382,7 +381,7 @@
         ! Suggested stripe width is 48 - should this be reduced for the complex case ???
 
         if (useGPU) then
-          stripe_width = 256 ! Must be a multiple of 4
+          stripe_width = 1024 ! Must be a multiple of 4
           stripe_count = (l_nev - 1) / stripe_width + 1
 
         else ! useGPU
@@ -879,14 +878,6 @@
           a_dim2, l_nev, row_group_size, nblk, unpack_idx,     &
           -1, .true.)
 
-        successCUDA = cuda_devicesynchronize()
-
-         if (.not.(successCUDA)) then
-           print *,"trans_ev_tridi_to_band_&
-           &MATH_DATATYPE&
-           &: error in cudaDeviceSynchronize"//errorMessage
-           stop 1
-         endif
       endif
 
       ! Set up result buffer queue
@@ -1092,23 +1083,6 @@
           stop 1
         endif
 
-        num =  ((max_blk_size-1))* size_of_datatype
-        successCUDA = cuda_malloc( hh_dot_dev, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMalloc"
-          stop 1
-        endif
-
-        successCUDA = cuda_memset( hh_dot_dev, 0, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMemset"
-          stop 1
-        endif
-
         num =  (max_blk_size)* size_of_datatype
         successCUDA = cuda_malloc( hh_tau_dev, num)
         if (.not.(successCUDA)) then
@@ -1234,20 +1208,9 @@
             call extract_hh_tau_&
                  &MATH_DATATYPE&
                  &_gpu_&
-                 &PRECISION &
-!#if REALCASE == 1
-                          (bcast_buffer_dev, hh_tau_dev, nbw, &
-!#endif
-!#if COMPLEXCASE == 1
-!                          (                              nbw, &
-!#endif
-                           current_local_n, .false.)
-      call compute_hh_dot_products_&
-           &MATH_DATATYPE&
-           &_gpu_&
-           &PRECISION &
-                     (bcast_buffer_dev, hh_dot_dev, nbw, &
-                            current_local_n)
+                 &PRECISION&
+                 (bcast_buffer_dev, hh_tau_dev, nbw, &
+                 current_local_n, .false.)
           endif ! useGPU
 
         else ! (current_local_n > 1) then
@@ -1449,14 +1412,11 @@
        call compute_hh_trafo_&
             &MATH_DATATYPE&
             &_openmp_&
-            &PRECISION &
-                              (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
-             l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
-#if REALCASE == 1
-                               hh_dot_dev, &
-#endif
-                               hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, &
-             i, my_thread, thread_width, kernel)
+            &PRECISION&
+            (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+            l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+            hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, &
+            i, my_thread, thread_width, kernel)
            enddo
 !$omp end parallel do
            call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1467,13 +1427,10 @@
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION&
-     & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,      &
-              a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
-#if REALCASE == 1
-              hh_dot_dev, &
-#endif
-              hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i,          &
-              last_stripe_width, kernel)
+                &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+                hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
+                last_stripe_width, kernel)
 #endif /* WITH_OPENMP */
 
            !send_b        1
@@ -1555,13 +1512,10 @@
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-               & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
-                 nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
-#if REALCASE == 1
-            hh_dot_dev,  &
-#endif
-            hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
-      bottom_msg_length, i, my_thread, thread_width, kernel)
+               &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+               nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
+               hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
+               bottom_msg_length, i, my_thread, thread_width, kernel)
         enddo
 !$omp end parallel do
         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1598,16 +1552,11 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,      &
-                      a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev,      &
-#if REALCASE == 1
-            hh_dot_dev, &
-#endif
-           hh_tau_dev, kernel_flops, kernel_time, n_times,                 &
-           current_local_n - bottom_msg_length, bottom_msg_length, i,             &
-           last_stripe_width, kernel)
-
-
+             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+             hh_tau_dev, kernel_flops, kernel_time, n_times, &
+             current_local_n - bottom_msg_length, bottom_msg_length, i, &
+             last_stripe_width, kernel)
 
         !send_b
 #ifdef WITH_MPI
@@ -1669,14 +1618,11 @@
           &MATH_DATATYPE&
           &_openmp_&
           &PRECISION&
-          & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
-             nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
-#if REALCASE == 1
-             hh_dot_dev, &
-#endif
-             hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,&
-             current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
-             kernel)
+          (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
+          nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+          hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
+          current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
+          kernel)
         enddo
 !$omp end parallel do
         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1687,14 +1633,11 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
-                      a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
-#if REALCASE == 1
-            hh_dot_dev,     &
-#endif
-           hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,                    &
-           current_local_n-top_msg_length-bottom_msg_length, i,                       &
-           last_stripe_width, kernel)
+             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+             hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
+             current_local_n-top_msg_length-bottom_msg_length, i, &
+             last_stripe_width, kernel)
 
 #endif /* WITH_OPENMP */
 
@@ -1749,13 +1692,10 @@
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-               & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
-                  nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
-#if REALCASE == 1
-             hh_dot_dev, &
-#endif
-             hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, my_thread, &
-       thread_width, kernel)
+               (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+               nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
+               hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, my_thread, &
+               thread_width, kernel)
         enddo
 !$omp end parallel do
         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1766,13 +1706,10 @@
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
-                      a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev,          &
-#if REALCASE == 1
-               hh_dot_dev,     &
-#endif
-           hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i,               &
-           last_stripe_width, kernel)
+             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
+             hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
+             last_stripe_width, kernel)
 
 #endif /* WITH_OPENMP */
       endif
@@ -2324,19 +2261,9 @@
      endif
 
      if (useGPU) then
-#if COMPLEXCASE == 1
-       ! should this not hbe done always?
        successCUDA = cuda_free(aIntern_dev)
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
-         stop 1
-       endif
-#endif
-       successCUDA = cuda_free(hh_dot_dev)
-       if (.not.(successCUDA)) then
-         print *,"trans_ev_tridi_to_band_&
-                 &MATH_DATATYPE&
-                 &real: error in cudaFree "//errorMessage
          stop 1
        endif
 
@@ -2381,31 +2308,6 @@
                          gpuString)
 
      return
-!#if COMPLEXCASE == 1
-!     contains
-!     ! The host wrapper for extracting "tau" from the HH reflectors (see the
-!     ! kernel below)
-!       subroutine extract_hh_tau_complex_gpu_&
-!       &PRECISION&
-!       &(nbw, n, is_zero)
-!         use cuda_c_kernel
-!         use pack_unpack_gpu
-!         use precision
-!         implicit none
-!         integer(kind=ik), value :: nbw, n
-!         logical, value          :: is_zero
-!         integer(kind=ik)        :: val_is_zero
-!
-!         if (is_zero) then
-!           val_is_zero = 1
-!         else
-!           val_is_zero = 0
-!         endif
-!         call launch_extract_hh_tau_c_kernel_complex_&
-!   &PRECISION&
-!   &(bcast_buffer_dev,hh_tau_dev, nbw, n,val_is_zero)
-!       end subroutine
-!#endif /* COMPLEXCASE */
 
     end subroutine
 

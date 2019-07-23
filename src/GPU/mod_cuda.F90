@@ -90,15 +90,6 @@ module cuda_functions
   end interface  
 
   interface
-    function cuda_threadsynchronize_c() result(istat) &
-             bind(C,name="cudaThreadSynchronizeFromC")
-      use iso_c_binding
-      implicit none
-      integer(kind=C_INT)  :: istat
-    end function cuda_threadsynchronize_c
-  end interface
-
-  interface
     function cuda_setdevice_c(n) result(istat) &
              bind(C, name="cudaSetDeviceFromC")
 
@@ -495,19 +486,6 @@ module cuda_functions
 #endif
    end function
     
-    function cuda_threadsynchronize() result(success)
-      use iso_c_binding
-
-      implicit none
-
-      logical :: success
-#ifdef WITH_GPU_VERSION
-      success = cuda_threadsynchronize_c() /= 0
-#else
-      success = .true.
-#endif
-    end function cuda_threadsynchronize
-
     function cuda_setdevice(n) result(success)
       use iso_c_binding
 
