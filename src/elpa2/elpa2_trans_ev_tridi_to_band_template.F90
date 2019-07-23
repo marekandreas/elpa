@@ -2177,9 +2177,11 @@
 #ifdef WITH_MPI
      if (ANY(result_send_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_send_request ***',my_prow,my_pcol
      if (ANY(result_recv_request /= MPI_REQUEST_NULL)) write(error_unit,*) '*** ERROR result_recv_request ***',my_prow,my_pcol
-
+#endif
 
      call obj%get("print_flops",print_flops,error)
+
+#ifdef WITH_MPI
 #ifdef HAVE_DETAILED_TIMINGS
      if (print_flops == 1) then
        call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, mpierr)
@@ -2193,7 +2195,6 @@
        kernel_time_recv = kernel_time
      endif
 #endif
-
 #endif /* WITH_MPI */
 
      if (my_prow==0 .and. my_pcol==0 .and.print_flops == 1) &
