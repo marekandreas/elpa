@@ -113,9 +113,9 @@ extern "C" {
   }
 
   int cudaThreadSynchronizeFromC() {
-    cudaError_t cuerr = cudaThreadSynchronize();
+    cudaError_t cuerr = cudaDeviceSynchronize();
     if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaThreadSynchronize: %s\n",cudaGetErrorString(cuerr));
+      errormessage("Error in cudaDeviceSynchronize: %s\n",cudaGetErrorString(cuerr));
       return 0;
     }
     return 1;
