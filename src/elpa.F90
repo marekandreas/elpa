@@ -125,7 +125,6 @@
 !>   if (success != ELPA_OK) then
 !>     print *,"Could not set entry"
 !>   endif
-
 !>   call elpa%set("nev", nev, success, success)
 !>   ! check success code ...
 !>
