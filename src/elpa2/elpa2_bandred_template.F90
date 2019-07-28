@@ -1637,37 +1637,38 @@
 !#endif
 
      if (useGPU) then
-       successCUDA = cuda_free(vmr_dev)
-       if (.not.(successCUDA)) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree vmr_dev 6"
-         stop 1
-       endif
-
-       successCUDA = cuda_free(umc_dev)
-       if (.not.(successCUDA)) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree umc_dev 8"
-         stop
-       endif
-
        if (allocated(umcCUDA)) then
          deallocate(umcCUDA, stat=istat, errmsg=errorMessage)
-         if (istat .ne. 0) then
+         if (istat /= 0) then
            print *,"bandred_&
                    &MATH_DATATYPE&
                    &: error when deallocating umcCUDA "//errorMessage
            stop 1
          endif
+
+         successCUDA = cuda_free(umc_dev)
+         if (.not. successCUDA) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaFree umc_dev 8"
+           stop
+         endif
        endif
+
        if (allocated(vmrCUDA)) then
          deallocate(vmrCUDA, stat=istat, errmsg=errorMessage)
-         if (istat .ne. 0) then
+         if (istat /= 0) then
            print *,"bandred_&
                    &MATH_DATATYPE&
                    &: error when deallocating vmrCUDA "//errorMessage
+           stop 1
+         endif
+
+         successCUDA = cuda_free(vmr_dev)
+         if (.not. successCUDA) then
+           print *,"bandred_&
+                   &MATH_DATATYPE&
+                   &: error in cudaFree vmr_dev 6"
            stop 1
          endif
        endif
@@ -1692,11 +1693,11 @@
 #endif
 
      if (useGPU) then
-       ! copy a_dev to a_mat 
+       ! copy a_dev to a_mat
        ! we do it here, since a is needed on the host in the following routine
        ! (band to tridi). Previously, a has been kept on the device and then
        ! copied in redist_band (called from tridiag_band). However, it seems to
-       ! be easier to do it here. 
+       ! be easier to do it here.
        successCUDA = cuda_memcpy (int(loc(a_mat),kind=c_intptr_t), &
        int(a_dev,kind=c_intptr_t), int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
                                   cudaMemcpyDeviceToHost)
