@@ -164,7 +164,7 @@
       integer(kind=ik)                           :: row_group_size, unpack_idx
 
       integer(kind=ik)                           :: n_times
-      integer(kind=ik)                           :: top, chunk, this_chunk
+      integer(kind=ik)                           :: chunk, this_chunk
 
       MATH_DATATYPE(kind=rck), allocatable       :: result_buffer(:,:,:)
       MATH_DATATYPE(kind=rck), allocatable       :: bcast_buffer(:,:)
@@ -2109,35 +2109,35 @@
 #else /* WITH_OPENMP */
          do i = 1, stripe_count
            if (useGPU) then
-             chunk = min(next_local_n - 1, a_off)
-             do j = top_msg_length + 1, top_msg_length + next_local_n, chunk
-               top = min(j + chunk, top_msg_length + next_local_n)
-               this_chunk = top - j + 1
-               dev_offset = (0 + ( (j-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-               dev_offset_1 = (0 + ( (j + a_off-1) * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-               ! it is not logical to set here always the value for the parameter
-               ! "cudaMemcpyDeviceToDevice" do this ONCE at startup
-               !               tmp = cuda_d2d(1)
-               successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , aIntern_dev +dev_offset_1, &
-                                         stripe_width*this_chunk* size_of_datatype, cudaMemcpyDeviceToDevice)
-               if (.not.(successCUDA)) then
+             chunk = min(next_local_n,a_off)
+
+             if (chunk < 1) exit
+
+             do j = top_msg_length+1, top_msg_length+next_local_n, chunk
+               this_chunk = min(j+chunk-1,top_msg_length+next_local_n)-j+1
+               dev_offset = ((j-1)*stripe_width+(i-1)*stripe_width*a_dim2)*size_of_datatype
+               dev_offset_1 = ((j+a_off-1)*stripe_width+(i-1)*stripe_width*a_dim2)*size_of_datatype
+               num = stripe_width*this_chunk*size_of_datatype
+               successCUDA = cuda_memcpy(aIntern_dev+dev_offset,aIntern_dev+dev_offset_1,num,cudaMemcpyDeviceToDevice)
+
+               if (.not. successCUDA) then
                  print *,"trans_ev_tridi_to_band_&
-                         &MATH_DATATYPE&
-                         &: error cudaMemcpy"
+                   &MATH_DATATYPE&
+                   &: error cudaMemcpy"
                  stop 1
-               endif
-             enddo
+               end if
+             end do
            else ! not useGPU
              do j = top_msg_length+1, top_msg_length+next_local_n
                aIntern(:,j,i) = aIntern(:,j+a_off,i)
-             enddo
-           endif
-         enddo ! stripe_count
+             end do
+           end if
+         end do ! stripe_count
 #endif /* WITH_OPENMP */
 
          a_off = 0
-       endif
-     enddo
+       end if
+     end do
 
      ! Just for safety:
 #ifdef WITH_MPI
