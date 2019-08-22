@@ -116,16 +116,15 @@
 !>     stop
 !>   endif
 !>   elpa => elpa_allocate(success)
-!>   if (success != ELPA_OK) then
+!>   if (success /= ELPA_OK) then
 !>     print *,"Could not allocate ELPA"
 !>   endif
 !>
 !>   ! set parameters decribing the matrix and it's MPI distribution
 !>   call elpa%set("na", na, success, success)
-!>   if (success != ELPA_OK) then
+!>   if (success /= ELPA_OK) then
 !>     print *,"Could not set entry"
 !>   endif
-
 !>   call elpa%set("nev", nev, success, success)
 !>   ! check success code ...
 !>
@@ -140,7 +139,7 @@
 !>
 !>   ! set up the elpa object
 !>   success = elpa%setup()
-!>   if (succes != ELPA_OK) then
+!>   if (succes /= ELPA_OK) then
 !>     print *,"Could not setup ELPA object"
 !>   endif
 !>
