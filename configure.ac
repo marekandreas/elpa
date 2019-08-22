@@ -171,18 +171,18 @@ AX_CHECK_COMPILE_FLAG([-std=gnu11], [
   echo "C compiler cannot compile -std=gnu11 code"
   echo "testing -std=c11.."
 ])
-if test x"$c11_standard" =x"yes"; then
+if test x"$c11_standard" = x"yes"; then
   CFLAGS+=" -std=gnu11"
 fi
 
-if test x"$c11_standard" =x"no"; then
+if test x"$c11_standard" = x"no"; then
   AX_CHECK_COMPILE_FLAG([-std=c11], [
     c11_standard=yes
   ], [
     echo "C compiler cannot compile C11 code"
     exit -1
   ])
-  if test x"$c11_standard" =x"yes"; then
+  if test x"$c11_standard" = x"yes"; then
     CFLAGS+=" -std=c11"
   fi
 fi
@@ -1319,7 +1319,7 @@ AC_MSG_CHECKING(whether we build for K-computer)
 AC_ARG_ENABLE([K-computer],
               AS_HELP_STRING([--enable-K-computer],
                              [enable builds on K-Computer, default no.]),
-			     [if test x"$enableval"=x"yes"; then
+			     [if test x"$enableval" = x"yes"; then
 			        enable_kcomputer=yes
 		              else
 				enable_kcomputer=no
@@ -1342,7 +1342,7 @@ AC_MSG_CHECKING(whether we build for NEC SX-Auroa)
 AC_ARG_ENABLE([SX-Aurora],
               AS_HELP_STRING([--enable-SX-Aurora],
                              [enable builds on SX-Aurora, default no.]),
-			     [if test x"$enableval"=x"yes"; then
+			     [if test x"$enableval" = x"yes"; then
 			        enable_sxaurora=yes
 		              else
 				enable_sxaurora=no
