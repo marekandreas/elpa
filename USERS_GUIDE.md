@@ -51,7 +51,8 @@ not supported anymore.
 - III) List of computational routines
 - IV)  Using OpenMP threading
 - V)   Influencing default values with environment variables
-- VI)   Autotuning
+- VI)  Autotuning
+- VII) A simple example how to use ELPA in an MPI application
 
 ## I) General concept of the *ELPA* API ##
 
@@ -385,10 +386,132 @@ C Synopsis
    }
    elpa_autotune_set_best(handle, autotune_handle &error);  // from now on use values used by autotuning
    elpa_autotune_deallocate(autotune_handle);        // cleanup autotuning
-   
 ```
 
-  
+
+## VII) A simple example how to use ELPA in an MPI application ##
+
+The following is a skeleton code of an basic example on how to use ELPA. The purpose is to show the steps that have 
+to be done in the application using MPI which wants to call ELPA, namely
+
+- Initializing the MPI
+- creating a blacs distributed matrics
+- using this matrix within ELPA
+
+The skeleton is not ment to be copied and pasted, since the details will always be dependent on the application which should 
+call ELPA.
+
+For simplicity only a Fortran example is shown
 
 
+```Fortran
 
+use mpi
+
+implicit none
+
+integer :: mpierr, myid, nprocs
+integer :: np_cols, np_rows, npcol, nprow
+integer :: my_blacs_ctxt, sc_desc(9), info
+integer :: na = [some value] ! global dimension of the matrix to be solved
+integer :: nblk = [some value ] ! the block size of the scalapack block cyclic distribution
+real*8, allocatable :: a(:,:), ev(:)
+
+!-------------------------------------------------------------------------------
+!  MPI Initialization
+
+call mpi_init(mpierr)
+call mpi_comm_rank(mpi_comm_world,myid,mpierr)
+call mpi_comm_size(mpi_comm_world,nprocs,mpierr)  
+
+!-------------------------------------------------------------------------------
+! Selection of number of processor rows/columns
+! the application has to decide how the matrix should be distributed
+np_cols = [ some value ]
+np_rows = [ some value ]
+
+
+!-------------------------------------------------------------------------------
+! Set up BLACS context and MPI communicators
+!
+! The BLACS context is only necessary for using Scalapack.
+!
+! For ELPA, the MPI communicators along rows/cols are sufficient,
+! and the grid setup may be done in an arbitrary way as long as it is
+! consistent (i.e. 0<=my_prow<np_rows, 0<=my_pcol<np_cols and every
+! process has a unique (my_prow,my_pcol) pair).
+! For details look at the documentation of  BLACS_Gridinit and
+! BLACS_Gridinfo of your BLACS installation
+
+my_blacs_ctxt = mpi_comm_world
+call BLACS_Gridinit( my_blacs_ctxt, 'C', np_rows, np_cols )
+call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
+
+! compute for your distributed matrix the number of local rows and columns 
+! per MPI task, e.g. with
+! the Scalapack tools routine NUMROC 
+
+! Set up a scalapack descriptor for the checks below.
+! For ELPA the following restrictions hold:
+! - block sizes in both directions must be identical (args 4+5)
+! - first row and column of the distributed matrix must be on row/col 0/0 (args 6+7)
+
+call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
+
+! Allocate matrices 
+
+allocate(a (na_rows,na_cols))
+allocate(ev(na))
+
+! fill the matrix with resonable values
+
+a(i,j) = [ your problem to be solved]
+
+! UP to this point this where all the prerequisites which have to be done in the
+! application if you have a distributed eigenvalue problem to be solved, independent of
+! whether you want to use ELPA, Scalapack, EigenEXA or alike
+
+! Now you can start using ELPA
+
+if (elpa_init(20171201) /= ELPA_OK) then        ! put here the API version that you are using
+   print *, "ELPA API version not supported"
+   stop
+ endif
+ elpa => elpa_allocate(success)
+ if (success != ELPA_OK) then
+   ! react on the error
+   ! we urge every user to always check the error codes
+   ! of all ELPA functions
+ endif
+
+ ! set parameters decribing the matrix and it's MPI distribution
+ call elpa%set("na", na, success)                          ! size of the na x na matrix
+ call elpa%set("nev", nev, success)                        ! number of eigenvectors that should be computed ( 1<= nev <= na)
+ call elpa%set("local_nrows", na_rows, success)            ! number of local rows of the distributed matrix on this MPI task 
+ call elpa%set("local_ncols", na_cols, success)            ! number of local columns of the distributed matrix on this MPI task
+ call elpa%set("nblk", nblk, success)                      ! size of the BLACS block cyclic distribution
+ call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success) ! the global MPI communicator
+ call elpa%set("process_row", my_prow, success)            ! row coordinate of MPI process
+ call elpa%set("process_col", my_pcol, success)            ! column coordinate of MPI process
+
+ success = elpa%setup()
+
+ ! if desired, set any number of tunable run-time options
+ ! look at the list of possible options as detailed later in
+ ! USERS_GUIDE.md
+ call e%set("solver", ELPA_SOLVER_2STAGE, success)
+
+ ! set the AVX BLOCK2 kernel, otherwise ELPA_2STAGE_REAL_DEFAULT will
+ ! be used
+ call e%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, success)
+
+ ! use method solve to solve the eigenvalue problem to obtain eigenvalues
+ ! and eigenvectors
+ ! other possible methods are desribed in USERS_GUIDE.md
+ call e%eigenvectors(a, ev, z, success)
+
+ ! cleanup
+ call elpa_deallocate(e)
+
+ call elpa_uninit()
+```
