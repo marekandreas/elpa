@@ -257,9 +257,6 @@ subroutine solve_tridi_&
            class(elpa_abstract_impl_t), intent(inout) :: obj
            integer(kind=ik)     :: np_off, nprocs
            integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n
-#ifdef WITH_MPI
-!           integer(kind=ik)     :: my_mpi_status(mpi_status_size)
-#endif
            logical, intent(in)  :: useGPU, wantDebug
            logical, intent(out) :: success
 
@@ -580,7 +577,7 @@ subroutine solve_tridi_&
     end subroutine solve_tridi_col_&
     &PRECISION_AND_SUFFIX
 
-    recursive subroutine solve_tridi_single_problem_&
+    subroutine solve_tridi_single_problem_&
     &PRECISION_AND_SUFFIX &
     (obj, nlen, d, e, q, ldq, wantDebug, success)
 

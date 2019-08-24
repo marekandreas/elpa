@@ -55,7 +55,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, nb, nblk, a_mat, a_dev, lda, d, e, matrixCols, &
+    (obj, na, nb, nblk, a_mat, lda, d, e, matrixCols, &
     hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug, nrThreads)
     !-------------------------------------------------------------------------------
     ! tridiag_band_real/complex:
@@ -104,7 +104,6 @@
 #else
       MATH_DATATYPE(kind=rck), intent(in)         :: a_mat(lda,matrixCols)
 #endif
-      integer(kind=c_intptr_t)                     :: a_dev
       real(kind=rk), intent(out)        :: d(na), e(na) ! set only on PE 0
       MATH_DATATYPE(kind=rck), intent(out), allocatable   :: hh_trans(:,:)
 
@@ -240,7 +239,7 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &(obj,a_mat, a_dev, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+      &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
 
       ! Calculate the workload for each sweep in the back transformation
       ! and the space requirements to hold the HH vectors

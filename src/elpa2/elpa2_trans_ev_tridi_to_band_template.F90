@@ -56,7 +56,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, nev, nblk, nbw, q, q_dev, ldq, matrixCols,         &
+    (obj, na, nev, nblk, nbw, q, ldq, matrixCols,         &
      hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, max_threads, success, &
      kernel)
 
@@ -77,8 +77,6 @@
     !  q           On input: Eigenvectors of tridiagonal matrix
     !              On output: Transformed eigenvectors
     !              Distribution is like in Scalapack.
-    !
-    !  q_dev       GPU device pointer to q
     !
     !  ldq         Leading dimension of q
     !  matrixCols  local columns of matrix q
@@ -114,7 +112,6 @@
 #endif
 
       MATH_DATATYPE(kind=rck), intent(in)        :: hh_trans(:,:)
-      integer(kind=c_intptr_t)                   :: q_dev
 
       integer(kind=ik)                           :: np_rows, my_prow, np_cols, my_pcol
       integer(kind=ik)                           :: i, j, ip, sweep, nbuf, l_nev, a_dim2
@@ -139,8 +136,8 @@
 
       type(c_ptr)                                :: aIntern_ptr
 
-      MATH_DATATYPE(kind=rck)   , allocatable    :: row(:)
-      MATH_DATATYPE(kind=rck)   , allocatable    :: row_group(:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: row(:)
+      MATH_DATATYPE(kind=rck), pointer           :: row_group(:,:)
 
 #ifdef WITH_OPENMP
       MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:)
@@ -162,11 +159,13 @@
       integer(kind=c_intptr_t)                   :: hh_tau_dev
       integer(kind=ik)                           :: row_group_size, unpack_idx
 
+      type(c_ptr)                                :: row_group_host, bcast_buffer_host
+
       integer(kind=ik)                           :: n_times
       integer(kind=ik)                           :: chunk, this_chunk
 
       MATH_DATATYPE(kind=rck), allocatable       :: result_buffer(:,:,:)
-      MATH_DATATYPE(kind=rck), allocatable       :: bcast_buffer(:,:)
+      MATH_DATATYPE(kind=rck), pointer           :: bcast_buffer(:,:)
 
       integer(kind=ik)                           :: n_off
 
@@ -497,7 +496,7 @@
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &: error in cudaMalloc"//errorMessage
+          &: error in cudaMalloc aIntern_dev "//errorMessage
           stop 1
         endif
 
@@ -505,18 +504,20 @@
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &: error in cudaMemset"//errorMessage
+          &: error in cudaMemset aIntern_dev "//errorMessage
           stop 1
         endif
 
         ! "row_group" and "row_group_dev" are needed for GPU optimizations
-        allocate(row_group(l_nev, nblk), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error when allocating row_group"//errorMessage
+        successCUDA = cuda_malloc_host(row_group_host,l_nev*nblk*size_of_datatype)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_band_to_full_&
+                  &MATH_DATATYPE&
+                  &: error in cudaMallocHost row_group_host"
           stop 1
         endif
+
+        call c_f_pointer(row_group_host, row_group, (/l_nev,nblk/))
 
         row_group(:, :) = 0.0_rck
         num =  (l_nev*nblk)* size_of_datatype
@@ -524,7 +525,7 @@
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &: error in cudaMalloc"//errorMessage
+          &: error in cudaMalloc row_group_dev "//errorMessage
           stop 1
         endif
 
@@ -532,7 +533,7 @@
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &: error in cudaMemset"//errorMessage
+          &: error in cudaMemset row_group_dev "//errorMessage
           stop 1
         endif
 
@@ -1056,22 +1057,35 @@
 
       ! Initialize broadcast buffer
 
-      allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating bcast_buffer"//errorMessage
-         stop 1
-       endif
+      if (useGPU) then
+        successCUDA = cuda_malloc_host(bcast_buffer_host,nbw*max_blk_size*size_of_datatype)
+        if (.not.(successCUDA)) then
+          print *,"trans_ev_band_to_full_&
+                  &MATH_DATATYPE&
+                  &: error in cudaMallocHost bcast_buffer_host"
+          stop 1
+        endif
+
+        call c_f_pointer(bcast_buffer_host, bcast_buffer, (/nbw,max_blk_size/))
+      else
+        allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          print *,"trans_ev_tridi_to_band_&
+          &MATH_DATATYPE&
+          &: error when allocating bcast_buffer"//errorMessage
+          stop 1
+        endif
+      endif
 
       bcast_buffer = 0.0_rck
+
       if (useGPU) then
         num =  ( nbw * max_blk_size) * size_of_datatype
         successCUDA = cuda_malloc(bcast_buffer_dev, num)
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &: error in cudaMalloc"
+          &: error in cudaMalloc bcast_buffer_dev"
           stop 1
         endif
 
@@ -1079,7 +1093,7 @@
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &: error in cudaMemset"
+          &: error in cudaMemset bcast_buffer_dev"
           stop 1
         endif
 
@@ -1088,7 +1102,7 @@
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &: error in cudaMalloc"
+          &: error in cudaMalloc hh_tau_dev"
           stop 1
         endif
 
@@ -1096,7 +1110,7 @@
         if (.not.(successCUDA)) then
           print *,"trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
-          &: error in cudaMemset"
+          &: error in cudaMemset hh_tau_dev"
           stop 1
         endif
       endif ! useGPU
@@ -1201,7 +1215,7 @@
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
               &MATH_DATATYPE&
-              &: error in cudaMemcpy"
+              &: error in cudaMemcpy bcast_buffer_dev H2D"
               stop 1
             endif
 
@@ -1222,7 +1236,7 @@
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
               &MATH_DATATYPE&
-              &: error in cudaMemset"
+              &: error in cudaMemset bcast_buffer_dev"
               stop 1
             endif
 
@@ -1301,7 +1315,7 @@
                 if (.not.(successCUDA)) then
                   print *,"trans_ev_tridi_to_band_&
                   &MATH_DATATYPE&
-                  &: error in cudaMemcpy"
+                  &: error in cudaMemcpy aIntern_dev H2D"
                   stop 1
                 endif
 
@@ -1386,7 +1400,7 @@
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_&
                          &MATH_DATATYPE&
-                         &: error in cudaMemcpy"
+                         &: error in cudaMemcpy aIntern_dev H2D"
                  stop 1
                 endif
              else ! useGPU
@@ -1473,7 +1487,7 @@
                if (.not.(successCUDA)) then
                  print *,"trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
-                 &: error in cudaMemcpy"
+                 &: error in cudaMemcpy aIntern_dev D2H"
                  stop 1
                endif
              else
@@ -1576,7 +1590,7 @@
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
               &MATH_DATATYPE&
-              &: error cudaMemcpy"
+              &: error cudaMemcpy aIntern_dev D2H"
               stop 1
             endif
           else
@@ -1666,7 +1680,7 @@
             if (.not.(successCUDA)) then
               print *,"trans_ev_tridi_to_band_&
                       &MATH_DATATYPE&
-                      &: error in cudaMemcpy"
+                      &: error in cudaMemcpy aIntern_dev H2D"
               stop 1
             endif
           else
@@ -1788,7 +1802,7 @@
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_&
                     &MATH_DATATYPE&
-                    &: error in cudaMemcpy"
+                    &: error in cudaMemcpy aIntern_dev D2H"
             stop 1
           endif
 
@@ -2060,7 +2074,7 @@
                if (.not. successCUDA) then
                  print *,"trans_ev_tridi_to_band_&
                    &MATH_DATATYPE&
-                   &: error cudaMemcpy"
+                   &: error cudaMemcpy aIntern_dev D2D"
                  stop 1
                end if
              end do
@@ -2118,28 +2132,6 @@
 
      if (my_prow==0 .and. my_pcol==0 .and.print_flops == 1) &
          write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)')  kernel_time, kernel_flops/kernel_time*1.d-6
-
-     if (useGPU) then
-     ! copy q to q_dev needed in trans_ev_band_to_full
-        successCUDA = cuda_malloc(q_dev, ldq*matrixCols* size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc"
-          stop 1
-        endif
-
-          ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-          successCUDA = cuda_memcpy(q_dev, int(loc(q),kind=c_intptr_t), (ldq)*(matrixCols)* size_of_datatype,   &
-                  cudaMemcpyHostToDevice)
-          if (.not.(successCUDA)) then
-            print *,"trans_ev_tridi_to_band_&
-                    &MATH_DATATYPE&
-                    &: error in cudaMalloc"
-            stop 1
-          endif
-!        endif
-     endif !use GPU
 
      ! deallocate all working space
 
@@ -2220,12 +2212,24 @@
        stop 1
      endif
 
-     deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating bcast_buffer "//errorMessage
-       stop 1
+     if (useGPU) then
+       nullify(bcast_buffer)
+
+       successCUDA = cuda_free_host(bcast_buffer_host)
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_band_to_full_&
+                 &MATH_DATATYPE&
+                 &: error in cudaFreeHost bcast_buffer_host"
+         stop 1
+       endif
+     else
+       deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_&
+                 &MATH_DATATYPE&
+                 &: error when deallocating bcast_buffer "//errorMessage
+         stop 1
+       endif
      endif
 
      deallocate(top_send_request, stat=istat, errmsg=errorMessage)
@@ -2263,7 +2267,7 @@
      if (useGPU) then
        successCUDA = cuda_free(aIntern_dev)
        if (.not.(successCUDA)) then
-         print *,"trans_ev_tridi_to_band_complex: error in cudaFree"
+         print *,"trans_ev_tridi_to_band_complex: error in cudaFree aIntern_dev"
          stop 1
        endif
 
@@ -2271,15 +2275,17 @@
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
-                 &: error in cudaFree "//errorMessage
+                 &: error in cudaFree hh_tau_dev"
          stop 1
        endif
 
-       deallocate(row_group, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
+       nullify(row_group)
+
+       successCUDA = cuda_free_host(row_group_host)
+       if (.not.(successCUDA)) then
+         print *,"trans_ev_band_to_full_&
                  &MATH_DATATYPE&
-                 &: error when deallocating row_group "//errorMessage
+                 &: error in cudaFreeHost row_group_host"
          stop 1
        endif
 
@@ -2287,7 +2293,7 @@
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
-                 &: error in cudaFree "//errorMessage
+                 &: error in cudaFree row_group_dev"
          stop 1
        endif
 
@@ -2295,7 +2301,7 @@
        if (.not.(successCUDA)) then
          print *,"trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
-                 &: error in cudaFree "//errorMessage
+                 &: error in cudaFree bcast_buffer_dev"
          stop 1
        endif
      endif ! useGPU
