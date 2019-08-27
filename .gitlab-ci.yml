@@ -10,6 +10,7 @@ before_script:
   - ulimit -v unlimited
   - echo "HOST " $(hostname)
   - echo $CI_RUNNER_DESCRIPTION
+  - echo $CI_RUNNER_TAGS
   - export SLURM=yes
   - export INTERACTIVE_RUN=yes
   - if [ "$(hostname)" = "amarek-elpa-gitlab-runner-1" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi
