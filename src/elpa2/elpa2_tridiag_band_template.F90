@@ -456,6 +456,7 @@
         if (my_pe==0) then
           n = MIN(na-na_s,nb) ! number of rows to be reduced
           hv(:) = 0.0_rck
+          hd(:) = 0.0_rck
           tau = 0.0_rck
 
           ! Transform first column of remaining matrix
@@ -629,6 +630,7 @@
 #if REALCASE == 1
                 if (isSkewsymmetric) then
 !                   call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                  hd(:) = 0.0_rk
                   call dssmv('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
                 else
                   call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
@@ -889,6 +891,7 @@
 #if REALCASE == 1
               if (isSkewsymmetric) then
 !                   call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                hd(:) = 0.0_rk
                 call dssmv('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
               else
                 call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
@@ -929,6 +932,7 @@
 #if REALCASE == 1
               if (isSkewsymmetric) then
 !                 call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                hd(:) = 0.0_rk
                 call dssmv('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
               else
                 call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
