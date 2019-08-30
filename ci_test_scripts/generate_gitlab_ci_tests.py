@@ -202,7 +202,6 @@ print("  - echo $CI_RUNNER_DESCRIPTION")
 print("  - echo $CI_RUNNER_TAGS")
 print("  - export SLURM=yes")
 print("  - export INTERACTIVE_RUN=yes")
-#print("  - if [ \"$(hostname)\" = \"buildtest-rzg\" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi")
 print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-1\" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi")
 print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-2\" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi")
 print("  - if [ \"$(hostname)\" = \"amarek-elpa-gitlab-runner-3\" ]; then module purge && module load git && module list && export INTERACTIVE_RUN=yes && export SLURM=no && source ./ci_test_scripts/.ci-env-vars; fi")
@@ -213,55 +212,6 @@ print("  - source ./ci_test_scripts/.ci-env-vars")
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"freya01-interactive\" ]; then export INTERACTIVE_RUN=yes && export SLURM=no; fi")
 print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"freya01-interactive-2\" ]; then export INTERACTIVE_RUN=yes && export SLURM=no; fi")
 
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-1\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-2\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-3\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-4\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-5\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-6\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-7\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-8\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-9\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-gp02-10\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=gp02 && export SLURMPARTITION=gp && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"skylake\" ; fi")
-#print("\n")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-1\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-2\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-3\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-4\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-5\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-6\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-7\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-8\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-9\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-10\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-11\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-12\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-13\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-14\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-15\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-16\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-17\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-18\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-19\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl1-20\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl1 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ;  fi")
-#print("\n")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl2\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl2 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ; fi")
-#print("\n")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl3\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl3 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ; fi")
-#print("\n")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-knl4\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=knl4 && export SLURMPARTITION=knl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ; fi")
-#print("\n")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-maik\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=maik && export SLURMPARTITION=maik && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"knl\" ; fi")
-
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-dvl01\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=dvl01 && export SLURMPARTITION=dvl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140  && export CONTSTRAINTS=\"x86_64&gpu0&gpu1\" && export GEOMETRYRESERVATION=\"gpu:2\" ; fi")
-#print("\n")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-dvl02\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=dvl02 && export SLURMPARTITION=dvl && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"x86_64&gpu0&gpu1\" && export GEOMETRYRESERVATION=\"gpu:2\" ; fi")
-#print("\n")
-
-#old power8 -> decomissioned
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-miy01\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=miy01 && export SLURMPARTITION=minsky && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"power8&gpu0&gpu1&gpu2&gpu3\" && export GEOMETRYRESERVATION=\"gpu:4\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-miy02\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=miy02 && export SLURMPARTITION=minsky && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"power8&gpu0&gpu1&gpu2&gpu3\" && export GEOMETRYRESERVATION=\"gpu:4\" ; fi")
-#print("  - if [ \"$CI_RUNNER_DESCRIPTION\" = \"appdev-miy03\" ]; then export INTERACTIVE_RUN=no && export SLURM=no && export SLURMHOST=miy03 && export SLURMPARTITION=minsky && export CONFIGURETIME=15 && export BUILDTIME=80 && export RUNTIME=140 && export CONTSTRAINTS=\"power8&gpu0&gpu1&gpu2&gpu3\" && export GEOMETRYRESERVATION=\"gpu:4\" ; fi")
 print("\n")
 print("  - export MATRIX_SIZE=150")
 print("  - export NUMBER_OF_EIGENVECTORS=150")
@@ -527,9 +477,11 @@ band_to_full_blocking = {
 }
 
 gpu = {
-        "with-gpu" : "--enable-gpu --with-cuda-path=\\$CUDA_HOME/",
         "no-gpu" : "--disable-gpu",
 }
+
+#"with-gpu" : "--enable-gpu --with-cuda-path=\\$CUDA_HOME/",
+
 
 coverage = {
         "coverage" : "coverage",
