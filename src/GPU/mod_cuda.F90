@@ -51,9 +51,10 @@ module cuda_functions
 
   integer(kind=ik) :: cudaMemcpyHostToDevice
   integer(kind=ik) :: cudaMemcpyDeviceToHost
+  integer(kind=ik) :: cudaMemcpyDeviceToDevice
+  integer(kind=ik) :: cudaHostRegisterDefault
   integer(kind=ik) :: cudaHostRegisterPortable
   integer(kind=ik) :: cudaHostRegisterMapped
-  integer(kind=ik) :: cudaMemcpyDeviceToDevice
 
   ! TODO global variable, has to be changed
   integer(kind=C_intptr_T) :: cublasHandle = -1
@@ -77,7 +78,7 @@ module cuda_functions
       integer(kind=C_intptr_T) :: handle
       integer(kind=C_INT)  :: istat
     end function cublas_create_c
-  end interface  
+  end interface
 
   interface
     function cublas_destroy_c(handle) result(istat) &
@@ -87,7 +88,7 @@ module cuda_functions
       integer(kind=C_intptr_T) :: handle
       integer(kind=C_INT)  :: istat
     end function cublas_destroy_c
-  end interface  
+  end interface
 
   interface
     function cuda_setdevice_c(n) result(istat) &
@@ -152,6 +153,15 @@ module cuda_functions
   end interface
 
   interface
+    function cuda_hostRegisterDefault_c() result(flag) &
+             bind(C, name="cudaHostRegisterDefaultFromC")
+      use iso_c_binding
+      implicit none
+      integer(kind=c_int) :: flag
+    end function
+  end interface
+
+  interface
     function cuda_hostRegisterPortable_c() result(flag) &
              bind(C, name="cudaHostRegisterPortableFromC")
       use iso_c_binding
@@ -205,6 +215,34 @@ module cuda_functions
     end function cuda_memcpy2d_c
   end interface
 
+  interface
+    function cuda_host_register_c(a, size, flag) result(istat) &
+             bind(C, name="cudaHostRegisterFromC")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_t), value              :: a
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: flag
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_host_register_c
+  end interface
+
+  interface
+    function cuda_host_unregister_c(a) result(istat) &
+             bind(C, name="cudaHostUnregisterFromC")
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_t), value              :: a
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_host_unregister_c
+  end interface
+
   ! functions to allocate and free CUDA memory
 
   interface
@@ -232,6 +270,33 @@ module cuda_functions
       integer(kind=C_INT)                         :: istat
 
     end function cuda_malloc_c
+  end interface
+
+  interface
+    function cuda_free_host_c(a) result(istat) &
+             bind(C, name="cudaFreeHostFromC")
+
+      use iso_c_binding
+
+      implicit none
+      type(c_ptr), value                    :: a
+      integer(kind=C_INT)              :: istat
+
+    end function cuda_free_host_c
+  end interface
+
+  interface
+    function cuda_malloc_host_c(a, width_height) result(istat) &
+             bind(C, name="cudaMallocHostFromC")
+
+      use iso_c_binding
+      implicit none
+
+      type(c_ptr)                    :: a
+      integer(kind=c_intptr_t), intent(in), value   :: width_height
+      integer(kind=C_INT)                         :: istat
+
+    end function cuda_malloc_host_c
   end interface
 
   interface
@@ -281,7 +346,7 @@ module cuda_functions
       real(kind=C_FLOAT),value                :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, b, c
       integer(kind=C_intptr_T), value         :: handle
-      
+
     end subroutine cublas_sgemm_c
   end interface
 
@@ -298,7 +363,7 @@ module cuda_functions
       real(kind=C_DOUBLE), value              :: alpha
       integer(kind=C_intptr_T), value         :: a, b
       integer(kind=C_intptr_T), value         :: handle
-      
+
     end subroutine cublas_dtrmm_c
   end interface
 
@@ -485,7 +550,7 @@ module cuda_functions
      success = .true.
 #endif
    end function
-    
+
     function cuda_setdevice(n) result(success)
       use iso_c_binding
 
@@ -559,6 +624,35 @@ module cuda_functions
 #endif
    end function cuda_free
 
+    function cuda_malloc_host(a, width_height) result(success)
+
+     use iso_c_binding
+     implicit none
+
+      type(c_ptr)                    :: a
+     integer(kind=c_intptr_t), intent(in)        :: width_height
+     logical                                   :: success
+#ifdef WITH_GPU_VERSION
+     success = cuda_malloc_host_c(a, width_height) /= 0
+#else
+     success = .true.
+#endif
+   end function
+
+   function cuda_free_host(a) result(success)
+
+     use iso_c_binding
+
+     implicit none
+      type(c_ptr), value                    :: a
+     logical                  :: success
+#ifdef WITH_GPU_VERSION
+     success = cuda_free_host_c(a) /= 0
+#else
+     success = .true.
+#endif
+   end function cuda_free_host
+
  function cuda_memset(a, val, size) result(success)
 
    use iso_c_binding
@@ -610,6 +704,18 @@ module cuda_functions
    integer(kind=ik) :: flag
 #ifdef WITH_GPU_VERSION
    flag = int( cuda_memcpyDeviceToHost_c())
+#else
+   flag = 0
+#endif
+ end function
+
+ function cuda_hostRegisterDefault() result(flag)
+   use iso_c_binding
+   use precision
+   implicit none
+   integer(kind=ik) :: flag
+#ifdef WITH_GPU_VERSION
+   flag = int(cuda_hostRegisterDefault_c())
 #else
    flag = 0
 #endif
@@ -677,6 +783,38 @@ module cuda_functions
       success = .true.
 #endif
     end function cuda_memcpy2d
+
+ function cuda_host_register(a, size, flag) result(success)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_t)              :: a
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: flag
+      logical :: success
+
+#ifdef WITH_GPU_VERSION
+        success = cuda_host_register_c(a, size, flag) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
+ function cuda_host_unregister(a) result(success)
+
+      use iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_t)              :: a
+      logical :: success
+
+#ifdef WITH_GPU_VERSION
+        success = cuda_host_unregister_c(a) /= 0
+#else
+        success = .true.
+#endif
+    end function
 
     ! cuBLAS
     subroutine cublas_dgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -856,7 +994,7 @@ module cuda_functions
 
 !     subroutine cublas_dsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 !       use iso_c_binding
-! 
+!
 !       implicit none
 !       character(1,C_CHAR),value       :: cta
 !       integer(kind=C_INT)             :: n
@@ -867,10 +1005,10 @@ module cuda_functions
 !       call cublas_dsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine cublas_dsymv
-! 
+!
 !     subroutine cublas_ssymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 !       use iso_c_binding
-! 
+!
 !       implicit none
 !       character(1,C_CHAR),value       :: cta
 !       integer(kind=C_INT)             :: n
@@ -881,10 +1019,10 @@ module cuda_functions
 !       call cublas_ssymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine cublas_ssymv
-! 
+!
 !     subroutine cublas_zsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 !       use iso_c_binding
-! 
+!
 !       implicit none
 !       character(1,C_CHAR),value       :: cta
 !       integer(kind=C_INT)             :: n
@@ -895,10 +1033,10 @@ module cuda_functions
 ! !       call cublas_zsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine cublas_zsymv
-! 
+!
 !     subroutine cublas_csymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 !       use iso_c_binding
-! 
+!
 !       implicit none
 !       character(1,C_CHAR),value       :: cta
 !       integer(kind=C_INT)             :: n
