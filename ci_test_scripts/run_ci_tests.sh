@@ -169,6 +169,10 @@ then
     echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
     echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node.sh
+    echo " " >> ./run_${CLUSTER}_1node.sh
+    echo "#copy everything back from /tmp/elpa to runner directory"
+    echo "cp -r * $runner_path"
+
 
     echo " "
     echo "Job script for the run"
