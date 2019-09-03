@@ -14,6 +14,7 @@ slurmBatch="no"
 projectName="unknown"
 projectExecutable=""
 projectConfigureArg=""
+gpuJob="no"
 
 function usage() {
 	cat >&2 <<-EOF
@@ -21,7 +22,7 @@ function usage() {
 		Call all the necessary steps to perform an ELPA CI test
 
 		Usage:
-		  run_project_tests [-c configure arguments] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-q submit command] [-S submit to Slurm] [-p projectName] [-e projectExecutable] [-C project configure arguments]"
+		  run_project_tests [-c configure arguments] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-q submit command] [-S submit to Slurm] [-p projectName] [-e projectExecutable] [-C project configure arguments] [-g gpu job]"
 
 		Options:
 		 -c configure arguments
@@ -56,13 +57,16 @@ function usage() {
 		 -C project configure arguments
 		    arguments for the configure of the project
 
+		 -g gpu job
+		    if "yes" a gpu job is assumed
+
 		 -h
 		    Print this help text
 	EOF
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:q:i:S:p:e:C:h" opt; do
+while getopts "c:t:j:m:n:b:o:s:q:i:S:p:e:C:g:h" opt; do
 	case $opt in
 		t)
 			mpiTasks=$OPTARG;;
@@ -86,6 +90,8 @@ while getopts "c:t:j:m:n:b:o:s:q:i:S:p:e:C:h" opt; do
 			projectExecutable=$OPTARG;;
 		C)
 			projectConfigureArgs=$OPTARG;;
+		g)
+			gpuJob=$OPTARG;;
 		:)
 			echo "Option -$OPTARG requires an argument" >&2;;
 		h)
@@ -172,6 +178,8 @@ then
     echo "rm -rf installdest" >> ./run_${CLUSTER}_1node.sh
     echo "popd" >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
+    echo "#copy everything back from /tmp/elpa to runner directory"
+    echo "cp -r * $runner_path"
     echo " "
     echo "Job script for the run"
     cat ./run_${CLUSTER}_1node.sh

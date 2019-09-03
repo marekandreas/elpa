@@ -689,6 +689,11 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     memory = set_requested_memory(matrix_size[na])
 
+    if (g != "with-gpu"):
+        gpuJob="no"
+    else:
+        gpuJob="yes"
+
     # do the configure
     if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
         if ( instr == "sse"):
@@ -697,33 +702,18 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-+ " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM")
++ " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM -g " +gpuJob)
 
     if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
         print("    - export REQUESTED_MEMORY="+memory)    
         print("\n")
-        #if (g == "with-gpu"):
-        #    print("    - echo \"The tasks will be submitted to SLURM PARTITION \" $SLURMPARTITION \" on host \" $SLURMHOST \" with constraints \" $CONTSTRAINTS \" with the geometry \" $GEOMETRYRESERVATION" )
-        #else:
-        #    print("    - echo \"The tasks will be submitted to SLURM PARTITION \" $SLURMPARTITION \" on host \" $SLURMHOST \"with constraints \" $CONTSTRAINTS ")
-
-        ## construct srun command-line
-        #if (g == "with-gpu"):
-        #    print("    - export SRUN_COMMANDLINE_CONFIGURE=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION \" ")
-        #    print("    - export SRUN_COMMANDLINE_BUILD=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION \" ")
-        #    print("    - export SRUN_COMMANDLINE_RUN=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --gres=$GEOMETRYRESERVATION \" ")
-        #else:
-        #    print("    - export SRUN_COMMANDLINE_CONFIGURE=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$CONFIGURETIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY\" ")
-        #    print("    - export SRUN_COMMANDLINE_BUILD=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$BUILDTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
-        #    print("    - export SRUN_COMMANDLINE_RUN=\"--partition=$SLURMPARTITION --nodelist=$SLURMHOST --time=$RUNTIME --constraint=$CONTSTRAINTS --mem=$REQUESTED_MEMORY \" ")
-        ##print("    - echo \"srun --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE\" ")
 
         if (runScalapackTest):
             print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal --enable-scalapack-tests" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -S $SLURM")
+                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -S $SLURM -g " +gpuJob)
             
 
         else:
@@ -731,7 +721,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
                 + " --enable-option-checking=fatal" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
-                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -i $INTERACTIVE_RUN -S $SLURM")
+                + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -i $INTERACTIVE_RUN -S $SLURM -g " +gpuJob)
 
     # do the test
 

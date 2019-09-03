@@ -11,6 +11,7 @@ ompThreads=1
 configueArg=""
 batchCommand=""
 slurmBatch="no"
+gpuJob="no"
 
 function usage() {
 	cat >&2 <<-EOF
@@ -18,7 +19,7 @@ function usage() {
 		Call all the necessary steps to perform an ELPA CI test
 
 		Usage:
-		  run_distcheck_tests [-c configure arguments] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-q submit command] [-S submit to Slurm]"
+		  run_distcheck_tests [-c configure arguments] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-q submit command] [-S submit to Slurm] [-g GPU job]"
 
 		Options:
 		 -c configure arguments
@@ -44,13 +45,16 @@ function usage() {
 		 -S submit to slurm
 		    if "yes" a SLURM batch job will be submitted
 
+		 -g gpu job
+		    if "yes" a gpu job is assumed
+
 		 -h
 		    Print this help text
 	EOF
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:q:i:S:h" opt; do
+while getopts "c:t:j:m:n:b:o:s:q:i:S:g:h" opt; do
 	case $opt in
 		t)
 			mpiTasks=$OPTARG;;
@@ -68,6 +72,8 @@ while getopts "c:t:j:m:n:b:o:s:q:i:S:h" opt; do
 			batchCommand=$OPTARG;;
 		S)
 			slurmBatch=$OPTARG;;
+		g)
+			gpuJob=$OPTARG;;
 		:)
 			echo "Option -$OPTARG requires an argument" >&2;;
 		h)
@@ -114,6 +120,9 @@ then
     echo "export DISTCHECK_CONFIGURE_FLAGS=\" $configureArgs \" "  >> ./run_${CLUSTER}_1node.sh
     echo "make distcheck TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" || { chmod u+rwX -R . ; exit 1 ; } " >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
+    echo "#copy everything back from /tmp/elpa to runner directory"
+    echo "cp -r * $runner_path"
+
     echo " "
     echo "Job script for the run"
     cat ./run_${CLUSTER}_1node.sh
