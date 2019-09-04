@@ -120,8 +120,8 @@ then
     echo "export DISTCHECK_CONFIGURE_FLAGS=\" $configureArgs \" "  >> ./run_${CLUSTER}_1node.sh
     echo "make distcheck TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" || { chmod u+rwX -R . ; exit 1 ; } " >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "#copy everything back from /tmp/elpa to runner directory"
-    echo "cp -r * $runner_path"
+    echo "#copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node.sh
+    echo "cp -r * $runner_path" >> ./run_${CLUSTER}_1node.sh
 
     echo " "
     echo "Job script for the run"
