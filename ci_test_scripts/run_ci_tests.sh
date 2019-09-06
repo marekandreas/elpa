@@ -179,7 +179,7 @@ then
     echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
     echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node.sh
-    echo "cp -r * $runner_path"  >> ./run_${CLUSTER}_1node.sh
+    echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node.sh
 
 
     echo " "
