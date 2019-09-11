@@ -478,9 +478,8 @@ band_to_full_blocking = {
 
 gpu = {
         "no-gpu" : "--disable-gpu",
+        "with-gpu" : "--enable-gpu --with-cuda-path=\\$CUDA_HOME/",
 }
-
-#"with-gpu" : "--enable-gpu --with-cuda-path=\\$CUDA_HOME/",
 
 
 coverage = {
