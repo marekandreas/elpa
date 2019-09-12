@@ -143,9 +143,9 @@ then
     echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
-    echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node.sh
-    echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node.sh
+    echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node_2GPU.sh
 
     echo " "
     echo "Job script for the run"
