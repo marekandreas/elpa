@@ -588,6 +588,8 @@ subroutine solve_tridi_&
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
      use precision
      use elpa_abstract_impl
+     use elpa_blas_interfaces
+
      implicit none
      class(elpa_abstract_impl_t), intent(inout) :: obj
      integer(kind=ik)                         :: nlen, ldq

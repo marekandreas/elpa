@@ -46,6 +46,8 @@
     &_&
     &PRECISION&
     & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs) result(status)
+ 
+      use elpa_blas_interfaces
       implicit none
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status
@@ -57,9 +59,6 @@
       MATH_DATATYPE(kind=rck)                :: xc
 
 #ifndef WITH_MPI
-#if REALCASE == 1
-      real(kind=rck)                   :: dnrm2, snrm2
-#endif
 #if COMPLEXCASE == 1
       complex(kind=rck)                :: zdotc, cdotc
 #endif /* COMPLEXCASE */

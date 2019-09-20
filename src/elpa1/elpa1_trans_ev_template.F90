@@ -97,6 +97,8 @@
       use iso_c_binding
       use precision
       use elpa_abstract_impl
+      use elpa_blas_interfaces
+
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)    :: obj

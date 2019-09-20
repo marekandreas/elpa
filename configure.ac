@@ -1415,7 +1415,7 @@ else
 fi
 
 dnl store-build-config
-AC_MSG_CHECKING(whether build config should be compiled into the library)
+echo "checking whether build config should be compiled into the library..."
 AC_CHECK_PROG(xxd_CHECK,xxd,yes)
 AS_IF([test x"$xxd_CHECK" != x"yes"], [AC_MSG_ERROR([Please install xxd before configuring.])])
 AC_ARG_ENABLE([store-build-config],
@@ -1429,10 +1429,12 @@ AC_ARG_ENABLE([store-build-config],
 	       fi
 	       ],
               [store_build_config=no])
-AC_MSG_RESULT([${store_build_config}])
 AM_CONDITIONAL([STORE_BUILD_CONFIG],[test x"$store_build_config" = x"yes"])
 if test x"${store_build_config}" = x"yes"; then
+	echo "build config should be compiled into the library: yes"
         AC_DEFINE([STORE_BUILD_CONFIG], [1], [compile build config into the library object])
+else
+	echo "build config should be compiled into the library: no"
 fi
 
 
@@ -1451,7 +1453,7 @@ AC_CONFIG_FILES([
 m4_include([m4/ax_fc_check_define.m4])
 AC_MSG_CHECKING([if workaround for broken preprocessor is needed])
 
-need_manual_cpp=yes
+need_manual_cpp=no
 AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[is_intel=yes],[])
 AX_FC_CHECK_DEFINE([__PGI],[is_pgi=yes],[])
 ACTUAL_FC="$FC"

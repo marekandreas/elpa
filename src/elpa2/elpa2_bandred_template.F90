@@ -107,7 +107,9 @@
       use omp_lib
 #endif
       use precision
+      use elpa_blas_interfaces
       use elpa_abstract_impl
+
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -1154,7 +1156,7 @@
             else ! useGPU
 
               call obj%timer%start("blas")
-              call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',          &
+              call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',       &
                              lce-lcs+1, n_cols, lre, ONE, a_mat(1,lcs), ubound(a_mat,dim=1), &
                                    vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
               call obj%timer%stop("blas")

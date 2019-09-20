@@ -38,6 +38,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_autotune_impl.F90 \
   src/elpa_abstract_impl.F90 \
   src/helpers/mod_precision.F90 \
+  src/helpers/mod_blas_interfaces.F90 \
   src/helpers/mod_mpi.F90 \
   src/helpers/mod_mpi_stubs.F90 \
   src/helpers/mod_omp.F90 \

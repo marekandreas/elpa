@@ -103,6 +103,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       use elpa_abstract_impl
       use matrix_plot
       use elpa_omp
+      use elpa_blas_interfaces
 
       implicit none
 #include "../general/precision_kinds.F90"

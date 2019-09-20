@@ -52,4 +52,6 @@ module precision
   integer, parameter :: ck4  = C_FLOAT_COMPLEX
   integer, parameter :: ik  = C_INT32_T
   integer, parameter :: lik = C_INT64_T
+
+  integer, parameter :: BLAS_KIND = C_INT32_T
 end module precision

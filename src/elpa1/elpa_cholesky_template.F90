@@ -49,6 +49,7 @@
      use precision
      use elpa_abstract_impl
      use elpa_omp
+     use elpa_blas_interfaces
 
      implicit none
 #include "../general/precision_kinds.F90"

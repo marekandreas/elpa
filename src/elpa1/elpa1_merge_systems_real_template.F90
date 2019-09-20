@@ -62,6 +62,8 @@
       use iso_c_binding
       use precision
       use elpa_abstract_impl
+      use elpa_blas_interfaces
+
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
@@ -84,7 +86,7 @@
       ! might be larger as well!
       integer(kind=ik), parameter                 :: max_strip=128
 
-      real(kind=REAL_DATATYPE)                    :: PRECISION_LAMCH, PRECISION_LAPY2
+      
       real(kind=REAL_DATATYPE)                    :: beta, sig, s, c, t, tau, rho, eps, tol, &
                                                      qtrans(2,2), dmax, zmax, d1new, d2new
       real(kind=REAL_DATATYPE)                    :: z(na), d1(na), d2(na), z1(na), delta(na),  &
@@ -235,7 +237,7 @@
 
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
-      EPS = PRECISION_LAMCH( 'Epsilon' )
+      EPS = PRECISION_LAMCH( 'E' ) ! return epsilon
       TOL = 8.0_rk*EPS*MAX(dmax,zmax)
 
       ! If the rank-1 modifier is small enough, no more needs to be done
