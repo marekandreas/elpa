@@ -48,6 +48,7 @@ module test_setup_mpi
     subroutine setup_mpi(myid, nprocs)
       use test_util
       use ELPA_utilities
+      use precision
       implicit none
 
       integer(kind=ik)              :: mpierr

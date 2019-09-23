@@ -39,6 +39,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_abstract_impl.F90 \
   src/helpers/mod_precision.F90 \
   src/helpers/mod_blas_interfaces.F90 \
+  src/helpers/mod_scalapack_interfaces.F90 \
   src/helpers/mod_mpi.F90 \
   src/helpers/mod_mpi_stubs.F90 \
   src/helpers/mod_omp.F90 \
@@ -622,7 +623,7 @@ double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MO
 
 noinst_PROGRAMS += real_2stage_banded@SUFFIX@
 check_SCRIPTS += real_2stage_banded@SUFFIX@_default.sh
-real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
+real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90 
 real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 

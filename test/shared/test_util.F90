@@ -43,6 +43,7 @@
 #include "config-f90.h"
 module test_util
   use iso_c_binding
+  use precision
 #ifdef WITH_MPI
 #ifdef HAVE_MPI_MODULE
   use mpi
@@ -55,12 +56,12 @@ module test_util
   integer, parameter :: mpi_comm_world = -1
 #endif
 
-  integer, parameter :: rk8 = C_DOUBLE
-  integer, parameter :: rk4 = C_FLOAT
-  integer, parameter :: ck8 = C_DOUBLE_COMPLEX
-  integer, parameter :: ck4 = C_FLOAT_COMPLEX
-  integer, parameter :: ik  = C_INT32_T
-  integer, parameter :: lik = C_INT64_T
+  !integer, parameter :: rk8 = C_DOUBLE
+  !integer, parameter :: rk4 = C_FLOAT
+  !integer, parameter :: ck8 = C_DOUBLE_COMPLEX
+  !integer, parameter :: ck4 = C_FLOAT_COMPLEX
+  !integer, parameter :: ik  = C_INT32_T
+  !integer, parameter :: lik = C_INT64_T
 
   contains
 !>

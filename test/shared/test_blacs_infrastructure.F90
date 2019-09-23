@@ -94,6 +94,7 @@ module test_blacs_infrastructure
 
       use elpa_utilities, only : error_unit
       use test_util
+      use precision
       implicit none
 
       integer(kind=ik), intent(in)  :: na, nblk, my_prow, my_pcol, np_rows,   &

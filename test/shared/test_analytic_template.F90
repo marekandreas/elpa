@@ -46,6 +46,8 @@
     &_&
     &PRECISION&
     &(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times)
+    use precision
+
     implicit none
     integer(kind=ik), intent(in)                       :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
     MATH_DATATYPE(kind=REAL_DATATYPE), intent(inout)   :: a(:,:)
@@ -121,6 +123,8 @@
     &PRECISION&
     &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, &
       check_eigenvectors, print_times) result(status)
+    use precision
+    
     implicit none
 #include "../../src/general/precision_kinds.F90"
     integer(kind=ik), intent(in)           :: na, nev, nblk, myid, np_rows, &
@@ -317,6 +321,8 @@
     &_&
     &PRECISION&
     &(na, i, j) result(element)
+    use precision
+
     implicit none
     integer(kind=ik), intent(in) :: na, i, j
     MATH_DATATYPE(kind=REAL_DATATYPE)     :: element
@@ -334,6 +340,8 @@
     &_&
     &PRECISION&
     &(na, i, j) result(element)
+    use precision
+
     implicit none
     integer(kind=ik), intent(in) :: na, i, j
     MATH_DATATYPE(kind=REAL_DATATYPE)               :: element
@@ -351,6 +359,8 @@
     &_&
     &PRECISION&
     &(na, i) result(element)
+    use precision
+
     implicit none
     integer(kind=ik), intent(in) :: na, i
     real(kind=REAL_DATATYPE)              :: element
@@ -366,6 +376,8 @@
     &_&
     &PRECISION&
     &(na, i, j, what) result(element)
+    use precision
+
     implicit none
 #include "../../src/general/precision_kinds.F90"
     integer(kind=ik), intent(in)   :: na, i, j, what
@@ -490,6 +502,8 @@
     &_&
     &PRECISION&
     &(myid, na, mat, mat_name)
+    use precision
+
     implicit none
 #include "../../src/general/precision_kinds.F90"
     integer(kind=ik), intent(in)    :: myid, na
@@ -519,6 +533,8 @@
     &_&
     &PRECISION&
     &(myid, na)
+    use precision
+
     implicit none
 #include "../../src/general/precision_kinds.F90"
     integer(kind=ik), intent(in)    :: myid, na
@@ -581,6 +597,8 @@
     &_&
     &PRECISION&
     &(myid)
+    use precision
+
     implicit none
     integer(kind=ik), intent(in)   :: myid
     integer(kind=ik)               :: decomposition(num_primes), i

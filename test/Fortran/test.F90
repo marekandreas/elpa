@@ -124,6 +124,8 @@ program test
 #ifdef WITH_OPENMP
    use omp_lib
 #endif
+   use precision
+
    implicit none
 
    ! matrix dimensions
