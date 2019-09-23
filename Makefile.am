@@ -478,6 +478,8 @@ BUILT_SOURCES = $(generated_headers)
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = \
   $(wildcard modules/*) \
+  src/helpers/lapack_interfaces.h \
+  src/helpers/scalapack_interfaces.h \
   elpa/elpa.h \
   elpa/elpa_generic.h \
   elpa/elpa_legacy.h
