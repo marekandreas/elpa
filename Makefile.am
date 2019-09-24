@@ -617,51 +617,39 @@ endif
 
 #include test_programs_manual.am
 
-noinst_PROGRAMS += double_instance@SUFFIX@
-check_SCRIPTS += double_instance@SUFFIX@_default.sh
-double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
-double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
-double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_double_instance@SUFFIX@
+check_SCRIPTS += validate_double_instance@SUFFIX@_default.sh
+validate_double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
+validate_double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
-noinst_PROGRAMS += real_2stage_banded@SUFFIX@
-check_SCRIPTS += real_2stage_banded@SUFFIX@_default.sh
-real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90 
-real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_real_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_real_2stage_banded@SUFFIX@_default.sh
+validate_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90 
+validate_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
-noinst_PROGRAMS += complex_2stage_banded@SUFFIX@
-check_SCRIPTS += complex_2stage_banded@SUFFIX@_default.sh
-complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
-complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_complex_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_complex_2stage_banded@SUFFIX@_default.sh
+validate_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
+validate_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 
 if WANT_SINGLE_PRECISION_REAL
-noinst_PROGRAMS += single_real_2stage_banded@SUFFIX@
-check_SCRIPTS += single_real_2stage_banded@SUFFIX@_default.sh
-single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
-single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_single_real_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_single_real_2stage_banded@SUFFIX@_default.sh
+validate_single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
+validate_single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
-noinst_PROGRAMS += single_complex_2stage_banded@SUFFIX@
-check_SCRIPTS += single_complex_2stage_banded@SUFFIX@_default.sh
-single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
-single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_single_complex_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_single_complex_2stage_banded@SUFFIX@_default.sh
+validate_single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
+validate_single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
 endif
-
-#noinst_PROGRAMS += test_c_bindings@SUFFIX@
-#check_SCRIPTS += test_c_bindings@SUFFIX@_default.sh
-#test_c_bindings@SUFFIX@_SOURCES = test/Fortran/elpa_generalized/test_bindings.F90
-#test_c_bindings@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-#test_c_bindings@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
-
-#noinst_PROGRAMS += test_c_cannon@SUFFIX@
-#check_SCRIPTS += test_c_cannon@SUFFIX@_default.sh
-#test_c_cannon@SUFFIX@_SOURCES = test/C/elpa_generalized/test_cannon.c
-#test_c_cannon@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-#test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
 
 # python wrapper
 pyelpadir = $(pythondir)/pyelpa
@@ -742,7 +730,7 @@ CLEANFILES = \
 
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
-	-rm -rf test_*.sh
+	-rm -rf validate_*.sh
 	-rm -rf legacy_*.sh
 	-rm -rf real_2stage*.sh
 	-rm -rf complex_2stage*.sh

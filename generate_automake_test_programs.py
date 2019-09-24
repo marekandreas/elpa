@@ -179,7 +179,7 @@ for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "test{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{qrsuffix}{m}{layoutsuffix}{spl}".format(
+        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{qrsuffix}{m}{layoutsuffix}{spl}".format(
             langsuffix=language_flag[lang],
             d=d, p=p, t=t, s=s,
             kernelsuffix="" if kernel == "nokernel" else "_" + kernel,
@@ -239,7 +239,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
             raise Exception("Oh no!")
         endifs += 1
 
-    name = "test_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
+    name = "validate_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
 
     print("if ENABLE_AUTOTUNING")
     print("check_SCRIPTS += " + name + "_extended.sh")
@@ -263,7 +263,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
     print("endif\n" * endifs)
     print("endif")
 
-name = "test_multiple_objs_real_double"
+name = "validate_multiple_objs_real_double"
 print("if ENABLE_AUTOTUNING")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
@@ -275,7 +275,7 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 
-name = "test_multiple_objs_real_double_c_version"
+name = "validate_multiple_objs_real_double_c_version"
 print("if ENABLE_AUTOTUNING")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
@@ -287,7 +287,7 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 
-name = "test_split_comm_real_double"
+name = "validate_split_comm_real_double"
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
 print(name + "_SOURCES = test/Fortran/test_split_comm.F90")
