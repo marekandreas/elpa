@@ -139,15 +139,15 @@ then
     echo "../autogen.sh"  >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running configure " >> ./run_${CLUSTER}_1node.sh
-    echo "../configure " "$configureArgs" >> ./run_${CLUSTER}_1node.sh
+    echo "../configure " "$configureArgs" " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running make " >> ./run_${CLUSTER}_1node.sh
-    echo "make -j 8"  >> ./run_${CLUSTER}_1node.sh
+    echo "make -j 8 || { exit 1; }"  >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running make install" >> ./run_${CLUSTER}_1node.sh
-    echo "make install" >> ./run_${CLUSTER}_1node.sh
+    echo "make install || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
     echo "popd" >> ./run_${CLUSTER}_1node.sh
     echo "mkdir -p $projectName/build" >> ./run_${CLUSTER}_1node.sh
     echo "pushd $projectName/build" >> ./run_${CLUSTER}_1node.sh
@@ -165,16 +165,16 @@ then
     echo "../autogen.sh" >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running configure " >> ./run_${CLUSTER}_1node.sh
-    echo "../configure " "$projectConfigureArgs " >> ./run_${CLUSTER}_1node.sh
+    echo "../configure " "$projectConfigureArgs " " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running make " >> ./run_${CLUSTER}_1node.sh
-    echo "make -j 8" >> ./run_${CLUSTER}_1node.sh
+    echo "make -j 8 || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
     echo "export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:\$LD_LIBRARY_PATH" >> ./run_${CLUSTER}_1node.sh
     echo "./$projectExecutable" >> ./run_${CLUSTER}_1node.sh
-    echo "make distclean" >> ./run_${CLUSTER}_1node.sh
+    echo "make distclean || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
     echo "popd" >> ./run_${CLUSTER}_1node.sh
     echo "pushd build" >> ./run_${CLUSTER}_1node.sh
-    echo "make distclean" >> ./run_${CLUSTER}_1node.sh
+    echo "make distclean || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
     echo "rm -rf installdest" >> ./run_${CLUSTER}_1node.sh
     echo "popd" >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh

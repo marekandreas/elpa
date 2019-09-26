@@ -114,7 +114,7 @@ then
   if [[ "$CI_RUNNER_TAGS" =~ "distcheck" ]]
   then
     cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
-    echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node.sh
+    echo "./configure " "$configureArgs" " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
     echo "export DISTCHECK_CONFIGURE_FLAGS=\" $configureArgs \" "  >> ./run_${CLUSTER}_1node.sh
