@@ -63,8 +63,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_generalized/cannon.c \
   #src/elpa_generalized/test_c_bindings.c \
   src/helpers/matrix_plot.F90 \
-  src/general/dssmv.F90 \
-  src/general/dssr2.F90 \
+  src/general/ssmv_template.F90 \
+  src/general/ssr2_template.F90 \
   src/elpa_index.c
 
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c 
@@ -103,7 +103,6 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/qr/elpa_pdgeqrf_template.F90 \
   src/elpa2/elpa2_bandred_template.F90 \
   src/elpa2/elpa2_symm_matrix_allreduce_real_template.F90 \
-  src/elpa2/elpa2_ssymm_matrix_allreduce_real_template.F90 \
   src/elpa2/elpa2_trans_ev_band_to_full_template.F90 \
   src/elpa2/elpa2_tridiag_band_template.F90 \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.F90 \
@@ -706,7 +705,6 @@ EXTRA_DIST = \
   src/elpa1/elpa_reduce_add_vectors.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/elpa1/elpa_transpose_vectors.F90 \
-  src/elpa1/elpa_transpose_vectors_ss.F90 \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu \
   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu \
   src/elpa2/compute_hh_trafo.F90 \

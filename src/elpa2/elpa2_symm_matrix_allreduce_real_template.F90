@@ -52,7 +52,18 @@
 
 #include "../general/sanity.F90"
 
+#ifdef SKEW_SYMMETRIC
+#define ROUTINE_NAME ssymm_matrix_allreduce
+#else
+#define ROUTINE_NAME symm_matrix_allreduce
+#endif
+
+
+#ifdef SKEW_SYMMETRIC
+    subroutine ssymm_matrix_allreduce_&
+#else
     subroutine symm_matrix_allreduce_&
+#endif
 &PRECISION &
                     (obj, n, a, lda, ldb, comm)
     !-------------------------------------------------------------------------------
@@ -73,7 +84,7 @@
       integer(kind=ik)             :: i, nc, mpierr
       real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
-      call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
+      call obj%timer%start("ROUTINE_NAME" // PRECISION_SUFFIX)
 
       nc = 0
       do i=1,n
@@ -88,7 +99,11 @@
       nc = 0
       do i=1,n
         a(1:i,i) = h2(nc+1:nc+i)
+#ifdef SKEW_SYMMETRIC
+        a(i,1:i-1) = - a(1:i-1,i)
+#else
         a(i,1:i-1) = a(1:i-1,i)
+#endif
         nc = nc+i
       enddo
 
@@ -98,7 +113,11 @@
       nc = 0
       do i=1,n
         a(1:i,i) = h1(nc+1:nc+i)
+#ifdef SKEW_SYMMETRIC
+        a(i,1:i-1) = - a(1:i-1,i)
+#else
         a(i,1:i-1) = a(1:i-1,i)
+#endif
         nc = nc+i
       enddo
 
@@ -110,9 +129,13 @@
 !        nc = nc+i
 !      enddo
 
-      call obj%timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
+      call obj%timer%stop("ROUTINE_NAME" // PRECISION_SUFFIX)
 
+#ifdef SKEW_SYMMETRIC
+    end subroutine ssymm_matrix_allreduce_&
+#else
     end subroutine symm_matrix_allreduce_&
+#endif
     &PRECISION
 
 

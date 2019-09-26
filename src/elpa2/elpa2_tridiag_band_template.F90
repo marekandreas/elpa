@@ -142,7 +142,7 @@
       if (istat .ne. ELPA_OK) then
            print *,"Problem getting option. Aborting..."
            stop
-      endif    
+      endif
       isSkewsymmetric = (skewsymmetric == 1)
       
       if(useGPU) then
@@ -653,7 +653,7 @@
                 endif
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                if (isSkewsymmetric) then 
+                if (isSkewsymmetric) then
 !                   call PRECISION_SSR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
                   call dssr2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
                 else

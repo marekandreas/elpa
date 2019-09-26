@@ -132,7 +132,7 @@
 
     integer(kind=ik)                                                  :: nrThreads
 ! #if SKEWSYMMETRIC ==1
-    integer(kind=ik)                                                  :: global_index     
+    integer(kind=ik)                                                  :: global_index
 ! #endif
 #if REALCASE == 1
 #undef GPU_KERNEL
@@ -186,7 +186,7 @@
       print *,"Problem getting option. Aborting..."
       stop
     endif
-    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+    call obj%get("mpi_comm_cols",mpi_comm_cols,error
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option. Aborting..."
       stop
@@ -236,13 +236,13 @@
       print *,"Problem getting option. Aborting..."
       stop
     endif
-    
+ 
     call obj%get("is_skewsymmetric",skewsymmetric,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option. Aborting..."
       stop
     endif
-    
+
     isSkewsymmetric = (skewsymmetric == 1)
 
     ! GPU settings
@@ -690,10 +690,10 @@
        endif
 #endif
      endif
-       
+ 
        if (isSkewsymmetric) then
        ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
-       ! This makes the eigenvectors complex. 
+       ! This makes the eigenvectors complex.
        ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
          q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols) = 0.0
          do i = 1, obj%local_nrows
@@ -713,7 +713,7 @@
               q(i,obj%local_ncols+1:2*obj%local_ncols) = -q(i,1:obj%local_ncols)
               q(i,1:obj%local_ncols) = 0
            end if
-         end do       
+         end do
        endif
 !        print * , "q="
 !        do i=1,na
@@ -754,7 +754,7 @@
        call obj%timer%stop("trans_ev_to_band")
 
        if (.not.(success)) return
-       
+ 
 !        ! We can now deallocate the stored householder vectors
 !        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
 !        if (istat .ne. 0) then
@@ -798,7 +798,7 @@
        call obj%timer%start("trans_ev_to_full")
        if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
          ! copy to device if we want to continue on GPU
-         
+ 
          successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
 !          if (.not.(successCUDA)) then
 !            print *,"elpa2_template, error in cuda_malloc"

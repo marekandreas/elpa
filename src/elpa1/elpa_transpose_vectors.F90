@@ -50,7 +50,14 @@
 #include "config-f90.h"
 #include "../general/sanity.F90"
 
-subroutine elpa_transpose_vectors_&
+#ifdef SKEW_SYMMETRIC
+#define ROUTINE_NAME elpa_transpose_vectors_ss_
+#else
+#define ROUTINE_NAME elpa_transpose_vectors_
+#endif
+
+
+subroutine ROUTINE_NAME&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
@@ -96,7 +103,7 @@ subroutine elpa_transpose_vectors_&
    integer(kind=ik)                                  :: auxstride
    integer(kind=ik), intent(in)                      :: nrThreads
 
-   call obj%timer%start("elpa_transpose_vectors_&
+   call obj%timer%start("ROUTINE_NAME&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &
@@ -190,7 +197,11 @@ subroutine elpa_transpose_vectors_&
                k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                ns = (i/npt)*nblk ! local start of block i
                nl = min(nvr-i*nblk,nblk) ! length
+#ifdef SKEW_SYMMETRIC
+               vmat_t(ns+1:ns+nl,lc) = - aux(k+1:k+nl)
+#else
                vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
+#endif
 !               k = k+nblk
             enddo
          enddo
@@ -203,7 +214,7 @@ subroutine elpa_transpose_vectors_&
 #endif
    deallocate(aux)
 
-   call obj%timer%stop("elpa_transpose_vectors_&
+   call obj%timer%stop("ROUTINE_NAME&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &

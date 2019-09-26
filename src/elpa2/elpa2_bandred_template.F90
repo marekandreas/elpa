@@ -139,7 +139,7 @@
       integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc
       integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
-      real(kind=rk)                    :: vnorm2
+      real(kind=rk)                              :: vnorm2
       MATH_DATATYPE(kind=rck)                    :: xf, aux1(nbw), aux2(nbw), vrl, tau, vav(nbw,nbw)
 
 !      complex(kind=COMPLEX_DATATYPE), allocatable :: tmpCUDA(:,:), vmrCUDA(:,:), umcCUDA(:,:) ! note the different dimension in real case
@@ -194,9 +194,9 @@
       if (error .ne. ELPA_OK) then
            print *,"Problem getting option. Aborting..."
            stop
-      endif    
+      endif
       isSkewsymmetric = (skewsymmetric == 1)
-    
+
       if(useGPU) then
         gpuString = "_gpu"
       else
@@ -1183,11 +1183,11 @@
               if (i==0) cycle
               lre = min(l_rows,i*l_rows_tile)
               call obj%timer%start("blas")
-              
+
               if (isSkewsymmetric) then
                call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, -ONE, a_mat(1,lcs), lda, &
                                      umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), &
-                                     ONE,      &                                  
+                                     ONE,      &
                                      vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
               else
                 call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
@@ -1465,7 +1465,7 @@
 
          ! Transpose umc -> umr (stored in vmr, second half)
          if (isSkewsymmetric) then
-           call elpa_transpose_vectors_ss_&      
+           call elpa_transpose_vectors_ss_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION &
@@ -1473,7 +1473,7 @@
                              vmrCUDA(cur_l_rows * n_cols + 1), cur_l_rows, mpi_comm_rows, &
                              1, istep*nbw, n_cols, nblk, max_threads)
          else
-           call elpa_transpose_vectors_&      
+           call elpa_transpose_vectors_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION &
@@ -1516,7 +1516,7 @@
                         umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
                               ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
          endif
-#endif           
+#endif
 #if COMPLEXCASE == 1
          call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
                               (-0.5_rk, 0.0_rk),     &

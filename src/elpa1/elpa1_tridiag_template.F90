@@ -185,9 +185,9 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       if (istat .ne. ELPA_OK) then
            print *,"Problem getting option. Aborting..."
            stop
-      endif    
+      endif
       isSkewsymmetric = (skewsymmetric == 1)
-      
+
       if(useGPU) then
         gpuString = "_gpu"
       else
@@ -538,12 +538,10 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                   if (isSkewsymmetric) then
                     call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,          &
                                         -ONE, a_mat(l_row_beg,l_col_beg), lda, v_col(l_col_beg), 1,  &
-                  
                                         ONE, ur_p(l_row_beg,my_thread), 1)
                   else
                     call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,          &
                                         ONE, a_mat(l_row_beg,l_col_beg), lda, v_col(l_col_beg), 1,  &
-                  
                                         ONE, ur_p(l_row_beg,my_thread), 1)
                   endif
                 endif

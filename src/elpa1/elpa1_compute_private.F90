@@ -172,8 +172,11 @@ module elpa1_compute
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 
+
 #include "elpa_transpose_vectors.F90"
-#include "elpa_transpose_vectors_ss.F90"
+#define SKEW_SYMMETRIC
+#include "elpa_transpose_vectors.F90"
+#undef SKEW_SYMMETRIC
 #include "elpa_reduce_add_vectors.F90"
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -185,7 +188,9 @@ module elpa1_compute
 #include "../general/precision_macros.h"
 
 #include "elpa_transpose_vectors.F90"
-#include "elpa_transpose_vectors_ss.F90"
+#define SKEW_SYMMETRIC
+#include "elpa_transpose_vectors.F90"
+#undef SKEW_SYMMETRIC
 #include "elpa_reduce_add_vectors.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -197,7 +202,9 @@ module elpa1_compute
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa_transpose_vectors.F90"
-#include "elpa_transpose_vectors_ss.F90"
+#define SKEW_SYMMETRIC
+#include "elpa_transpose_vectors.F90"
+#undef SKEW_SYMMETRIC
 #include "elpa_reduce_add_vectors.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
@@ -208,7 +215,9 @@ module elpa1_compute
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa_transpose_vectors.F90"
-#include "elpa_transpose_vectors_ss.F90"
+#define SKEW_SYMMETRIC
+#include "elpa_transpose_vectors.F90"
+#undef SKEW_SYMMETRIC
 #include "elpa_reduce_add_vectors.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION

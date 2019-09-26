@@ -1,14 +1,17 @@
-      SUBROUTINE DSSMV( UPLO, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY )
+   subroutine BLAS_SUFFIX&
+              ssmv(UPLO, N, ALPHA, A, LDA, X, INCX, BETA, Y, INCY )
 !
+      use precision
+      use iso_c_binding
       IMPLICIT NONE
 !
 !     .. Scalar Arguments ..
-      CHARACTER          UPLO
-      INTEGER            N, LDA, INCX, INCY
-      DOUBLE PRECISION   ALPHA, BETA
+      CHARACTER ::                UPLO
+      INTEGER(kind=c_int) ::      N, LDA, INCX, INCY
+      MATH_DATATYPE(kind=rck) ::  ALPHA, BETA
 !     ..
 !     .. Array Arguments ..
-      DOUBLE PRECISION   A( LDA, * ), X( * ), Y( * )
+      MATH_DATATYPE(kind=rck) ::  A( LDA, * ), X( * ), Y( * )
 !     ..
 !
 !  Purpose
@@ -103,15 +106,14 @@
 !     .. Parameters ..
       DOUBLE PRECISION   ZERO, ONE
       PARAMETER          ( ZERO = 0.0D+0, ONE = 1.0D+0 )
-      INTEGER            NB
-      PARAMETER          ( NB = 64 )
+      INTEGER(kind=c_int), parameter :: NB = 64
 !     ..
 !     .. Local Scalars ..
-      INTEGER            II, JJ, IC, IY, JC, JX, KX, KY, INFO
-      DOUBLE PRECISION   TEMP
-      LOGICAL            UPPER
+      INTEGER(kind=c_int)     ::  II, JJ, IC, IY, JC, JX, KX, KY, INFO
+      MATH_DATATYPE(kind=rck) ::  TEMP
+      LOGICAL ::                  UPPER
 !     .. Local Arrays ..
-      DOUBLE PRECISION   WORK( NB )
+      MATH_DATATYPE(kind=rck) :: WORK( NB )
 !     ..
 !     .. External Functions ..
       LOGICAL            LSAME
@@ -183,10 +185,10 @@
 !              and DGEMV for off-diagonal blocks.
 !
                IF ( II .GT. JJ ) THEN
-                  CALL DGEMV( 'T', NB, IC, -ALPHA, A( JJ, II ), LDA, &
+                  CALL PRECISIOM_GEMV( 'T', NB, IC, -ALPHA, A( JJ, II ), LDA, &
      &                 X( JX ), INCX, TEMP, Y( IY ), INCY )
                ELSE IF ( II .LT. JJ ) THEN
-                  CALL DGEMV( 'N', NB, JC, ALPHA, A( II, JJ ), LDA, &
+                  CALL PRECISION_GEMV( 'N', NB, JC, ALPHA, A( II, JJ ), LDA, &
      &                 X( JX ), INCX, TEMP, Y( IY ), INCY )
                ELSE
                   CALL DSSMV_SM( UPPER, JC, ALPHA, A( JJ, JJ ), LDA, &
@@ -213,10 +215,10 @@
 !              and DGEMV for off-diagonal blocks.
 !
                IF ( II .LT. JJ ) THEN
-                  CALL DGEMV( 'T', JC, NB, -ALPHA, A( JJ, II ), LDA, &
+                  CALL PRECISION_GEMV( 'T', JC, NB, -ALPHA, A( JJ, II ), LDA, &
      &                 X( JX ), INCX, TEMP, Y( IY ), INCY )
                ELSE IF ( II .GT. JJ ) THEN
-                  CALL DGEMV( 'N', IC, NB, ALPHA, A( II, JJ ), LDA, &
+                  CALL PRECISION_GEMV( 'N', IC, NB, ALPHA, A( II, JJ ), LDA, &
      &                 X( JX ), INCX, TEMP, Y( IY ), INCY )
                ELSE
                   CALL DSSMV_SM( UPPER, JC, ALPHA, A( JJ, JJ ), LDA, &
