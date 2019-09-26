@@ -621,26 +621,26 @@ noinst_PROGRAMS += validate_double_instance@SUFFIX@
 check_SCRIPTS += validate_double_instance@SUFFIX@_default.sh
 validate_double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
 validate_double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
-validate_double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+validate_double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
 noinst_PROGRAMS += validate_real_2stage_banded@SUFFIX@
 check_SCRIPTS += validate_real_2stage_banded@SUFFIX@_default.sh
 validate_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90 
 validate_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-validate_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+validate_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
 noinst_PROGRAMS += validate_complex_2stage_banded@SUFFIX@
 check_SCRIPTS += validate_complex_2stage_banded@SUFFIX@_default.sh
 validate_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
 validate_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-validate_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+validate_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
 if WANT_SINGLE_PRECISION_REAL
 noinst_PROGRAMS += validate_single_real_2stage_banded@SUFFIX@
 check_SCRIPTS += validate_single_real_2stage_banded@SUFFIX@_default.sh
 validate_single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
 validate_single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-validate_single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+validate_single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
@@ -648,7 +648,7 @@ noinst_PROGRAMS += validate_single_complex_2stage_banded@SUFFIX@
 check_SCRIPTS += validate_single_complex_2stage_banded@SUFFIX@_default.sh
 validate_single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
 validate_single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-validate_single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+validate_single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 endif
 
 # python wrapper
