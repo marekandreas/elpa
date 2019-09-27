@@ -136,13 +136,13 @@ then
   if [ "$gpuJob" == "yes" ]
   then
     cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_2GPU.sh .
-    echo "./configure " "$configureArgs" " || { cat config.log; exit 1; }" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
-    echo "make -j 16 || { exit 1; }" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "make -j 16" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
-    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  || { exit 1; }" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node_2GPU.sh
@@ -170,13 +170,13 @@ then
   if [[ "$CI_RUNNER_TAGS" =~ "sse" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx2" ]]  || [ ["$CI_RUNNER_TAGS" =~ "avx512" ]]
   then
     cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
-    echo "./configure " "$configureArgs" " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
+    echo "./configure " "$configureArgs"  >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "make -j 16 || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
+    echo "make -j 16 " >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
     echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
-    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
+    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  " >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
     echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node.sh
     echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node.sh

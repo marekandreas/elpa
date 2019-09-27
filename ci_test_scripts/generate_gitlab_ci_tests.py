@@ -284,8 +284,8 @@ print("  script:")
 print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"  \
         SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
         --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
-print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \"  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\\\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\\\\\"  \
-        SCALAPACK_FCFLAGS=\\\\\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
+print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \"  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"  \
+        SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
         --disable-sse --disable-avx --disable-avx2 \" -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM ")
 print("\n\n")
 
@@ -299,9 +299,9 @@ print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xH
   --enable-option-checking=fatal --with-mpi=yes \
  --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 \
  -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
-print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\\\\\"-xHost\\\\\\\" \
- CFLAGS=\\\\\\\"-march=native\\\\\\\" SCALAPACK_LDFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\\\\\"  \
- SCALAPACK_FCFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal \
+print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" \
+ CFLAGS=\\\"-march=native\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\"  \
+ SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" --enable-option-checking=fatal \
  --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 \" -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM ")
 print("\n\n")
 
@@ -315,9 +315,9 @@ print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xH
   --enable-option-checking=fatal --with-mpi=yes \
   --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 \
   -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
-print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\\\\\"-xHost\\\\\\\" \
- CFLAGS=\\\\\\\"-march=native\\\\\\\" SCALAPACK_LDFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\\\\\"  \
- SCALAPACK_FCFLAGS=\\\\\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\\\\\" --enable-option-checking=fatal \
+print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" \
+ CFLAGS=\\\"-march=native\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\"  \
+ SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" --enable-option-checking=fatal \
  --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning \" -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM ")
 print("\n\n")
 
@@ -360,10 +360,10 @@ python_ci_tests = [
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
     '    - ./ci_test_scripts/run_distcheck_tests.sh -c "'
-    'CC=\\\\\\\"mpiicc\\\\\\\" CFLAGS=\\\\\\\"-O3 -xAVX\\\\\\\" '
-    'FC=\\\\\\\"mpiifort\\\\\\\" FCFLAGS=\\\\\\\"-O3 -xAVX\\\\\\\" '
-    'SCALAPACK_LDFLAGS=\\\\\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\\\\\\" '
-    'SCALAPACK_FCFLAGS=\\\\\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\\\\\\" '
+    'CC=\\\"mpiicc\\\" CFLAGS=\\\"-O3 -xAVX\\\" '
+    'FC=\\\"mpiifort\\\" FCFLAGS=\\\"-O3 -xAVX\\\" '
+    'SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\\" '
+    'SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
     '--disable-gpu --enable-avx --enable-python --enable-python-tests'
     '" -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM  || { chmod u+rwX -R . ; exit 1 ; }',
