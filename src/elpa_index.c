@@ -257,6 +257,7 @@ static const elpa_index_int_entry_t int_entries[] = {
 
 static const elpa_index_double_entry_t double_entries[] = {
         /* Empty for now */
+        READONLY_DOUBLE_ENTRY("dummy", "dummy"),
 };
 
 void elpa_index_free(elpa_index_t index) {
