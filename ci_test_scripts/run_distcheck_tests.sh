@@ -19,11 +19,15 @@ function usage() {
 		Call all the necessary steps to perform an ELPA CI test
 
 		Usage:
-		  run_distcheck_tests [-c configure arguments] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-q submit command] [-S submit to Slurm] [-g GPU job]"
+		  run_distcheck_tests [-c configure arguments] [-d distcheck configure arguments] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-q submit command] [-S submit to Slurm] [-g GPU job]"
 
 		Options:
 		 -c configure arguments
 		    Line of arguments passed to configure call
+
+                 -d configure arguments to distcheck
+		    Line of arguments passed to distcheck configure call
+
 		 -t MPI Tasks
 		    Number of MPI processes used during test runs of ELPA tests
 
@@ -54,7 +58,7 @@ function usage() {
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:q:i:S:g:h" opt; do
+while getopts "c:d:t:j:m:n:b:o:s:q:i:S:g:h" opt; do
 	case $opt in
 		t)
 			mpiTasks=$OPTARG;;
@@ -68,6 +72,9 @@ while getopts "c:t:j:m:n:b:o:s:q:i:S:g:h" opt; do
 			ompThreads=$OPTARG;;
 		c)
 			configureArgs=$OPTARG;;
+		d)
+			distcheckConfigureArgs=$OPTARG;;
+
 		q)
 			batchCommand=$OPTARG;;
 		S)
@@ -117,7 +124,7 @@ then
     echo "./configure " "$configureArgs" " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
-    echo "export DISTCHECK_CONFIGURE_FLAGS=\" $configureArgs \" "  >> ./run_${CLUSTER}_1node.sh
+    echo "export DISTCHECK_CONFIGURE_FLAGS=\" $distcheckConfigureArgs \" "  >> ./run_${CLUSTER}_1node.sh
     echo "make distcheck TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" || { chmod u+rwX -R . ; exit 1 ; } " >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
     echo "#copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node.sh
