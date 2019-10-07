@@ -235,6 +235,8 @@ print("# next time a runner tries to clean-up")
 print("after_script:")
 print("  - chmod u+w -R .")
 print("  - if [ ! -f ./debug.keep ]; then find . -exec chmod a+rxw {} \; && rm -rf * ; fi")
+#print("  - chmod u+w -R /tmp/elpa")
+#print("  - find /tmp/elpa -exec chmod a+rxw {} \; && rm -rf /tmp/elpa ;")
 print("\n\n")
 
 
@@ -281,9 +283,9 @@ print("distcheck:")
 print("  tags:")
 print("    - distcheck")
 print("  script:")
-print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"  \
-        SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
-        --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
+#print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"  \
+#        SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
+#        --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
 print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \"  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"  \
         SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly \
         --disable-sse --disable-avx --disable-avx2 \" -d \"  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\\\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\\\\\"  \
@@ -295,12 +297,12 @@ print("distcheck-mpi:")
 print("  tags:")
 print("    - distcheck")
 print("  script:")
-print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" CFLAGS=\\\"-march=native\\\" \
-  SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
-  SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
-  --enable-option-checking=fatal --with-mpi=yes \
- --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 \
- -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
+#print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" CFLAGS=\\\"-march=native\\\" \
+#  SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+#  SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+#  --enable-option-checking=fatal --with-mpi=yes \
+# --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 \
+# -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
 print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" \
  CFLAGS=\\\"-march=native\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\"  \
  SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" --enable-option-checking=fatal \
@@ -314,12 +316,12 @@ print("distcheck-no-autotune:")
 print("  tags:")
 print("    - distcheck")
 print("  script:")
-print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" CFLAGS=\\\"-march=native\\\" \
-  SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
-  SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
-  --enable-option-checking=fatal --with-mpi=yes \
-  --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 \
-  -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
+#print("    - ./ci_test_scripts/run_ci_tests.sh -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" CFLAGS=\\\"-march=native\\\" \
+#  SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\" \
+#  SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" \
+#  --enable-option-checking=fatal --with-mpi=yes \
+#  --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-autotuning || { cat config.log; exit 1; } \" -t $MPI_TASKS -m 150 \
+#  -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM ")
 print("    - ./ci_test_scripts/run_distcheck_tests.sh  -c \" FC=mpiifort FCFLAGS=\\\"-xHost\\\" \
  CFLAGS=\\\"-march=native\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\"  \
  SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" --enable-option-checking=fatal \
@@ -357,7 +359,7 @@ python_ci_tests = [
     "  tags:",
     "    - python-distcheck",
     "  script:",
-    '    - ./ci_test_scripts/run_ci_tests.sh -c "'
+    '#    - ./ci_test_scripts/run_ci_tests.sh -c "'
     'CC=\\\"mpiicc\\\" CFLAGS=\\\"-O3 -xAVX\\\" '
     'FC="mpiifort" FCFLAGS=\\\"-O3 -xAVX\\\" '
     'SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP\\\" '
