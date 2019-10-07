@@ -2,5 +2,5 @@
 import sys
 import os
 
-args = filter(lambda q : q != "-Xcompiler", sys.argv[1:])
+args = [q for q in sys.argv[1:] if q != "-Xcompiler"]
 os.execvp(args[0], args[0:])

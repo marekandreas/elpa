@@ -107,6 +107,8 @@
     !-------------------------------------------------------------------------------
       use elpa_abstract_impl
       use elpa2_workload
+      use elpa_blas_interfaces
+
       use precision
       implicit none
 #include "../general/precision_kinds.F90"
@@ -462,6 +464,8 @@
     &(obj, n, nb, W, Y, tau, mem, lda)
 
       use elpa_abstract_impl
+      use elpa_blas_interfaces
+
       use precision
       implicit none
 #include "../general/precision_kinds.F90"
@@ -495,6 +499,7 @@
 
       use precision
       use elpa_abstract_impl
+      use elpa_blas_interfaces
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -522,6 +527,7 @@
 
       use precision
       use elpa_abstract_impl
+      use elpa_blas_interfaces
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -550,6 +556,8 @@
     &(obj, n, nb, A, lda, W, Y, mem, mem2, lda2)
 
       use elpa_abstract_impl
+      use elpa_blas_interfaces
+
       use precision
       implicit none
 #include "../general/precision_kinds.F90"

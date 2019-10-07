@@ -63,7 +63,7 @@
       real(kind=C_DATATYPE_KIND)   :: rows(:,:)
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND):: rows(:,:)
+      complex(kind=C_DATATYPE_KIND) :: rows(:,:)
 #endif
       integer(kind=ik)             :: max_idx
       logical                      :: successCUDA
@@ -84,7 +84,7 @@
       ! Issue one single transfer call for all rows (device to host)
 !        rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
 
-      successCUDA =  cuda_memcpy( loc(rows(:, 1: row_count)), row_group_dev , row_count * l_nev * size_of_&
+      successCUDA =  cuda_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
       &PRECISION&
       &_&
       &MATH_DATATYPE&
@@ -117,10 +117,10 @@
       integer(kind=ik), intent(in)                 :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev
       integer(kind=ik), intent(in)                 :: n_offset, row_count
 #if REALCASE == 1
-      real(kind=C_DATATYPE_KIND), intent(in)       :: rows(:, :)
+      real(kind=C_DATATYPE_KIND), intent(in) :: rows(:, :)
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND), intent(in)    :: rows(:, :)
+      complex(kind=C_DATATYPE_KIND), intent(in) :: rows(:, :)
 #endif
 
       integer(kind=ik)                             :: max_idx
@@ -133,7 +133,7 @@
 !      row_group_dev(:, 1 : row_count) = rows(:, 1 : row_count)
 
 
-      successCUDA =  cuda_memcpy( row_group_dev , loc(rows(1, 1)),row_count * l_nev * &
+      successCUDA =  cuda_memcpy( row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
                                  size_of_&
                                  &PRECISION&
                                  &_&

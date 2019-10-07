@@ -13,6 +13,8 @@ configueArg=""
 skipStep=0
 batchCommand=""
 interactiveRun="yes"
+slurmBatch="no"
+gpuJob="no"
 
 function usage() {
 	cat >&2 <<-EOF
@@ -20,7 +22,7 @@ function usage() {
 		Call all the necessary steps to perform an ELPA CI test
 
 		Usage:
-		  run_ci_tests [-c configure arguments] [-j makeTasks] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-s skipStep] [-q submit command] [-i interactive run]
+		  run_ci_tests [-c configure arguments] [-j makeTasks] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-s skipStep] [-q submit command] [-i interactive run] [-S submit to Slurm] [-g GPU job]"
 
 		Options:
 		 -c configure arguments
@@ -40,7 +42,7 @@ function usage() {
 		 -o OpenMP threads
 		    Number of OpenMP threads used during runs of ELPA tests
 
-		 -j makeTaks
+		 -j makeTasks
 		    Number of processes make should use during build (default 1)
 
 		 -s skipStep
@@ -52,13 +54,18 @@ function usage() {
 		 -i interactive_run
 		    if "yes" NO no batch command will be triggered
 
+		 -S submit to slurm
+		    if "yes" a SLURM batch job will be submitted
+
+		 -g gpu job
+		    if "yes" a GPU job is assumed
 		 -h
 		    Print this help text
 	EOF
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:q:i:h" opt; do
+while getopts "c:t:j:m:n:b:o:s:q:i:S:g:h" opt; do
 	case $opt in
 		j)
 			makeTasks=$OPTARG;;
@@ -80,6 +87,10 @@ while getopts "c:t:j:m:n:b:o:s:q:i:h" opt; do
 			batchCommand=$OPTARG;;
 		i)
 			interactiveRun=$OPTARG;;
+		S)
+			slurmBatch=$OPTARG;;
+		g)
+			gpuJob=$OPTARG;;
 		:)
 			echo "Option -$OPTARG requires an argument" >&2;;
 		h)
@@ -90,17 +101,142 @@ while getopts "c:t:j:m:n:b:o:s:q:i:h" opt; do
 	esac
 done
 
+
 if [ $skipStep -eq 1 ]
 then
   echo "Skipping the test since option -s has been specified"
   exit 0
-else
+fi
+if [ "$slurmBatch" == "yes" ]
+then
+
+  # default exit code
+  exitCode=1
+  CLUSTER=""
+  if [[ "$HOST" =~ "cobra" ]]
+  then
+    CLUSTER="cobra"
+  fi
+  if [[ "$HOST" =~ "talos" ]]
+  then
+    CLUSTER="talos"
+  fi
+  if [[ "$HOST" =~ "freya" ]]
+  then
+    CLUSTER="freya"
+  fi
+  if [[ "$HOST" =~ "draco" ]]
+  then
+    CLUSTER="draco"
+  fi
+
+  echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS on $mpiTasks tasks"
+
+  # GPU runners
+  if [ "$gpuJob" == "yes" ]
+  then
+    cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_2GPU.sh .
+    echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "make -j 16" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node_2GPU.sh
+
+    echo " "
+    echo "Job script for the run"
+    cat ./run_${CLUSTER}_1node_2GPU.sh
+    echo " "
+    echo "Submitting to SLURM"
+    if sbatch -W ./run_${CLUSTER}_1node_2GPU.sh; then
+      exitCode=$?
+    else
+      exitCode=$?
+      echo "Submission exited with exitCode $exitCode"
+    fi
+
+    #if (( $exitCode > 0 ))
+    #then
+      cat ./ELPA_CI_2gpu.err.*
+    #fi
+    
+  else
+
+    #SSE, AVX, AVX2, and AVX-512 runners
+    if [[ "$CI_RUNNER_TAGS" =~ "sse" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx2" ]]  || [ ["$CI_RUNNER_TAGS" =~ "avx512" ]]
+    then
+      cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
+      echo "./configure " "$configureArgs"  >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "make -j 16 " >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
+      echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
+      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  " >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node.sh
+      echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node.sh
+
+
+      echo " "
+      echo "Job script for the run"
+      cat ./run_${CLUSTER}_1node.sh
+      echo " "
+      echo "Submitting to SLURM"
+      if sbatch -W ./run_${CLUSTER}_1node.sh; then
+        exitCode=$?
+      else
+        exitCode=$?
+        echo "Submission excited with exitCode $exitCode"
+      fi
+
+      echo " "
+      echo "Exit Code of sbatch: $exitCode"
+      echo " "
+      cat ./ELPA_CI.out.*
+      #if [ $exitCode -ne 0 ]
+      #then
+        cat ./ELPA_CI.err.*
+      #fi
+
+    fi
+  fi
+  #if [ $exitCode -ne 0 ]
+  #then
+  if [ -f ./test-suite.log ]
+  then
+    cat ./test-suite.log
+  fi
+  #fi
+
+  exit $exitCode
+
+fi
+
+
+# not skipped then proceed
+if [ "$slurmBatch" == "no" ]
+then
+  # this is the old, messy implementation for
+  # - appdev
+  # - freya-interactive
+  # - draco
+  # - buildtest
+  # - virtual machine runners
+  # hopefully this can be removed soon
+  echo "Using old CI logic for appdev"
   if [ "$batchCommand" == "srun" ]
   then
+    # use srun to start mpi jobs
     if [ "$interactiveRun" == "no" ]
     then
+      # interactive runs are not possible
       echo "Running with $batchCommand with $SRUN_COMMANDLINE_CONFIGURE"
-#      $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source ./ci_test_scripts/ci-env-vars && eval  ./configure $configureArgs; }'
+      # $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE bash -c ' {source /etc/profile.d/modules.sh && source ./ci_test_scripts/ci-env-vars && eval  ./configure $configureArgs; }'
       $batchCommand --ntasks-per-core=1 --ntasks=1 --cpus-per-task=1 $SRUN_COMMANDLINE_CONFIGURE ./ci_test_scripts/configure_step.sh "$configureArgs"
 
       if [ $? -ne 0 ]; then cat config.log && exit 1; fi
@@ -112,22 +248,26 @@ else
       grep -i "Expected %stop" test-suite.log && exit 1 || true ;
       if [ $? -ne 0 ]; then exit 1; fi
     else
-    #eval ./configure $configureArgs
-    ./ci_test_scripts/configure_step.sh "$configureArgs"
+      # interactive runs are possible
+      #eval ./configure $configureArgs
+      ./ci_test_scripts/configure_step.sh "$configureArgs"
 
-    if [ $? -ne 0 ]; then cat config.log && exit 1; fi
+      if [ $? -ne 0 ]; then cat config.log && exit 1; fi
     
-    make -j $makeTasks
-    if [ $? -ne 0 ]; then exit 1; fi
+      make -j $makeTasks
+      if [ $? -ne 0 ]; then exit 1; fi
     
-    OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite.log; exit 1; }
-    if [ $? -ne 0 ]; then exit 1; fi
+      OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite.log; exit 1; }
+      if [ $? -ne 0 ]; then exit 1; fi
      
-    grep -i "Expected %stop" test-suite.log && exit 1 || true ;
-    if [ $? -ne 0 ]; then exit 1; fi
+      grep -i "Expected %stop" test-suite.log && exit 1 || true ;
+      if [ $? -ne 0 ]; then exit 1; fi
 
     fi
+
   else
+    # do not use srun to start mpi applications
+ 
     #eval ./configure $configureArgs
     ./ci_test_scripts/configure_step.sh "$configureArgs"
 
@@ -142,5 +282,8 @@ else
     grep -i "Expected %stop" test-suite.log && exit 1 || true ;
     if [ $? -ne 0 ]; then exit 1; fi
   fi
+else
+  # a submission to SLURM via a batch script will be done
+  echo "Submitting to a SLURM batch system"
 fi
 

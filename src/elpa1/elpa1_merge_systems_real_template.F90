@@ -62,6 +62,8 @@
       use iso_c_binding
       use precision
       use elpa_abstract_impl
+      use elpa_blas_interfaces
+
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
@@ -84,7 +86,7 @@
       ! might be larger as well!
       integer(kind=ik), parameter                 :: max_strip=128
 
-      real(kind=REAL_DATATYPE)                    :: PRECISION_LAMCH, PRECISION_LAPY2
+      
       real(kind=REAL_DATATYPE)                    :: beta, sig, s, c, t, tau, rho, eps, tol, &
                                                      qtrans(2,2), dmax, zmax, d1new, d2new
       real(kind=REAL_DATATYPE)                    :: z(na), d1(na), d2(na), z1(na), delta(na),  &
@@ -235,7 +237,7 @@
 
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
-      EPS = PRECISION_LAMCH( 'Epsilon' )
+      EPS = PRECISION_LAMCH( 'E' ) ! return epsilon
       TOL = 8.0_rk*EPS*MAX(dmax,zmax)
 
       ! If the rank-1 modifier is small enough, no more needs to be done
@@ -684,7 +686,7 @@
           endif
 
           if (useGPU) then
-            successCUDA = cuda_memcpy(qtmp1_dev, loc(qtmp1(1,1)), &
+            successCUDA = cuda_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("merge_systems: qtmp1_dev", successCUDA)
           endif
@@ -749,13 +751,13 @@
 
             if(useGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
-              successCUDA = cuda_memcpy(qtmp2_dev, loc(qtmp2(1,1)), &
+              successCUDA = cuda_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
 
               !TODO the previous loop could be possible to do on device and thus
               !copy less
-              successCUDA = cuda_memcpy(ev_dev, loc(ev(1,1)), &
+              successCUDA = cuda_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
             endif
@@ -791,7 +793,7 @@
               !TODO either copy only half of the matrix here, and half after the
               !second gemm, or copy whole array after the next gemm
 
-!              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
+!              successCUDA = cuda_memcpy(c_loc(qtmp2(1,1)), qtmp2_dev, &
 !                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
 !              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
             endif
@@ -813,7 +815,7 @@
             if(useGPU) then
               !TODO the previous loop could be possible to do on device and thus
               !copy less
-              successCUDA = cuda_memcpy(ev_dev, loc(ev(1,1)), &
+              successCUDA = cuda_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
             endif
@@ -843,7 +845,7 @@
             if(useGPU) then
               !TODO either copy only half of the matrix here, and get rid of the
               !previous copy or copy whole array here
-              successCUDA = cuda_memcpy(loc(qtmp2(1,1)), qtmp2_dev, &
+              successCUDA = cuda_memcpy(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
               check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
             endif

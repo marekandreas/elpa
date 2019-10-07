@@ -64,7 +64,7 @@
 #endif
       logical, intent(in)              :: wantDebug
       logical                          :: success
-      integer(kind=ik)                 :: successInternal, error
+      integer(kind=ik)                 :: error
 
       class(elpa_t), pointer           :: e
 
@@ -82,7 +82,11 @@
         return
       endif
 
-      e => elpa_allocate()
+      e => elpa_allocate(error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem calling internal elpa_allocate. Aborting ..."
+        stop
+      endif
 
       call e%set("na", na, error)
       if (error .ne. ELPA_OK) then
@@ -123,6 +127,8 @@
       !  call e%set("nev", na)
       !endif
 
+      call e%creating_from_legacy_api()
+
       if (e%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
         success = .false.
@@ -136,19 +142,27 @@
            stop
         endif
       endif
-      call e%cholesky(a(1:lda,1:matrixCols), successInternal)
+      call e%cholesky(a(1:lda,1:matrixCols), error)
 
-      if (successInternal .ne. ELPA_OK) then
+      if (error .ne. ELPA_OK) then
         print *, "Cannot run cholesky"
         success = .false.
         return
       else
         success =.true.
       endif
-      call elpa_deallocate(e)
 
-      call elpa_uninit()
-
+      call elpa_deallocate(e, error)
+      if (error .ne. ELPA_OK) then
+        print *," Cannot deallocate the internal ELPA object! This might lead to a memory leak!"
+!        stop
+      endif
+ 
+      call elpa_uninit(error)
+      if (error .ne. ELPA_OK) then
+        print *," Cannot uninit the internal ELPA object! This might lead to a memory leak!"
+!        stop
+      endif
       !call timer%stop("elpa_cholesky_&
       !&MATH_DATATYPE&
       !&_&

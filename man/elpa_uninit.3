@@ -13,14 +13,14 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-.RI  "call \fBelpa_uninit\fP ()"
+.RI  "call \fBelpa_uninit\fP (error)"
 .br
 .RI " "
 .br
 .RI "With the definitions of the input and output variables:"
 
 .br
-.RI "No input or output is needed."
+.RI "error     integer, optional error code"
 .br
 .br
 
@@ -31,7 +31,7 @@ class(elpa_t), pointer :: elpa
 elpa_t handle;
 
 .br
-.RI "\fBvoid\fP \fBelpa_uninit\fP ();"
+.RI "\fBvoid\fP \fBelpa_uninit\fP (int *error);"
 .br
 .RI " "
 .br
@@ -39,7 +39,7 @@ elpa_t handle;
 
 .br
 .br
-.RI "No input or output is needed."
+.RI "\fBint *\fP    error : the error code"
 .br
 
 .SH DESCRIPTION

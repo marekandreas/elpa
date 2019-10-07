@@ -50,7 +50,6 @@
 module elpa_abstract_impl
   use elpa_api
   use elpa_generated_fortran_interfaces
-  use elpa_utilities, only : error_unit
 
 #ifdef HAVE_DETAILED_TIMINGS
   use ftimings
@@ -98,6 +97,7 @@ module elpa_abstract_impl
     !> \result  error      integer, the error code
     subroutine elpa_set_integer(self, name, value, error)
       use iso_c_binding
+      use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
       integer(kind=c_int), intent(in) :: value
@@ -131,6 +131,7 @@ module elpa_abstract_impl
     !> \param   error      integer, optional, to store an error code
     subroutine elpa_get_integer(self, name, value, error)
       use iso_c_binding
+      use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
       integer(kind=c_int)            :: value
@@ -163,6 +164,7 @@ module elpa_abstract_impl
     !> \result  error      integer, the error code
     subroutine elpa_set_double(self, name, value, error)
       use iso_c_binding
+      use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
       real(kind=c_double), intent(in) :: value
@@ -195,6 +197,7 @@ module elpa_abstract_impl
     !> \param   error      integer, optional, to store an error code
     subroutine elpa_get_double(self, name, value, error)
       use iso_c_binding
+      use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
       real(kind=c_double)            :: value

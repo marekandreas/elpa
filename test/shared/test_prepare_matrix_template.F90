@@ -49,6 +49,8 @@
 
 
       use test_util
+      use elpa_scalapack_interfaces
+
       implicit none
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
@@ -215,6 +217,7 @@ subroutine prepare_matrix_random_&
     & (na, myid, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
 
       use test_util
+      use precision
       implicit none
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)

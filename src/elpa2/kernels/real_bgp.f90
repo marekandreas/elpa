@@ -72,7 +72,7 @@
     ! Safety only:
 
     if(mod(ldq,4) /= 0) STOP 'double_hh_trafo: ldq not divisible by 4!'
-    if(mod(loc(q),16) /= 0) STOP 'Q unaligned!'
+    if(mod(c_loc(q),16) /= 0) STOP 'Q unaligned!'
 
     ! Calculate dot product of the two Householder vectors
 

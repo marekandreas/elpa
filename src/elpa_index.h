@@ -60,8 +60,8 @@
 #define nelements(x) (sizeof(x)/sizeof(x[0]))
 
 #define FOR_ALL_TYPES(X) \
-        X(int, "%d", -1) \
-        X(double, "%g", NAN)
+        X(int, "%d", "%d", -1) \
+        X(double, "%g", "%lg", NAN)
 
 /* A simple structure for storing values to a pre-set
  * number of keys */
@@ -437,8 +437,8 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
 
 /*
  !f> interface
- !f>   function elpa_index_print_all_parameters_c(index, file_name) result(success) &
- !f>       bind(C, name="elpa_index_print_all_parameters")
+ !f>   function elpa_index_print_settings_c(index, file_name) result(success) &
+ !f>       bind(C, name="elpa_index_print_settings")
  !f>     import c_int, c_ptr, c_char
  !f>     type(c_ptr), intent(in), value :: index
  !f>     character(kind=c_char), intent(in)     :: file_name(*)
@@ -447,12 +447,12 @@ int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level,
  !f> end interface
  !f>
  */
-int elpa_index_print_all_parameters(elpa_index_t index, char* filename);
+int elpa_index_print_settings(elpa_index_t index, char* filename);
 
 /*
  !f> interface
- !f>   function elpa_index_load_all_parameters_c(index, file_name) result(success) &
- !f>       bind(C, name="elpa_index_load_all_parameters")
+ !f>   function elpa_index_load_settings_c(index, file_name) result(success) &
+ !f>       bind(C, name="elpa_index_load_settings")
  !f>     import c_int, c_ptr, c_char
  !f>     type(c_ptr), intent(in), value :: index
  !f>     character(kind=c_char), intent(in)     :: file_name(*)
@@ -461,7 +461,7 @@ int elpa_index_print_all_parameters(elpa_index_t index, char* filename);
  !f> end interface
  !f>
  */
-int elpa_index_load_all_parameters(elpa_index_t index, char* filename);
+int elpa_index_load_settings(elpa_index_t index, char* filename);
 
 /*
  !f> interface
@@ -498,3 +498,5 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
  */
 int elpa_index_load_autotune_state(elpa_index_t index, int* autotune_level, int* autotune_domain, int* min_loc,
                                     double* min_val, int* current, int* cardinality, char* filename);
+
+int elpa_index_is_printing_mpi_rank(elpa_index_t index);

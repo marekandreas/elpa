@@ -95,7 +95,7 @@
 !      integer(kind=ik)                            :: istat
 !      character(200)                              :: errorMessage
       logical                                     :: success
-      integer(kind=ik)                            :: successInternal, error
+      integer(kind=ik)                            :: error
       class(elpa_t), pointer                      :: e
 
       !call timer%start("elpa_mult_at_b_&
@@ -120,7 +120,11 @@
         return
       endif
 
-      e => elpa_allocate()
+      e => elpa_allocate(error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem calling internal elpa_allocate. Aborting ..."
+        stop
+      endif
 
       call e%set("na", na, error)
       if (error .ne. ELPA_OK) then
@@ -154,6 +158,8 @@
          stop
       endif
 
+      call e%creating_from_legacy_api()
+
       if (e%setup() .ne. ELPA_OK) then
         print *, "Cannot setup ELPA instance"
         success = .false.
@@ -161,16 +167,25 @@
 
       call e%hermitian_multiply(uplo_a, uplo_c, ncb, a(1:lda,1:ldaCols), &
                                 b(1:ldb,1:ldbCols), ldb, ldbCols, &
-                                c(1:ldc,1:ldcCols), ldc, ldcCols, successInternal)
+                                c(1:ldc,1:ldcCols), ldc, ldcCols, error)
 
-      if (successInternal .ne. ELPA_OK) then
+      if (error .ne. ELPA_OK) then
         print *, "Cannot run multiply_a_b"
         success = .false.
         return
       endif
-      call elpa_deallocate(e)
 
-      call elpa_uninit()
+      call elpa_deallocate(e, error)
+      if (error .ne. ELPA_OK) then
+        print *," Cannot deallocate the internal ELPA object! This might lead to a memory leak!"
+!        stop
+      endif
+ 
+      call elpa_uninit(error)
+      if (error .ne. ELPA_OK) then
+        print *," Cannot uninit the internal ELPA object! This might lead to a memory leak!"
+!        stop
+      endif
 
       !call timer%stop("elpa_mult_at_b_&
       !&MATH_DATATYPE&

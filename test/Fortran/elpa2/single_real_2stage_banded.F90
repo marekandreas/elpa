@@ -211,7 +211,8 @@ program test_real2_single_banded
      print *, "ELPA API version not supported"
      stop 1
    endif
-   e => elpa_allocate()
+   e => elpa_allocate(success)
+   assert_elpa_ok(success)
 
    call e%set("na", na, success)
    assert_elpa_ok(success)
@@ -223,12 +224,14 @@ program test_real2_single_banded
    assert_elpa_ok(success)
    call e%set("nblk", nblk, success)
    assert_elpa_ok(success)
+#ifdef WITH_MPI
    call e%set("mpi_comm_parent", MPI_COMM_WORLD, success)
    assert_elpa_ok(success)
    call e%set("process_row", my_prow, success)
    assert_elpa_ok(success)
    call e%set("process_col", my_pcol, success)
    assert_elpa_ok(success)
+#endif
 
    call e%set("bandwidth", bandwidth, success)
    assert_elpa_ok(success)
@@ -240,9 +243,12 @@ program test_real2_single_banded
 
    call e%eigenvectors(a, ev, z, success)
    assert_elpa_ok(success)
-   call elpa_deallocate(e)
 
-   call elpa_uninit()
+   call elpa_deallocate(e, success)
+   assert_elpa_ok(success)
+
+   call elpa_uninit(success)
+   assert_elpa_ok(success)
 
 
    !-------------------------------------------------------------------------------

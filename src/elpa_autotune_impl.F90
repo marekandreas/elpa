@@ -23,19 +23,35 @@ module elpa_autotune_impl
     !> \brief function to print the autotuning
     !> Parameters
     !> \param   self  class(elpa_autotune_impl_t) the allocated ELPA autotune object
-    subroutine elpa_autotune_print(self)
+    subroutine elpa_autotune_print(self, error)
       implicit none
       class(elpa_autotune_impl_t), intent(in) :: self
-      !print *, "Print me"
+#ifdef USE_FORTRAN2008
+      integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
 
     !> \brief function to destroy an elpa autotune object
     !> Parameters
     !> \param   self  class(elpa_autotune_impl_t) the allocated ELPA autotune object
-    subroutine elpa_autotune_destroy(self)
+    !> \param   error integer, optional error code
+    subroutine elpa_autotune_destroy(self, error)
       implicit none
       class(elpa_autotune_impl_t), intent(inout) :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+#endif
+      
       ! nothing to do atm
+#ifdef USE_FORTRAN2008
+      if (present(error)) error = ELPA_OK
+#else
+      error = ELPA_OK
+#endif
     end subroutine
 #endif
 end module

@@ -27,36 +27,65 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [12:0:1])
+AC_SUBST([ELPA_SO_VERSION], [14:0:0])
+
+# AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
+# -----------------------------------------
+AC_DEFUN([AC_DEFINE_SUBST], [
+AC_DEFINE([$1], [$2], [$3])
+AC_SUBST([$1], ['$2'])
+])
 
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
-AC_DEFINE([CURRENT_API_VERSION], [20180525], [Current ELPA API version])
+
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20190524, "Current ELPA API version")
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20180525], [Current ELPA autotune version])
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20190524], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20190524, "Current ELPA autotune version")
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
         AC_MSG_ERROR([Need GNU Make])
 fi
 
+enable_legacy=no
+
 AC_MSG_CHECKING(whether legacy interface should be provided)
 AC_ARG_ENABLE([legacy-interface],
-              AS_HELP_STRING([--disable-legacy-interface],
-                             [do not build legacy API, default yes]),
+              AS_HELP_STRING([--enable-legacy-interface],
+                             [build legacy API, default no]),
               [
 	       if test x"$enableval" = x"yes"; then
-	         enable_legayc=yes
+	         enable_legacy=yes
 	       else
 	         enable_legacy=no
 	       fi
 	       ],
-              [enable_legacy=yes])
+              [enable_legacy=no])
 AC_MSG_RESULT([${enable_legacy}])
 AM_CONDITIONAL([ENABLE_LEGACY],[test x"$enable_legacy" = x"yes"])
 if test x"${enable_legacy}" = x"yes"; then
         AC_DEFINE([ENABLE_LEGACY], [1], [enable legacy interface])
+fi
+
+AC_MSG_CHECKING(whether in C interface the error argument should be optional)
+AC_ARG_ENABLE([optional-argument-in-C-API],
+              AS_HELP_STRING([--enable-optional-argument-in-C-API],
+                             [do not build C API with error argument as optional, default no]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         optional_c_error_argument=yes
+	       else
+	         optional_c_error_argument=no
+	       fi
+	       ],
+              [optional_c_error_argument=no])
+AC_MSG_RESULT([${optional_c_error_argument}])
+AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$enable_legacy" = x"yes"])
+if test x"${optional_c_error_argument}" = x"yes"; then
+        AC_DEFINE([OPTIONAL_C_ERROR_ARGUMENT], [1], [enable error argument in C-API to be optional])
 fi
 
 
@@ -119,6 +148,7 @@ AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"
 
 dnl C
 AC_LANG_PUSH([C])
+
 AX_PROG_CC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_c=yes],[found_mpi_c=no])
 if test x"$with_mpi" = x"yes"; then
   if test x"$found_mpi_c" = x"no"; then
@@ -134,13 +164,51 @@ if test x"${enable_openmp}" = x"yes"; then
   CFLAGS="$OPENMP_CFLAGS $CFLAGS"
 fi
 
-
-AX_CHECK_COMPILE_FLAG([-std=c11], [
-  CFLAGS+=" -std=c11"
+c11_standard=no
+AX_CHECK_COMPILE_FLAG([-std=gnu11], [
+  c11_standard=yes
 ], [
-  echo "C compiler cannot compile C11 code"
-  exit -1
+  echo "C compiler cannot compile -std=gnu11 code"
+  echo "testing -std=c11.."
 ])
+if test x"$c11_standard" = x"yes"; then
+  CFLAGS+=" -std=gnu11"
+fi
+
+if test x"$c11_standard" = x"no"; then
+  AX_CHECK_COMPILE_FLAG([-std=c11], [
+    c11_standard=yes
+  ], [
+    echo "C compiler cannot compile C11 code"
+    exit -1
+  ])
+  if test x"$c11_standard" = x"yes"; then
+    CFLAGS+=" -std=c11"
+  fi
+fi
+
+AC_MSG_CHECKING(whether C compiler can use _Generic )
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+int main(int argc, char **argv) {
+#define elpa_set(e, name, value, error) _Generic((value), \
+                int: \
+                  elpa_set_integer, \
+                \
+                double: \
+                  elpa_set_double \
+        )(e, name, value, error)
+
+  return 0;
+}
+    ])],
+    [can_compile_generic=yes],
+    [can_compile_generic=no]
+  )
+AC_MSG_RESULT([${can_compile_generic}])
+if test x"$can_compile_generic" != x"yes"; then
+  AC_MSG_ERROR([C compiler cannot handle _Generic statement! Upgrade or change C compiler])
+fi
+AC_DEFINE([HAVE_VSX_SSE],[1],[Altivec VSX intrinsics are supported on this CPU])
 
 AC_PROG_INSTALL
 AM_PROG_AR
@@ -176,9 +244,9 @@ fi
 
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
-  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun], [no])
+  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun aprun], [no])
   if test x"$MPI_BINARY" = x"no"; then
-    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun])
+    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
   fi
 fi
 
@@ -256,6 +324,51 @@ if test x"${enable_timings}" = x"yes"; then
   fi
 fi
 AC_LANG_POP([C])
+
+dnl Likwid
+AC_LANG_PUSH([Fortran])
+AC_ARG_WITH([likwid],
+            [AS_HELP_STRING([--with-likwid=[[yes|no(default)|PATH]]],
+                            [Use Likwid to measure performance in some parts of the library])],
+            [with_likwid="$withval"],
+            [with_likwid="no"])
+
+if test x"$with_likwid" != x"no" ; then
+  if test -d $with_likwid/lib ; then
+    LDFLAGS="-L$with_likwid/lib $LDFLAGS"
+  fi
+  if test -d $with_likwid/lib64 ; then
+    LDFLAGS="-L$with_likwid/lib64 $LDFLAGS"
+  fi
+  if test -d $with_likwid/include ; then
+    FCFLAGS="-I$with_likwid/include $FCFLAGS"
+  fi
+  AC_SEARCH_LIBS([likwid_markerInit], [likwid], [liblikwid_found="yes"], [liblikwid_found="no"])
+  if test x"$liblikwid_found" = x"no" ; then
+    AC_MSG_ERROR([Could not find a usable likwid library, please adjust LDFLAGS])
+  fi
+  AC_MSG_CHECKING([whether we can use the likwid module in a Fortran program])
+  AC_COMPILE_IFELSE([
+       program foo
+       use likwid
+
+       implicit none
+
+       call likwid_markerInit()
+       call likwid_markerThreadInit()
+
+       call likwid_markerStartRegion("foobar")
+       call likwid_markerStopRegion("foobar")
+
+       call likwid_markerClose()
+       end
+    ],
+    [AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])
+     AC_MSG_ERROR([Could not compile a Fortran program using the likwid module, adjust FCFLAGS])])
+  AC_DEFINE([HAVE_LIKWID], [1], [Use likwid])
+fi
+AC_LANG_POP([Fortran])
 
 save_FCFLAGS=$FCFLAGS
 save_LDFLAGS=$LDFLAGS
@@ -479,7 +592,7 @@ dnl Test possibility of 'use mpi', if requested
 if test x"${with_mpi}" = x"yes" ; then
   AC_ARG_ENABLE([mpi-module],
                 AS_HELP_STRING([--disable-mpi-module],
-                               [do not use the Fortran MPI module, get interfaces by 'include "mpif.h')]),
+                               [do not use the Fortran MPI module, get interfaces by 'include "mpif.h']),
                 [
                  if test x"$enableval" = x"yes"; then
                    enable_mpi_module=yes
@@ -516,6 +629,8 @@ m4_pattern_forbid([elpa_m4])
 m4_define(elpa_m4_generic_kernels, [
         real_generic
         real_generic_simple
+        real_generic_simple_block4
+        real_generic_simple_block6
         complex_generic
         complex_generic_simple
 ])
@@ -537,6 +652,12 @@ m4_define(elpa_m4_sparc64_kernels, [
         real_sparc64_block2
         real_sparc64_block4
         real_sparc64_block6
+])
+
+m4_define(elpa_m4_neon_arch64_kernels, [
+        real_neon_arch64_block2
+        real_neon_arch64_block4
+        real_neon_arch64_block6
 ])
 
 m4_define(elpa_m4_vsx_kernels, [
@@ -584,7 +705,7 @@ m4_define(elpa_m4_gpu_kernels, [
         complex_gpu
 ])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 vsx sse sse_assembly avx avx2 avx512 bgp bgq gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 bgp bgq gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -618,6 +739,7 @@ AC_DEFUN([ELPA_SELECT_KERNELS], [
 dnl Modify list of kernels with configure arguments
 ELPA_SELECT_KERNELS([generic],[enable])
 ELPA_SELECT_KERNELS([sparc64],[disable])
+ELPA_SELECT_KERNELS([neon_arch64],[disable])
 ELPA_SELECT_KERNELS([vsx],[disable])
 ELPA_SELECT_KERNELS([sse],[enable])
 ELPA_SELECT_KERNELS([sse_assembly],[enable])
@@ -633,7 +755,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 ])
 
 if test x"${enable_bgp}" = x"yes" -o x"$enable_bgq" = x"yes"; then
-        m4_foreach_w([elpa_m4_kernel], elpa_m4_sparc64_kernels elpa_m4_vsx_kernels elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels, [
+        m4_foreach_w([elpa_m4_kernel], elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels, [
                 if x"$use_[]elpa_m4_kernel[]" = x"yes" ; then
                         echo "Disabling elpa_m4_kernel due to BGP/BGQ option"
                 fi
@@ -693,7 +815,7 @@ AC_DEFUN([ELPA_KERNEL_DEPENDS],[
                   ])
           fi
 ])
-m4_foreach_w([elpa_m4_arch],[sparc64 vsx sse avx avx2 avx512],[
+m4_foreach_w([elpa_m4_arch],[sparc64 neon_arch64 vsx sse avx avx2 avx512],[
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block6], [real_]elpa_m4_arch[_block4 real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block4], [real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([complex_]elpa_m4_arch[_block2], [complex_]elpa_m4_arch[_block1])
@@ -725,9 +847,33 @@ dnl the list of kernels is now assembled
 dnl choosing a default kernel
 
 m4_foreach_w([elpa_m4_kind],[real complex],[
+        AC_ARG_WITH([default-]elpa_m4_kind[-kernel], m4_expand([AS_HELP_STRING([--with-default-]elpa_m4_kind[-kernel]=KERNEL,
+                [set a specific ]elpa_m4_kind[ kernel as default kernel. Available kernels are:]
+                 m4_foreach_w([elpa_m4_kernel],m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels),[m4_bpatsubst(elpa_m4_kernel,elpa_m4_kind[]_,[]) ]))]),
+                 [default_]elpa_m4_kind[_kernel="]elpa_m4_kind[_$withval"],[default_]elpa_m4_kind[_kernel=""])
+        #if test -n "$default_[]elpa_m4_kind[]_kernel" ; then
+        #        found="no"
+        #        m4_foreach_w([elpa_m4_otherkernel],m4_expand(elpa_m4_[]elpa_m4_kind[]_kernels),[
+        #                if test "$default_]elpa_m4_kind[_kernel" = "]elpa_m4_otherkernel[" ; then
+        #                        use_[]elpa_m4_otherkernel[]=yes
+        #                        found="yes"
+        #                else
+        #                        use_[]elpa_m4_otherkernel[]=no
+        #                fi
+        #        ])
+        #        if test x"$found" = x"no" ; then
+        #                AC_MSG_ERROR([Invalid kernel "$default_]elpa_m4_kind[_kernel" specified for --with-default-]elpa_m4_kind[-kernel])
+        #        fi
+        #        AC_DEFINE([WITH_DEFAULT_]m4_toupper(elpa_m4_kind)[_KERNEL],[1],[use specific ]elpa_m4_kind[ default kernel (set at compile time)])
+        #fi
+])
+
+
+
+m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sparc64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -774,7 +920,6 @@ int main(int argc, char **argv) {
   AC_DEFINE([HAVE_VSX_SSE],[1],[Altivec VSX intrinsics are supported on this CPU])
 fi
 
-
 if test x"${need_sparc64}" = x"yes"; then
   AC_MSG_CHECKING(whether we can compile SPARC64 with intrinsics in C)
   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -795,6 +940,27 @@ int main(int argc, char **argv) {
   fi
   AC_DEFINE([HAVE_SPARC64_SSE],[1],[SPARC64 intrinsics are supported on this CPU])
 fi
+
+if test x"${need_neon_arch64}" = x"yes"; then
+  AC_MSG_CHECKING(whether we can compile NEON ARCH64 with intrinsics in C)
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#include <arm_neon.h>
+int main(int argc, char **argv) {
+  __Float64x2_t  x1, x2, x3, x4;
+  x4 = vfmaq_f64(x1, x2, x3);
+  return 0;
+}
+    ])],
+    [can_compile_neon_arch64=yes],
+    [can_compile_neon_arch64=no]
+  )
+  AC_MSG_RESULT([${can_compile_neon_arch64}])
+  if test x"$can_compile_neon_arch64" != x"yes"; then
+    AC_MSG_ERROR([Could not compile test program, try with --disable-neon_arch64, or adjust the C compiler or CFLAGS])
+  fi
+  AC_DEFINE([HAVE_NEON_ARCH64_SSE],[1],[NEON_ARCH64 intrinsics are supported on this CPU])
+fi
+
 
 if test x"${need_sse}" = x"yes"; then
   AC_MSG_CHECKING(whether we can compile SSE3 with gcc intrinsics in C)
@@ -919,7 +1085,7 @@ if test x"${need_avx512}" = x"yes"; then
 
   if test x"$can_compile_avx512" = x"yes"; then
     AC_MSG_CHECKING([whether we compile for Xeon])
-    AC_RUN_IFELSE([AC_LANG_SOURCE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
      #include <x86intrin.h>
      int main(int argc, char **argv){
      __m512d sign;
@@ -935,7 +1101,7 @@ if test x"${need_avx512}" = x"yes"; then
     AC_MSG_RESULT([${can_compile_avx512_xeon}])
 
     AC_MSG_CHECKING([whether we compile for Xeon PHI])
-    AC_RUN_IFELSE([AC_LANG_SOURCE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
      #include <x86intrin.h>
      int main(int argc, char **argv){
      __m512d sign;
@@ -1153,7 +1319,7 @@ AC_MSG_CHECKING(whether we build for K-computer)
 AC_ARG_ENABLE([K-computer],
               AS_HELP_STRING([--enable-K-computer],
                              [enable builds on K-Computer, default no.]),
-			     [if test x"$enableval"=x"yes"; then
+			     [if test x"$enableval" = x"yes"; then
 			        enable_kcomputer=yes
 		              else
 				enable_kcomputer=no
@@ -1169,6 +1335,29 @@ if test x"${enable_kcomputer}" = x"yes"; then
   fi
   if test x"${enable_fortran2008_features}" = x"yes" ; then
     AC_MSG_ERROR(on K-computer you have to switch off Fortran 2008 features!)
+  fi
+fi
+
+AC_MSG_CHECKING(whether we build for NEC SX-Auroa)
+AC_ARG_ENABLE([SX-Aurora],
+              AS_HELP_STRING([--enable-SX-Aurora],
+                             [enable builds on SX-Aurora, default no.]),
+			     [if test x"$enableval" = x"yes"; then
+			        enable_sxaurora=yes
+		              else
+				enable_sxaurora=no
+			      fi],
+              [enable_kcomputer=no])
+AC_MSG_RESULT([${enable_sxaurora}])
+AM_CONDITIONAL([BUILD_KCOMPUTER],[test x"$enable_sxaurora" = x"yes"])
+if test x"${enable_sxaurora}" = x"yes"; then
+ AC_DEFINE([BUILD_SXAURORA], [1], [build for SX-Aurora])
+ FC_MODINC="-I"
+  #if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
+  #  AC_MSG_ERROR(on K-computer you have to switch off assumed-size arrays!)
+  #fi
+  if test x"${enable_fortran2008_features}" = x"yes" ; then
+    AC_MSG_ERROR(on SX-Aurora you have to switch off Fortran 2008 features!)
   fi
 fi
 
@@ -1228,6 +1417,30 @@ else
   fi
 fi
 
+dnl store-build-config
+echo "checking whether build config should be compiled into the library..."
+AC_CHECK_PROG(xxd_CHECK,xxd,yes)
+AS_IF([test x"$xxd_CHECK" != x"yes"], [AC_MSG_ERROR([Please install xxd before configuring.])])
+AC_ARG_ENABLE([store-build-config],
+              AS_HELP_STRING([--enable-store-build-config],
+                             [compile build config into the library object, default no]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         store_build_config=yes
+	       else
+	         store_build_config=no
+	       fi
+	       ],
+              [store_build_config=no])
+AM_CONDITIONAL([STORE_BUILD_CONFIG],[test x"$store_build_config" = x"yes"])
+if test x"${store_build_config}" = x"yes"; then
+	echo "build config should be compiled into the library: yes"
+        AC_DEFINE([STORE_BUILD_CONFIG], [1], [compile build config into the library object])
+else
+	echo "build config should be compiled into the library: no"
+fi
+
+
 AC_SUBST([SUFFIX])
 AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
 
@@ -1236,6 +1449,8 @@ AC_CONFIG_FILES([
   Doxyfile
   ${PKG_CONFIG_FILE}:elpa.pc.in
   elpa/elpa_constants.h
+  elpa/elpa_version.h
+  elpa/elpa_build_config.h
 ])
 
 m4_include([m4/ax_fc_check_define.m4])
@@ -1278,7 +1493,80 @@ else
         AC_MSG_RESULT([no])
 fi
 
-
+AC_MSG_CHECKING(whether --enable-python is specified)
+AC_ARG_ENABLE([python],
+              AS_HELP_STRING([--enable-python],
+                             [build and install python wrapper, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_python=yes
+	       else
+	         enable_python=no
+	       fi
+	       ],
+              [enable_python=no])
+AC_MSG_RESULT([${enable_python}])
+AM_CONDITIONAL([WITH_PYTHON],[test x"$enable_python" = x"yes"])
+if test x"${enable_python}" = x"yes"; then
+        AC_DEFINE([WITH_PYTHON], [1], [build and install python wrapper])
+        # check for python and dependencies
+        AM_PATH_PYTHON([3.6])
+        AC_ARG_VAR([PYTHON_INCLUDE], [Include flags for python, bypassing python-config])
+        AC_ARG_VAR([PYTHON_CONFIG], [Path to python-config])
+        AS_IF([test -z "$PYTHON_INCLUDE"], [
+          AS_IF([test -z "$PYTHON_CONFIG"], [
+            AC_PATH_PROGS([PYTHON_CONFIG],
+                          [python$PYTHON_VERSION-config python-config],
+                          [no],
+                          [`dirname $PYTHON`])
+            AS_IF([test "$PYTHON_CONFIG" = no], [AC_MSG_ERROR([cannot find python-config for $PYTHON.])])
+          ])
+          AC_MSG_CHECKING([python include flags])
+          PYTHON_INCLUDE=`$PYTHON_CONFIG --includes`
+          AC_MSG_RESULT([$PYTHON_INCLUDE])
+        ])
+        AC_MSG_CHECKING([numpy module])
+        AS_IF([$PYTHON -c "import numpy"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find numpy.])])
+        AC_MSG_CHECKING([mpi4py module])
+        AS_IF([$PYTHON -c "import mpi4py"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find mpi4py.])])
+        AC_MSG_CHECKING([cython module])
+        AS_IF([$PYTHON -c "import cython"], [AC_MSG_RESULT([found.])],
+              [AC_MSG_ERROR([cannot find cython.])])
+        AC_CHECK_PROG([cython_found], [cython], [yes], [no])
+        if test x"$cython_found" != x"yes" ; then
+          AC_MSG_ERROR([cython not found.])
+        fi
+        AC_ARG_VAR([NUMPY_INCLUDE], [Include flags for numpy])
+        AC_MSG_CHECKING([numpy include flags])
+        NUMPY_INCLUDE=-I`$PYTHON -c "import numpy; print(numpy.get_include())"`
+        AS_IF([test "$NUMPY_INCLUDE" = "-I"], [AC_MSG_ERROR([cannot get numpy include path.])])
+        AC_MSG_RESULT([$NUMPY_INCLUDE])
+fi
+AC_MSG_CHECKING(whether --enable-python-tests is specified)
+AC_ARG_ENABLE([python-tests],
+              AS_HELP_STRING([--enable-python-tests],
+                             [enable python tests, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_python_tests=yes
+	       else
+	         enable_python_tests=no
+	       fi
+	       ],
+              [enable_python_tests=no])
+AC_MSG_RESULT([${enable_python_tests}])
+AM_CONDITIONAL([WITH_PYTHON_TESTS],[test x"$enable_python_tests" = x"yes"])
+if test x"${enable_python_tests}" = x"yes"; then
+        if test x"${enable_python}" = x"no"; then
+          AC_MSG_ERROR([Python tests can only be enabled it python is enabled.])
+        fi
+        AC_CHECK_PROG([pytest_found], [pytest], [yes], [no])
+        if test x"$pytest_found" != x"yes" ; then
+          AC_MSG_ERROR([pytest not found.])
+        fi
+fi
 AC_OUTPUT
 
 echo ""
@@ -1301,9 +1589,17 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 
 #echo " "
 #echo "***********************************************************************"
-#echo "*  This is a the first release candidate of ELPA 2018.05.001.rc1      *"
+#echo "*  ELPA 2018.11.001 will be the last release where the old, obsolete, *"
+#echo "*  legacy API is enabled by default! In the 2019.05.001 release       *"
+#echo "*  the legacy API will be still available (but as default switched    *"
+#echo "*  off). With the 2019.11.001 release it will be abolished!	    *"					 
+#echo "***********************************************************************"
+#echo " "
+#echo " "
+#echo "***********************************************************************"
+#echo "*  This is a the first release candidate of ELPA 2019.05.001.rc2      *"
 #echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2018.05.001                                                   *"
+#echo "*  ELPA 2019.05.001                                                   *"
 #echo "***********************************************************************"
 #echo " "
 
@@ -1315,5 +1611,16 @@ if test x"$enable_kcomputer" = x"yes" ; then
   echo "call: make -f ../generated_headers.am generated-headers top_srcdir=.."
   echo "BEFORE triggering the build with make!"
 else
+  if test x"$optional_c_error_argument" = x"yes" ; then
+    echo "#define OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+  else
+    echo "#undef OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+  fi
+  if test x"$store_build_config" = x"yes"; then
+    cat config.log > elpa_build_object
+    xxd -i elpa_build_object >> elpa/elpa_build_config.h
+  fi
+
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi
+

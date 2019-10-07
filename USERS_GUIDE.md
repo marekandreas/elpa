@@ -13,7 +13,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program, which prints all
 the available kernels.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.05.001/html/index.html)
+Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.001/html/index.html)
 for each *ELPA* release is available.
 
 
@@ -31,6 +31,19 @@ that all future features of *ELPA* will only be accessible via the new API defin
 As mentioned, we advise against it, but if you want to use the legacy API please look at the document 
 [USERS_GUIDE_DEPRECATED_LEGACY_API.md] (USERS_GUIDE_DEPRECATED_LEGACY_API.md).
 
+
+The old, obsolete legacy API will be deprecated in the future !
+Allready now, all new features of ELPA are only available with the new API. Thus, there
+is no reason to keep the legacy API arround for too long.
+
+The release ELPA 2018.11.001 was the last release, where the legacy API has been
+enabled by default (and can be disabled at build time).
+With release ELPA 2019.05.001 the legacy API is disabled by default, however,
+can be still switched on at build time.
+Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and
+not supported anymore.
+
+
 ### Table of Contents: ###
 
 - I)   General concept of the *ELPA* API
@@ -38,7 +51,8 @@ As mentioned, we advise against it, but if you want to use the legacy API please
 - III) List of computational routines
 - IV)  Using OpenMP threading
 - V)   Influencing default values with environment variables
-- VI)   Autotuning
+- VI)  Autotuning
+- VII) A simple example how to use ELPA in an MPI application
 
 ## I) General concept of the *ELPA* API ##
 
@@ -79,7 +93,12 @@ Fortran synopsis
     print *, "ELPA API version not supported"
     stop
   endif
-  elpa => elpa_allocate()
+  elpa => elpa_allocate(success)
+  if (success != ELPA_OK) then
+    ! react on the error
+    ! we urge every user to always check the error codes
+    ! of all ELPA functions
+  endif
 
   ! set parameters decribing the matrix and it's MPI distribution
   call elpa%set("na", na, success)                          ! size of the na x na matrix
@@ -91,12 +110,16 @@ Fortran synopsis
   call elpa%set("process_row", my_prow, success)            ! row coordinate of MPI process
   call elpa%set("process_col", my_pcol, success)            ! column coordinate of MPI process
 
-  succes = elpa%setup()
+  success = elpa%setup()
 
   ! if desired, set any number of tunable run-time options
   ! look at the list of possible options as detailed later in
   ! USERS_GUIDE.md
   call e%set("solver", ELPA_SOLVER_2STAGE, success)
+
+  ! set the AVX BLOCK2 kernel, otherwise ELPA_2STAGE_REAL_DEFAULT will
+  ! be used
+  call e%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, success)
 
   ! use method solve to solve the eigenvalue problem to obtain eigenvalues
   ! and eigenvectors
@@ -122,6 +145,11 @@ C Synopsis:
    }
 
    handle = elpa_allocate(&error);
+   if (error != ELPA_OK) {
+     /* react on the error code */
+     /* we urge the user to always check the error codes of all ELPA functions */
+   }
+
 
    /* Set parameters the matrix and it's MPI distribution */
    elpa_set(handle, "na", na, &error);                                           // size of the na x na matrix
@@ -134,13 +162,17 @@ C Synopsis:
    elpa_set(handle, "process_col", my_pcol, &error);                             // column coordinate of MPI process
 
    /* Setup */
-   elpa_setup(handle);
+   error = elpa_setup(handle);
 
    /* if desired, set any number of tunable run-time options */
    /* look at the list of possible options as detailed later in
       USERS_GUIDE.md */
 
    elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
+  
+   // set the AVX BLOCK2 kernel, otherwise ELPA_2STAGE_REAL_DEFAULT will
+   // be used
+   elpa_set(handle, "real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, &error)
 
    /* use method solve to solve the eigenvalue problem */
    /* other possible methods are desribed in USERS_GUIDE.md */
@@ -169,7 +201,7 @@ The following table gives a list of all supported parameters which can be used t
 
 ## III) List of computational routines ##
 
-The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2018.05.001/html/index.html) for details.
+The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.001/html/index.html) for details.
 
 
 | Name         | Purpose                                                                 | since API version |
@@ -181,6 +213,7 @@ The following compute routines are available in *ELPA*: Please have a look at th
 | hermitian_multiply       | do (real) a^T x b <br> (complex) a^H x b                                        | 20170403 |
 | cholesky                 | do cholesky factorisation                                                       | 20170403 |
 | invert_triangular        | invert a upper triangular matrix                                                | 20170403 |
+| solve_tridiagonal        | solve EVP for a tridiagonal matrix                                              | 20170403 |
 
 
 ## IV) Using OpenMP threading ##
@@ -243,11 +276,12 @@ There are two ways, how the user can influence the autotuning steps:
 Each level defines a different set of tunable parameter. The autouning option will be extended by future releases of the *ELPA* library, at the moment the following
 sets are supported: 
 
-| AUTOTUNE LEVEL       | Parameters                                           |
-| :------------------- | :--------------------------------------------------  |
-| ELPA_AUTOTUNE_FAST   | { solver, real_kernel, complex_kernel, omp_threads } |
-| ELPA_AUTOTUNE_MEDIUM | { gpu }                                              |
-
+| AUTOTUNE LEVEL          | Parameters                                              |
+| :---------------------- | :------------------------------------------------------ |
+| ELPA_AUTOTUNE_FAST      | { solver, real_kernel, complex_kernel, omp_threads }    |
+| ELPA_AUTOTUNE_MEDIUM    | all of abvoe + { gpu, partly gpu }                      |
+| ELPA_AUTOTUNE_EXTENSIVE | all of above + { various blocking factors, stripewidth, |
+|                         | intermediate_bandwidth }                                |
 
 2.) the user can **remove** tunable parameters from the list of autotuning possibilites by explicetly setting this parameter,
 e.g. if the user sets in his code 
@@ -274,7 +308,7 @@ Fortran synopsis
     print *, "ELPA API version not supported"
     stop
   endif
-  elpa => elpa_allocate()
+  elpa => elpa_allocate(success)
 
   ! set parameters decribing the matrix and it's MPI distribution
   call elpa%set("na", na, success)
@@ -286,23 +320,23 @@ Fortran synopsis
   call elpa%set("process_row", my_prow, success)
   call elpa%set("process_col", my_pcol, success)
 
-  succes = elpa%setup()
+  success = elpa%setup()
 
-  tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL, error)   ! prepare autotuning, set AUTOTUNE_LEVEL and the domain (real or complex)
+  tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL, success)   ! prepare autotuning, set AUTOTUNE_LEVEL and the domain (real or complex)
 
   ! do the loop of subsequent ELPA calls which will be used to do the autotuning
   do i=1, scf_cycles
-    unfinished = e%autotune_step(tune_state)   ! check whether autotuning is finished; If not do next step
+    unfinished = e%autotune_step(tune_state, success)   ! check whether autotuning is finished; If not do next step
 
     if (.not.(unfinished)) then
       print *,"autotuning finished at step ",i
     endif
 
-    call e%eigenvectors(a, ev, z, error)       ! do the normal computation
+    call e%eigenvectors(a, ev, z, success)       ! do the normal computation
 
   enddo
 
-  call e%autotune_set_best(tune_state)         ! from now use the values found by autotuning
+  call e%autotune_set_best(tune_state, success)         ! from now use the values found by autotuning
 
   call elpa_autotune_deallocate(tune_state)    ! cleanup autotuning object 
 ```
@@ -340,7 +374,7 @@ C Synopsis
    // repeatedl call ELPA, e.g. in an scf iteration
    for (i=0; i < scf_cycles; i++) {
 
-     unfinished = elpa_autotune_step(handle, autotune_handle);      // check whether autotuning finished. If not do next step
+     unfinished = elpa_autotune_step(handle, autotune_handle, &error);      // check whether autotuning finished. If not do next step
 
      if (unfinished == 0) {
        printf("ELPA autotuning finished in the %d th scf step \n",i);
@@ -350,12 +384,134 @@ C Synopsis
       /* do the normal computation */
       elpa_eigenvectors(handle, a, ev, z, &error);
    }
-   elpa_autotune_set_best(handle, autotune_handle);  // from now on use values used by autotuning
+   elpa_autotune_set_best(handle, autotune_handle &error);  // from now on use values used by autotuning
    elpa_autotune_deallocate(autotune_handle);        // cleanup autotuning
-   
 ```
 
-  
+
+## VII) A simple example how to use ELPA in an MPI application ##
+
+The following is a skeleton code of an basic example on how to use ELPA. The purpose is to show the steps that have 
+to be done in the application using MPI which wants to call ELPA, namely
+
+- Initializing the MPI
+- creating a blacs distributed matrics
+- using this matrix within ELPA
+
+The skeleton is not ment to be copied and pasted, since the details will always be dependent on the application which should 
+call ELPA.
+
+For simplicity only a Fortran example is shown
 
 
+```Fortran
 
+use mpi
+
+implicit none
+
+integer :: mpierr, myid, nprocs
+integer :: np_cols, np_rows, npcol, nprow
+integer :: my_blacs_ctxt, sc_desc(9), info
+integer :: na = [some value] ! global dimension of the matrix to be solved
+integer :: nblk = [some value ] ! the block size of the scalapack block cyclic distribution
+real*8, allocatable :: a(:,:), ev(:)
+
+!-------------------------------------------------------------------------------
+!  MPI Initialization
+
+call mpi_init(mpierr)
+call mpi_comm_rank(mpi_comm_world,myid,mpierr)
+call mpi_comm_size(mpi_comm_world,nprocs,mpierr)  
+
+!-------------------------------------------------------------------------------
+! Selection of number of processor rows/columns
+! the application has to decide how the matrix should be distributed
+np_cols = [ some value ]
+np_rows = [ some value ]
+
+
+!-------------------------------------------------------------------------------
+! Set up BLACS context and MPI communicators
+!
+! The BLACS context is only necessary for using Scalapack.
+!
+! For ELPA, the MPI communicators along rows/cols are sufficient,
+! and the grid setup may be done in an arbitrary way as long as it is
+! consistent (i.e. 0<=my_prow<np_rows, 0<=my_pcol<np_cols and every
+! process has a unique (my_prow,my_pcol) pair).
+! For details look at the documentation of  BLACS_Gridinit and
+! BLACS_Gridinfo of your BLACS installation
+
+my_blacs_ctxt = mpi_comm_world
+call BLACS_Gridinit( my_blacs_ctxt, 'C', np_rows, np_cols )
+call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
+
+! compute for your distributed matrix the number of local rows and columns 
+! per MPI task, e.g. with
+! the Scalapack tools routine NUMROC 
+
+! Set up a scalapack descriptor for the checks below.
+! For ELPA the following restrictions hold:
+! - block sizes in both directions must be identical (args 4+5)
+! - first row and column of the distributed matrix must be on row/col 0/0 (args 6+7)
+
+call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
+
+! Allocate matrices 
+
+allocate(a (na_rows,na_cols))
+allocate(ev(na))
+
+! fill the matrix with resonable values
+
+a(i,j) = [ your problem to be solved]
+
+! UP to this point this where all the prerequisites which have to be done in the
+! application if you have a distributed eigenvalue problem to be solved, independent of
+! whether you want to use ELPA, Scalapack, EigenEXA or alike
+
+! Now you can start using ELPA
+
+if (elpa_init(20171201) /= ELPA_OK) then        ! put here the API version that you are using
+   print *, "ELPA API version not supported"
+   stop
+ endif
+ elpa => elpa_allocate(success)
+ if (success != ELPA_OK) then
+   ! react on the error
+   ! we urge every user to always check the error codes
+   ! of all ELPA functions
+ endif
+
+ ! set parameters decribing the matrix and it's MPI distribution
+ call elpa%set("na", na, success)                          ! size of the na x na matrix
+ call elpa%set("nev", nev, success)                        ! number of eigenvectors that should be computed ( 1<= nev <= na)
+ call elpa%set("local_nrows", na_rows, success)            ! number of local rows of the distributed matrix on this MPI task 
+ call elpa%set("local_ncols", na_cols, success)            ! number of local columns of the distributed matrix on this MPI task
+ call elpa%set("nblk", nblk, success)                      ! size of the BLACS block cyclic distribution
+ call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success) ! the global MPI communicator
+ call elpa%set("process_row", my_prow, success)            ! row coordinate of MPI process
+ call elpa%set("process_col", my_pcol, success)            ! column coordinate of MPI process
+
+ success = elpa%setup()
+
+ ! if desired, set any number of tunable run-time options
+ ! look at the list of possible options as detailed later in
+ ! USERS_GUIDE.md
+ call e%set("solver", ELPA_SOLVER_2STAGE, success)
+
+ ! set the AVX BLOCK2 kernel, otherwise ELPA_2STAGE_REAL_DEFAULT will
+ ! be used
+ call e%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, success)
+
+ ! use method solve to solve the eigenvalue problem to obtain eigenvalues
+ ! and eigenvectors
+ ! other possible methods are desribed in USERS_GUIDE.md
+ call e%eigenvectors(a, ev, z, success)
+
+ ! cleanup
+ call elpa_deallocate(e)
+
+ call elpa_uninit()
+```

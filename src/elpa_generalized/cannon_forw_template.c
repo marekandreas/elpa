@@ -1,3 +1,59 @@
+//    This file is part of ELPA.
+//
+//    The ELPA library was originally created by the ELPA consortium,
+//    consisting of the following organizations:
+//
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+//      Informatik,
+//    - Technische Universität München, Lehrstuhl für Informatik mit
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//      and
+//    - IBM Deutschland GmbH
+//
+//    This particular source code file has been developed within the ELPA-AEO //
+//    project, which has been a joint effort of
+//
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+//      Informatik,
+//    - Technische Universität München, Lehrstuhl für Informatik mit
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Technische Universität München, Lehrstuhl für Theoretische Chemie,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+
+//    More information can be found here:
+//    http://elpa.mpcdf.mpg.de/ and
+//    http://elpa-aeo.mpcdf.mpg.de
+//
+//    ELPA is free software: you can redistribute it and/or modify
+//    it under the terms of the version 3 of the license of the
+//    GNU Lesser General Public License as published by the Free
+//    Software Foundation.
+//
+//    ELPA is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+//
+//    ELPA reflects a substantial effort on the part of the original
+//    ELPA consortium, and we ask you to respect the spirit of the
+//    license that we chose: i.e., please contribute any changes you
+//    may have back to the original ELPA library distribution, and keep
+//    any derivatives of ELPA under the same license that we chose for
+//    the original distribution, the GNU Lesser General Public License.
+//
+// Author: Valeriy Manin (Bergische Universität Wuppertal)
+// integreated into the ELPA library Pavel Kus, Andeas Marek (MPCDF)
+
 
 // it seems, that we need those two levels of indirection to correctly expand macros
 #define cannons_reduction_impl_expand2(SUFFIX) cannons_reduction_##SUFFIX
@@ -10,10 +66,13 @@
 
 #include "../general/precision_typedefs.h"
 
-void C_PLACPY(char*, int*, int*, math_type*, int*, int*, int*, math_type*, int*, int*, int*);
-void C_LACPY(char*, int*, int*, math_type*, int*, math_type*, int*);
-void C_GEMM(char*, char*, int*, int*, int*, math_type*, math_type*, int*, math_type*, int*, math_type*, math_type*, int*); 
-void C_PTRAN(int*, int*, math_type*, math_type*, int*, int*, int*, math_type*, math_type*, int*, int*, int*);
+#include "../helpers/lapack_interfaces.h"
+#include "../helpers/scalapack_interfaces.h"
+
+//void C_PLACPY(char*, int*, int*, math_type*, int*, int*, int*, math_type*, int*, int*, int*);
+//void C_LACPY(char*, int*, int*, math_type*, int*, math_type*, int*);
+//void C_GEMM(char*, char*, int*, int*, int*, math_type*, math_type*, int*, math_type*, int*, math_type*, math_type*, int*); 
+//void C_PTRAN(int*, int*, math_type*, math_type*, int*, int*, int*, math_type*, math_type*, int*, int*, int*);
 
 void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols, int my_prow, int my_pcol,
                          int* a_desc, math_type *Res, int ToStore, MPI_Comm row_comm, MPI_Comm col_comm)

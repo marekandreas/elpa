@@ -53,15 +53,21 @@ layout_flag = {
     "square": ""
 }
 
-for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
-                                              sorted(matrix_flag.keys()),
-                                              sorted(gpu_flag.keys()),
-                                              sorted(qr_flag.keys()),
-                                              sorted(test_type_flag.keys()),
-                                              sorted(prec_flag.keys()),
-                                              sorted(domain_flag.keys()),
-                                              sorted(solver_flag.keys()),
-                                              sorted(layout_flag.keys())):
+split_comm_flag = {
+    "myself": "-DSPLIT_COMM_MYSELF",
+    "by_elpa": ""
+}
+
+for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
+                                                   sorted(matrix_flag.keys()),
+                                                   sorted(gpu_flag.keys()),
+                                                   sorted(qr_flag.keys()),
+                                                   sorted(test_type_flag.keys()),
+                                                   sorted(prec_flag.keys()),
+                                                   sorted(domain_flag.keys()),
+                                                   sorted(solver_flag.keys()),
+                                                   sorted(layout_flag.keys()),
+                                                   sorted(split_comm_flag.keys())):
 
     if lang == "C" and (m == "analytic" or m == "toeplitz" or m == "frank" or lay == "all_layouts"):
         continue
@@ -117,9 +123,19 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
     if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == 1 or m != "random")):
         continue
 
+    if(spl == "myself" and (d != "real" or p != "double" or q != 0 or m != "random" or (t != "eigenvectors" and t != "cholesky")  or lang != "Fortran" or lay != "square")):
+        continue
+
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
         endifs = 0
         extra_flags = []
+
+        if(spl == "myself" and kernel == "all_kernels"):
+            continue
+
+        if(spl == "myself"):
+            print("if WITH_MPI")
+            endifs += 1
 
         if (t == "eigenvalues" and kernel == "all_kernels"):
             continue
@@ -151,6 +167,9 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
         if layout_flag[lay]:
             extra_flags.append(layout_flag[lay])
 
+        if split_comm_flag[spl]:
+            extra_flags.append(split_comm_flag[spl])
+
         if (p == "single"):
             if (d == "real"):
                 print("if WANT_SINGLE_PRECISION_REAL")
@@ -160,14 +179,15 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "test{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{qrsuffix}{m}{layoutsuffix}".format(
+        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{qrsuffix}{m}{layoutsuffix}{spl}".format(
             langsuffix=language_flag[lang],
             d=d, p=p, t=t, s=s,
             kernelsuffix="" if kernel == "nokernel" else "_" + kernel,
             gpusuffix="gpu_" if g else "",
             qrsuffix="qr_" if q else "",
             m=m,
-            layoutsuffix="_all_layouts" if lay == "all_layouts" else "")
+            layoutsuffix="_all_layouts" if lay == "all_layouts" else "",
+            spl="_split_comm_myself" if spl == "myself" else "")
 
         print("if BUILD_KCOMPUTER")
         print("bin_PROGRAMS += " + name)
@@ -176,9 +196,15 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
         print("endif")
 
         if lay == "square" or t == "generalized":
-            print("check_SCRIPTS += " + name + "_default.sh")
+            if kernel == "all_kernels":
+                print("check_SCRIPTS += " + name + "_extended.sh")
+            else:
+                print("check_SCRIPTS += " + name + "_default.sh")
         elif lay == "all_layouts":
-            print("check_SCRIPTS += " + name + "_extended.sh")
+            if kernel == "all_kernels":
+                print("check_SCRIPTS += " + name + "_extended.sh")
+            else:
+                print("check_SCRIPTS += " + name + "_extended.sh")
         else:
             raise Exception("Unknown layout {0}".format(lay))
 
@@ -207,6 +233,7 @@ for lang, m, g, q, t, p, d, s, lay in product(sorted(language_flag.keys()),
 
         print("endif\n" * endifs)
 
+
 for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys()), sorted(domain_flag.keys())):
     endifs = 0
     if (p == "single"):
@@ -218,7 +245,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
             raise Exception("Oh no!")
         endifs += 1
 
-    name = "test_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
+    name = "validate_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
 
     print("if ENABLE_AUTOTUNING")
     print("check_SCRIPTS += " + name + "_extended.sh")
@@ -242,7 +269,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
     print("endif\n" * endifs)
     print("endif")
 
-name = "test_multiple_objs_real_double"
+name = "validate_multiple_objs_real_double"
 print("if ENABLE_AUTOTUNING")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
@@ -264,4 +291,24 @@ print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
 
+name = "validate_multiple_objs_real_double_c_version"
+print("if ENABLE_AUTOTUNING")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C/test_multiple_objs.c")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CFLAGS = $(test_program_cflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
 
+name = "validate_split_comm_real_double"
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/Fortran/test_split_comm.F90")
+print(name + "_LDADD = $(test_program_ldadd)")
+print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))

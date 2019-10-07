@@ -88,7 +88,7 @@
        logical, intent(in)          :: wantDebug
        logical                      :: success
 
-       integer(kind=iK)            :: successInternal, error
+       integer(kind=iK)            :: error
        class(elpa_t), pointer      :: e
 
        !call timer%start("elpa_invert_trm_&
@@ -105,7 +105,12 @@
          return
        endif
 
-       e => elpa_allocate()
+       e => elpa_allocate(error)
+       if (error .ne. ELPA_OK) then
+         print *,"Problem calling internal elpa_allocate. Aborting ..."
+         stop
+       endif
+
 
        call e%set("na", na, error)
        if (error .ne. ELPA_OK) then
@@ -139,11 +144,14 @@
           stop
        endif
 
+       call e%creating_from_legacy_api()
+
        if (e%setup() .ne. ELPA_OK) then
          print *, "Cannot setup ELPA instance"
          success = .false.
          return
        endif
+
 
        if (wantDebug) then
          call e%set("debug",1, error)
@@ -153,20 +161,29 @@
          endif
        endif
 
-       call e%invert_triangular(a(1:lda,1:matrixCols), successInternal)
+       call e%invert_triangular(a(1:lda,1:matrixCols), error)
 
-       if (successInternal .ne. ELPA_OK) then
+       if (error .ne. ELPA_OK) then
          print *, "Cannot run invert_trm"
          success = .false.
          return
        else
          success =.true.
        endif
-       call elpa_deallocate(e)
 
-       call elpa_uninit()
+       call elpa_deallocate(e, error)
+       if (error .ne. ELPA_OK) then
+         print *," Cannot deallocate the internal ELPA object! This might lead to a memory leak!"
+!         stop
+       endif
 
-       !call timer%stop("elpa_invert_trm_&
+       call elpa_uninit(error)
+       if (error .ne. ELPA_OK) then
+         print *," Cannot uninit the internal ELPA object! This might lead to a memory leak!"
+!         stop
+      endif
+
+      !call timer%stop("elpa_invert_trm_&
        !&MATH_DATATYPE&
        !&_&
        !&PRECISION&

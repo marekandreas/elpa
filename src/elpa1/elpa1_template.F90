@@ -66,9 +66,8 @@ function elpa_solve_evp_&
    use elpa_abstract_impl
    use elpa_mpi
    use elpa1_compute
-#ifdef WITH_OPENMP
-   use omp_lib
-#endif
+   use elpa_omp
+
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -129,7 +128,11 @@ function elpa_solve_evp_&
    &")
 
 #ifdef WITH_OPENMP
-   !nrThreads = omp_get_max_threads()
+   ! store the number of OpenMP threads used in the calling function
+   ! restore this at the end of ELPA 2
+   omp_threads_caller = omp_get_max_threads()
+
+   ! check the number of threads that ELPA should use internally
    call obj%get("omp_threads",nrThreads,error)
    call omp_set_num_threads(nrThreads)
 #else
@@ -163,6 +166,13 @@ function elpa_solve_evp_&
      if (.not.(obj%eigenvalues_only)) then
        q(1,1) = ONE
      endif
+
+     ! restore original OpenMP settings
+#ifdef WITH_OPENMP
+     ! store the number of OpenMP threads used in the calling function
+     ! restore this at the end of ELPA 2
+     call omp_set_num_threads(omp_threads_caller)
+#endif
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&
      &_1stage_&
@@ -179,17 +189,12 @@ function elpa_solve_evp_&
 
    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
+     print *,"Problem getting option. Aborting..."
      stop
    endif
    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
-     stop
-   endif
-   call obj%get("mpi_comm_parent", mpi_comm_all,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
+     print *,"Problem getting option. Aborting..."
      stop
    endif
 
@@ -214,9 +219,6 @@ function elpa_solve_evp_&
    
    call obj%timer%start("mpi_communication")
 
-   call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
-   call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
-
    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
 
@@ -238,6 +240,12 @@ function elpa_solve_evp_&
    
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
+     call obj%get("mpi_comm_parent", mpi_comm_all,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+     call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = .true.
        ! set the neccessary parameters
@@ -331,16 +339,28 @@ function elpa_solve_evp_&
 
    if (do_tridiag) then
      call obj%timer%start("forward")
+#ifdef HAVE_LIKWID
+     call likwid_markerStartRegion("tridi")
+#endif
+
      call tridiag_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
      & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
+
+#ifdef HAVE_LIKWID
+     call likwid_markerStopRegion("tridi")
+#endif
      call obj%timer%stop("forward")
     endif  !do_tridiag
 
     if (do_solve) then
      call obj%timer%start("solve")
+#ifdef HAVE_LIKWID
+     call likwid_markerStartRegion("solve")
+#endif
+
      call solve_tridi_&
      &PRECISION&
      & (obj, na, nev, ev, e,  &
@@ -351,6 +371,10 @@ function elpa_solve_evp_&
         q_real, l_rows,  &
 #endif
         nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+
+#ifdef HAVE_LIKWID
+     call likwid_markerStopRegion("solve")
+#endif
      call obj%timer%stop("solve")
      if (.not.(success)) return
    endif !do_solve
@@ -410,6 +434,10 @@ function elpa_solve_evp_&
      endif
 
      call obj%timer%start("back")
+#ifdef HAVE_LIKWID
+     call likwid_markerStartRegion("trans_ev")
+#endif
+
      ! In the skew-symmetric case this transforms the real part
      call trans_ev_&
      &MATH_DATATYPE&
@@ -420,11 +448,15 @@ function elpa_solve_evp_&
        ! Transform imaginary part
        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
        call trans_ev_&
- 	     &MATH_DATATYPE&
- 	     &_&
- 	     &PRECISION&
- 	     & (obj, na, nev, a, lda, tau, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION&
+             & (obj, na, nev, a, lda, tau, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
        endif
+
+#ifdef HAVE_LIKWID
+     call likwid_markerStopRegion("trans_ev")
+#endif
      call obj%timer%stop("back")
    endif ! do_trans_ev
 
@@ -461,6 +493,13 @@ function elpa_solve_evp_&
        stop 1
      endif
    endif
+
+   ! restore original OpenMP settings
+#ifdef WITH_OPENMP
+   ! store the number of OpenMP threads used in the calling function
+   ! restore this at the end of ELPA 2
+   call omp_set_num_threads(omp_threads_caller)
+#endif
 
    call obj%timer%stop("elpa_solve_evp_&
    &MATH_DATATYPE&

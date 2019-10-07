@@ -56,6 +56,9 @@ module elpa_impl
   use elpa_mpi
   use elpa_generated_fortran_interfaces
   use elpa_utilities, only : error_unit
+#ifdef HAVE_LIKWID
+  use likwid
+#endif
 
   use elpa_abstract_impl
 #ifdef ENABLE_AUTOTUNING
@@ -73,6 +76,9 @@ module elpa_impl
    private
    integer :: communicators_owned
 
+   !This object has been created through the legacy api.
+   integer :: from_legacy_api
+
    !> \brief methods available with the elpa_impl_t type
    contains
      !> \brief the puplic methods
@@ -81,11 +87,14 @@ module elpa_impl
      procedure, public :: destroy => elpa_destroy               !< a destroy method: implemented in elpa_destroy
 
      ! KV store
-     procedure, public :: is_set => elpa_is_set                 !< a method to check whether a key/value pair has been set : implemented
-                                                                !< in elpa_is_set
-     procedure, public :: can_set => elpa_can_set               !< a method to check whether a key/value pair can be set : implemented
-                                                                !< in elpa_can_set
+     procedure, public :: is_set => elpa_is_set             !< a method to check whether a key/value pair has been set : implemented
+                                                            !< in elpa_is_set
+     procedure, public :: can_set => elpa_can_set           !< a method to check whether a key/value pair can be set : implemented
+                                                            !< in elpa_can_set
 
+     ! call before setup if created from the legacy api
+     ! remove this function completely after the legacy api is dropped
+     procedure, public :: creating_from_legacy_api => elpa_creating_from_legacy_api
 
      ! timer
      procedure, public :: get_time => elpa_get_time
@@ -120,7 +129,7 @@ module elpa_impl
      procedure, public :: elpa_generalized_eigenvalues_dc
      procedure, public :: elpa_generalized_eigenvalues_fc
 
-     procedure, public :: elpa_hermitian_multiply_d            !< public methods to implement a "hermitian" multiplication of matrices a and b
+     procedure, public :: elpa_hermitian_multiply_d      !< public methods to implement a "hermitian" multiplication of matrices a and b
      procedure, public :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
      procedure, public :: elpa_hermitian_multiply_dc           !< for complex valued matrices:   a**H * b
      procedure, public :: elpa_hermitian_multiply_fc
@@ -155,9 +164,9 @@ module elpa_impl
      procedure, private :: elpa_transform_back_generalized_fc
 #endif
 
-     procedure, public :: print_all_parameters => elpa_print_all_parameters
-     procedure, public :: save_all_parameters => elpa_save_all_parameters
-     procedure, public :: load_all_parameters => elpa_load_all_parameters
+     procedure, public :: print_settings => elpa_print_settings
+     procedure, public :: store_settings => elpa_store_settings
+     procedure, public :: load_settings => elpa_load_settings
 #ifdef ENABLE_AUTOTUNING
      procedure, public :: autotune_setup => elpa_autotune_setup
      procedure, public :: autotune_step => elpa_autotune_step
@@ -179,17 +188,31 @@ module elpa_impl
     !> \param   error      integer, optional to get an error code
     !> \result  obj        class(elpa_impl_t) allocated ELPA object
     function elpa_impl_allocate(error) result(obj)
-      type(elpa_impl_t), pointer   :: obj
-      integer, optional            :: error
+      type(elpa_impl_t), pointer     :: obj
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
+      integer                        :: error2, output_build_config
 
-      allocate(obj)
+      allocate(obj, stat=error2)
+      if (error2 .ne. 0) then
+        write(error_unit, *) "elpa_allocate(): could not allocate object"
+      endif
+
+      obj%from_legacy_api = 0
 
       ! check whether init has ever been called
       if ( elpa_initialized() .ne. ELPA_OK) then
         write(error_unit, *) "elpa_allocate(): you must call elpa_init() once before creating instances of ELPA"
-        if(present(error)) then
-          error = ELPA_ERROR
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_API_VERSION
         endif
+#else
+        error = ELPA_ERROR_API_VERSION
+#endif
         return
       endif
 
@@ -202,168 +225,328 @@ module elpa_impl
       obj%local_ncols => obj%associate_int("local_ncols")
       obj%nblk => obj%associate_int("nblk")
 
-      if(present(error)) then
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
     end function
 
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define elpa_allocate(...) CONC(elpa_allocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
+#endif
     !c> /*! \brief C interface for the implementation of the elpa_allocate method
     !c> *
     !c> *  \param  none
     !c> *  \result elpa_t handle
     !c> */
-    !c> elpa_t elpa_allocate(int *error);
-    function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
-      integer(kind=c_int) :: error
-      type(c_ptr) :: ptr
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> elpa_t elpa_allocate2(int *error);
+    !c_o> elpa_t elpa_allocate1();
+    !c_o> #endif
+    function elpa_impl_allocate_c1() result(ptr) bind(C, name="elpa_allocate1")
+      type(c_ptr)                :: ptr
+      type(elpa_impl_t), pointer :: obj
+
+      obj => elpa_impl_allocate()
+      ptr = c_loc(obj)
+    end function
+
+    function elpa_impl_allocate_c2(error) result(ptr) bind(C, name="elpa_allocate2")
+      integer(kind=c_int)        :: error
+      type(c_ptr)                :: ptr
       type(elpa_impl_t), pointer :: obj
 
       obj => elpa_impl_allocate(error)
       ptr = c_loc(obj)
     end function
+#else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> elpa_t elpa_allocate(int *error);
+    !c_no> #endif
+    function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
+      integer(kind=c_int)        :: error
+      type(c_ptr)                :: ptr
+      type(elpa_impl_t), pointer :: obj
 
+      obj => elpa_impl_allocate(error)
+      ptr = c_loc(obj)
+    end function
+#endif
+
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define NARGS(...) NARGS_(__VA_ARGS__, 5, 4, 3, 2, 1, 0)
+    !c_o> #define NARGS_(_5, _4, _3, _2, _1, N, ...) N
+    !c_o> #define CONC(A, B) CONC_(A, B)
+    !c_o> #define CONC_(A, B) A##B
+    !c_o> #define elpa_deallocate(...) CONC(elpa_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
+#endif
     !c> /*! \brief C interface for the implementation of the elpa_deallocate method
     !c> *
     !c> *  \param  elpa_t  handle of ELPA object to be deallocated
+    !c> *  \param  int*    error code
     !c> *  \result void
     !c> */
-    !c> void elpa_deallocate(elpa_t handle);
-    subroutine elpa_impl_deallocate_c(handle) bind(C, name="elpa_deallocate")
-      type(c_ptr), value :: handle
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> void elpa_deallocate2(elpa_t handle, int *error);
+    !c_o> void elpa_deallocate1(elpa_t handle);
+    !c_o> #endif
+    subroutine elpa_impl_deallocate_c2(handle, error) bind(C, name="elpa_deallocate2")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+      integer(kind=c_int)        :: error
+
+      call c_f_pointer(handle, self)
+      call self%destroy(error)
+      deallocate(self)
+    end subroutine
+
+    subroutine elpa_impl_deallocate_c1(handle) bind(C, name="elpa_deallocate1")
+      type(c_ptr), value         :: handle
       type(elpa_impl_t), pointer :: self
 
       call c_f_pointer(handle, self)
       call self%destroy()
       deallocate(self)
     end subroutine
+#else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> void elpa_deallocate(elpa_t handle, int *error);
+    !c_no> #endif
+    subroutine elpa_impl_deallocate_c(handle, error) bind(C, name="elpa_deallocate")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+      integer(kind=c_int)        :: error
+
+      call c_f_pointer(handle, self)
+      call self%destroy(error)
+      deallocate(self)
+    end subroutine
+
+#endif
+
+    !> \brief function to load all the parameters, which have been saved to a file
+    !> Parameters
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
+    !> \param   file_name   string, the name of the file from which to load the parameters
+    !> \param   error       integer, optional
+    subroutine elpa_load_settings(self, file_name, error)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      character(*), intent(in)          :: file_name
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out)    :: error
+#else
+      integer(kind=c_int), intent(out)              :: error
+#endif
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
+      if (elpa_index_load_settings_c(self%index, file_name // c_null_char) /= 1) then
+        write(error_unit, *) "This should not happen (in elpa_load_settings())"
+
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_CANNOT_OPEN_FILE
+        endif
+#else
+        error = ELPA_ERROR_CANNOT_OPEN_FILE
+#endif
+      endif
+    end subroutine
+
+    !c> /*! \brief C interface for the implementation of the elpa_load_settings method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* filename
+    !c> */
+    !c> void elpa_load_settings(elpa_t handle, const char *filename, int *error);
+    subroutine elpa_load_settings_c(handle, filename_p, error) bind(C, name="elpa_load_settings")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+
+      integer(kind=c_int)        :: error
+      type(c_ptr), intent(in), value :: filename_p
+      character(len=elpa_strlen_c(filename_p)), pointer :: filename
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(filename_p, filename)
+      call elpa_load_settings(self, filename, error)
+
+    end subroutine
+
+    !> \brief function to print all the parameters, that have been set
+    !> Parameters
+    !> \param   self            class(elpa_impl_t) the allocated ELPA object
+    !> \param   error           optional, integer
+    subroutine elpa_print_settings(self, error)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out)    :: error
+#else
+      integer(kind=c_int), intent(out)              :: error
+#endif
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
+      if (elpa_index_print_settings_c(self%index, c_null_char) /= 1) then
+        write(error_unit, *) "This should not happen (in elpa_print_settings())"
+
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_CRITICAL
+        endif
+#else
+        error = ELPA_ERROR_CRITICAL
+#endif
+      endif
+    end subroutine
+
+    !c> /*! \brief C interface for the implementation of the elpa_print_settings method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* filename
+    !c> */
+    !c> void elpa_print_settings(elpa_t handle, int *error);
+    subroutine elpa_print_settings_c(handle, error) bind(C, name="elpa_print_settings")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+ 
+      integer(kind=c_int)        :: error
+
+      call c_f_pointer(handle, self)
+      call elpa_print_settings(self, error)
+
+    end subroutine
+
+
+    !> \brief function to save all the parameters, that have been set
+    !> Parameters
+    !> \param   self        class(elpa_impl_t) the allocated ELPA object
+    !> \param   file_name   string, the name of the file where to save the parameters
+    !> \param   error       integer, optional
+    subroutine elpa_store_settings(self, file_name, error)
+      implicit none
+      class(elpa_impl_t), intent(inout) :: self
+      character(*), intent(in)          :: file_name
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out)    :: error
+#else
+      integer(kind=c_int), intent(out)              :: error
+#endif
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
+      if (elpa_index_print_settings_c(self%index, file_name // c_null_char) /= 1) then
+        write(error_unit, *) "This should not happen (in elpa_store_settings())"
+
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_CANNOT_OPEN_FILE
+        endif
+#else
+        error = ELPA_ERROR_CANNOT_OPEN_FILE
+#endif
+      endif
+    end subroutine
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_store_settings method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* filename
+    !c> */
+    !c> void elpa_store_settings(elpa_t handle, const char *filename, int *error);
+    subroutine elpa_store_settings_c(handle, filename_p, error) bind(C, name="elpa_store_settings")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in), value :: filename_p
+      character(len=elpa_strlen_c(filename_p)), pointer :: filename
+      integer(kind=c_int)        :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(filename_p, filename)
+      call elpa_store_settings(self, filename, error)
+
+    end subroutine
+
 
 #ifdef ENABLE_AUTOTUNING
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define elpa_autotune_deallocate(...) CONC(elpa_autotune_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
+#endif
     !c> /*! \brief C interface for the implementation of the elpa_autotune_deallocate method
     !c> *
     !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
     !c> *  \result void
     !c> */
-    !c> void elpa_autotune_deallocate(elpa_autotune_t handle);
-    subroutine elpa_autotune_impl_deallocate_c( autotune_handle) bind(C, name="elpa_autotune_deallocate")
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> void elpa_autotune_deallocate2(elpa_autotune_t handle, int *error);
+    !c_o> void elpa_autotune_deallocate1(elpa_autotune_t handle);
+    !c_o> #endif
+    subroutine elpa_autotune_impl_deallocate_c1( autotune_handle) bind(C, name="elpa_autotune_deallocate1")
       type(c_ptr), value                  :: autotune_handle
 
       type(elpa_autotune_impl_t), pointer :: self
+      integer(kind=c_int)                 :: error
 
       call c_f_pointer(autotune_handle, self)
-      call self%destroy()
+      call self%destroy(error)
       deallocate(self)
     end subroutine
-#endif
 
-    ! we want to ensure, that my_prow(col) and np_rows(cols) values are allways accessible trhough
-    ! the elpa object, no matter whether the user provides communicators or communicators are created
-    ! by elpa. If the walues are present already, they are checked for consistency with the communicators.
-    subroutine set_or_check_missing_comm_params(self)
-      implicit none
-      class(elpa_impl_t), intent(inout)   :: self
-      integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, mpierr, error, &
-                                             my_prow, my_pcol, my_id, present_my_prow, present_my_pcol, present_my_id, &
-                                             np_rows, np_cols, np_total, present_np_rows, present_np_cols, present_np_total, &
-                                             is_process_id_zero
-      if (.not. (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) ) then
-        print *,"MPI row and column communicators not set correctly. Aborting..."
-        stop
-      endif
-      call self%get("mpi_comm_rows", mpi_comm_rows, error)
-      call self%get("mpi_comm_cols", mpi_comm_cols, error)
+    subroutine elpa_autotune_impl_deallocate_c2( autotune_handle, error) bind(C, name="elpa_autotune_deallocate2")
+      type(c_ptr), value                  :: autotune_handle
 
-      call mpi_comm_size(mpi_comm_rows, np_rows, mpierr)
-      if(self%is_set("num_process_rows") == 1) then
-        call self%get("num_process_rows", present_np_rows, error)
-        if(np_rows .ne. present_np_rows) then
-          print *,"MPI row communicator not set correctly. Aborting..."
-          stop
-        endif
-      else
-        call self%set("num_process_rows", np_rows, error)
-      endif
-
-      call mpi_comm_size(mpi_comm_cols, np_cols, mpierr)
-      if(self%is_set("num_process_cols") == 1) then
-        call self%get("num_process_cols", present_np_cols, error)
-        if(np_cols .ne. present_np_cols) then
-          print *,"MPI column communicator not set correctly. Aborting..."
-          stop
-        endif
-      else
-        call self%set("num_process_cols", np_cols, error)
-      endif
-
-      call mpi_comm_rank(mpi_comm_rows, my_prow, mpierr)
-      if(self%is_set("process_row") == 1) then
-        call self%get("process_row", present_my_prow, error)
-        if(my_prow .ne. present_my_prow) then
-          print *,"MPI row communicator not set correctly. Aborting..."
-          stop
-        endif
-      else
-        call self%set("process_row", my_prow, error)
-      endif
-
-      call mpi_comm_rank(mpi_comm_cols, my_pcol, mpierr)
-      if(self%is_set("process_col") == 1) then
-        call self%get("process_col", present_my_pcol, error)
-        if(my_pcol .ne. present_my_pcol) then
-          print *,"MPI column communicator not set correctly. Aborting..."
-          stop
-        endif
-      else
-        call self%set("process_col", my_pcol, error)
-      endif
-
-
-      ! sadly, at the moment, the parent mpi communicator is not required to be set, e.g. in legacy tests
-      ! we thus cannot obtain process_id
-      ! we can, however, determine the number of prcesses and determine, whether the given process has id 0, 
-      ! assuming, that that is the wan with row and column ids == 0
-      is_process_id_zero = 0
-      if (self%is_set("mpi_comm_parent") == 1) then
-        call self%get("mpi_comm_parent", mpi_comm_parent, error)
-
-        call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
-        if(self%is_set("num_processes") == 1) then
-          call self%get("num_processes", present_np_total, error)
-          if(np_total .ne. present_np_total) then
-            print *,"MPI parent communicator not set correctly. Aborting..."
-            stop
-          endif
-        else
-          call self%set("num_processes", np_total, error)
-        endif
-
-        if(np_total .ne. np_rows * np_cols) then
-          print *,"MPI parent communicator and row/col communicators do not match. Aborting..."
-          stop
-        endif
-
-        call mpi_comm_rank(mpi_comm_parent, my_id, mpierr)
-        if(self%is_set("process_id") == 1) then
-          call self%get("process_id", present_my_id, error)
-          if(my_id .ne. present_my_id) then
-            print *,"MPI parent communicator not set correctly. Aborting..."
-            stop
-          endif
-        else
-          call self%set("process_id", my_id, error)
-        endif
-
-        if(my_id == 0) &
-          is_process_id_zero = 1
-      else
-        ! we can set number of processes and whether process id is zero, but not the process id.
-        ! we assume, that my_pcol == 0 && my_prow == 0  <==> my_id == 0
-        call self%set("num_process", np_rows * np_cols, error)
-        if((my_prow == 0) .and. (my_pcol == 0)) &
-          is_process_id_zero = 1
-      endif
-        call self%set("is_process_id_zero", is_process_id_zero, error)
-
+      type(elpa_autotune_impl_t), pointer :: self
+      integer(kind=c_int)                 :: error
+      call c_f_pointer(autotune_handle, self)
+      call self%destroy(error)
+      deallocate(self)
     end subroutine
+#else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> void elpa_autotune_deallocate(elpa_autotune_t handle, int *error);
+    !c_no> #endif
+    subroutine elpa_autotune_impl_deallocate( autotune_handle, error) bind(C, name="elpa_autotune_deallocate")
+      type(c_ptr), value                  :: autotune_handle
+
+      type(elpa_autotune_impl_t), pointer :: self
+      integer(kind=c_int)                 :: error
+      call c_f_pointer(autotune_handle, self)
+      call self%destroy(error)
+      deallocate(self)
+    end subroutine
+
+#endif
+#endif /* ENABLE_AUTOTUNING */
 
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
@@ -371,32 +554,83 @@ module elpa_impl
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
       class(elpa_impl_t), intent(inout)   :: self
-      integer                             :: error, timings
+      integer                             :: error, timings, performance, build_config
 
 #ifdef WITH_MPI
-      integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, &
-                                             mpierr, mpierr2, process_row, process_col, mpi_string_length
+      integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
+                                             mpierr, mpierr2, process_row, process_col, mpi_string_length, &
+                                             present_np_rows, present_np_cols, np_total
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
+      character(*), parameter             :: MPI_CONSISTENCY_MSG = &
+        "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
+
+#endif
+
+
+#ifdef HAVE_LIKWID
+      !initialize likwid
+      call likwid_markerInit()
+      call likwid_markerThreadInit()
+      call likwid_markerStartRegion("TOTAL")
 #endif
 
 #ifdef HAVE_DETAILED_TIMINGS
       call self%get("timings",timings, error)
+      call self%get("measure_performance",performance, error)
+      if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
       if (timings == 1) then
         call self%timer%enable()
+        if (performance == 1) then
+          call self%timer%measure_flops(.true.)
+          call self%timer%set_print_options(print_flop_count=.true.,print_flop_rate=.true.)
+        endif
       endif
 #endif
 
       error = ELPA_OK
 
-#ifdef WITH_MPI
-      ! Create communicators ourselves
-      if (self%is_set("mpi_comm_parent") == 1 .and. &
-          self%is_set("process_row") == 1 .and. &
-          self%is_set("process_col") == 1) then
+      ! In most cases, we actually need the parent communicator to be supplied,
+      ! ELPA internally requires it when either GPU is enabled or when ELPA2 is
+      ! used. It thus seems reasonable that we should ALLWAYS require it. It
+      ! should then be accompanied by EITHER process_row and process_col
+      ! indices, OR mpi_comm_rows and mpi_comm_cols communicators, but NOT both.
+      ! This assumption will significanlty simplify the logic, avoid possible
+      ! inconsistencies and is rather natural from the user point of view
 
+#ifdef WITH_MPI
+      if (self%is_set("mpi_comm_parent") == 1) then
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
+        call mpi_comm_rank(mpi_comm_parent, my_id, mpierr)
+        call self%set("process_id", my_id, error)
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+
+        call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
+        call self%set("num_processes", np_total, error)
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      else
+        if (self%from_legacy_api .ne. 1) then
+          write(error_unit,*) MPI_CONSISTENCY_MSG
+          error = ELPA_ERROR
+          return
+        endif
+      endif
+
+      ! Create communicators ourselves
+      if (self%is_set("process_row") == 1 .and. self%is_set("process_col") == 1) then
+
+        if (self%is_set("mpi_comm_rows") == 1 .or. self%is_set("mpi_comm_cols") == 1) then
+          write(error_unit,*) MPI_CONSISTENCY_MSG
+          error = ELPA_ERROR
+          return
+        endif
+
         call self%get("process_row", process_row, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
         call self%get("process_col", process_col, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
         ! mpi_comm_rows is used for communicating WITHIN rows, i.e. all processes
         ! having the same column coordinate share one mpi_comm_rows.
@@ -404,7 +638,6 @@ module elpa_impl
         ! Analogous for mpi_comm_cols
 
         call mpi_comm_split(mpi_comm_parent,process_col,process_row,mpi_comm_rows,mpierr)
-
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
@@ -419,46 +652,113 @@ module elpa_impl
         endif
 
         call self%set("mpi_comm_rows", mpi_comm_rows,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem setting option. Aborting..."
-          stop
-        endif
-        call self%set("mpi_comm_cols", mpi_comm_cols,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem setting option. Aborting..."
-          stop
-        endif
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
-        call set_or_check_missing_comm_params(self)
+        call self%set("mpi_comm_cols", mpi_comm_cols,error)
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
         ! remember that we created those communicators and we need to free them later
         self%communicators_owned = 1
 
-        error = ELPA_OK
-        return
-      endif
-
       ! Externally supplied communicators
-      if (self%is_set("mpi_comm_rows") == 1 .and. self%is_set("mpi_comm_cols") == 1) then
-        call set_or_check_missing_comm_params(self)
+      else if ( self%is_set("mpi_comm_rows") == 1 .and.  self%is_set("mpi_comm_cols") == 1) then
+
+        if (self%is_set("process_row") == 1 .or. self%is_set("process_col") == 1) then
+          write(error_unit,*) MPI_CONSISTENCY_MSG
+          error = ELPA_ERROR
+          return
+        endif
+
+        call self%get("mpi_comm_rows", mpi_comm_rows,error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
+        call self%get("mpi_comm_cols", mpi_comm_cols,error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
+        call mpi_comm_rank(mpi_comm_rows, process_row, mpierr)
+        call self%set("process_row", process_row, error)
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+
+        call mpi_comm_rank(mpi_comm_cols, process_col, mpierr)
+        call self%set("process_col", process_col, error)
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+
+        ! remember that we DID NOT created those communicators and we WILL NOT free them later
         self%communicators_owned = 0
-        error = ELPA_OK
+      else
+        ! Otherwise parameters are missing
+        write(error_unit,*) MPI_CONSISTENCY_MSG
+        error = ELPA_ERROR
         return
       endif
 
-      ! Otherwise parameters are missing
-      error = ELPA_ERROR
+      ! set num_process_rows (and cols), if they are not supplied. Check them
+      ! for consistency if they are. Maybe we could instead require, that they
+      ! are never supplied?
+      call mpi_comm_size(mpi_comm_rows, np_rows, mpierr)
+      if (self%is_set("num_process_rows") == 1) then
+        call self%get("num_process_rows", present_np_rows, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
+        if (np_rows .ne. present_np_rows) then
+          print *,"MPI row communicator not set correctly. Aborting..."
+          stop
+        endif
+      else
+        call self%set("num_process_rows", np_rows, error)
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      endif
+
+      call mpi_comm_size(mpi_comm_cols, np_cols, mpierr)
+      if (self%is_set("num_process_cols") == 1) then
+        call self%get("num_process_cols", present_np_cols, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
+        if (np_cols .ne. present_np_cols) then
+          print *,"MPI column communicator not set correctly. Aborting..."
+          stop
+        endif
+      else
+        call self%set("num_process_cols", np_cols, error)
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      endif
+
+      if (self%from_legacy_api .ne. 1) then
+        if (np_total .ne. np_rows * np_cols) then
+          print *,"MPI parent communicator and row/col communicators do not match. Aborting..."
+          stop
+        endif
+      endif
+
 #else
-        call self%set("process_row", 0, error)
-        call self%set("process_col", 0, error)
-        call self%set("process_id", 0, error)
-        call self%set("is_process_id_zero", 1, error)
-        call self%set("num_process_rows", 1, error)
-        call self%set("num_process_cols", 1, error)
-        call self%set("num_processes", 1, error)
+      call self%set("process_row", 0, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      call self%set("process_col", 0, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      call self%set("process_id", 0, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      call self%set("num_process_rows", 1, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      call self%set("num_process_cols", 1, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      call self%set("num_processes", 1, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 #endif
 
+#if STORE_BUILD_CONFIG
+      call self%get("output_build_config",build_config, error)
+      if ( build_config .eq. 1) then
+#ifdef WITH_MPI
+        if (my_id .eq. 0) then
+#endif
+          call print_build_config()
+#ifdef WITH_MPI
+        endif
+#endif
+      endif
+#endif
     end function
+
 
     !c> /*! \brief C interface for the implementation of the elpa_setup method
     !c> *
@@ -488,11 +788,12 @@ module elpa_impl
         stop
       endif
       call self%get("blacs_context", blacs_ctx, error)
+      if (check_elpa_get(error, ELPA_ERROR_CRITICAL)) return
 
       sc_desc(1) = 1
       sc_desc(2) = blacs_ctx
       sc_desc(3) = self%na
-      if(rectangular_for_ev) then
+      if (rectangular_for_ev) then
         sc_desc(4) = self%nev
       else
         sc_desc(4) = self%na
@@ -507,6 +808,7 @@ module elpa_impl
 #endif
       error = ELPA_OK
     end function
+
 
     !c> /*! \brief C interface for the implementation of the elpa_set_integer method
     !c> *  This method is available to the user as C generic elpa_set method
@@ -524,12 +826,7 @@ module elpa_impl
       type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
       integer(kind=c_int), intent(in), value        :: value
-
-#ifdef USE_FORTRAN2008
-      integer(kind=c_int) , intent(in), optional    :: error
-#else
       integer(kind=c_int) , intent(in)              :: error
-#endif
 
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
@@ -553,11 +850,8 @@ module elpa_impl
       type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
       integer(kind=c_int)                           :: value
-#ifdef ISE_FORTRAN2008
-      integer(kind=c_int), intent(inout), optional  :: error
-#else
       integer(kind=c_int), intent(inout)            :: error
-#endif
+ 
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_get_integer(self, name, value, error)
@@ -603,7 +897,12 @@ module elpa_impl
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
       type(c_ptr) :: ptr
+#ifdef USE_FORTRAN2008
       integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
+
       integer :: val, actual_error
       character(kind=c_char, len=elpa_index_int_value_to_strlen_c(self%index, option_name // C_NULL_CHAR)), pointer :: string
 
@@ -611,9 +910,13 @@ module elpa_impl
 
       call self%get(option_name, val, actual_error)
       if (actual_error /= ELPA_OK) then
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = actual_error
         endif
+#else
+          error = actual_error
+#endif
         return
       endif
 
@@ -622,9 +925,13 @@ module elpa_impl
         call c_f_pointer(ptr, string)
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = actual_error
       endif
+#else
+        error = actual_error
+#endif
     end function
 
 
@@ -644,11 +951,8 @@ module elpa_impl
       type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
       real(kind=c_double), intent(in), value        :: value
-#ifdef USE_FORTRAN2008
-      integer(kind=c_int), intent(in), optional     :: error
-#else
       integer(kind=c_int), intent(in)               :: error
-#endif
+
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_set_double(self, name, value, error)
@@ -671,11 +975,8 @@ module elpa_impl
       type(c_ptr), intent(in), value                :: name_p
       character(len=elpa_strlen_c(name_p)), pointer :: name
       real(kind=c_double)                           :: value
-#ifdef USE_FORTRAN2008
-      integer(kind=c_int), intent(inout), optional  :: error
-#else
       integer(kind=c_int), intent(inout)            :: error
-#endif
+
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_get_double(self, name, value, error)
@@ -766,29 +1067,120 @@ module elpa_impl
     !> \brief function to destroy an elpa object
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
-    subroutine elpa_destroy(self)
+    !> \param   error           integer, optional error code
+    subroutine elpa_destroy(self, error)
 #ifdef WITH_MPI
-      integer :: mpi_comm_rows, mpi_comm_cols, mpierr, error
+      integer                              :: mpi_comm_rows, mpi_comm_cols, &
+                                              mpierr, mpierr2, mpi_string_length
+      character(len=MPI_MAX_ERROR_STRING)  :: mpierr_string
 #endif
-      class(elpa_impl_t) :: self
+      class(elpa_impl_t)                   :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)       :: error
+#else
+      integer, intent(out)                 :: error
+#endif
+      integer                              :: error2
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
+
+#ifdef HAVE_LIKWID
+      call likwid_markerStopRegion("TOTAL")
+      call likwid_markerClose()
+#endif
 
 #ifdef WITH_MPI
       if (self%communicators_owned == 1) then
-        call self%get("mpi_comm_rows", mpi_comm_rows,error)
-        if (error .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
-           stop
-        endif
-        call self%get("mpi_comm_cols", mpi_comm_cols,error)
-        if (error .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
-           stop
-        endif
-
-        call mpi_comm_free(mpi_comm_rows, mpierr)
-        call mpi_comm_free(mpi_comm_cols, mpierr)
-      endif
+        call self%get("mpi_comm_rows", mpi_comm_rows, error2)
+        if (error2 .ne. ELPA_OK) then
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = error2
+          else
+            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+          endif
+#else
+          error = error2
 #endif
+          return
+        endif ! error happend
+
+        call self%get("mpi_comm_cols", mpi_comm_cols,error2)
+        if (error2 .ne. ELPA_OK) then
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = error2
+          else
+            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+          endif
+#else
+          error = error2
+#endif
+          return
+        endif ! error happend
+
+        ! this is just for debugging ! do not leave in a relase
+        !write(error_unit, '(A,2I13)') "FREE comms", mpi_comm_rows, mpi_comm_cols
+        call mpi_comm_free(mpi_comm_rows, mpierr)
+        if (mpierr .ne. MPI_SUCCESS) then
+          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
+          return
+        endif ! mpierr happend
+        call self%set("mpi_comm_cols", -12345, error2)
+        if (error2 .ne. ELPA_OK) then
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = error2
+          else
+            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+          endif
+#else
+          error = error2
+#endif
+          return
+        endif ! error happend
+        call mpi_comm_free(mpi_comm_cols, mpierr)
+        if (mpierr .ne. MPI_SUCCESS) then
+          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          write(error_unit,*) "MPI ERROR occured during mpi_comm_free for col communicator: ", trim(mpierr_string)
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
+          return
+        endif ! mpierr happend
+        call self%set("mpi_comm_rows", -12345,error2)
+        if (error2 .ne. ELPA_OK) then
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = error2
+          else
+            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+          endif
+#else
+          error = error2
+#endif
+          return
+        endif ! error happend
+      endif
+#endif /* WITH_MPI */
 
       call timer_free(self%timer)
       call timer_free(self%autotune_timer)
@@ -869,12 +1261,17 @@ module elpa_impl
 #undef SINGLE_PRECISION
 #endif
 
+
 !    function use_cannons_algorithm(self) result(use_cannon, do_print)
 !      class(elpa_impl_t), intent(inout), target :: self
 !      logical                                   :: use_cannon
 !      logical, intent(in)                       :: do_print
 !    end function
 !
+
+
+
+
 #ifdef ENABLE_AUTOTUNING
     !> \brief function to setup the ELPA autotuning and create the autotune object
     !> Parameters
@@ -900,14 +1297,15 @@ module elpa_impl
 #else
       error = ELPA_OK
 #endif
+
       if (elpa_get_api_version() < EARLIEST_AUTOTUNE_VERSION) then
         write(error_unit, "(a,i0,a)") "ELPA: Error API version: Autotuning does not support ", elpa_get_api_version()
 #ifdef USE_FORTRAN2008
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_AUTOTUNE_API_VERSION
         endif
 #else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_AUTOTUNE_API_VERSION
 #endif
         return
       endif
@@ -944,11 +1342,7 @@ module elpa_impl
       integer(kind=c_int), intent(in), value :: level
       integer(kind=c_int), intent(in), value :: domain
       type(c_ptr)                            :: ptr
-#ifdef USE_FORTRAN2008
-      integer(kind=c_int) , intent(in), optional    :: error
-#else
-      integer(kind=c_int) , intent(in)              :: error
-#endif
+      integer(kind=c_int) , intent(in)       :: error
 
       call c_f_pointer(handle, self)
 
@@ -970,20 +1364,45 @@ module elpa_impl
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
     !> \result  unfinished      logical: describes the state of the autotuning (completed/uncompleted)
-    function elpa_autotune_step(self, tune_state) result(unfinished)
+    function elpa_autotune_step(self, tune_state, error) result(unfinished)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)             :: self
       class(elpa_autotune_t), intent(inout), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
-      logical :: unfinished
-      integer :: i
-      real(kind=C_DOUBLE) :: time_spent
+      type(elpa_autotune_impl_t), pointer           :: ts_impl
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out)    :: error
+#else
+      integer(kind=c_int),  intent(out)             :: error
+#endif
+      integer(kind=c_int)                           :: error2, error3
+      integer                                       :: mpierr, mpierr2, mpi_comm_parent, mpi_string_length, np_total
+      logical                                       :: unfinished
+      integer                                       :: i
+      real(kind=C_DOUBLE)                           :: time_spent, sendbuf(1), recvbuf(1)
+#ifdef WITH_MPI
+      character(len=MPI_MAX_ERROR_STRING)           :: mpierr_string
+#endif
 
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR
+          endif
+#else
+          error = ELPA_ERROR
+#endif
       end select
 
       unfinished = .false.
@@ -993,13 +1412,50 @@ module elpa_impl
         time_spent = self%autotune_timer%get("accumulator")
 #else
         print *, "Cannot do autotuning without detailed timings"
+
+        ! TODO check this. Do we really want to return only if error is present? And should it be ELPA_OK?
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_CRITICAL
+        endif
+#else
+        error = ELPA_OK
 #endif
+        return
+#endif /* HAVE_DETAILED_TIMINGS */
+
+#ifdef WITH_MPI
+        ! find the average time spent .. we need a unique value on all ranks
+        call self%get("mpi_comm_parent", mpi_comm_parent, error2)
+        call self%get("num_processes", np_total, error3)
+        if ((error2 .ne. ELPA_OK) .or. (error3 .ne. ELPA_OK)) then
+          print *, "Parent communicator is not set properly. Aborting..."
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
+          return
+        endif
+
+        sendbuf(1) = time_spent
+        call MPI_Allreduce(sendbuf, recvbuf, 1, MPI_REAL8, MPI_SUM, mpi_comm_parent, mpierr)
+        if (mpierr .ne. MPI_SUCCESS) then
+          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          write(error_unit,*) "MPI ERROR occured during elpa_autotune_step: ", trim(mpierr_string)
+          return
+        endif
+        time_spent = recvbuf(1) / np_total
+#endif /* WITH_MPI */
+
         if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
           ts_impl%min_val = time_spent
           ts_impl%min_loc = ts_impl%current
         end if
         call self%autotune_timer%free()
-      endif
+      endif ! (ts_impl%current >= 0)
 
       do while (ts_impl%current < ts_impl%cardinality - 1)
         ts_impl%current = ts_impl%current + 1
@@ -1017,21 +1473,24 @@ module elpa_impl
     !c> *
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *error code
     !c> *  \result int              unfinished:  describes whether autotuning finished (0) or not (1)
     !c> */
-    !c> int elpa_autotune_step(elpa_t handle, elpa_autotune_t autotune_handle);
-    function elpa_autotune_step_c(handle, autotune_handle) result(unfinished) bind(C, name="elpa_autotune_step")
+    !c> int elpa_autotune_step(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    function elpa_autotune_step_c(handle, autotune_handle, &
+                    error) result(unfinished) bind(C, name="elpa_autotune_step")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
       type(elpa_autotune_impl_t), pointer  :: tune_state
       logical                              :: unfinished_f
       integer(kind=c_int)                  :: unfinished
+      integer(kind=c_int)                  :: error
 
       call c_f_pointer(handle, self)
       call c_f_pointer(autotune_handle, tune_state)
 
-      unfinished_f = self%autotune_step(tune_state)
+      unfinished_f = self%autotune_step(tune_state, error)
       if (unfinished_f) then
         unfinished = 1
       else
@@ -1040,121 +1499,184 @@ module elpa_impl
 
     end function
 
-
-
-    !> \brief function to set the up-to-know best options of the autotuning
+    !> \brief function to set the up-to-now best options of the autotuning
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
-    subroutine elpa_autotune_set_best(self, tune_state)
+    !> \param   error code      optional, integer
+    subroutine elpa_autotune_set_best(self, tune_state, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+#ifdef USE_FORTRAN2008
+      integer(kind=ik), optional, intent(out)    :: error
+#else
+      integer(kind=ik), intent(out)              :: error
+#endif
 
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical error"
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
       if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
-        stop "This should not happen (in elpa_autotune_set_best())"
+        write(error_unit, *) "This should not happen (in elpa_autotune_set_best())"
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+        endif
+#else
+        error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+#endif
       endif
     end subroutine
 
 
 
-    !> \brief function to print the up-to-know best options of the autotuning
+    !> \brief function to print the up-to-now best options of the autotuning
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
-    subroutine elpa_autotune_print_best(self, tune_state)
+    !> \param   error           integer, optional
+    subroutine elpa_autotune_print_best(self, tune_state, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out) :: error
+#else
+      integer(kind=c_int),  intent(out)          :: error
+#endif
 
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical error"
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
-      print *, "The following settings were found to be best:"
-      print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
+      !print *, "The following settings were found to be best:"
+      !print *, "Best, i = ", ts_impl%min_loc, "best time = ", ts_impl%min_val
       flush(output_unit)
       if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain) /= 1) then
-        stop "This should not happen (in elpa_autotune_print_best())"
+        write(error_unit, *) "This should not happen (in elpa_autotune_print_best())"
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+        endif
+#else
+        error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+#endif
       endif
     end subroutine
 
-
-    !> \brief function to print all the parameters, that have been set
-    !> Parameters
-    !> \param   self            class(elpa_impl_t) the allocated ELPA object
-    subroutine elpa_print_all_parameters(self)
-      implicit none
-      class(elpa_impl_t), intent(inout) :: self
-
-      if (elpa_index_print_all_parameters_c(self%index, c_null_char) /= 1) then
-        stop "This should not happen (in elpa_print_all_parameters())"
-      endif
-    end subroutine
-
-    !> \brief function to save all the parameters, that have been set
-    !> Parameters
-    !> \param   self            class(elpa_impl_t) the allocated ELPA object
-    !> \param   file_name   string, the name of the file where to save the parameters
-    subroutine elpa_save_all_parameters(self, file_name)
-      implicit none
-      class(elpa_impl_t), intent(inout) :: self
-      character(*), intent(in)          :: file_name
-
-      if (elpa_index_print_all_parameters_c(self%index, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_save_all_parameters())"
-      endif
-    end subroutine
-
-    !> \brief function to load all the parameters, which have been saved to a file
-    !> Parameters
-    !> \param   self            class(elpa_impl_t) the allocated ELPA object
-    !> \param   file_name   string, the name of the file from which to load the parameters
-    subroutine elpa_load_all_parameters(self, file_name)
-      implicit none
-      class(elpa_impl_t), intent(inout) :: self
-      character(*), intent(in)          :: file_name
-
-      if (elpa_index_load_all_parameters_c(self%index, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_load_all_parameters())"
-      endif
-    end subroutine
 
 
     !> \brief function to print the state of the autotuning
     !> Parameters
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
-    subroutine elpa_autotune_print_state(self, tune_state)
+    !> \param   error           integer, optional
+    subroutine elpa_autotune_print_state(self, tune_state, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out) :: error
+#else
+      integer(kind=c_int), intent(out)           :: error
+#endif
 
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical erro"
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
       if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, c_null_char) /= 1) then
-        stop "This should not happen (in elpa_autotune_print_state())"
+        write(error_unit, *) "This should not happen (in elpa_autotune_print_state())"
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+        endif
+#else
+        error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+#endif
       endif
     end subroutine
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_print_state method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_print_state(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_print_state_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_print_state")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_print_state(tune_state, error)
+
+    end subroutine
+
 
 
     !> \brief function to save the state of the autotuning
@@ -1162,25 +1684,80 @@ module elpa_impl
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
     !> \param   file_name       string, the name of the file where to save the state
-    subroutine elpa_autotune_save_state(self, tune_state, file_name)
+    !> \param   error           integer, optional
+    subroutine elpa_autotune_save_state(self, tune_state, file_name, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
-      character(*), intent(in)        :: file_name
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+      character(*), intent(in)                   :: file_name
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out) :: error
+#else
+      integer(kind=c_int), intent(out)           :: error
+#endif
 
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical error"
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
       if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_autotune_save_state())"
+        write(error_unit, *) "This should not happen (in elpa_autotune_save_state())"
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR_CANNOT_OPEN_FILE
+        endif
+#else
+        error = ELPA_ERROR_CANNOT_OPEN_FILE
+#endif
       endif
     end subroutine
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_save_state method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_save_state(elpa_t handle, elpa_autotune_t autotune_handle, const char *filename, int *error);
+    subroutine elpa_autotune_save_state_c(handle, autotune_handle, filename_p, error) bind(C, name="elpa_autotune_save_state")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      type(c_ptr), intent(in), value       :: filename_p
+      character(len=elpa_strlen_c(filename_p)), pointer :: filename
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(filename_p, filename)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_save_state(tune_state, filename, error)
+
+    end subroutine
+
 
 
     !> \brief function to load the state of the autotuning
@@ -1188,27 +1765,81 @@ module elpa_impl
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   tune_state      class(elpa_autotune_t): the autotuning object
     !> \param   file_name       string, the name of the file from which to load the state
-    subroutine elpa_autotune_load_state(self, tune_state, file_name)
+    !> \param   error           integer, optional
+    subroutine elpa_autotune_load_state(self, tune_state, file_name, error)
       implicit none
-      class(elpa_impl_t), intent(inout) :: self
+      class(elpa_impl_t), intent(inout)          :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      type(elpa_autotune_impl_t), pointer :: ts_impl
-      character(*), intent(in)        :: file_name
+      type(elpa_autotune_impl_t), pointer        :: ts_impl
+      character(*), intent(in)                   :: file_name
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(out) :: error
+#else
+      integer(kind=c_int), intent(out)           :: error
+#endif
 
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        error = ELPA_OK
+      endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "This should not happen"
+          write(error_unit, *) "This should not happen! Critical error"
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
-      print *, "testing, before C call, ts_impl%current is ", ts_impl%current
+      !print *, "testing, before C call, ts_impl%current is ", ts_impl%current
 
       if (elpa_index_load_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
-        stop "This should not happen (in elpa_autotune_load_state())"
+         write(error_unit, *) "This should not happen (in elpa_autotune_load_state())"
+#ifdef USE_FORTRAN2008
+         if (present(error)) then
+           error = ELPA_ERROR_CANNOT_OPEN_FILE
+         endif
+#else
+         error = ELPA_ERROR_CANNOT_OPEN_FILE
+#endif
       endif
-      print *, "testing, after C call, ts_impl%current is ", ts_impl%current
+      !print *, "testing, after C call, ts_impl%current is ", ts_impl%current
+    end subroutine
+
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_autotune_load_state method
+    !c> *
+    !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
+    !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
+    !c> *  \result none 
+    !c> */
+    !c> void elpa_autotune_load_state(elpa_t handle, elpa_autotune_t autotune_handle, const char *filename, int *error);
+    subroutine elpa_autotune_load_state_c(handle, autotune_handle, filename_p, error) bind(C, name="elpa_autotune_load_state")
+      type(c_ptr), intent(in), value       :: handle
+      type(c_ptr), intent(in), value       :: autotune_handle
+      type(elpa_impl_t), pointer           :: self
+      type(elpa_autotune_impl_t), pointer  :: tune_state
+      type(c_ptr), intent(in), value       :: filename_p
+      character(len=elpa_strlen_c(filename_p)), pointer :: filename
+      integer(kind=c_int)                  :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(filename_p, filename)
+      call c_f_pointer(autotune_handle, tune_state)
+
+      call self%autotune_load_state(tune_state, filename, error)
+
     end subroutine
 
 
@@ -1216,44 +1847,83 @@ module elpa_impl
     !c> *
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
     !c> *  \result none 
     !c> */
-    !c> void elpa_autotune_set_best(elpa_t handle, elpa_autotune_t autotune_handle);
-    subroutine elpa_autotune_set_best_c(handle, autotune_handle) bind(C, name="elpa_autotune_set_best")
+    !c> void elpa_autotune_set_best(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_set_best_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_set_best")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
       type(elpa_autotune_impl_t), pointer  :: tune_state
+      integer(kind=c_int)                  :: error
 
       call c_f_pointer(handle, self)
       call c_f_pointer(autotune_handle, tune_state)
 
-      call self%autotune_set_best(tune_state)
+      call self%autotune_set_best(tune_state, error)
 
     end subroutine
-
 
 
     !c> /*! \brief C interface for the implementation of the elpa_autotune_print_best method
     !c> *
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
+    !c> *  \param  error            int *
     !c> *  \result none 
     !c> */
-    !c> void elpa_autotune_print_best(elpa_t handle, elpa_autotune_t autotune_handle);
-    subroutine elpa_autotune_print_best_c(handle, autotune_handle) bind(C, name="elpa_autotune_print_best")
+    !c> void elpa_autotune_print_best(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
+    subroutine elpa_autotune_print_best_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_print_best")
       type(c_ptr), intent(in), value       :: handle
       type(c_ptr), intent(in), value       :: autotune_handle
       type(elpa_impl_t), pointer           :: self
       type(elpa_autotune_impl_t), pointer  :: tune_state
+      integer(kind=c_int)                  :: error
 
       call c_f_pointer(handle, self)
       call c_f_pointer(autotune_handle, tune_state)
 
-      call self%autotune_print_best(tune_state)
+      call self%autotune_print_best(tune_state, error)
 
     end subroutine
-#endif
 
+#endif /* HAVE_AUTOTUNING */
 
+    function check_elpa(error, str, new_error) result(res)
+      integer, intent(inout) :: error
+      integer, intent(in)    :: new_error
+      character(*)  :: str
+      logical :: res
+      if (error .ne. ELPA_OK) then
+        print *, trim(str)
+        res = .true.
+        error = new_error
+        return
+      endif
+      res = .false.
+    end function
+
+    function check_elpa_get(error, new_error) result(res)
+      integer, intent(inout) :: error
+      integer, intent(in)    :: new_error
+      logical :: res
+      res = check_elpa(error, "Problem getting option. Aborting...", new_error)
+      return
+    end function
+
+    function check_elpa_set(error, new_error) result(res)
+      integer, intent(inout) :: error
+      integer, intent(in)    :: new_error
+      logical :: res
+      res = check_elpa(error, "Problem setting option. Aborting...", new_error)
+      return
+    end function
+
+    subroutine elpa_creating_from_legacy_api(self)
+      implicit none
+      class(elpa_impl_t), intent(inout)          :: self
+
+      self%from_legacy_api = 1
+    end subroutine
 end module

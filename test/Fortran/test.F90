@@ -124,6 +124,8 @@ program test
 #ifdef WITH_OPENMP
    use omp_lib
 #endif
+   use precision
+
    implicit none
 
    ! matrix dimensions
@@ -180,7 +182,12 @@ program test
                                   do_test_hermitian_multiply
 
 #ifdef WITH_OPENMP
-   integer                    :: max_threads
+   integer                    :: max_threads, threads_caller
+#endif
+
+#ifdef SPLIT_COMM_MYSELF
+   integer                    :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
+   character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
 #endif
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
@@ -527,7 +534,16 @@ program test
      do_test_cholesky = .false.
    endif
 
-   e => elpa_allocate()
+
+#ifdef WITH_OPENMP
+   threads_caller = omp_get_max_threads()
+   if (myid == 0) then
+     print *,"The calling program uses ",threads_caller," threads"
+   endif
+#endif
+
+   e => elpa_allocate(error)
+   assert_elpa_ok(error)
 
    call e%set("na", na, error)
    assert_elpa_ok(error)
@@ -541,12 +557,35 @@ program test
    assert_elpa_ok(error)
 
 #ifdef WITH_MPI
+#ifdef SPLIT_COMM_MYSELF
+   call mpi_comm_split(MPI_COMM_WORLD,my_pcol,my_prow,mpi_comm_rows,mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+
+   call mpi_comm_split(MPI_COMM_WORLD,my_prow,my_pcol,mpi_comm_cols, mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_split for col communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+
+   call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
+   assert_elpa_ok(error)
+   call e%set("mpi_comm_rows", mpi_comm_rows, error)
+   assert_elpa_ok(error)
+   call e%set("mpi_comm_cols", mpi_comm_cols, error)
+   assert_elpa_ok(error)
+#else
    call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
    assert_elpa_ok(error)
    call e%set("process_row", my_prow, error)
    assert_elpa_ok(error)
    call e%set("process_col", my_pcol, error)
    assert_elpa_ok(error)
+#endif
 #endif
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
    call e%set("blacs_context", my_blacs_ctxt, error)
@@ -580,7 +619,11 @@ program test
 
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
-     kernel = elpa_option_enumerate(KERNEL_KEY, i)
+     if (TEST_GPU .eq. 0) then
+       kernel = elpa_option_enumerate(KERNEL_KEY, i)
+       if (kernel .eq. ELPA_2STAGE_REAL_GPU) continue
+       if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) continue
+     endif
 #endif
 #ifdef TEST_KERNEL
      kernel = TEST_KERNEL
@@ -596,6 +639,7 @@ program test
      endif
      ! actually used kernel might be different if forced via environment variables
      call e%get(KERNEL_KEY, kernel, error)
+     assert_elpa_ok(error)
 #endif
      if (myid == 0) then
        print *, elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
@@ -604,7 +648,8 @@ program test
 
 
 ! print all parameters
-     call e%print_all_parameters()
+     call e%print_settings(error)
+     assert_elpa_ok(error)
 
 #ifdef TEST_ALL_KERNELS
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
@@ -733,7 +778,7 @@ program test
      if (do_test_toeplitz_eigenvalues) then
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
        status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
-         subdiagonalElement, ev, z, myid)
+                                                       subdiagonalElement, ev, z, myid)
        call check_status(status, myid)
 #endif
      endif
@@ -758,6 +803,15 @@ program test
      endif
 #endif
 
+
+#ifdef WITH_OPENMP
+     if (threads_caller .ne. omp_get_max_threads()) then
+       if (myid .eq. 0) then
+         print *, " ERROR! the number of OpenMP threads has not been restored correctly"
+       endif
+       status = 1
+     endif
+#endif
      if (myid == 0) then
        print *, ""
      endif
@@ -771,7 +825,8 @@ program test
    end do ! kernels
 #endif
 
-   call elpa_deallocate(e)
+   call elpa_deallocate(e, error)
+   assert_elpa_ok(error)
 
    deallocate(a)
    deallocate(as)
@@ -793,7 +848,8 @@ program test
    end do ! factors
    end do ! layouts
 #endif
-   call elpa_uninit()
+   call elpa_uninit(error)
+   assert_elpa_ok(error)
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

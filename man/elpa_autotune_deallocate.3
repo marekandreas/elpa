@@ -14,7 +14,7 @@ class(elpa_t), pointer :: elpa
 class(elpa_autotune_t), pointer :: tune_state
 .br
 
-.RI  "call\fBelpa%autotune_deallocate\fP (tune_state)"
+.RI  "call\fBelpa%autotune_deallocate\fP (tune_state, error)"
 .br
 .RI " "
 .br
@@ -23,6 +23,9 @@ class(elpa_autotune_t), pointer :: tune_state
 .br
 .RI "type(elpa_autotune_t) :: \fBtune_state\fP  !  the ELPA autotuning object, created with \fBelpa_autotune_setup\fP(3)
 .br
+.RI "integer, optional     :: \fBerror\fP       ! the returned error code
+.br
+.br
 .SS C INTERFACE
 #include <elpa/elpa.h>
 .br
@@ -30,7 +33,7 @@ elpa_t handle;
 elpa_autotune_t autotune_handle;
 
 .br
-.RI "void \fBelpa_autotune_deallocate\fP (\fBelpa_t\fP handle, \fBelpa_autotune_t\fP autotune_handle);"
+.RI "void \fBelpa_autotune_deallocate\fP (\fBelpa_t\fP handle, \fBelpa_autotune_t\fP autotune_handle, \fBint\fP *error);"
 .br
 .RI " "
 .br
@@ -41,7 +44,10 @@ elpa_autotune_t autotune_handle;
 .RI "elpa_t \fBhandle\fP;  // the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
 .br
 .RI "elpa_autotune_t \fBautotune_handle\fP;  // the handle of an ELPA object, obtained before with \fBelpa_autotune_setup\fP(3)"
-
+.br
+.RI "int \fB*error\fP; // the returned error code"
+.br
+.br
 .SH DESCRIPTION
 Deallocates an ELPA autotuning instance.  \fIPrior\fP to calling the elpa_autotune_deallocate method, an ELPA autotuning object must have been created. See \fBelpa_autotune_setup\fP(3)
 .SH "SEE ALSO"

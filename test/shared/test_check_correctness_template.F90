@@ -328,6 +328,10 @@ function check_correctness_evp_numeric_residuals_&
     &_&
     &PRECISION&
     & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs) result(status)
+ 
+      use elpa_blas_interfaces
+      use elpa_scalapack_interfaces
+
       implicit none
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status
@@ -339,9 +343,6 @@ function check_correctness_evp_numeric_residuals_&
       MATH_DATATYPE(kind=rck)                :: xc
 
 #ifndef WITH_MPI
-#if REALCASE == 1
-      real(kind=rck)                   :: dnrm2, snrm2
-#endif
 #if COMPLEXCASE == 1
       complex(kind=rck)                :: zdotc, cdotc
 #endif /* COMPLEXCASE */
@@ -712,6 +713,7 @@ function check_correctness_evp_gen_numeric_residuals_&
     &_&
     &PRECISION&
     & (na, a, as, na_rows, sc_desc, myid) result(status)
+      use precision
       implicit none
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status
@@ -828,6 +830,7 @@ function check_correctness_evp_gen_numeric_residuals_&
     &_&
     &PRECISION&
     & (na, a, b, c, na_rows, sc_desc, myid) result(status)
+      use precision
       implicit none
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status

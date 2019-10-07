@@ -38,8 +38,11 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_autotune_impl.F90 \
   src/elpa_abstract_impl.F90 \
   src/helpers/mod_precision.F90 \
+  src/helpers/mod_blas_interfaces.F90 \
+  src/helpers/mod_scalapack_interfaces.F90 \
   src/helpers/mod_mpi.F90 \
   src/helpers/mod_mpi_stubs.F90 \
+  src/helpers/mod_omp.F90 \
   src/elpa_generated_fortran_interfaces.F90 \
   src/elpa2/mod_redist_band.F90 \
   src/elpa2/mod_pack_unpack_cpu.F90 \
@@ -110,6 +113,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/complex_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
+  src/elpa2/kernels/simple_block4_template.F90 \
+  src/elpa2/kernels/simple_block6_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/compute_hh_trafo.F90 \
@@ -120,6 +125,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa_multiply_a_b.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/precision_macros.h \
+  src/general/precision_typedefs.h \
   src/general/precision_kinds.F90
 
 if ENABLE_LEGACY
@@ -189,6 +195,14 @@ if WITH_COMPLEX_GENERIC_SIMPLE_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_simple.F90
 endif
 
+if WITH_REAL_GENERIC_SIMPLE_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block4.F90
+endif
+
+if WITH_REAL_GENERIC_SIMPLE_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_simple_block6.F90
+endif
+
 if WITH_REAL_BGP_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_bgp.f90
 endif
@@ -217,6 +231,13 @@ if WITH_REAL_SPARC64_BLOCK2_KERNEL
 #if WANT_SINGLE_PRECISION_REAL
 #  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_2hv_single_precision.c
 #endif
+endif
+
+if WITH_REAL_NEON_ARCH64_BLOCK2_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_2hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_2hv_single_precision.c
+endif
 endif
 
 if WITH_REAL_VSX_BLOCK2_KERNEL
@@ -261,6 +282,13 @@ if WITH_REAL_SPARC64_BLOCK4_KERNEL
 #endif
 endif
 
+if WITH_REAL_NEON_ARCH64_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_4hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_4hv_single_precision.c
+endif
+endif
+
 if WITH_REAL_VSX_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_vsx_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
@@ -301,6 +329,13 @@ if WITH_REAL_SPARC64_BLOCK6_KERNEL
 #if WANT_SINGLE_PRECISION_REAL
 #  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_single_precision.c
 #endif
+endif
+
+if WITH_REAL_NEON_ARCH64_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_6hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_neon_arch64_6hv_single_precision.c
+endif
 endif
 
 if WITH_REAL_VSX_BLOCK6_KERNEL
@@ -423,6 +458,12 @@ if WANT_SINGLE_PRECISION_COMPLEX
 endif
 endif
 
+
+if STORE_BUILD_CONFIG
+  libelpa@SUFFIX@_private_la_SOURCES += src/helpers/print_build_config.c
+endif
+
+
 # Cuda files
 .cu.lo:
 	NVCC="$(NVCC)" libtool --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
@@ -439,13 +480,17 @@ BUILT_SOURCES = $(generated_headers)
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = \
   $(wildcard modules/*) \
+  src/helpers/lapack_interfaces.h \
+  src/helpers/scalapack_interfaces.h \
   elpa/elpa.h \
   elpa/elpa_generic.h \
   elpa/elpa_legacy.h
 
 nobase_nodist_elpa_include_HEADERS = \
+  elpa/elpa_version.h \
   elpa/elpa_constants.h \
   elpa/elpa_generated.h \
+  elpa/elpa_generated_c_api.h \
   elpa/elpa_generated_legacy.h
 
 dist_man_MANS = \
@@ -463,6 +508,12 @@ dist_man_MANS = \
   man/elpa_solve_tridiagonal.3 \
   man/elpa_hermitian_multiply.3 \
   man/elpa_deallocate.3 \
+  man/elpa_load_settings.3 \
+  man/elpa_store_settings.3 \
+  man/elpa_print_settings.3 \
+  man/elpa_autotune_save_state.3 \
+  man/elpa_autotune_load_state.3 \
+  man/elpa_autotune_print_state.3 \
   man/elpa_uninit.3
 
 if ENABLE_LEGACY
@@ -568,54 +619,56 @@ endif
 
 #include test_programs_manual.am
 
-noinst_PROGRAMS += double_instance@SUFFIX@
-check_SCRIPTS += double_instance@SUFFIX@_default.sh
-double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
-double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
-double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_double_instance@SUFFIX@
+check_SCRIPTS += validate_double_instance@SUFFIX@_default.sh
+validate_double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
+validate_double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
-noinst_PROGRAMS += real_2stage_banded@SUFFIX@
-check_SCRIPTS += real_2stage_banded@SUFFIX@_default.sh
-real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
-real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_real_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_real_2stage_banded@SUFFIX@_default.sh
+validate_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90 
+validate_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
-noinst_PROGRAMS += complex_2stage_banded@SUFFIX@
-check_SCRIPTS += complex_2stage_banded@SUFFIX@_default.sh
-complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
-complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_complex_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_complex_2stage_banded@SUFFIX@_default.sh
+validate_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
+validate_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
 if WANT_SINGLE_PRECISION_REAL
-noinst_PROGRAMS += single_real_2stage_banded@SUFFIX@
-check_SCRIPTS += single_real_2stage_banded@SUFFIX@_default.sh
-single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
-single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_single_real_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_single_real_2stage_banded@SUFFIX@_default.sh
+validate_single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
+validate_single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
-noinst_PROGRAMS += single_complex_2stage_banded@SUFFIX@
-check_SCRIPTS += single_complex_2stage_banded@SUFFIX@_default.sh
-single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
-single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_single_complex_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_single_complex_2stage_banded@SUFFIX@_default.sh
+validate_single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
+validate_single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 endif
 
-#noinst_PROGRAMS += test_c_bindings@SUFFIX@
-#check_SCRIPTS += test_c_bindings@SUFFIX@_default.sh
-#test_c_bindings@SUFFIX@_SOURCES = test/Fortran/elpa_generalized/test_bindings.F90
-#test_c_bindings@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-#test_c_bindings@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+# python wrapper
+pyelpadir = $(pythondir)/pyelpa
+if WITH_PYTHON
+pyelpa_PYTHON = python/pyelpa/__init__.py python/pyelpa/distributedmatrix.py
+pyelpa_LTLIBRARIES = wrapper.la
+else
+pyelpa_PYTHON =
+pyelpa_LTLIBRARIES =
+endif
+nodist_wrapper_la_SOURCES = python/pyelpa/wrapper.c
+wrapper_la_LDFLAGS = -module -avoid-version -shared $(AM_LDFLAGS)
+wrapper_la_LIBADD = libelpa@SUFFIX@.la
+wrapper_la_CFLAGS = $(PYTHON_INCLUDE) $(NUMPY_INCLUDE) $(AM_CFLAGS)
 
-#noinst_PROGRAMS += test_c_cannon@SUFFIX@
-#check_SCRIPTS += test_c_cannon@SUFFIX@_default.sh
-#test_c_cannon@SUFFIX@_SOURCES = test/C/elpa_generalized/test_cannon.c
-#test_c_cannon@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-#test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
-
-
-
+python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
+	cython $< -o $@
 # test scripts
 TASKS ?= 2
 if WITH_MPI
@@ -634,10 +687,30 @@ TESTS = $(check_SCRIPTS)
 	@echo '$(wrapper)' ./$^ '$$TEST_FLAGS' >> $@
 	@chmod +x $@
 
+if WITH_PYTHON_TESTS
+check_SCRIPTS += test_python.sh
+endif
+
+test_python.sh:
+	@echo '#!/bin/bash' > $@
+# this is kind of hacky... is there a better way to get wrapper.so?
+	@echo 'export PYTHONPATH=./python-copy:$$PYTHONPATH' >> $@
+	@echo 'cp -r $(abs_top_srcdir)/python python-copy || exit 1' >> $@
+	@echo 'chmod u+rwX -R python-copy || exit 1' >> $@
+	@echo 'cp .libs/wrapper.so python-copy/pyelpa/ || exit 1' >> $@
+# the dlopen flags are needed for MKL to work properly...
+# only in os from python 3.3 on
+	@echo "$(wrapper) $(PYTHON) -c 'import sys, os; sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL); import pytest; sys.exit(pytest.main([\"./python-copy\", \"-p\", \"no:cacheprovider\"]))'" >> $@
+	@echo 'exit_code=$$?' >> $@
+	@echo 'rm -rf python-copy || exit 1' >> $@
+	@echo 'exit $$exit_code' >> $@
+	@chmod +x $@
+
 include doxygen.am
 
 CLEANFILES = \
-  elpa-generated.h \
+  elpa_generated.h \
+  elpa_generated_c_api.h \
   elpa1_test* \
   elpa2_test*\
   elpa2_real* \
@@ -653,11 +726,13 @@ CLEANFILES = \
   real* \
   complex* \
   double_instance* \
-  *.i
+  *.i \
+  python/pyelpa/wrapper.c \
+  check_python.sh
 
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
-	-rm -rf test_*.sh
+	-rm -rf validate_*.sh
 	-rm -rf legacy_*.sh
 	-rm -rf real_2stage*.sh
 	-rm -rf complex_2stage*.sh
@@ -667,16 +742,14 @@ clean-local:
 	-rm -rf $(generated_headers)
 
 distclean-local:
+	-rm -rf ./m4
+	-rm -rf ./src
+	-rm -rf ./test
+	-rm -rf ./modules
+	-rm -rf .fortran_dependencies
 	-rm config-f90.h
-	-rm -rf ./src/elpa2/kernels/.deps
-	-rm -rf ./src/.deps
 	-rm -rf ./test/.deps
-	-rmdir ./src/elpa2/kernels/
-	-rmdir ./src
-	-rmdir ./test
-	-rmdir ./m4
-	-rmdir modules/
-	-rmdir .fortran_dependencies/
+	-rm -rf elpa/elpa_generated_c_api.h
 
 EXTRA_DIST = \
   elpa.spec \
@@ -717,27 +790,13 @@ EXTRA_DIST = \
   src/elpa2/elpa2_trans_ev_band_to_full_template.F90 \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.F90 \
   src/elpa2/elpa2_tridiag_band_template.F90 \
-  src/elpa2/kernels/complex_avx-avx2_1hv_template.c \
-  src/elpa2/kernels/complex_avx-avx2_2hv_template.c \
-  src/elpa2/kernels/complex_avx512_1hv_template.c \
-  src/elpa2/kernels/complex_avx512_2hv_template.c \
-  src/elpa2/kernels/complex_sse_1hv_template.c \
-  src/elpa2/kernels/complex_sse_2hv_template.c \
+  src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/complex_template.F90 \
-  src/elpa2/kernels/real_avx-avx2_2hv_template.c \
-  src/elpa2/kernels/real_avx-avx2_4hv_template.c \
-  src/elpa2/kernels/real_avx-avx2_6hv_template.c \
-  src/elpa2/kernels/real_avx512_2hv_template.c \
-  src/elpa2/kernels/real_avx512_4hv_template.c \
-  src/elpa2/kernels/real_avx512_6hv_template.c \
-  src/elpa2/kernels/real_vsx_2hv_template.c \
-  src/elpa2/kernels/real_vsx_4hv_template.c \
-  src/elpa2/kernels/real_vsx_6hv_template.c \
-  src/elpa2/kernels/real_sse_2hv_template.c \
-  src/elpa2/kernels/real_sse_4hv_template.c \
-  src/elpa2/kernels/real_sse_6hv_template.c \
+  src/elpa2/kernels/real_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/simple_template.F90 \
+  src/elpa2/kernels/simple_block4_template.F90 \
+  src/elpa2/kernels/simple_block6_template.F90 \
   src/elpa2/pack_unpack_cpu.F90 \
   src/elpa2/pack_unpack_gpu.F90 \
   src/elpa2/qr/elpa_pdgeqrf_template.F90 \
@@ -751,6 +810,7 @@ EXTRA_DIST = \
   src/fortran_constants.h \
   src/general/map_global_to_local.F90 \
   src/general/precision_macros.h \
+  src/general/precision_typedefs.h \
   src/general/precision_kinds.F90 \
   src/general/prow_pcol.F90 \
   src/general/sanity.F90 \
@@ -814,6 +874,15 @@ if WITH_SCALAPACK_TESTS
 EXTRA_DIST += \
   test/shared/test_scalapack_template.F90
 endif
+
+# python wrapper files
+EXTRA_DIST += python/pyelpa/__init__.py \
+	      python/pyelpa/distributedmatrix.py \
+	      python/pyelpa/wrapper.pyx \
+	      python/tests/test_elpa_import.py \
+	      python/tests/test_mpi4py.py \
+	      python/tests/test_numroc.py \
+	      python/tests/test_with_mpi.py
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)

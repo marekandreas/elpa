@@ -96,7 +96,6 @@ module elpa1
 
   public :: elpa_solve_evp_real_1stage_double    !< Driver routine for real double-precision 1-stage eigenvalue problem
 
-  public :: solve_evp_real_1stage                !< Driver routine for real double-precision eigenvalue problem
   public :: solve_evp_real_1stage_double         !< Driver routine for real double-precision eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: solve_evp_real_1stage_single         !< Driver routine for real single-precision eigenvalue problem
@@ -104,7 +103,6 @@ module elpa1
 
 #endif
   public :: elpa_solve_evp_complex_1stage_double !< Driver routine for complex 1-stage eigenvalue problem
-  public :: solve_evp_complex_1stage             !< Driver routine for complex double-precision eigenvalue problem
   public :: solve_evp_complex_1stage_double      !< Driver routine for complex double-precision eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   public :: solve_evp_complex_1stage_single      !< Driver routine for complex single-precision eigenvalue problem
@@ -114,22 +112,16 @@ module elpa1
   ! imported from elpa1_auxilliary
 
   public :: elpa_mult_at_b_real_double       !< Multiply double-precision real matrices A**T * B
-  public :: mult_at_b_real                   !< old, deprecated interface to multiply double-precision real matrices A**T * B  DO NOT USE
 
   public :: elpa_mult_ah_b_complex_double    !< Multiply double-precision complex matrices A**H * B
-  public :: mult_ah_b_complex                !< old, deprecated interface to multiply double-preicion complex matrices A**H * B  DO NOT USE
 
   public :: elpa_invert_trm_real_double      !< Invert double-precision real triangular matrix
-  public :: invert_trm_real                  !< old, deprecated interface to invert double-precision real triangular matrix  DO NOT USE
 
   public :: elpa_invert_trm_complex_double   !< Invert double-precision complex triangular matrix
-  public :: invert_trm_complex               !< old, deprecated interface to invert double-precision complex triangular matrix  DO NOT USE
 
   public :: elpa_cholesky_real_double        !< Cholesky factorization of a double-precision real matrix
-  public :: cholesky_real                    !< old, deprecated interface to do Cholesky factorization of a double-precision real matrix  DO NOT USE
 
   public :: elpa_cholesky_complex_double     !< Cholesky factorization of a double-precision complex matrix
-  public :: cholesky_complex                 !< old, deprecated interface to do Cholesky factorization of a double-precision complex matrix  DO NOT USE
 
   public :: elpa_solve_tridi_double          !< Solve a double-precision tridiagonal eigensystem with divide and conquer method
 
@@ -154,10 +146,6 @@ module elpa1
 
   logical, public :: elpa_print_times = .false. !< Set elpa_print_times to .true. for explicit timing outputs
 
-
-  interface solve_evp_real_1stage
-    module procedure elpa_solve_evp_real_1stage_double
-  end interface
 
 !> \brief elpa_solve_evp_real_1stage_double: Fortran function to solve the real eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_real"
 !>
@@ -198,46 +186,6 @@ module elpa1
 
   interface solve_evp_real_1stage_double
     module procedure elpa_solve_evp_real_1stage_double
-  end interface
-
-
-!> \brief solve_evp_complex_1stage: old, deprecated Fortran function to solve the complex eigenvalue problem with 1-stage solver. will be deleted at some point. Better use "solve_evp_complex_1stage" or "elpa_solve_evp_complex"
-!>
-!> \details
-!> The interface and variable definition is the same as in "elpa_solve_evp_complex_1stage_double"
-!  Parameters
-!
-!> \param  na                   Order of matrix a
-!>
-!> \param  nev                  Number of eigenvalues needed.
-!>                              The smallest nev eigenvalues/eigenvectors are calculated.
-!>
-!> \param  a(lda,matrixCols)    Distributed matrix for which eigenvalues are to be computed.
-!>                              Distribution is like in Scalapack.
-!>                              The full matrix must be set (not only one half like in scalapack).
-!>                              Destroyed on exit (upper and lower half).
-!>
-!>  \param lda                  Leading dimension of a
-!>
-!>  \param ev(na)               On output: eigenvalues of a, every processor gets the complete set
-!>
-!>  \param q(ldq,matrixCols)    On output: Eigenvectors of a
-!>                              Distribution is like in Scalapack.
-!>                              Must be always dimensioned to the full size (corresponding to (na,na))
-!>                              even if only a part of the eigenvalues is needed.
-!>
-!>  \param ldq                  Leading dimension of q
-!>
-!>  \param nblk                 blocksize of cyclic distribution, must be the same in both directions!
-!>
-!>  \param matrixCols           distributed number of matrix columns
-!>
-!>  \param mpi_comm_rows        MPI-Communicator for rows
-!>  \param mpi_comm_cols        MPI-Communicator for columns
-!>
-!>  \result                     success
-  interface solve_evp_complex_1stage
-    module procedure elpa_solve_evp_complex_1stage_double
   end interface
 
 !> \brief solve_evp_complex_1stage_double: Fortran function to solve the complex eigenvalue problem with 1-stage solver. This is called by "elpa_solve_evp_complex"

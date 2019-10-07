@@ -127,6 +127,7 @@ program test
 
    integer                     :: iter
    character(len=5)            :: iter_string
+   integer                     :: timings, debug, gpu
 
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -179,46 +180,85 @@ program test
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times=.false.)
    as(:,:) = a(:,:)
 
-   e1 => elpa_allocate()
+   e1 => elpa_allocate(error)
+   !assert_elpa_ok(error)
+
    call set_basic_params(e1, na, nev, na_rows, na_cols, my_prow, my_pcol)
 
    call e1%set("timings",1, error)
+   assert_elpa_ok(error)
 
-   call e1%set("debug",1)
-   call e1%set("gpu", 0)
+   call e1%set("debug",1, error)
+   assert_elpa_ok(error)
+
+   call e1%set("gpu", 0, error)
+   assert_elpa_ok(error)
    !call e1%set("max_stored_rows", 15, error)
 
    assert_elpa_ok(e1%setup())
 
-   call e1%save_all_parameters("initial_parameters.txt")
+   call e1%store_settings("initial_parameters.txt", error)
+   assert_elpa_ok(error)
+
+#ifdef WITH_MPI
+     ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
+     call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+#endif
 
    ! try to load parameters into another object
-   e2 => elpa_allocate()
+   e2 => elpa_allocate(error)
+   assert_elpa_ok(error)
+
    call set_basic_params(e2, na, nev, na_rows, na_cols, my_prow, my_pcol)
-   call e2%load_all_parameters("initial_parameters.txt")
+   call e2%load_settings("initial_parameters.txt", error)
+   assert_elpa_ok(error)
+
    assert_elpa_ok(e2%setup())
 
+   ! test whether the user setting of e1 are correctly loade to e2
+   call e2%get("timings", timings, error)
+   assert_elpa_ok(error)
+   call e2%get("debug", debug, error)
+   assert_elpa_ok(error)
+   call e2%get("gpu", gpu, error)
+   assert_elpa_ok(error)
+
+   if ((timings .ne. 1) .or. (debug .ne. 1) .or. (gpu .ne. 0)) then
+     print *, "Parameters not stored or loaded correctly. Aborting...", timings, debug, gpu
+     stop 1
+   endif
+
    if(myid == 0) print *, "parameters of e1"
-   call e1%print_all_parameters()
+   call e1%print_settings(error)
+   assert_elpa_ok(error)
+
    if(myid == 0) print *, ""
    if(myid == 0) print *, "parameters of e2"
-   call e2%print_all_parameters()
+   call e2%print_settings(error)
+   assert_elpa_ok(error)
+
    e_ptr => e2
 
 
-   tune_state => e_ptr%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
+   tune_state => e_ptr%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
 
    iter=0
-   do while (e_ptr%autotune_step(tune_state))
+   do while (e_ptr%autotune_step(tune_state, error))
+     assert_elpa_ok(error)
+ 
      iter=iter+1
      write(iter_string,'(I5.5)') iter
-     call e_ptr%print_all_parameters()
-     call e_ptr%save_all_parameters("saved_parameters_"//trim(iter_string)//".txt")
+     call e_ptr%print_settings(error)
+     assert_elpa_ok(error)
+
+     call e_ptr%store_settings("saved_parameters_"//trim(iter_string)//".txt", error)
+     assert_elpa_ok(error)
 
      call e_ptr%timer_start("eigenvectors: iteration "//trim(iter_string))
      call e_ptr%eigenvectors(a, ev, z, error)
+     assert_elpa_ok(error)
      call e_ptr%timer_stop("eigenvectors: iteration "//trim(iter_string))
 
      assert_elpa_ok(error)
@@ -229,29 +269,41 @@ program test
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                          .true., .true., print_times=.false.)
      a(:,:) = as(:,:)
-     call e_ptr%autotune_print_state(tune_state)
-     call e_ptr%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+     call e_ptr%autotune_print_state(tune_state, error)
+     assert_elpa_ok(error)
+
+     call e_ptr%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt", error)
+     assert_elpa_ok(error)
 #ifdef WITH_MPI
+     ! barrier after save state, file created from one MPI rank only, but loaded everywhere
      call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 #endif
-     call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+     call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt", error)
+     assert_elpa_ok(error)
+
    end do
 
    ! set and print the autotuned-settings
-   call e_ptr%autotune_set_best(tune_state)
+   call e_ptr%autotune_set_best(tune_state, error)
+   assert_elpa_ok(error)
+
    if (myid .eq. 0) then
      print *, "The best combination found by the autotuning:"
      flush(output_unit)
-     call e_ptr%autotune_print_best(tune_state)
+     call e_ptr%autotune_print_best(tune_state, error)
+     assert_elpa_ok(error)
    endif
    ! de-allocate autotune object
-   call elpa_autotune_deallocate(tune_state)
+   call elpa_autotune_deallocate(tune_state, error)
+   assert_elpa_ok(error)
 
    if (myid .eq. 0) then
      print *, "Running once more time with the best found setting..."
    endif
    call e_ptr%timer_start("eigenvectors: best setting")
    call e_ptr%eigenvectors(a, ev, z, error)
+   assert_elpa_ok(error)
+
    call e_ptr%timer_stop("eigenvectors: best setting")
    assert_elpa_ok(error)
    if (myid .eq. 0) then
@@ -261,14 +313,16 @@ program test
    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                        .true., .true., print_times=.false.)
 
-   call elpa_deallocate(e_ptr)
+   call elpa_deallocate(e_ptr, error)
+   !assert_elpa_ok(error)
 
    deallocate(a)
    deallocate(as)
    deallocate(z)
    deallocate(ev)
 
-   call elpa_uninit()
+   call elpa_uninit(error)
+   !assert_elpa_ok(error)
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

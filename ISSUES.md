@@ -3,6 +3,12 @@
 For more details and recent updates please visit the online [issue system] (https://gitlab.mpcdf.mpg.de/elpa/elpa/issues)
 Issues which are not mentioned in a newer release are (considered as) solved.
 
+### ELPA 2019.11.001 release ###
+- same issues as in ELPA 2017.11.001
+
+### ELPA 2018.11.001 release ###
+- same issues as in ELPA 2017.11.001
+
 ### ELPA 2018.05.001 release ###
 - same issues as in ELPA 2017.11.001
 

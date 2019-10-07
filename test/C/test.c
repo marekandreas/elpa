@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
    }
 
    handle = elpa_allocate(&error);
-   assert_elpa_ok(error);
+   //assert_elpa_ok(error);
 
    /* Set parameters */
    elpa_set(handle, "na", na, &error);
@@ -276,8 +276,8 @@ int main(int argc, char** argv) {
 #endif
    assert_elpa_ok(error);
 
-   elpa_deallocate(handle);
-   elpa_uninit();
+   elpa_deallocate(handle, &error);
+   elpa_uninit(&error);
 
    /* check the results */
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)

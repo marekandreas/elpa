@@ -102,9 +102,9 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       use precision
       use elpa_abstract_impl
       use matrix_plot
-#ifdef WITH_OPENMP
-      use omp_lib
-#endif
+      use elpa_omp
+      use elpa_blas_interfaces
+
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -113,14 +113,14 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       integer(kind=c_int)                           :: skewsymmetric
       logical                                       :: isSkewsymmetric
 
-      MATH_DATATYPE(kind=rck), intent(out)         :: tau(na)
+      MATH_DATATYPE(kind=rck), intent(out)          :: tau(na)
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck), intent(inout)       :: a_mat(lda,*)
+      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,*)
 #else
-      MATH_DATATYPE(kind=rck), intent(inout)       :: a_mat(lda,matrixCols)
+      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,matrixCols)
 #endif
-      real(kind=rk), intent(out)         :: d_vec(na), e_vec(na)
-
+      real(kind=rk), intent(out)                    :: d_vec(na)
+      real(kind=rk), intent(out)                    :: e_vec(na)
       integer(kind=ik), parameter                   :: max_stored_uv = 32
       logical,          parameter                   :: mat_vec_as_one_block = .true.
 
@@ -154,9 +154,10 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       complex(kind=rck)                             :: aux3(1)
 #endif
 
-      MATH_DATATYPE(kind=rck), allocatable          :: tmp(:), &
-                                                       v_row(:), &   ! used to store calculated Householder Vector
-                                                       v_col(:), &   ! the same Vector, but transposed - differently distributed among MPI tasks
+      MATH_DATATYPE(kind=rck), allocatable          :: tmp(:)
+      MATH_DATATYPE(kind=rck), allocatable          :: v_row(:), &   ! used to store calculated Householder Vector
+                                                       v_col(:), &   ! the same Vector, but transposed 
+                                                                     ! - differently distributed among MPI tasks
                                                        u_row(:), &
                                                        u_col(:)
       ! the following two matrices store pairs of vectors v and u calculated in each step
@@ -352,7 +353,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_datatype)
         check_alloc_cuda("tridiag: a_dev", successCUDA)
 
-        successCUDA = cuda_memcpy(a_dev, loc(a_mat(1,1)), lda * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
+        successCUDA = cuda_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
+                      lda * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
         check_memcpy_cuda("tridiag: a_dev", successCUDA)
       endif
 
@@ -376,9 +378,11 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           ! copy l_cols + 1 column of A to v_row
           if (useGPU) then
             a_offset = l_cols * lda * size_of_datatype
-            ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
+            ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, 
+            ! (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
 
-            successCUDA = cuda_memcpy(loc(v_row(1)), a_dev + a_offset, (l_rows)* size_of_datatype, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(int(loc(v_row(1)),kind=c_intptr_t), &
+                                      a_dev + a_offset, (l_rows)* size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag a_dev 1", successCUDA)
           else
             v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
@@ -496,11 +500,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             successCUDA = cuda_memset(u_row_dev, 0, l_rows * size_of_datatype)
             check_memcpy_cuda("tridiag: u_row_dev", successCUDA)
 
-            successCUDA = cuda_memcpy(v_col_dev, loc(v_col(1)), l_cols * size_of_datatype, cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
+                          l_cols * size_of_datatype, cudaMemcpyHostToDevice)
 
             check_memcpy_cuda("tridiag: v_col_dev", successCUDA)
 
-            successCUDA = cuda_memcpy(v_row_dev, loc(v_row(1)), l_rows * size_of_datatype, cudaMemcpyHostToDevice)
+            successCUDA = cuda_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
+                                      l_rows * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag: v_row_dev", successCUDA)
           endif ! useGU
 
@@ -648,10 +654,12 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               enddo
             end if !multiplication as one block / per stripes
 
-            successCUDA = cuda_memcpy(loc(u_col(1)), u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
+                          u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
 
-            successCUDA = cuda_memcpy(loc(u_row(1)), u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
+                          u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
           endif
 
@@ -784,12 +792,12 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
           if (useGPU) then
-            successCUDA = cuda_memcpy(vu_stored_rows_dev, loc(vu_stored_rows(1,1)), &
+            successCUDA = cuda_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
                                       max_local_rows * 2 * max_stored_uv *          &
                                       size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag: vu_stored_rows_dev", successCUDA)
 
-            successCUDA = cuda_memcpy(uv_stored_cols_dev, loc(uv_stored_cols(1,1)), &
+            successCUDA = cuda_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
                                       max_local_cols * 2 * max_stored_uv *          &
                                       size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag: uv_stored_cols_dev", successCUDA)
@@ -852,7 +860,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
              a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * size_of_datatype
 
-             successCUDA = cuda_memcpy(loc(a_mat(l_rows, l_cols)), a_dev + a_offset, &
+             successCUDA = cuda_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
                                        1 *  size_of_datatype, cudaMemcpyDeviceToHost)
              check_memcpy_cuda("tridiag: a_dev 3", successCUDA)
 
@@ -892,7 +900,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         if (my_prow==prow(1, nblk, np_rows)) then
           ! We use last l_cols value of loop above
           if(useGPU) then
-            successCUDA = cuda_memcpy(loc(aux3(1)), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
+            successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
             vrl = aux3(1)
@@ -928,7 +936,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #endif /* WITH_MPI */
       if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
         if(useGPU) then
-          successCUDA = cuda_memcpy(loc(aux3(1)), a_dev, &
+          successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 6", successCUDA)
           d_vec(1) = PRECISION_REAL(aux3(1))
@@ -944,7 +952,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
         if(useGPU) then
-          successCUDA = cuda_memcpy(loc(e_vec(1)), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
+          successCUDA = cuda_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
         else !useGPU
@@ -955,7 +963,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
      ! Store d_vec(1)
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
         if(useGPU) then
-          successCUDA = cuda_memcpy(loc(d_vec(1)), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
+          successCUDA = cuda_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
         else !useGPU
           if (isSkewsymmetric) then

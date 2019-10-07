@@ -206,6 +206,7 @@ module test_read_input_parameters
     end subroutine
 
     subroutine read_input_parameters_general(input_options)
+      use precision
       implicit none
 
       type(input_options_t)         :: input_options
@@ -340,6 +341,7 @@ module test_read_input_parameters
     end subroutine
 
     subroutine read_input_parameters_traditional_noskip(na, nev, nblk, write_to_file)
+      use precision
       implicit none
 
       integer(kind=ik), intent(out) :: na, nev, nblk
@@ -351,6 +353,7 @@ module test_read_input_parameters
     end subroutine
 
     subroutine read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
+      use precision
       implicit none
 
       integer(kind=ik), intent(out) :: na, nev, nblk

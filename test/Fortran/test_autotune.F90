@@ -179,7 +179,8 @@ program test
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times=.false.)
    as(:,:) = a(:,:)
 
-   e => elpa_allocate()
+   e => elpa_allocate(error)
+   assert_elpa_ok(error)
 
    call e%set("na", na, error)
    assert_elpa_ok(error)
@@ -201,9 +202,12 @@ program test
    assert_elpa_ok(error)
 #endif
    call e%set("timings",1, error)
+   assert_elpa_ok(error)
 
-   call e%set("debug",1)
-   call e%set("gpu", 0)
+   call e%set("debug",1, error)
+   assert_elpa_ok(error)
+   call e%set("gpu", 0, error)
+   assert_elpa_ok(error)
    !call e%set("max_stored_rows", 15, error)
 
    assert_elpa_ok(e%setup())
@@ -213,16 +217,16 @@ program test
    tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
    assert_elpa_ok(error)
 
-   assert_elpa_ok(error)
-
    iter=0
-   do while (e%autotune_step(tune_state))
+   do while (e%autotune_step(tune_state, error))
+     assert_elpa_ok(error)
      iter=iter+1
      write(iter_string,'(I5.5)') iter
-     !call e%print_all_parameters()
-     !call e%save_all_parameters("saved_parameters_"//trim(iter_string)//".txt")
+     !call e%print_settings()
+     !call e%store_settings("saved_parameters_"//trim(iter_string)//".txt")
      call e%timer_start("eigenvectors: iteration "//trim(iter_string))
      call e%eigenvectors(a, ev, z, error)
+     assert_elpa_ok(error)
      call e%timer_stop("eigenvectors: iteration "//trim(iter_string))
 
      assert_elpa_ok(error)
@@ -238,20 +242,24 @@ program test
    end do
 
    ! set and print the autotuned-settings
-   call e%autotune_set_best(tune_state)
+   call e%autotune_set_best(tune_state, error)
+   assert_elpa_ok(error)
    if (myid .eq. 0) then
      print *, "The best combination found by the autotuning:"
      flush(output_unit)
-     call e%autotune_print_best(tune_state)
+     call e%autotune_print_best(tune_state, error)
+     assert_elpa_ok(error)
    endif
    ! de-allocate autotune object
-   call elpa_autotune_deallocate(tune_state)
+   call elpa_autotune_deallocate(tune_state, error)
+   assert_elpa_ok(error)
 
    if (myid .eq. 0) then
      print *, "Running once more time with the best found setting..."
    endif
    call e%timer_start("eigenvectors: best setting")
    call e%eigenvectors(a, ev, z, error)
+   assert_elpa_ok(error)
    call e%timer_stop("eigenvectors: best setting")
    assert_elpa_ok(error)
    if (myid .eq. 0) then
@@ -261,14 +269,16 @@ program test
    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                        .true., .true., print_times=.false.)
 
-   call elpa_deallocate(e)
+   call elpa_deallocate(e,error)
+   assert_elpa_ok(error)
 
    deallocate(a)
    deallocate(as)
    deallocate(z)
    deallocate(ev)
 
-   call elpa_uninit()
+   call elpa_uninit(error)
+   assert_elpa_ok(error)
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

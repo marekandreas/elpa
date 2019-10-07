@@ -99,6 +99,10 @@ module elpa_api
       procedure(elpa_is_set_i),  deferred, public :: is_set         !< method to check whether key/value is set
       procedure(elpa_can_set_i), deferred, public :: can_set        !< method to check whether key/value can be set
 
+      ! call before setup if created from the legacy api
+      ! remove this function completely after the legacy api is dropped
+      procedure(elpa_creating_from_legacy_api_i), deferred, public :: creating_from_legacy_api
+
       ! Timer
       procedure(elpa_get_time_i), deferred, public :: get_time        !< method to get the times from the timer object
       procedure(elpa_print_times_i), deferred, public :: print_times  !< method to print the timings tree
@@ -153,9 +157,9 @@ module elpa_api
           elpa_solve_tridiagonal_d, &                                !< matrix
           elpa_solve_tridiagonal_f
 
-      procedure(print_all_parameters_i), deferred, public :: print_all_parameters !< method to print all parameters
-      procedure(save_all_parameters_i), deferred, public :: save_all_parameters !< method to save all parameters
-      procedure(load_all_parameters_i), deferred, public :: load_all_parameters !< method to save all parameters
+      procedure(print_settings_i), deferred, public :: print_settings !< method to print all parameters
+      procedure(store_settings_i), deferred, public :: store_settings !< method to save all parameters
+      procedure(load_settings_i), deferred, public :: load_settings !< method to save all parameters
 #ifdef ENABLE_AUTOTUNING
       ! Auto-tune
       procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
@@ -247,51 +251,69 @@ module elpa_api
     function elpa_setup_i(self) result(error)
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout) :: self
-      integer :: error
+      class(elpa_t), intent(inout)   :: self
+      integer                        :: error
     end function
   end interface
 
-  !> \brief abstract definition of the print_all_parameters method
+  !> \brief abstract definition of the print_settings method
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
+  !> \param   error       integer, optional
   !> Prints all the elpa parameters
   abstract interface
-    subroutine print_all_parameters_i(self)
+    subroutine print_settings_i(self, error)
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)   :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
   end interface
 
-  !> \brief abstract definition of the save_all_parameters method
+  !> \brief abstract definition of the store_settings method
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   file_name   string, the name of the file where to save the parameters
+  !> \param   error       integer, optional
   !> Saves all the elpa parameters
   abstract interface
-    subroutine save_all_parameters_i(self, file_name)
+    subroutine store_settings_i(self, file_name, error)
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout) :: self
-      character(*), intent(in)     :: file_name
+      class(elpa_t), intent(inout)  :: self
+      character(*), intent(in)      :: file_name
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out):: error
+#else
+      integer, intent(out)          :: error
+#endif
     end subroutine
   end interface
 
-  !> \brief abstract definition of the load_all_parameters method
+  !> \brief abstract definition of the load_settings method
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
   !> \param   file_name   string, the name of the file from which to load the parameters
+  !> \param   error       integer, optional
   !> Loads all the elpa parameters
   abstract interface
-    subroutine load_all_parameters_i(self, file_name)
+    subroutine load_settings_i(self, file_name, error)
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout) :: self
-      character(*), intent(in)     :: file_name
+      class(elpa_t), intent(inout)   :: self
+      character(*), intent(in)       :: file_name
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
   end interface
 
@@ -325,13 +347,19 @@ module elpa_api
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
   !> \param   unfinished  logical: state whether tuning is unfinished or not
+  !> \param   error       integer, optional
   abstract interface
-    function elpa_autotune_step_i(self, tune_state) result(unfinished)
+    function elpa_autotune_step_i(self, tune_state, error) result(unfinished)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)                  :: self
       class(elpa_autotune_t), intent(inout), target :: tune_state
-      logical :: unfinished
+      logical                                       :: unfinished
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)                :: error
+#else
+      integer, intent(out)                          :: error
+#endif
     end function
   end interface
 
@@ -341,13 +369,20 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   error       integer, optional
   !> Sets the best combination of ELPA options
   abstract interface
-    subroutine elpa_autotune_set_best_i(self, tune_state)
+    subroutine elpa_autotune_set_best_i(self, tune_state, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+
+#endif
     end subroutine
   end interface
 
@@ -357,13 +392,20 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   error       integer, optional
   !> Prints the best combination of ELPA options
   abstract interface
-    subroutine elpa_autotune_print_best_i(self, tune_state)
+    subroutine elpa_autotune_print_best_i(self, tune_state, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+
+#endif
     end subroutine
   end interface
 
@@ -372,13 +414,19 @@ module elpa_api
   !> \details
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
+  !> \param   error       integer, optional
   !> Prints the autotuning state
   abstract interface
-    subroutine elpa_autotune_print_state_i(self, tune_state)
+    subroutine elpa_autotune_print_state_i(self, tune_state, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)             :: error
+#else
+      integer,  intent(out)                      :: error
+#endif
     end subroutine
   end interface
 
@@ -388,14 +436,20 @@ module elpa_api
   !> \param   self        class(elpa_t): the ELPA object, which should be tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
   !> \param   file_name   string, the name of the file where to save the state
+  !> \param   error       integer, optional
   !> Saves the autotuning state
   abstract interface
-    subroutine elpa_autotune_save_state_i(self, tune_state, file_name)
+    subroutine elpa_autotune_save_state_i(self, tune_state, file_name, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      character(*), intent(in)        :: file_name
+      character(*), intent(in)                   :: file_name
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+#endif
     end subroutine
   end interface
 
@@ -405,14 +459,20 @@ module elpa_api
   !> \param   self        class(elpa_t): the ELPA object, which is being tuned
   !> \param   tune_state  class(elpa_autotune_t): the autotuning object
   !> \param   file_name   string, the name of the file from which to load the autotuning state
+  !> \param   error       integer, optional
   !> Loads all the elpa parameters
   abstract interface
-    subroutine elpa_autotune_load_state_i(self, tune_state, file_name)
+    subroutine elpa_autotune_load_state_i(self, tune_state, file_name, error)
       import elpa_t, elpa_autotune_t
       implicit none
-      class(elpa_t), intent(inout) :: self
+      class(elpa_t), intent(inout)               :: self
       class(elpa_autotune_t), intent(in), target :: tune_state
-      character(*), intent(in)     :: file_name
+      character(*), intent(in)                   :: file_name
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)             :: error
+#else
+      integer, intent(out)                       :: error
+#endif
     end subroutine
   end interface
 #endif
@@ -667,11 +727,17 @@ module elpa_api
   !> \brief abstract definition of interface to destroy an ELPA object
   !> Parameters
   !> \param   self        class(elpa_t), the ELPA object
+  !> \param   error       integer, optional, the error code
   abstract interface
-    subroutine elpa_destroy_i(self)
+    subroutine elpa_destroy_i(self, error)
       import elpa_t
       implicit none
-      class(elpa_t) :: self
+      class(elpa_t)                  :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
     end subroutine
   end interface
 
@@ -680,10 +746,16 @@ module elpa_api
   !> Parameters
   !> \param   self        class(elpa_autotune_t): the ELPA autotune object
   abstract interface
-    subroutine elpa_autotune_print_i(self)
+    subroutine elpa_autotune_print_i(self, error)
       import elpa_autotune_t
       implicit none
       class(elpa_autotune_t), intent(in) :: self
+#ifdef USE_FORTRAN2008
+      integer, intent(out), optional     :: error
+#else
+      integer, intent(out)               :: error
+#endif
+
     end subroutine
   end interface
 
@@ -692,13 +764,26 @@ module elpa_api
   !> Parameters
   !> \param   self        class(elpa_autotune_t): the ELPA autotune object
   abstract interface
-    subroutine elpa_autotune_destroy_i(self)
+    subroutine elpa_autotune_destroy_i(self, error)
       import elpa_autotune_t
       implicit none
       class(elpa_autotune_t), intent(inout) :: self
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out)        :: error
+#else
+      integer, intent(out)                  :: error
+#endif
     end subroutine
   end interface
 #endif
+
+  abstract interface
+    subroutine elpa_creating_from_legacy_api_i(self)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout)          :: self
+    end subroutine
+  end interface
 
   contains
 
@@ -721,8 +806,9 @@ module elpa_api
         error = ELPA_OK
       else
         write(error_unit, "(a,i0,a)") "ELPA: Error API version ", api_version," is not supported by this library"
-        error = ELPA_ERROR
+        error = ELPA_ERROR_API_VERSION
       endif
+
     end function
 
 
@@ -734,7 +820,7 @@ module elpa_api
       if (initDone) then
         state = ELPA_OK
       else
-        state = ELPA_ERROR
+        state = ELPA_ERROR_CRITICAL
       endif
     end function
 
@@ -744,14 +830,49 @@ module elpa_api
        api_version = api_version_set
     end function
 
-
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #define elpa_uninit(...) CONC(elpa_uninit, NARGS(__VA_ARGS__))(__VA_ARGS__)
+    !c_o> #endif
+#endif
     !> \brief subroutine to uninit the ELPA library. Does nothing at the moment. Might do sth. later
     !
-    !c> void elpa_uninit(void);
-    subroutine elpa_uninit() bind(C, name="elpa_uninit")
+#ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+    !c_o> void elpa_uninit1(int *error);
+    !c_o> void elpa_uninit0();
+    !c_o> #endif
+    subroutine elpa_uninit_c1(error) bind(C, name="elpa_uninit1")
+      integer(kind=c_int)        :: error
+      call elpa_uninit(error)
     end subroutine
 
+    subroutine elpa_uninit_c0() bind(C, name="elpa_uninit0")
+      call elpa_uninit()
+    end subroutine
+#else
+    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> void elpa_uninit(int *error);
+    !c_no> #endif
+    subroutine elpa_uninit_c(error) bind(C, name="elpa_uninit")
+      integer(kind=c_int)        :: error
+      call elpa_uninit(error)
+    end subroutine
+#endif
 
+    subroutine elpa_uninit(error)
+#ifdef USE_FORTRAN2008
+      integer, optional, intent(out) :: error
+#else
+      integer, intent(out)           :: error
+#endif
+
+#ifdef USE_FORTRAN2008
+     if (present(error)) error = ELPA_OK
+#else
+     error = ELPA_OK
+#endif
+    end subroutine
     !> \brief helper function for error strings
     !> Parameters
     !> \param   elpa_error  integer: error code to querry
