@@ -196,9 +196,15 @@ for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
         print("endif")
 
         if lay == "square" or t == "generalized":
-            print("check_SCRIPTS += " + name + "_default.sh")
+            if kernel == "all_kernels":
+                print("check_SCRIPTS += " + name + "_extended.sh")
+            else:
+                print("check_SCRIPTS += " + name + "_default.sh")
         elif lay == "all_layouts":
-            print("check_SCRIPTS += " + name + "_extended.sh")
+            if kernel == "all_kernels":
+                print("check_SCRIPTS += " + name + "_extended.sh")
+            else:
+                print("check_SCRIPTS += " + name + "_extended.sh")
         else:
             raise Exception("Unknown layout {0}".format(lay))
 
