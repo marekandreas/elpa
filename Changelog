@@ -2,6 +2,12 @@ Changelog for upcoming release
 
 - not yet decided
 
+
+Changelog for ELPA 2019.05.002
+
+- repacking of the src since the legacy interface has been forgotten in the
+  2019.05.001 release
+
 Changelog for ELPA 2019.05.001
 
 - elpa_print_kernels supports GPU usage

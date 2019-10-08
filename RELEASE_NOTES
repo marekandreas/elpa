@@ -1,29 +1,18 @@
-This file contains the release notes for the ELPA 2019.05.001 version
+This file contains the release notes for the ELPA 2019.05.002 version
 
 What is new?
 -------------
 For detailed information about changes since release ELPA 2018.11 please have a look at the Changelog file
 
-- user can define a default kernel at build time
-- ELPA VERSION number is exported to the C-header
-- C functions can have an optional error argument, if compiler supports this
-   => ABI and API change
-- as anounced, removal of deprecated routines
-- new kernels for Arm arch64
-
+- repackaging of src files, to include forgotten files of the legacy interface
 ABI change
 ---------------------
 
-Since release 2018.10.001 the ABI has changed.
+Since release 2019.05.001 the ABI has not changed.
 
 Any incompatibilities to previous version?
 ---------------------------------------
-For Fortran:
-Break of ABI compatibility, since all routines announced as deperecated have been removed
 
-For C:
-Break of ABI and API compatibility, since all functions obtained a required int* argument of the error code.
-
-
+no
 
 

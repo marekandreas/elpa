@@ -19,7 +19,7 @@
 %define with_openmp 0
 
 Name:           elpa
-Version:        2019.05.001
+Version:        2019.05.002
 Release:        1
 Summary:        A massively parallel eigenvector solver
 License:        LGPL-3.0
