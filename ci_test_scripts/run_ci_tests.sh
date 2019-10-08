@@ -206,13 +206,10 @@ then
 
     fi
   fi
-  #if [ $exitCode -ne 0 ]
-  #then
   if [ -f ./test-suite.log ]
   then
     cat ./test-suite.log
   fi
-  #fi
 
   exit $exitCode
 

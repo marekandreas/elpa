@@ -145,20 +145,15 @@ then
     cat ./ELPA_CI.out.*
     #if [ $exitCode -ne 0 ]
     #then
-      cat ./ELPA_CI.err.*
+    cat ./ELPA_CI.err.*
     #fi
-    if [ -f ./test-suite.log ]
-    then
-      cat ./test-suite.log
-    fi
 
   fi
 
-  #if [ $exitCode -ne 0 ]
-  #then
+  if [ -f ./test-suite.log ]
+  then
     cat ./test-suite.log
-  #fi
-
+  fi
   exit $exitCode
 
 fi
