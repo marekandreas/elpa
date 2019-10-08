@@ -87,10 +87,10 @@ module elpa_impl
      procedure, public :: destroy => elpa_destroy               !< a destroy method: implemented in elpa_destroy
 
      ! KV store
-     procedure, public :: is_set => elpa_is_set                 !< a method to check whether a key/value pair has been set : implemented
-                                                                !< in elpa_is_set
-     procedure, public :: can_set => elpa_can_set               !< a method to check whether a key/value pair can be set : implemented
-                                                                !< in elpa_can_set
+     procedure, public :: is_set => elpa_is_set             !< a method to check whether a key/value pair has been set : implemented
+                                                            !< in elpa_is_set
+     procedure, public :: can_set => elpa_can_set           !< a method to check whether a key/value pair can be set : implemented
+                                                            !< in elpa_can_set
 
      ! call before setup if created from the legacy api
      ! remove this function completely after the legacy api is dropped
@@ -129,7 +129,7 @@ module elpa_impl
      procedure, public :: elpa_generalized_eigenvalues_dc
      procedure, public :: elpa_generalized_eigenvalues_fc
 
-     procedure, public :: elpa_hermitian_multiply_d            !< public methods to implement a "hermitian" multiplication of matrices a and b
+     procedure, public :: elpa_hermitian_multiply_d      !< public methods to implement a "hermitian" multiplication of matrices a and b
      procedure, public :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
      procedure, public :: elpa_hermitian_multiply_dc           !< for complex valued matrices:   a**H * b
      procedure, public :: elpa_hermitian_multiply_fc
@@ -194,8 +194,7 @@ module elpa_impl
 #else
       integer, intent(out)           :: error
 #endif
-      integer                        :: error2
-
+      integer                        :: error2, output_build_config
 
       allocate(obj, stat=error2)
       if (error2 .ne. 0) then
@@ -207,9 +206,13 @@ module elpa_impl
       ! check whether init has ever been called
       if ( elpa_initialized() .ne. ELPA_OK) then
         write(error_unit, *) "elpa_allocate(): you must call elpa_init() once before creating instances of ELPA"
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_API_VERSION
         endif
+#else
+        error = ELPA_ERROR_API_VERSION
+#endif
         return
       endif
 
@@ -222,9 +225,13 @@ module elpa_impl
       obj%local_ncols => obj%associate_int("local_ncols")
       obj%nblk => obj%associate_int("nblk")
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
     end function
 
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
@@ -340,14 +347,24 @@ module elpa_impl
 #else
       integer(kind=c_int), intent(out)              :: error
 #endif
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       if (elpa_index_load_settings_c(self%index, file_name // c_null_char) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_load_settings())"
+
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_CANNOT_OPEN_FILE
         endif
+#else
+        error = ELPA_ERROR_CANNOT_OPEN_FILE
+#endif
       endif
     end subroutine
 
@@ -383,14 +400,24 @@ module elpa_impl
 #else
       integer(kind=c_int), intent(out)              :: error
 #endif
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       if (elpa_index_print_settings_c(self%index, c_null_char) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_print_settings())"
+
+#ifdef USE_FORTRAN2008
         if (present(error)) then
-          error = ELPA_ERROR
+          error = ELPA_ERROR_CRITICAL
         endif
+#else
+        error = ELPA_ERROR_CRITICAL
+#endif
       endif
     end subroutine
 
@@ -427,15 +454,23 @@ module elpa_impl
       integer(kind=c_int), intent(out)              :: error
 #endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       if (elpa_index_print_settings_c(self%index, file_name // c_null_char) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_store_settings())"
+
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_CANNOT_OPEN_FILE
         endif
-
+#else
+        error = ELPA_ERROR_CANNOT_OPEN_FILE
+#endif
       endif
     end subroutine
 
@@ -460,9 +495,6 @@ module elpa_impl
     end subroutine
 
 
-
-
-
 #ifdef ENABLE_AUTOTUNING
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
     !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
@@ -483,9 +515,10 @@ module elpa_impl
       type(c_ptr), value                  :: autotune_handle
 
       type(elpa_autotune_impl_t), pointer :: self
+      integer(kind=c_int)                 :: error
 
       call c_f_pointer(autotune_handle, self)
-      call self%destroy()
+      call self%destroy(error)
       deallocate(self)
     end subroutine
 
@@ -521,7 +554,7 @@ module elpa_impl
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
       class(elpa_impl_t), intent(inout)   :: self
-      integer                             :: error, timings, performance
+      integer                             :: error, timings, performance, build_config
 
 #ifdef WITH_MPI
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
@@ -532,6 +565,7 @@ module elpa_impl
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
 
 #endif
+
 
 #ifdef HAVE_LIKWID
       !initialize likwid
@@ -711,6 +745,18 @@ module elpa_impl
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 #endif
 
+#if STORE_BUILD_CONFIG
+      call self%get("output_build_config",build_config, error)
+      if ( build_config .eq. 1) then
+#ifdef WITH_MPI
+        if (my_id .eq. 0) then
+#endif
+          call print_build_config()
+#ifdef WITH_MPI
+        endif
+#endif
+      endif
+#endif
     end function
 
 
@@ -851,7 +897,12 @@ module elpa_impl
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
       type(c_ptr) :: ptr
+#ifdef USE_FORTRAN2008
       integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
+
       integer :: val, actual_error
       character(kind=c_char, len=elpa_index_int_value_to_strlen_c(self%index, option_name // C_NULL_CHAR)), pointer :: string
 
@@ -859,9 +910,13 @@ module elpa_impl
 
       call self%get(option_name, val, actual_error)
       if (actual_error /= ELPA_OK) then
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = actual_error
         endif
+#else
+          error = actual_error
+#endif
         return
       endif
 
@@ -870,9 +925,13 @@ module elpa_impl
         call c_f_pointer(ptr, string)
       endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = actual_error
       endif
+#else
+        error = actual_error
+#endif
     end function
 
 
@@ -1023,9 +1082,13 @@ module elpa_impl
 #endif
       integer                              :: error2
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
 
 #ifdef HAVE_LIKWID
       call likwid_markerStopRegion("TOTAL")
@@ -1036,24 +1099,31 @@ module elpa_impl
       if (self%communicators_owned == 1) then
         call self%get("mpi_comm_rows", mpi_comm_rows, error2)
         if (error2 .ne. ELPA_OK) then
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = error2
-            return
           else
             write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-            return
           endif
-        endif
+#else
+          error = error2
+#endif
+          return
+        endif ! error happend
+
         call self%get("mpi_comm_cols", mpi_comm_cols,error2)
         if (error2 .ne. ELPA_OK) then
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = error2
-            return
           else
             write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-            return
           endif
-        endif
+#else
+          error = error2
+#endif
+          return
+        endif ! error happend
 
         ! this is just for debugging ! do not leave in a relase
         !write(error_unit, '(A,2I13)') "FREE comms", mpi_comm_rows, mpi_comm_cols
@@ -1061,42 +1131,56 @@ module elpa_impl
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR_CRITICAL
           endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
           return
-        endif
+        endif ! mpierr happend
         call self%set("mpi_comm_cols", -12345, error2)
         if (error2 .ne. ELPA_OK) then
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = error2
-            return
           else
             write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-            return
           endif
-        endif
+#else
+          error = error2
+#endif
+          return
+        endif ! error happend
         call mpi_comm_free(mpi_comm_cols, mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_free for col communicator: ", trim(mpierr_string)
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR_CRITICAL
           endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
           return
-        endif
+        endif ! mpierr happend
         call self%set("mpi_comm_rows", -12345,error2)
         if (error2 .ne. ELPA_OK) then
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = error2
-            return
           else
             write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-            return
           endif
-        endif
-      endif
+#else
+          error = error2
 #endif
+          return
+        endif ! error happend
+      endif
+#endif /* WITH_MPI */
 
       call timer_free(self%timer)
       call timer_free(self%autotune_timer)
@@ -1213,6 +1297,7 @@ module elpa_impl
 #else
       error = ELPA_OK
 #endif
+
       if (elpa_get_api_version() < EARLIEST_AUTOTUNE_VERSION) then
         write(error_unit, "(a,i0,a)") "ELPA: Error API version: Autotuning does not support ", elpa_get_api_version()
 #ifdef USE_FORTRAN2008
@@ -1298,17 +1383,26 @@ module elpa_impl
       character(len=MPI_MAX_ERROR_STRING)           :: mpierr_string
 #endif
 
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           print *, "This should not happen"
+#ifdef USE_FORTRAN2008
           if (present(error)) then
-            error = ELPA_OK
+            error = ELPA_ERROR
           endif
+#else
+          error = ELPA_ERROR
+#endif
       end select
 
       unfinished = .false.
@@ -1320,20 +1414,29 @@ module elpa_impl
         print *, "Cannot do autotuning without detailed timings"
 
         ! TODO check this. Do we really want to return only if error is present? And should it be ELPA_OK?
+#ifdef USE_FORTRAN2008
         if (present(error)) then
-          error = ELPA_OK
-          return
+          error = ELPA_ERROR_CRITICAL
         endif
+#else
+        error = ELPA_OK
 #endif
+        return
+#endif /* HAVE_DETAILED_TIMINGS */
 
 #ifdef WITH_MPI
         ! find the average time spent .. we need a unique value on all ranks
         call self%get("mpi_comm_parent", mpi_comm_parent, error2)
         call self%get("num_processes", np_total, error3)
         if ((error2 .ne. ELPA_OK) .or. (error3 .ne. ELPA_OK)) then
-          print *, "Parrent communicator is not set properly. Aborting..."
-          if (present(error)) &
+          print *, "Parent communicator is not set properly. Aborting..."
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
             error = ELPA_ERROR_CRITICAL
+          endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
           return
         endif
 
@@ -1345,14 +1448,14 @@ module elpa_impl
           return
         endif
         time_spent = recvbuf(1) / np_total
-#endif
+#endif /* WITH_MPI */
 
         if (ts_impl%min_loc == -1 .or. (time_spent < ts_impl%min_val)) then
           ts_impl%min_val = time_spent
           ts_impl%min_loc = ts_impl%current
         end if
         call self%autotune_timer%free()
-      endif
+      endif ! (ts_impl%current >= 0)
 
       do while (ts_impl%current < ts_impl%cardinality - 1)
         ts_impl%current = ts_impl%current + 1
@@ -1411,24 +1514,37 @@ module elpa_impl
 #else
       integer(kind=ik), intent(out)              :: error
 #endif
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           write(error_unit, *) "This should not happen! Critical error"
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR_CRITICAL
           endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
       if (elpa_index_set_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_autotune_set_best())"
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
         endif
+#else
+        error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+#endif
       endif
     end subroutine
 
@@ -1449,17 +1565,26 @@ module elpa_impl
 #else
       integer(kind=c_int),  intent(out)          :: error
 #endif
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           write(error_unit, *) "This should not happen! Critical error"
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR_CRITICAL
           endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
       !print *, "The following settings were found to be best:"
@@ -1467,9 +1592,13 @@ module elpa_impl
       flush(output_unit)
       if (elpa_index_print_autotune_parameters_c(self%index, ts_impl%level, ts_impl%domain) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_autotune_print_best())"
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
         endif
+#else
+        error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+#endif
       endif
     end subroutine
 
@@ -1490,25 +1619,38 @@ module elpa_impl
 #else
       integer(kind=c_int), intent(out)           :: error
 #endif
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           write(error_unit, *) "This should not happen! Critical erro"
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR_CRITICAL
           endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
       if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, c_null_char) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_autotune_print_state())"
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
         endif
+#else
+        error = ELPA_ERROR_AUTOTUNE_OBJECT_CHANGED
+#endif
       endif
     end subroutine
 
@@ -1554,25 +1696,38 @@ module elpa_impl
 #else
       integer(kind=c_int), intent(out)           :: error
 #endif
+
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           write(error_unit, *) "This should not happen! Critical error"
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR_CRITICAL
           endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
       if (elpa_index_print_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
         write(error_unit, *) "This should not happen (in elpa_autotune_save_state())"
+#ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR_CANNOT_OPEN_FILE
         endif
+#else
+        error = ELPA_ERROR_CANNOT_OPEN_FILE
+#endif
       endif
     end subroutine
 
@@ -1623,17 +1778,25 @@ module elpa_impl
       integer(kind=c_int), intent(out)           :: error
 #endif
 
+#ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
       endif
+#else
+      error = ELPA_OK
+#endif
       select type(tune_state)
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
           write(error_unit, *) "This should not happen! Critical error"
+#ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR_CRITICAL
           endif
+#else
+          error = ELPA_ERROR_CRITICAL
+#endif
       end select
 
       !print *, "testing, before C call, ts_impl%current is ", ts_impl%current
@@ -1641,9 +1804,13 @@ module elpa_impl
       if (elpa_index_load_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
          write(error_unit, *) "This should not happen (in elpa_autotune_load_state())"
-        if (present(error)) then
-          error = ELPA_ERROR_CANNOT_OPEN_FILE
-        endif
+#ifdef USE_FORTRAN2008
+         if (present(error)) then
+           error = ELPA_ERROR_CANNOT_OPEN_FILE
+         endif
+#else
+         error = ELPA_ERROR_CANNOT_OPEN_FILE
+#endif
       endif
       !print *, "testing, after C call, ts_impl%current is ", ts_impl%current
     end subroutine

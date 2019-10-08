@@ -124,6 +124,8 @@ program test
 #ifdef WITH_OPENMP
    use omp_lib
 #endif
+   use precision
+
    implicit none
 
    ! matrix dimensions
@@ -617,9 +619,11 @@ program test
 
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
-     kernel = elpa_option_enumerate(KERNEL_KEY, i)
-     if (kernel .eq. ELPA_2STAGE_REAL_GPU) continue
-     if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) continue
+     if (TEST_GPU .eq. 0) then
+       kernel = elpa_option_enumerate(KERNEL_KEY, i)
+       if (kernel .eq. ELPA_2STAGE_REAL_GPU) continue
+       if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) continue
+     endif
 #endif
 #ifdef TEST_KERNEL
      kernel = TEST_KERNEL

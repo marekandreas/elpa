@@ -14,6 +14,7 @@ slurmBatch="no"
 projectName="unknown"
 projectExecutable=""
 projectConfigureArg=""
+gpuJob="no"
 
 function usage() {
 	cat >&2 <<-EOF
@@ -21,7 +22,7 @@ function usage() {
 		Call all the necessary steps to perform an ELPA CI test
 
 		Usage:
-		  run_project_tests [-c configure arguments] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-q submit command] [-S submit to Slurm] [-p projectName] [-e projectExecutable] [-C project configure arguments]"
+		  run_project_tests [-c configure arguments] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-q submit command] [-S submit to Slurm] [-p projectName] [-e projectExecutable] [-C project configure arguments] [-g gpu job]"
 
 		Options:
 		 -c configure arguments
@@ -56,13 +57,16 @@ function usage() {
 		 -C project configure arguments
 		    arguments for the configure of the project
 
+		 -g gpu job
+		    if "yes" a gpu job is assumed
+
 		 -h
 		    Print this help text
 	EOF
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:q:i:S:p:e:C:h" opt; do
+while getopts "c:t:j:m:n:b:o:s:q:i:S:p:e:C:g:h" opt; do
 	case $opt in
 		t)
 			mpiTasks=$OPTARG;;
@@ -86,6 +90,8 @@ while getopts "c:t:j:m:n:b:o:s:q:i:S:p:e:C:h" opt; do
 			projectExecutable=$OPTARG;;
 		C)
 			projectConfigureArgs=$OPTARG;;
+		g)
+			gpuJob=$OPTARG;;
 		:)
 			echo "Option -$OPTARG requires an argument" >&2;;
 		h)
@@ -133,15 +139,15 @@ then
     echo "../autogen.sh"  >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running configure " >> ./run_${CLUSTER}_1node.sh
-    echo "../configure " "$configureArgs" >> ./run_${CLUSTER}_1node.sh
+    echo "../configure " "$configureArgs" " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running make " >> ./run_${CLUSTER}_1node.sh
-    echo "make -j 8"  >> ./run_${CLUSTER}_1node.sh
+    echo "make -j 8 || { exit 1; }"  >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running make install" >> ./run_${CLUSTER}_1node.sh
-    echo "make install" >> ./run_${CLUSTER}_1node.sh
+    echo "make install || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
     echo "popd" >> ./run_${CLUSTER}_1node.sh
     echo "mkdir -p $projectName/build" >> ./run_${CLUSTER}_1node.sh
     echo "pushd $projectName/build" >> ./run_${CLUSTER}_1node.sh
@@ -159,19 +165,22 @@ then
     echo "../autogen.sh" >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running configure " >> ./run_${CLUSTER}_1node.sh
-    echo "../configure " "$projectConfigureArgs " >> ./run_${CLUSTER}_1node.sh
+    echo "../configure " "$projectConfigureArgs " " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
     echo " "  >> ./run_${CLUSTER}_1node.sh
     echo "#Running make " >> ./run_${CLUSTER}_1node.sh
-    echo "make -j 8" >> ./run_${CLUSTER}_1node.sh
+    echo "make -j 8 || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
     echo "export LD_LIBRARY_PATH=$MKL_HOME/lib/intel64:\$LD_LIBRARY_PATH" >> ./run_${CLUSTER}_1node.sh
     echo "./$projectExecutable" >> ./run_${CLUSTER}_1node.sh
-    echo "make distclean" >> ./run_${CLUSTER}_1node.sh
+    echo "make distclean || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
     echo "popd" >> ./run_${CLUSTER}_1node.sh
     echo "pushd build" >> ./run_${CLUSTER}_1node.sh
-    echo "make distclean" >> ./run_${CLUSTER}_1node.sh
+    echo "make distclean || { exit 1; }" >> ./run_${CLUSTER}_1node.sh
     echo "rm -rf installdest" >> ./run_${CLUSTER}_1node.sh
     echo "popd" >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
+    echo "#copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node.sh
+    echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node.sh
+    echo "cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node.sh
     echo " "
     echo "Job script for the run"
     cat ./run_${CLUSTER}_1node.sh

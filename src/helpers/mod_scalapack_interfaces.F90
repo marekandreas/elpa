@@ -1,0 +1,230 @@
+!    This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!
+!    More information can be found here:
+!    http://elpa.rzg.mpg.de/
+!
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+! This file was written by A. Marek, MPCDF
+
+
+#include "config-f90.h"
+module elpa_scalapack_interfaces
+  use iso_c_binding
+  use precision
+
+  implicit none
+
+  public
+
+  interface
+    subroutine pdgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, IA, JA, DESCA, B, IB, JB, DESCB, BETA, C, IC, JC, DESCC)
+    use precision
+    implicit none
+    character               :: TRANSA, TRANSB
+    integer(kind=BLAS_KIND) :: M, N, K, IA, JA, DESCA(*), IB, JB, DESCB(*), IC, JC, DESCC(*)
+    real(kind=rk8)          :: ALPHA, BETA
+    real(kind=rk8)          :: A(*), B(*), C(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pdnrm2(N, norm2, x, ix, jx, descx, incx)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: N, ix, jx, descx(*), incx
+    real(kind=rk8)          :: norm2, x(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pdlaset(UPLO, M, N, ALPHA, BETA, A, IA, JA, DESCA)
+    use precision
+    implicit none
+    character               :: UPLO
+    integer(kind=BLAS_KIND) :: M, N, IA, JA, DESCA(*)
+    real(kind=rk8)          :: ALPHA, BETA
+    real(kind=rk8)          :: A(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pdtran(M, N, ALPHA, A, IA, JA, DESCA, BETA, C, IC, JC, DESCC)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: M, N, IA, JA, DESCA(*), IC, JC, DESCC(*)
+    real(kind=rk8)          :: ALPHA, BETA
+    real(kind=rk8)          :: A(*), C(*)
+    end subroutine
+  end interface
+
+
+
+
+  interface
+    subroutine psgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, IA, JA, DESCA, B, IB, JB, DESCB, BETA, C, IC, JC, DESCC)
+    use precision
+    implicit none
+    character               :: TRANSA, TRANSB
+    integer(kind=BLAS_KIND) :: M, N, K, IA, JA, DESCA(*), IB, JB, DESCB(*), IC, JC, DESCC(*)
+    real(kind=rk4)          :: ALPHA, BETA
+    real(kind=rk4)          :: A(*), B(*), C(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine psnrm2(N, norm2, x, ix, jx, descx, incx)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: N, ix, jx, descx(*), incx
+    real(kind=rk4)          :: norm2, x(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pslaset(UPLO, M, N, ALPHA, BETA, A, IA, JA, DESCA)
+    use precision
+    implicit none
+    character               :: UPLO
+    integer(kind=BLAS_KIND) :: M, N, IA, JA, DESCA(*)
+    real(kind=rk4)          :: ALPHA, BETA
+    real(kind=rk4)          :: A(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pstran(M, N, ALPHA, A, IA, JA, DESCA, BETA, C, IC, JC, DESCC)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: M, N, IA, JA, DESCA(*), IC, JC, DESCC(*)
+    real(kind=rk4)          :: ALPHA, BETA
+    real(kind=rk4)          :: A(*), C(*)
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine pzgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, IA, JA, DESCA, B, IB, JB, DESCB, BETA, C, IC, JC, DESCC)
+    use precision
+    implicit none
+    character               :: TRANSA, TRANSB
+    integer(kind=BLAS_KIND) :: M, N, K, IA, JA, DESCA(*), IB, JB, DESCB(*), IC, JC, DESCC(*)
+    complex(kind=ck8)       :: ALPHA, BETA
+    complex(kind=ck8)       :: A(*), B(*), C(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pzdotc(N, DOTC, X, ix, jx, descx, incx, Y, iy, jy, descy, incy)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: N, ix, jx, descx(*), incx, iy, jy, descy(*), incy
+    complex(kind=ck8)       :: DOTC
+    complex(kind=ck8)       :: X(*), Y(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pzlaset(UPLO, M, N, ALPHA, BETA, A, IA, JA, DESCA)
+    use precision
+    implicit none
+    character               :: UPLO
+    integer(kind=BLAS_KIND) :: M, N, IA, JA, DESCA(*)
+    complex(kind=ck8)       :: ALPHA, BETA
+    complex(kind=ck8)       :: A(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pztranc(M, N, ALPHA, A, IA, JA, DESCA, BETA, C, IC, JC, DESCC)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: M, N, IA, JA, DESCA(*), IC, JC, DESCC(*)
+    complex(kind=ck8)       :: ALPHA, BETA
+    complex(kind=ck8)       :: A(*), C(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pcgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, IA, JA, DESCA, B, IB, JB, DESCB, BETA, C, IC, JC, DESCC)
+    use precision
+    implicit none
+    character               :: TRANSA, TRANSB
+    integer(kind=BLAS_KIND) :: M, N, K, IA, JA, DESCA(*), IB, JB, DESCB(*), IC, JC, DESCC(*)
+    complex(kind=ck4)       :: ALPHA, BETA
+    complex(kind=ck4)       :: A(*), B(*), C(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pcdotc(N, DOTC, X, ix, jx, descx, incx, Y, iy, jy, descy, incy)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: N, ix, jx, descx(*), incx, iy, jy, descy(*), incy
+    complex(kind=ck4)       :: DOTC
+    complex(kind=ck4)       :: X(*), Y(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pclaset(UPLO, M, N, ALPHA, BETA, A, IA, JA, DESCA)
+    use precision
+    implicit none
+    character               :: UPLO
+    integer(kind=BLAS_KIND) :: M, N, IA, JA, DESCA(*)
+    complex(kind=ck4)       :: ALPHA, BETA
+    complex(kind=ck4)       :: A(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine pctranc(M, N, ALPHA, A, IA, JA, DESCA, BETA, C, IC, JC, DESCC)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: M, N, IA, JA, DESCA(*), IC, JC, DESCC(*)
+    complex(kind=ck4)       :: ALPHA, BETA
+    complex(kind=ck4)       :: A(*), C(*)
+    end subroutine
+  end interface
+
+
+
+
+
+
+end module
+
+

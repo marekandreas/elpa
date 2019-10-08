@@ -92,6 +92,8 @@
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
+      use elpa_blas_interfaces
+
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)   :: obj

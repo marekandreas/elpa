@@ -143,11 +143,15 @@
       MATH_DATATYPE(kind=rck)   , allocatable    :: row_group(:,:)
 
 #ifdef WITH_OPENMP
-      MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:), top_border_recv_buffer(:,:)
-      MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:), bottom_border_recv_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: top_border_recv_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_recv_buffer(:,:)
 #else
-      MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:,:), top_border_recv_buffer(:,:,:)
-      MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:,:), bottom_border_recv_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: top_border_recv_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_recv_buffer(:,:,:)
 #endif
 
       integer(kind=c_intptr_t)                   :: aIntern_dev
@@ -1234,7 +1238,7 @@
 #endif /* WITH_MPI */
 
           if (useGPU) then
-            successCUDA =  cuda_memcpy(bcast_buffer_dev, loc(bcast_buffer(1,1)),  &
+            successCUDA =  cuda_memcpy(bcast_buffer_dev, int(loc(bcast_buffer(1,1)),kind=c_intptr_t),  &
                                        nbw * current_local_n *    &
                                        size_of_datatype, &
                                        cudaMemcpyHostToDevice)
@@ -1345,7 +1349,8 @@
 
               if (useGPU) then
                 dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * size_of_datatype
-                successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc(bottom_border_recv_buffer(1,1,i)), &
+                successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , &
+                                           int(loc(bottom_border_recv_buffer(1,1,i)),kind=c_intptr_t), &
                                            stripe_width*nbw*  size_of_datatype,    &
                                            cudaMemcpyHostToDevice)
                 if (.not.(successCUDA)) then
@@ -1430,7 +1435,7 @@
              if (useGPU) then
                dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
                !             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
-               successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , loc(top_border_recv_buffer(1,1,i)),  &
+               successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , int(loc(top_border_recv_buffer(1,1,i)),kind=c_intptr_t),  &
                                            stripe_width*top_msg_length* size_of_datatype,      &
                                            cudaMemcpyHostToDevice)
                if (.not.(successCUDA)) then
@@ -1523,7 +1528,7 @@
 
              if (useGPU) then
                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-               successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset, &
+               successCUDA =  cuda_memcpy( int(loc(bottom_border_send_buffer(1,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                           stripe_width * bottom_msg_length * size_of_datatype,      &
                                           cudaMemcpyDeviceToHost)
                if (.not.(successCUDA)) then
@@ -1634,7 +1639,7 @@
 
           if (useGPU) then
             dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-            successCUDA =  cuda_memcpy( loc(bottom_border_send_buffer(1,1,i)), aIntern_dev + dev_offset,  &
+            successCUDA =  cuda_memcpy(int(loc(bottom_border_send_buffer(1,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
                                          stripe_width*bottom_msg_length* size_of_datatype,  &
                                          cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
@@ -1730,7 +1735,7 @@
 #endif
           if (useGPU) then
             dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-            successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , loc( top_border_recv_buffer(:,1,i)),  &
+            successCUDA =  cuda_memcpy( aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,1,i)),kind=c_intptr_t),  &
                                        stripe_width * top_msg_length * size_of_datatype,   &
                cudaMemcpyHostToDevice)
             if (.not.(successCUDA)) then
@@ -1858,7 +1863,7 @@
 #endif
         if (useGPU) then
           dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-          successCUDA =  cuda_memcpy( loc(top_border_send_buffer(:,1,i)), aIntern_dev + dev_offset, &
+          successCUDA =  cuda_memcpy( int(loc(top_border_send_buffer(:,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                      stripe_width*nbw * size_of_datatype, &
                                      cudaMemcpyDeviceToHost)
           if (.not.(successCUDA)) then
@@ -2205,7 +2210,7 @@
         endif
 
           ! copy q_dev to device, maybe this can be avoided if q_dev can be kept on device in trans_ev_tridi_to_band
-          successCUDA = cuda_memcpy(q_dev, loc(q), (ldq)*(matrixCols)* size_of_datatype,   &
+          successCUDA = cuda_memcpy(q_dev, int(loc(q),kind=c_intptr_t), (ldq)*(matrixCols)* size_of_datatype,   &
                   cudaMemcpyHostToDevice)
           if (.not.(successCUDA)) then
             print *,"trans_ev_tridi_to_band_&

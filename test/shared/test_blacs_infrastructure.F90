@@ -54,7 +54,11 @@ module test_blacs_infrastructure
 
       implicit none
       integer(kind=c_int), intent(in), value  :: mpi_comm_parent, np_rows, np_cols
+#ifdef SXAURORA
+      character(len=1), intent(in)            :: layout
+#else
       character(len=1), intent(in), value     :: layout
+#endif
       integer(kind=c_int), intent(out)        :: my_blacs_ctxt, my_prow, my_pcol
 
 #ifdef WITH_MPI
@@ -90,6 +94,7 @@ module test_blacs_infrastructure
 
       use elpa_utilities, only : error_unit
       use test_util
+      use precision
       implicit none
 
       integer(kind=ik), intent(in)  :: na, nblk, my_prow, my_pcol, np_rows,   &

@@ -59,8 +59,10 @@ module matrix_plot
       ! print a_dev
 
       if(useGpu) then
-        successCUDA = cuda_memcpy(loc(a_dev_helper(1,1)), a_dev, lda * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
-
+#ifdef HAVE_GPU_VERSION
+        successCUDA = cuda_memcpy(int(loc(a_dev_helper(1,1)),kind=c_intptr_t), &
+                      a_dev, lda * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
+#endif
         write(filename, "(A,A,I0.4,A,I0.2,A)") trim(directory), "/a_dev-", counter, "-", mpi_rank, ".txt"
         write(*,*) trim(filename)
         open(unit=out_unit, file=trim(filename), action="write",status="replace")

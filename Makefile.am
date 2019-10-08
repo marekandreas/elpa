@@ -38,6 +38,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_autotune_impl.F90 \
   src/elpa_abstract_impl.F90 \
   src/helpers/mod_precision.F90 \
+  src/helpers/mod_blas_interfaces.F90 \
+  src/helpers/mod_scalapack_interfaces.F90 \
   src/helpers/mod_mpi.F90 \
   src/helpers/mod_mpi_stubs.F90 \
   src/helpers/mod_omp.F90 \
@@ -454,6 +456,12 @@ if WANT_SINGLE_PRECISION_COMPLEX
 endif
 endif
 
+
+if STORE_BUILD_CONFIG
+  libelpa@SUFFIX@_private_la_SOURCES += src/helpers/print_build_config.c
+endif
+
+
 # Cuda files
 .cu.lo:
 	NVCC="$(NVCC)" libtool --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
@@ -470,6 +478,8 @@ BUILT_SOURCES = $(generated_headers)
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = \
   $(wildcard modules/*) \
+  src/helpers/lapack_interfaces.h \
+  src/helpers/scalapack_interfaces.h \
   elpa/elpa.h \
   elpa/elpa_generic.h \
   elpa/elpa_legacy.h
@@ -607,51 +617,39 @@ endif
 
 #include test_programs_manual.am
 
-noinst_PROGRAMS += double_instance@SUFFIX@
-check_SCRIPTS += double_instance@SUFFIX@_default.sh
-double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
-double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
-double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_double_instance@SUFFIX@
+check_SCRIPTS += validate_double_instance@SUFFIX@_default.sh
+validate_double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
+validate_double_instance@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
-noinst_PROGRAMS += real_2stage_banded@SUFFIX@
-check_SCRIPTS += real_2stage_banded@SUFFIX@_default.sh
-real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
-real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_real_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_real_2stage_banded@SUFFIX@_default.sh
+validate_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90 
+validate_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
-noinst_PROGRAMS += complex_2stage_banded@SUFFIX@
-check_SCRIPTS += complex_2stage_banded@SUFFIX@_default.sh
-complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
-complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_complex_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_complex_2stage_banded@SUFFIX@_default.sh
+validate_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/complex_2stage_banded.F90
+validate_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
 if WANT_SINGLE_PRECISION_REAL
-noinst_PROGRAMS += single_real_2stage_banded@SUFFIX@
-check_SCRIPTS += single_real_2stage_banded@SUFFIX@_default.sh
-single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
-single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_single_real_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_single_real_2stage_banded@SUFFIX@_default.sh
+validate_single_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_real_2stage_banded.F90
+validate_single_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_single_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 endif
 
 if WANT_SINGLE_PRECISION_COMPLEX
-noinst_PROGRAMS += single_complex_2stage_banded@SUFFIX@
-check_SCRIPTS += single_complex_2stage_banded@SUFFIX@_default.sh
-single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
-single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
-single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
+noinst_PROGRAMS += validate_single_complex_2stage_banded@SUFFIX@
+check_SCRIPTS += validate_single_complex_2stage_banded@SUFFIX@_default.sh
+validate_single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
+validate_single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
+validate_single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 endif
-
-#noinst_PROGRAMS += test_c_bindings@SUFFIX@
-#check_SCRIPTS += test_c_bindings@SUFFIX@_default.sh
-#test_c_bindings@SUFFIX@_SOURCES = test/Fortran/elpa_generalized/test_bindings.F90
-#test_c_bindings@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-#test_c_bindings@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules
-
-#noinst_PROGRAMS += test_c_cannon@SUFFIX@
-#check_SCRIPTS += test_c_cannon@SUFFIX@_default.sh
-#test_c_cannon@SUFFIX@_SOURCES = test/C/elpa_generalized/test_cannon.c
-#test_c_cannon@SUFFIX@_LDADD = $(test_program_ldadd) $(FCLIBS)
-#test_c_cannon@SUFFIX@_CFLAGS = $(test_program_cflags)
 
 # python wrapper
 pyelpadir = $(pythondir)/pyelpa
@@ -669,7 +667,6 @@ wrapper_la_CFLAGS = $(PYTHON_INCLUDE) $(NUMPY_INCLUDE) $(AM_CFLAGS)
 
 python/pyelpa/wrapper.c: python/pyelpa/wrapper.pyx
 	cython $< -o $@
-
 # test scripts
 TASKS ?= 2
 if WITH_MPI
@@ -733,7 +730,7 @@ CLEANFILES = \
 
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
-	-rm -rf test_*.sh
+	-rm -rf validate_*.sh
 	-rm -rf legacy_*.sh
 	-rm -rf real_2stage*.sh
 	-rm -rf complex_2stage*.sh
@@ -793,8 +790,6 @@ EXTRA_DIST = \
   src/elpa2/elpa2_tridiag_band_template.F90 \
   src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/complex_template.F90 \
-  src/elpa2/kernels/real_vsx_4hv_template.c \
-  src/elpa2/kernels/real_vsx_6hv_template.c \
   src/elpa2/kernels/real_128bit_256bit_512bit_BLOCK_template.c \
   src/elpa2/kernels/real_template.F90 \
   src/elpa2/kernels/simple_template.F90 \

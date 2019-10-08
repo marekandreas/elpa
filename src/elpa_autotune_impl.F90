@@ -31,7 +31,6 @@ module elpa_autotune_impl
 #else
       integer, intent(out)           :: error
 #endif
-      !print *, "Print me"
     end subroutine
 
     !> \brief function to destroy an elpa autotune object
@@ -48,7 +47,11 @@ module elpa_autotune_impl
 #endif
       
       ! nothing to do atm
+#ifdef USE_FORTRAN2008
       if (present(error)) error = ELPA_OK
+#else
+      error = ELPA_OK
+#endif
     end subroutine
 #endif
 end module

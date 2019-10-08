@@ -808,6 +808,7 @@ module elpa_api
         write(error_unit, "(a,i0,a)") "ELPA: Error API version ", api_version," is not supported by this library"
         error = ELPA_ERROR_API_VERSION
       endif
+
     end function
 
 
@@ -865,11 +866,11 @@ module elpa_api
 #else
       integer, intent(out)           :: error
 #endif
+
 #ifdef USE_FORTRAN2008
-      if (present(error)) then
-        error = ELPA_OK
-        return
-      endif
+     if (present(error)) error = ELPA_OK
+#else
+     error = ELPA_OK
 #endif
     end subroutine
     !> \brief helper function for error strings

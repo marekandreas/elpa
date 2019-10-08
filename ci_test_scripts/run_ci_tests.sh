@@ -14,6 +14,7 @@ skipStep=0
 batchCommand=""
 interactiveRun="yes"
 slurmBatch="no"
+gpuJob="no"
 
 function usage() {
 	cat >&2 <<-EOF
@@ -21,7 +22,7 @@ function usage() {
 		Call all the necessary steps to perform an ELPA CI test
 
 		Usage:
-		  run_ci_tests [-c configure arguments] [-j makeTasks] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-s skipStep] [-q submit command] [-i interactive run] [-S submit to Slurm]"
+		  run_ci_tests [-c configure arguments] [-j makeTasks] [-h] [-t MPI Tasks] [-m matrix size] [-n number of eigenvectors] [-b block size] [-o OpenMP threads] [-s skipStep] [-q submit command] [-i interactive run] [-S submit to Slurm] [-g GPU job]"
 
 		Options:
 		 -c configure arguments
@@ -56,13 +57,15 @@ function usage() {
 		 -S submit to slurm
 		    if "yes" a SLURM batch job will be submitted
 
+		 -g gpu job
+		    if "yes" a GPU job is assumed
 		 -h
 		    Print this help text
 	EOF
 }
 
 
-while getopts "c:t:j:m:n:b:o:s:q:i:S:h" opt; do
+while getopts "c:t:j:m:n:b:o:s:q:i:S:g:h" opt; do
 	case $opt in
 		j)
 			makeTasks=$OPTARG;;
@@ -86,6 +89,8 @@ while getopts "c:t:j:m:n:b:o:s:q:i:S:h" opt; do
 			interactiveRun=$OPTARG;;
 		S)
 			slurmBatch=$OPTARG;;
+		g)
+			gpuJob=$OPTARG;;
 		:)
 			echo "Option -$OPTARG requires an argument" >&2;;
 		h)
@@ -128,7 +133,7 @@ then
   echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS on $mpiTasks tasks"
 
   # GPU runners
-  if [ "$CI_RUNNER_TAGS" == "gpu" ]
+  if [ "$gpuJob" == "yes" ]
   then
     cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_2GPU.sh .
     echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_2GPU.sh
@@ -138,6 +143,10 @@ then
     echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node_2GPU.sh
 
     echo " "
     echo "Job script for the run"
@@ -156,50 +165,51 @@ then
       cat ./ELPA_CI_2gpu.err.*
     #fi
     
-  fi
+  else
 
-  #SSE, AVX, AVX2, and AVX-512 runners
-  if [[ "$CI_RUNNER_TAGS" =~ "sse" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx2" ]]  || [ ["$CI_RUNNER_TAGS" =~ "avx512" ]]
-  then
-    cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
-    echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node.sh
-    echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "make -j 16" >> ./run_${CLUSTER}_1node.sh
-    echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
-    echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
-    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node.sh
+    #SSE, AVX, AVX2, and AVX-512 runners
+    if [[ "$CI_RUNNER_TAGS" =~ "sse" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx" ]] || [[ "$CI_RUNNER_TAGS" =~ "avx2" ]]  || [ ["$CI_RUNNER_TAGS" =~ "avx512" ]]
+    then
+      cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
+      echo "./configure " "$configureArgs"  >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "make -j 16 " >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
+      echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
+      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  " >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "#copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node.sh
+      echo "cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node.sh
+      echo "cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node.sh
 
-    echo " "
-    echo "Job script for the run"
-    cat ./run_${CLUSTER}_1node.sh
-    echo " "
-    echo "Submitting to SLURM"
-    if sbatch -W ./run_${CLUSTER}_1node.sh; then
-      exitCode=$?
-    else
-      exitCode=$?
-      echo "Submission excited with exitCode $exitCode"
+      echo " "
+      echo "Job script for the run"
+      cat ./run_${CLUSTER}_1node.sh
+      echo " "
+      echo "Submitting to SLURM"
+      if sbatch -W ./run_${CLUSTER}_1node.sh; then
+        exitCode=$?
+      else
+        exitCode=$?
+        echo "Submission excited with exitCode $exitCode"
+      fi
+
+      echo " "
+      echo "Exit Code of sbatch: $exitCode"
+      echo " "
+      cat ./ELPA_CI.out.*
+      #if [ $exitCode -ne 0 ]
+      #then
+        cat ./ELPA_CI.err.*
+      #fi
+
     fi
-
-    echo " "
-    echo "Exit Code of sbatch: $exitCode"
-    echo " "
-    cat ./ELPA_CI.out.*
-    #if [ $exitCode -ne 0 ]
-    #then
-      cat ./ELPA_CI.err.*
-    #fi
-
   fi
-
-  #if [ $exitCode -ne 0 ]
-  #then
   if [ -f ./test-suite.log ]
   then
     cat ./test-suite.log
   fi
-  #fi
 
   exit $exitCode
 
