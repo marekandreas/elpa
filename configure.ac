@@ -189,6 +189,23 @@ fi
 
 AX_EXT
 
+dnl mixed-cluster-support
+AC_MSG_CHECKING(whether mixed-cluster-support should be enabled)
+AC_ARG_ENABLE([mixed-cluster-support],
+              AS_HELP_STRING([--mixed-cluster-support],
+                             [allow ELPA to automatically switch to a kernel supported on all CPUs of a cluster (only works for Intel CPUs at the moment), default no. Activate only if necessary has a performance penalty!]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_mixed_cluster_support=yes
+	       else
+	         enable_mixed_cluster_support=no
+	       fi
+	       ],
+              [enable_mixed_cluster_support="no"])
+AC_MSG_RESULT([$enable_mixed_cluster_support])
+if test x"${enable_mixed_cluster_support}" = x"yes"; then
+  AC_DEFINE([HAVE_MIXED_CLUSTER_SUPPORT], [1], [automatically support clusters with different Intel CPUs])
+fi
 
 AC_MSG_CHECKING(whether C compiler can use _Generic )
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
