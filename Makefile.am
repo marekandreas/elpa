@@ -64,10 +64,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/elpa1.F90 \
   src/elpa2/elpa2.F90 \
   src/elpa_generalized/cannon.c \
-  #src/elpa_generalized/test_c_bindings.c \
   src/helpers/matrix_plot.F90 \
-  src/general/ssmv_template.F90 \
-  src/general/ssr2_template.F90 \
+  src/general/elpa_ssmv.F90 \
+  src/general/elpa_ssr2.F90 \
   src/elpa_index.c
 
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c 
