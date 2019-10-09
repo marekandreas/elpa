@@ -1,4 +1,4 @@
-# [Eigenvalue SoLvers for Petaflop-Applications (ELPA)] (http://elpa.mpcdf.mpg.de)
+# [Eigenvalue SoLvers for Petaflop-Applications (ELPA)](http://elpa.mpcdf.mpg.de)
 
 ## Current Release ##
 
@@ -65,8 +65,8 @@ GNU Lesser General Public License as published by the Free Software Foundation.
 
 There exist several ways to obtain the *ELPA* library either as sources or pre-compiled packages:
 
-- official release tar-gz sources from the [*ELPA* webpage] (http://elpa.mpcdf.mpg.de/elpa-tar-archive)
-- from the [*ELPA* git repository] (https://gitlab.mpcdf.mpg.de/elpa/elpa)
+- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/elpa-tar-archive)
+- from the *ELPA*[git repository](https://gitlab.mpcdf.mpg.de/elpa/elpa)
 - as packaged software for several Linux distributions (e.g. Debian, Fedora, OpenSuse)
 
 ## Terms of usage
@@ -121,13 +121,12 @@ configure *ELPA*):
   - Scalapack routines
   - a working MPI library
 
-Please refer to the **INSTALL document** on details of the installation process and
+Please refer to the [INSTALL document](INSTALL.md) on details of the installation process and
 the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the "**USERS_GUIDE**" file, to get a documentation or at the [online]
-(http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.002/html/index.html) doxygen
+Please have a look at the [USERS_GUIDE](USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.002/html/index.html) doxygen
 documentation, where you find the definition of the interfaces.
 
 ## Contributing to *ELPA*
