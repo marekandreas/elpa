@@ -22,8 +22,9 @@ status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://
 [![Code 
 coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](http://elpa.pages.mpcdf.de/elpa/coverage_summary)
 
-[![License: LGPL v3][license-badge]](LICENSE)
-[license-badge]: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
+image:: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
+:target: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
+:alt: License
 
 ## About *ELPA* ##
 
@@ -104,7 +105,7 @@ Nonetheless, we are grateful if you cite the following publications:
  
   Kus; P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
   "Optimizations of the Eigenvaluesolvers in the ELPA Library",
-  Parllel Computing 85, 167-177 (2019)
+  Parallel Computing 85, 167-177 (2019)
   
 
 ## Installation of the *ELPA* library
