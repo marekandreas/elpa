@@ -22,7 +22,7 @@ status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://
 [![Code 
 coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](http://elpa.pages.mpcdf.de/elpa/coverage_summary)
 
-[![License: LGPL v3][licence-badge]](LICENSE)
+![License: LGPL v3][licence-badge]
 [license-badge]: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
 
 
