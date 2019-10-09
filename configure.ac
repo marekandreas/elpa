@@ -187,6 +187,9 @@ if test x"$c11_standard" = x"no"; then
   fi
 fi
 
+AX_EXT
+
+
 AC_MSG_CHECKING(whether C compiler can use _Generic )
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 int main(int argc, char **argv) {
@@ -745,7 +748,7 @@ ELPA_SELECT_KERNELS([sse],[enable])
 ELPA_SELECT_KERNELS([sse_assembly],[enable])
 ELPA_SELECT_KERNELS([avx],[enable])
 ELPA_SELECT_KERNELS([avx2],[enable])
-ELPA_SELECT_KERNELS([avx512],[disable])
+ELPA_SELECT_KERNELS([avx512],[enable])
 ELPA_SELECT_KERNELS([gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
@@ -996,7 +999,7 @@ if test x"${need_sse_assembly}" = x"yes"; then
   rm -f ./conftest.o
   AC_MSG_RESULT([${can_compile_sse_asm_double}])
   if test x"$can_compile_sse_asm_double" != x"yes"; then
-    AC_MSG_ERROR([Could not compile test program, try with --disable-sse-assembly, or adjust the C compiler or CFLAGS])
+    AC_MSG_ERROR([Could not compile test program, try with --disable-sse-assembly, or adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
 
   if test x"${want_single_precision}" = x"yes" ; then
@@ -1012,7 +1015,7 @@ if test x"${need_sse_assembly}" = x"yes"; then
     rm -f ./conftest.o
     AC_MSG_RESULT([${can_compile_sse_asm_single}])
     if test x"$can_compile_sse_asm_single" != x"yes"; then
-      AC_MSG_ERROR([Could not compile test program, try with --disable-sse-assembly, or adjust the C compiler or CFLAGS])
+      AC_MSG_ERROR([Could not compile test program, try with --disable-sse-assembly, or adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
     fi
   fi
 fi
@@ -1035,7 +1038,7 @@ if test x"${need_avx}" = x"yes"; then
   )
   AC_MSG_RESULT([${can_compile_avx}])
   if test x"$can_compile_avx" != x"yes"; then
-    AC_MSG_ERROR([Could not compile a test program with AVX, try with --disable-avx, or adjust the C compiler or CFLAGS])
+    AC_MSG_ERROR([Could not compile a test program with AVX, try with --disable-avx, or adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
   AC_DEFINE([HAVE_AVX],[1],[AVX is supported on this CPU])
 fi
@@ -1057,7 +1060,7 @@ if test x"${need_avx2}" = x"yes"; then
   )
   AC_MSG_RESULT([${can_compile_avx2}])
   if test x"$can_compile_avx2" != x"yes"; then
-    AC_MSG_ERROR([Could not compile a test program with AVX2, try with --disable-avx2, or adjust the C compiler or CFLAGS])
+    AC_MSG_ERROR([Could not compile a test program with AVX2, try with --disable-avx2, or adjust the C compiler or CFLAGS.  Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
   AC_DEFINE([HAVE_AVX2],[1],[AVX2 is supported on this CPU])
 fi
@@ -1079,7 +1082,7 @@ if test x"${need_avx512}" = x"yes"; then
   )
   AC_MSG_RESULT([${can_compile_avx512}])
   if test x"$can_compile_avx512" != x"yes"; then
-    AC_MSG_ERROR([Could not compile a test program with AVX512, adjust the C compiler or CFLAGS])
+    AC_MSG_ERROR([Could not compile a test program with AVX512, adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
   AC_DEFINE([HAVE_AVX512],[1],[AVX512 is supported on this CPU])
 
@@ -1583,6 +1586,41 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
                 fi
         ])
 ])
+
+if test x"${ax_cv_have_sse3_cpu_ext}" = x"yes" -a  x"${need_sse}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request SSE support (--enable-sse), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+if test x"${ax_cv_have_sse3_cpu_ext}" = x"yes" -a  x"${need_sse_assembly}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request SSE-ASSEMBLY support (--enable-sse-assembly), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+if test x"${ax_cv_have_avx_cpu_ext}" = x"yes" -a  x"${need_avx}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request AVX support (--enable-avx), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+if test x"${ax_cv_have_avx2_cpu_ext}" = x"yes" -a  x"${need_avx2}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request AVX2 support (--enable-avx2), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request AVX512 support (--enable-avx512), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
 
 #echo " "
 #echo "***********************************************************************"
