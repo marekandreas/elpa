@@ -22,9 +22,9 @@ status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://
 [![Code 
 coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](http://elpa.pages.mpcdf.de/elpa/coverage_summary)
 
-image:: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
-:target: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
-:alt: License
+[![License: LGPL v3][licence-badge]](LICENSE)
+[license-badge]: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
+
 
 ## About *ELPA* ##
 
