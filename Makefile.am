@@ -177,6 +177,11 @@ if !HAVE_DETAILED_TIMINGS
 endif
 endif
 
+
+if HAVE_HETEROGENOUS_CLUSTER_SUPPORT
+  libelpa@SUFFIX@_private_la_SOURCES +=  src/helpers/get_cpuid_set.c src/helpers/mod_simd_kernel.F90
+endif
+
 if WITH_REAL_GENERIC_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES +=  src/elpa2/kernels/real.F90
 endif
@@ -480,6 +485,7 @@ nobase_elpa_include_HEADERS = \
   $(wildcard modules/*) \
   src/helpers/lapack_interfaces.h \
   src/helpers/scalapack_interfaces.h \
+  elpa/elpa_simd_constants.h \
   elpa/elpa.h \
   elpa/elpa_generic.h \
   elpa/elpa_legacy.h

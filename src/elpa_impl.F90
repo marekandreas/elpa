@@ -1799,7 +1799,6 @@ module elpa_impl
 #endif
       end select
 
-      !print *, "testing, before C call, ts_impl%current is ", ts_impl%current
 
       if (elpa_index_load_autotune_state_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
                   ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
@@ -1812,7 +1811,6 @@ module elpa_impl
          error = ELPA_ERROR_CANNOT_OPEN_FILE
 #endif
       endif
-      !print *, "testing, after C call, ts_impl%current is ", ts_impl%current
     end subroutine
 
 

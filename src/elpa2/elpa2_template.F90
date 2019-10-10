@@ -49,6 +49,9 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+
+#include "elpa/elpa_simd_constants.h"
+
  function elpa_solve_evp_&
   &MATH_DATATYPE&
   &_&
@@ -64,7 +67,9 @@
    use cuda_functions
    use mod_check_for_gpu
    use elpa_omp
-
+#ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
+   use simd_kernel
+#endif
    use iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
@@ -74,14 +79,14 @@
    logical                                                            :: useQR
    logical                                                            :: useQRActual
 #endif
-   integer(kind=c_int)                                                :: kernel
+   integer(kind=c_int)                                                :: kernel, kernelByUser
 
 #ifdef USE_ASSUMED_SIZE
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,*)
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target         :: q(obj%local_nrows,*)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target :: q(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,obj%local_ncols)
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target        :: q(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target :: q(obj%local_nrows,obj%local_ncols)
 #endif
    real(kind=C_DATATYPE_KIND), intent(inout)                          :: ev(obj%na)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: hh_trans(:,:)
@@ -124,6 +129,12 @@
                                                                          do_trans_to_band, do_trans_to_full
 
     integer(kind=ik)                                                  :: nrThreads
+#ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
+    integer(kind=c_int)                                               :: simdSetAvailable(NUMBER_OF_INSTR)
+#endif
+
+
+
 #if REALCASE == 1
 #undef GPU_KERNEL
 #undef GENERIC_KERNEL
@@ -377,6 +388,88 @@
 
 #endif
 
+     ! consistency check: is user set kernel still identical with "kernel" or did
+     ! we change it above? This is a mess and should be cleaned up
+     call obj%get(KERNEL_STRING,kernelByUser,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+
+     if (kernelByUser .ne. kernel) then
+       call obj%set(KERNEL_STRING, kernel, error)
+       if (error .ne. ELPA_OK) then
+         print *,"Problem setting option. Aborting..."
+         stop
+       endif
+     endif
+
+#ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
+     ! find a kernel which is supported on all used CPUs
+     ! at the moment this works only on Intel CPUs
+     simdSetAvailable(:) = 0
+     call get_cpuid_set(simdSetAvailable, NUMBER_OF_INSTR)
+#ifdef WITH_MPI
+     call MPI_ALLREDUCE(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, mpi_comm_all, mpierr)
+#endif
+
+     ! compare user chosen kernel with possible kernels
+     call obj%get(KERNEL_STRING,kernelByUser,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+
+     ! map kernel to SIMD Set, and check whether this is set is available on all cores
+
+#if REALCASE == 1
+    if (simdSetAvailable(map_real_kernel_to_simd_instruction(kernelByUser)) /= 1) then
+#endif
+#if COMPLEXCASE == 1
+    if (simdSetAvailable(map_complex_kernel_to_simd_instruction(kernelByUser)) /=1) then
+#endif
+
+      ! if we are not purely running on Intel CPUs, this feature does not work at the moment
+      ! this restriction should be lifted step by step
+      if (simdSetAvailable(CPU_MANUFACTURER) /= 1) then
+         if (my_pe == 0 ) then
+         write(error_unit,*) "You enabled the experimental feature of an heterogenous cluster support."
+         write(error_unit,*) "However, this works at the moment only if ELPA is run on (different) Intel CPUs!"
+         write(error_unit,*) "ELPA detected also non Intel-CPUs, and will this abort now"
+         stop
+        endif
+      else
+        if (my_pe == 0 ) then
+          write(error_unit,*) "The ELPA 2stage kernel of your choice, cannot be run on all CPUs"
+          write(error_unit,*) "ELPA will use another kernel..."
+        endif
+
+        ! find best kernel available for supported instruction sets
+        do i = NUMBER_OF_INSTR, 2, -1
+          if (simdSetAvailable(i) == 1) then
+            ! map to "best" kernel with this instruction set
+            ! this can be only done for kernels that ELPA has been configured to use
+#if REALCASE == 1
+            kernel = map_simd_instruction_to_real_kernel(i)
+#endif
+#if COMPLEXCASE == 1
+            kernel = map_simd_instruction_to_complex_kernel(i)
+#endif
+            if (obj%can_set(KERNEL_STRING, kernel) == ELPA_OK) then
+              call obj%set(KERNEL_STRING, kernel, error)
+              if (error .ne. ELPA_OK) then
+                print *,"Problem setting option. Aborting..."
+                stop
+              endif
+              if (my_pe == 0 ) write(error_unit,*) "ELPA decided to use ",elpa_int_value_to_string(KERNEL_STRING, kernel)
+              exit 
+            endif
+          endif
+        enddo
+      endif
+
+    endif
+#endif /* HAVE_HETEROGENOUS_CLUSTER_SUPPORT */
 
 #if REALCASE == 1
     call obj%get("qr",qr,error)
