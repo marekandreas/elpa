@@ -44,7 +44,7 @@
 #include "config-f90.h"
 module elpa_scalapack_interfaces
   use iso_c_binding
-  use precision
+  !use precision
 
   implicit none
 

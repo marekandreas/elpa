@@ -51,7 +51,7 @@
       use elpa_scalapack_interfaces
 
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
       MATH_DATATYPE(kind=rck), intent(in)           :: as(:,:), z(:,:)
@@ -295,7 +295,7 @@ function check_correctness_evp_numeric_residuals_&
       use iso_c_binding
 
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
 
       integer(kind=c_int)            :: status
       integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
@@ -356,7 +356,7 @@ function check_correctness_evp_gen_numeric_residuals_&
       use iso_c_binding
 
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
 
       integer(kind=c_int)            :: status
       integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
@@ -381,7 +381,7 @@ function check_correctness_evp_gen_numeric_residuals_&
     & (na, diagonalElement, subdiagonalElement, ev, z, myid) result(status)
       use iso_c_binding
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
 
       integer               :: status, ii, j, myid
       integer, intent(in)   :: na
@@ -456,9 +456,9 @@ function check_correctness_evp_gen_numeric_residuals_&
     &_&
     &PRECISION&
     & (na, a, as, na_rows, sc_desc, myid) result(status)
-      use precision
+      use precision_for_tests
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, myid, na_rows
 
@@ -573,9 +573,9 @@ function check_correctness_evp_gen_numeric_residuals_&
     &_&
     &PRECISION&
     & (na, a, b, c, na_rows, sc_desc, myid) result(status)
-      use precision
+      use precision_for_tests
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
       integer(kind=ik)                 :: status
       integer(kind=ik), intent(in)     :: na, myid, na_rows
       MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:), b(:,:), c(:,:)
@@ -682,7 +682,7 @@ function check_correctness_evp_gen_numeric_residuals_&
     & (na, ev, z, myid) result(status)
       use iso_c_binding
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
 
       integer                   :: status, i, j, myid
       integer, intent(in)       :: na

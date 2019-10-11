@@ -52,7 +52,7 @@ module test_analytic
 #else
   use timings_dummy
 #endif
-  use precision
+  use precision_for_tests
 
   interface prepare_matrix_analytic
     module procedure prepare_matrix_analytic_complex_double
