@@ -208,6 +208,30 @@ if test x"${enable_heterogenous_cluster_support}" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_HETEROGENOUS_CLUSTER_SUPPORT],[test x"$enable_heterogenous_cluster_support" = x"yes"])
 
+dnl 64bit integer support for BLACS/LAPACK/SCALAPACK
+AC_MSG_CHECKING(whether 64bit integers should be used for math libraries (BLAS/LAPACK/SCALAPACK))
+AC_ARG_ENABLE([64bit-integer-support],
+              AS_HELP_STRING([--64bit-integer-support],
+                             [allows to link against the 64bit integer versions of the math libraries BLAS, LAPACK, and SCALAPACK]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_64bit_integer_support=yes
+	       else
+	         enable_64bit_integer_support=no
+	       fi
+	       ],
+              [enable_64bit_integer_support="no"])
+AC_MSG_RESULT([$enable_64bit_integer_support])
+if test x"${enable_64bit_integer_support}" = x"yes"; then
+  AC_DEFINE([HAVE_64BIT_INTEGER_SUPPORT], [1], [allow to link against the 64bit integer versions of math libraries])
+fi
+AM_CONDITIONAL([HAVE_64BIT_INTEGER_SUPPORT],[test x"$enable_64bit_integer_support" = x"yes"])
+
+
+
+
+
+
 AC_MSG_CHECKING(whether C compiler can use _Generic )
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 int main(int argc, char **argv) {

@@ -51,12 +51,12 @@ module test_read_input_parameters
   implicit none
 
   type input_options_t
-    integer        :: datatype
-    integer        :: na, nev, nblk
+    integer(kind=MPI_KIND)        :: datatype
+    integer(kind=MPI_KIND)        :: na, nev, nblk
     type(output_t) :: write_to_file
-    integer        :: this_real_kernel, this_complex_kernel
+    integer(kind=MPI_KIND)        :: this_real_kernel, this_complex_kernel
     logical        :: realKernelIsSet, complexKernelIsSet
-    integer        :: useQrIsSet, useGPUIsSet
+    integer(kind=MPI_KIND)        :: useQrIsSet, useGPUIsSet
     logical        :: doSolveTridi, do1stage, do2stage, justHelpMessage, &
                       doCholesky, doInvertTrm, doTransposeMultiply
   end type
@@ -74,7 +74,7 @@ module test_read_input_parameters
 
       type(input_options_t) :: input_options
       character(len=128)    :: command_line_argument
-      integer               :: error
+      integer(kind=MPI_KIND)               :: error
 
       if (command_line_argument == "--help") then
         print *,"usage: elpa_tests [--help] [datatype={real|complex}] [na=number] [nev=number] "
@@ -213,7 +213,7 @@ module test_read_input_parameters
 
       ! Command line arguments
       character(len=128)            :: arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10
-      integer(kind=ik)              :: mpierr
+      integer(kind=MPI_KIND)              :: mpierr
 
       ! default parameters
       input_options%datatype = 1
@@ -344,7 +344,7 @@ module test_read_input_parameters
       use precision
       implicit none
 
-      integer(kind=ik), intent(out) :: na, nev, nblk
+      integer(kind=MPI_KIND), intent(out) :: na, nev, nblk
 
       type(output_t), intent(out)   :: write_to_file
       logical                       :: skip_check_correctness
@@ -356,14 +356,14 @@ module test_read_input_parameters
       use precision
       implicit none
 
-      integer(kind=ik), intent(out) :: na, nev, nblk
+      integer(kind=MPI_KIND), intent(out) :: na, nev, nblk
 
       type(output_t), intent(out)   :: write_to_file
       logical, intent(out)          :: skip_check_correctness
 
       ! Command line arguments
       character(len=128)            :: arg1, arg2, arg3, arg4, arg5
-      integer(kind=ik)              :: mpierr
+      integer(kind=MPI_KIND)              :: mpierr
 
       ! default parameters
       na = 5000
