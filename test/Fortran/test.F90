@@ -127,7 +127,7 @@ program test
 #ifdef WITH_OPENMP
    !use omp_lib
 #endif
-   use precision
+   use precision_for_tests
 
    implicit none
 
