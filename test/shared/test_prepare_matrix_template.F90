@@ -48,11 +48,11 @@
     & (na, myid, sc_desc, a, z, as)
 
 
-      use test_util
-      use elpa_scalapack_interfaces
+      !use test_util
+      !use elpa_scalapack_interfaces
 
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
       integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
       MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
 
@@ -162,7 +162,7 @@ subroutine prepare_matrix_random_&
       use iso_c_binding
 
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
 
       integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
       integer(kind=c_int)           :: sc_desc(1:9)
@@ -183,10 +183,10 @@ subroutine prepare_matrix_random_&
     &PRECISION&
     & (na, myid, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
 
-      use test_util
-      use precision
+      !use test_util
+      use precision_for_tests
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
       integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
       MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
       integer, intent(in)        ::  nblk, np_rows, np_cols, my_prow, my_pcol
@@ -252,7 +252,7 @@ subroutine prepare_matrix_random_spd_&
       use iso_c_binding
 
       implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
 
       integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
       integer(kind=c_int)           :: sc_desc(1:9)
@@ -275,9 +275,10 @@ subroutine prepare_matrix_random_spd_&
    &PRECISION&
    & (na, diagonalElement, subdiagonalElement, d, sd, ds, sds, a, as, &
       nblk, np_rows, np_cols, my_prow, my_pcol)
-     use test_util
+     !use test_util
+     use precision_for_tests
      implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
 
      integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
      MATH_DATATYPE(kind=rck) :: diagonalElement, subdiagonalElement
@@ -326,7 +327,7 @@ subroutine prepare_matrix_random_spd_&
    & (na, diagonalElement, subdiagonalElement, d, sd, ds, sds, &
       nblk, np_rows, np_cols, my_prow, my_pcol)
 #endif
-     use test_util
+     !use test_util
      implicit none
 
      integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
@@ -374,7 +375,8 @@ subroutine prepare_matrix_random_spd_&
    &_&
    &PRECISION&
    & (na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
-     use test_util
+     !use test_util
+     use precision_for_tests
      implicit none
 
      integer, intent(in)           :: na, nblk, np_rows, np_cols, my_prow, my_pcol

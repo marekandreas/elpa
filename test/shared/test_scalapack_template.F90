@@ -46,7 +46,7 @@
       &BLAS_CHAR_AND_SY_OR_HE&
       &evd(na, a, sc_desc, ev, z)
     implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
     integer(kind=ik), intent(in)     :: na
     MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:)
     MATH_DATATYPE(kind=rck), intent(inout)    :: z(:,:)
@@ -102,7 +102,7 @@
       &BLAS_CHAR_AND_SY_OR_HE&
       &evr(na, a, sc_desc, nev, ev, z)
     implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
     integer(kind=ik), intent(in)     :: na, nev
     MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:)
     MATH_DATATYPE(kind=rck), intent(inout)    :: z(:,:)

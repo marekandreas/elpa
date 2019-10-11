@@ -590,6 +590,7 @@ test_program_fcflags = $(AM_FCFLAGS) $(FC_MODOUT)test_modules $(FC_MODINC)test_m
 noinst_LTLIBRARIES += libelpatest@SUFFIX@.la
 libelpatest@SUFFIX@_la_FCFLAGS = $(test_program_fcflags)
 libelpatest@SUFFIX@_la_SOURCES = \
+  test/shared/tests_variable_definitions.F90 \
   test/shared/test_util.F90 \
   test/shared/test_read_input_parameters.F90 \
   test/shared/test_check_correctness.F90 \
@@ -816,6 +817,7 @@ EXTRA_DIST = \
   src/general/precision_macros.h \
   src/general/precision_typedefs.h \
   src/general/precision_kinds.F90 \
+  test/shared/test_precision_kinds.F90 \
   src/general/prow_pcol.F90 \
   src/general/sanity.F90 \
   test/Fortran/assert.h \

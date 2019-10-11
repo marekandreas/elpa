@@ -46,7 +46,7 @@
     &_&
     &PRECISION&
     &(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times)
-    use precision
+    use precision_for_tests
 
     implicit none
     integer(kind=ik), intent(in)                       :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
@@ -123,10 +123,10 @@
     &PRECISION&
     &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, &
       check_eigenvectors, print_times) result(status)
-    use precision
+    use precision_for_tests
     
     implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
     integer(kind=ik), intent(in)           :: na, nev, nblk, myid, np_rows, &
                                               np_cols, my_prow, my_pcol
     integer(kind=ik)                       :: status, mpierr
@@ -321,7 +321,7 @@
     &_&
     &PRECISION&
     &(na, i, j) result(element)
-    use precision
+    use precision_for_tests
 
     implicit none
     integer(kind=ik), intent(in) :: na, i, j
@@ -340,7 +340,7 @@
     &_&
     &PRECISION&
     &(na, i, j) result(element)
-    use precision
+    use precision_for_tests
 
     implicit none
     integer(kind=ik), intent(in) :: na, i, j
@@ -359,7 +359,7 @@
     &_&
     &PRECISION&
     &(na, i) result(element)
-    use precision
+    use precision_for_tests
 
     implicit none
     integer(kind=ik), intent(in) :: na, i
@@ -376,10 +376,10 @@
     &_&
     &PRECISION&
     &(na, i, j, what) result(element)
-    use precision
+    use precision_for_tests
 
     implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
     integer(kind=ik), intent(in)   :: na, i, j, what
     MATH_DATATYPE(kind=rck)        :: element, mat2x2(2,2), mat(5,5)
     real(kind=rk)                  :: a, am, amp
@@ -502,10 +502,10 @@
     &_&
     &PRECISION&
     &(myid, na, mat, mat_name)
-    use precision
+    use precision_for_tests
 
     implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
     integer(kind=ik), intent(in)    :: myid, na
     character(len=*), intent(in)    :: mat_name
     MATH_DATATYPE(kind=rck)         :: mat(na, na)
@@ -533,10 +533,10 @@
     &_&
     &PRECISION&
     &(myid, na)
-    use precision
+    use precision_for_tests
 
     implicit none
-#include "../../src/general/precision_kinds.F90"
+#include "./test_precision_kinds.F90"
     integer(kind=ik), intent(in)    :: myid, na
     MATH_DATATYPE(kind=rck)                  :: A(na, na), S(na, na), L(na, na), res(na, na)
     integer(kind=ik)                :: i, j, decomposition(num_primes)
@@ -597,7 +597,7 @@
     &_&
     &PRECISION&
     &(myid)
-    use precision
+    use precision_for_tests
 
     implicit none
     integer(kind=ik), intent(in)   :: myid

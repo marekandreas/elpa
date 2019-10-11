@@ -3,8 +3,7 @@
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
-!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -17,7 +16,7 @@
 !
 !
 !    More information can be found here:
-!    http://elpa.mpcdf.mpg.de/
+!    http://elpa.rzg.mpg.de/
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -39,57 +38,20 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
+! This file was written by A. Marek, MPC
+
 #include "config-f90.h"
-module test_setup_mpi
+module precision_for_tests
+  use iso_c_binding, only : C_FLOAT, C_DOUBLE, C_FLOAT_COMPLEX, C_DOUBLE_COMPLEX, C_INT32_T, C_INT64_T, C_INT
 
-  contains
+  implicit none
+  integer, parameter :: rk8  = C_DOUBLE
+  integer, parameter :: rk4  = C_FLOAT
+  integer, parameter :: ck8  = C_DOUBLE_COMPLEX
+  integer, parameter :: ck4  = C_FLOAT_COMPLEX
+  integer, parameter :: ik  = C_INT32_T
+  integer, parameter :: lik = C_INT64_T
 
-    subroutine setup_mpi(myid, nprocs)
-      use test_util
-      use ELPA_utilities
-      use precision_for_tests
-      implicit none
+  integer, parameter :: BLAS_KIND = C_INT32_T
 
-      integer(kind=ik)              :: mpierr
-
-      integer(kind=ik), intent(out) :: myid, nprocs
-#ifdef WITH_OPENMP
-      integer(kind=ik)              :: required_mpi_thread_level, &
-                                       provided_mpi_thread_level
-#endif
-
-
-#ifdef WITH_MPI
-
-#ifndef WITH_OPENMP
-      call mpi_init(mpierr)
-#else
-      required_mpi_thread_level = MPI_THREAD_MULTIPLE
-
-      call mpi_init_thread(required_mpi_thread_level,     &
-                           provided_mpi_thread_level, mpierr)
-
-      if (required_mpi_thread_level .ne. provided_mpi_thread_level) then
-        write(error_unit,*) "MPI ERROR: MPI_THREAD_MULTIPLE is not provided on this system"
-        write(error_unit,*) "           only ", mpi_thread_level_name(provided_mpi_thread_level), " is available"
-        call MPI_FINALIZE(mpierr)
-        call exit(77)
-      endif
-#endif
-      call mpi_comm_rank(mpi_comm_world,myid,mpierr)
-      call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
-
-      if (nprocs <= 1) then
-        print *, "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"
-        stop 1
-      endif
-#else
-      myid = 0
-      nprocs = 1
-#endif
-
-    end subroutine
-
-
-end module
+end module precision_for_tests
