@@ -109,7 +109,7 @@
       use precision
       use elpa_blas_interfaces
 #ifdef WITH_MPI
-      use elpa_scalpack_interfaces
+      use elpa_scalapack_interfaces
 #endif
       use elpa_abstract_impl
 

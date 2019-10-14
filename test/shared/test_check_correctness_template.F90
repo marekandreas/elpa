@@ -517,14 +517,19 @@ function check_correctness_evp_gen_numeric_residuals_&
     & (na, a, as, na_rows, sc_desc, myid) result(status)
       use precision_for_tests
       use tests_blas_interfaces
+      use tests_scalapack_interfaces
       implicit none
 #include "./test_precision_kinds.F90"
-      TEST_INT_TYPE                 :: status
-      TEST_INT_TYPE, intent(in)     :: na, myid, na_rows
+      TEST_INT_TYPE                                                     :: status
+      TEST_INT_TYPE, intent(in)                                         :: na, myid, na_rows
 
-      MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:), as(:,:)
+      MATH_DATATYPE(kind=rck), intent(in)                               :: a(:,:), as(:,:)
       MATH_DATATYPE(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      real(kind=rk)                   :: norm, normmax
+#if COMPLEXCASE == 1
+      ! needed for [z,c]lange from scalapack
+      real(kind=rk), dimension(2*size(as,dim=1),size(as,dim=2))         :: tmp1_real
+#endif
+      real(kind=rk)                                                     :: norm, normmax
 
 #ifdef WITH_MPI
       !real(kind=rck)                   :: p&
@@ -585,10 +590,20 @@ function check_correctness_evp_gen_numeric_residuals_&
 #ifdef WITH_MPI
       norm = p&
               &BLAS_CHAR&
-              &lange("M",na, na, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, tmp1)
+              &lange("M",na, na, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+#if COMPLEXCASE == 1
+              tmp1_real)
+#else
+              tmp1)
+#endif
 #else /* WITH_MPI */
       norm = BLAS_CHAR&
-             &lange("M", na, na, tmp2, na_rows, tmp1)
+             &lange("M", na, na, tmp2, na_rows, &
+#if COMPLEXCASE == 1
+             tmp1_real)
+#else
+             tmp1)
+#endif
 #endif /* WITH_MPI */
 
 
@@ -638,13 +653,17 @@ function check_correctness_evp_gen_numeric_residuals_&
     & (na, a, b, c, na_rows, sc_desc, myid) result(status)
       use precision_for_tests
       use tests_blas_interfaces
+      use tests_scalapack_interfaces
       implicit none
 #include "./test_precision_kinds.F90"
-      TEST_INT_TYPE                 :: status
-      TEST_INT_TYPE, intent(in)     :: na, myid, na_rows
-      MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:), b(:,:), c(:,:)
+      TEST_INT_TYPE                                                   :: status
+      TEST_INT_TYPE, intent(in)                                       :: na, myid, na_rows
+      MATH_DATATYPE(kind=rck), intent(in)                             :: a(:,:), b(:,:), c(:,:)
       MATH_DATATYPE(kind=rck), dimension(size(a,dim=1),size(a,dim=2)) :: tmp1, tmp2
-      real(kind=rck)                   :: norm, normmax
+#if COMPLEXCASE == 1
+      real(kind=rk), dimension(2*size(a,dim=1),size(a,dim=2))         :: tmp1_real
+#endif
+      real(kind=rck)                                                  :: norm, normmax
 
 #ifdef WITH_MPI
       !real(kind=rck)                   :: p&
@@ -700,12 +719,26 @@ function check_correctness_evp_gen_numeric_residuals_&
       tmp2(:,:) = tmp2(:,:) - c(:,:)
 
 #ifdef WITH_MPI
+      ! dirty hack: the last argument should be a real array, but is not referenced
+      ! if mode = "M", thus we get away with a complex argument
       norm = p&
               &BLAS_CHAR&
-              &lange("M",na, na, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, tmp1)
+              &lange("M",na, na, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+#if COMPLEXCASE == 1              
+              tmp1_real)
+#else
+              tmp1)
+#endif
 #else /* WITH_MPI */
+      ! dirty hack: the last argument should be a real array, but is not referenced
+      ! if mode = "M", thus we get away with a complex argument
       norm = BLAS_CHAR&
-             &lange("M", na, na, tmp2, na_rows, tmp1)
+             &lange("M", na, na, tmp2, na_rows, &
+#if COMPLEXCASE == 1              
+              tmp1_real)
+#else
+              tmp1)
+#endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI

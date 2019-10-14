@@ -41,9 +41,35 @@
 ! This file was written by A. Marek, MPCDF
 
 
-!interface for descint
-!interface for BLACS_Gridinit
-!interface for BLACS_Gridinfo
+  interface 
+    subroutine descinit(DESC, M, N, MB, NB, IRSRC, ICSRC, ICTXT, LLD, INFO)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: DESC(*), M, N, MB, NB, IRSRC, ICSRC, LLD
+    integer(kind=BLAS_KIND), intent(inout) :: info
+    integer(kind=BLAS_KIND) :: ICTXT
+    end subroutine
+  end interface
+
+  interface
+    subroutine blacs_gridinit(ICONTXT, ORDER, NPROW, NPCOL)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: ICONTXT
+    character(len=1)        :: ORDER
+    integer(kind=BLAS_KIND) :: NPROW, NPCOL
+    end subroutine
+  end interface
+
+  interface
+    subroutine blacs_gridinfo(ICONTXT, NPROW, NPCOL, MYPROW, MYPCOL)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: ICONTXT
+    integer(kind=BLAS_KIND), intent(inout) :: NPROW, NPCOL, MYPROW, MYPCOL
+    end subroutine
+  end interface
+
 
   interface
     function numroc(N, NB, IPROC, ISRCPROC, NPROCS) result(numr)
@@ -209,8 +235,9 @@
     implicit none
     character               :: norm
     integer(kind=BLAS_KIND) :: m, n, ia, ja, desca(*)
-    complex(kind=ck8)          :: a(*), work(*)
-    complex(kind=ck8)          :: norm2
+    complex(kind=ck8)       :: a(*)
+    real(kind=rk8)          ::work(*)
+    real(kind=rk8)          :: norm2
     end function
   end interface
 
@@ -262,8 +289,9 @@
     implicit none
     character               :: norm
     integer(kind=BLAS_KIND) :: m, n, ia, ja, desca(*)
-    complex(kind=ck4)          :: a(*), work(*)
-    complex(kind=ck4)          :: norm2
+    complex(kind=ck4)       :: a(*)
+    real(kind=rk4)          ::work(*)
+    real(kind=rk4)          :: norm2
     end function
   end interface
 

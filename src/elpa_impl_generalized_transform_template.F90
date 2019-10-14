@@ -75,7 +75,7 @@
 #ifdef WITH_MPI
        call cannons_reduction_&
          &ELPA_IMPL_SUFFIX&
-         &(a, b, int(self%local_nrows,kind=kind=BLAS_KIND), int(self%local_ncols,kind=BLAS_KIND), &
+         &(a, b, int(self%local_nrows,kind=BLAS_KIND), int(self%local_ncols,kind=BLAS_KIND), &
            int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=BLAS_KIND),                    &
            int(mpi_comm_rows,kind=BLAS_KIND), int(mpi_comm_cols,kind=BLAS_KIND))
 #endif

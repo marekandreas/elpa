@@ -761,7 +761,7 @@
 
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
                                 int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
-                                int(ubound(tmat,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND)
+                                int(ubound(tmat,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND))
             call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
                                 int(n_cols,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
                                 tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))

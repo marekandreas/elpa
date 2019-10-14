@@ -51,6 +51,19 @@
 #include <math.h>
 
 #include <elpa/elpa_legacy.h>
+
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define TEST_C_INT_TYPE_PTR long int*
+#define C_INT_TYPE_PTR long int*
+#define TEST_C_INT_TYPE long int
+#define C_INT_TYPE long int
+#else
+#define TEST_C_INT_TYPE_PTR int*
+#define C_INT_TYPE_PTR int*
+#define TEST_C_INT_TYPE int
+#define C_INT_TYPE int
+#endif
+
 #include <test/shared/generated.h>
 #include <complex.h>
 

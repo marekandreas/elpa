@@ -113,10 +113,11 @@ module test_blacs_infrastructure
       use tests_scalapack_interfaces
       implicit none
 
-      TEST_INT_TYPE, intent(in)  :: na, nblk, my_prow, my_pcol, np_rows,   &
+      TEST_INT_TYPE, intent(in)    :: na, nblk, my_prow, my_pcol, np_rows,   &
                                        np_cols, &
-                                       my_blacs_ctxt, info
-      TEST_INT_TYPE, intent(out)  :: na_rows, na_cols, sc_desc(1:9)
+                                       my_blacs_ctxt
+      TEST_INT_TYPE, intent(inout) :: info
+      TEST_INT_TYPE, intent(out)   :: na_rows, na_cols, sc_desc(1:9)
 
 #ifdef WITH_MPI
       TEST_INT_TYPE                 :: mpierr

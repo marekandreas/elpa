@@ -74,7 +74,7 @@
 #define cannons_triang_rectangular_c_impl_expand1(SUFFIX) cannons_triang_rectangular_c_impl_expand2(SUFFIX)
 #define cannons_triang_rectangular_c_impl cannons_triang_rectangular_c_impl_expand1(ELPA_IMPL_SUFFIX)
 
-void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol, C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTRb_desc, math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm)
+void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol, C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTR b_desc, math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm)
 {
    // Cannons algorithm, Non-blocking version
    // Input: 

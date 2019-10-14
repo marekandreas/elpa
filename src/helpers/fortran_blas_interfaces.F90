@@ -705,11 +705,11 @@
     function zlange(NORM, M, N, A, LDA, WORK) result(norm2)
     use PRECISION_MODULE
     implicit none
-    character               :: NORM
-    integer(kind=BLAS_KIND) :: M, N, LDA
-    complex(kind=ck8)          :: A(lda, *)
-    complex(kind=ck8), intent(inout) :: work(*)
-    complex(kind=ck8)                :: norm2
+    character                        :: NORM
+    integer(kind=BLAS_KIND)          :: M, N, LDA
+    complex(kind=ck8)                :: A(lda, *)
+    real(kind=rk8), intent(inout)    :: work(*)
+    real(kind=rk8)                   :: norm2
     end function
   end interface
 
@@ -877,11 +877,11 @@
     function clange(NORM, M, N, A, LDA, WORK) result(norm2)
     use PRECISION_MODULE
     implicit none
-    character               :: NORM
-    integer(kind=BLAS_KIND) :: M, N, LDA
-    complex(kind=ck4)          :: A(lda, *)
-    complex(kind=ck4), intent(inout) :: work(*)
-    complex(kind=ck4)          :: norm2
+    character                     :: NORM
+    integer(kind=BLAS_KIND)       :: M, N, LDA
+    complex(kind=ck4)             :: A(lda, *)
+    real(kind=rk4), intent(inout) :: work(*)
+    real(kind=rk4)                :: norm2
     end function
   end interface
 
