@@ -54,6 +54,16 @@
 // Author: Valeriy Manin (Bergische Universität Wuppertal)
 // integreated into the ELPA library Pavel Kus, Andeas Marek (MPCDF)
 
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define C_INT_TYPE_PTR long int*
+#define C_INT_TYPE long int
+#define FORTRAN_INT_TYPE c_int64_t
+#else
+#define C_INT_TYPE_PTR int*
+#define C_INT_TYPE int
+#define FORTRAN_INT_TYPE c_int
+#endif
+
 
 // it seems, that we need those two levels of indirection to correctly expand macros
 #define cannons_triang_rectangular_impl_expand2(SUFFIX) cannons_triang_rectangular_##SUFFIX
@@ -64,7 +74,7 @@
 #define cannons_triang_rectangular_c_impl_expand1(SUFFIX) cannons_triang_rectangular_c_impl_expand2(SUFFIX)
 #define cannons_triang_rectangular_c_impl cannons_triang_rectangular_c_impl_expand1(ELPA_IMPL_SUFFIX)
 
-void cannons_triang_rectangular_impl(math_type* U, math_type* B, int np_rows, int np_cols, int my_prow, int my_pcol, int* U_desc, int*b_desc, math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm)
+void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol, C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTRb_desc, math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm)
 {
    // Cannons algorithm, Non-blocking version
    // Input: 
@@ -76,22 +86,22 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, int np_rows, in
    // col_comm: communicator along columns
    // This function will be used for a backtransformation
   
-   int na, nb, nblk, width, na_rows, na_cols, nb_cols, cols_in_buffer_U_my_initial, cols_in_buffer_U, rows_in_buffer_U, Size_receive_U_now, rows_in_buffer_U_now, cols_in_buffer_U_now, rows_in_buffer_U_my_initial;
+   C_INT_TYPE na, nb, nblk, width, na_rows, na_cols, nb_cols, cols_in_buffer_U_my_initial, cols_in_buffer_U, rows_in_buffer_U, Size_receive_U_now, rows_in_buffer_U_now, cols_in_buffer_U_now, rows_in_buffer_U_my_initial;
 
-   int i, j, Size_send_U, Size_receive_U, Size_send_B, Size_receive_B, intNumber, Buf_rows, Buf_cols_U, Buf_cols_B, curr_rows, num_of_iters, cols_in_buffer, rows_in_block, curr_col_loc, cols_in_block, num_of_blocks_in_U_buffer, col_of_origin_U, b_rows_mult, b_cols_mult; 
+   C_INT_TYPE i, j, Size_send_U, Size_receive_U, Size_send_B, Size_receive_B, intNumber, Buf_rows, Buf_cols_U, Buf_cols_B, curr_rows, num_of_iters, cols_in_buffer, rows_in_block, curr_col_loc, cols_in_block, num_of_blocks_in_U_buffer, col_of_origin_U, b_rows_mult, b_cols_mult; 
    
    math_type *Buf_to_send_U, *Buf_to_receive_U, *Buf_to_send_B, *Buf_to_receive_B, *Buf_U, *PosBuff;
   
-   int where_to_send_U, from_where_to_receive_U, where_to_send_B, from_where_to_receive_B, last_proc_col_B, last_proc_row_B, n, Size_U_stored, proc_col_min; 
+   C_INT_TYPE where_to_send_U, from_where_to_receive_U, where_to_send_B, from_where_to_receive_B, last_proc_col_B, last_proc_row_B, n, Size_U_stored, proc_col_min; 
    
    math_type *U_local_start, *Buf_pos, *B_local_start, *double_ptr, *CopyTo, *CopyFrom;
    
-   int ratio;
+   C_INT_TYPE ratio;
    
    MPI_Status status;
 
-   int one = 1;
-   int zero = 0; 
+   C_INT_TYPE one = 1;
+   C_INT_TYPE zero = 0; 
    math_type done = 1.0;
    math_type dzero = 0.0;
       
@@ -301,8 +311,8 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, int np_rows, in
          {
             MPI_Sendrecv(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, Buf_to_receive_U, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, row_comm, &status);
             MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U);
-            cols_in_buffer_U = (int)Buf_to_receive_U[Size_receive_U-2];
-            rows_in_buffer_U = (int)Buf_to_receive_U[Size_receive_U-1];
+            cols_in_buffer_U = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-2];
+            rows_in_buffer_U = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-1];
          }
          else    // if my_prow == 0, then I have already everything in my Buf_to_receive_U buffer
          {
@@ -376,8 +386,8 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, int np_rows, in
       MPI_Irecv(Buf_to_receive_B, Buf_rows*nb_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_B, 0, col_comm, &request_B_Recv);
       
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
-      cols_in_buffer_U = (int)Buf_to_send_U[Size_receive_U-2];
-      rows_in_buffer_U = (int)Buf_to_send_U[Size_receive_U-1];
+      cols_in_buffer_U = (C_INT_TYPE)Buf_to_send_U[Size_receive_U-2];
+      rows_in_buffer_U = (C_INT_TYPE)Buf_to_send_U[Size_receive_U-1];
       //find minimal proc. column among those procs. who contributed in the current U buffer
       proc_col_min = np_cols; 
       for(j = 0; j < ratio; j++)
@@ -425,8 +435,8 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, int np_rows, in
    }         
    
    // last iteration 
-   cols_in_buffer_U = (int)Buf_to_receive_U[Size_receive_U-2];
-   rows_in_buffer_U = (int)Buf_to_receive_U[Size_receive_U-1];
+   cols_in_buffer_U = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-2];
+   rows_in_buffer_U = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-1];
    //find minimal proc. column among those procs. who contributed in the current U buffer
    proc_col_min = np_cols; 
    for(j = 0; j < ratio; j++)
@@ -472,13 +482,13 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, int np_rows, in
 }
 
 
-void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_rows, int local_cols,
-                                    int* u_desc, int* b_desc, math_type *Res, int row_comm, int col_comm)
+void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, C_INT_TYPE local_rows, C_INT_TYPE local_cols,
+                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, math_type *Res, C_INT_TYPE row_comm, C_INT_TYPE col_comm)
 {
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 
-  int my_prow, my_pcol, np_rows, np_cols;
+  C_INT_TYPE my_prow, my_pcol, np_rows, np_cols;
   MPI_Comm_rank(c_row_comm, &my_prow);
   MPI_Comm_size(c_row_comm, &np_rows);
   MPI_Comm_rank(c_col_comm, &my_pcol);

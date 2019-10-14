@@ -58,6 +58,7 @@
       use elpa_mpi
       use precision
       use elpa_abstract_impl
+      use elpa_blas_interfaces
       implicit none
 
 #include "../../src/general/precision_kinds.F90"
@@ -275,8 +276,11 @@
 
               if (lrs<=lre) then
                 call obj%timer%start("blas")
-                call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nstor, lce-lcs+1, lre-lrs+1, ONE, &
-                        aux_mat(lrs,1), ubound(aux_mat,dim=1), b(lrs,lcs), ldb,ZERO, tmp1, nstor)
+                call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
+                                    int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), &
+                                    ONE, aux_mat(lrs,1), int(ubound(aux_mat,dim=1),kind=BLAS_KIND), &
+                                    b(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, tmp1, &
+                                    int(nstor,kind=BLAS_KIND))
                 call obj%timer%stop("blas")
               else
                 tmp1 = 0

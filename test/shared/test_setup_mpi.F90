@@ -41,6 +41,15 @@
 !
 !
 #include "config-f90.h"
+
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+
 module test_setup_mpi
 
   contains
@@ -51,11 +60,11 @@ module test_setup_mpi
       use precision_for_tests
       implicit none
 
-      integer(kind=ik)              :: mpierr
+      TEST_INT_TYPE              :: mpierr
 
-      integer(kind=ik), intent(out) :: myid, nprocs
+      TEST_INT_TYPE, intent(out) :: myid, nprocs
 #ifdef WITH_OPENMP
-      integer(kind=ik)              :: required_mpi_thread_level, &
+      TEST_INT_TYPE              :: required_mpi_thread_level, &
                                        provided_mpi_thread_level
 #endif
 

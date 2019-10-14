@@ -208,7 +208,12 @@ if test x"${enable_heterogenous_cluster_support}" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_HETEROGENOUS_CLUSTER_SUPPORT],[test x"$enable_heterogenous_cluster_support" = x"yes"])
 
-dnl 64bit integer support for BLACS/LAPACK/SCALAPACK
+dnl 64bit integer support for BLACS/LAPACK/SCALAPACK support
+dnl first long int
+AC_CHECK_SIZEOF([long int])
+size_of_long_int="${ac_cv_sizeof_long_int}"
+
+dnl then 64bit
 AC_MSG_CHECKING(whether 64bit integers should be used for math libraries (BLAS/LAPACK/SCALAPACK))
 AC_ARG_ENABLE([64bit-integer-support],
               AS_HELP_STRING([--64bit-integer-support],
@@ -223,13 +228,19 @@ AC_ARG_ENABLE([64bit-integer-support],
               [enable_64bit_integer_support="no"])
 AC_MSG_RESULT([$enable_64bit_integer_support])
 if test x"${enable_64bit_integer_support}" = x"yes"; then
+  if test x"${enable_legacy}" = x"yes"; then
+    AC_MSG_ERROR([You cannot both enable 64bit integer support and the legacy interface!])
+  fi
+  dnl check whether long int is the correct data-type in C
+  if test x"${size_of_long_int}" = x"8"; then
+    echo "Found C data-type \"long int\" with 8 bytes"
+  else
+    AC_MSG_ERROR([The C data-type "long int" is only ${size_of_long_int} bytes; Needed is 8 bytes])
+  fi
+
   AC_DEFINE([HAVE_64BIT_INTEGER_SUPPORT], [1], [allow to link against the 64bit integer versions of math libraries])
 fi
 AM_CONDITIONAL([HAVE_64BIT_INTEGER_SUPPORT],[test x"$enable_64bit_integer_support" = x"yes"])
-
-
-
-
 
 
 AC_MSG_CHECKING(whether C compiler can use _Generic )

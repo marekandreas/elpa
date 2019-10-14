@@ -54,6 +54,16 @@
 // Author: Valeriy Manin (Bergische Universität Wuppertal)
 // integreated into the ELPA library Pavel Kus, Andeas Marek (MPCDF)
 
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define C_INT_TYPE_PTR long int*
+#define C_INT_TYPE long int
+#define FORTRAN_INT_TYPE c_int64_t
+#else
+#define C_INT_TYPE_PTR int*
+#define C_INT_TYPE int
+#define FORTRAN_INT_TYPE c_int
+#endif
+
 
 // it seems, that we need those two levels of indirection to correctly expand macros
 #define cannons_reduction_impl_expand2(SUFFIX) cannons_reduction_##SUFFIX
@@ -69,13 +79,8 @@
 #include "../helpers/lapack_interfaces.h"
 #include "../helpers/scalapack_interfaces.h"
 
-//void C_PLACPY(char*, int*, int*, math_type*, int*, int*, int*, math_type*, int*, int*, int*);
-//void C_LACPY(char*, int*, int*, math_type*, int*, math_type*, int*);
-//void C_GEMM(char*, char*, int*, int*, int*, math_type*, math_type*, int*, math_type*, int*, math_type*, math_type*, int*); 
-//void C_PTRAN(int*, int*, math_type*, math_type*, int*, int*, int*, math_type*, math_type*, int*, int*, int*);
-
-void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols, int my_prow, int my_pcol,
-                         int* a_desc, math_type *Res, int ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
+void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol,
+                         C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_TYPE ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
 {
    // Input matrices: 
       // - A: full matrix
@@ -85,18 +90,18 @@ void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols
    // row_comm: communicator along rows
    // col_comm: communicator along columns
   
-   int na, nblk, i, j, Size_send_A, Size_receive_A, Size_send_U, Size_receive_U, Buf_rows, Buf_cols, where_to_send_A, from_where_to_receive_A, where_to_send_U, from_where_to_receive_U, last_proc_row, last_proc_col, cols_in_buffer_A, rows_in_buffer_A, intNumber;
+   C_INT_TYPE na, nblk, i, j, Size_send_A, Size_receive_A, Size_send_U, Size_receive_U, Buf_rows, Buf_cols, where_to_send_A, from_where_to_receive_A, where_to_send_U, from_where_to_receive_U, last_proc_row, last_proc_col, cols_in_buffer_A, rows_in_buffer_A, intNumber;
    math_type *Buf_to_send_A, *Buf_to_receive_A, *Buf_to_send_U, *Buf_to_receive_U, *data_ptr, *Buf_A, *Buf_pos, *U_local_start, *Res_ptr, *M, *M_T, *A_local_start, *U_local_start_curr, *U_stored, *CopyTo, *CopyFrom, *U_to_calc;
-   int ratio, num_of_iters, cols_in_buffer, rows_in_block, rows_in_buffer, curr_col_loc, cols_in_block, curr_col_glob, curr_row_loc, Size_receive_A_now, Nb, owner, cols_in_buffer_A_now;
-   int  row_of_origin_U, rows_in_block_U, num_of_blocks_in_U_buffer, k, startPos, cols_in_buffer_U, rows_in_buffer_U, col_of_origin_A, curr_row_loc_res, curr_row_loc_A, curr_col_glob_res; 
-   int curr_col_loc_res, curr_col_loc_buf, proc_row_curr, curr_col_loc_U, A_local_index, LDA_A, LDA_A_new, index_row_A_for_LDA, ii, rows_in_block_U_curr, width, row_origin_U, rows_in_block_A, cols_in_buffer_A_my_initial, rows_in_buffer_A_my_initial, proc_col_min;
-   int *SizesU;
-   int Size_U_skewed, Size_U_stored, Curr_pos_in_U_stored, rows_in_buffer_A_now;
+   C_INT_TYPE ratio, num_of_iters, cols_in_buffer, rows_in_block, rows_in_buffer, curr_col_loc, cols_in_block, curr_col_glob, curr_row_loc, Size_receive_A_now, Nb, owner, cols_in_buffer_A_now;
+   C_INT_TYPE  row_of_origin_U, rows_in_block_U, num_of_blocks_in_U_buffer, k, startPos, cols_in_buffer_U, rows_in_buffer_U, col_of_origin_A, curr_row_loc_res, curr_row_loc_A, curr_col_glob_res; 
+   C_INT_TYPE curr_col_loc_res, curr_col_loc_buf, proc_row_curr, curr_col_loc_U, A_local_index, LDA_A, LDA_A_new, index_row_A_for_LDA, ii, rows_in_block_U_curr, width, row_origin_U, rows_in_block_A, cols_in_buffer_A_my_initial, rows_in_buffer_A_my_initial, proc_col_min;
+   C_INT_TYPE *SizesU;
+   C_INT_TYPE Size_U_skewed, Size_U_stored, Curr_pos_in_U_stored, rows_in_buffer_A_now;
    math_type done = 1.0;
    math_type dzero = 0.0;
-   int one = 1; 
-   int zero = 0; 
-   int na_rows, na_cols;
+   C_INT_TYPE one = 1; 
+   C_INT_TYPE zero = 0; 
+   C_INT_TYPE na_rows, na_cols;
         
    MPI_Status status;
    MPI_Request request_A_Recv; 
@@ -164,7 +169,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols
    Size_U_stored = ratio*nblk*nblk*intNumber*(intNumber+1)/2 + 2;   // number of local elements from the upper triangular part that every proc. has (max. possible value among all the procs.)
    
    U_stored = malloc((Size_U_stored*(ToStore+1))*sizeof(math_type));
-   SizesU = malloc(ToStore*sizeof(int));  // here will be stored the sizes of the buffers of U that I have stored     
+   SizesU = malloc(ToStore*sizeof(C_INT_TYPE));  // here will be stored the sizes of the buffers of U that I have stored     
    Buf_to_send_A = malloc(ratio*Buf_cols*Buf_rows*sizeof(math_type));
    Buf_to_receive_A = malloc(ratio*Buf_cols*Buf_rows*sizeof(math_type));
    Buf_to_send_U = malloc(Size_U_stored*sizeof(math_type));
@@ -421,7 +426,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols
    }
    
    /////// do the last multiplication //////////////
-   rows_in_buffer = (int)Buf_to_receive_U[Size_receive_U-1];
+   rows_in_buffer = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-1];
    row_origin_U = (my_pcol + my_prow + np_cols + np_rows -1)%np_rows;
 
    if((my_pcol >= my_prow)&&(my_pcol >= row_origin_U))   // if I and sender are from the upper part of grid
@@ -635,7 +640,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols
          {
             MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_to_receive_A, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
             MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A);
-            cols_in_buffer_A = (int)Buf_to_receive_A[Size_receive_A-1];
+            cols_in_buffer_A = (C_INT_TYPE)Buf_to_receive_A[Size_receive_A-1];
             if(from_where_to_receive_A <= my_prow)  // if source is from the lower part of grid
             {
                rows_in_buffer_A = na_rows;
@@ -712,15 +717,15 @@ void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols
       }
       
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
-      rows_in_buffer_U = (int)U_to_calc[Size_receive_U-1];
+      rows_in_buffer_U = (C_INT_TYPE)U_to_calc[Size_receive_U-1];
       row_of_origin_U = (my_pcol + my_prow + np_cols + j - 1)%np_rows;
       if(my_pcol >= row_of_origin_U)
          cols_in_buffer_U = na_cols;
       else
          cols_in_buffer_U = na_cols - nblk;
       
-      cols_in_buffer_A = (int)Buf_to_send_A[Size_receive_A-2];
-      rows_in_buffer_A = (int)Buf_to_send_A[Size_receive_A-1];
+      cols_in_buffer_A = (C_INT_TYPE)Buf_to_send_A[Size_receive_A-2];
+      rows_in_buffer_A = (C_INT_TYPE)Buf_to_send_A[Size_receive_A-1];
       // find the minimal pcol among those who have sent A for this iteration
       col_of_origin_A = np_cols; 
       for(i = 0; i < ratio; i++)
@@ -830,15 +835,15 @@ void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols
    /////// do the last multiplication //////////////
    if(ToStore < np_rows - 1)
       U_to_calc = Buf_to_receive_U;
-   rows_in_buffer_U = (int)U_to_calc[Size_receive_U-1];
+   rows_in_buffer_U = (C_INT_TYPE)U_to_calc[Size_receive_U-1];
    row_of_origin_U = (my_pcol + my_prow + np_cols + j - 1)%np_rows;     
    if(my_pcol >= row_of_origin_U)
       cols_in_buffer_U = na_cols;
    else
       cols_in_buffer_U = na_cols - nblk;
       
-   cols_in_buffer_A = (int)Buf_to_receive_A[Size_receive_A-2];
-   rows_in_buffer_A = (int)Buf_to_receive_A[Size_receive_A-1];
+   cols_in_buffer_A = (C_INT_TYPE)Buf_to_receive_A[Size_receive_A-2];
+   rows_in_buffer_A = (C_INT_TYPE)Buf_to_receive_A[Size_receive_A-1];
    // find the minimal pcol among those who have sent A for this iteration
    col_of_origin_A = np_cols; 
    for(i = 0; i < ratio; i++)
@@ -941,13 +946,13 @@ void cannons_reduction_impl(math_type* A, math_type* U, int np_rows, int np_cols
    free(SizesU);
 }
 
-void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rows, int local_cols,
-                         int* a_desc, math_type *Res, int ToStore, int row_comm, int col_comm)
+void cannons_reduction_c_impl(math_type* A, math_type* U, C_INT_TYPE local_rows, C_INT_TYPE local_cols,
+                         C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_TYPE ToStore, C_INT_TYPE row_comm, C_INT_TYPE col_comm)
 {
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 
-  int my_prow, my_pcol, np_rows, np_cols;
+  C_INT_TYPE my_prow, my_pcol, np_rows, np_cols;
   MPI_Comm_rank(c_row_comm, &my_prow);
   MPI_Comm_size(c_row_comm, &np_rows);
   MPI_Comm_rank(c_col_comm, &my_pcol);

@@ -102,47 +102,52 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #define KERNEL_KEY "complex_kernel"
 #endif
 
-
-#define TEST_INTEGER integer(kind=C_int64_t)
-
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
 #include "assert.h"
 
 program test
-   !use elpa
+   use elpa !, only : elpa_allocate, elpa_init, elpa_allocate, elpa_t, ELPA_SOLVER_1STAGE, elpa_deallocate, &
+            !       elpa_uninit, 
 
    !use test_util
-   !use test_setup_mpi
-   !use test_prepare_matrix
+   use test_setup_mpi
+   use test_prepare_matrix
    use test_read_input_parameters
-   !use test_blacs_infrastructure
-   !use test_check_correctness
-   !use test_analytic
+   use test_blacs_infrastructure
+   use test_check_correctness
+   use test_analytic
 #ifdef WITH_SCALAPACK_TESTS
-   !use test_scalapack
+   use test_scalapack
 #endif
 
 #ifdef HAVE_REDIRECT
-   !use test_redirect
+   use test_redirect
 #endif
 #ifdef WITH_OPENMP
-   !use omp_lib
+   use omp_lib
 #endif
    use precision_for_tests
 
    implicit none
 
    ! matrix dimensions
-   TEST_INTEGER      :: na, nev, nblk
+   TEST_INT_TYPE      :: na, nev, nblk
 
    ! mpi
-   TEST_INTEGER      :: myid, nprocs
-   TEST_INTEGER      :: na_cols, na_rows  ! local matrix size
-   TEST_INTEGER      :: np_cols, np_rows  ! number of MPI processes per column/row
-   TEST_INTEGER      :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INTEGER      :: mpierr
+   TEST_INT_TYPE      :: myid, nprocs
+   TEST_INT_TYPE      :: na_cols, na_rows  ! local matrix size
+   TEST_INT_TYPE      :: np_cols, np_rows  ! number of MPI processes per column/row
+   TEST_INT_TYPE      :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
+   TEST_INT_TYPE      :: mpierr
 
    ! blacs
-   TEST_INTEGER     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
    MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
@@ -164,18 +169,19 @@ program test
    EV_TYPE                     :: diagonalELement, subdiagonalElement
 #endif
 
-   TEST_INTEGER      :: error, status
+   TEST_INT_TYPE               :: status
+   integer(kind=c_int)         :: error_elpa
 
    type(output_t)              :: write_to_file
    class(elpa_t), pointer      :: e
 #ifdef TEST_ALL_KERNELS
-   TEST_INTEGER      :: i
+   TEST_INT_TYPE      :: i
 #endif
 #ifdef TEST_ALL_LAYOUTS
    character(len=1), parameter :: layouts(2) = [ 'C', 'R' ]
-   TEST_INTEGER      :: i_layout
+   TEST_INT_TYPE      :: i_layout
 #endif
-   TEST_INTEGER      :: kernel
+   integer(kind=c_int)         :: kernel
    character(len=1)            :: layout
    logical                     :: do_test_numeric_residual, do_test_numeric_residual_generalized, &
                                   do_test_analytic_eigenvalues, &
@@ -185,16 +191,16 @@ program test
                                   do_test_hermitian_multiply
 
 #ifdef WITH_OPENMP
-   TEST_INTEGER      :: max_threads, threads_caller
+   TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
 
 #ifdef SPLIT_COMM_MYSELF
-   TEST_INTEGER      :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
+   TEST_INT_TYPE      :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
    character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
 #endif
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
-   !call setup_mpi(myid, nprocs)
+   call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
@@ -285,11 +291,11 @@ program test
 #endif /* TEST_QR_DECOMPOSITION */
 
 
-   !call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
-   !                      my_blacs_ctxt, my_prow, my_pcol)
+   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
+                         my_blacs_ctxt, my_prow, my_pcol)
 
-   !call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
-   !                             na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+   call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -325,12 +331,12 @@ program test
 
    ! We also have to take care of special case in TEST_EIGENVECTORS
 #if !defined(TEST_EIGENVECTORS)
-    !call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+    call prepare_matrix_random(na, myid, sc_desc, a, z, as)
 #else /* TEST_EIGENVECTORS */
     if (nev .ge. 1) then
-     !call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+      call prepare_matrix_random(na, myid, sc_desc, a, z, as)
 #ifndef TEST_HERMITIAN_MULTIPLY
-    do_test_numeric_residual = .true.
+      do_test_numeric_residual = .true.
 #endif
    else
      if (myid .eq. 0) then
@@ -349,8 +355,8 @@ program test
 #endif /* (TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_MATRIX_RANDOM) && defined(TEST_CHOLESKY)
-     !call prepare_matrix_random_spd(na, myid, sc_desc, a, z, as, &
-     !            nblk, np_rows, np_cols, my_prow, my_pcol)
+     call prepare_matrix_random_spd(na, myid, sc_desc, a, z, as, &
+                 nblk, np_rows, np_cols, my_prow, my_pcol)
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
     do_test_frank_eigenvalues = .false.
@@ -358,9 +364,9 @@ program test
 #endif /* TEST_MATRIX_RANDOM and TEST_CHOLESKY */
 
 #if defined(TEST_MATRIX_RANDOM) && defined(TEST_GENERALIZED_EIGENPROBLEM)
-   !! call prepare_matrix_random(na, myid, sc_desc, a, z, as)
-   ! call prepare_matrix_random_spd(na, myid, sc_desc, b, z, bs, &
-   !              nblk, np_rows, np_cols, my_prow, my_pcol)
+   ! call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+    call prepare_matrix_random_spd(na, myid, sc_desc, b, z, bs, &
+                 nblk, np_rows, np_cols, my_prow, my_pcol)
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
     do_test_frank_eigenvalues = .false.
@@ -380,7 +386,7 @@ program test
    ! ANALYTIC + TEST_SOLVE_TRIDIAGONAL: we need a TOEPLITZ MATRIX
    ! ANALTIC  + TEST_CHOLESKY: no correctness check yet implemented
 
-   !call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+   call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
    as(:,:) = a
 
    do_test_numeric_residual = .false.
@@ -424,9 +430,9 @@ program test
 #endif
 #endif /* TEST_CHOLESKY */
 
-   !call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
-   !                             d, sd, ds, sds, a, as, nblk, np_rows, &
-   !                             np_cols, my_prow, my_pcol)
+   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
+                                d, sd, ds, sds, a, as, nblk, np_rows, &
+                                np_cols, my_prow, my_pcol)
 
 
    do_test_numeric_residual = .false.
@@ -459,7 +465,7 @@ program test
 
    ! We also have to take care of special case in TEST_EIGENVECTORS
 #if !defined(TEST_EIGENVECTORS)
-    !call prepare_matrix_frank(na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
+    call prepare_matrix_frank(na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
 
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
@@ -471,7 +477,7 @@ program test
 #else /* TEST_EIGENVECTORS */
 
     if (nev .ge. 1) then
-     !call prepare_matrix_frank(na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
+      call prepare_matrix_frank(na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
 
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
@@ -545,19 +551,19 @@ program test
    endif
 #endif
 
-   e => elpa_allocate(error)
-   assert_elpa_ok(error)
+   e => elpa_allocate(error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e%set("na", na, error)
-   assert_elpa_ok(error)
-   call e%set("nev", nev, error)
-   assert_elpa_ok(error)
-   call e%set("local_nrows", na_rows, error)
-   assert_elpa_ok(error)
-   call e%set("local_ncols", na_cols, error)
-   assert_elpa_ok(error)
-   call e%set("nblk", nblk, error)
-   assert_elpa_ok(error)
+   call e%set("na", int(na,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("nev", int(nev,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("local_nrows", int(na_rows,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("local_ncols", int(na_cols,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("nblk", int(nblk,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 
 #ifdef WITH_MPI
 #ifdef SPLIT_COMM_MYSELF
@@ -575,47 +581,47 @@ program test
      stop 1
    endif
 
-   call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
-   assert_elpa_ok(error)
-   call e%set("mpi_comm_rows", mpi_comm_rows, error)
-   assert_elpa_ok(error)
-   call e%set("mpi_comm_cols", mpi_comm_cols, error)
-   assert_elpa_ok(error)
+   call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("mpi_comm_rows", int(mpi_comm_rows,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("mpi_comm_cols", int(mpi_comm_cols,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #else
-   call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
-   assert_elpa_ok(error)
-   call e%set("process_row", my_prow, error)
-   assert_elpa_ok(error)
-   call e%set("process_col", my_pcol, error)
-   assert_elpa_ok(error)
+   call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("process_row", int(my_prow,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("process_col", int(my_pcol,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #endif
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
-   call e%set("blacs_context", my_blacs_ctxt, error)
-   assert_elpa_ok(error)
+   call e%set("blacs_context", int(my_blacs_ctxt,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
-   call e%set("timings",1,error)
+   call e%set("timings", 1_ik, error_elpa)
    assert_elpa_ok(e%setup())
 
 #ifdef TEST_SOLVER_1STAGE
-   call e%set("solver", ELPA_SOLVER_1STAGE,error)
+   call e%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
 #else
-   call e%set("solver", ELPA_SOLVER_2STAGE,error)
+   call e%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
 #endif
-   assert_elpa_ok(error)
+   assert_elpa_ok(error_elpa)
 
-   call e%set("gpu", TEST_GPU, error)
-   assert_elpa_ok(error)
+   call e%set("gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
 
 #if TEST_QR_DECOMPOSITION == 1
-   call e%set("qr", 1, error)
-   assert_elpa_ok(error)
+   call e%set("qr", 1_ik, error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 
 #ifdef WITH_OPENMP
    max_threads=omp_get_max_threads()
-   call e%set("omp_threads", max_threads, error)
-   assert_elpa_ok(error)
+   call e%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 
    if (myid == 0) print *, ""
@@ -623,7 +629,7 @@ program test
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
      if (TEST_GPU .eq. 0) then
-       kernel = elpa_option_enumerate(KERNEL_KEY, i)
+       kernel = elpa_option_enumerate(KERNEL_KEY, int(i,kind=c_int))
        if (kernel .eq. ELPA_2STAGE_REAL_GPU) continue
        if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) continue
      endif
@@ -633,16 +639,16 @@ program test
 #endif
 
 #ifdef TEST_SOLVER_2STAGE
-     call e%set(KERNEL_KEY, kernel, error)
+     call e%set(KERNEL_KEY, kernel, error_elpa)
 #ifdef TEST_KERNEL
-     assert_elpa_ok(error)
+     assert_elpa_ok(error_elpa)
 #else
-     if (error /= ELPA_OK) then
+     if (error_elpa /= ELPA_OK) then
        cycle
      endif
      ! actually used kernel might be different if forced via environment variables
-     call e%get(KERNEL_KEY, kernel, error)
-     assert_elpa_ok(error)
+     call e%get(KERNEL_KEY, kernel, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
      if (myid == 0) then
        print *, elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
@@ -651,8 +657,8 @@ program test
 
 
 ! print all parameters
-     call e%print_settings(error)
-     assert_elpa_ok(error)
+     call e%print_settings(error_elpa)
+     assert_elpa_ok(error_elpa)
 
 #ifdef TEST_ALL_KERNELS
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
@@ -671,7 +677,7 @@ program test
      call solve_scalapack_part(na, a, sc_desc, nev, ev, z)
      check_all_evals = .false. ! scalapack does not compute all eigenvectors
 #else
-     call e%eigenvectors(a, ev, z, error)
+     call e%eigenvectors(a, ev, z, error_elpa)
 #endif
 #if TEST_QR_DECOMPOSITION == 1
      call e%timer_stop("e%eigenvectors_qr()")
@@ -682,27 +688,29 @@ program test
 
 #ifdef TEST_EIGENVALUES
      call e%timer_start("e%eigenvalues()")
-     call e%eigenvalues(a, ev, error)
+     call e%eigenvalues(a, ev, error_elpa)
      call e%timer_stop("e%eigenvalues()")
 #endif
 
 #if defined(TEST_SOLVE_TRIDIAGONAL)
      call e%timer_start("e%solve_tridiagonal()")
-     call e%solve_tridiagonal(d, sd, z, error)
+     call e%solve_tridiagonal(d, sd, z, error_elpa)
      call e%timer_stop("e%solve_tridiagonal()")
      ev(:) = d(:)
 #endif
 
 #if defined(TEST_CHOLESKY)
      call e%timer_start("e%cholesky()")
-     call e%cholesky(a, error)
-     assert_elpa_ok(error)
+     call e%cholesky(a, error_elpa)
+     assert_elpa_ok(error_elpa)
      call e%timer_stop("e%cholesky()")
 #endif
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
      call e%timer_start("e%hermitian_multiply()")
-     call e%hermitian_multiply('F','F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, error)
+     call e%hermitian_multiply('F','F', int(na,kind=c_int), a, b, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
      call e%timer_stop("e%hermitian_multiply()")
 #endif
 
@@ -711,18 +719,18 @@ program test
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      call e%timer_start("is_already_decomposed=.false.")
 #endif
-     call e%generalized_eigenvectors(a, b, ev, z, .false., error)
+     call e%generalized_eigenvectors(a, b, ev, z, .false., error_elpa)
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      call e%timer_stop("is_already_decomposed=.false.")
      a = as
      call e%timer_start("is_already_decomposed=.true.")
-     call e%generalized_eigenvectors(a, b, ev, z, .true., error)
+     call e%generalized_eigenvectors(a, b, ev, z, .true., error_elpa)
      call e%timer_stop("is_already_decomposed=.true.")
 #endif
      call e%timer_stop("e%generalized_eigenvectors()")
 #endif
 
-     assert_elpa_ok(error)
+     assert_elpa_ok(error_elpa)
 
 #ifdef TEST_ALL_KERNELS
      call e%timer_stop(elpa_int_value_to_string(KERNEL_KEY, kernel))
@@ -759,49 +767,49 @@ program test
      endif
 
      if (do_test_analytic_eigenvalues) then
-       !status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, .false.)
+       status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, .false.)
        call check_status(status, myid)
      endif
 
      if (do_test_analytic_eigenvalues_eigenvectors) then
-       !status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, .true.)
+       status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, .true.)
        call check_status(status, myid)
      endif
 
      if(do_test_numeric_residual) then
-       !status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
        call check_status(status, myid)
      endif
 
      if (do_test_frank_eigenvalues) then
-       !status = check_correctness_eigenvalues_frank(na, ev, z, myid)
+       status = check_correctness_eigenvalues_frank(na, ev, z, myid)
        call check_status(status, myid)
      endif
 
      if (do_test_toeplitz_eigenvalues) then
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
-       !status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
-       !                                                subdiagonalElement, ev, z, myid)
+       status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
+                                                       subdiagonalElement, ev, z, myid)
        call check_status(status, myid)
 #endif
      endif
 
      if (do_test_cholesky) then
-       !status = check_correctness_cholesky(na, a, as, na_rows, sc_desc, myid )
+       status = check_correctness_cholesky(na, a, as, na_rows, sc_desc, myid )
        call check_status(status, myid)
      endif
 
 #ifdef TEST_HERMITIAN_MULTIPLY
      if (do_test_hermitian_multiply) then
-       !status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
+       status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
        call check_status(status, myid)
      endif
 #endif
 
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
      if(do_test_numeric_residual_generalized) then
-       !status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, &
-       !my_pcol, bs)
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, &
+       my_pcol, bs)
        call check_status(status, myid)
      endif
 #endif
@@ -828,8 +836,8 @@ program test
    end do ! kernels
 #endif
 
-   call elpa_deallocate(e, error)
-   assert_elpa_ok(error)
+   call elpa_deallocate(e, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    deallocate(a)
    deallocate(as)
@@ -851,8 +859,8 @@ program test
    end do ! factors
    end do ! layouts
 #endif
-   call elpa_uninit(error)
-   assert_elpa_ok(error)
+   call elpa_uninit(error_elpa)
+   assert_elpa_ok(error_elpa)
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
@@ -864,8 +872,8 @@ program test
 
      subroutine check_status(status, myid)
        implicit none
-       integer, intent(in) :: status, myid
-       integer :: mpierr
+       TEST_INT_TYPE, intent(in) :: status, myid
+       TEST_INT_TYPE             :: mpierr
        if (status /= 0) then
          if (myid == 0) print *, "Result incorrect!"
 #ifdef WITH_MPI

@@ -41,6 +41,15 @@
 !
 !
 #include "config-f90.h"
+
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+
 module test_util
   use iso_c_binding
   use precision_for_tests
@@ -53,7 +62,7 @@ module test_util
   include 'mpif.h'
 #endif
 #else
-  integer, parameter :: mpi_comm_world = -1
+  TEST_INT_TYPE, parameter :: mpi_comm_world = -1
 #endif
 
   contains

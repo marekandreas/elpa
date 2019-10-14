@@ -108,6 +108,9 @@
 #endif
       use precision
       use elpa_blas_interfaces
+#ifdef WITH_MPI
+      use elpa_scalpack_interfaces
+#endif
       use elpa_abstract_impl
 
       implicit none
@@ -159,9 +162,6 @@
 #endif
       ! a_dev is passed from bandred_real to trans_ev_band
       integer(kind=C_intptr_T)                    :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
-#ifdef WITH_MPI
-      integer(kind=ik), external                  :: numroc
-#endif
       integer(kind=ik)                            :: ierr
       integer(kind=ik)                            :: cur_l_rows, cur_l_cols, vmr_size, umc_size
       integer(kind=c_intptr_t)                    :: lc_start, lc_end
@@ -884,9 +884,9 @@
 #if COMPLEXCASE == 1
              call PRECISION_HERK('U', 'C',            &
 #endif
-                           n_cols, l_rows, ONE, &
-                           vmrCUDA, cur_l_rows, &
-                           ZERO, vav, ubound(vav,dim=1))
+                           int(n_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
+                           vmrCUDA, int(cur_l_rows,kind=BLAS_KIND), &
+                           ZERO, vav, int(ubound(vav,dim=1),kind=BLAS_KIND))
 
          else ! useGPU_reduction_to_tridiagonal
            if (l_rows>0) &
@@ -896,7 +896,8 @@
 #if COMPLEXCASE == 1
              call PRECISION_HERK('U', 'C',           &
 #endif
-                           n_cols, l_rows, ONE, vmrCPU, ubound(vmrCPU,dim=1), ZERO, vav, ubound(vav,dim=1))
+                                 int(n_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, vmrCPU, &
+                                 int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), ZERO, vav, int(ubound(vav,dim=1),kind=BLAS_KIND))
          endif
          call obj%timer%stop("blas")
 #if REALCASE == 1
@@ -913,7 +914,8 @@
            tau = tmat(lc,lc,istep)
            if (lc<n_cols) then
              call PRECISION_TRMV('U', BLAS_TRANS_OR_CONJ, 'N',&
-                                 n_cols-lc, tmat(lc+1,lc+1,istep), ubound(tmat,dim=1), vav(lc+1,lc), 1)
+                                 int(n_cols-lc,kind=BLAS_KIND), tmat(lc+1,lc+1,istep), &
+                                 int(ubound(tmat,dim=1),kind=BLAS_KIND), vav(lc+1,lc), 1_BLAS_KIND)
 
 #if REALCASE == 1
              tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
@@ -1065,10 +1067,11 @@
              !                 B2]
              if ( lre > lrs .and. l_cols > lcs ) then
                call obj%timer%start("blas")
-               call PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1,          &
-                                   ONE, a_mat(lrs,lcs), ubound(a_mat,dim=1),                 &
-                                   umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1),  &
-                                   ZERO, vmrCPU(lrs,n_cols+1), ubound(vmrCPU,dim=1))
+               call PRECISION_GEMM('N', 'N', int(lre-lrs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
+                                   int(l_cols-lcs+1,kind=BLAS_KIND),          &
+                                   ONE, a_mat(lrs,lcs), int(ubound(a_mat,dim=1),kind=BLAS_KIND),        &
+                                   umcCPU(lcs,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND),  &
+                                   ZERO, vmrCPU(lrs,n_cols+1), int(ubound(vmrCPU,dim=1),kind=BLAS_KIND) )
                call obj%timer%stop("blas")
              endif
 
@@ -1076,10 +1079,10 @@
              if ( lce > lcs .and. i > 0 ) then
                call obj%timer%start("blas")
                call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',     &
-                        lce-lcs+1, n_cols, lrs-1,              &
-                                    ONE, a_mat(1,lcs),   ubound(a_mat,dim=1),      &
-                                    vmrCPU(1,1),   ubound(vmrCPU,dim=1),   &
-                                    ZERO, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+                                   int(lce-lcs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lrs-1,kind=BLAS_KIND), &
+                                    ONE, a_mat(1,lcs), int(ubound(a_mat,dim=1),kind=BLAS_KIND),      &
+                                    vmrCPU(1,1), int(ubound(vmrCPU,dim=1),kind=BLAS_KIND),   &
+                                    ZERO, umcCPU(lcs,1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
                call obj%timer%stop("blas")
              endif
            enddo
@@ -1157,15 +1160,18 @@
 
               call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',       &
-                             lce-lcs+1, n_cols, lre, ONE, a_mat(1,lcs), ubound(a_mat,dim=1), &
-                                   vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+                                  int(lce-lcs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lre,kind=BLAS_KIND), &
+                                  ONE, a_mat(1,lcs), int(ubound(a_mat,dim=1),kind=BLAS_KIND), &
+                                  vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), ONE, umcCPU(lcs,1), &
+                                  int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
               call obj%timer%stop("blas")
               if (i==0) cycle
               lre = min(l_rows,i*l_rows_tile)
               call obj%timer%start("blas")
-              call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
-                                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE,      &
-                                     vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+              call PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
+                                  ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND), &
+                                  umcCPU(lcs,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), ONE,      &
+                                  vmrCPU(1,n_cols+1), int(ubound(vmrCPU,dim=1), kind=BLAS_KIND) )
               call obj%timer%stop("blas")
             endif ! useGPU
           enddo ! i=0,(istep*nbw-1)/tile_size
@@ -1352,18 +1358,20 @@
          call obj%timer%start("blas")
 
          call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
-                        l_cols,n_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), &
-                              umcCPU, ubound(umcCPU,dim=1))
+                             int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
+                             int(ubound(tmat,dim=1),kind=BLAS_KIND), &
+                              umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
 
          ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
 
          call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',              &
-                       n_cols, n_cols, l_cols, ONE, umcCPU, ubound(umcCPU,dim=1), umcCPU(1,n_cols+1), &
-                             ubound(umcCPU,dim=1), ZERO, vav, ubound(vav,dim=1))
+                             int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                             ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND), umcCPU(1,n_cols+1), &
+                             int(ubound(umcCPU,dim=1),kind=BLAs_KIND), ZERO, vav, int(ubound(vav,dim=1),kind=BLAS_KIND))
 
          call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
-                       n_cols, n_cols, ONE, tmat(1,1,istep),    &
-                             ubound(tmat,dim=1), vav, ubound(vav,dim=1))
+                             int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep),    &
+                             int(ubound(tmat,dim=1),kind=BLAS_KIND), vav, int(ubound(vav,dim=1),kind=BLAS_KIND) )
          call obj%timer%stop("blas")
 
        endif ! useGPU
@@ -1446,15 +1454,15 @@
          endif
        else ! useGPU
          call obj%timer%start("blas")
-         call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
+         call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
 #if REALCASE == 1
-                       -0.5_rk,                           &
+                              -0.5_rk,                           &
 #endif
 #if COMPLEXCASE == 1
                               (-0.5_rk, 0.0_rk),     &
 #endif
-            umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), vav, &
-                              ubound(vav,dim=1), ONE, umcCPU, ubound(umcCPU,dim=1))
+                              umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav, &
+                              int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
 
          call obj%timer%stop("blas")
          ! Transpose umc -> umr (stored in vmr, second half)
@@ -1501,9 +1509,11 @@
          if ( myend > lre ) myend = lre
          if ( myend-mystart+1 < 1) cycle
          call obj%timer%start("blas")
-         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1, lce-lcs+1, 2*n_cols, -ONE, &
-                    vmrCPU(mystart, 1), ubound(vmrCPU,1), umcCPU(lcs,1), ubound(umcCPU,1), &
-                     ONE, a_mat(mystart,lcs), ubound(a_mat,1))
+         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
+                             int(lce-lcs+1,kind=BLAS_KIND), int(2*n_cols,kind=BLAS_KIND), -ONE, &
+                             vmrCPU(mystart, 1), int(ubound(vmrCPU,1),kind=BLAS_KIND), &
+                             umcCPU(lcs,1), int(ubound(umcCPU,1),kind=BLAS_KIND), &
+                             ONE, a_mat(mystart,lcs), int(ubound(a_mat,1),kind=BLAS_KIND) )
           call obj%timer%stop("blas")
        enddo
        !$omp end parallel
@@ -1543,9 +1553,12 @@
          else ! useGPU
 
            call obj%timer%start("blas")
-           call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, lre,lce-lcs+1, 2*n_cols, -ONE, &
-                               vmrCPU, ubound(vmrCPU,dim=1), umcCPU(lcs,1), ubound(umcCPU,dim=1), &
-                               ONE, a_mat(1,lcs), lda)
+           call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre,kind=BLAS_KIND),int(lce-lcs+1,kind=BLAS_KIND), &
+                               int(2*n_cols,kind=BLAS_KIND), &
+                               -ONE, &
+                               vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), umcCPU(lcs,1), &
+                               int(ubound(umcCPU,dim=1),kind=BLAS_KIND), &
+                               ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND))
            call obj%timer%stop("blas")
          endif ! useGPU
        enddo ! i=0,(istep*nbw-1)/tile_size

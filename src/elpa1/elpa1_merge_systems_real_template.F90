@@ -99,12 +99,14 @@
 
       integer(kind=ik)                            :: i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
                                                      l_rqm, ns, info
+      integer(kind=BLAS_KIND)                     :: infoBLAS
       integer(kind=ik)                            :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
                                                      l_cols_qreorg, np, l_idx, nqcols1, nqcols2
       integer(kind=ik)                            :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
                                                      np_cols, mpierr
       integer(kind=ik)                            :: np_next, np_prev, np_rem
       integer(kind=ik)                            :: idx(na), idx1(na), idx2(na)
+      integer(kind=BLAS_KIND)                     :: idxBLAS(NA)
       integer(kind=ik)                            :: coltyp(na), idxq1(na), idxq2(na)
 
       integer(kind=ik)                            :: istat
@@ -230,7 +232,9 @@
       rho = 2.0_rk*beta
       ! Calculate index for merging both systems by ascending eigenvalues
       call obj%timer%start("blas")
-      call PRECISION_LAMRG( nm, na-nm, d, 1, 1, idx )
+      call PRECISION_LAMRG( int(nm,kind=BLAS_KIND), int(na-nm,kind=BLAS_KIND), d, &
+                            1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
+      idx(:) = int(idxBLAS(:),kind=ik)
       call obj%timer%stop("blas")
 
 ! Calculate the allowable deflation tolerance
@@ -391,8 +395,8 @@
           d(1) = d1(1) + rho*z1(1)**2 ! solve secular equation
         else ! na1==2
           call obj%timer%start("blas")
-          call PRECISION_LAED5(1, d1, z1, qtrans(1,1), rho, d(1))
-          call PRECISION_LAED5(2, d1, z1, qtrans(1,2), rho, d(2))
+          call PRECISION_LAED5(1_BLAS_KIND, d1, z1, qtrans(1,1), rho, d(1))
+          call PRECISION_LAED5(2_BLAS_KIND, d1, z1, qtrans(1,2), rho, d(2))
           call obj%timer%stop("blas")
           call transform_columns_&
           &PRECISION&
@@ -404,7 +408,9 @@
 
         ! Calculate arrangement of all eigenvalues  in output
         call obj%timer%start("blas")
-        call PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
+        call PRECISION_LAMRG( int(na1,kind=BLAS_KIND), int(na-na1,kind=BLAS_KIND), d, &
+                              1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
+        idx(:) = int(idxBLAS(:),kind=ik)
         call obj%timer%stop("blas")
         ! Rearrange eigenvalues
 
@@ -437,16 +443,19 @@
         ddiff(1:na1) = 0
 
         info = 0
+        infoBLAS = int(info,kind=BLAS_KIND)
 #ifdef WITH_OPENMP
 
         call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
-!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,j)
+!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,infoBLAS,j)
         my_thread = omp_get_thread_num()
 !$OMP DO
 #endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
           call obj%timer%start("blas")
-          call PRECISION_LAED4(na1, i, d1, z1, delta, rho, s, info) ! s is not used!
+          call PRECISION_LAED4(int(na1,kind=BLAS_KIND), int(i,kind=BLAS_KIND), d1, z1, delta, &
+                               rho, s, infoBLAS) ! s is not used!
+          info = int(infoBLAS,kind=ik)
           call obj%timer%stop("blas")
           if (info/=0) then
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
@@ -548,7 +557,9 @@
 
         call obj%timer%start("blas")
         ! Calculate arrangement of all eigenvalues  in output
-        call PRECISION_LAMRG( na1, na-na1, d, 1, 1, idx )
+        call PRECISION_LAMRG(int(na1,kind=BLAS_KIND), int(na-na1,kind=BLAS_KIND), d, &
+                             1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
+        idx(:) = int(idxBLAS(:),kind=ik)
         call obj%timer%stop("blas")
         ! Rearrange eigenvalues
         tmp = d
@@ -775,10 +786,11 @@
               else
                 call obj%timer%start("blas")
                 call obj%timer%start("gemm")
-                call PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
-                                    1.0_rk, qtmp1, ubound(qtmp1,dim=1),    &
-                                    ev, ubound(ev,dim=1), &
-                                    1.0_rk, qtmp2(1,1), ubound(qtmp2,dim=1))
+                call PRECISION_GEMM('N', 'N', int(l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND), &
+                                    int(nnzu,kind=BLAS_KIND),   &
+                                    1.0_rk, qtmp1, int(ubound(qtmp1,dim=1),kind=BLAS_KIND),    &
+                                    ev, int(ubound(ev,dim=1),kind=BLAS_KIND), &
+                                    1.0_rk, qtmp2(1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
                 call obj%timer%stop("gemm")
                 call obj%timer%stop("blas")
               endif ! useGPU
@@ -833,10 +845,11 @@
               else
                 call obj%timer%start("blas")
                 call obj%timer%start("gemm")
-                call PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
-                                     1.0_rk, qtmp1(l_rnm+1,1), ubound(qtmp1,dim=1),    &
-                                     ev,  ubound(ev,dim=1),   &
-                                     1.0_rk, qtmp2(l_rnm+1,1), ubound(qtmp2,dim=1))
+                call PRECISION_GEMM('N', 'N', int(l_rows-l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND),  &
+                                     int(nnzl,kind=BLAS_KIND),   &
+                                     1.0_rk, qtmp1(l_rnm+1,1), int(ubound(qtmp1,dim=1),kind=BLAS_KIND),    &
+                                     ev,  int(ubound(ev,dim=1),kind=BLAS_KIND),   &
+                                     1.0_rk, qtmp2(l_rnm+1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
                 call obj%timer%stop("gemm")
                 call obj%timer%stop("blas")
               endif ! useGPU

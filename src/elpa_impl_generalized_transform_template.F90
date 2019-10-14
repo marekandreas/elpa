@@ -75,7 +75,9 @@
 #ifdef WITH_MPI
        call cannons_reduction_&
          &ELPA_IMPL_SUFFIX&
-         &(a, b, self%local_nrows, self%local_ncols, sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
+         &(a, b, int(self%local_nrows,kind=kind=BLAS_KIND), int(self%local_ncols,kind=BLAS_KIND), &
+           int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=BLAS_KIND),                    &
+           int(mpi_comm_rows,kind=BLAS_KIND), int(mpi_comm_cols,kind=BLAS_KIND))
 #endif
        call self%timer_stop("cannons_reduction")
 
@@ -99,12 +101,13 @@
 #ifdef WITH_MPI
        call p&
            &BLAS_CHAR&
-           &trmm("R", "U", "N", "N", self%na, self%na, &
-                 ONE, b, 1, 1, sc_desc, a, 1, 1, sc_desc)
+           &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
+                 ONE, b, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+                 a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
 #else
        call BLAS_CHAR&
-           &trmm("R", "U", "N", "N", self%na, self%na, &
-                 ONE, b, self%na, a, self%na)
+           &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
+                 ONE, b, int(self%na,kind=BLAS_KIND), a, int(self%na,kind=BLAS_KIND))
 #endif
        call self%timer_stop("scalapack multiply A * inv(U)")
      endif ! use_cannon
@@ -164,7 +167,9 @@
 #ifdef WITH_MPI
        call cannons_triang_rectangular_&
          &ELPA_IMPL_SUFFIX&
-         &(b, q, self%local_nrows, self%local_ncols, sc_desc, sc_desc_ev, tmp, mpi_comm_rows, mpi_comm_cols);
+         &(b, q, int(self%local_nrows,kind=BLAS_KIND), int(self%local_ncols,kind=BLAS_KIND), &
+           int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
+           int(mpi_comm_rows,kind=BLAS_KIND), int(mpi_comm_cols,kind=BLAS_KIND) );
 #endif
        call self%timer_stop("cannons_triang_rectangular")
 
@@ -175,12 +180,13 @@
        ! Q <- inv(U) * Q
        call p&
            &BLAS_CHAR&
-           &trmm("L", "U", "N", "N", self%na, self%nev, &
-                 ONE, b, 1, 1, sc_desc,  q, 1, 1, sc_desc)
+           &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
+                 ONE, b, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND),  &
+                 q, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
 #else
        call BLAS_CHAR&
-           &trmm("L", "U", "N", "N", self%na, self%nev, &
-                 ONE, b, self%na, q, self%na)
+           &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
+                 ONE, b, int(self%na,kind=BLAS_KIND), q, int(self%na,kind=BLAS_KIND))
 #endif
        call self%timer_stop("scalapack multiply inv(U) * Q")
      endif

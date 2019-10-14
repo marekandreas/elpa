@@ -301,7 +301,8 @@
 #if COMPLEXCASE == 1
             call PRECISION_HERK('U', 'C',   &
 #endif
-                                 nstor, l_rows, ONE, hvm, ubound(hvm,dim=1), ZERO, tmat, max_stored_rows)
+                                 int(nstor,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
+                                 hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), ZERO, tmat, int(max_stored_rows,kind=BLAS_KIND))
           call obj%timer%stop("blas")
           nc = 0
           do n = 1, nstor-1
@@ -323,7 +324,8 @@
           tmat(1,1) = tau(ice-nstor+1)
           do n = 1, nstor-1
             call obj%timer%start("blas")
-            call PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ , 'N', n, tmat, max_stored_rows, h2(nc+1), 1)
+            call PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ , 'N', int(n,kind=BLAS_KIND), tmat, &
+                                int(max_stored_rows,kind=BLAS_KIND), h2(nc+1), 1_BLAS_KIND)
             call obj%timer%stop("blas")
 
             tmat(n+1,1:n) = &
@@ -369,8 +371,9 @@
 
               call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',  &
-                                  nstor, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
-                                  q_mat, ldq, ZERO, tmp1, nstor)
+                                  int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                  int(l_rows,kind=BLAS_KIND), ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                  q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, int(nstor,kind=BLAS_KIND))
               call obj%timer%stop("blas")
             endif ! useGPU
 
@@ -422,19 +425,21 @@
 #ifdef WITH_MPI
               ! tmp2 = tmat * tmp2
               call obj%timer%start("blas")
-              call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
-                                  ONE, tmat, max_stored_rows, tmp2, nstor)
+              call PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
+                                  ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND))
               !q_mat = q_mat - hvm*tmp2
-              call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
-                                  -ONE, hvm, ubound(hvm,dim=1), tmp2, nstor, ONE, q_mat, ldq)
+              call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(nstor,kind=BLAS_KIND),   &
+                                  -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND), &
+                                  ONE, q_mat, int(ldq,kind=BLAS_KIND))
               call obj%timer%stop("blas")
 #else /* WITH_MPI */
               call obj%timer%start("blas")
 
-              call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
-                                  ONE, tmat, max_stored_rows, tmp1, nstor)
-              call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
-                                  -ONE, hvm, ubound(hvm,dim=1), tmp1, nstor, ONE, q_mat, ldq)
+              call PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
+                                  ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp1, int(nstor,kind=BLAS_KIND))
+              call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                  int(nstor,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                  tmp1, int(nstor,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
               call obj%timer%stop("blas")
 #endif /* WITH_MPI */
             endif ! useGPU

@@ -63,6 +63,7 @@
       integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
       integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
       integer(kind=ik)              :: n, nc, i, info
+      integer(kind=BLAS_KIND)       :: infoBLAS
       integer(kind=ik)              :: lcs, lce, lrs, lre
       integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
 
@@ -192,7 +193,9 @@
           if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
             call obj%timer%start("blas")
 
-            call PRECISION_POTRF('U', na-n+1, a(l_row1,l_col1), lda, info)
+            call PRECISION_POTRF('U', int(na-n+1,kind=BLAS_KIND), a(l_row1,l_col1), &
+                                 int(lda,kind=BLAS_KIND), infoBLAS )
+            info = int(infoBLAS,kind=ik)
             call obj%timer%stop("blas")
 
             if (info/=0) then
@@ -223,7 +226,9 @@
             ! Cholesky-Factorization of this block
             call obj%timer%start("blas")
 
-            call PRECISION_POTRF('U', nblk, a(l_row1,l_col1), lda, info)
+            call PRECISION_POTRF('U', int(nblk,kind=BLAS_KIND), a(l_row1,l_col1), &
+                                 int(lda,kind=BLAS_KIND) , infoBLAS )
+            info = int(infoBLAS,kind=ik)
             call obj%timer%stop("blas")
 
             if (info/=0) then
@@ -270,8 +275,9 @@
 
           call obj%timer%start("blas")
           if (l_cols-l_colx+1>0) &
-              call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', nblk, l_cols-l_colx+1, ONE, tmp2, &
-                            ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+              call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
+                                  int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, tmp2, &
+                                  int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(lda,kind=BLAS_KIND) )
           call obj%timer%stop("blas")
         endif
 
@@ -310,9 +316,11 @@
           lre = min(l_rows,(i+1)*l_rows_tile)
           if (lce<lcs .or. lre<lrs) cycle
           call obj%timer%start("blas")
-          call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, lre-lrs+1, lce-lcs+1, nblk, -ONE,  &
-                              tmatr(lrs,1), ubound(tmatr,dim=1), tmatc(lcs,1), ubound(tmatc,dim=1), &
-                              ONE, a(lrs,lcs), lda)
+          call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre-lrs+1,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
+                              int(nblk,kind=BLAS_KIND), -ONE,  &
+                              tmatr(lrs,1), int(ubound(tmatr,dim=1),kind=BLAS_KIND), tmatc(lcs,1), &
+                              int(ubound(tmatc,dim=1),kind=BLAS_KIND), &
+                              ONE, a(lrs,lcs), int(lda,kind=BLAS_KIND))
           call obj%timer%stop("blas")
 
         enddo

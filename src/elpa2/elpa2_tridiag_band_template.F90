@@ -611,11 +611,14 @@
                 ! Transform diagonal block
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                call PRECISION_SYMV( &
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                call PRECISION_HEMV( &
 #endif
+                     'L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                     hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+
                 if (wantDebug) call obj%timer%stop("blas")
 #if REALCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*tau
@@ -626,11 +629,13 @@
                 hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                call PRECISION_SYR2( &
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_HER2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                call PRECISION_HER2( &
 #endif
+                                    'L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                                    hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
                 if (wantDebug) call obj%timer%stop("blas")
                 hv_t(:,my_thread) = 0.0_rck
                 tau_t(my_thread)  = 0.0_rck
@@ -638,7 +643,9 @@
 
                 ! Transform subdiagonal block
                 if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
+                call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
+                                    ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                    ZERO, hs, 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("blas")
                 if (nr>1) then
 
@@ -673,7 +680,9 @@
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
                   if (wantDebug) call obj%timer%start("blas")
                   call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
-                          nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, ZERO, h(2), 1)
+                                      int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                      tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                      hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
                   if (wantDebug) call obj%timer%stop("blas")
 
                   x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
@@ -857,13 +866,17 @@
               if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
-              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd,1)
+              call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
               ! Subdiagonal block
-              if (nr>0) call PRECISION_GEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
+              if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                            tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                            ZERO, hs, 1_BLAS_KIND)
               if (wantDebug) call obj%timer%stop("blas")
 
               ! ... then request last column ...
@@ -892,12 +905,15 @@
               ! Normal matrix multiply
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+              call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
-              if (nr>0) call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
+              if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, ab(nb+1,ns), &
+                                            int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
               if (wantDebug) call obj%timer%stop("blas")
             endif
 
@@ -999,10 +1015,12 @@
               ! ... and calculate remaining columns with rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              if (nc>1) call PRECISION_SYR2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+              if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                            hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
 #endif
 #if COMPLEXCASE == 1
-              if (nc>1) call PRECISION_HER2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+              if (nc>1) call PRECISION_HER2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                            hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
 #endif
               if (wantDebug) call obj%timer%stop("blas")
 
@@ -1010,10 +1028,12 @@
               ! No need to  send, just a rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+              call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
+                                  hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HER2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+              call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, hv, 1_BLAS_KIND, &
+                                  ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
               if (wantDebug) call obj%timer%stop("blas")
 
@@ -1024,8 +1044,9 @@
             if (nr>0) then
               if (nr>1) then
                 if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, &
-                                    hv_new, 1, ZERO, h(2), 1)
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                    tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("blas")
 
                 x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new

@@ -599,6 +599,7 @@ subroutine solve_tridi_&
      real(kind=REAL_DATATYPE)                 :: dtmp
 
      integer(kind=ik)              :: i, j, lwork, liwork, info
+     integer(kind=BLAS_KIND)       :: infoBLAS
      integer(kind=ik), allocatable :: iwork(:)
 
      logical, intent(in)           :: wantDebug
@@ -630,7 +631,10 @@ subroutine solve_tridi_&
        stop 1
      endif
      call obj%timer%start("blas")
-     call PRECISION_STEDC('I', nlen, d, e, q, ldq, work, lwork, iwork, liwork, info)
+     call PRECISION_STEDC('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND),    &
+                          work, int(lwork,kind=BLAS_KIND), int(iwork,kind=BLAS_KIND), int(liwork,kind=BLAS_KIND), &
+                          infoBLAS)
+     info = int(infoBLAS,kind=ik)
      call obj%timer%stop("blas")
 
      if (info /= 0) then
@@ -642,7 +646,8 @@ subroutine solve_tridi_&
        d(:) = ds(:)
        e(:) = es(:)
        call obj%timer%start("blas")
-       call PRECISION_STEQR('I', nlen, d, e, q, ldq, work, info)
+       call PRECISION_STEQR('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND), work, infoBLAS )
+       info = int(infoBLAS,kind=ik)
        call obj%timer%stop("blas")
 
        ! If DSTEQR fails also, we don't know what to do further ...

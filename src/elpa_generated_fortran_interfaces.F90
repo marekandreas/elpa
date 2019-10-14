@@ -48,6 +48,14 @@
 
 #include "config-f90.h"
 
+!#ifdef HAVE_64BIT_INTEGER_SUPPORT
+!#define FORTRAN_INT_TYPE c_int64_t
+!#else
+!#define FORTRAN_INT_TYPE c_int
+!#endif
+
+#define FORTRAN_INT_TYPE c_int64_t
+
 module elpa_generated_fortran_interfaces
   use iso_c_binding
   implicit none

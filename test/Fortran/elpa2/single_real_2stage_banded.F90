@@ -91,6 +91,7 @@ program test_real2_single_banded
    use test_redirect
 #endif
    use test_output_type
+   use tests_scalapack_interfaces
    implicit none
 
    !-------------------------------------------------------------------------------
@@ -107,8 +108,6 @@ program test_real2_single_banded
 
    integer(kind=ik)           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
    integer(kind=ik)           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
-
-   integer(kind=ik), external :: numroc
 
    real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 

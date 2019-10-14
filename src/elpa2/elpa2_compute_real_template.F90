@@ -117,6 +117,7 @@
 
       real(kind=rk)                              :: work(nb*nb2), work2(nb2*nb2)
       integer(kind=ik)                         :: lwork, info
+      integer(kind=BLAS_KIND)                  :: infoBLAS
 
       integer(kind=ik)                         :: istep, i, n, dest
       integer(kind=ik)                         :: n_off, na_s
@@ -234,7 +235,10 @@
 
             ! Transform first block column of remaining matrix
       call obj%timer%start("blas")
-            call PRECISION_GEQRF(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info)
+            call PRECISION_GEQRF(int(n,kind=BLAS_KIND), int(nb2,kind=BLAS_KIND), ab(1+nb2,na_s-n_off), &
+                                 int(2*nb-1,kind=BLAs_KIND), tau, work, int(lwork,kind=BLAS_KIND), &
+                                 infoBLAS)
+      info = int(infoBLAS,kind=ik)
       call obj%timer%stop("blas")
 
             do i=1,nb2
@@ -334,7 +338,10 @@
         &PRECISION&
         &(obj,nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
         call obj%timer%start("blas")
-              call PRECISION_GEQRF(nr, nb2, ab(nb+1,ns), 2*nb-1, tau_new, work, lwork, info)
+              call PRECISION_GEQRF(int(nr,kind=BLAS_KIND), int(nb2,kind=BLAS_KIND), ab(nb+1,ns), &
+                                   int(2*nb-1,kind=BLAS_KIND), tau_new, work, int(lwork,kind=BLAS_KIND), &
+                                   infoBLAS)
+        info = int(infoBLAS,kind=ik)
         call obj%timer%stop("blas")
               do i=1,nb2
                 hv_new(i,i) = 1.0_rk
@@ -480,8 +487,10 @@
    do i=2,nb
      W(1:n,i) = tau(i)*Y(1:n,i)
      call obj%timer%start("blas")
-     call PRECISION_GEMV('T', n, i-1,  1.0_rk, Y, lda, W(1,i), 1, 0.0_rk, mem,1)
-     call PRECISION_GEMV('N', n, i-1, -1.0_rk, W, lda, mem, 1, 1.0_rk, W(1,i),1)
+     call PRECISION_GEMV('T', int(n,kind=BLAS_KIND), int(i-1,kind=BLAS_KIND),  1.0_rk, Y, int(lda,kind=BLAS_KIND), &
+                         W(1,i), 1_BLAS_KIND, 0.0_rk, mem, 1_BLAS_KIND)
+     call PRECISION_GEMV('N', int(n,kind=BLAS_KIND), int(i-1,kind=BLAS_KIND), -1.0_rk, W, int(lda,kind=BLAS_KIND), &
+                         mem, 1_BLAS_KIND, 1.0_rk, W(1,i), 1_BLAS_KIND)
      call obj%timer%stop("blas")
    enddo
    call obj%timer%stop("wy_gen" // PRECISION_SUFFIX)
@@ -509,8 +518,11 @@
 
    call obj%timer%start("wy_left" // PRECISION_SUFFIX)
    call obj%timer%start("blas")
-   call PRECISION_GEMM('T', 'N', nb, n, m, 1.0_rk, W, lda2, A, lda, 0.0_rk, mem, nb)
-   call PRECISION_GEMM('N', 'N', m, n, nb, -1.0_rk, Y, lda2, mem, nb, 1.0_rk, A, lda)
+   call PRECISION_GEMM('T', 'N', int(nb,kind=BLAS_KIND), int(n,kind=BLAS_KIND), int(m,kind=BLAS_KIND), &
+                       1.0_rk, W, int(lda2,kind=BLAS_KIND), A, int(lda,kind=BLAS_KIND), 0.0_rk, mem, &
+                       int(nb,kind=BLAS_KIND))
+   call PRECISION_GEMM('N', 'N', int(m,kind=BLAS_KIND), int(n,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), &
+                       -1.0_rk, Y, int(lda2,kind=BLAS_KIND), mem, int(nb,kind=BLAS_KIND), 1.0_rk, A, int(lda,kind=BLAS_KIND))
    call obj%timer%stop("blas")
    call obj%timer%stop("wy_left" // PRECISION_SUFFIX)
     end subroutine
@@ -538,8 +550,10 @@
 
       call obj%timer%start("wy_right" // PRECISION_SUFFIX)
       call obj%timer%start("blas")
-      call PRECISION_GEMM('N', 'N', n, nb, m, 1.0_rk, A, lda, W, lda2, 0.0_rk, mem, n)
-      call PRECISION_GEMM('N', 'T', n, m, nb, -1.0_rk, mem, n, Y, lda2, 1.0_rk, A, lda)
+      call PRECISION_GEMM('N', 'N', int(n,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), int(m,kind=BLAS_KIND), &
+                          1.0_rk, A, int(lda,kind=BLAS_KIND), W, int(lda2,kind=BLAS_KIND), 0.0_rk, mem, int(n,kind=BLAS_KIND))
+      call PRECISION_GEMM('N', 'T', int(n,kind=BLAS_KIND), int(m,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), &
+                          -1.0_rk, mem, int(n,kind=BLAS_KIND), Y, int(lda2,kind=BLAS_KIND), 1.0_rk, A, int(lda,kind=BLAS_KIND))
       call obj%timer%stop("blas")
       call obj%timer%stop("wy_right" // PRECISION_SUFFIX)
 
@@ -568,10 +582,15 @@
 
       call obj%timer%start("wy_symm" // PRECISION_SUFFIX)
       call obj%timer%start("blas")
-      call PRECISION_SYMM('L', 'L', n, nb, 1.0_rk, A, lda, W, lda2, 0.0_rk, mem, n)
-      call PRECISION_GEMM('T', 'N', nb, nb, n, 1.0_rk, mem, n, W, lda2, 0.0_rk, mem2, nb)
-      call PRECISION_GEMM('N', 'N', n, nb, nb, -0.5_rk, Y, lda2, mem2, nb, 1.0_rk, mem, n)
-      call PRECISION_SYR2K('L', 'N', n, nb, -1.0_rk, Y, lda2, mem, n, 1.0_rk, A, lda)
+      call PRECISION_SYMM('L', 'L', int(n, kind=BLAS_KIND), int(nb,kind=BLAS_KIND), 1.0_rk, A, &
+                          int(lda,kind=BLAS_KIND), W, int(lda2,kind=BLAS_KIND), 0.0_rk, mem, int(n,kind=BLAS_KIND))
+      call PRECISION_GEMM('T', 'N', int(nb,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), int(n,kind=BLAS_KIND), &
+                          1.0_rk, mem, int(n,kind=BLAS_KIND), W, int(lda2,kind=BLAS_KIND), 0.0_rk, mem2, &
+                          int(nb,kind=BLAS_KIND))
+      call PRECISION_GEMM('N', 'N', int(n,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), &
+                          -0.5_rk, Y, int(lda2,kind=BLAS_KIND), mem2, int(nb,kind=BLAS_KIND), 1.0_rk, mem, int(n,kind=BLAS_KIND))
+      call PRECISION_SYR2K('L', 'N',int(n,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), -1.0_rk, Y, int(lda2,kind=BLAS_KIND), &
+                           mem, int(n,kind=BLAS_KIND), 1.0_rk, A, int(lda,kind=BLAS_KIND))
       call obj%timer%stop("blas")
       call obj%timer%stop("wy_symm" // PRECISION_SUFFIX)
 

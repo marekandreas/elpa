@@ -385,16 +385,16 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
               call PRECISION_GEMV('N',   &
-                                  l_rows, 2*n_stored_vecs,                                  &
-                                  ONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),        &
+                                  int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
+                                  ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
 #if REALCASE == 1
-                                  uv_stored_cols(l_cols+1,1), ubound(uv_stored_cols,dim=1), &
+                                  uv_stored_cols(l_cols+1,1), int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND), &
 #endif
 #if COMPLEXCASE == 1
-                                   aux, 1,  &
+                                   aux, 1_BLAS_KIND,  &
 
 #endif
-                                  ONE, v_row, 1)
+                                  ONE, v_row, 1_BLAS_KIND)
                if (wantDebug) call obj%timer%stop("blas")
 
             endif
@@ -527,15 +527,15 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               if (mod(n_iter,n_threads) == my_thread) then
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
-                                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                                    ONE, a_mat(l_row_beg,l_col_beg), lda,         &
-                                    v_row(l_row_beg), 1, ONE, uc_p(l_col_beg,my_thread), 1)
+                                    int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                    ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),         &
+                                    v_row(l_row_beg), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
 
                 if (i/=j) then
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,          &
-                                      ONE, a_mat(l_row_beg,l_col_beg), lda, v_col(l_col_beg), 1,  &
+                  call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                      ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), v_col(l_col_beg), 1_BLAS_KIND,  &
 
-                                      ONE, ur_p(l_row_beg,my_thread), 1)
+                                      ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
                 endif
                 if (wantDebug) call obj%timer%stop("blas")
               endif
@@ -548,17 +548,17 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               if (.not. useGPU) then
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
-                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                            ONE, a_mat(l_row_beg, l_col_beg), lda,         &
-                            v_row(l_row_beg), 1,                           &
-                            ONE, u_col(l_col_beg), 1)
+                            int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                            ONE, a_mat(l_row_beg, l_col_beg), int(lda,kind=BLAS_KIND),         &
+                            v_row(l_row_beg), 1_BLAS_KIND,                           &
+                            ONE, u_col(l_col_beg), 1_BLAS_KIND)
 
                 if (i/=j) then
 
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                      ONE, a_mat(l_row_beg,l_col_beg), lda,               &
-                                      v_col(l_col_beg), 1,                                &
-                                      ONE, u_row(l_row_beg), 1)
+                  call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+                                      ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),               &
+                                      v_col(l_col_beg), 1_BLAS_KIND,                                &
+                                      ONE, u_row(l_row_beg), 1_BLAS_KIND)
                 endif
                 if (wantDebug) call obj%timer%stop("blas")
               endif ! not useGPU
@@ -663,13 +663,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #if COMPLEXCASE == 1
             call PRECISION_GEMV('C',     &
 #endif
-                                l_rows, 2*n_stored_vecs,   &
-                                ONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),   &
-                                v_row,  1, ZERO, aux, 1)
+                                int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                                ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
 
-            call PRECISION_GEMV('N', l_cols, 2*n_stored_vecs,   &
-                                ONE, uv_stored_cols, ubound(uv_stored_cols,dim=1),   &
-                                aux, 1, ONE, u_col,  1)
+            call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                                ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
+                                aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
             if (wantDebug) call obj%timer%stop("blas")
           endif
 
@@ -797,10 +797,11 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             else !useGPU
               if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
-                                   l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
-                                   ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
-                                   uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
-                                   ONE, a_mat(l_row_beg,l_col_beg), lda)
+                                   int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                   int(2*n_stored_vecs,kind=BLAS_KIND),    &
+                                   ONE, vu_stored_rows(l_row_beg,1), int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                   uv_stored_cols(l_col_beg,1), int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
+                                   ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND))
               if (wantDebug) call obj%timer%stop("blas")
             endif !useGPU
           enddo

@@ -72,6 +72,7 @@
        integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
        integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
        integer(kind=ik)             :: n, nc, i, info, ns, nb
+       integer(kind=BLAS_KIND)      :: infoBLAS
        MATH_DATATYPE(kind=rck), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
        logical                      :: wantDebug
        logical                      :: success
@@ -178,8 +179,9 @@
            if (my_pcol==pcol(n, nblk, np_cols)) then
              call obj%timer%start("blas")
 
-             call PRECISION_TRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
-
+             call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a(l_row1,l_col1), int(lda,kind=BLAS_KIND), &
+                                  infoBLAS)
+             info = int(infoBLAS,kind=ik)
              call obj%timer%stop("blas")
 
              if (info/=0) then
@@ -222,8 +224,8 @@
 
            call obj%timer%start("blas")
            if (l_cols-l_colx+1>0) &
-        call PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, &
-                                   tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+           call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
+                                   tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(lda,kind=BLAS_KIND))
            call obj%timer%stop("blas")
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -257,9 +259,11 @@
 
          call obj%timer%start("blas")
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
-           call PRECISION_GEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -ONE, &
-                                tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), ONE, &
-                                 a(1,l_col1), lda)
+           call PRECISION_GEMM('N', 'N', int(l_row1-1,kind=BLAS_KIND), int(l_cols-l_col1+1,kind=BLAS_KIND), &
+                               int(nb,kind=BLAS_KIND), -ONE, &
+                                tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
+                                int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
+                                 a(1,l_col1), int(lda,kind=BLAS_KIND) )
 
          call obj%timer%stop("blas")
 

@@ -41,25 +41,13 @@
 ! This file was written by A. Marek, MPCDF
 
 #include "config-f90.h"
-!> \brief Fortran module which defines the datatypes used in ELPA
-module precision
-  use iso_c_binding, only : C_FLOAT, C_DOUBLE, C_FLOAT_COMPLEX, C_DOUBLE_COMPLEX, C_INT32_T, C_INT64_T, C_INT
+#define PRECISION_MODULE precision_for_tests
+module tests_blas_interfaces
+  use iso_c_binding
+  use precision_for_tests
 
   implicit none
-  integer, parameter :: rk8  = C_DOUBLE
-  integer, parameter :: rk4  = C_FLOAT
-  integer, parameter :: ck8  = C_DOUBLE_COMPLEX
-  integer, parameter :: ck4  = C_FLOAT_COMPLEX
-  integer, parameter :: ik  = C_INT32_T
-  integer, parameter :: lik = C_INT64_T
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
-  integer, parameter :: BLAS_KIND = C_INT64_T
-  integer, parameter :: MPI_KIND  = C_INT64_T
-#else
-  integer, parameter :: BLAS_KIND = C_INT32_T
-  integer, parameter :: MPI_KIND  = C_INT32_T
-#endif
+#include "../../src/helpers/fortran_blas_interfaces.F90"
 
-
-end module precision
+end module

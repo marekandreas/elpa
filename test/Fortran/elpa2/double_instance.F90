@@ -42,11 +42,21 @@
 !
 #include "config-f90.h"
 
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+
 #include "../assert.h"
 
 program test_interface
    use elpa
-   use test_util
+
+   use precision_for_tests
+   !use test_util
    use test_setup_mpi
    use test_prepare_matrix
    use test_read_input_parameters
@@ -55,17 +65,17 @@ program test_interface
    implicit none
 
    ! matrix dimensions
-   integer :: na, nev, nblk
+   TEST_INT_TYPE :: na, nev, nblk
 
    ! mpi
-   integer :: myid, nprocs
-   integer :: na_cols, na_rows  ! local matrix size
-   integer :: np_cols, np_rows  ! number of MPI processes per column/row
-   integer :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   integer :: mpierr
+   TEST_INT_TYPE :: myid, nprocs
+   TEST_INT_TYPE :: na_cols, na_rows  ! local matrix size
+   TEST_INT_TYPE :: np_cols, np_rows  ! number of MPI processes per column/row
+   TEST_INT_TYPE :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
+   TEST_INT_TYPE :: mpierr
 
    ! blacs
-   integer :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
    real(kind=C_DOUBLE), allocatable :: a1(:,:), as1(:,:)
@@ -80,10 +90,11 @@ program test_interface
    complex(kind=C_DOUBLE_COMPLEX), allocatable :: z2(:,:)
    ! eigenvalues
    real(kind=C_DOUBLE), allocatable :: ev2(:)
-   integer :: success, status
+   TEST_INT_TYPE :: status
+   integer(kind=c_int) :: error_elpa
 
-   integer(kind=c_int) :: solver
-   integer(kind=c_int) :: qr
+   TEST_INT_TYPE :: solver
+   TEST_INT_TYPE :: qr
 
    type(output_t) :: write_to_file
    class(elpa_t), pointer :: e1, e2
@@ -132,76 +143,76 @@ program test_interface
      stop 1
    endif
 
-   e1 => elpa_allocate(success)
-   assert_elpa_ok(success)
+   e1 => elpa_allocate(error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e1%set("na", na, success)
-   assert_elpa_ok(success)
-   call e1%set("nev", nev, success)
-   assert_elpa_ok(success)
-   call e1%set("local_nrows", na_rows, success)
-   assert_elpa_ok(success)
-   call e1%set("local_ncols", na_cols, success)
-   assert_elpa_ok(success)
-   call e1%set("nblk", nblk, success)
-   assert_elpa_ok(success)
+   call e1%set("na", int(na,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e1%set("nev", int(nev,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e1%set("local_nrows", int(na_rows,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e1%set("local_ncols", int(na_cols,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e1%set("nblk", int(nblk,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #ifdef WITH_MPI
-   call e1%set("mpi_comm_parent", MPI_COMM_WORLD, success)
-   assert_elpa_ok(success)
-   call e1%set("process_row", my_prow, success)
-   assert_elpa_ok(success)
-   call e1%set("process_col", my_pcol, success)
-   assert_elpa_ok(success)
+   call e1%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e1%set("process_row", int(my_prow,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e1%set("process_col", int(my_pcol,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 
    assert(e1%setup() .eq. ELPA_OK)
 
-   call e1%set("solver", ELPA_SOLVER_2STAGE, success)
-   assert_elpa_ok(success)
+   call e1%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e1%set("real_kernel", ELPA_2STAGE_REAL_DEFAULT, success)
-   assert_elpa_ok(success)
+   call e1%set("real_kernel", ELPA_2STAGE_REAL_DEFAULT, error_elpa)
+   assert_elpa_ok(error_elpa)
 
 
-   e2 => elpa_allocate(success)
-   assert_elpa_ok(success)
+   e2 => elpa_allocate(error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e2%set("na", na, success)
-   assert_elpa_ok(success)
-   call e2%set("nev", nev, success)
-   assert_elpa_ok(success)
-   call e2%set("local_nrows", na_rows, success)
-   assert_elpa_ok(success)
-   call e2%set("local_ncols", na_cols, success)
-   assert_elpa_ok(success)
-   call e2%set("nblk", nblk, success)
-   assert_elpa_ok(success)
+   call e2%set("na", int(na,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e2%set("nev", int(nev,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e2%set("local_nrows", int(na_rows,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e2%set("local_ncols", int(na_cols,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e2%set("nblk", int(nblk,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #ifdef WITH_MPI
-   call e2%set("mpi_comm_parent", MPI_COMM_WORLD, success)
-   assert_elpa_ok(success)
-   call e2%set("process_row", my_prow, success)
-   assert_elpa_ok(success)
-   call e2%set("process_col", my_pcol, success)
-   assert_elpa_ok(success)
+   call e2%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e2%set("process_row", int(my_prow,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e2%set("process_col", int(my_pcol,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
    assert(e2%setup() .eq. ELPA_OK)
 
-   call e2%set("solver", ELPA_SOLVER_1STAGE, success)
-   assert_elpa_ok(success)
+   call e2%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e1%eigenvectors(a1, ev1, z1, success)
-   assert_elpa_ok(success)
+   call e1%eigenvectors(a1, ev1, z1, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call elpa_deallocate(e1, success)
-   assert_elpa_ok(success)
+   call elpa_deallocate(e1, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e2%eigenvectors(a2, ev2, z2, success)
-   assert_elpa_ok(success)
+   call e2%eigenvectors(a2, ev2, z2, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call elpa_deallocate(e2, success)
-   assert_elpa_ok(success)
+   call elpa_deallocate(e2, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call elpa_uninit(success)
+   call elpa_uninit(error_elpa)
 
    status = check_correctness_evp_numeric_residuals(na, nev, as1, z1, ev1, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
