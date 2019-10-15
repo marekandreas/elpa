@@ -43,14 +43,20 @@
 #include "config-f90.h"
 
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #else
 #define TEST_INT_TYPE integer(kind=c_int32_t)
 #define INT_TYPE c_int32_t
 #endif
-
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
 #include "../assert.h"
 !>
 !> Fortran test programm to demonstrates the use of
@@ -117,7 +123,8 @@ program test_real2_single_banded
    TEST_INT_TYPE           :: np_rows, np_cols, na_rows, na_cols
 
    TEST_INT_TYPE           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   TEST_INT_TYPE           :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE           :: i, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_MPI_TYPE       :: mpierr
 
    real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
@@ -177,7 +184,7 @@ program test_real2_single_banded
    ! consistent (i.e. 0<=my_prow<np_rows, 0<=my_pcol<np_cols and every
    ! process has a unique (my_prow,my_pcol) pair).
 
-   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, 'C', &
+   call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, np_cols, 'C', &
                          my_blacs_ctxt, my_prow, my_pcol)
 
    if (myid==0) then

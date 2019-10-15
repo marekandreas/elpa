@@ -171,8 +171,10 @@
 #endif
       integer(kind=ik)                            :: lr_end
       integer(kind=ik)                            :: na_cols
+      integer(kind=BLAS_KIND)                     :: na_colsBLAS
 #if COMPLEXCASE == 1
       integer(kind=ik)                            :: na_rows
+      integer(kind=BLAS_KIND)                     :: na_rowsBLAS
 #endif
 
       logical, intent(in)                         :: wantDebug
@@ -256,11 +258,13 @@
       if (useGPU) then
 #ifdef WITH_MPI
 #if COMPLEXCASE == 1
-        na_rows = numroc(int(na,kind=MPI_KIND), int(nblk,kind=MPI_KIND), &
-                         int(my_prow,kind=MPI_KIND), 0_MPI_KIND, int(np_rows,kind=MPI_KIND))
+        na_rowsBLAS = numroc(int(na,kind=BLAS_KIND), int(nblk,kind=BLAS_KIND), &
+                         int(my_prow,kind=BLAS_KIND), 0_BLAS_KIND, int(np_rows,kind=BLAS_KIND))
+        na_rows = int(na_rowsBLAS,kind=c_int)
 #endif
-        na_cols = numroc(int(na,kind=MPI_KIND), int(nblk,kind=MPI_KIND), &
-                         int(my_pcol,kind=MPI_KIND), 0_MPI_KIND, int(np_cols,kind=MPI_KIND))
+        na_colsBLAS = numroc(int(na,kind=BLAS_KIND), int(nblk,kind=BLAS_KIND), &
+                         int(my_pcol,kind=BLAS_KIND), 0_BLAS_KIND, int(np_cols,kind=BLAS_KIND))
+        na_cols = int(na_colsBLAS,kind=c_int)
 #else
 #if COMPLEXCASE == 1
          na_rows = na

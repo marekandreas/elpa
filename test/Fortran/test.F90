@@ -102,19 +102,24 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #define KERNEL_KEY "complex_kernel"
 #endif
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #else
 #define TEST_INT_TYPE integer(kind=c_int32_t)
 #define INT_TYPE c_int32_t
 #endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
 #include "assert.h"
 
 program test
-   use elpa !, only : elpa_allocate, elpa_init, elpa_allocate, elpa_t, ELPA_SOLVER_1STAGE, elpa_deallocate, &
-            !       elpa_uninit, 
-
+   use elpa 
    !use test_util
    use test_setup_mpi
    use test_prepare_matrix
@@ -137,14 +142,15 @@ program test
    implicit none
 
    ! matrix dimensions
-   TEST_INT_TYPE      :: na, nev, nblk
+   TEST_INT_TYPE     :: na, nev, nblk
 
    ! mpi
-   TEST_INT_TYPE      :: myid, nprocs
-   TEST_INT_TYPE      :: na_cols, na_rows  ! local matrix size
-   TEST_INT_TYPE      :: np_cols, np_rows  ! number of MPI processes per column/row
-   TEST_INT_TYPE      :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INT_TYPE      :: mpierr
+   TEST_INT_TYPE     :: myid, nprocs
+   TEST_INT_MPI_TYPE :: myidMPI, nprocsMPI
+   TEST_INT_TYPE     :: na_cols, na_rows  ! local matrix size
+   TEST_INT_TYPE     :: np_cols, np_rows  ! number of MPI processes per column/row
+   TEST_INT_TYPE     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
+   TEST_INT_MPI_TYPE :: mpierr
 
    ! blacs
    TEST_INT_TYPE     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
@@ -181,26 +187,27 @@ program test
    character(len=1), parameter :: layouts(2) = [ 'C', 'R' ]
    TEST_INT_TYPE      :: i_layout
 #endif
-   integer(kind=c_int)         :: kernel
-   character(len=1)            :: layout
-   logical                     :: do_test_numeric_residual, do_test_numeric_residual_generalized, &
-                                  do_test_analytic_eigenvalues, &
-                                  do_test_analytic_eigenvalues_eigenvectors,   &
-                                  do_test_frank_eigenvalues,  &
-                                  do_test_toeplitz_eigenvalues, do_test_cholesky,   &
-                                  do_test_hermitian_multiply
+   integer(kind=c_int):: kernel
+   character(len=1)   :: layout
+   logical            :: do_test_numeric_residual, do_test_numeric_residual_generalized, &
+                         do_test_analytic_eigenvalues, &
+                         do_test_analytic_eigenvalues_eigenvectors,   &
+                         do_test_frank_eigenvalues,  &
+                         do_test_toeplitz_eigenvalues, do_test_cholesky,   &
+                         do_test_hermitian_multiply
 
 #ifdef WITH_OPENMP
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
 
 #ifdef SPLIT_COMM_MYSELF
-   TEST_INT_TYPE      :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
+   TEST_INT_MPI_TYPE  :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
    character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
 #endif
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
    call setup_mpi(myid, nprocs)
+
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
@@ -291,10 +298,12 @@ program test
 #endif /* TEST_QR_DECOMPOSITION */
 
 
-   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
-                         my_blacs_ctxt, my_prow, my_pcol)
+   call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, &
+                         np_cols, layout, my_blacs_ctxt, my_prow, &
+                         my_pcol)
 
-   call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
+   call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
+                                np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
 
    allocate(a (na_rows,na_cols))
@@ -567,14 +576,16 @@ program test
 
 #ifdef WITH_MPI
 #ifdef SPLIT_COMM_MYSELF
-   call mpi_comm_split(MPI_COMM_WORLD,my_pcol,my_prow,mpi_comm_rows,mpierr)
+   call mpi_comm_split(MPI_COMM_WORLD, int(my_pcol,kind=MPI_KIND), int(my_prow,kind=MPI_KIND), &
+                       mpi_comm_rows, mpierr)
    if (mpierr .ne. MPI_SUCCESS) then
-     call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+     call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_length, mpierr2)
      write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
      stop 1
    endif
 
-   call mpi_comm_split(MPI_COMM_WORLD,my_prow,my_pcol,mpi_comm_cols, mpierr)
+   call mpi_comm_split(MPI_COMM_WORLD, int(my_prow,kind=MPI_KIND), int(my_pcol,kind=MPI_KIND), &
+                       mpi_comm_cols, mpierr)
    if (mpierr .ne. MPI_SUCCESS) then
      call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
      write(error_unit,*) "MPI ERROR occured during mpi_comm_split for col communicator: ", trim(mpierr_string)
@@ -767,17 +778,20 @@ program test
      endif
 
      if (do_test_analytic_eigenvalues) then
-       status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, .false.)
+       status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
+                                           my_prow, my_pcol, check_all_evals, .false.)
        call check_status(status, myid)
      endif
 
      if (do_test_analytic_eigenvalues_eigenvectors) then
-       status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, .true.)
+       status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
+                                           my_prow, my_pcol, check_all_evals, .true.)
        call check_status(status, myid)
      endif
 
      if(do_test_numeric_residual) then
-       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, &
+                                                        np_rows,np_cols, my_prow, my_pcol)
        call check_status(status, myid)
      endif
 
@@ -808,7 +822,8 @@ program test
 
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
      if(do_test_numeric_residual_generalized) then
-       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows,np_cols, my_prow, &
+       status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, &
+                                                        np_cols, my_prow, &
        my_pcol, bs)
        call check_status(status, myid)
      endif
@@ -873,7 +888,7 @@ program test
      subroutine check_status(status, myid)
        implicit none
        TEST_INT_TYPE, intent(in) :: status, myid
-       TEST_INT_TYPE             :: mpierr
+       TEST_INT_MPI_TYPE         :: mpierr
        if (status /= 0) then
          if (myid == 0) print *, "Result incorrect!"
 #ifdef WITH_MPI

@@ -1,4 +1,4 @@
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define C_INT_TYPE_PTR long int*
 #define C_INT_TYPE long int
 #else

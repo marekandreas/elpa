@@ -48,7 +48,7 @@
 
 #include "config-f90.h"
 
-!#ifdef HAVE_64BIT_INTEGER_SUPPORT
+!#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 !#define FORTRAN_INT_TYPE c_int64_t
 !#else
 !#define FORTRAN_INT_TYPE c_int

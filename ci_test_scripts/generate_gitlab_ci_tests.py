@@ -348,7 +348,7 @@ ilp64_no_omp_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_NOOMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_NOOMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=no --disable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-support || { cat config.log; exit 1; }'
+    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -366,7 +366,7 @@ ilp64_no_omp_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_OMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_OMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=no --enable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-support || { cat config.log; exit 1; }'
+    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",

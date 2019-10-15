@@ -79,13 +79,22 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #  define AUTOTUNE_DOMAIN ELPA_AUTOTUNE_DOMAIN_COMPLEX
 #endif
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #else
 #define TEST_INT_TYPE integer(kind=c_int32_t)
 #define INT_TYPE c_int32_t
 #endif
+
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
+
 
 #include "assert.h"
 
@@ -114,10 +123,10 @@ program test
    TEST_INT_TYPE                     :: na_cols, na_rows  ! local matrix size
    TEST_INT_TYPE                     :: np_cols, np_rows  ! number of MPI processes per column/row
    TEST_INT_TYPE                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INT_TYPE                     :: mpierr, ierr
-
+   TEST_INT_TYPE                     :: ierr
+   TEST_INT_MPI_TYPE                 :: mpierr
    ! blacs
-   character(len=1)            :: layout
+   character(len=1)                  :: layout
    TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
@@ -171,7 +180,7 @@ program test
      print *,''
    endif
 
-   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
+   call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, np_cols, layout, &
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
@@ -211,7 +220,7 @@ program test
 
 #ifdef WITH_MPI
      ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
-     call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
 
    ! try to load parameters into another object
@@ -285,7 +294,7 @@ program test
      assert_elpa_ok(error_elpa)
 #ifdef WITH_MPI
      ! barrier after save state, file created from one MPI rank only, but loaded everywhere
-     call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
      call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt", error_elpa)
      assert_elpa_ok(error_elpa)

@@ -43,7 +43,7 @@
 
 #include "config-f90.h"
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #define TEST_C_INT_TYPE_PTR long int*
@@ -54,6 +54,18 @@
 #define TEST_C_INT_TYPE_PTR int*
 #define TEST_C_INT_TYPE int
 #endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#define TEST_C_INT_MPI_TYPE_PTR long int*
+#define TEST_C_INT_MPI_TYPE long int
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#define TEST_C_INT_MPI_TYPE_PTR int*
+#define TEST_C_INT_MPI_TYPE int
+#endif
+
 
     subroutine prepare_matrix_random_&
     &MATH_DATATYPE&
@@ -110,7 +122,7 @@
 #ifdef WITH_MPI
       call p&
           &BLAS_CHAR&
-          &tran(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**T
+          &tran(na, na, ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**T
 #else /* WITH_MPI */
       a = a + transpose(z)
 #endif /* WITH_MPI */
@@ -120,7 +132,7 @@
 #ifdef WITH_MPI
       call p&
           &BLAS_CHAR&
-          &tranc(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**H
+          &tranc(na, na, ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**H
 #else /* WITH_MPI */
       a = a + transpose(conjg(z))
 #endif /* WITH_MPI */

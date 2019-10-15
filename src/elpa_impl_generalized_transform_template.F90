@@ -6,6 +6,7 @@
    subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, a, b, is_already_decomposed, error)
+     use precision
      implicit none
 #include "general/precision_kinds.F90"
      class(elpa_impl_t)  :: self
@@ -84,8 +85,8 @@
        call cannons_reduction_&
          &ELPA_IMPL_SUFFIX&
          &(a, b, self%local_nrows, self%local_ncols, &
-           int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=BLAS_KIND),                    &
-           int(mpi_comm_rows,kind=BLAS_KIND), int(mpi_comm_cols,kind=BLAS_KIND))
+           int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),                    &
+           int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND))
 #endif
        call self%timer_stop("cannons_reduction")
 
@@ -184,7 +185,7 @@
          &ELPA_IMPL_SUFFIX&
          &(b, q, self%local_nrows, self%local_ncols, &
            int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
-           int(mpi_comm_rows,kind=BLAS_KIND), int(mpi_comm_cols,kind=BLAS_KIND) );
+           int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND) );
 #endif
        call self%timer_stop("cannons_triang_rectangular")
 

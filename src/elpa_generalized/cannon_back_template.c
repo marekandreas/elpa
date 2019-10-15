@@ -54,16 +54,24 @@
 // Author: Valeriy Manin (Bergische Universität Wuppertal)
 // integreated into the ELPA library Pavel Kus, Andeas Marek (MPCDF)
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define C_INT_TYPE_PTR long int*
 #define C_INT_TYPE long int
-#define FORTRAN_INT_TYPE c_int64_t
+#define BLAS_KIND c_int64_t
 #else
 #define C_INT_TYPE_PTR int*
 #define C_INT_TYPE int
-#define FORTRAN_INT_TYPE c_int
+#define BLAS_KIND c_int
 #endif
-
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define C_INT_MPI_TYPE_PTR long int*
+#define C_INT_MPI_TYPE long int
+#define MPI_KIND c_int64_t
+#else
+#define C_INT_MPI_TYPE_PTR int*
+#define C_INT_MPI_TYPE int
+#define MPI_KIND c_int
+#endif
 
 // it seems, that we need those two levels of indirection to correctly expand macros
 #define cannons_triang_rectangular_impl_expand2(SUFFIX) cannons_triang_rectangular_##SUFFIX
@@ -88,6 +96,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
   
    C_INT_TYPE na, nb, nblk, width, na_rows, na_cols, nb_cols, cols_in_buffer_U_my_initial, cols_in_buffer_U, rows_in_buffer_U, Size_receive_U_now, rows_in_buffer_U_now, cols_in_buffer_U_now, rows_in_buffer_U_my_initial;
 
+   C_INT_MPI_TYPE Size_receive_U_nowMPI, Size_receive_UMPI, Size_receive_BMPI;
    C_INT_TYPE i, j, Size_send_U, Size_receive_U, Size_send_B, Size_receive_B, intNumber, Buf_rows, Buf_cols_U, Buf_cols_B, curr_rows, num_of_iters, cols_in_buffer, rows_in_block, curr_col_loc, cols_in_block, num_of_blocks_in_U_buffer, col_of_origin_U, b_rows_mult, b_cols_mult; 
    
    math_type *Buf_to_send_U, *Buf_to_receive_U, *Buf_to_send_B, *Buf_to_receive_B, *Buf_U, *PosBuff;
@@ -241,9 +250,10 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       {
          if(where_to_send_U != my_pcol)   // if I need to send and receive on this step
          {
-            MPI_Sendrecv(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, Buf_U, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U_now);
-            Size_receive_U = Size_receive_U + Size_receive_U_now - 2; // we need only number of elements, so exclude information about cols_in_buffer_U and rows_in_buffer_U
+            MPI_Sendrecv(Buf_to_send_U, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, 0, Buf_U, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_U, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U_nowMPI);
+            Size_receive_U_now = (C_INT_TYPE) Size_receive_U_nowMPI;
+            Size_receive_U = Size_receive_U + Size_receive_U_now - 2; // we need only number of elements, so exclude information about cols_in_buffer_U and rows_in_buffer_
             
             cols_in_buffer_U_now = Buf_U[Size_receive_U_now - 2];
             cols_in_buffer_U = cols_in_buffer_U + cols_in_buffer_U_now;
@@ -309,8 +319,10 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       {
          if(my_prow > 0)
          {
-            MPI_Sendrecv(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, Buf_to_receive_U, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U);
+            MPI_Sendrecv(Buf_to_send_U, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, 0, Buf_to_receive_U, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_U, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_UMPI);
+            Size_receive_U = (C_INT_TYPE) Size_receive_UMPI;
+
             cols_in_buffer_U = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-2];
             rows_in_buffer_U = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-1];
          }
@@ -341,9 +353,11 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       {
          // form array to send
          C_LACPY("A", &na_rows, &nb_cols, B, &na_rows, Buf_to_send_B, &na_rows);
-         MPI_Sendrecv(Buf_to_send_B, nb_cols*na_rows, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_B, 0, Buf_to_receive_B, nb_cols*Buf_rows, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_B, 0, col_comm, &status); 
-         MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_B); // find out how many elements I have received 
+         MPI_Sendrecv(Buf_to_send_B, (C_INT_MPI_TYPE) (nb_cols*na_rows), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_B, 0, Buf_to_receive_B, (C_INT_MPI_TYPE) (nb_cols*Buf_rows), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_B, 0, col_comm, &status); 
+         MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_BMPI); // find out how many elements I have received
+         Size_receive_B = (C_INT_TYPE) Size_receive_BMPI;
          Size_receive_B = Size_receive_B/nb_cols;    // how many rows I have received
+	 
       }
       else
       {
@@ -378,13 +392,11 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       Size_send_B = Size_receive_B;                   
         
       ///// shift for U ////////////////////////////////////////////////////////////
-      MPI_Isend(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, row_comm, &request_U_Send); 
-      MPI_Irecv(Buf_to_receive_U, ratio*Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, row_comm, &request_U_Recv);
-         
+      MPI_Isend(Buf_to_send_U, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, 0, row_comm, &request_U_Send); 
+      MPI_Irecv(Buf_to_receive_U, (C_INT_MPI_TYPE) (ratio*Size_U_stored), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_U, 0, row_comm, &request_U_Recv);      
       ///// shift for B /////////////////////////////////////////////      
-      MPI_Isend(Buf_to_send_B, Size_send_B*nb_cols, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_B, 0, col_comm, &request_B_Send); 
-      MPI_Irecv(Buf_to_receive_B, Buf_rows*nb_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_B, 0, col_comm, &request_B_Recv);
-      
+      MPI_Isend(Buf_to_send_B, (C_INT_MPI_TYPE) (Size_send_B*nb_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_B, 0, col_comm, &request_B_Send); 
+      MPI_Irecv(Buf_to_receive_B, (C_INT_MPI_TYPE) (Buf_rows*nb_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_B, 0, col_comm, &request_B_Recv);      
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
       cols_in_buffer_U = (C_INT_TYPE)Buf_to_send_U[Size_receive_U-2];
       rows_in_buffer_U = (C_INT_TYPE)Buf_to_send_U[Size_receive_U-1];
@@ -426,12 +438,15 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       
       MPI_Wait(&request_U_Send, &status);
       MPI_Wait(&request_U_Recv, &status);
-      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U); // find out how many elements I have received 
-      
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_UMPI); // find out how many elements I have received 
+      Size_receive_U = (C_INT_TYPE) Size_receive_UMPI;
+
       MPI_Wait(&request_B_Send, &status);
       MPI_Wait(&request_B_Recv, &status);
-      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_B); // find out how many elements I have received 
-      Size_receive_B = Size_receive_B/nb_cols;    // how many rows I have received
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_BMPI); // find out how many elements I have received
+      Size_receive_B = (C_INT_TYPE) Size_receive_BMPI;
+      Size_receive_B = (C_INT_TYPE) Size_receive_B / nb_cols;    // how many rows I have received
+
    }         
    
    // last iteration 
@@ -483,7 +498,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
 
 
 void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_rowsCast, int local_colsCast,
-                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, math_type *Res, C_INT_TYPE row_comm, C_INT_TYPE col_comm)
+                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, math_type *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm)
 {
   C_INT_TYPE local_rows, local_cols;
 
@@ -494,11 +509,17 @@ void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_row
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 
   C_INT_TYPE my_prow, my_pcol, np_rows, np_cols;
-  MPI_Comm_rank(c_row_comm, &my_prow);
-  MPI_Comm_size(c_row_comm, &np_rows);
-  MPI_Comm_rank(c_col_comm, &my_pcol);
-  MPI_Comm_size(c_col_comm, &np_cols);
+  C_INT_MPI_TYPE my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI;
 
+  MPI_Comm_rank(c_row_comm, &my_prowMPI);
+  MPI_Comm_size(c_row_comm, &np_rowsMPI);
+  MPI_Comm_rank(c_col_comm, &my_pcolMPI);
+  MPI_Comm_size(c_col_comm, &np_colsMPI);
+
+  my_prow = (C_INT_TYPE) my_prowMPI;
+  my_pcol = (C_INT_TYPE) my_pcolMPI;
+  np_rows = (C_INT_TYPE) np_rowsMPI;
+  np_cols = (C_INT_TYPE) np_colsMPI;
 
   // BEWARE
   // in the cannons algorithm, column and row communicators are exchanged

@@ -44,12 +44,19 @@
 #include "../Fortran/assert.h"
 #include "config-f90.h"
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #else
 #define TEST_INT_TYPE integer(kind=c_int32_t)
 #define INT_TYPE c_int32_t
+#endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
 #endif
 
 module test_analytic

@@ -42,14 +42,20 @@
 !
 #include "config-f90.h"
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #else
 #define TEST_INT_TYPE integer(kind=c_int32_t)
 #define INT_TYPE c_int32_t
 #endif
-
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
 #include "../assert.h"
 
 program test_interface
@@ -72,7 +78,7 @@ program test_interface
    TEST_INT_TYPE :: na_cols, na_rows  ! local matrix size
    TEST_INT_TYPE :: np_cols, np_rows  ! number of MPI processes per column/row
    TEST_INT_TYPE :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INT_TYPE :: mpierr
+   TEST_INT_MPI_TYPE :: mpierr
 
    ! blacs
    TEST_INT_TYPE :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
@@ -113,7 +119,7 @@ program test_interface
    my_prow = mod(myid, np_cols)
    my_pcol = myid / np_cols
 
-   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, 'C', &
+   call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, np_cols, 'C', &
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &

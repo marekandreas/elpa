@@ -64,7 +64,7 @@ subroutine qr_pdlarfb_1dcomm_&
     ! local scalars
     integer(kind=ik)  :: localsize,offset,baseoffset
     integer(kind=ik)         :: mpirank, mpiprocs
-    integer(kind=BLAS_KIND)  :: mpirankMPI, mpiprocsMPI, mpierr
+    integer(kind=MPI_KIND)  :: mpirankMPI, mpiprocsMPI, mpierr
 
         if (idx .le. 1) return
 

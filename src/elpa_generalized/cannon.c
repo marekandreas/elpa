@@ -60,13 +60,26 @@
 #include <math.h>
 #include <complex.h>
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define C_INT_TYPE_PTR long int*
 #define C_INT_TYPE long int
+#define BLAS_KIND c_int64_t
 #else
 #define C_INT_TYPE_PTR int*
 #define C_INT_TYPE int
+#define BLAS_KIND c_int
 #endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define C_INT_MPI_TYPE_PTR long int*
+#define C_INT_MPI_TYPE long int
+#define MPI_KIND c_int64_t
+#else
+#define C_INT_MPI_TYPE_PTR int*
+#define C_INT_MPI_TYPE int
+#define MPI_KIND c_int
+#endif
+
+
 
 // most of the file is not compiled if not using MPI
 #ifdef WITH_MPI
@@ -84,69 +97,37 @@
 #undef REALCASE
 
 /*
-!f>#ifdef HAVE_64BIT_INTEGER_SUPPORT
 !f> interface
 !f>   subroutine cannons_reduction_d(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_reduction_c_d")
-!f>     use, intrinsic :: iso_c_binding
+!f>     use precision
 !f>     real(c_double)                :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
 !f>     real(c_double)                :: Res(local_rowsCast, local_colsCast)
-!f>     !type(c_ptr), value           :: A, U, Res
-!f>     integer(kind=c_int64_t)       :: a_desc(9)
+!f>     integer(kind=BLAS_KIND)       :: a_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int64_t),value ::  row_comm, col_comm, ToStore
+!f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm, ToStore
 !f>   end subroutine
 !f> end interface
-!f>#endif
-!f>#ifndef HAVE_64BIT_INTEGER_SUPPORT
-!f> interface
-!f>   subroutine cannons_reduction_d(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
-!f>                             bind(C, name="cannons_reduction_c_d")
-!f>     use, intrinsic :: iso_c_binding
-!f>     real(c_double)            :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
-!f>     real(c_double)            :: Res(local_rowsCast, local_colsCast)
-!f>     !type(c_ptr), value       :: A, U, Res
-!f>     integer(kind=c_int)       :: a_desc(9)
-!f>     integer(kind=c_int),value :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int),value ::  row_comm, col_comm, ToStore
-!f>   end subroutine
-!f> end interface
-!f>#endif
 
 */
 void cannons_reduction_c_d(double* A, double* U, int local_rowsCast, int local_colsCast, C_INT_TYPE_PTR a_desc,
-                         double *Res, C_INT_TYPE ToStore, C_INT_TYPE row_comm, C_INT_TYPE col_comm);
+                           double *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
 
 /*
-!f>#ifdef HAVE_64BIT_INTEGER_SUPPORT
 !f> interface
 !f>   subroutine cannons_triang_rectangular_d(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_triang_rectangular_c_d")
-!f>     use, intrinsic :: iso_c_binding
+!f>     use precision
 !f>     real(c_double)                :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
 !f>     real(c_double)                :: Res(local_rowsCast, local_colsCast)
-!f>     integer(kind=c_int64_t)       :: u_desc(9), b_desc(9)
+!f>     integer(kind=BLAS_KIND)       :: u_desc(9), b_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int64_t),value :: row_comm, col_comm
+!f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm
 !f>   end subroutine
 !f> end interface
-!f>#endif
-!f>#ifndef HAVE_64BIT_INTEGER_SUPPORT
-!f> interface
-!f>   subroutine cannons_triang_rectangular_d(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
-!f>                             bind(C, name="cannons_triang_rectangular_c_d")
-!f>     use, intrinsic :: iso_c_binding
-!f>     real(c_double)            :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
-!f>     real(c_double)            :: Res(local_rowsCast, local_colsCast)
-!f>     integer(kind=c_int)       :: u_desc(9), b_desc(9)
-!f>     integer(kind=c_int),value :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int),value :: row_comm, col_comm
-!f>   end subroutine
-!f> end interface
-!f>#endif
 */
 void cannons_triang_rectangular_c_d(double* U, double* B, int local_rowsCast, int local_colsCast,
-                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, double *Res, C_INT_TYPE row_comm, C_INT_TYPE col_comm);
+                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, double *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
 
 //***********************************************************************************************************
 
@@ -159,68 +140,37 @@ void cannons_triang_rectangular_c_d(double* U, double* B, int local_rowsCast, in
 #undef REALCASE
 
 /*
-!f>#ifdef HAVE_64BIT_INTEGER_SUPPORT
 !f> interface
 !f>   subroutine cannons_reduction_f(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_reduction_c_f")
-!f>     use, intrinsic :: iso_c_binding
+!f>     use precision
 !f>     real(c_float)                 :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
 !f>     real(c_float)                 :: Res(local_rowsCast, local_colsCast)
 !f>     !type(c_ptr), value           :: A, U, Res
-!f>     integer(kind=c_int64_t)       :: a_desc(9)
+!f>     integer(kind=BLAS_KIND)       :: a_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int64_t),value :: row_comm, col_comm, ToStore
+!f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm, ToStore
 !f>   end subroutine
 !f> end interface
-!f>#endif
-!f>#ifndef HAVE_64BIT_INTEGER_SUPPORT
-!f> interface
-!f>   subroutine cannons_reduction_f(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
-!f>                             bind(C, name="cannons_reduction_c_f")
-!f>     use, intrinsic :: iso_c_binding
-!f>     real(c_float)                 :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
-!f>     real(c_float)                 :: Res(local_rowsCast, local_colsCast)
-!f>     !type(c_ptr), value           :: A, U, Res
-!f>     integer(kind=c_int)           :: a_desc(9)
-!f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int),value     :: row_comm, col_comm, ToStore
-!f>   end subroutine
-!f> end interface
-!f>#endif
 */
 void cannons_reduction_c_f(float* A, float* U, int local_rowsCast, int local_colsCast, C_INT_TYPE_PTR a_desc,
-                         float *Res, C_INT_TYPE ToStore, C_INT_TYPE row_comm, C_INT_TYPE col_comm);
+                           float *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
 
 /*
-!f>#ifdef HAVE_64BIT_INTEGER_SUPPORT
 !f> interface
 !f>   subroutine cannons_triang_rectangular_f(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_triang_rectangular_c_f")
-!f>     use, intrinsic :: iso_c_binding
+!f>     use precision
 !f>     real(c_float)                        :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
 !f>     real(c_float)                        :: Res(local_rowsCast, local_colsCast)
-!f>     integer(kind=c_int64_t)              :: u_desc(9), b_desc(9)
+!f>     integer(kind=BLAS_KIND)              :: u_desc(9), b_desc(9)
 !f>     integer(kind=c_int),value            :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int64_t),value        :: row_comm, col_comm
+!f>     integer(kind=MPI_KIND),value         :: row_comm, col_comm
 !f>   end subroutine
 !f> end interface
-!f>#endif
-!f>#ifndef HAVE_64BIT_INTEGER_SUPPORT
-!f> interface
-!f>   subroutine cannons_triang_rectangular_f(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
-!f>                             bind(C, name="cannons_triang_rectangular_c_f")
-!f>     use, intrinsic :: iso_c_binding
-!f>     real(c_float)                        :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
-!f>     real(c_float)                        :: Res(local_rowsCast, local_colsCast)
-!f>     integer(kind=c_int)                  :: u_desc(9), b_desc(9)
-!f>     integer(kind=c_int),value            :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int),value            :: row_comm, col_comm
-!f>   end subroutine
-!f> end interface
-!f>#endif
 */
 void cannons_triang_rectangular_c_f(float* U, float* B, int local_rowsCast, int local_colsCast,
-                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, float *Res, C_INT_TYPE row_comm, C_INT_TYPE col_comm);
+                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, float *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
 
 //***********************************************************************************************************
 
@@ -233,68 +183,36 @@ void cannons_triang_rectangular_c_f(float* U, float* B, int local_rowsCast, int 
 #undef COMPLEXCASE
 
 /*
-!f>#ifdef HAVE_64BIT_INTEGER_SUPPORT
 !f> interface
 !f>   subroutine cannons_reduction_dc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_reduction_c_dc")
-!f>     use, intrinsic :: iso_c_binding
+!f>     use precision
 !f>     complex(c_double)             :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
 !f>     complex(c_double)             :: Res(local_rowsCast, local_colsCast)
-!f>     !type(c_ptr), value           :: A, U, Res
-!f>     integer(kind=c_int64_t)       :: a_desc(9)
+!f>     integer(kind=BLAS_KIND)       :: a_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int64_t),value :: row_comm, col_comm, ToStore
+!f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm, ToStore
 !f>   end subroutine
 !f> end interface
-!f>#endif
-!f>#ifndef HAVE_64BIT_INTEGER_SUPPORT
-!f> interface
-!f>   subroutine cannons_reduction_dc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
-!f>                             bind(C, name="cannons_reduction_c_dc")
-!f>     use, intrinsic :: iso_c_binding
-!f>     complex(c_double)         :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
-!f>     complex(c_double)         :: Res(local_rowsCast, local_colsCast)
-!f>     !type(c_ptr), value       :: A, U, Res
-!f>     integer(kind=c_int)       :: a_desc(9)
-!f>     integer(kind=c_int),value :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int),value :: row_comm, col_comm, ToStore
-!f>   end subroutine
-!f> end interface
-!f>#endif
 */
 void cannons_reduction_c_dc(double complex* A, double complex* U, int local_rowsCast, int local_colsCasr, C_INT_TYPE_PTR a_desc,
-                         double complex *Res, C_INT_TYPE ToStore, C_INT_TYPE row_comm, C_INT_TYPE col_comm);
+                            double complex *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
 
 /*
-!f>#ifdef HAVE_64BIT_INTEGER_SUPPORT
 !f> interface
 !f>   subroutine cannons_triang_rectangular_dc(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_triang_rectangular_c_dc")
-!f>     use, intrinsic :: iso_c_binding
-!f>     complex(c_double)             :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
-!f>     complex(c_double)            :: Res(local_rowsCast, local_colsCast)
-!f>     integer(kind=c_int64_t)       :: u_desc(9), b_desc(9)
-!f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int64_t),value :: row_comm, col_comm
-!f>   end subroutine
-!f> end interface
-!f>#endif
-!f>#ifndef HAVE_64BIT_INTEGER_SUPPORT
-!f> interface
-!f>   subroutine cannons_triang_rectangular_dc(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
-!f>                             bind(C, name="cannons_triang_rectangular_c_dc")
-!f>     use, intrinsic :: iso_c_binding
+!f>     use precision
 !f>     complex(c_double)             :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
 !f>     complex(c_double)             :: Res(local_rowsCast, local_colsCast)
-!f>     integer(kind=c_int)           :: u_desc(9), b_desc(9)
+!f>     integer(kind=BLAS_KIND)       :: u_desc(9), b_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int),value     :: row_comm, col_comm
+!f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm
 !f>   end subroutine
 !f> end interface
-!f>#endif
 */
 void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int local_rowsCast, int local_colsCast,
-                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, double complex *Res, C_INT_TYPE row_comm, C_INT_TYPE col_comm);
+                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, double complex *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
 //***********************************************************************************************************
 
 #define COMPLEXCASE 1
@@ -306,66 +224,36 @@ void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int l
 #undef COMPLEXCASE
 
 /*
-!f>#ifdef HAVE_64BIT_INTEGER_SUPPORT
 !f> interface
 !f>   subroutine cannons_reduction_fc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_reduction_c_fc")
-!f>     use, intrinsic :: iso_c_binding
+!f>     use precision
 !f>     complex(c_float)              :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
 !f>     complex(c_float)              :: Res(local_rowsCast, local_colsCast)
 !f>     !type(c_ptr), value           :: A, U, Res
-!f>     integer(kind=c_int64_t)       :: a_desc(9)
+!f>     integer(kind=BLAS_KIND)       :: a_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int64_t),value :: row_comm, col_comm, ToStore
+!f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm, ToStore
 !f>   end subroutine
 !f> end interface
-!f>#endif
-!f>#ifndef HAVE_64BIT_INTEGER_SUPPORT
-!f> interface
-!f>   subroutine cannons_reduction_fc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
-!f>                             bind(C, name="cannons_reduction_c_fc")
-!f>     use, intrinsic :: iso_c_binding
-!f>     complex(c_float)              :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
-!f>     complex(c_float)              :: Res(local_rowsCast, local_colsCast)
-!f>     !type(c_ptr), value           :: A, U, Res
-!f>     integer(kind=c_int)           :: a_desc(9)
-!f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int),value     ::  row_comm, col_comm, ToStore
-!f>   end subroutine
-!f> end interface
-!f>#endif
 */
+
 void cannons_reduction_c_fc(float complex* A, float complex* U, int local_rowsCast, int local_colsCast, C_INT_TYPE_PTR a_desc,
-                         float complex *Res, C_INT_TYPE ToStore, C_INT_TYPE row_comm, C_INT_TYPE col_comm);
+                         float complex *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
 
 /*
-!f>#ifdef HAVE_64BIT_INTEGER_SUPPORT
 !f> interface
 !f>   subroutine cannons_triang_rectangular_fc(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_triang_rectangular_c_fc")
-!f>     use, intrinsic :: iso_c_binding
+!f>     use precision
 !f>     complex(c_float)              :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
 !f>     complex(c_float)              :: Res(local_rowsCast, local_colsCast)
-!f>     integer(kind=c_int64_t)       :: u_desc(9), b_desc(9)
+!f>     integer(kind=BLAS_KIND)       :: u_desc(9), b_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int64_t),value :: row_comm, col_comm
+!f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm
 !f>   end subroutine
 !f> end interface
-!f>#endif
-!f>#ifndef HAVE_64BIT_INTEGER_SUPPORT
-!f> interface
-!f>   subroutine cannons_triang_rectangular_fc(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
-!f>                             bind(C, name="cannons_triang_rectangular_c_fc")
-!f>     use, intrinsic :: iso_c_binding
-!f>     complex(c_float)          :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
-!f>     complex(c_float)          :: Res(local_rowsCast, local_colsCast)
-!f>     integer(kind=c_int)       :: u_desc(9), b_desc(9)
-!f>     integer(kind=c_int),value :: local_rowsCast, local_colsCast
-!f>     integer(kind=c_int),value :: row_comm, col_comm
-!f>   end subroutine
-!f> end interface
-!f>#endif
 */
 void cannons_triang_rectangular_c_fc(float complex* U, float complex* B, int local_rowsCast, int local_colsCast,
-                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, float complex *Res, C_INT_TYPE row_comm, C_INT_TYPE col_comm);
+                                    C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, float complex *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
 #endif

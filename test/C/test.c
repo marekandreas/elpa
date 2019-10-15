@@ -104,7 +104,7 @@
 #define assert_elpa_ok(x) assert(x == ELPA_OK)
 
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_C_INT_TYPE_PTR long int*
 #define C_INT_TYPE_PTR long int*
 #define TEST_C_INT_TYPE long int
@@ -116,6 +116,17 @@
 #define C_INT_TYPE int
 #endif
 
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_C_INT_MPI_TYPE_PTR long int*
+#define C_INT_MPI_TYPE_PTR long int*
+#define TEST_C_INT_MPI_TYPE long int
+#define C_INT_MPI_TYPE long int
+#else
+#define TEST_C_INT_MPI_TYPE_PTR int*
+#define C_INT_MPI_TYPE_PTR int*
+#define TEST_C_INT_MPI_TYPE int
+#define C_INT_MPI_TYPE int
+#endif
 #include "test/shared/generated.h"
 
 int main(int argc, char** argv) {
@@ -124,11 +135,12 @@ int main(int argc, char** argv) {
 
    /* mpi */
    C_INT_TYPE myid, nprocs;
+   C_INT_MPI_TYPE myidMPI, nprocsMPI;
    C_INT_TYPE na_cols, na_rows;
    C_INT_TYPE np_cols, np_rows;
    C_INT_TYPE my_prow, my_pcol;
    C_INT_TYPE mpi_comm;
-   C_INT_TYPE provided_mpi_thread_level;
+   C_INT_MPI_TYPE provided_mpi_thread_level;
 
    /* blacs */
    C_INT_TYPE my_blacs_ctxt, sc_desc[9], info;
@@ -156,8 +168,10 @@ int main(int argc, char** argv) {
    }
 #endif
 
-   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+   MPI_Comm_size(MPI_COMM_WORLD, &nprocsMPI);
+   nprocs = (C_INT_TYPE) nprocsMPI;
+   MPI_Comm_rank(MPI_COMM_WORLD, &myidMPI);
+   myid = (C_INT_TYPE) myidMPI;
 
 #else
    nprocs = 1;

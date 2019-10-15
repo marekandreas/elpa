@@ -43,12 +43,19 @@
 
 #include "config-f90.h"
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #else
 #define TEST_INT_TYPE integer(kind=c_int32_t)
 #define INT_TYPE c_int32_t
+#endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
 #endif
 
 
@@ -142,14 +149,15 @@
     
     implicit none
 #include "./test_precision_kinds.F90"
-    TEST_INT_TYPE, intent(in)           :: na, nev, nblk, myid, np_rows, &
+    TEST_INT_TYPE, intent(in)              :: na, nev, nblk, myid, np_rows, &
                                               np_cols, my_prow, my_pcol
-    TEST_INT_TYPE                       :: status, mpierr
+    TEST_INT_TYPE                          :: status
+    TEST_INT_MPI_TYPE                      :: mpierr
     MATH_DATATYPE(kind=rck), intent(inout) :: z(:,:)
     real(kind=rk), intent(inout)           :: ev(:)
     logical, intent(in)                    :: check_all_evals, check_eigenvectors
 
-    TEST_INT_TYPE                       :: globI, globJ, locI, locJ, &
+    TEST_INT_TYPE                          :: globI, globJ, locI, locJ, &
                                               levels(num_primes)
     integer(kind=c_int)                    :: loc_I, loc_J
     real(kind=rk)                          :: diff, max_z_diff, max_ev_diff, &
@@ -172,10 +180,10 @@
                                               normalization_quotient
     MATH_DATATYPE(kind=rck)                :: max_values_array(np_rows * np_cols), &
                                               corresponding_exact_value
-    TEST_INT_TYPE                       :: max_value_idx, rank_with_max, &
+    TEST_INT_TYPE                          :: max_value_idx, rank_with_max, &
                                               rank_with_max_reduced,        &
                                               num_checked_evals
-    TEST_INT_TYPE                       :: max_idx_array(np_rows * np_cols), &
+    TEST_INT_TYPE                          :: max_idx_array(np_rows * np_cols), &
                                               rank
     logical, optional                      :: print_times
     logical                                :: print_timer
@@ -254,9 +262,11 @@
       ! it without this, it would be tricky.. question of uniquness - two complex numbers
       ! with the same absolut values, but completely different... 
 #ifdef WITH_MPI
-      call MPI_Gather(max_value_for_normalization, 1, MPI_MATH_DATATYPE_PRECISION, &
-                     max_values_array, 1, MPI_MATH_DATATYPE_PRECISION, 0, MPI_COMM_WORLD, mpierr)
-      call MPI_Gather(max_value_idx, 1, MPI_INT, max_idx_array, 1, MPI_INT, 0, MPI_COMM_WORLD, mpierr)
+      call MPI_Gather(max_value_for_normalization, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+                      max_values_array, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, 0_MPI_KIND, &
+                      int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+      call MPI_Gather(max_value_idx, 1_MPI_KIND, MPI_INT, max_idx_array, 1_MPI_KIND, MPI_INT, &
+                      0_MPI_KIND, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
       max_value_for_normalization = 0.0_rk
       max_value_idx = -1
       do rank = 1, np_cols * np_rows 
@@ -265,8 +275,10 @@
           max_value_idx = max_idx_array(rank)
         end if
       end do
-      call MPI_Bcast(max_value_for_normalization, 1, MPI_MATH_DATATYPE_PRECISION, 0, MPI_COMM_WORLD, mpierr)
-      call MPI_Bcast(max_value_idx, 1, MPI_INT, 0, MPI_COMM_WORLD, mpierr)
+      call MPI_Bcast(max_value_for_normalization, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+                     0_MPI_KIND, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+      call MPI_Bcast(max_value_idx, 1_MPI_KIND, MPI_INT, 0_MPI_KIND, &
+                     int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
 #endif
       ! we decided what the maximum computed value is. Calculate expected value on the same 
       if(abs(max_value_for_normalization) < 0.0001_rk) then 
@@ -308,7 +320,8 @@
     call timer%stop("loop_eigenvectors")
 
 #ifdef WITH_MPI
-    call mpi_allreduce(max_z_diff, glob_max_z_diff, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+    call mpi_allreduce(max_z_diff, glob_max_z_diff, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, &
+                       int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
 #else
     glob_max_z_diff = max_z_diff
 #endif
@@ -402,11 +415,11 @@
 
     implicit none
 #include "./test_precision_kinds.F90"
-    TEST_INT_TYPE, intent(in)   :: na, i, j, what
-    MATH_DATATYPE(kind=rck)        :: element, mat2x2(2,2), mat(5,5)
-    real(kind=rk)                  :: a, am, amp
-    TEST_INT_TYPE               :: levels(num_primes)
-    TEST_INT_TYPE               :: ii, jj, m, prime_id, prime, total_level, level
+    TEST_INT_TYPE, intent(in)     :: na, i, j, what
+    MATH_DATATYPE(kind=rck)       :: element, mat2x2(2,2), mat(5,5)
+    real(kind=rk)                 :: a, am, amp
+    TEST_INT_TYPE                 :: levels(num_primes)
+    TEST_INT_TYPE                 :: ii, jj, m, prime_id, prime, total_level, level
 
     real(kind=rk), parameter      :: s = 0.5_rk
     real(kind=rk), parameter      :: c = 0.86602540378443864679_rk
@@ -529,10 +542,10 @@
     implicit none
 #include "./test_precision_kinds.F90"
     TEST_INT_TYPE, intent(in)    :: myid, na
-    character(len=*), intent(in)    :: mat_name
-    MATH_DATATYPE(kind=rck)         :: mat(na, na)
+    character(len=*), intent(in) :: mat_name
+    MATH_DATATYPE(kind=rck)      :: mat(na, na)
     TEST_INT_TYPE                :: i,j
-    character(len=20)               :: na_str
+    character(len=20)            :: na_str
 
     if(myid .ne. 0) &
       return
@@ -559,9 +572,9 @@
 
     implicit none
 #include "./test_precision_kinds.F90"
-    TEST_INT_TYPE, intent(in)    :: myid, na
-    MATH_DATATYPE(kind=rck)                  :: A(na, na), S(na, na), L(na, na), res(na, na)
-    TEST_INT_TYPE                :: i, j, decomposition(num_primes)
+    TEST_INT_TYPE, intent(in) :: myid, na
+    MATH_DATATYPE(kind=rck)   :: A(na, na), S(na, na), L(na, na), res(na, na)
+    TEST_INT_TYPE             :: i, j, decomposition(num_primes)
 
     real(kind=rk)             :: err
 #ifdef DOUBLE_PRECISION
@@ -626,13 +639,13 @@
     TEST_INT_TYPE               :: decomposition(num_primes), i
     TEST_INT_TYPE, parameter    :: check_sizes(7) = (/2, 3, 5, 6, 10, 25, 150/)
     if(myid == 0) print *, "Checking test_analytic module sanity.... "
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
     assert(decompose(1500_lik, decomposition))
 #else
     assert(decompose(1500_ik, decomposition))
 #endif
     assert(all(decomposition == (/2,1,3/)))
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
     assert(decompose(6_lik,decomposition))
 #else
     assert(decompose(6_ik,decomposition))

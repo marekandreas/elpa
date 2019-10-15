@@ -79,7 +79,7 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #  define AUTOTUNE_DOMAIN ELPA_AUTOTUNE_DOMAIN_COMPLEX
 #endif
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #else
@@ -87,6 +87,13 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #define INT_TYPE c_int32_t
 #endif
 
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
 #include "assert.h"
 
 program test
@@ -114,7 +121,7 @@ program test
    TEST_INT_TYPE                     :: na_cols, na_rows  ! local matrix size
    TEST_INT_TYPE                     :: np_cols, np_rows  ! number of MPI processes per column/row
    TEST_INT_TYPE                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INT_TYPE                     :: mpierr
+   TEST_INT_MPI_TYPE                 :: mpierr
 
    ! blacs
    character(len=1)            :: layout
@@ -170,7 +177,7 @@ program test
      print *,''
    endif
 
-   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
+   call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, np_cols, layout, &
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &

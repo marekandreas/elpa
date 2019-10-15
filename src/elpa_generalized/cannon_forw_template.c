@@ -54,14 +54,23 @@
 // Author: Valeriy Manin (Bergische Universität Wuppertal)
 // integreated into the ELPA library Pavel Kus, Andeas Marek (MPCDF)
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define C_INT_TYPE_PTR long int*
 #define C_INT_TYPE long int
-#define FORTRAN_INT_TYPE c_int64_t
+#define BLAS_KIND c_int64_t
 #else
 #define C_INT_TYPE_PTR int*
 #define C_INT_TYPE int
-#define FORTRAN_INT_TYPE c_int
+#define BLAS_KIND c_int
+#endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define C_INT_MPI_TYPE_PTR long int*
+#define C_INT_MPI_TYPE long int
+#define MPI_KIND c_int64_t
+#else
+#define C_INT_MPI_TYPE_PTR int*
+#define C_INT_MPI_TYPE int
+#define MPI_KIND c_int
 #endif
 
 
@@ -80,7 +89,7 @@
 #include "../helpers/scalapack_interfaces.h"
 
 void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol,
-                         C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_TYPE ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
+                         C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_MPI_TYPE ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
 {
    // Input matrices: 
       // - A: full matrix
@@ -93,6 +102,8 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    C_INT_TYPE na, nblk, i, j, Size_send_A, Size_receive_A, Size_send_U, Size_receive_U, Buf_rows, Buf_cols, where_to_send_A, from_where_to_receive_A, where_to_send_U, from_where_to_receive_U, last_proc_row, last_proc_col, cols_in_buffer_A, rows_in_buffer_A, intNumber;
    math_type *Buf_to_send_A, *Buf_to_receive_A, *Buf_to_send_U, *Buf_to_receive_U, *data_ptr, *Buf_A, *Buf_pos, *U_local_start, *Res_ptr, *M, *M_T, *A_local_start, *U_local_start_curr, *U_stored, *CopyTo, *CopyFrom, *U_to_calc;
    C_INT_TYPE ratio, num_of_iters, cols_in_buffer, rows_in_block, rows_in_buffer, curr_col_loc, cols_in_block, curr_col_glob, curr_row_loc, Size_receive_A_now, Nb, owner, cols_in_buffer_A_now;
+   C_INT_MPI_TYPE Size_receive_A_nowMPI, Size_receive_AMPI, Size_receive_UMPI;
+
    C_INT_TYPE  row_of_origin_U, rows_in_block_U, num_of_blocks_in_U_buffer, k, startPos, cols_in_buffer_U, rows_in_buffer_U, col_of_origin_A, curr_row_loc_res, curr_row_loc_A, curr_col_glob_res; 
    C_INT_TYPE curr_col_loc_res, curr_col_loc_buf, proc_row_curr, curr_col_loc_U, A_local_index, LDA_A, LDA_A_new, index_row_A_for_LDA, ii, rows_in_block_U_curr, width, row_origin_U, rows_in_block_A, cols_in_buffer_A_my_initial, rows_in_buffer_A_my_initial, proc_col_min;
    C_INT_TYPE *SizesU;
@@ -199,9 +210,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       {
          if(where_to_send_A != my_pcol)
          {
-            MPI_Sendrecv(Buf_to_send_A, na_cols*na_rows, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_A, na_rows*Buf_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A_now);
-            Size_receive_A_now = Size_receive_A_now/na_rows;       // how many columns of A I have received
+           MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) (na_cols*na_rows), MPI_MATH_DATATYPE_PRECISION_C,(C_INT_MPI_TYPE)  where_to_send_A, 0, Buf_A, (C_INT_MPI_TYPE) (na_rows*Buf_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_A, 0, row_comm, &status);
+           MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A_nowMPI);
+           Size_receive_A_now = (C_INT_TYPE) Size_receive_A_nowMPI/na_rows;       // how many columns of A I have received
          }
          else
             Size_receive_A_now = na_cols;
@@ -231,9 +242,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          if(my_prow > 0)
          {
             C_LACPY("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy my buffer to send
-            MPI_Sendrecv(Buf_to_send_A, na_cols*na_rows, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_to_receive_A, na_rows*Buf_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A);
-            Size_receive_A = Size_receive_A/na_rows;       // how many columns of A I have received
+            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) (na_cols*na_rows), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_A, 0, Buf_to_receive_A, (C_INT_MPI_TYPE) (na_rows*Buf_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_AMPI);
+            Size_receive_A = (C_INT_TYPE) Size_receive_AMPI;
          }
          else
          {
@@ -298,8 +309,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    if(where_to_send_U != my_prow)
    {   
       // send and receive in the col_comm
-      MPI_Sendrecv(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, Buf_to_receive_U, Buf_rows*na_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, col_comm, &status); 
-      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U); // find out how many elements I have received 
+      MPI_Sendrecv(Buf_to_send_U, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, 0, Buf_to_receive_U, (C_INT_MPI_TYPE) (Buf_rows*na_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_U, 0, col_comm, &status); 
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_UMPI); // find out how many elements I have received
+      Size_receive_U = (C_INT_TYPE) Size_receive_UMPI;
    }
    else // if I do not need to send 
       Size_receive_U = Size_send_U;         // how many elements I "have received"; the needed data I have already copied to the "receive" buffer
@@ -328,13 +340,13 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       
       ///// shift for A ////////////////////////////////////////////////////////////
       Size_send_A = Size_receive_A;  // number of block-columns of A and block-rows of U to send (that I have received on the previous step) 
-      MPI_Isend(Buf_to_send_A, Size_send_A*na_rows, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, row_comm, &request_A_Send); 
-      MPI_Irecv(Buf_to_receive_A, Buf_cols*na_rows*ratio, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &request_A_Recv);
+      MPI_Isend(Buf_to_send_A, (C_INT_MPI_TYPE) (Size_send_A*na_rows), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_A, 0, row_comm, &request_A_Send); 
+      MPI_Irecv(Buf_to_receive_A, (C_INT_MPI_TYPE) (Buf_cols*na_rows*ratio), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_A, 0, row_comm, &request_A_Recv);
          
       ///// shift for U /////////////////////////////////////////////
       Size_send_U = Size_receive_U; 
-      MPI_Isend(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, col_comm, &request_U_Send); 
-      MPI_Irecv(Buf_to_receive_U, Buf_rows*na_cols, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, col_comm, &request_U_Recv); 
+      MPI_Isend(Buf_to_send_U, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, 0, col_comm, &request_U_Send); 
+      MPI_Irecv(Buf_to_receive_U, (C_INT_MPI_TYPE) (Buf_rows*na_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_U, 0, col_comm, &request_U_Recv); 
       
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
       rows_in_buffer = (int)Buf_to_send_U[Size_receive_U-1];
@@ -395,10 +407,12 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             rows_in_block_U = rows_in_buffer;
 
          if ((rows_in_block_A > 0)&&(cols_in_block > 0))
-            if (j == 1)
+            if (j == 1) {
                C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
-            else 
+	    }
+            else { 
                C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
+	    }
       
          U_local_start = U_local_start + rows_in_block_U*cols_in_block;
          curr_col_loc_res = curr_col_loc_res + nblk;
@@ -408,13 +422,16 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
      
       MPI_Wait(&request_A_Send, &status);
       MPI_Wait(&request_A_Recv, &status);
-      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A); // find out how many elements I have received 
-      Size_receive_A = Size_receive_A/na_rows;
+
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_AMPI); // find out how many elements I have received
+      Size_receive_A = (C_INT_TYPE) Size_receive_AMPI;
+      Size_receive_A = Size_receive_A / na_rows;
+      
       
       MPI_Wait(&request_U_Send, &status);
       MPI_Wait(&request_U_Recv, &status);
-      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U); // find out how many elements I have received  
-      
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_UMPI); // find out how many elements I have received  
+      Size_receive_U = (C_INT_TYPE) Size_receive_UMPI; 
        //// write in the buffer for later use //////////////////////////////7
       if(j <= ToStore)
       {
@@ -484,10 +501,12 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          rows_in_block_U = rows_in_buffer; 
 
       if ((rows_in_block_A > 0)&&(cols_in_block > 0))
-         if (j == 1)
+         if (j == 1) {
             C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
-         else 
+	 }
+         else { 
             C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
+         }
       
       U_local_start = U_local_start + rows_in_block_U*cols_in_block;
       curr_col_loc_res = curr_col_loc_res + nblk;
@@ -572,10 +591,12 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       {
          if(where_to_send_A != my_pcol)   // if I need to send and receive on this step
          {
-            MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_A, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A_now);
+            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_A, 0, Buf_A, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A_nowMPI);
+            Size_receive_A_now = (C_INT_TYPE) Size_receive_A_nowMPI;
+
             Size_receive_A = Size_receive_A + Size_receive_A_now - 1; // we need only number of elements, so exclude information about cols_in_buffer_A
-            
+
             cols_in_buffer_A_now = Buf_A[Size_receive_A_now-1];
             cols_in_buffer_A = cols_in_buffer_A + cols_in_buffer_A_now; 
             
@@ -638,8 +659,10 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       {
          if(my_prow > 0)
          {
-            MPI_Sendrecv(Buf_to_send_A, Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, Buf_to_receive_A, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &status);
-            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A);
+            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_A, 0, Buf_to_receive_A, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_A, 0, row_comm, &status);
+            MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_AMPI);
+            Size_receive_A = (C_INT_TYPE) Size_receive_AMPI;
+
             cols_in_buffer_A = (C_INT_TYPE)Buf_to_receive_A[Size_receive_A-1];
             if(from_where_to_receive_A <= my_prow)  // if source is from the lower part of grid
             {
@@ -699,8 +722,8 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
         
       ///// shift for A ////////////////////////////////////////////////////////////
       Size_send_A = Size_receive_A; 
-      MPI_Isend(Buf_to_send_A, Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_A, 0, row_comm, &request_A_Send); 
-      MPI_Irecv(Buf_to_receive_A, ratio*Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_A, 0, row_comm, &request_A_Recv);
+      MPI_Isend(Buf_to_send_A, (C_INT_MPI_TYPE) Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_A, 0, row_comm, &request_A_Send); 
+      MPI_Irecv(Buf_to_receive_A, (C_INT_MPI_TYPE) (ratio*Size_U_stored), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_A, 0, row_comm, &request_A_Recv);
          
       ///// shift for U /////////////////////////////////////////////
       Size_send_U = Size_receive_U; 
@@ -708,12 +731,13 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       {
          if(j > ToStore + 1)
          {
-            MPI_Isend(Buf_to_send_U, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, col_comm, &request_U_Send); 
+            MPI_Isend(Buf_to_send_U, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, 0, col_comm, &request_U_Send);
             U_to_calc = Buf_to_send_U;
          }
-         else
-            MPI_Isend(U_to_calc, Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, where_to_send_U, 0, col_comm, &request_U_Send);
-         MPI_Irecv(Buf_to_receive_U, Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, from_where_to_receive_U, 0, col_comm, &request_U_Recv);
+         else {
+	    MPI_Isend(U_to_calc, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, 0, col_comm, &request_U_Send);
+	 }
+         MPI_Irecv(Buf_to_receive_U, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_U, 0, col_comm, &request_U_Recv);	 
       }
       
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
@@ -795,10 +819,12 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                else
                   rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
 
-               if((j == 1)&&(ii == 0))
+               if((j == 1)&&(ii == 0)) {
                   C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
-               else 
+	       }
+               else { 
                   C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
+               }
 
                LDA_A_new = LDA_A_new - nblk;
       
@@ -816,7 +842,8 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       
       MPI_Wait(&request_A_Send, &status);
       MPI_Wait(&request_A_Recv, &status);
-      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A); // find out how many elements I have received 
+      MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_AMPI); // find out how many elements I have received 
+      Size_receive_A = (C_INT_TYPE) Size_receive_AMPI;
       
       if (j <= ToStore)
       {
@@ -828,7 +855,8 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       {
          MPI_Wait(&request_U_Send, &status);
          MPI_Wait(&request_U_Recv, &status);
-         MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_U); // find out how many elements I have received  
+	 MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_UMPI); // find out how many elements I have received 
+         Size_receive_U = (C_INT_TYPE) Size_receive_UMPI;
       }
    }
    
@@ -911,10 +939,12 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             else
                rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
 
-            if((j == 1)&&(ii == 0))
+            if((j == 1)&&(ii == 0)) {
                C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
-            else 
+	    }
+            else { 
                C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
+	    }
 
             LDA_A_new = LDA_A_new - nblk;
               
@@ -947,7 +977,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 }
 
 void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rowsCast, int local_colsCast,
-                         C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_TYPE ToStore, C_INT_TYPE row_comm, C_INT_TYPE col_comm)
+                         C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm)
 {
   C_INT_TYPE local_rows, local_cols;
   local_rows = (C_INT_TYPE) local_rowsCast;
@@ -956,11 +986,19 @@ void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rowsCast, in
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 
-  C_INT_TYPE my_prow, my_pcol, np_rows, np_cols;
-  MPI_Comm_rank(c_row_comm, &my_prow);
-  MPI_Comm_size(c_row_comm, &np_rows);
-  MPI_Comm_rank(c_col_comm, &my_pcol);
-  MPI_Comm_size(c_col_comm, &np_cols);
+
+  C_INT_MPI_TYPE my_prow, my_pcol, np_rows, np_cols;
+  C_INT_MPI_TYPE my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI;
+
+  MPI_Comm_rank(c_row_comm, &my_prowMPI);
+  MPI_Comm_size(c_row_comm, &np_rowsMPI);
+  MPI_Comm_rank(c_col_comm, &my_pcolMPI);
+  MPI_Comm_size(c_col_comm, &np_colsMPI);
+
+  my_prow = (C_INT_TYPE) my_prowMPI;
+  my_pcol = (C_INT_TYPE) my_pcolMPI;
+  np_rows = (C_INT_TYPE) np_rowsMPI;
+  np_cols = (C_INT_TYPE) np_colsMPI;
 
   // BEWARE
   // in the cannons algorithm, column and row communicators are exchanged

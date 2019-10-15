@@ -42,7 +42,7 @@
 !
 #include "config-f90.h"
 
-#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_INT_TYPE integer(kind=c_int64_t)
 #define INT_TYPE c_int64_t
 #define TEST_C_INT_TYPE_PTR long int*
@@ -53,12 +53,24 @@
 #define TEST_C_INT_TYPE_PTR int*
 #define TEST_C_INT_TYPE int
 #endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#define TEST_C_INT_MPI_TYPE_PTR long int*
+#define TEST_C_INT_MPI_TYPE long int
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#define TEST_C_INT_MPI_TYPE_PTR int*
+#define TEST_C_INT_MPI_TYPE int
+#endif
 
 module test_blacs_infrastructure
 
   contains
 
-    !c> void set_up_blacsgrid_f(int mpi_comm_parent, int np_rows, int np_cols, char layout,
+    !c> void set_up_blacsgrid_f(TEST_C_INT_TYPE mpi_comm_parent, TEST_C_INT_TYPE np_rows, 
+    !c>                         TEST_C_INT_TYPE np_cols, char layout,
     !c>                         TEST_C_INT_TYPE_PTR my_blacs_ctxt, TEST_C_INT_TYPE_PTR my_prow, 
     !c>                         TEST_C_INT_TYPE_PTR my_pcol);
     subroutine set_up_blacsgrid(mpi_comm_parent, np_rows, np_cols, layout, &
@@ -68,13 +80,13 @@ module test_blacs_infrastructure
       use test_util
 
       implicit none
-      TEST_INT_TYPE, intent(in), value  :: mpi_comm_parent, np_rows, np_cols
+      TEST_INT_TYPE, intent(in), value    :: mpi_comm_parent, np_rows, np_cols
 #ifdef SXAURORA
-      character(len=1), intent(in)            :: layout
+      character(len=1), intent(in)        :: layout
 #else
-      character(len=1), intent(in), value     :: layout
+      character(len=1), intent(in), value :: layout
 #endif
-      TEST_INT_TYPE, intent(out)        :: my_blacs_ctxt, my_prow, my_pcol
+      TEST_INT_TYPE, intent(out)          :: my_blacs_ctxt, my_prow, my_pcol
 
 #ifdef WITH_MPI
       TEST_INT_TYPE :: np_rows_, np_cols_
@@ -120,14 +132,14 @@ module test_blacs_infrastructure
       TEST_INT_TYPE, intent(out)   :: na_rows, na_cols, sc_desc(1:9)
 
 #ifdef WITH_MPI
-      TEST_INT_TYPE                 :: mpierr
+      TEST_INT_MPI_TYPE            :: mpierr
 
       sc_desc(:) = 0
       ! determine the neccessary size of the distributed matrices,
       ! we use the scalapack tools routine NUMROC
 
-      na_rows = numroc(na, nblk, my_prow, 0, np_rows)
-      na_cols = numroc(na, nblk, my_pcol, 0, np_cols)
+      na_rows = numroc(na, nblk, my_prow, 0_BLAS_KIND, np_rows)
+      na_cols = numroc(na, nblk, my_pcol, 0_BLAS_KIND, np_cols)
 
       ! set up the scalapack descriptor for the checks below
       ! For ELPA the following restrictions hold:
@@ -135,7 +147,8 @@ module test_blacs_infrastructure
       ! - first row and column of the distributed matrix must be on
       !   row/col 0/0 (arg 6 and 7)
 
-      call descinit(sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info)
+      call descinit(sc_desc, na, na, nblk, nblk, 0_BLAS_KIND, 0_BLAS_KIND, &
+                    my_blacs_ctxt, na_rows, info)
 
       if (info .ne. 0) then
         write(error_unit,*) 'Error in BLACS descinit! info=',info
@@ -144,7 +157,7 @@ module test_blacs_infrastructure
         write(error_unit,*) 'problem size (matrix size and blocksize)!'
         write(error_unit,*) 'The blacsgrid can not be set up properly'
         write(error_unit,*) 'Try reducing the number of MPI tasks...'
-        call MPI_ABORT(mpi_comm_world, 1, mpierr)
+        call MPI_ABORT(int(mpi_comm_world,kind=MPI_KIND), 1_MPI_KIND, mpierr)
       endif
 #else /* WITH_MPI */
       na_rows = na
