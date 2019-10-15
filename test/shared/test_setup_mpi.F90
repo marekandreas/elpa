@@ -86,8 +86,8 @@ module test_setup_mpi
         call exit(77)
       endif
 #endif
-      call mpi_comm_rank(mpi_comm_world,myid,mpierr)
-      call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+      call mpi_comm_rank(mpi_comm_world, myid,  mpierr)
+      call mpi_comm_size(mpi_comm_world, nprocs,mpierr)
 
       if (nprocs <= 1) then
         print *, "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"

@@ -286,7 +286,7 @@
      if (wantDebug) call obj%timer%start("hh_transform_&
                       &MATH_DATATYPE&
 		      &" // &
-		      &PRECISION_SUFFIX )
+                      &PRECISION_SUFFIX )
 
 #if COMPLEXCASE == 1
       ALPHR = real( ALPHA, kind=rk )

@@ -78,8 +78,8 @@
       complex(kind=COMPLEX_DATATYPE)           :: a(lda,ldaCols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
 #endif
-  !    integer(kind=ik)                         :: my_prow, my_pcol, np_rows, np_cols, mpierr
-  !    integer(kind=ik)                         :: l_cols, l_rows, l_rows_np
+!    integer(kind=ik)                         :: my_prow, my_pcol, np_rows, np_cols, mpierr
+!    integer(kind=ik)                         :: l_cols, l_rows, l_rows_np
 !      integer(kind=ik)                         :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
 !      integer(kind=ik)                         :: gcol_min, gcol, goff
 !      integer(kind=ik)                         :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals

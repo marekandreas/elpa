@@ -63,7 +63,8 @@ subroutine qr_pdlarfb_1dcomm_&
 
     ! local scalars
     integer(kind=ik)  :: localsize,offset,baseoffset
-    integer(kind=ik)  :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)         :: mpirank, mpiprocs
+    integer(kind=BLAS_KIND)  :: mpirankMPI, mpiprocsMPI, mpierr
 
         if (idx .le. 1) return
 
@@ -92,9 +93,11 @@ subroutine qr_pdlarfb_1dcomm_&
         return
     end if
 
-    !print *,'updating trailing matrix with k=',k
-    call MPI_Comm_rank(mpicomm,mpirank,mpierr)
-    call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
+    call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND) ,mpirankMPI,  mpierr)
+    call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
+
+    mpirank = int(mpirankMPI,kind=c_int)
+    mpiprocs = int(mpiprocsMPI,kind=c_int)
     ! use baseidx as idx here, otherwise the upper triangle part will be lost
     ! during the calculation, especially in the reversed case
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
@@ -119,9 +122,11 @@ subroutine qr_pdlarfb_1dcomm_&
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-    call mpi_allreduce(work(1,1),work(1,n+1),k*n,mpi_real8,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(1,1),work(1,n+1),int(k*n,kind=MPI_KIND), mpi_real8, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND), mpierr)
 #else
-    call mpi_allreduce(work(1,1),work(1,n+1),k*n,mpi_real4,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(1,1),work(1,n+1),int(k*n,kind=MPI_KIND), mpi_real4, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND), mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -155,7 +160,8 @@ subroutine qr_pdlarft_pdlarfb_1dcomm_&
 
     ! local scalars
     integer(kind=ik)  :: localsize,offset,baseoffset
-    integer(kind=ik)  :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)  :: mpirank, mpiprocs
+    integer(kind=MPI_KIND)  :: mpirankMPI, mpiprocsMPI, mpierr
     integer(kind=ik)  :: icol
 
     integer(kind=ik)  :: sendoffset,recvoffset,sendsize
@@ -172,8 +178,11 @@ subroutine qr_pdlarft_pdlarfb_1dcomm_&
 #endif
         return
     end if
-    call MPI_Comm_rank(mpicomm,mpirank,mpierr)
-    call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
+    call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND) ,mpirankMPI, mpierr)
+    call MPI_Comm_size(int(mpicomm,kind=MPI_KIND) ,mpiprocsMPI, mpierr)
+
+    mpirank = int(mpirankMPI,kind=c_int)
+    mpiprocs = int(mpiprocsMPI,kind=c_int)
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
                                 localsize,baseoffset,offset)
 
@@ -211,9 +220,11 @@ subroutine qr_pdlarft_pdlarfb_1dcomm_&
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-    call mpi_allreduce(work(1,sendoffset),work(1,recvoffset),sendsize,mpi_real8,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(1,sendoffset),work(1,recvoffset),int(sendsize,kind=MPI_KIND), mpi_real8, &
+                       mpi_sum, int(mpicomm,kind=MPI_KIND), mpierr)
 #else
-    call mpi_allreduce(work(1,sendoffset),work(1,recvoffset),sendsize,mpi_real4,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(1,sendoffset),work(1,recvoffset),int(sendsize,kind=MPI_KIND), mpi_real4, &
+                       mpi_sum, int(mpicomm,kind=MPI_KIND), mpierr)
 #endif
 
 #else /* WITH_MPI */
@@ -278,7 +289,8 @@ subroutine qr_pdlarft_set_merge_1dcomm_&
 
     ! local scalars
     integer(kind=ik)  :: localsize,offset,baseoffset
-    integer(kind=ik)  :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)  :: mpirank,mpiprocs
+    integer(kind=MPI_KIND)  :: mpirankMPI, mpiprocsMPI, mpierr
 
     if (lwork .eq. -1) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -289,8 +301,11 @@ subroutine qr_pdlarft_set_merge_1dcomm_&
 #endif
         return
     end if
-    call MPI_Comm_rank(mpicomm,mpirank,mpierr)
-    call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
+    call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND), mpirankMPI,  mpierr)
+    call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
+
+    mpirank = int(mpirankMPI,kind=c_int)
+    mpiprocs = int(mpiprocsMPI,kind=c_int)
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
                                 localsize,baseoffset,offset)
 #ifdef DOUBLE_PRECISION_REAL
@@ -311,9 +326,11 @@ subroutine qr_pdlarft_set_merge_1dcomm_&
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-    call mpi_allreduce(work(1,1),work(1,n+1),n*n,mpi_real8,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(1,1),work(1,n+1),int(n*n,kind=MPI_KIND), mpi_real8, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND) ,mpierr)
 #else
-    call mpi_allreduce(work(1,1),work(1,n+1),n*n,mpi_real4,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(1,1),work(1,n+1),int(n*n,kind=MPI_KIND), mpi_real4, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND) ,mpierr)
 #endif
 
 #else
@@ -349,7 +366,8 @@ subroutine qr_pdlarft_tree_merge_1dcomm_&
 
     ! local scalars
     integer(kind=ik) :: localsize,offset,baseoffset
-    integer(kind=ik) :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)       :: mpirank, mpiprocs
+    integer(kind=MPI_KIND) :: mpirankMPI, mpiprocsMPI ,mpierr
 
     if (lwork .eq. -1) then
 #ifdef DOUBLE_PRECISION_REAL
@@ -361,8 +379,11 @@ subroutine qr_pdlarft_tree_merge_1dcomm_&
     end if
 
     if (n .le. blocksize) return ! nothing to do
-    call MPI_Comm_rank(mpicomm,mpirank,mpierr)
-    call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
+    call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND), mpirankMPI,  mpierr)
+    call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
+
+    mpirank = int(mpirankMPI,kind=c_int)
+    mpiprocs = int(mpiprocsMPI,kind=c_int)
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
                                 localsize,baseoffset,offset)
 
@@ -383,9 +404,11 @@ subroutine qr_pdlarft_tree_merge_1dcomm_&
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-    call mpi_allreduce(work(1,1),work(1,n+1),n*n,mpi_real8,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(1,1),work(1,n+1),int(n*n,kind=MPI_KIND), mpi_real8, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND), mpierr)
 #else
-    call mpi_allreduce(work(1,1),work(1,n+1),n*n,mpi_real4,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(1,1),work(1,n+1),int(n*n,kind=MPI_KIND), mpi_real4, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND), mpierr)
 #endif
 #else
     work(1:n,n+1:n+1+n-1) = work(1:n,1:n)
@@ -422,15 +445,19 @@ subroutine qr_pdlarfl_1dcomm_&
     ! output variables (global)
 
     ! local scalars
-    integer(kind=ik) :: mpierr,mpirank,mpiprocs
+    integer(kind=ik)       :: mpirank, mpiprocs
+    integer(kind=MPI_KIND) :: mpierr, mpirankMPI, mpiprocsMPI
     integer(kind=ik) :: sendsize,recvsize,icol
     integer(kind=ik) :: local_size,local_offset
     integer(kind=ik) :: v_local_offset
 
     ! external functions
     real(kind=C_DATATYPE_KIND), external :: ddot
-    call MPI_Comm_rank(mpicomm, mpirank, mpierr)
-    call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
+    call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND), mpirankMPI, mpierr)
+    call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
+
+    mpirank = int(mpirankMPI, kind=c_int)
+    mpiprocs = int(mpiprocsMPI, kind=c_int)
     sendsize = n
     recvsize = sendsize
 
@@ -470,9 +497,11 @@ subroutine qr_pdlarfl_1dcomm_&
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-    call mpi_allreduce(work, work(sendsize+1), sendsize, mpi_real8, mpi_sum, mpicomm, mpierr)
+    call mpi_allreduce(work, work(sendsize+1), int(sendsize,kind=MPI_KIND), mpi_real8, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND), mpierr)
 #else
-    call mpi_allreduce(work, work(sendsize+1), sendsize, mpi_real4, mpi_sum, mpicomm, mpierr)
+    call mpi_allreduce(work, work(sendsize+1), int(sendsize,kind=MPI_KIND), mpi_real4, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND), mpierr)
 #endif
 #else
     work(sendsize+1:sendsize+1+sendsize+1+sendsize-1) = work(1:sendsize)
@@ -507,7 +536,8 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_&
     ! output variables (global)
 
     ! local scalars
-    integer(kind=ik) :: mpierr,mpirank,mpiprocs,mpirank_top1,mpirank_top2
+    integer(kind=ik) :: mpirank,mpiprocs,mpirank_top1,mpirank_top2
+    integer(kind=MPI_KIND) :: mpierr, mpirankMPI, mpiprocsMPI
     integer(kind=ik) :: dgemv1_offset,dgemv2_offset
     integer(kind=ik) :: sendsize, recvsize
     integer(kind=ik) :: local_size1,local_offset1
@@ -520,8 +550,11 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_&
 
     ! external functions
     real(kind=C_DATATYPE_KIND), external :: ddot
-    call MPI_Comm_rank(mpicomm, mpirank, mpierr)
-    call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
+    call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND), mpirankMPI, mpierr)
+    call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
+
+    mpirank = int(mpirankMPI,kind=c_int)
+    mpiprocs = int(mpiprocsMPI,kind=c_int)
     sendsize = 2*n
     recvsize = sendsize
 
@@ -571,9 +604,11 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_&
 #ifdef WITH_MPI
 
 #ifdef DOUBLE_PRECISION_REAL
-        call mpi_allreduce(work, work(sendsize+1), sendsize, mpi_real8, mpi_sum, mpicomm, mpierr)
+        call mpi_allreduce(work, work(sendsize+1), int(sendsize,kind=MPI_KIND), mpi_real8, mpi_sum, &
+                           int(mpicomm,kind=MPI_KIND), mpierr)
 #else
-        call mpi_allreduce(work, work(sendsize+1), sendsize, mpi_real4, mpi_sum, mpicomm, mpierr)
+        call mpi_allreduce(work, work(sendsize+1), int(sendsize,kind=MPI_KIND), mpi_real4, mpi_sum, &
+                           int(mpicomm,kind=MPI_KIND), mpierr)
 #endif
 #else
         work(sendsize+1:sendsize+1+sendsize-1) = work(1:sendsize)
@@ -645,7 +680,8 @@ subroutine qr_tmerge_pdlarfb_1dcomm_&
 
     ! local scalars
     integer(kind=ik) :: localsize,offset,baseoffset
-    integer(kind=ik) :: mpirank,mpiprocs,mpierr
+    integer(kind=ik) :: mpirank, mpiprocs
+    integer(kind=MPI_KIND) :: mpirankMPI, mpiprocsMPI, mpierr
 
     integer(kind=ik) :: sendoffset,recvoffset,sendsize
     integer(kind=ik) :: updateoffset,updatelda,updatesize
@@ -679,8 +715,10 @@ subroutine qr_tmerge_pdlarfb_1dcomm_&
 #endif
         return
     end if
-    call MPI_Comm_rank(mpicomm,mpirank,mpierr)
-    call MPI_Comm_size(mpicomm,mpiprocs,mpierr)
+    call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND), mpirankMPI,  mpierr)
+    call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
+    mpirank = int(mpirankMPI,kind=c_int)
+    mpiprocs = int(mpiprocsMPI,kind=c_int)
     ! use baseidx as idx here, otherwise the upper triangle part will be lost
     ! during the calculation, especially in the reversed case
     call local_size_offset_1d(m,mb,baseidx,baseidx,rev,mpirank,mpiprocs, &
@@ -782,9 +820,11 @@ subroutine qr_tmerge_pdlarfb_1dcomm_&
     ! exchange data
 #ifdef WITH_MPI
 #ifdef DOUBLE_PRECISION_REAL
-    call mpi_allreduce(work(sendoffset),work(recvoffset),sendsize,mpi_real8,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(sendoffset),work(recvoffset), int(sendsize,kind=MPI_KIND), mpi_real8, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND) ,mpierr)
 #else
-    call mpi_allreduce(work(sendoffset),work(recvoffset),sendsize,mpi_real4,mpi_sum,mpicomm,mpierr)
+    call mpi_allreduce(work(sendoffset),work(recvoffset), int(sendsize,kind=MPI_KIND), mpi_real4, mpi_sum, &
+                       int(mpicomm,kind=MPI_KIND) ,mpierr)
 #endif
 
 #else

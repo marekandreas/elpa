@@ -69,16 +69,18 @@
       integer(kind=ik), intent(in)  :: ldb, ldbCols, ldc, ldcCols
       integer(kind=ik)              :: na, ncb
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck)                 :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
+      MATH_DATATYPE(kind=rck)       :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
 #else
-      MATH_DATATYPE(kind=rck)                 :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
+      MATH_DATATYPE(kind=rck)       :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols
+      integer(kind=MPI_KIND)        :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np
       integer(kind=ik)              :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
       integer(kind=ik)              :: gcol_min, gcol, goff
       integer(kind=ik)              :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
       integer(kind=ik), allocatable :: lrs_save(:), lre_save(:)
+      integer(kind=MPI_KIND)        :: mpierr
 
       logical                       :: a_lower, a_upper, c_lower, c_upper
       MATH_DATATYPE(kind=rck), allocatable    :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
@@ -114,10 +116,15 @@
       success = .true.
 
       call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
+
+      my_prow = int(my_prowMPI,kind=c_int)
+      np_rows = int(np_rowsMPI,kind=c_int)
+      my_pcol = int(my_pcolMPI,kind=c_int)
+      np_cols = int(np_colsMPI,kind=c_int)
       call obj%timer%stop("mpi_communication")
       l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
       l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
@@ -225,14 +232,14 @@
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
 #if REALCASE == 1
-          call MPI_Bcast(aux_bc, n_aux_bc,    &
+          call MPI_Bcast(aux_bc, int(n_aux_bc,kind=MPI_KIND),    &
                          MPI_REAL_PRECISION,  &
-                         np_bc, mpi_comm_cols, mpierr)
+                         int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 #endif
 #if COMPLEXCASE == 1
-          call MPI_Bcast(aux_bc, n_aux_bc,    &
+          call MPI_Bcast(aux_bc, int(n_aux_bc,kind=MPI_KIND),    &
                          MPI_COMPLEX_PRECISION,  &
-                         np_bc, mpi_comm_cols, mpierr)
+                         int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 #endif
           call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -289,8 +296,8 @@
               ! Sum up the results and send to processor row np
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_reduce(tmp1, tmp2, nstor*(lce-lcs+1),  MPI_MATH_DATATYPE_PRECISION, &
-                              MPI_SUM, np, mpi_comm_rows, mpierr)
+              call mpi_reduce(tmp1, tmp2, int(nstor*(lce-lcs+1),kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
+                              MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
               call obj%timer%stop("mpi_communication")
               ! Put the result into C
               if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)

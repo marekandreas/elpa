@@ -103,7 +103,9 @@
       integer(kind=ik)                            :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
                                                      l_cols_qreorg, np, l_idx, nqcols1, nqcols2
       integer(kind=ik)                            :: my_proc, n_procs, my_prow, my_pcol, np_rows, &
-                                                     np_cols, mpierr
+                                                     np_cols
+      integer(kind=MPI_KIND)                      :: mpierr
+      integer(kind=MPI_KIND)                      :: my_prowMPI, np_rowsMPI, my_pcolMPI, np_colsMPI
       integer(kind=ik)                            :: np_next, np_prev, np_rem
       integer(kind=ik)                            :: idx(na), idx1(na), idx2(na)
       integer(kind=BLAS_KIND)                     :: idxBLAS(NA)
@@ -132,10 +134,16 @@
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
       success = .true.
       call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI, mpierr)
+
+      my_prow = int(my_prowMPI,kind=c_int)
+      np_rows = int(np_rowsMPI,kind=c_int)
+      my_pcol = int(my_pcolMPI,kind=c_int)
+      np_cols = int(np_colsMPI,kind=c_int)
+
       call obj%timer%stop("mpi_communication")
 
       ! If my processor column isn't in the requested set, do nothing
@@ -689,9 +697,9 @@
             endif
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call MPI_Sendrecv_replace(qtmp1, l_rows*max_local_cols, MPI_REAL_PRECISION, &
-                                        np_next, 1111, np_prev, 1111, &
-                                        mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+            call MPI_Sendrecv_replace(qtmp1, int(l_rows*max_local_cols,kind=MPI_KIND), MPI_REAL_PRECISION,     &
+                                        int(np_next,kind=MPI_KIND), 1111_MPI_KIND, int(np_prev,kind=MPI_KIND), &
+                                        1111_MPI_KIND, int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
             call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
           endif
@@ -934,7 +942,7 @@
         &PRECISION&
         &(obj, idx_ev, nLength)
           use precision
-    use elpa_abstract_impl
+          use elpa_abstract_impl
           implicit none
           class(elpa_abstract_impl_t), intent(inout) :: obj
           integer(kind=ik), intent(in) :: nLength
@@ -975,14 +983,16 @@
               else
 #ifdef WITH_MPI
                 call obj%timer%start("mpi_communication")
-                call mpi_send(q(l_rqs,lc1), l_rows, MPI_REAL_PRECISION, pc2, mod(i,4096), mpi_comm_cols, mpierr)
+                call mpi_send(q(l_rqs,lc1), int(l_rows,kind=MPI_KIND), MPI_REAL_PRECISION, pc2, int(mod(i,4096),kind=MPI_KIND), &
+                              int(mpi_comm_cols,kind=MPI_KIND), mpierr)
                 call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
               endif
             else if (pc2==my_pcol) then
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_recv(qtmp(1,nc), l_rows, MPI_REAL_PRECISION, pc1, mod(i,4096), mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(qtmp(1,nc), int(l_rows,kind=MPI_KIND), MPI_REAL_PRECISION, pc1, int(mod(i,4096),kind=MPI_KIND), &
+                            int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
               call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
               qtmp(1:l_rows,nc) = q(l_rqs:l_rqe,lc1)
@@ -1040,9 +1050,9 @@
             else
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_sendrecv(q(l_rqs,lc1), l_rows, MPI_REAL_PRECISION, pc2, 1, &
-                                tmp, l_rows, MPI_REAL_PRECISION, pc2, 1,          &
-                                mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+              call mpi_sendrecv(q(l_rqs,lc1), int(l_rows,kind=MPI_KIND), MPI_REAL_PRECISION, pc2, 1_MPI_KIND, &
+                                tmp, int(l_rows,kind=MPI_KIND), MPI_REAL_PRECISION, pc2, 1_MPI_KIND,          &
+                                int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
               call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
               tmp(1:l_rows) = q(l_rqs:l_rqe,lc1)
@@ -1052,9 +1062,9 @@
           else if (pc2==my_pcol) then
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call mpi_sendrecv(q(l_rqs,lc2), l_rows, MPI_REAL_PRECISION, pc1, 1, &
-                               tmp, l_rows, MPI_REAL_PRECISION, pc1, 1,         &
-                               mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+            call mpi_sendrecv(q(l_rqs,lc2), int(l_rows,kind=MPI_KIND), MPI_REAL_PRECISION, pc1, 1_MPI_KIND, &
+                              tmp, int(l_rows,kind=MPI_KIND), MPI_REAL_PRECISION, pc1, 1_MPI_KIND,          &
+                              int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
             call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
             tmp(1:l_rows) = q(l_rqs:l_rqe,lc2)
@@ -1085,7 +1095,7 @@
           ! Do an mpi_allreduce over processor rows
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(z, tmp, n, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(z, tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           tmp = z
@@ -1100,7 +1110,7 @@
           if (npc_n==np_cols) then
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call mpi_allreduce(tmp, z, n, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+            call mpi_allreduce(tmp, z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
             call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
             tmp = z
@@ -1115,8 +1125,9 @@
             z(:) = z(:) + tmp(:)
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call MPI_Sendrecv_replace(z, n, MPI_REAL_PRECISION, np_next, 1111, np_prev, 1111, &
-                                       mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+            call MPI_Sendrecv_replace(z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, int(np_next,kind=MPI_KIND), 1111_MPI_KIND, &
+                                      int(np_prev,kind=MPI_KIND), 1111_MPI_KIND, &
+                                      int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
             call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
           enddo
@@ -1143,7 +1154,7 @@
           ! Do an mpi_allreduce over processor rows
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(z, tmp, n, MPI_REAL_PRECISION, MPI_PROD, mpi_comm_rows, mpierr)
+          call mpi_allreduce(z, tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_PROD, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           tmp = z
@@ -1158,7 +1169,7 @@
           if (npc_n==np_cols) then
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call mpi_allreduce(tmp, z, n, MPI_REAL_PRECISION, MPI_PROD, mpi_comm_cols, mpierr)
+            call mpi_allreduce(tmp, z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_PROD, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
             call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
             z = tmp
@@ -1174,7 +1185,8 @@
             do np = npc_0+1, npc_0+npc_n-1
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_recv(tmp, n, MPI_REAL_PRECISION, np, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), 1111_MPI_KIND, &
+                            int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
               call obj%timer%stop("mpi_communication")
 #else  /* WITH_MPI */
               tmp(1:n) = z(1:n)
@@ -1184,15 +1196,18 @@
             do np = npc_0+1, npc_0+npc_n-1
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_send(z, n, MPI_REAL_PRECISION, np, 1111, mpi_comm_cols, mpierr)
+              call mpi_send(z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), 1111_MPI_KIND, &
+                            int(mpi_comm_cols,kind=MPI_KIND), mpierr)
               call obj%timer%stop("mpi_communication")
 #endif  /* WITH_MPI */
             enddo
           else
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call mpi_send(tmp, n, MPI_REAL_PRECISION, npc_0, 1111, mpi_comm_cols, mpierr)
-            call mpi_recv(z  ,n, MPI_REAL_PRECISION, npc_0, 1111, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+            call mpi_send(tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, int(npc_0,kind=MPI_KIND), 1111_MPI_KIND, &
+                          int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+            call mpi_recv(z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, int(npc_0,kind=MPI_KIND), 1111_MPI_KIND, &
+                          int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
             call obj%timer%stop("mpi_communication")
 #else  /* WITH_MPI */
             z(1:n) = tmp(1:n)

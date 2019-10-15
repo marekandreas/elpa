@@ -482,9 +482,14 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
 }
 
 
-void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, C_INT_TYPE local_rows, C_INT_TYPE local_cols,
+void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_rowsCast, int local_colsCast,
                                     C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, math_type *Res, C_INT_TYPE row_comm, C_INT_TYPE col_comm)
 {
+  C_INT_TYPE local_rows, local_cols;
+
+  local_rows = (C_INT_TYPE) local_rowsCast;
+  local_cols = (C_INT_TYPE) local_colsCast;
+
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 

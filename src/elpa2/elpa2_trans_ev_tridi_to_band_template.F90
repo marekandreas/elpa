@@ -117,6 +117,7 @@
       integer(kind=c_intptr_t)                   :: q_dev
 
       integer(kind=ik)                           :: np_rows, my_prow, np_cols, my_pcol
+      integer(kind=MPI_KIND)                     :: np_rowsMPI, my_prowMPI, np_colsMPI, my_pcolMPI
       integer(kind=ik)                           :: i, j, ip, sweep, nbuf, l_nev, a_dim2
       integer(kind=ik)                           :: current_n, current_local_n, current_n_start, current_n_end
       integer(kind=ik)                           :: next_n, next_local_n, next_n_start, next_n_end
@@ -127,7 +128,8 @@
 #endif
       integer(kind=ik)                           :: num_result_blocks, num_result_buffers, num_bufs_recvd
       integer(kind=ik)                           :: a_off, current_tv_off, max_blk_size
-      integer(kind=ik)                           :: mpierr, src, src_offset, dst, offset, nfact, num_blk
+      integer(kind=ik)                           :: src, src_offset, dst, offset, nfact, num_blk
+      integer(kind=MPI_KIND)                     :: mpierr
 
       logical                                    :: flag
 #ifdef WITH_OPENMP
@@ -172,9 +174,10 @@
 
       integer(kind=ik)                           :: n_off
 
-      integer(kind=ik), allocatable              :: result_send_request(:), result_recv_request(:), limits(:)
-      integer(kind=ik), allocatable              :: top_send_request(:), bottom_send_request(:)
-      integer(kind=ik), allocatable              :: top_recv_request(:), bottom_recv_request(:)
+      integer(kind=MPI_KIND), allocatable        :: result_send_request(:), result_recv_request(:)
+      integer(kind=ik), allocatable              :: limits(:)
+      integer(kind=MPI_KIND), allocatable        :: top_send_request(:), bottom_send_request(:)
+      integer(kind=MPI_KIND), allocatable        :: top_recv_request(:), bottom_recv_request(:)
 
       ! MPI send/recv tags, arbitrary
 
@@ -232,10 +235,16 @@
       kernel_flops = 0
 
       if (wantDebug) call obj%timer%start("mpi_communication")
-      call MPI_Comm_rank(mpi_comm_rows, my_prow, mpierr)
-      call MPI_Comm_size(mpi_comm_rows, np_rows, mpierr)
-      call MPI_Comm_rank(mpi_comm_cols, my_pcol, mpierr)
-      call MPI_Comm_size(mpi_comm_cols, np_cols, mpierr)
+      call MPI_Comm_rank(int(mpi_comm_rows,kind=MPI_KIND) , my_prowMPI , mpierr)
+      call MPI_Comm_size(int(mpi_comm_rows,kind=MPI_KIND) , np_rowsMPI , mpierr)
+      call MPI_Comm_rank(int(mpi_comm_cols,kind=MPI_KIND) , my_pcolMPI , mpierr)
+      call MPI_Comm_size(int(mpi_comm_cols,kind=MPI_KIND) , np_colsMPI , mpierr)
+
+      my_prow = int(my_prowMPI,kind=c_int)
+      my_pcol = int(my_pcolMPI,kind=c_int)
+      np_rows = int(np_rowsMPI,kind=c_int)
+      np_cols = int(np_colsMPI,kind=c_int)
+
       if (wantDebug) call obj%timer%stop("mpi_communication")
 
       if (mod(nbw,nblk)/=0) then
@@ -634,8 +643,8 @@
 
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
-              call MPI_Recv(row, l_nev, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+              call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                            int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -674,8 +683,8 @@
                                            i - limits(ip), .false.)
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                              src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call MPI_Recv(row_group(:, row_group_size), int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                              int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -685,8 +694,8 @@
               else ! useGPU
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call MPI_Recv(row, l_nev, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                              src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                              int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -782,8 +791,8 @@
 
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call MPI_Send(row, l_nev, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                              dst, 0, mpi_comm_rows, mpierr)
+                call MPI_Send(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                              int(dst,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
               endif
@@ -801,8 +810,8 @@
               row(:) = q(src_offset, 1:l_nev)
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
-              call MPI_Send(row, l_nev, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            ip, 0, mpi_comm_rows, mpierr)
+              call MPI_Send(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                            int(ip,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
             endif
@@ -816,8 +825,8 @@
 
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
-              call MPI_Recv(row, l_nev, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+              call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                            int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -852,8 +861,8 @@
 
 #ifdef WITH_MPI
                if (wantDebug) call obj%timer%start("mpi_communication")
-               call MPI_Recv(row_group(:, row_group_size), l_nev, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                             src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+               call MPI_Recv(row_group(:, row_group_size), int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                             int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
                if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -863,8 +872,8 @@
               else ! useGPU
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call MPI_Recv(row, l_nev, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                              src, 0, mpi_comm_rows, MPI_STATUS_IGNORE, mpierr)
+                call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                              int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -947,8 +956,9 @@
 
       if (my_prow > 0 .and. l_nev>0) then ! note: row 0 always sends
         do j = 1, min(num_result_buffers, num_result_blocks)
-          call MPI_Irecv(result_buffer(1,1,j), l_nev*nblk, MPI_MATH_DATATYPE_PRECISION_EXPL,     &
-                         0, result_recv_tag, mpi_comm_rows, result_recv_request(j), mpierr)
+          call MPI_Irecv(result_buffer(1,1,j), int(l_nev*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,     &
+                         0_MPI_KIND, int(result_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),          &
+                         result_recv_request(j), mpierr)
         enddo
       endif
       if (wantDebug) call obj%timer%stop("mpi_communication")
@@ -1196,8 +1206,10 @@
             csw = min(stripe_width, thread_width-(i-1)*stripe_width) ! "current_stripe_width"
             b_len = csw*nbw*max_threads
 #ifdef WITH_MPI
-            call MPI_Irecv(bottom_border_recv_buffer(1,i), b_len, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                           my_prow+1, bottom_recv_tag, mpi_comm_rows, bottom_recv_request(i), mpierr)
+            call MPI_Irecv(bottom_border_recv_buffer(1,i), int(b_len,kind=MPI_KIND), &
+                           MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
+                           int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
+                           bottom_recv_request(i), mpierr)
 
 #else /* WITH_MPI */
 !            carefull the "recieve" has to be done at the corresponding wait or send
@@ -1207,8 +1219,10 @@
 #else /* WITH_OPENMP */
 
 #ifdef WITH_MPI
-            call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                           my_prow+1, bottom_recv_tag, mpi_comm_rows, bottom_recv_request(i), mpierr)
+            call MPI_Irecv(bottom_border_recv_buffer(1,1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+                           MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
+                           int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
+                           bottom_recv_request(i), mpierr)
 #else  /* WITH_MPI */
 !            carefull the recieve has to be done at the corresponding wait or send
 !            bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
@@ -1231,8 +1245,8 @@
 
 #ifdef WITH_MPI
            if (wantDebug) call obj%timer%start("mpi_communication")
-           call mpi_bcast(bcast_buffer, nbw*current_local_n, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                          mod(sweep,np_cols), mpi_comm_cols, mpierr)
+           call mpi_bcast(bcast_buffer, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                          int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
            if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -1376,8 +1390,10 @@
              endif
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
-             call MPI_Irecv(bottom_border_recv_buffer(1,i), csw*nbw*max_threads, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            my_prow+1, bottom_recv_tag, mpi_comm_rows, bottom_recv_request(i), mpierr)
+             call MPI_Irecv(bottom_border_recv_buffer(1,i), int(csw*nbw*max_threads,kind=MPI_KIND), &
+                            MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
+                            int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
+                            bottom_recv_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WTIH_MPI */
@@ -1390,8 +1406,10 @@
 
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
-             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), nbw*stripe_width, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            my_prow+1, bottom_recv_tag, mpi_comm_rows, bottom_recv_request(i), mpierr)
+             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+                            MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
+                            int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
+                            bottom_recv_request(i), mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -1509,8 +1527,9 @@
                  reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
-             call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            my_prow+1, top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+             call MPI_Isend(bottom_border_send_buffer(1,i), int(b_len,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                            int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
+                            bottom_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
              if (next_top_msg_length > 0) then
@@ -1542,8 +1561,9 @@
              endif
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
-             call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width,  &
-                   MPI_MATH_DATATYPE_PRECISION_EXPL, my_prow+1, top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+             call MPI_Isend(bottom_border_send_buffer(1,1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
+                   MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
+                   int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -1576,10 +1596,10 @@
                & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
                  nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
-            hh_dot_dev,  &
+                 hh_dot_dev,  &
 #endif
-            hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
-      bottom_msg_length, i, my_thread, thread_width, kernel)
+                 hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
+                 bottom_msg_length, i, my_thread, thread_width, kernel)
         enddo
 !$omp end parallel do
         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -1597,8 +1617,9 @@
               reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call MPI_Isend(bottom_border_send_buffer(1,i), b_len, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                         my_prow+1, top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+          call MPI_Isend(bottom_border_send_buffer(1,i), int(b_len,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                         int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
+                         bottom_send_request(i), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -1654,8 +1675,9 @@
 
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call MPI_Isend(bottom_border_send_buffer(1,1,i), bottom_msg_length*stripe_width, &
-           MPI_MATH_DATATYPE_PRECISION_EXPL, my_prow+1, top_recv_tag, mpi_comm_rows, bottom_send_request(i), mpierr)
+          call MPI_Isend(bottom_border_send_buffer(1,1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
+                         MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
+                         int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
                 if (next_top_msg_length > 0) then
@@ -1706,13 +1728,13 @@
              &_&
              &PRECISION&
              & (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count,  max_threads,          &
-                      a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
+                a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 #if REALCASE == 1
-            hh_dot_dev,     &
+                hh_dot_dev,     &
 #endif
-           hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,                    &
-           current_local_n-top_msg_length-bottom_msg_length, i,                       &
-           last_stripe_width, kernel)
+                hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length,                    &
+                current_local_n-top_msg_length-bottom_msg_length, i,                       &
+                last_stripe_width, kernel)
 
 #endif /* WITH_OPENMP */
 
@@ -1802,8 +1824,9 @@
         b_len = csw*next_top_msg_length*max_threads
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call MPI_Irecv(top_border_recv_buffer(1,i), b_len, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-           my_prow-1, top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
+        call MPI_Irecv(top_border_recv_buffer(1,i), int(b_len,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       int(my_prow-1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
+                       top_recv_request(i), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !             carefull the "recieve" has to be done at the corresponding wait or send
@@ -1815,8 +1838,9 @@
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call MPI_Irecv(top_border_recv_buffer(1,1,i), next_top_msg_length*stripe_width, &
-              MPI_MATH_DATATYPE_PRECISION_EXPL, my_prow-1, top_recv_tag, mpi_comm_rows, top_recv_request(i), mpierr)
+        call MPI_Irecv(top_border_recv_buffer(1,1,i), int(next_top_msg_length*stripe_width,kind=MPI_KIND), &
+                       MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow-1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
+                       int(mpi_comm_rows,kind=MPI_KIND), top_recv_request(i), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !             carefull the "recieve" has to be done at the corresponding wait or send
@@ -1842,8 +1866,9 @@
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call MPI_Isend(top_border_send_buffer(1,i), b_len, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                       my_prow-1, bottom_recv_tag, mpi_comm_rows, top_send_request(i), mpierr)
+        call MPI_Isend(top_border_send_buffer(1,i), int(b_len,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
+                       top_send_request(i), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
               if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
@@ -1878,8 +1903,9 @@
         endif
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call MPI_Isend(top_border_send_buffer(1,1,i), nbw*stripe_width, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                       my_prow-1, bottom_recv_tag, mpi_comm_rows, top_send_request(i), mpierr)
+        call MPI_Isend(top_border_send_buffer(1,1,i), int(nbw*stripe_width,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),   &
+                       top_send_request(i), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
             if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
@@ -2014,8 +2040,9 @@
           endif ! useGPU
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call MPI_Isend(result_buffer(1,1,nbuf), l_nev*nblk, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                          dst, result_recv_tag, mpi_comm_rows, result_send_request(nbuf), mpierr)
+          call MPI_Isend(result_buffer(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                         int(dst,kind=MPI_KIND), int(result_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
+                         result_send_request(nbuf), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -2075,8 +2102,9 @@
         if (wantDebug) call obj%timer%start("mpi_communication")
 
         if (j+num_result_buffers < num_result_blocks) &
-            call MPI_Irecv(result_buffer(1,1,nbuf), l_nev*nblk, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                           0, result_recv_tag, mpi_comm_rows, result_recv_request(nbuf), mpierr)
+            call MPI_Irecv(result_buffer(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                           0_MPI_KIND, int(result_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
+                           result_recv_request(nbuf), mpierr)
 
         ! carefull the "recieve" has to be done at the corresponding wait or send
 !         if (j+num_result_buffers < num_result_blocks) &

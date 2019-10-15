@@ -64,6 +64,7 @@
    useGPU) result(success)
 
    use iso_c_binding
+   use precision, only : MPI_KIND, BLAS_KIND
    use elpa
    use elpa_mpi
 
@@ -86,14 +87,18 @@
 #endif
    real(kind=C_DATATYPE_KIND), intent(inout)          :: ev(na)
 
-   integer(kind=c_int)                       :: my_prow, my_pcol, mpierr
+   integer(kind=c_int)                       :: my_prow, my_pcol
+   integer(kind=MPI_KIND)                    :: my_prowMPI, my_pcolMPI, mpierr
    logical                                   :: success
 
    integer(kind=c_int)                       :: error
    class(elpa_t), pointer                    :: e
 
-    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+    call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+    call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+
+    my_prow = int(my_prowMPI,kind=c_int)
+    my_pcol = int(my_pcolMPI,kind=c_int)
 
     success = .true.
     if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then

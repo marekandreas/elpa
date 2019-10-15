@@ -946,9 +946,13 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    free(SizesU);
 }
 
-void cannons_reduction_c_impl(math_type* A, math_type* U, C_INT_TYPE local_rows, C_INT_TYPE local_cols,
+void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rowsCast, int local_colsCast,
                          C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_TYPE ToStore, C_INT_TYPE row_comm, C_INT_TYPE col_comm)
 {
+  C_INT_TYPE local_rows, local_cols;
+  local_rows = (C_INT_TYPE) local_rowsCast;
+  local_cols = (C_INT_TYPE) local_colsCast;
+
   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 

@@ -41,6 +41,18 @@
 !
 !
 #include "config-f90.h"
+
+
+
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+
+
 #include "../assert.h"
 !>
 !> Fortran test programm to demonstrates the use of
@@ -100,33 +112,33 @@ program test_complex2_single_banded
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   integer(kind=ik)              :: nblk
-   integer(kind=ik)              :: na, nev
+   TEST_INT_TYPE              :: nblk
+   TEST_INT_TYPE              :: na, nev
 
-   integer(kind=ik)              :: np_rows, np_cols, na_rows, na_cols
+   TEST_INT_TYPE              :: np_rows, np_cols, na_rows, na_cols
 
-   integer(kind=ik)              :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   integer(kind=ik)              :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE              :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   TEST_INT_TYPE              :: i, mpierr, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 #ifdef WITH_MPI
-   integer(kind=ik), external    :: numroc
+   TEST_INT_TYPE, external    :: numroc
 #endif
    complex(kind=ck4), parameter   :: CZERO = (0.0_rk4,0.0_rk4), CONE = (1.0_rk4,0.0_rk4)
    real(kind=rk4), allocatable    :: ev(:)
 
    complex(kind=ck4), allocatable :: a(:,:), z(:,:), as(:,:)
 
-   integer(kind=ik)              :: STATUS
+   TEST_INT_TYPE              :: STATUS
 #ifdef WITH_OPENMP
-   integer(kind=ik)              :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   TEST_INT_TYPE              :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    type(output_t)                :: write_to_file
-   integer(kind=ik)              :: success
+   integer(kind=ik)              :: error_elpa
    character(len=8)              :: task_suffix
-   integer(kind=ik)              :: j
+   TEST_INT_TYPE              :: j
 
 
-   integer(kind=ik)              :: global_row, global_col, local_row, local_col
-   integer(kind=ik)              :: bandwidth
+   TEST_INT_TYPE              :: global_row, global_col, local_row, local_col
+   TEST_INT_TYPE              :: bandwidth
    class(elpa_t), pointer        :: e
 
 #define COMPLEXCASE
@@ -218,43 +230,43 @@ program test_complex2_single_banded
      stop 1
    endif
 
-   e => elpa_allocate(success)
-   assert_elpa_ok(success)
+   e => elpa_allocate(error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e%set("na", na, success)
-   assert_elpa_ok(success)
-   call e%set("nev", nev, success)
-   assert_elpa_ok(success)
-   call e%set("local_nrows", na_rows, success)
-   assert_elpa_ok(success)
-   call e%set("local_ncols", na_cols, success)
-   assert_elpa_ok(success)
-   call e%set("nblk", nblk, success)
-   assert_elpa_ok(success)
+   call e%set("na", int(na,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("nev", int(nev,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("local_nrows", int(na_rows,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("local_ncols", int(na_cols,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("nblk", int(nblk,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #ifdef WITH_MPI
-   call e%set("mpi_comm_parent", MPI_COMM_WORLD, success)
-   assert_elpa_ok(success)
-   call e%set("process_row", my_prow, success)
-   assert_elpa_ok(success)
-   call e%set("process_col", my_pcol, success)
-   assert_elpa_ok(success)
+   call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("process_row", int(my_prow,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("process_col", int(my_pcol,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 
-   call e%set("bandwidth", bandwidth, success)
-   assert_elpa_ok(success)
+   call e%set("bandwidth", int(bandwidth,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 
    assert(e%setup() .eq. ELPA_OK)
 
-   call e%set("solver", ELPA_SOLVER_2STAGE, success)
-   assert_elpa_ok(success)
-   call e%eigenvectors(a, ev, z, success)
-   assert_elpa_ok(success)
+   call e%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%eigenvectors(a, ev, z, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call elpa_deallocate(e, success)
-   assert_elpa_ok(success)
+   call elpa_deallocate(e, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call elpa_uninit(success)
-   assert_elpa_ok(success)
+   call elpa_uninit(error_elpa)
+   assert_elpa_ok(error_elpa)
 
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)

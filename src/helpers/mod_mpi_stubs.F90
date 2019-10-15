@@ -44,12 +44,12 @@
 #include "config-f90.h"
 !> \brief Fortran module which exports the MPI stubs function, if ELPA as been built without MPI support
 module elpa_mpi_stubs
-  use iso_c_binding
+  use precision
   implicit none
 
   public
 
-  integer(kind=c_int), parameter :: MPI_COMM_SELF=1, MPI_COMM_WORLD=1, MPI_SUCCESS=0
+  integer(kind=MPI_KIND), parameter :: MPI_COMM_SELF=1, MPI_COMM_WORLD=1, MPI_SUCCESS=0
 
   contains
     function MPI_WTIME() result(time)
@@ -67,9 +67,9 @@ module elpa_mpi_stubs
     subroutine mpi_comm_size(mpi_comm_world, ntasks, mpierr)
       implicit none
 
-      integer(kind=c_int), intent(in)    :: mpi_comm_world
-      integer(kind=c_int), intent(inout) :: ntasks
-      integer(kind=c_int), intent(inout) :: mpierr
+      integer(kind=MPI_KIND), intent(in)    :: mpi_comm_world
+      integer(kind=MPI_KIND), intent(inout) :: ntasks
+      integer(kind=MPI_KIND), intent(inout) :: mpierr
 
       ntasks = 1
       mpierr = 0
@@ -80,9 +80,9 @@ module elpa_mpi_stubs
 
     subroutine mpi_comm_rank(mpi_comm_world, myid, mpierr)
       implicit none
-      integer(kind=c_int), intent(in)    :: mpi_comm_world
-      integer(kind=c_int), intent(inout) :: mpierr
-      integer(kind=c_int), intent(inout) :: myid
+      integer(kind=MPI_KIND), intent(in)    :: mpi_comm_world
+      integer(kind=MPI_KIND), intent(inout) :: mpierr
+      integer(kind=MPI_KIND), intent(inout) :: myid
 
       myid = 0
       mpierr = 0
@@ -92,8 +92,8 @@ module elpa_mpi_stubs
 
     subroutine mpi_comm_split(mpi_communicator, color, key, new_comm, mpierr)
       implicit none
-      integer(kind=c_int), intent(in)    :: mpi_communicator, color, key
-      integer(kind=c_int), intent(inout) :: new_comm, mpierr
+      integer(kind=MPI_KIND), intent(in)    :: mpi_communicator, color, key
+      integer(kind=MPI_KIND), intent(inout) :: new_comm, mpierr
 
       new_comm = mpi_communicator
       mpierr = 0

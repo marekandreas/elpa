@@ -62,6 +62,14 @@
   end interface
 
   interface
+    subroutine blacs_gridexit(ICONTXT)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND) :: ICONTXT
+    end subroutine
+  end interface
+
+  interface
     subroutine blacs_gridinfo(ICONTXT, NPROW, NPCOL, MYPROW, MYPCOL)
     use precision
     implicit none

@@ -60,7 +60,8 @@
 #else
       MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,obj%local_ncols)
 #endif
-      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols
+      integer(kind=MPI_KIND)        :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
       integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
       integer(kind=ik)              :: n, nc, i, info
       integer(kind=BLAS_KIND)       :: infoBLAS
@@ -120,10 +121,15 @@
       endif
 
       call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+      my_prow = int(my_prowMPI, kind=c_int)
+      np_rows = int(np_rowsMPI, kind=c_int)
+      my_pcol = int(my_pcolMPI, kind=c_int)
+      np_cols = int(np_colsMPI, kind=c_int)
       call obj%timer%stop("mpi_communication")
       success = .true.
 
@@ -255,14 +261,14 @@
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
 
-          call MPI_Bcast(tmp1, nblk*(nblk+1)/2,      &
+          call MPI_Bcast(tmp1, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
 #if REALCASE == 1
-                   MPI_REAL_PRECISION,         &
+                         MPI_REAL_PRECISION,         &
 #endif
 #if COMPLEXCASE == 1
                          MPI_COMPLEX_PRECISION,      &
 #endif
-       pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+                         int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
           call obj%timer%stop("mpi_communication")
 
@@ -294,8 +300,8 @@
 
           call obj%timer%start("mpi_communication")
           if (l_cols-l_colx+1>0) &
-            call MPI_Bcast(tmatc(l_colx,i), l_cols-l_colx+1, MPI_MATH_DATATYPE_PRECISION, &
-                           prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+            call MPI_Bcast(tmatc(l_colx,i), int(l_cols-l_colx+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                           int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
           call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */

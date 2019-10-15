@@ -231,6 +231,10 @@ if test x"${enable_64bit_integer_support}" = x"yes"; then
   if test x"${enable_legacy}" = x"yes"; then
     AC_MSG_ERROR([You cannot both enable 64bit integer support and the legacy interface!])
   fi
+  dnl at least INTEL MPI does _NOT_ support 64BIT integer mode  for C thus disable C tests in this Case
+  if test x"${enable_c_tests}" = x"yes"; then
+     AC_MSG_ERROR([You cannot both define 64bit integer support and C tests. Reconfigure!])
+  fi
   dnl check whether long int is the correct data-type in C
   if test x"${size_of_long_int}" = x"8"; then
     echo "Found C data-type \"long int\" with 8 bytes"

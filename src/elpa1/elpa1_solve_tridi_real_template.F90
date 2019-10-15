@@ -75,8 +75,8 @@ subroutine solve_tridi_&
       logical, intent(out)                       :: success
 
       integer(kind=ik)                           :: i, j, n, np, nc, nev1, l_cols, l_rows
-      integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols, mpierr
-
+      integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols
+      integer(kind=MPI_KIND)                     :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
       integer(kind=ik), allocatable              :: limits(:), l_col(:), p_col(:), l_col_bc(:), p_col_bc(:)
 
       integer(kind=ik)                           :: istat
@@ -93,10 +93,16 @@ subroutine solve_tridi_&
       call obj%timer%start("solve_tridi" // PRECISION_SUFFIX // gpuString)
 
       call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI, mpierr)
+
+      my_prow = int(my_prowMPI,kind=c_int)
+      np_rows = int(np_rowsMPI,kind=c_int)
+      my_pcol = int(my_pcolMPI,kind=c_int)
+      np_cols = int(np_colsMPI,kind=c_int)
+
       call obj%timer%stop("mpi_communication")
 
       success = .true.
@@ -293,7 +299,8 @@ subroutine solve_tridi_&
            call obj%timer%start("mpi_communication")
            if (my_pcol==np_off) then
              do n=np_off+np1,np_off+nprocs-1
-               call mpi_send(d(noff+1), nmid, MPI_REAL_PRECISION, n, 1, mpi_comm_cols, mpierr)
+               call mpi_send(d(noff+1), int(nmid,kind=MPI_KIND), MPI_REAL_PRECISION, int(n,kind=MPI_KIND), 1_MPI_KIND, &
+                             int(mpi_comm_cols,kind=MPI_KIND), mpierr)
              enddo
            endif
            call obj%timer%stop("mpi_communication")
@@ -302,7 +309,8 @@ subroutine solve_tridi_&
            if (my_pcol>=np_off+np1 .and. my_pcol<np_off+nprocs) then
 #ifdef WITH_MPI
              call obj%timer%start("mpi_communication")
-             call mpi_recv(d(noff+1), nmid, MPI_REAL_PRECISION, np_off, 1, mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+             call mpi_recv(d(noff+1), int(nmid,kind=MPI_KIND), MPI_REAL_PRECISION, int(np_off,kind=MPI_KIND), 1_MPI_KIND, &
+                           int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
              call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !             d(noff+1:noff+1+nmid-1) = d(noff+1:noff+1+nmid-1)
@@ -313,7 +321,8 @@ subroutine solve_tridi_&
              do n=np_off,np_off+np1-1
 #ifdef WITH_MPI
                call obj%timer%start("mpi_communication")
-               call mpi_send(d(noff+nmid+1), nlen-nmid, MPI_REAL_PRECISION, n, 1, mpi_comm_cols, mpierr)
+               call mpi_send(d(noff+nmid+1), int(nlen-nmid,kind=MPI_KIND), MPI_REAL_PRECISION, int(n,kind=MPI_KIND), &
+                             1_MPI_KIND, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
                call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -322,7 +331,8 @@ subroutine solve_tridi_&
            if (my_pcol>=np_off .and. my_pcol<np_off+np1) then
 #ifdef WITH_MPI
              call obj%timer%start("mpi_communication")
-             call mpi_recv(d(noff+nmid+1), nlen-nmid, MPI_REAL_PRECISION, np_off+np1, 1,mpi_comm_cols, MPI_STATUS_IGNORE, mpierr)
+             call mpi_recv(d(noff+nmid+1), int(nlen-nmid,kind=MPI_KIND), MPI_REAL_PRECISION, int(np_off+np1,kind=MPI_KIND), &
+                           1_MPI_KIND, int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
              call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !             d(noff+nmid+1:noff+nmid+1+nlen-nmid-1) = d(noff+nmid+1:noff+nmid+1+nlen-nmid-1)
@@ -335,7 +345,8 @@ subroutine solve_tridi_&
              call merge_systems_&
                   &PRECISION &
                                  (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
-                                 nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col, p_col, &
+                                 nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
+                                 l_col, p_col, &
                                  l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success, max_threads )
              if (.not.(success)) return
            else
@@ -343,7 +354,8 @@ subroutine solve_tridi_&
              call merge_systems_&
                   &PRECISION &
                                 (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
-                                 nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, l_col(noff+1), p_col(noff+1), &
+                                 nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
+                                 l_col(noff+1), p_col(noff+1), &
                                  l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success, max_threads )
              if (.not.(success)) return
            endif
@@ -378,7 +390,8 @@ subroutine solve_tridi_&
       real(kind=REAL_DATATYPE), allocatable    :: qmat1(:,:), qmat2(:,:)
       integer(kind=ik)              :: i, n, np
       integer(kind=ik)              :: ndiv, noff, nmid, nlen, max_size
-      integer(kind=ik)              :: my_prow, np_rows, mpierr
+      integer(kind=ik)              :: my_prow, np_rows
+      integer(kind=MPI_KIND)        :: mpierr, my_prowMPI, np_rowsMPI
 
       integer(kind=ik), allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
       logical, intent(in)           :: useGPU, wantDebug
@@ -390,8 +403,11 @@ subroutine solve_tridi_&
 
       call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
       call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+
+      my_prow = int(my_prowMPI,kind=c_int)
+      np_rows = int(np_rowsMPI,kind=c_int)
       call obj%timer%stop("mpi_communication")
       success = .true.
       ! Calculate the number of subdivisions needed.
@@ -497,9 +513,11 @@ subroutine solve_tridi_&
           nlen = limits(np+1)-noff
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call MPI_Bcast(d(noff+1), nlen, MPI_REAL_PRECISION, np, mpi_comm_rows, mpierr)
+          call MPI_Bcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           qmat2 = qmat1
-          call MPI_Bcast(qmat2, max_size*max_size, MPI_REAL_PRECISION, np, mpi_comm_rows, mpierr)
+          call MPI_Bcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !          qmat2 = qmat1 ! is this correct
@@ -559,7 +577,8 @@ subroutine solve_tridi_&
           call merge_systems_&
           &PRECISION &
                               (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
-                               matrixCols, mpi_comm_rows, mpi_comm_self, l_col(noff+1), p_col_i(noff+1), &
+                               matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_self,kind=ik), &
+                               l_col(noff+1), p_col_i(noff+1), &
                                l_col(noff+1), p_col_o(noff+1), 0, 1, useGPU, wantDebug, success, max_threads)
           if (.not.(success)) return
 

@@ -121,15 +121,17 @@
 
       integer(kind=ik)                         :: istep, i, n, dest
       integer(kind=ik)                         :: n_off, na_s
-      integer(kind=ik)                         :: my_pe, n_pes, mpierr
+      integer(kind=ik)                         :: my_pe, n_pes
+      integer(kind=MPI_KIND)                   :: my_peMPI, n_pesMPI, mpierr
       integer(kind=ik)                         :: nblocks_total, nblocks
       integer(kind=ik)                         :: nblocks_total2, nblocks2
-      integer(kind=ik)                         :: ireq_ab, ireq_hv
+      integer(kind=MPI_KIND)                   :: ireq_ab, ireq_hv
 #ifdef WITH_MPI
 !      integer(kind=ik)                         :: MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
 #endif
 !      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
-      integer(kind=ik), allocatable            :: block_limits(:), block_limits2(:), ireq_ab2(:)
+      integer(kind=ik), allocatable            :: block_limits(:), block_limits2(:)
+      integer(kind=MPI_KIND), allocatable      :: ireq_ab2(:)
 
       integer(kind=ik)                         :: j, nc, nr, ns, ne, iblk
       integer(kind=ik)                         :: istat
@@ -138,8 +140,11 @@
       call obj%timer%start("band_band_real" // PRECISION_SUFFIX)
 
       call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(communicator,my_pe,mpierr)
-      call mpi_comm_size(communicator,n_pes,mpierr)
+      call mpi_comm_rank(int(communicator,kind=MPI_KIND) ,my_peMPI ,mpierr)
+      call mpi_comm_size(int(communicator,kind=MPI_KIND) ,n_pesMPI ,mpierr)
+
+      my_pe = int(my_peMPI,kind=c_int)
+      n_pes = int(n_pesMPI,kind=c_int)
       call obj%timer%stop("mpi_communication")
 
       ! Total number of blocks in the band:
@@ -180,7 +185,8 @@
       if (nb2>1) then
         do i=0,nblocks2-1
 
-          call mpi_irecv(ab2(1,i*nb2+1), 2*nb2*nb2, MPI_REAL_PRECISION, 0, 3, communicator, ireq_ab2(i+1), mpierr)
+          call mpi_irecv(ab2(1,i*nb2+1), int(2*nb2*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, &
+                         0_MPI_KIND, 3_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_ab2(i+1), mpierr)
         enddo
       endif
       call obj%timer%stop("mpi_communication")
@@ -216,7 +222,8 @@
 #ifdef WITH_MPI
         call obj%timer%start("mpi_communication")
 
-        call mpi_isend(ab_s, (nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, communicator, ireq_ab, mpierr)
+        call mpi_isend(ab_s, int((nb+1)*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe-1,kind=MPI_KIND), &
+                       1_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
         call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
       endif
@@ -263,7 +270,8 @@
             endif
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call mpi_send(ab_s2, 2*nb2*nb2, MPI_REAL_PRECISION, dest, 3, communicator, mpierr)
+            call mpi_send(ab_s2, int(2*nb2*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(dest,kind=MPI_KIND), &
+                          3_MPI_KIND, int(communicator,kind=MPI_KIND), mpierr)
             call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -282,7 +290,8 @@
             ! Receive Householder vectors from previous task, from PE owning subdiagonal
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call mpi_recv(hv, nb*nb2, MPI_REAL_PRECISION, my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
+            call mpi_recv(hv, int(nb*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe-1,kind=MPI_KIND), &
+                          2_MPI_KIND, int(communicator,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
             call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -320,7 +329,8 @@
               !request last nb2 columns
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_recv(ab_r,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(ab_r, int((nb+1)*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe+1,kind=MPI_KIND), &
+                            1_MPI_KIND, int(communicator,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
               call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -364,7 +374,8 @@
                 enddo
 #ifdef WITH_MPI
                 call obj%timer%start("mpi_communication")
-                call mpi_isend(hv_s,nb*nb2, MPI_REAL_PRECISION, my_pe+1, 2, communicator, ireq_hv, mpierr)
+                call mpi_isend(hv_s, int(nb*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe+1,kind=MPI_KIND), &
+                               2_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_hv, mpierr)
                 call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -391,7 +402,8 @@
               enddo
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_isend(ab_s,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, communicator, ireq_ab, mpierr)
+              call mpi_isend(ab_s, int((nb+1)*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe-1,kind=MPI_KIND), &
+                             1_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
               call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -433,7 +445,7 @@
 !          stop 1
 !        endif
 
-        call mpi_barrier(communicator,mpierr)
+        call mpi_barrier(int(communicator,kind=MPI_KIND) ,mpierr)
         call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */

@@ -120,7 +120,8 @@
 #endif
       integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
 
-      integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols
+      integer(kind=MPI_KIND)                 :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
       integer(kind=ik)                       :: max_blocks_row, max_blocks_col, max_local_rows, &
                                                 max_local_cols
       integer(kind=ik)                       :: l_cols, l_rows, l_colh, n_cols
@@ -172,11 +173,15 @@
 #endif
       call obj%timer%start("mpi_communication")
 
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
 
+      my_prow = int(my_prowMPI,kind=c_int)
+      my_pcol = int(my_pcolMPI,kind=c_int)
+      np_rows = int(np_rowsMPI,kind=c_int)
+      np_cols = int(np_colsMPI,kind=c_int)
       call obj%timer%stop("mpi_communication")
 
       max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of a_mat
@@ -329,8 +334,8 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_MATH_DATATYPE_PRECISION,&
-                             pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+              call MPI_Bcast(hvb(ns+1), int(nb-ns,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,&
+                             int(pcol(ncol, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
               call obj%timer%stop("mpi_communication")
 
@@ -393,8 +398,8 @@
 
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_MATH_DATATYPE_PRECISION, &
-                             MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(tmp1, tmp2, int(n_cols*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -612,8 +617,8 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_MATH_DATATYPE_PRECISION,    &
-                             pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+              call MPI_Bcast(hvb(ns+1), int(nb-ns,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                             int(pcol(ncol, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
               call obj%timer%stop("mpi_communication")
 
@@ -660,8 +665,8 @@
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
 
-              call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_MATH_DATATYPE_PRECISION,    &
-                                 MPI_SUM, mpi_comm_rows, mpierr)
+              call mpi_allreduce(t_tmp, t_tmp2, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                                 MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
               call obj%timer%stop("mpi_communication")
               call obj%timer%start("blas")
               call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), &
@@ -718,7 +723,8 @@
 
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
+          call mpi_allreduce(tmp1, tmp2, int(n_cols*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                             int(mpi_comm_rows,kind=MPI_KIND) ,mpierr)
           call obj%timer%stop("mpi_communication")
 
           call obj%timer%start("blas")
