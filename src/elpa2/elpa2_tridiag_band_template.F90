@@ -93,7 +93,7 @@
       use omp_lib
 #endif
       use elpa_blas_interfaces
-
+      use elpa_skewsymmetric_blas
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)   :: obj
@@ -633,7 +633,7 @@
                 if (isSkewsymmetric) then
 !                   call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
                   hd(:) = 0.0_rk
-                  call elpa_dssmv(nc, tau, ab(1,ns), 2*nb-1, hv, hd)
+                  call ELPA_PRECISION_SSMV(nc, tau, ab(1,ns), 2*nb-1, hv, hd)
                 else
                   call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
                 endif
@@ -657,7 +657,7 @@
 #if REALCASE == 1
                 if (isSkewsymmetric) then
 !                   call PRECISION_SSR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
-                  call elpa_dssr2( nc, hd,  hv, ab(1,ns), 2*nb-1)
+                  call ELPA_PRECISION_SSR2( nc, hd,  hv, ab(1,ns), 2*nb-1)
                 else
                   call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
                 endif
@@ -894,7 +894,7 @@
               if (isSkewsymmetric) then
 !                   call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
                 hd(:) = 0.0_rk
-                call elpa_dssmv( nc, tau, ab(1,ns), 2*nb-1, hv, hd)
+                call ELPA_PRECISION_SSMV( nc, tau, ab(1,ns), 2*nb-1, hv, hd)
               else
                 call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
               endif
@@ -935,7 +935,7 @@
               if (isSkewsymmetric) then
 !                 call PRECISION_SSMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
                 hd(:) = 0.0_rk
-                call elpa_dssmv(nc, tau, ab(1,ns), 2*nb-1, hv, hd)
+                call ELPA_PRECISION_SSMV(nc, tau, ab(1,ns), 2*nb-1, hv, hd)
               else
                 call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
               endif
@@ -1060,7 +1060,7 @@
 #if REALCASE == 1
               if (isSkewsymmetric) then 
 !               if (nc>1) call PRECISION_SSR2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
-                if (nc>1) call elpa_dssr2(nc-1, hd(2), hv(2), ab(1,ns+1), 2*nb-1)
+                if (nc>1) call ELPA_PRECISION_SSR2(nc-1, hd(2), hv(2), ab(1,ns+1), 2*nb-1)
               else
                 if (nc>1) call PRECISION_SYR2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
               endif
@@ -1076,7 +1076,7 @@
 #if REALCASE == 1
               if (isSkewsymmetric) then 
 !                 call PRECISION_SSR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
-                call elpa_dssr2(nc,hd, hv, ab(1,ns), 2*nb-1)
+                call ELPA_PRECISION_SSR2(nc,hd, hv, ab(1,ns), 2*nb-1)
               else
                 call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
               endif

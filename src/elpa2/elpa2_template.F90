@@ -189,7 +189,7 @@
       print *,"Problem getting option. Aborting..."
       stop
     endif
-    call obj%get("mpi_comm_cols",mpi_comm_cols,error
+    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option. Aborting..."
       stop

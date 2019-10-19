@@ -67,6 +67,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/helpers/matrix_plot.F90 \
   src/general/elpa_ssmv.F90 \
   src/general/elpa_ssr2.F90 \
+  src/general/mod_elpa_skewsymmetric_blas.F90 \
   src/elpa_index.c
 
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c 
@@ -123,6 +124,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa_invert_trm.F90 \
   src/elpa1/elpa_multiply_a_b.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
+  src/general/elpa_ssr2_template.F90 \
+  src/general/elpa_ssmv_template.F90 \
   src/general/precision_macros.h \
   src/general/precision_typedefs.h \
   src/general/precision_kinds.F90

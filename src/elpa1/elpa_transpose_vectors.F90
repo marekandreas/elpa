@@ -50,6 +50,7 @@
 #include "config-f90.h"
 #include "../general/sanity.F90"
 
+#undef ROUTINE_NAME
 #ifdef SKEW_SYMMETRIC
 #define ROUTINE_NAME elpa_transpose_vectors_ss_
 #else

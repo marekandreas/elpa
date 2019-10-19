@@ -51,16 +51,14 @@
 #include "../../src/general/precision_kinds.F90"
       integer(kind=ik)                 :: status, na_cols, na_rows
       integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-      real(kind=rk), intent(in)           :: as(:,:)
-      real(kind=rk)                       :: tmpr
-      complex(kind=rck), intent(in)                 :: z(:,:)
-!       MATH_DATATYPE(kind=rck), intent(in), optional :: bs(:,:)
-      real(kind=rk)                 :: ev(:)
+      real(kind=rk), intent(in)        :: as(:,:)
+      real(kind=rk)                    :: tmpr
+      complex(kind=rck), intent(in)    :: z(:,:)
+      real(kind=rk)                    :: ev(:)
       complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
       complex(kind=rck)                :: xc
       
       complex(kind=rck), allocatable   :: as_complex(:,:)
-!       complex(kind=rck), allocatable   :: ev_complex(:)
 
 #ifndef WITH_MPI
 #if REALCASE == 1
@@ -105,38 +103,19 @@
       complex(kind=rck), parameter   :: CZERO = (0.0_rck,0.0_rck), CONE = (1.0_rck,0.0_rck)
 
 
-!       if(present(bs)) then
-!           tol_res = generalized_penalty * tol_res
-!       endif
-!       call MPI_BARRIER(MPI_COMM_WORLD, status)
       status = 0
       
       ! Setup complex matrices and eigenvalues
       na_rows = size(as,dim=1)
       na_cols = size(as,dim=2)
-!       
-!       write(*,*) 'check: ', 'myid=', myid, 'na_cols=', na_cols, 'na_rows=',na_rows 
       
       allocate(as_complex(na_rows,na_cols))
-!       allocate(ev_complex(nev))
-!       CALL PDLAPRNT( na, na, as(:,:), 1, 1, sc_desc, 0, 0, 'A_ss1', 6, tmpr)
       do j=1, na_cols
         do i=1,na_rows
-!           write(*,*) '(i,j)=', i, j
           as_complex(i,j) = dcmplx(0.0,-as(i,j))
-!           write(*,*) 'myid=', myid,'; as(',i,',',j,')=',as(i,j) &
-!           ,'; as_complex(',i,',',j,') =', as_complex(i,j),';'
        enddo
       enddo
       
-!       CALL PZLAPRNT( na, na, as_complex(:,:), 1, 1, sc_desc, 0, 0, 'AS_COMPL', 6, tmp1)
-      
-!       do i=1,nev
-!         ev_complex = cmplx(0.0,ev(i))
-!       enddo
-      
-!       write(*,*) 'ev_complex(1)=', ev_complex(1)
-
       ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
 
       ! tmp1 = Zi*EVi
@@ -150,19 +129,8 @@
 #endif /* WITH_MPI */
       enddo
 
-      ! for generalized EV problem, multiply by bs as well
-      ! tmp2 = B * tmp1
-!       if(present(bs)) then
-! #ifdef WITH_MPI
-!       call PZGEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, sc_desc, &
-!                   tmp1, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
-! #else /* WITH_MPI */
-!       call ZGEMM('N','N',na,nev,na,ONE,bs,na,tmp1,na,ZERO,tmp2,na)
-! #endif /* WITH_MPI */
-!       else
         ! normal eigenvalue problem .. no need to multiply
         tmp2(:,:) = tmp1(:,:)
-!       end if
 
       ! tmp1 =  A * Z
       ! as is original stored matrix, Z are the EVs
@@ -172,11 +140,6 @@
 #else /* WITH_MPI */
       call ZGEMM('N','N',na,nev,na,CONE,as_complex,na,z,na,CZERO,tmp1,na)
 #endif /* WITH_MPI */
-! #ifdef WITH_MPI
-!      call MPI_BARRIER(MPI_COMM_WORLD, status)
-! #endif
-!       CALL PZLAPRNT( na, na, tmp1(:,:), 1, 1, sc_desc, 0, 0, 'TMP1', 6, as_complex)
-!       CALL PZLAPRNT( na, na, tmp2(:,:), 1, 1, sc_desc, 0, 0, 'TMP2', 6, as_complex)
 
       !  tmp1 = A*Zi - Zi*EVi
       tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
@@ -185,17 +148,6 @@
       errmax = 0.0_rk
 
       do i=1,nev
-! #if REALCASE == 1
-!         err = 0.0_rk
-! #ifdef WITH_MPI
-!         call scal_PRECISION_NRM2(na, err, tmp1, 1, i, sc_desc, 1)
-! #else /* WITH_MPI */
-!         err = PRECISION_NRM2(na,tmp1(1,i),1)
-! #endif /* WITH_MPI */
-!         errmax = max(errmax, err)
-! #endif /* REALCASE */
-! 
-! #if COMPLEXCASE == 1
         xc = (0.0_rck,0.0_rck)
 #ifdef WITH_MPI
         call PZDOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
@@ -203,7 +155,6 @@
         xc = ZDOTC(na,tmp1,1,tmp1,1)
 #endif /* WITH_MPI */
         errmax = max(errmax, sqrt(real(xc,kind=REAL_DATATYPE)))
-! #endif /* COMPLEXCASE */
       enddo
 
       ! Get maximum error norm over all processors
@@ -226,22 +177,7 @@
       endif
 
       ! 2. Eigenvector orthogonality
-!       if(present(bs)) then
-!         !for the generalized EVP, the eigenvectors should be B-orthogonal, not orthogonal
-!         ! tmp2 = B * Z
-!         tmp2(:,:) = 0.0_rck
-! #ifdef WITH_MPI
-!         call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, &
-!                         sc_desc, z, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
-! #else /* WITH_MPI */
-!         call PRECISION_GEMM('N','N', na, nev, na, ONE, bs, na, z, na, ZERO, tmp2, na)
-! #endif /* WITH_MPI */
-! 
-!       else
         tmp2(:,:) = z(:,:)
-!       endif
-      ! tmp1 = Z**T * tmp2
-      ! actually tmp1 = Z**T * Z for standard case and tmp1 = Z**T * B * Z for generalized
       tmp1 = 0
 #ifdef WITH_MPI
       call PZGEMM('C', 'N', nev, nev, na, CONE, z, 1, 1, &
