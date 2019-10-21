@@ -232,8 +232,13 @@ program test
      call MPI_BARRIER(MPI_COMM_WORLD, ierr)
 #endif     
 !      as_complex(:,:) = z_complex(:,:)
-   status = check_correctness_evp_numeric_residuals_complex_double(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
+#ifdef TEST_SINGLE
+     status = check_correctness_evp_numeric_residuals_complex_single(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
                                                     nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+#else
+     status = check_correctness_evp_numeric_residuals_complex_double(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
+                                                    nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+#endif
 !    status = 0
 !    call check_status(status, myid)
 

@@ -49,6 +49,46 @@ module elpa_blas_interfaces
   implicit none
 
   public
+  interface
+    subroutine dger(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)       :: M, N, INCX, INCY, LDA
+    real(kind=rk8), intent(in)    :: ALPHA, X(*), Y(*)
+    real(kind=rk8), intent(inout) :: A(LDA, *)
+    end subroutine
+  end interface
+
+  interface
+    subroutine daxpy(N, DA, DX, INCX, DY, INCY)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)       :: N, INCX, INCY
+    real(kind=rk8), intent(in)    :: DA, DX(*)
+    real(kind=rk8), intent(inout) :: DY(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine dcopy(N, DX, INCX, DY, INCY)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)       :: N, INCX, INCY
+    real(kind=rk8), intent(in)    :: DX(*)
+    real(kind=rk8), intent(inout) :: DY(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine dscal(N, DA, DX, INCX)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)       :: N, INCX
+    real(kind=rk8)                :: DA
+    real(kind=rk8), intent(inout) :: DX(*)
+    end subroutine
+
+  end interface
 
   interface
     subroutine dgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
@@ -289,7 +329,45 @@ module elpa_blas_interfaces
 
 
 !#endif /* DOUBLE_PRECISION_REAL */
+  interface
+    subroutine sger(M, N, ALPHA, X, INCX, Y, INCY, A, LDA)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)       :: M, N, INCX, INCY, LDA
+    real(kind=rk4), intent(in)    :: ALPHA, X(*), Y(*)
+    real(kind=rk4), intent(inout) :: A(LDA, *)
+    end subroutine
+  end interface
 
+  interface
+    subroutine saxpy(N, DA, DX, INCX, DY, INCY)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)       :: N, INCX, INCY
+    real(kind=rk4), intent(in)    :: DA, DX(*)
+    real(kind=rk4), intent(inout) :: DY(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine scopy(N, DX, INCX, DY, INCY)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)       :: N, INCX, INCY
+    real(kind=rk4), intent(in)    :: DX(*)
+    real(kind=rk4), intent(inout) :: DY(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine sscal(N, DA, DX, INCX)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)       :: N, INCX
+    real(kind=rk4)                :: DA
+    real(kind=rk4), intent(inout) :: DX(*)
+    end subroutine
+  end interface
 
   interface
     subroutine sgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
@@ -518,6 +596,36 @@ module elpa_blas_interfaces
 
 
 !#endif /* SINGLE_PRECSION_REAL */
+  interface
+    subroutine zaxpy(N, DA, DX, INCX, DY, INCY)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)          :: N, INCX, INCY
+    complex(kind=ck8), intent(in)    :: DA, DX(*)
+    complex(kind=ck8), intent(inout) :: DY(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine zcopy(N, DX, INCX, DY, INCY)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)          :: N, INCX, INCY
+    complex(kind=ck8), intent(in)    :: DX(*)
+    complex(kind=ck8), intent(inout) :: DY(*)
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine zscal(N, DA, DX, INCX)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)          :: N, INCX
+    complex(kind=ck8)                :: DA
+    complex(kind=ck8), intent(inout) :: DX(*)
+    end subroutine
+  end interface
 
   interface
     subroutine zgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
@@ -674,6 +782,35 @@ module elpa_blas_interfaces
 
 
 !#endif /* DOUBLE_PRECISION_COMPLEX */
+  interface
+    subroutine caxpy(N, DA, DX, INCX, DY, INCY)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)          :: N, INCX, INCY
+    complex(kind=ck4), intent(in)    :: DA, DX(*)
+    complex(kind=ck4), intent(inout) :: DY(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine ccopy(N, DX, INCX, DY, INCY)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)          :: N, INCX, INCY
+    complex(kind=ck4), intent(in)    :: DX(*)
+    complex(kind=ck4), intent(inout) :: DY(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine cscal(N, DA, DX, INCX)
+    use precision
+    implicit none
+    integer(kind=BLAS_KIND)          :: N, INCX
+    complex(kind=ck4)                :: DA
+    complex(kind=ck4), intent(inout) :: DX(*)
+    end subroutine
+  end interface
 
   interface
     subroutine cgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)

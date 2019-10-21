@@ -17,7 +17,7 @@ subroutine elpa_cssr2(n, x, y,  a, lda )
 
   use precision
   use elpa_utilities, only : error_unit
-  !use elpa_blas_interfaces
+  use elpa_blas_interfaces
   implicit none
 #include "./precision_kinds.F90"
 

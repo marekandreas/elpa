@@ -65,8 +65,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/elpa2.F90 \
   src/elpa_generalized/cannon.c \
   src/helpers/matrix_plot.F90 \
-  src/general/elpa_ssmv.F90 \
-  src/general/elpa_ssr2.F90 \
   src/general/mod_elpa_skewsymmetric_blas.F90 \
   src/elpa_index.c
 

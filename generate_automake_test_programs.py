@@ -282,7 +282,7 @@ print("  " + " \\\n  ".join([
 print("endif")
 
 name = "test_skewsymmetric_real_double"
-print("check_SCRIPTS += " + name + "_extended.sh")
+print("check_SCRIPTS += " + name)
 print("noinst_PROGRAMS += " + name)
 print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
 print(name + "_LDADD = $(test_program_ldadd)")
@@ -290,6 +290,20 @@ print(name + "_FCFLAGS = $(test_program_fcflags) \\")
 print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
+
+name = "test_skewsymmetric_real_single"
+print("if WANT_SINGLE_PRECISION_REAL")
+print("check_SCRIPTS += " + name)
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
+print(name + "_LDADD = $(test_program_ldadd)")
+print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['single']]))
+print("endif")
+
+
 
 name = "validate_multiple_objs_real_double_c_version"
 print("if ENABLE_AUTOTUNING")

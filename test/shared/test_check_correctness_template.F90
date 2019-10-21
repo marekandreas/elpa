@@ -492,8 +492,8 @@ function check_correctness_evp_numeric_residuals_&
 
       integer(kind=c_int)            :: status
       integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
-      MATH_DATATYPE(kind=rck)     :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      real(kind=rck)    :: ev(1:na)
+      MATH_DATATYPE(kind=rck)        :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
+      real(kind=rck)                 :: ev(1:na)
       integer(kind=c_int)            :: sc_desc(1:9)
 
       status = check_correctness_evp_numeric_residuals_&

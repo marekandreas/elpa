@@ -17,7 +17,7 @@ subroutine elpa_cssmv(n, alpha, a, lda, x,  y)
 
   use precision
   use elpa_utilities, only : error_unit
-  !use elpa_blas_interfaces  
+  use elpa_blas_interfaces  
   implicit none
 #include "./precision_kinds.F90"
 
