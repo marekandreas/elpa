@@ -265,6 +265,7 @@
       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
          do_useGPU = .true.
+         a_dev = 0
 
          ! set the neccessary parameters
          cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
@@ -899,6 +900,15 @@
          endif
        endif
      endif
+
+     if(do_useGPU .and. (a_dev .ne. 0)) then
+       successCUDA = cuda_free(a_dev)
+       if (.not.(successCUDA)) then
+         print *,"elpa2_template: error in cudaFree, a_dev"
+         stop 1
+       endif
+     endif
+
 
      if (obj%eigenvalues_only) then
        deallocate(q_dummy, stat=istat, errmsg=errorMessage)
