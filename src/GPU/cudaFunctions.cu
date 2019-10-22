@@ -1,3 +1,4 @@
+#define DEBUG_CUDA 1
 #include <stdio.h>
 #include <math.h>
 #include <stdio.h>
@@ -157,7 +158,7 @@ extern "C" {
 
     cudaError_t cuerr = cudaMalloc((void **) a, width_height);
 #ifdef DEBUG_CUDA
-    printf("Malloc pointer address: %p \n", *a);
+    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *a, width_height);
 #endif
     if (cuerr != cudaSuccess) {
       errormessage("Error in cudaMalloc: %s\n",cudaGetErrorString(cuerr));
@@ -167,7 +168,7 @@ extern "C" {
   }
   int cudaFreeFromC(intptr_t *a) {
 #ifdef DEBUG_CUDA
-    printf("Free pointer address: %p \n", a);
+    printf("CUDA Free, pointer address: %p \n", a);
 #endif
     cudaError_t cuerr = cudaFree(a);
 
