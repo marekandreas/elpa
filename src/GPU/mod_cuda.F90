@@ -465,7 +465,40 @@ module cuda_functions
   end interface
 
 
+#ifdef WITH_NVTX
+  ! NVTX profiling interfaces
+  interface nvtxRangePushA
+    subroutine nvtxRangePushA(name) bind(C, name='nvtxRangePushA')
+      use iso_c_binding
+      character(kind=C_CHAR,len=1) :: name(*)
+    end subroutine
+  end interface
+
+  interface nvtxRangePop
+    subroutine nvtxRangePop() bind(C, name='nvtxRangePop')
+    end subroutine
+  end interface
+#endif
+
   contains
+
+#ifdef WITH_NVTX
+   ! this wrapper is needed for the string conversion
+   subroutine nvtxRangePush(range_name)
+     implicit none
+     character(len=*), intent(in) :: range_name
+
+     character(kind=C_CHAR,len=1), dimension(len(range_name)+1) :: c_name
+     integer i
+
+     do i = 1, len(range_name)
+       c_name(i) = range_name(i:i)
+     end do
+     c_name(len(range_name)+1) = char(0)
+
+     call nvtxRangePushA(c_name)
+   end subroutine
+#endif
 
     ! functions to set and query the CUDA devices
 

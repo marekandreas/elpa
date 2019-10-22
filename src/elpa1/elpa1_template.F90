@@ -131,6 +131,9 @@ function elpa_solve_evp_&
 #else
    nrThreads = 1
 #endif
+#ifdef WITH_NVTX
+   call nvtxRangePush("elpa1")
+#endif
 
 
    success = .true.
@@ -327,6 +330,9 @@ function elpa_solve_evp_&
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("tridi")
 #endif
+#ifdef WITH_NVTX
+     call nvtxRangePush("tridi")
+#endif
 
      call tridiag_&
      &MATH_DATATYPE&
@@ -334,6 +340,9 @@ function elpa_solve_evp_&
      &PRECISION&
      & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
 
+#ifdef WITH_NVTX
+     call nvtxRangePop()
+#endif
 #ifdef HAVE_LIKWID
      call likwid_markerStopRegion("tridi")
 #endif
@@ -344,6 +353,9 @@ function elpa_solve_evp_&
      call obj%timer%start("solve")
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("solve")
+#endif
+#ifdef WITH_NVTX
+     call nvtxRangePush("solve")
 #endif
 
      call solve_tridi_&
@@ -357,6 +369,9 @@ function elpa_solve_evp_&
 #endif
         nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
 
+#ifdef WITH_NVTX
+     call nvtxRangePop()
+#endif
 #ifdef HAVE_LIKWID
      call likwid_markerStopRegion("solve")
 #endif
@@ -398,6 +413,9 @@ function elpa_solve_evp_&
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("trans_ev")
 #endif
+#ifdef WITH_NVTX
+     call nvtxRangePush("trans_ev")
+#endif
 
      call trans_ev_&
      &MATH_DATATYPE&
@@ -405,6 +423,9 @@ function elpa_solve_evp_&
      &PRECISION&
      & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
 
+#ifdef WITH_NVTX
+     call nvtxRangePop()
+#endif
 #ifdef HAVE_LIKWID
      call likwid_markerStopRegion("trans_ev")
 #endif
@@ -445,6 +466,9 @@ function elpa_solve_evp_&
      endif
    endif
 
+#ifdef WITH_NVTX
+   call nvtxRangePop()
+#endif
    ! restore original OpenMP settings
 #ifdef WITH_OPENMP
    ! store the number of OpenMP threads used in the calling function
