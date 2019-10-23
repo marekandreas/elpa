@@ -78,7 +78,7 @@ function elpa_solve_evp_&
    MATH_DATATYPE(kind=rck), optional,target,intent(out)  :: q(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=rck), intent(inout)       :: a(obj%local_nrows,obj%local_ncols)
-#if SKEWSYMMETRIC == 1
+#ifdef HAVE_SKEWSYMMETRIC
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)

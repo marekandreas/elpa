@@ -105,32 +105,32 @@ program test
    implicit none
 
    ! matrix dimensions
-   integer                     :: na, nev, nblk
+   integer                          :: na, nev, nblk
 
    ! mpi
-   integer                     :: myid, nprocs
-   integer                     :: na_cols, na_rows  ! local matrix size
-   integer                     :: np_cols, np_rows  ! number of MPI processes per column/row
-   integer                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   integer                     :: mpierr, ierr
+   integer                          :: myid, nprocs
+   integer                          :: na_cols, na_rows  ! local matrix size
+   integer                          :: np_cols, np_rows  ! number of MPI processes per column/row
+   integer                          :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
+   integer                          :: mpierr, ierr
 
    ! blacs
-   character(len=1)            :: layout
-   integer                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   character(len=1)                 :: layout
+   integer                          :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
-   MATRIX_TYPE, allocatable    :: a_skewsymmetric(:,:), as_skewsymmetric(:,:)
-   MATRIX_TYPE_COMPLEX, allocatable    :: a_complex(:,:), as_complex(:,:)
+   MATRIX_TYPE, allocatable         :: a_skewsymmetric(:,:), as_skewsymmetric(:,:)
+   MATRIX_TYPE_COMPLEX, allocatable :: a_complex(:,:), as_complex(:,:)
    ! eigenvectors
-   MATRIX_TYPE, allocatable    :: z_skewsymmetric(:,:)
-   MATRIX_TYPE_COMPLEX, allocatable    :: z_complex(:,:)
+   MATRIX_TYPE, allocatable         :: z_skewsymmetric(:,:)
+   MATRIX_TYPE_COMPLEX, allocatable :: z_complex(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable:: ev_skewsymmetric(:), ev_complex(:)
+   EV_TYPE, allocatable             :: ev_skewsymmetric(:), ev_complex(:)
 
-   integer                     :: error, status, i, j
+   integer                          :: error, status, i, j
 
-   type(output_t)              :: write_to_file
-   class(elpa_t), pointer      :: e_complex, e_skewsymmetric
+   type(output_t)                   :: write_to_file
+   class(elpa_t), pointer           :: e_complex, e_skewsymmetric
            
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -220,13 +220,13 @@ program test
    assert_elpa_ok(e_complex%setup())
    call e_complex%set("solver", elpa_solver_2stage, error)
 
-   call e_complex%timer_start("eigenvectors: brute force ")
+   call e_complex%timer_start("eigenvectors: brute force as complex matrix")
    call e_complex%eigenvectors(a_complex, ev_complex, z_complex, error)
-   call e_complex%timer_stop("eigenvectors: brute force ")
+   call e_complex%timer_stop("eigenvectors: brute force as complex matrix")
 
    if (myid .eq. 0) then
      print *, ""
-     call e_complex%print_times("eigenvectors: brute force")
+     call e_complex%print_times("eigenvectors: brute force as complex matrix")
    endif 
 #ifdef WITH_MPI
      call MPI_BARRIER(MPI_COMM_WORLD, ierr)

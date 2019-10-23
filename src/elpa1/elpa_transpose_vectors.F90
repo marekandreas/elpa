@@ -51,7 +51,7 @@
 #include "../general/sanity.F90"
 
 #undef ROUTINE_NAME
-#ifdef SKEW_SYMMETRIC
+#ifdef SKEW_SYMMETRIC_BUILD
 #define ROUTINE_NAME elpa_transpose_vectors_ss_
 #else
 #define ROUTINE_NAME elpa_transpose_vectors_
@@ -198,7 +198,7 @@ subroutine ROUTINE_NAME&
                k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                ns = (i/npt)*nblk ! local start of block i
                nl = min(nvr-i*nblk,nblk) ! length
-#ifdef SKEW_SYMMETRIC
+#ifdef SKEW_SYMMETRIC_BUILD
                vmat_t(ns+1:ns+nl,lc) = - aux(k+1:k+nl)
 #else
                vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)

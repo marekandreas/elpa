@@ -53,14 +53,14 @@
 #include "../general/sanity.F90"
 
 #undef ROUTINE_NAME
-#ifdef SKEW_SYMMETRIC
+#ifdef SKEW_SYMMETRIC_BUILD
 #define ROUTINE_NAME ssymm_matrix_allreduce
 #else
 #define ROUTINE_NAME symm_matrix_allreduce
 #endif
 
 
-#ifdef SKEW_SYMMETRIC
+#ifdef SKEW_SYMMETRIC_BUILD
     subroutine ssymm_matrix_allreduce_&
 #else
     subroutine symm_matrix_allreduce_&
@@ -100,7 +100,7 @@
       nc = 0
       do i=1,n
         a(1:i,i) = h2(nc+1:nc+i)
-#ifdef SKEW_SYMMETRIC
+#ifdef SKEW_SYMMETRIC_BUILD
         a(i,1:i-1) = - a(1:i-1,i)
 #else
         a(i,1:i-1) = a(1:i-1,i)
@@ -114,7 +114,7 @@
       nc = 0
       do i=1,n
         a(1:i,i) = h1(nc+1:nc+i)
-#ifdef SKEW_SYMMETRIC
+#ifdef SKEW_SYMMETRIC_BUILD
         a(i,1:i-1) = - a(1:i-1,i)
 #else
         a(i,1:i-1) = a(1:i-1,i)
@@ -132,7 +132,7 @@
 
       call obj%timer%stop("ROUTINE_NAME" // PRECISION_SUFFIX)
 
-#ifdef SKEW_SYMMETRIC
+#ifdef SKEW_SYMMETRIC_BUILD
     end subroutine ssymm_matrix_allreduce_&
 #else
     end subroutine symm_matrix_allreduce_&
