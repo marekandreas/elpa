@@ -542,7 +542,7 @@ dist_man_MANS += \
   man/elpa_solve_evp_real_double.3 \
   man/elpa_solve_evp_real_single.3 \
   man/elpa_solve_evp_complex_double.3 \
-  man/elpa_solve_evp_complex_single.3 \
+  man/elpa_solve_evp_complex_single.3 
 endif
 
 
