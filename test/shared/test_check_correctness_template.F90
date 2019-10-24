@@ -112,7 +112,11 @@
       allocate(as_complex(na_rows,na_cols))
       do j=1, na_cols
         do i=1,na_rows
-          as_complex(i,j) = dcmplx(0.0,-as(i,j))
+#ifdef DOUBLE_PRECISION_REAL
+          as_complex(i,j) = dcmplx(as(i,j),0.0_rk)
+#else
+          as_complex(i,j) = cmplx(as(i,j),0.0_rk)
+#endif
        enddo
       enddo
       
@@ -121,7 +125,11 @@
       ! tmp1 = Zi*EVi
       tmp1(:,:) = z(:,:)
       do i=1,nev
-        xc = dcmplx(ev(i),0.0)
+#ifdef DOUBLE_PRECISION_REAL
+        xc = dcmplx(0.0_rk,ev(i))
+#else
+        xc = cmplx(0.0_rk,ev(i))
+#endif
 #ifdef WITH_MPI
         call pzscal(na, xc, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
@@ -129,7 +137,7 @@
 #endif /* WITH_MPI */
       enddo
 
-        ! normal eigenvalue problem .. no need to multiply
+      ! normal eigenvalue problem .. no need to multiply
         tmp2(:,:) = tmp1(:,:)
 
       ! tmp1 =  A * Z
@@ -148,7 +156,7 @@
       errmax = 0.0_rk
 
       do i=1,nev
-        xc = (0.0_rck,0.0_rck)
+        xc = (0.0_rk,0.0_rk)
 #ifdef WITH_MPI
         call PZDOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
