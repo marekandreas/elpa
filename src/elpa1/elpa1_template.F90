@@ -420,10 +420,11 @@ function elpa_solve_evp_&
        ! Transform imaginary part
        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
        call trans_ev_&
- 	     &MATH_DATATYPE&
- 	     &_&
- 	     &PRECISION&
- 	     & (obj, na, nev, a, lda, tau, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION&
+             & (obj, na, nev, a, lda, tau, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), ldq, nblk, matrixCols, &
+                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
        endif
      call obj%timer%stop("back")
    endif ! do_trans_ev
