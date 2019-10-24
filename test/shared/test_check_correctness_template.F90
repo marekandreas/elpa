@@ -123,7 +123,7 @@
       do j=1, na_cols
         do i=1,na_rows
 !           write(*,*) '(i,j)=', i, j
-          as_complex(i,j) = dcmplx(0.0,-as(i,j))
+          as_complex(i,j) = dcmplx(as(i,j),0.0_rk)
 !           write(*,*) 'myid=', myid,'; as(',i,',',j,')=',as(i,j) &
 !           ,'; as_complex(',i,',',j,') =', as_complex(i,j),';'
        enddo
@@ -142,7 +142,7 @@
       ! tmp1 = Zi*EVi
       tmp1(:,:) = z(:,:)
       do i=1,nev
-        xc = dcmplx(ev(i),0.0)
+        xc = dcmplx(0.0_rk,ev(i))
 #ifdef WITH_MPI
         call pzscal(na, xc, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
@@ -150,17 +150,7 @@
 #endif /* WITH_MPI */
       enddo
 
-      ! for generalized EV problem, multiply by bs as well
-      ! tmp2 = B * tmp1
-!       if(present(bs)) then
-! #ifdef WITH_MPI
-!       call PZGEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, sc_desc, &
-!                   tmp1, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
-! #else /* WITH_MPI */
-!       call ZGEMM('N','N',na,nev,na,ONE,bs,na,tmp1,na,ZERO,tmp2,na)
-! #endif /* WITH_MPI */
-!       else
-        ! normal eigenvalue problem .. no need to multiply
+      ! normal eigenvalue problem .. no need to multiply
         tmp2(:,:) = tmp1(:,:)
 !       end if
 
@@ -196,7 +186,7 @@
 ! #endif /* REALCASE */
 ! 
 ! #if COMPLEXCASE == 1
-        xc = (0.0_rck,0.0_rck)
+        xc = (0.0_rk,0.0_rk)
 #ifdef WITH_MPI
         call PZDOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
 #else /* WITH_MPI */
