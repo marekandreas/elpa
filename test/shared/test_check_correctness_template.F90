@@ -60,15 +60,6 @@
       
       complex(kind=rck), allocatable   :: as_complex(:,:)
 
-#ifndef WITH_MPI
-#if REALCASE == 1
-      real(kind=rck)                   :: dnrm2, snrm2
-#endif
-#if COMPLEXCASE == 1
-      complex(kind=rck)                :: zdotc, cdotc
-#endif /* COMPLEXCASE */
-#endif
-
       integer(kind=ik)                 :: sc_desc(:)
 
       integer(kind=ik)                 :: i, j, rowLocal, colLocal
@@ -104,7 +95,6 @@
 
 
       status = 0
-      
       ! Setup complex matrices and eigenvalues
       na_rows = size(as,dim=1)
       na_cols = size(as,dim=2)
@@ -131,9 +121,17 @@
         xc = cmplx(0.0_rk,ev(i))
 #endif
 #ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
         call pzscal(na, xc, tmp1, 1, i, sc_desc, 1)
+#else
+        call pcscal(na, xc, tmp1, 1, i, sc_desc, 1)
+#endif
 #else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
         call zscal(na,xc,tmp1(:,i),1)
+#else
+        call cscal(na,xc,tmp1(:,i),1)
+#endif
 #endif /* WITH_MPI */
       enddo
 
@@ -143,10 +141,19 @@
       ! tmp1 =  A * Z
       ! as is original stored matrix, Z are the EVs
 #ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
       call PZGEMM('N', 'N', na, nev, na, CONE, as_complex, 1, 1, sc_desc, &
                   z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#else
+      call PCGEMM('N', 'N', na, nev, na, CONE, as_complex, 1, 1, sc_desc, &
+                  z, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#endif
 #else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
       call ZGEMM('N','N',na,nev,na,CONE,as_complex,na,z,na,CZERO,tmp1,na)
+#else
+      call CGEMM('N','N',na,nev,na,CONE,as_complex,na,z,na,CZERO,tmp1,na)
+#endif
 #endif /* WITH_MPI */
 
       !  tmp1 = A*Zi - Zi*EVi
@@ -158,9 +165,17 @@
       do i=1,nev
         xc = (0.0_rk,0.0_rk)
 #ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
         call PZDOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
+#else
+        call PCDOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
+#endif
 #else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
         xc = ZDOTC(na,tmp1,1,tmp1,1)
+#else
+        xc = CDOTC(na,tmp1,1,tmp1,1)
+#endif
 #endif /* WITH_MPI */
         errmax = max(errmax, sqrt(real(xc,kind=REAL_DATATYPE)))
       enddo
@@ -188,10 +203,20 @@
         tmp2(:,:) = z(:,:)
       tmp1 = 0
 #ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
       call PZGEMM('C', 'N', nev, nev, na, CONE, z, 1, 1, &
                         sc_desc, tmp2, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#else
+      call PCGEMM('C', 'N', nev, nev, na, CONE, z, 1, 1, &
+                        sc_desc, tmp2, 1, 1, sc_desc, CZERO, tmp1, 1, 1, sc_desc)
+#endif
+
 #else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
       call ZGEMM('C','N',nev,nev,na,CONE,z,na,tmp2,na,CZERO,tmp1,na)
+#else
+      call CGEMM('C','N',nev,nev,na,CONE,z,na,tmp2,na,CZERO,tmp1,na)
+#endif
 #endif /* WITH_MPI */
       ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
       err = 0.0_rk
@@ -211,9 +236,17 @@
       ! Initialize tmp2 to unit matrix
       tmp2 = 0
 #ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
       call PZLASET('A', nev, nev, CZERO, CONE, tmp2, 1, 1, sc_desc)
+#else
+      call PCLASET('A', nev, nev, CZERO, CONE, tmp2, 1, 1, sc_desc)
+#endif
 #else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
       call ZLASET('A',nev,nev,CZERO,CONE,tmp2,na)
+#else
+      call CLASET('A',nev,nev,CZERO,CONE,tmp2,na)
+#endif
 #endif /* WITH_MPI */
 
       !      ! tmp1 = Z**T * Z - Unit Matrix
@@ -285,12 +318,6 @@ function check_correctness_evp_numeric_residuals_&
       real(kind=rk)                 :: ev(:)
       MATH_DATATYPE(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
       MATH_DATATYPE(kind=rck)                :: xc
-
-#ifndef WITH_MPI
-#if COMPLEXCASE == 1
-      complex(kind=rck)                :: zdotc, cdotc
-#endif /* COMPLEXCASE */
-#endif
 
       integer(kind=ik)                 :: sc_desc(:)
 

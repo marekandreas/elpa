@@ -58,26 +58,22 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 
 #ifdef TEST_SINGLE
 #  define EV_TYPE real(kind=C_FLOAT)
+#  define EV_TYPE_COMPLEX complex(kind=C_FLOAT_COMPLEX)
+#  define MATRIX_TYPE_COMPLEX complex(kind=C_FLOAT_COMPLEX)
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE real(kind=C_FLOAT)
 #  else
 #    define MATRIX_TYPE complex(kind=C_FLOAT_COMPLEX)
 #  endif
 #else
+#  define MATRIX_TYPE_COMPLEX complex(kind=C_DOUBLE_COMPLEX)
+#  define EV_TYPE_COMPLEX complex(kind=C_DOUBLE_COMPLEX)
 #  define EV_TYPE real(kind=C_DOUBLE)
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE real(kind=C_DOUBLE)
 #  else
 #    define MATRIX_TYPE complex(kind=C_DOUBLE_COMPLEX)
 #  endif
-#endif
-
-#ifdef TEST_SINGLE
-#define MATRIX_TYPE_COMPLEX complex(kind=C_FLOAT_COMPLEX)
-#define EV_TYPE_COMPLEX complex(kind=C_FLOAT_COMPLEX)
-#else
-#define MATRIX_TYPE_COMPLEX complex(kind=C_DOUBLE_COMPLEX)
-#define EV_TYPE_COMPLEX complex(kind=C_DOUBLE_COMPLEX)
 #endif
 
 #ifdef TEST_REAL
@@ -199,11 +195,18 @@ program test
    
 
       do j=1, na_cols
-         do i=1,na_rows
-               a_complex(i,j) = dcmplx(0.0, a_skewsymmetric(i,j))
-         enddo
+        do i=1,na_rows
+#ifdef TEST_DOUBLE
+          a_complex(i,j) = dcmplx(0.0, a_skewsymmetric(i,j))
+#endif
+#ifdef TEST_SINGLE
+          a_complex(i,j) = cmplx(0.0, a_skewsymmetric(i,j))
+#endif
+        enddo
       enddo
    
+
+
    z_complex(1:na_rows,1:na_cols)  = a_complex(1:na_rows,1:na_cols)
    as_complex(1:na_rows,1:na_cols) = a_complex(1:na_rows,1:na_cols)
 
@@ -239,8 +242,8 @@ program test
      status = check_correctness_evp_numeric_residuals_complex_double(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
                                                     nblk, myid, np_rows,np_cols, my_prow, my_pcol)
 #endif
-!    status = 0
-!    call check_status(status, myid)
+    status = 0
+    call check_status(status, myid)
 
 #ifdef WITH_MPI
      call MPI_BARRIER(MPI_COMM_WORLD, ierr)
@@ -271,27 +274,36 @@ program test
      call e_skewsymmetric%print_times("eigenvectors: skewsymmetric")
    endif
    
-   
    ! check eigenvalues
    do i=1, na
      if (myid == 0) then
-!          print *,"ev(", i,")=",ev_skewsymmetric(i)
+#ifdef TEST_DOUBLE
        if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-10) then
+#endif
+#ifdef TEST_SINGLE
+       if (abs(ev_complex(i)-ev_skewsymmetric(i))/abs(ev_complex(i)) .gt. 1e-4) then
+#endif
          print *,"ev: i=",i,ev_complex(i),ev_skewsymmetric(i)
          status = 1
      endif
      endif
    enddo
+
+
 !    call check_status(status, myid)
    
    z_complex(:,:) = 0
    do j=1, na_cols
      do i=1,na_rows
+#ifdef TEST_DOUBLE
        z_complex(i,j) = dcmplx(z_skewsymmetric(i,j), z_skewsymmetric(i,na_cols+j))
+#endif
+#ifdef TEST_SINGLE
+       z_complex(i,j) = cmplx(z_skewsymmetric(i,j), z_skewsymmetric(i,na_cols+j))
+#endif
      enddo
    enddo
    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
-   
    status = check_correctness_evp_numeric_residuals_ss(na, nev, as_skewsymmetric, z_complex, ev_skewsymmetric, &
                               sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
 

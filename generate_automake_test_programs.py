@@ -282,7 +282,7 @@ print("  " + " \\\n  ".join([
 print("endif")
 
 name = "test_skewsymmetric_real_double"
-print("check_SCRIPTS += " + name)
+print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
 print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
 print(name + "_LDADD = $(test_program_ldadd)")
@@ -293,7 +293,7 @@ print("  " + " \\\n  ".join([
 
 name = "test_skewsymmetric_real_single"
 print("if WANT_SINGLE_PRECISION_REAL")
-print("check_SCRIPTS += " + name)
+print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
 print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
 print(name + "_LDADD = $(test_program_ldadd)")
