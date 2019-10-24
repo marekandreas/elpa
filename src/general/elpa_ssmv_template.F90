@@ -31,7 +31,7 @@ subroutine elpa_cssmv(n, alpha, a, lda, x,  y)
 
   ! Test the input parameters.
   info = 0
-  if (n /= 0) then
+  if (n == 0) then
     return
   end if
   if ( n < 0 ) then
@@ -82,3 +82,4 @@ subroutine elpa_cssmv(n, alpha, a, lda, x,  y)
 
   return
 end subroutine
+
