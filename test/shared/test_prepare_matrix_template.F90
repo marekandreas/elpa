@@ -71,7 +71,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    & (na, myid, sc_desc, a, z, as)
+    & (na, myid, sc_desc, a, z, as, is_skewsymmetric)
 
 
       !use test_util
@@ -79,18 +79,31 @@
 
       implicit none
 #include "./test_precision_kinds.F90"
-      TEST_INT_TYPE, intent(in)    :: myid, na, sc_desc(:)
-      MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
+      TEST_INT_TYPE, intent(in)                 :: myid, na, sc_desc(:)
+      MATH_DATATYPE(kind=rck), intent(inout)    :: z(:,:), a(:,:), as(:,:)
 
 #if COMPLEXCASE == 1
-      real(kind=rk) :: xr(size(a,dim=1), size(a,dim=2))
+      real(kind=rk)                             :: xr(size(a,dim=1), size(a,dim=2))
 #endif /* COMPLEXCASE */
 
-      integer(kind=c_int), allocatable :: iseed(:)
-      integer(kind=c_int) ::  n
+      integer(kind=c_int), allocatable          :: iseed(:)
+      integer(kind=c_int)                       ::  n
+      integer(kind=c_int), intent(in), optional :: is_skewsymmetric
+      logical                                   :: skewsymmetric
+
+      if (present(is_skewsymmetric)) then
+        if (is_skewsymmetric .eq. 1) then
+          skewsymmetric = .true.
+        else
+          skewsymmetric = .false.
+        endif      
+      else
+        skewsymmetric = .false.
+      endif
 
       ! for getting a hermitian test matrix A we get a random matrix Z
       ! and calculate A = Z + Z**H
+      ! in case of a skewsymmetric matrix A = Z - Z**H
 
       ! we want different random numbers on every process
       ! (otherwise A might get rank deficient):
@@ -120,21 +133,45 @@
 
 #if REALCASE == 1
 #ifdef WITH_MPI
-      call p&
-          &BLAS_CHAR&
-          &tran(na, na, ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**T
+      if (skewsymmetric) then
+        call p&
+             &BLAS_CHAR&
+             &tran(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), -ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                   ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**T
+      else
+        call p&
+             &BLAS_CHAR&
+             &tran(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                   ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**T
+      endif
 #else /* WITH_MPI */
-      a = a + transpose(z)
+      if (skewsymmetric) then
+        a = a - transpose(z)
+      else
+        a = a + transpose(z)
+      endif
 #endif /* WITH_MPI */
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef WITH_MPI
-      call p&
-          &BLAS_CHAR&
-          &tranc(na, na, ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**H
+      if (skewsymmetric) then
+        call p&
+             &BLAS_CHAR&
+             &tranc(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), -ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                    ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**H
+      else
+        call p&
+             &BLAS_CHAR&
+             &tranc(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                    ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**H
+      endif
 #else /* WITH_MPI */
-      a = a + transpose(conjg(z))
+      if (skewsymmetric) then
+        a = a - transpose(conjg(z))
+      else
+        a = a + transpose(conjg(z))
+      endif
 #endif /* WITH_MPI */
 #endif /* COMPLEXCASE */
 
@@ -192,8 +229,8 @@ subroutine prepare_matrix_random_&
 
       TEST_INT_TYPE , value   :: myid, na, na_rows, na_cols
       TEST_INT_TYPE           :: sc_desc(1:9)
-      MATH_DATATYPE(kind=rck)    :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
+      MATH_DATATYPE(kind=rck) :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
+                                 as(1:na_rows,1:na_cols)
       call prepare_matrix_random_&
       &MATH_DATATYPE&
       &_&
@@ -213,12 +250,12 @@ subroutine prepare_matrix_random_&
       use precision_for_tests
       implicit none
 #include "./test_precision_kinds.F90"
-      TEST_INT_TYPE, intent(in)    :: myid, na, sc_desc(:)
-      MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
-      TEST_INT_TYPE, intent(in)        ::  nblk, np_rows, np_cols, my_prow, my_pcol
+      TEST_INT_TYPE, intent(in)              :: myid, na, sc_desc(:)
+      MATH_DATATYPE(kind=rck), intent(inout) :: z(:,:), a(:,:), as(:,:)
+      TEST_INT_TYPE, intent(in)              ::  nblk, np_rows, np_cols, my_prow, my_pcol
 
-      TEST_INT_TYPE                    :: ii
-      integer(kind=c_int)              :: rowLocal, colLocal
+      TEST_INT_TYPE                          :: ii
+      integer(kind=c_int)                    :: rowLocal, colLocal
 
 
       call prepare_matrix_random_&
@@ -292,8 +329,8 @@ subroutine prepare_matrix_random_spd_&
 
       TEST_INT_TYPE , value   :: myid, na, na_rows, na_cols
       TEST_INT_TYPE           :: sc_desc(1:9)
-      MATH_DATATYPE(kind=rck)    :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
-                                       as(1:na_rows,1:na_cols)
+      MATH_DATATYPE(kind=rck) :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
+                                 as(1:na_rows,1:na_cols)
       TEST_INT_TYPE , value   :: nblk, np_rows, np_cols, my_prow, my_pcol
       call prepare_matrix_random_spd_&
       &MATH_DATATYPE&
@@ -316,13 +353,13 @@ subroutine prepare_matrix_random_spd_&
      implicit none
 #include "./test_precision_kinds.F90"
 
-     TEST_INT_TYPE, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
-     MATH_DATATYPE(kind=rck) :: diagonalElement, subdiagonalElement
-     MATH_DATATYPE(kind=rck) :: d(:), sd(:), ds(:), sds(:)
-     MATH_DATATYPE(kind=rck) :: a(:,:), as(:,:)
+     TEST_INT_TYPE, intent(in) :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     MATH_DATATYPE(kind=rck)   :: diagonalElement, subdiagonalElement
+     MATH_DATATYPE(kind=rck)   :: d(:), sd(:), ds(:), sds(:)
+     MATH_DATATYPE(kind=rck)   :: a(:,:), as(:,:)
 
-     TEST_INT_TYPE                    :: ii
-     integer(kind=c_int)              :: rowLocal, colLocal
+     TEST_INT_TYPE             :: ii
+     integer(kind=c_int)       :: rowLocal, colLocal
 
      d(:) = diagonalElement
      sd(:) = subdiagonalElement
@@ -376,10 +413,10 @@ subroutine prepare_matrix_random_spd_&
      !use test_util
      implicit none
 
-     TEST_INT_TYPE, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
-     real(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
+     TEST_INT_TYPE, intent(in)     :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     real(kind=C_DATATYPE_KIND)    :: diagonalElement, subdiagonalElement
 
-     real(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
+     real(kind=C_DATATYPE_KIND)    :: d(:), sd(:), ds(:), sds(:)
 
 #if COMPLEXCASE == 1
      complex(kind=C_DATATYPE_KIND) :: a(:,:), as(:,:)
@@ -387,8 +424,8 @@ subroutine prepare_matrix_random_spd_&
 #if REALCASE == 1
 #endif
 
-     TEST_INT_TYPE                    :: ii
-     integer(kind=c_int)              :: rowLocal, colLocal
+     TEST_INT_TYPE                 :: ii
+     integer(kind=c_int)           :: rowLocal, colLocal
 #if COMPLEXCASE == 1
      d(:) = diagonalElement
      sd(:) = subdiagonalElement
@@ -435,7 +472,7 @@ subroutine prepare_matrix_random_spd_&
      use precision_for_tests
      implicit none
 
-     TEST_INT_TYPE, intent(in)           :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     TEST_INT_TYPE, intent(in)     :: na, nblk, np_rows, np_cols, my_prow, my_pcol
 
 #if REALCASE == 1
      real(kind=C_DATATYPE_KIND)    :: a(:,:), z(:,:), as(:,:)
@@ -444,8 +481,8 @@ subroutine prepare_matrix_random_spd_&
      complex(kind=C_DATATYPE_KIND) :: a(:,:), z(:,:), as(:,:)
 #endif
 
-     TEST_INT_TYPE                       :: i, j
-     integer(kind=c_int)                 :: rowLocal, colLocal
+     TEST_INT_TYPE                 :: i, j
+     integer(kind=c_int)           :: rowLocal, colLocal
 
      do i = 1, na
        do j = 1, na

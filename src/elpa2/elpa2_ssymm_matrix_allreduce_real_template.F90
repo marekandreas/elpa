@@ -52,19 +52,7 @@
 
 #include "../general/sanity.F90"
 
-#undef ROUTINE_NAME
-#ifdef SKEW_SYMMETRIC_BUILD
-#define ROUTINE_NAME ssymm_matrix_allreduce
-#else
-#define ROUTINE_NAME symm_matrix_allreduce
-#endif
-
-
-#ifdef SKEW_SYMMETRIC_BUILD
     subroutine ssymm_matrix_allreduce_&
-#else
-    subroutine symm_matrix_allreduce_&
-#endif
 &PRECISION &
                     (obj, n, a, lda, ldb, comm)
     !-------------------------------------------------------------------------------
@@ -82,11 +70,10 @@
 #else
       real(kind=REAL_DATATYPE)     :: a(lda,ldb)
 #endif
-      integer(kind=ik)             :: i, nc
-      integer(kind=MPI_KIND)       :: mpierr
+      integer(kind=ik)             :: i, nc, mpierr
       real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
-      call obj%timer%start("ROUTINE_NAME" // PRECISION_SUFFIX)
+      call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
       nc = 0
       do i=1,n
@@ -96,17 +83,12 @@
 
 #ifdef WITH_MPI
       call obj%timer%start("mpi_communication")
-      call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                         int(comm,kind=MPI_KIND), mpierr)
+      call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
       call obj%timer%stop("mpi_communication")
       nc = 0
       do i=1,n
         a(1:i,i) = h2(nc+1:nc+i)
-#ifdef SKEW_SYMMETRIC_BUILD
         a(i,1:i-1) = - a(1:i-1,i)
-#else
-        a(i,1:i-1) = a(1:i-1,i)
-#endif
         nc = nc+i
       enddo
 
@@ -116,11 +98,7 @@
       nc = 0
       do i=1,n
         a(1:i,i) = h1(nc+1:nc+i)
-#ifdef SKEW_SYMMETRIC_BUILD
         a(i,1:i-1) = - a(1:i-1,i)
-#else
-        a(i,1:i-1) = a(1:i-1,i)
-#endif
         nc = nc+i
       enddo
 
@@ -132,13 +110,9 @@
 !        nc = nc+i
 !      enddo
 
-      call obj%timer%stop("ROUTINE_NAME" // PRECISION_SUFFIX)
+      call obj%timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
-#ifdef SKEW_SYMMETRIC_BUILD
     end subroutine ssymm_matrix_allreduce_&
-#else
-    end subroutine symm_matrix_allreduce_&
-#endif
     &PRECISION
 
 

@@ -78,7 +78,11 @@ function elpa_solve_evp_&
    MATH_DATATYPE(kind=rck), optional,target,intent(out)  :: q(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=rck), intent(inout)       :: a(obj%local_nrows,obj%local_ncols)
-   MATH_DATATYPE(kind=rck), optional, target, intent(out)  :: q(obj%local_nrows,obj%local_ncols)
+#ifdef HAVE_SKEWSYMMETRIC
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
+#else
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
+#endif
 #endif
 
 #if REALCASE == 1
@@ -92,11 +96,15 @@ function elpa_solve_evp_&
    complex(kind=C_DATATYPE_KIND), allocatable      :: tau(:)
    complex(kind=C_DATATYPE_KIND), allocatable,target :: q_dummy(:,:)
    complex(kind=C_DATATYPE_KIND), pointer          :: q_actual(:,:)
-   integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
-   integer(kind=MPI_KIND)                          :: np_rowsMPI, np_colsMPI
 #endif /* COMPLEXCASE */
 
+
+   integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
+   integer(kind=MPI_KIND)                          :: np_rowsMPI, np_colsMPI
+
    logical                                         :: useGPU
+   integer(kind=c_int)                             :: skewsymmetric
+   logical                                         :: isSkewsymmetric
    logical                                         :: success
 
    logical                                         :: do_useGPU, do_useGPU_tridiag, &
@@ -115,7 +123,8 @@ function elpa_solve_evp_&
 
    logical                                         :: do_tridiag, do_solve, do_trans_ev
    integer(kind=ik)                                :: nrThreads
-
+   integer(kind=ik)                                :: global_index
+   
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
@@ -203,7 +212,15 @@ function elpa_solve_evp_&
    else
      useGPU = .false.
    endif
-
+   
+   call obj%get("is_skewsymmetric",skewsymmetric,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem getting option. Aborting..."
+     stop
+   endif
+    
+   isSkewsymmetric = (skewsymmetric == 1)
+   
    call obj%timer%start("mpi_communication")
 
    call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
@@ -212,13 +229,11 @@ function elpa_solve_evp_&
    my_prow = int(my_prowMPI,kind=c_int)
    my_pcol = int(my_pcolMPI,kind=c_int)
 
-#if COMPLEXCASE == 1
-   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsmPI, mpierr)
-   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsmPI, mpierr)
+   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
 
    np_rows = int(np_rowsMPI,kind=c_int)
    np_cols = int(np_colsMPI,kind=c_int)
-#endif
 
    call obj%timer%stop("mpi_communication")
 
@@ -403,17 +418,52 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
      q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 #endif
+     if (isSkewsymmetric) then
+     ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
+     ! This makes the eigenvectors complex. 
+     ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
+       q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols) = 0.0
+       do i = 1, obj%local_nrows
+!        global_index = indxl2g(i, nblk, my_prow, 0, np_rows)
+         global_index = np_rows*nblk*((i-1)/nblk) + MOD(i-1,nblk) + MOD(np_rows+my_prow-0, np_rows)*nblk + 1
+         if (mod(global_index-1,4) .eq. 0) then
+            ! do nothing
+         end if
+         if (mod(global_index-1,4) .eq. 1) then
+            q(i,obj%local_ncols+1:2*obj%local_ncols) = q(i,1:obj%local_ncols)
+            q(i,1:obj%local_ncols) = 0
+         end if
+         if (mod(global_index-1,4) .eq. 2) then
+            q(i,1:obj%local_ncols) = -q(i,1:obj%local_ncols)
+         end if
+         if (mod(global_index-1,4) .eq. 3) then
+            q(i,obj%local_ncols+1:2*obj%local_ncols) = -q(i,1:obj%local_ncols)
+            q(i,1:obj%local_ncols) = 0
+         end if
+       end do       
+     endif
 
      call obj%timer%start("back")
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("trans_ev")
 #endif
 
+     ! In the skew-symmetric case this transforms the real part
      call trans_ev_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
      & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+     if (isSkewsymmetric) then
+       ! Transform imaginary part
+       ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
+       call trans_ev_&
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION&
+             & (obj, na, nev, a, lda, tau, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), ldq, nblk, matrixCols, &
+                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+       endif
 
 #ifdef HAVE_LIKWID
      call likwid_markerStopRegion("trans_ev")

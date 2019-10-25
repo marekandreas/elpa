@@ -1,5 +1,5 @@
 !    This file is part of ELPA.
-!
+! 
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
@@ -49,97 +49,55 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+!
+! Author: Andreas Marek, MPCDF
+#include "config-f90.h"
 
-#include "../general/sanity.F90"
+module elpa_skewsymmetric_blas
+  use precision
+  use iso_c_binding
+  contains
 
-#undef ROUTINE_NAME
-#ifdef SKEW_SYMMETRIC_BUILD
-#define ROUTINE_NAME ssymm_matrix_allreduce
-#else
-#define ROUTINE_NAME symm_matrix_allreduce
-#endif
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "./precision_macros.h"
+#include "./elpa_ssr2_template.F90"
+#include "./elpa_ssmv_template.F90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
 
+#if defined(WANT_SINGLE_PRECISION_REAL)
 
-#ifdef SKEW_SYMMETRIC_BUILD
-    subroutine ssymm_matrix_allreduce_&
-#else
-    subroutine symm_matrix_allreduce_&
-#endif
-&PRECISION &
-                    (obj, n, a, lda, ldb, comm)
-    !-------------------------------------------------------------------------------
-    !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
-    !  On entry, only the upper half of A needs to be set
-    !  On exit, the complete matrix is set
-    !-------------------------------------------------------------------------------
-      use elpa_abstract_impl
-      use precision
-      implicit none
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)             :: n, lda, ldb, comm
-#ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)     :: a(lda,*)
-#else
-      real(kind=REAL_DATATYPE)     :: a(lda,ldb)
-#endif
-      integer(kind=ik)             :: i, nc
-      integer(kind=MPI_KIND)       :: mpierr
-      real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "./precision_macros.h"
+#include "./elpa_ssr2_template.F90"
+#include "./elpa_ssmv_template.F90"
+#undef REALCASE
+#undef SINGLE_PRECISION
 
-      call obj%timer%start("ROUTINE_NAME" // PRECISION_SUFFIX)
-
-      nc = 0
-      do i=1,n
-        h1(nc+1:nc+i) = a(1:i,i)
-        nc = nc+i
-      enddo
-
-#ifdef WITH_MPI
-      call obj%timer%start("mpi_communication")
-      call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                         int(comm,kind=MPI_KIND), mpierr)
-      call obj%timer%stop("mpi_communication")
-      nc = 0
-      do i=1,n
-        a(1:i,i) = h2(nc+1:nc+i)
-#ifdef SKEW_SYMMETRIC_BUILD
-        a(i,1:i-1) = - a(1:i-1,i)
-#else
-        a(i,1:i-1) = a(1:i-1,i)
-#endif
-        nc = nc+i
-      enddo
-
-#else /* WITH_MPI */
-!      h2=h1
-
-      nc = 0
-      do i=1,n
-        a(1:i,i) = h1(nc+1:nc+i)
-#ifdef SKEW_SYMMETRIC_BUILD
-        a(i,1:i-1) = - a(1:i-1,i)
-#else
-        a(i,1:i-1) = a(1:i-1,i)
-#endif
-        nc = nc+i
-      enddo
-
-#endif /* WITH_MPI */
-!      nc = 0
-!      do i=1,n
-!        a(1:i,i) = h2(nc+1:nc+i)
-!        a(i,1:i-1) = a(1:i-1,i)
-!        nc = nc+i
-!      enddo
-
-      call obj%timer%stop("ROUTINE_NAME" // PRECISION_SUFFIX)
-
-#ifdef SKEW_SYMMETRIC_BUILD
-    end subroutine ssymm_matrix_allreduce_&
-#else
-    end subroutine symm_matrix_allreduce_&
-#endif
-    &PRECISION
+#endif /* WANT_SINGLE_PRECISION_REAL */
 
 
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "./precision_macros.h"
+#include "./elpa_ssr2_template.F90"
+#include "./elpa_ssmv_template.F90"
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
 
+#if defined(WANT_SINGLE_PRECISION_COMPLEX)
+
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "./precision_macros.h"
+#include "./elpa_ssr2_template.F90"
+#include "./elpa_ssmv_template.F90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+
+end module

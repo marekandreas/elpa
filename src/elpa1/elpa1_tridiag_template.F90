@@ -110,6 +110,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU, wantDebug
+      integer(kind=c_int)                           :: skewsymmetric
+      logical                                       :: isSkewsymmetric
 
       MATH_DATATYPE(kind=rck), intent(out)          :: tau(na)
 #ifdef USE_ASSUMED_SIZE
@@ -181,6 +183,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                                                                           &PRECISION&
                                                                           &_&
                                                                           &MATH_DATATYPE
+      call obj%get("is_skewsymmetric",skewsymmetric,istat)
+      if (istat .ne. ELPA_OK) then
+           print *,"Problem getting option. Aborting..."
+           stop
+      endif
+      isSkewsymmetric = (skewsymmetric == 1)
+
       if(useGPU) then
         gpuString = "_gpu"
       else
@@ -538,10 +547,16 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                                     v_row(l_row_beg), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
 
                 if (i/=j) then
-                  call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                      ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), v_col(l_col_beg), 1_BLAS_KIND,  &
+                  if (isSkewsymmetric) then
+                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                        -ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), v_col(l_col_beg), 1_BLAS_KIND,  &
+                                        ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
 
-                                      ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+                  else
+                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                        ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), v_col(l_col_beg), 1_BLAS_KIND,  &
+                                        ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+                  endif
                 endif
                 if (wantDebug) call obj%timer%stop("blas")
               endif
@@ -560,11 +575,16 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                             ONE, u_col(l_col_beg), 1_BLAS_KIND)
 
                 if (i/=j) then
+                  if (isSkewsymmetric) then
+                    call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+                                        -ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),               &
+                                        v_col(l_col_beg), 1_BLAS_KIND, ONE, u_row(l_row_beg), 1_BLAS_KIND)
 
-                  call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
-                                      ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),               &
-                                      v_col(l_col_beg), 1_BLAS_KIND,                                &
-                                      ONE, u_row(l_row_beg), 1_BLAS_KIND)
+                  else
+                    call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+                                        ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),               &
+                                        v_col(l_col_beg), 1_BLAS_KIND, ONE, u_row(l_row_beg), 1_BLAS_KIND)
+                  endif
                 endif
                 if (wantDebug) call obj%timer%stop("blas")
               endif ! not useGPU
@@ -626,11 +646,17 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
                   a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
                           size_of_datatype
-
-                  call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                              ONE, a_dev + a_offset, lda, &
-                              v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
-                              ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
+                  if (isSkewsymmetric) then
+                     call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                                 -ONE, a_dev + a_offset, lda, &
+                                 v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
+                                 ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
+                  else
+                     call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                                 ONE, a_dev + a_offset, lda, &
+                                 v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
+                                 ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
+                  endif
               enddo
             end if !multiplication as one block / per stripes
 
@@ -710,13 +736,21 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           u_col = tmp
 #endif /* WITH_MPI */
         endif
-
-        call elpa_transpose_vectors_&
-        &MATH_DATATYPE&
-        &_&
-        &PRECISION &
-        (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-         mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
+        if (isSkewsymmetric) then
+           call elpa_transpose_vectors_ss_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+            mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
+        else
+           call elpa_transpose_vectors_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+            mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
+        endif
 
         ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
         x = 0
@@ -843,7 +877,11 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                         + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
           end if
 #if REALCASE == 1
-          d_vec(istep-1) = a_mat(l_rows,l_cols)
+          if (isSkewsymmetric) then
+            d_vec(istep-1) = 0.0_rk
+          else
+            d_vec(istep-1) = a_mat(l_rows,l_cols)
+          endif
 #endif
 #if COMPLEXCASE == 1
           d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
@@ -937,7 +975,11 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           successCUDA = cuda_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
         else !useGPU
-          d_vec(1) = a_mat(1,1)
+          if (isSkewsymmetric) then
+            d_vec(1) = 0.0_rk
+          else
+            d_vec(1) = a_mat(1,1)
+          endif
         endif !useGPU
       endif
 #endif
