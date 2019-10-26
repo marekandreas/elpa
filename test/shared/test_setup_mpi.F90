@@ -41,6 +41,22 @@
 !
 !
 #include "config-f90.h"
+
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
+
 module test_setup_mpi
 
   contains
@@ -51,12 +67,13 @@ module test_setup_mpi
       use precision_for_tests
       implicit none
 
-      integer(kind=ik)              :: mpierr
+      TEST_INT_MPI_TYPE              :: mpierr
 
-      integer(kind=ik), intent(out) :: myid, nprocs
+      TEST_INT_TYPE, intent(out)     :: myid, nprocs
+      TEST_INT_MPI_TYPE              :: myidMPI, nprocsMPI
 #ifdef WITH_OPENMP
-      integer(kind=ik)              :: required_mpi_thread_level, &
-                                       provided_mpi_thread_level
+      TEST_INT_MPI_TYPE              :: required_mpi_thread_level, &
+                                        provided_mpi_thread_level
 #endif
 
 
@@ -77,8 +94,11 @@ module test_setup_mpi
         call exit(77)
       endif
 #endif
-      call mpi_comm_rank(mpi_comm_world,myid,mpierr)
-      call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+      call mpi_comm_rank(mpi_comm_world, myidMPI,  mpierr)
+      call mpi_comm_size(mpi_comm_world, nprocsMPI,mpierr)
+
+      myid   = int(myidMPI,kind=BLAS_KIND)
+      nprocs = int(nprocsMPI,kind=BLAS_KIND)
 
       if (nprocs <= 1) then
         print *, "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"

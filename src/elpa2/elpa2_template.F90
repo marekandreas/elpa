@@ -91,7 +91,9 @@
    real(kind=C_DATATYPE_KIND), intent(inout)                          :: ev(obj%na)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: hh_trans(:,:)
 
-   integer(kind=c_int)                                                :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols, mpierr
+   integer(kind=c_int)                                                :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols
+   integer(kind=MPI_KIND)                                             :: my_peMPI, n_pesMPI, my_prowMPI, my_pcolMPI, &
+                                                                         np_rowsMPI, np_colsMPI, mpierr
    integer(kind=c_int)                                                :: nbw, num_blocks
 #if COMPLEXCASE == 1
    integer(kind=c_int)                                                :: l_cols_nev, l_rows, l_cols
@@ -203,13 +205,21 @@
     endif
 
     call obj%timer%start("mpi_communication")
-    call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
-    call mpi_comm_size(mpi_comm_all,n_pes,mpierr)
+    call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND) ,my_peMPI ,mpierr)
+    call mpi_comm_size(int(mpi_comm_all,kind=MPI_KIND) ,n_pesMPI ,mpierr)
 
-    call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-    call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-    call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-    call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+    call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
+    call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
+    call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
+    call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
+
+    my_pe = int(my_peMPI, kind=c_int)
+    n_pes = int(n_pesMPI, kind=c_int)
+    my_prow = int(my_prowMPI, kind=c_int)
+    np_rows = int(np_rowsMPI, kind=c_int)
+    my_pcol = int(my_pcolMPI, kind=c_int)
+    np_cols = int(np_colsMPI, kind=c_int)
+
     call obj%timer%stop("mpi_communication")
 
    ! special case na = 1
@@ -410,7 +420,7 @@
      simdSetAvailable(:) = 0
      call get_cpuid_set(simdSetAvailable, NUMBER_OF_INSTR)
 #ifdef WITH_MPI
-     call MPI_ALLREDUCE(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, mpi_comm_all, mpierr)
+     call MPI_ALLREDUCE(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
 #endif
 
      ! compare user chosen kernel with possible kernels
@@ -689,8 +699,8 @@
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
-       call mpi_bcast(ev, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
-       call mpi_bcast(e, na, MPI_REAL_PRECISION, 0, mpi_comm_all, mpierr)
+       call mpi_bcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       call mpi_bcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 #ifdef HAVE_LIKWID

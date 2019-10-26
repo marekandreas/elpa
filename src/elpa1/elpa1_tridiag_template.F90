@@ -124,7 +124,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       ! id in processor row and column and total numbers of processor rows and columns
       integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols
-      integer(kind=ik)                              :: mpierr
+      integer(kind=MPI_KIND)                        :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
+      integer(kind=MPI_KIND)                        :: mpierr
       integer(kind=ik)                              :: totalblocks, max_loc_block_rows, max_loc_block_cols, max_local_rows, &
                                                        max_local_cols
       ! updated after each istep (in the main cycle) to contain number of
@@ -194,10 +195,15 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
 
       if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+      my_prow = int(my_prowMPI, kind=c_int)
+      np_rows = int(np_rowsMPI, kind=c_int)
+      my_pcol = int(my_pcolMPI, kind=c_int)
+      np_cols = int(np_colsMPI, kind=c_int)
       if (wantDebug) call obj%timer%stop("mpi_communication")
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -385,16 +391,16 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
               call PRECISION_GEMV('N',   &
-                                  l_rows, 2*n_stored_vecs,                                  &
-                                  ONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),        &
+                                  int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
+                                  ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
 #if REALCASE == 1
-                                  uv_stored_cols(l_cols+1,1), ubound(uv_stored_cols,dim=1), &
+                                  uv_stored_cols(l_cols+1,1), int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND), &
 #endif
 #if COMPLEXCASE == 1
-                                   aux, 1,  &
+                                   aux, 1_BLAS_KIND,  &
 
 #endif
-                                  ONE, v_row, 1)
+                                  ONE, v_row, 1_BLAS_KIND)
                if (wantDebug) call obj%timer%stop("blas")
 
             endif
@@ -409,8 +415,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_allreduce(aux1, aux2, 2, MPI_MATH_DATATYPE_PRECISION, &
-                               MPI_SUM, mpi_comm_rows, mpierr)
+            call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+                               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           aux2 = aux1
@@ -460,8 +466,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #ifdef WITH_MPI
          if (wantDebug) call obj%timer%start("mpi_communication")
          ! Broadcast the Householder Vector (and tau) along columns
-         call MPI_Bcast(v_row, l_rows+1, MPI_MATH_DATATYPE_PRECISION,    &
-                        pcol(istep, nblk, np_cols), mpi_comm_cols, mpierr)
+         call MPI_Bcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                        int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
          if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -527,15 +533,15 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               if (mod(n_iter,n_threads) == my_thread) then
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
-                                    l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                                    ONE, a_mat(l_row_beg,l_col_beg), lda,         &
-                                    v_row(l_row_beg), 1, ONE, uc_p(l_col_beg,my_thread), 1)
+                                    int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                    ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),         &
+                                    v_row(l_row_beg), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
 
                 if (i/=j) then
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,          &
-                                      ONE, a_mat(l_row_beg,l_col_beg), lda, v_col(l_col_beg), 1,  &
+                  call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                      ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), v_col(l_col_beg), 1_BLAS_KIND,  &
 
-                                      ONE, ur_p(l_row_beg,my_thread), 1)
+                                      ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
                 endif
                 if (wantDebug) call obj%timer%stop("blas")
               endif
@@ -548,17 +554,17 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               if (.not. useGPU) then
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
-                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                            ONE, a_mat(l_row_beg, l_col_beg), lda,         &
-                            v_row(l_row_beg), 1,                           &
-                            ONE, u_col(l_col_beg), 1)
+                            int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                            ONE, a_mat(l_row_beg, l_col_beg), int(lda,kind=BLAS_KIND),         &
+                            v_row(l_row_beg), 1_BLAS_KIND,                           &
+                            ONE, u_col(l_col_beg), 1_BLAS_KIND)
 
                 if (i/=j) then
 
-                  call PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1,  &
-                                      ONE, a_mat(l_row_beg,l_col_beg), lda,               &
-                                      v_col(l_col_beg), 1,                                &
-                                      ONE, u_row(l_row_beg), 1)
+                  call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+                                      ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),               &
+                                      v_col(l_col_beg), 1_BLAS_KIND,                                &
+                                      ONE, u_row(l_row_beg), 1_BLAS_KIND)
                 endif
                 if (wantDebug) call obj%timer%stop("blas")
               endif ! not useGPU
@@ -663,13 +669,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #if COMPLEXCASE == 1
             call PRECISION_GEMV('C',     &
 #endif
-                                l_rows, 2*n_stored_vecs,   &
-                                ONE, vu_stored_rows, ubound(vu_stored_rows,dim=1),   &
-                                v_row,  1, ZERO, aux, 1)
+                                int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                                ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
 
-            call PRECISION_GEMV('N', l_cols, 2*n_stored_vecs,   &
-                                ONE, uv_stored_cols, ubound(uv_stored_cols,dim=1),   &
-                                aux, 1, ONE, u_col,  1)
+            call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                                ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
+                                aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
             if (wantDebug) call obj%timer%stop("blas")
           endif
 
@@ -697,8 +703,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp, u_col, l_cols, MPI_MATH_DATATYPE_PRECISION,    &
-                             MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(tmp, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           u_col = tmp
@@ -719,7 +725,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_allreduce(x, vav, 1, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+        call mpi_allreduce(x, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -797,10 +803,11 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             else !useGPU
               if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
-                                   l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,    &
-                                   ONE, vu_stored_rows(l_row_beg,1), ubound(vu_stored_rows,dim=1),   &
-                                   uv_stored_cols(l_col_beg,1), ubound(uv_stored_cols,dim=1),        &
-                                   ONE, a_mat(l_row_beg,l_col_beg), lda)
+                                   int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                   int(2*n_stored_vecs,kind=BLAS_KIND),    &
+                                   ONE, vu_stored_rows(l_row_beg,1), int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                   uv_stored_cols(l_col_beg,1), int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
+                                   ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND))
               if (wantDebug) call obj%timer%stop("blas")
             endif !useGPU
           enddo
@@ -884,7 +891,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         endif
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, prow(1, nblk, np_rows), mpi_comm_rows, mpierr)
+        call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -892,7 +900,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_bcast(tau(2), 1, MPI_COMPLEX_PRECISION, pcol(2, nblk, np_cols), mpi_comm_cols, mpierr)
+      call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
+                     int(mpi_comm_cols,kind=MPI_KIND), mpierr)
       if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -975,13 +984,17 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
       tmp_real = d_vec
-      call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+      call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
       tmp_real = d_vec
-      call mpi_allreduce(tmp_real, d_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+      call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(mpi_comm_cols,kind=MPI_KIND), mpierr)
       tmp_real = e_vec
-      call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+      call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
       tmp_real = e_vec
-      call mpi_allreduce(tmp_real, e_vec, na, MPI_REAL_PRECISION, MPI_SUM, mpi_comm_cols, mpierr)
+      call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(mpi_comm_cols,kind=MPI_KIND), mpierr)
       if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 

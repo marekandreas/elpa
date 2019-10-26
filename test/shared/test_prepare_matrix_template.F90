@@ -41,6 +41,32 @@
 !
 ! Author: A. Marek, MPCDF
 
+#include "config-f90.h"
+
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#define TEST_C_INT_TYPE_PTR long int*
+#define TEST_C_INT_TYPE long int
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#define TEST_C_INT_TYPE_PTR int*
+#define TEST_C_INT_TYPE int
+#endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#define TEST_C_INT_MPI_TYPE_PTR long int*
+#define TEST_C_INT_MPI_TYPE long int
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#define TEST_C_INT_MPI_TYPE_PTR int*
+#define TEST_C_INT_MPI_TYPE int
+#endif
+
+
     subroutine prepare_matrix_random_&
     &MATH_DATATYPE&
     &_&
@@ -49,19 +75,19 @@
 
 
       !use test_util
-      !use elpa_scalapack_interfaces
+      use tests_scalapack_interfaces
 
       implicit none
 #include "./test_precision_kinds.F90"
-      integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
+      TEST_INT_TYPE, intent(in)    :: myid, na, sc_desc(:)
       MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
 
 #if COMPLEXCASE == 1
       real(kind=rk) :: xr(size(a,dim=1), size(a,dim=2))
 #endif /* COMPLEXCASE */
 
-      integer, allocatable :: iseed(:)
-      integer ::  n
+      integer(kind=c_int), allocatable :: iseed(:)
+      integer(kind=c_int) ::  n
 
       ! for getting a hermitian test matrix A we get a random matrix Z
       ! and calculate A = Z + Z**H
@@ -96,7 +122,7 @@
 #ifdef WITH_MPI
       call p&
           &BLAS_CHAR&
-          &tran(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**T
+          &tran(na, na, ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**T
 #else /* WITH_MPI */
       a = a + transpose(z)
 #endif /* WITH_MPI */
@@ -106,7 +132,7 @@
 #ifdef WITH_MPI
       call p&
           &BLAS_CHAR&
-          &tranc(na, na, ONE, z, 1, 1, sc_desc, ONE, a, 1, 1, sc_desc) ! A = A + Z**H
+          &tranc(na, na, ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**H
 #else /* WITH_MPI */
       a = a + transpose(conjg(z))
 #endif /* WITH_MPI */
@@ -127,25 +153,25 @@
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-    !c> void prepare_matrix_random_real_double_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       double *a, double *z, double *as);
+    !c> void prepare_matrix_random_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
+    !c>                                          TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                          double *a, double *z, double *as);
 #else
-    !c> void prepare_matrix_random_real_single_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       float *a, float *z, float *as);
+    !c> void prepare_matrix_random_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
+    !c>                                          TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                          float *a, float *z, float *as);
 #endif
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void prepare_matrix_random_complex_double_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       complex double *a, complex double *z, complex double *as);
+    !c> void prepare_matrix_random_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
+    !c>                                             TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                             complex double *a, complex double *z, complex double *as);
 #else
-    !c> void prepare_matrix_random_complex_single_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       complex float *a, complex float *z, complex float *as);
+    !c> void prepare_matrix_random_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
+    !c>                                             TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                             complex float *a, complex float *z, complex float *as);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -164,8 +190,8 @@ subroutine prepare_matrix_random_&
       implicit none
 #include "./test_precision_kinds.F90"
 
-      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
-      integer(kind=c_int)           :: sc_desc(1:9)
+      TEST_INT_TYPE , value   :: myid, na, na_rows, na_cols
+      TEST_INT_TYPE           :: sc_desc(1:9)
       MATH_DATATYPE(kind=rck)    :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                        as(1:na_rows,1:na_cols)
       call prepare_matrix_random_&
@@ -187,11 +213,12 @@ subroutine prepare_matrix_random_&
       use precision_for_tests
       implicit none
 #include "./test_precision_kinds.F90"
-      integer(kind=ik), intent(in)    :: myid, na, sc_desc(:)
+      TEST_INT_TYPE, intent(in)    :: myid, na, sc_desc(:)
       MATH_DATATYPE(kind=rck), intent(inout)     :: z(:,:), a(:,:), as(:,:)
-      integer, intent(in)        ::  nblk, np_rows, np_cols, my_prow, my_pcol
+      TEST_INT_TYPE, intent(in)        ::  nblk, np_rows, np_cols, my_prow, my_pcol
 
-      integer                    :: ii, rowLocal, colLocal
+      TEST_INT_TYPE                    :: ii
+      integer(kind=c_int)              :: rowLocal, colLocal
 
 
       call prepare_matrix_random_&
@@ -202,8 +229,13 @@ subroutine prepare_matrix_random_&
 
       ! hermitian diagonaly dominant matrix => positive definite
       do ii=1, na
-        if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-          a(rowLocal,colLocal) = real(a(rowLocal, colLocal)) + na + 1
+        if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii,kind=c_int), &
+                                                  rowLocal, colLocal, &
+                                                  int(nblk,kind=c_int), int(np_rows,kind=c_int),      &
+                                                  int(np_cols,kind=c_int), int(my_prow,kind=c_int),  &
+                                                  int(my_pcol,kind=c_int) )) then
+          a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = &
+                  real(a(int(rowLocal,kind=INT_TYPE), int(colLocal,kind=INT_TYPE))) + na + 1
         end if
       end do
 
@@ -213,29 +245,33 @@ subroutine prepare_matrix_random_&
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-    !c> void prepare_matrix_random_spd_real_double_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       double *a, double *z, double *as,
-    !c>                                       int nblk, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> void prepare_matrix_random_spd_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
+    !c>                                              TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                              double *a, double *z, double *as,
+    !c>                                              TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, 
+    !c>                                              TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
-    !c> void prepare_matrix_random_spd_real_single_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       float *a, float *z, float *as,
-    !c>                                       int nblk, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> void prepare_matrix_random_spd_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
+    !c>                                              TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                              float *a, float *z, float *as,
+    !c>                                              TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                              TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #endif
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void prepare_matrix_random_spd_complex_double_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       complex double *a, complex double *z, complex double *as,
-    !c>                                       int nblk, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> void prepare_matrix_random_spd_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
+    !c>                                                 TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                 complex double *a, complex double *z, complex double *as,
+    !c>                                                 TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE np_rows, 
+    !c>                                                 TEST_C_INT_TYPE np_cols, TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
-    !c> void prepare_matrix_random_spd_complex_single_f(int na, int myid, int na_rows, int na_cols,
-    !c>                                       int sc_desc[9],
-    !c>                                       complex float *a, complex float *z, complex float *as,
-    !c>                                       int nblk, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> void prepare_matrix_random_spd_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows,
+    !c>                                                 TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                 complex float *a, complex float *z, complex float *as,
+    !c>                                                 TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE np_rows, 
+    !c>                                                 TEST_C_INT_TYPE np_cols, TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -254,11 +290,11 @@ subroutine prepare_matrix_random_spd_&
       implicit none
 #include "./test_precision_kinds.F90"
 
-      integer(kind=c_int) , value   :: myid, na, na_rows, na_cols
-      integer(kind=c_int)           :: sc_desc(1:9)
+      TEST_INT_TYPE , value   :: myid, na, na_rows, na_cols
+      TEST_INT_TYPE           :: sc_desc(1:9)
       MATH_DATATYPE(kind=rck)    :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                        as(1:na_rows,1:na_cols)
-      integer(kind=c_int) , value   :: nblk, np_rows, np_cols, my_prow, my_pcol
+      TEST_INT_TYPE , value   :: nblk, np_rows, np_cols, my_prow, my_pcol
       call prepare_matrix_random_spd_&
       &MATH_DATATYPE&
       &_&
@@ -280,12 +316,13 @@ subroutine prepare_matrix_random_spd_&
      implicit none
 #include "./test_precision_kinds.F90"
 
-     integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     TEST_INT_TYPE, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
      MATH_DATATYPE(kind=rck) :: diagonalElement, subdiagonalElement
      MATH_DATATYPE(kind=rck) :: d(:), sd(:), ds(:), sds(:)
      MATH_DATATYPE(kind=rck) :: a(:,:), as(:,:)
 
-     integer                    :: ii, rowLocal, colLocal
+     TEST_INT_TYPE                    :: ii
+     integer(kind=c_int)              :: rowLocal, colLocal
 
      d(:) = diagonalElement
      sd(:) = subdiagonalElement
@@ -293,19 +330,28 @@ subroutine prepare_matrix_random_spd_&
 
      ! set up the diagonal and subdiagonals (for general solver test)
      do ii=1, na ! for diagonal elements
-       if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a(rowLocal,colLocal) = diagonalElement
+       if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                 int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                 int(my_pcol,kind=c_int) ) ) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = diagonalElement
        endif
      enddo
      do ii=1, na-1
-       if (map_global_array_index_to_local_index(ii, ii+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a(rowLocal,colLocal) = subdiagonalElement
+       if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii+1,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                 int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                 int(my_pcol,kind=c_int) ) ) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = subdiagonalElement
        endif
      enddo
 
      do ii=2, na
-       if (map_global_array_index_to_local_index(ii, ii-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a(rowLocal,colLocal) = subdiagonalElement
+       if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii-1,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                 int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                 int(my_pcol,kind=c_int) ) ) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = subdiagonalElement
        endif
      enddo
 
@@ -330,7 +376,7 @@ subroutine prepare_matrix_random_spd_&
      !use test_util
      implicit none
 
-     integer, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     TEST_INT_TYPE, intent(in)        :: na, nblk, np_rows, np_cols, my_prow, my_pcol
      real(kind=C_DATATYPE_KIND) :: diagonalElement, subdiagonalElement
 
      real(kind=C_DATATYPE_KIND) :: d(:), sd(:), ds(:), sds(:)
@@ -341,26 +387,36 @@ subroutine prepare_matrix_random_spd_&
 #if REALCASE == 1
 #endif
 
-     integer                    :: ii, rowLocal, colLocal
+     TEST_INT_TYPE                    :: ii
+     integer(kind=c_int)              :: rowLocal, colLocal
 #if COMPLEXCASE == 1
      d(:) = diagonalElement
      sd(:) = subdiagonalElement
 
      ! set up the diagonal and subdiagonals (for general solver test)
      do ii=1, na ! for diagonal elements
-       if (map_global_array_index_to_local_index(ii, ii, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a(rowLocal,colLocal) = diagonalElement
+       if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int),                   &
+                                                 int(np_rows,kind=c_int), int(np_cols,kind=c_int),                 &
+                                                 int(my_prow,kind=c_int), int(my_pcol,kind=c_int) )) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = diagonalElement
        endif
      enddo
      do ii=1, na-1
-       if (map_global_array_index_to_local_index(ii, ii+1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a(rowLocal,colLocal) = subdiagonalElement
+       if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii+1,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int),                   &
+                                                 int(np_rows,kind=c_int), int(np_cols,kind=c_int),                 &
+                                                 int(my_prow,kind=c_int), int(my_pcol,kind=c_int) )) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = subdiagonalElement
        endif
      enddo
 
      do ii=2, na
-       if (map_global_array_index_to_local_index(ii, ii-1, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
-         a(rowLocal,colLocal) = subdiagonalElement
+       if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii-1,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int),                   &
+                                                 int(np_rows,kind=c_int), int(np_cols,kind=c_int),                 &
+                                                 int(my_prow,kind=c_int), int(my_pcol,kind=c_int) )) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = subdiagonalElement
        endif
      enddo
 
@@ -379,7 +435,7 @@ subroutine prepare_matrix_random_spd_&
      use precision_for_tests
      implicit none
 
-     integer, intent(in)           :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     TEST_INT_TYPE, intent(in)           :: na, nblk, np_rows, np_cols, my_prow, my_pcol
 
 #if REALCASE == 1
      real(kind=C_DATATYPE_KIND)    :: a(:,:), z(:,:), as(:,:)
@@ -388,15 +444,21 @@ subroutine prepare_matrix_random_spd_&
      complex(kind=C_DATATYPE_KIND) :: a(:,:), z(:,:), as(:,:)
 #endif
 
-     integer                       :: i, j, rowLocal, colLocal
+     TEST_INT_TYPE                       :: i, j
+     integer(kind=c_int)                 :: rowLocal, colLocal
 
      do i = 1, na
        do j = 1, na
-         if (map_global_array_index_to_local_index(i, j, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+         if (map_global_array_index_to_local_index(int(i,kind=c_int), int(j,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int),                   &
+                                                 int(np_rows,kind=c_int), int(np_cols,kind=c_int),                 &
+                                                 int(my_prow,kind=c_int), int(my_pcol,kind=c_int) )) then
            if (j .le. i) then
-             a(rowLocal,colLocal) = real((na+1-i), kind=C_DATATYPE_KIND) / real(na, kind=C_DATATYPE_KIND)
+             a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = &
+                     real((na+1-i), kind=C_DATATYPE_KIND) / real(na, kind=C_DATATYPE_KIND)
            else
-             a(rowLocal,colLocal) = real((na+1-j), kind=C_DATATYPE_KIND) / real(na, kind=C_DATATYPE_KIND)
+             a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = &
+                     real((na+1-j), kind=C_DATATYPE_KIND) / real(na, kind=C_DATATYPE_KIND)
            endif
          endif
        enddo

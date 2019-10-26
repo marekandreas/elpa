@@ -208,6 +208,68 @@ if test x"${enable_heterogenous_cluster_support}" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_HETEROGENOUS_CLUSTER_SUPPORT],[test x"$enable_heterogenous_cluster_support" = x"yes"])
 
+dnl 64bit integer support for BLACS/LAPACK/SCALAPACK support
+dnl first long int
+AC_CHECK_SIZEOF([long int])
+size_of_long_int="${ac_cv_sizeof_long_int}"
+
+dnl then 64bit blas
+AC_MSG_CHECKING(whether 64bit integers should be used for math libraries (BLAS/LAPACK/SCALAPACK))
+AC_ARG_ENABLE([64bit-integer-math-support],
+              AS_HELP_STRING([--64bit-integer-math-support],
+                             [allows to link against the 64bit integer versions of the math libraries BLAS, LAPACK, and SCALAPACK]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_64bit_integer_math_support=yes
+	       else
+	         enable_64bit_integer_math_support=no
+	       fi
+	       ],
+              [enable_64bit_integer_math_support="no"])
+AC_MSG_RESULT([$enable_64bit_integer_math_support])
+if test x"${enable_64bit_integer_math_support}" = x"yes"; then
+  if test x"${enable_legacy}" = x"yes"; then
+    AC_MSG_ERROR([You cannot both enable 64bit integer support and the legacy interface!])
+  fi
+  dnl at least INTEL MPI does _NOT_ support 64BIT integer mode  for C thus disable C tests in this Case
+  if test x"${enable_c_tests}" = x"yes"; then
+     AC_MSG_ERROR([You cannot both define 64bit integer support and C tests. Reconfigure!])
+  fi
+  dnl check whether long int is the correct data-type in C
+  if test x"${size_of_long_int}" = x"8"; then
+    echo "Found C data-type \"long int\" with 8 bytes"
+  else
+    AC_MSG_ERROR([The C data-type "long int" is only ${size_of_long_int} bytes; Needed is 8 bytes])
+  fi
+
+  AC_DEFINE([HAVE_64BIT_INTEGER_MATH_SUPPORT], [1], [allow to link against the 64bit integer versions of math libraries])
+fi
+AM_CONDITIONAL([HAVE_64BIT_INTEGER_MATH_SUPPORT],[test x"$enable_64bit_integer_math_support" = x"yes"])
+
+dnl then 64bit blas
+AC_MSG_CHECKING(whether 64bit integers should be used for the MPI library)
+AC_ARG_ENABLE([64bit-integer-mpi-support],
+              AS_HELP_STRING([--64bit-integer-mpi-support],
+                             [allows to link against the 64bit integer versions of the MPI library]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_64bit_integer_mpi_support=yes
+	       else
+	         enable_64bit_integer_mpi_support=no
+	       fi
+	       ],
+              [enable_64bit_integer_mpi_support="no"])
+AC_MSG_RESULT([$enable_64bit_integer_mpi_support])
+if test x"${enable_64bit_integer_mpi_support}" = x"yes"; then
+  if test x"${enable_legacy}" = x"yes"; then
+    AC_MSG_ERROR([You cannot both enable 64bit integer support and the legacy interface!])
+  fi
+  AC_DEFINE([HAVE_64BIT_INTEGER_MPI_SUPPORT], [1], [allow to link against the 64bit integer versions of the MPI library])
+fi
+AM_CONDITIONAL([HAVE_64BIT_INTEGER_MPI_SUPPORT],[test x"$enable_64bit_integer_mpi_support" = x"yes"])
+
+
+
 AC_MSG_CHECKING(whether C compiler can use _Generic )
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 int main(int argc, char **argv) {

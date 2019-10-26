@@ -53,8 +53,6 @@
 #include <elpa/elpa.h>
 #include <assert.h>
 
-#include "test/shared/generated.h"
-
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
 #error "define exactly one of TEST_REAL or TEST_COMPLEX"
 #endif
@@ -106,30 +104,57 @@
 #define assert_elpa_ok(x) assert(x == ELPA_OK)
 
 
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_C_INT_TYPE_PTR long int*
+#define C_INT_TYPE_PTR long int*
+#define TEST_C_INT_TYPE long int
+#define C_INT_TYPE long int
+#else
+#define TEST_C_INT_TYPE_PTR int*
+#define C_INT_TYPE_PTR int*
+#define TEST_C_INT_TYPE int
+#define C_INT_TYPE int
+#endif
+
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_C_INT_MPI_TYPE_PTR long int*
+#define C_INT_MPI_TYPE_PTR long int*
+#define TEST_C_INT_MPI_TYPE long int
+#define C_INT_MPI_TYPE long int
+#else
+#define TEST_C_INT_MPI_TYPE_PTR int*
+#define C_INT_MPI_TYPE_PTR int*
+#define TEST_C_INT_MPI_TYPE int
+#define C_INT_MPI_TYPE int
+#endif
+#include "test/shared/generated.h"
+
 int main(int argc, char** argv) {
    /* matrix dimensions */
-   int na, nev, nblk;
+   C_INT_TYPE na, nev, nblk;
 
    /* mpi */
-   int myid, nprocs;
-   int na_cols, na_rows;
-   int np_cols, np_rows;
-   int my_prow, my_pcol;
-   int mpi_comm;
-   int provided_mpi_thread_level;
+   C_INT_TYPE myid, nprocs;
+   C_INT_MPI_TYPE myidMPI, nprocsMPI;
+   C_INT_TYPE na_cols, na_rows;
+   C_INT_TYPE np_cols, np_rows;
+   C_INT_TYPE my_prow, my_pcol;
+   C_INT_TYPE mpi_comm;
+   C_INT_MPI_TYPE provided_mpi_thread_level;
 
    /* blacs */
-   int my_blacs_ctxt, sc_desc[9], info;
+   C_INT_TYPE my_blacs_ctxt, sc_desc[9], info;
 
    /* The Matrix */
    MATRIX_TYPE *a, *as, *z, *b, *bs;
    EV_TYPE *ev;
 
-   int error, status;
+   C_INT_TYPE error, status;
+   int error_elpa;
 
    elpa_t handle;
 
-   int value;
+   int  value;
 #ifdef WITH_MPI
 #ifndef WITH_OPENMP
    MPI_Init(&argc, &argv);
@@ -143,8 +168,10 @@ int main(int argc, char** argv) {
    }
 #endif
 
-   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+   MPI_Comm_size(MPI_COMM_WORLD, &nprocsMPI);
+   nprocs = (C_INT_TYPE) nprocsMPI;
+   MPI_Comm_rank(MPI_COMM_WORLD, &myidMPI);
+   myid = (C_INT_TYPE) myidMPI;
 
 #else
    nprocs = 1;
@@ -161,7 +188,7 @@ int main(int argc, char** argv) {
      nblk = 16;
    }
 
-   for (np_cols = (int) sqrt((double) nprocs); np_cols > 1; np_cols--) {
+   for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
      if (nprocs % np_cols == 0) {
        break;
      }
@@ -198,41 +225,41 @@ int main(int argc, char** argv) {
      exit(1);
    }
 
-   handle = elpa_allocate(&error);
-   //assert_elpa_ok(error);
+   handle = elpa_allocate(&error_elpa);
+   //assert_elpa_ok(error_elpa);
 
    /* Set parameters */
-   elpa_set(handle, "na", na, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "na", (int) na, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "nev", nev, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "nev", (int) nev, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
    if (myid == 0) {
      printf("Setting the matrix parameters na=%d, nev=%d \n",na,nev);
    }
-   elpa_set(handle, "local_nrows", na_rows, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "local_nrows", (int) na_rows, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "local_ncols", na_cols, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "local_ncols", (int) na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "nblk", nblk, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "nblk", (int) nblk, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
 #ifdef WITH_MPI
-   elpa_set(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "mpi_comm_parent", (int) (MPI_Comm_c2f(MPI_COMM_WORLD)), &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "process_row", my_prow, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "process_row", (int) my_prow, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "process_col", my_pcol, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "process_col", (int) my_pcol, &error_elpa);
+   assert_elpa_ok(error_elpa);
 #endif
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
-   elpa_set(handle, "blacs_context", my_blacs_ctxt, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "blacs_context", (int) my_blacs_ctxt, &error_elpa);
+   assert_elpa_ok(error_elpa);
 #endif
 
    /* Setup */
@@ -240,44 +267,44 @@ int main(int argc, char** argv) {
 
    /* Set tunables */
 #ifdef TEST_SOLVER_1STAGE
-   elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &error);
+   elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &error_elpa);
 #else
-   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
+   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error_elpa);
 #endif
-   assert_elpa_ok(error);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "gpu", TEST_GPU, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "gpu", TEST_GPU, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
 #if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)
 # ifdef TEST_COMPLEX
-   elpa_set(handle, "complex_kernel", TEST_KERNEL, &error);
+   elpa_set(handle, "complex_kernel", TEST_KERNEL, &error_elpa);
 # else
-   elpa_set(handle, "real_kernel", TEST_KERNEL, &error);
+   elpa_set(handle, "real_kernel", TEST_KERNEL, &error_elpa);
 # endif
-   assert_elpa_ok(error);
+   assert_elpa_ok(error_elpa);
 #endif
 
-   elpa_get(handle, "solver", &value, &error);
+   elpa_get(handle, "solver", &value, &error_elpa);
    if (myid == 0) {
      printf("Solver is set to %d \n", value);
    }
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-     elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error);
+     elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error_elpa);
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      //a = as, so that the problem can be solved again
      memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE));
-     elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error);
+     elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error_elpa);
 #endif
 #else
    /* Solve EV problem */
-   elpa_eigenvectors(handle, a, ev, z, &error);
+   elpa_eigenvectors(handle, a, ev, z, &error_elpa);
 #endif
-   assert_elpa_ok(error);
+   assert_elpa_ok(error_elpa);
 
-   elpa_deallocate(handle, &error);
-   elpa_uninit(&error);
+   elpa_deallocate(handle, &error_elpa);
+   elpa_uninit(&error_elpa);
 
    /* check the results */
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)

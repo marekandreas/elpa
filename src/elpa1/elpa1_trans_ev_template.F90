@@ -115,7 +115,8 @@
       logical, intent(in)                           :: useGPU
       integer(kind=ik)                              :: max_stored_rows, max_stored_rows_fac
 
-      integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols
+      integer(kind=MPI_KIND)                        :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
       integer(kind=ik)                              :: totalblocks, max_blocks_row, max_blocks_col, max_local_rows, max_local_cols
       integer(kind=ik)                              :: l_cols, l_rows, l_colh, nstor
       integer(kind=ik)                              :: istep, n, nc, ic, ics, ice, nb, cur_pcol
@@ -150,10 +151,15 @@
       gpuString)
 
       call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI, mpierr)
+
+      my_prow = int(my_prowMPI, kind=c_int)
+      np_rows = int(np_rowsMPI, kind=c_int)
+      my_pcol = int(my_pcolMPI, kind=c_int)
+      np_cols = int(np_colsMPI, kind=c_int)
       call obj%timer%stop("mpi_communication")
 
       call obj%get("max_stored_rows",max_stored_rows_fac, error)
@@ -271,7 +277,8 @@
 #ifdef WITH_MPI
         call obj%timer%start("mpi_communication")
         if (nb>0) &
-          call MPI_Bcast(hvb, nb, MPI_MATH_DATATYPE_PRECISION , cur_pcol, mpi_comm_cols, mpierr)
+          call MPI_Bcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
+                         int(mpi_comm_cols,kind=MPI_KIND), mpierr)
         call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -301,7 +308,8 @@
 #if COMPLEXCASE == 1
             call PRECISION_HERK('U', 'C',   &
 #endif
-                                 nstor, l_rows, ONE, hvm, ubound(hvm,dim=1), ZERO, tmat, max_stored_rows)
+                                 int(nstor,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
+                                 hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), ZERO, tmat, int(max_stored_rows,kind=BLAS_KIND))
           call obj%timer%stop("blas")
           nc = 0
           do n = 1, nstor-1
@@ -310,7 +318,8 @@
           enddo
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          if (nc>0) call mpi_allreduce( h1, h2, nc, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          if (nc>0) call mpi_allreduce( h1, h2, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -323,7 +332,8 @@
           tmat(1,1) = tau(ice-nstor+1)
           do n = 1, nstor-1
             call obj%timer%start("blas")
-            call PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ , 'N', n, tmat, max_stored_rows, h2(nc+1), 1)
+            call PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ , 'N', int(n,kind=BLAS_KIND), tmat, &
+                                int(max_stored_rows,kind=BLAS_KIND), h2(nc+1), 1_BLAS_KIND)
             call obj%timer%stop("blas")
 
             tmat(n+1,1:n) = &
@@ -369,8 +379,9 @@
 
               call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',  &
-                                  nstor, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
-                                  q_mat, ldq, ZERO, tmp1, nstor)
+                                  int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                  int(l_rows,kind=BLAS_KIND), ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                  q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, int(nstor,kind=BLAS_KIND))
               call obj%timer%stop("blas")
             endif ! useGPU
 
@@ -393,7 +404,8 @@
             check_memcpy_cuda("trans_ev", successCUDA)
           endif
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, nstor*l_cols, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                             int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
           ! copy back tmp2 - after reduction...
           if (useGPU) then
@@ -422,19 +434,21 @@
 #ifdef WITH_MPI
               ! tmp2 = tmat * tmp2
               call obj%timer%start("blas")
-              call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
-                                  ONE, tmat, max_stored_rows, tmp2, nstor)
+              call PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
+                                  ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND))
               !q_mat = q_mat - hvm*tmp2
-              call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
-                                  -ONE, hvm, ubound(hvm,dim=1), tmp2, nstor, ONE, q_mat, ldq)
+              call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(nstor,kind=BLAS_KIND),   &
+                                  -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND), &
+                                  ONE, q_mat, int(ldq,kind=BLAS_KIND))
               call obj%timer%stop("blas")
 #else /* WITH_MPI */
               call obj%timer%start("blas")
 
-              call PRECISION_TRMM('L', 'L', 'N', 'N', nstor, l_cols,   &
-                                  ONE, tmat, max_stored_rows, tmp1, nstor)
-              call PRECISION_GEMM('N', 'N', l_rows, l_cols, nstor,   &
-                                  -ONE, hvm, ubound(hvm,dim=1), tmp1, nstor, ONE, q_mat, ldq)
+              call PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
+                                  ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp1, int(nstor,kind=BLAS_KIND))
+              call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                  int(nstor,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                  tmp1, int(nstor,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
               call obj%timer%stop("blas")
 #endif /* WITH_MPI */
             endif ! useGPU

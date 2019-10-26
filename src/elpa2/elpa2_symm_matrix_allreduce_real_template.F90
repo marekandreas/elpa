@@ -70,7 +70,8 @@
 #else
       real(kind=REAL_DATATYPE)     :: a(lda,ldb)
 #endif
-      integer(kind=ik)             :: i, nc, mpierr
+      integer(kind=ik)             :: i, nc
+      integer(kind=MPI_KIND)       :: mpierr
       real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
       call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
@@ -83,7 +84,8 @@
 
 #ifdef WITH_MPI
       call obj%timer%start("mpi_communication")
-      call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
+      call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(comm,kind=MPI_KIND), mpierr)
       call obj%timer%stop("mpi_communication")
       nc = 0
       do i=1,n

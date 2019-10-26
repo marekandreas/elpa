@@ -41,19 +41,46 @@
 !
 ! Author: A. Marek, MPCDF
 
+
+#include "config-f90.h"
+
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE lik
+#define TEST_C_INT_TYPE_PTR long int*
+#define TEST_C_INT_TYPE long int
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE ik
+#define TEST_C_INT_TYPE_PTR int*
+#define TEST_C_INT_TYPE int
+#endif
+
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE lik
+#define TEST_C_INT_MPI_TYPE_PTR long int*
+#define TEST_C_INT_MPI_TYPE long int
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE ik
+#define TEST_C_INT_MPI_TYPE_PTR int*
+#define TEST_C_INT_MPI_TYPE int
+#endif
+
     function check_correctness_evp_numeric_residuals_&
     &MATH_DATATYPE&
     &_&
     &PRECISION&
     & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs) result(status)
  
-      use elpa_blas_interfaces
-      use elpa_scalapack_interfaces
-
+      use tests_blas_interfaces
+      use tests_scalapack_interfaces
+      use precision_for_tests
       implicit none
 #include "./test_precision_kinds.F90"
-      integer(kind=ik)                 :: status
-      integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+      TEST_INT_TYPE                 :: status
+      TEST_INT_TYPE, intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
       MATH_DATATYPE(kind=rck), intent(in)           :: as(:,:), z(:,:)
       MATH_DATATYPE(kind=rck), intent(in), optional :: bs(:,:)
       real(kind=rk)                 :: ev(:)
@@ -66,12 +93,13 @@
 #endif /* COMPLEXCASE */
 #endif
 
-      integer(kind=ik)                 :: sc_desc(:)
+      TEST_INT_TYPE                 :: sc_desc(:)
 
-      integer(kind=ik)                 :: i, rowLocal, colLocal
-      real(kind=rck)                   :: err, errmax
+      TEST_INT_TYPE                 :: i, rowLocal, colLocal
+      integer(kind=c_int)           :: row_Local, col_Local
+      real(kind=rck)                :: err, errmax
 
-      integer :: mpierr
+      TEST_INT_MPI_TYPE             :: mpierr
 
       ! tolerance for the residual test for different math type/precision setups
       real(kind=rk), parameter       :: tol_res_real_double      = 5e-12_rk
@@ -95,8 +123,8 @@
                                                                           &_&
                                                                           &PRECISION
 
-      if(present(bs)) then
-          tol_res = generalized_penalty * tol_res
+      if (present(bs)) then
+        tol_res = generalized_penalty * tol_res
       endif
       status = 0
 
@@ -109,10 +137,10 @@
 #ifdef WITH_MPI
         call p&
             &BLAS_CHAR&
-            &scal(na, xc, tmp1, 1, i, sc_desc, 1)
+            &scal(na, xc, tmp1, 1_BLAS_KIND, i, sc_desc, 1_BLAS_KIND)
 #else /* WITH_MPI */
         call BLAS_CHAR&
-            &scal(na,xc,tmp1(:,i),1)
+            &scal(na, xc, tmp1(:,i), 1_BLAS_KIND)
 #endif /* WITH_MPI */
       enddo
 
@@ -120,8 +148,8 @@
       ! tmp2 = B * tmp1
       if(present(bs)) then
 #ifdef WITH_MPI
-      call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, sc_desc, &
-                  tmp1, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
+      call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, bs, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                               tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       call PRECISION_GEMM('N','N',na,nev,na,ONE,bs,na,tmp1,na,ZERO,tmp2,na)
 #endif /* WITH_MPI */
@@ -133,8 +161,8 @@
       ! tmp1 =  A * Z
       ! as is original stored matrix, Z are the EVs
 #ifdef WITH_MPI
-      call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, as, 1, 1, sc_desc, &
-                  z, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+      call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, as, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                  z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       call PRECISION_GEMM('N','N',na,nev,na,ONE,as,na,z,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
@@ -149,9 +177,9 @@
 #if REALCASE == 1
         err = 0.0_rk
 #ifdef WITH_MPI
-        call scal_PRECISION_NRM2(na, err, tmp1, 1, i, sc_desc, 1)
+        call scal_PRECISION_NRM2(na, err, tmp1, 1_BLAS_KIND, i, sc_desc, 1_BLAS_KIND)
 #else /* WITH_MPI */
-        err = PRECISION_NRM2(na,tmp1(1,i),1)
+        err = PRECISION_NRM2(na,tmp1(1,i),1_BLAS_KIND)
 #endif /* WITH_MPI */
         errmax = max(errmax, err)
 #endif /* REALCASE */
@@ -159,9 +187,10 @@
 #if COMPLEXCASE == 1
         xc = 0
 #ifdef WITH_MPI
-        call scal_PRECISION_DOTC(na, xc, tmp1, 1, i, sc_desc, 1, tmp1, 1, i, sc_desc, 1)
+        call scal_PRECISION_DOTC(na, xc, tmp1, 1_BLAS_KIND, i, sc_desc, &
+                                 1_BLAS_KIND, tmp1, 1_BLAS_KIND, i, sc_desc, 1_BLAS_KIND)
 #else /* WITH_MPI */
-        xc = PRECISION_DOTC(na,tmp1,1,tmp1,1)
+        xc = PRECISION_DOTC(na,tmp1,1_BLAS_KIND,tmp1,1_BLAS_KIND)
 #endif /* WITH_MPI */
         errmax = max(errmax, sqrt(real(xc,kind=REAL_DATATYPE)))
 #endif /* COMPLEXCASE */
@@ -170,7 +199,7 @@
       ! Get maximum error norm over all processors
       err = errmax
 #ifdef WITH_MPI
-      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+      call mpi_allreduce(err, errmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
       errmax = err
 #endif /* WITH_MPI */
@@ -192,8 +221,8 @@
         ! tmp2 = B * Z
         tmp2(:,:) = 0.0_rck
 #ifdef WITH_MPI
-        call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, bs, 1, 1, &
-                        sc_desc, z, 1, 1, sc_desc, ZERO, tmp2, 1, 1, sc_desc)
+        call scal_PRECISION_GEMM('N', 'N', na, nev, na, ONE, bs, 1_BLAS_KIND, 1_BLAS_KIND, &
+                        sc_desc, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
         call PRECISION_GEMM('N','N', na, nev, na, ONE, bs, na, z, na, ZERO, tmp2, na)
 #endif /* WITH_MPI */
@@ -205,20 +234,26 @@
       ! actually tmp1 = Z**T * Z for standard case and tmp1 = Z**T * B * Z for generalized
       tmp1 = 0
 #ifdef WITH_MPI
-      call scal_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nev, nev, na, ONE, z, 1, 1, &
-                        sc_desc, tmp2, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+      call scal_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nev, nev, na, ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, &
+                        sc_desc, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, &
+                        tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       call PRECISION_GEMM(BLAS_TRANS_OR_CONJ,'N',nev,nev,na,ONE,z,na,tmp2,na,ZERO,tmp1,na)
 #endif /* WITH_MPI */
       ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
       err = 0.0_rk
       do i=1, nev
-        if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+        if (map_global_array_index_to_local_index(int(i,kind=c_int), int(i,kind=c_int) , row_Local, col_Local, &
+                                                  int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                  int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                  int(my_pcol,kind=c_int) )) then
+           rowLocal = int(row_Local,kind=INT_TYPE)
+           colLocal = int(col_Local,kind=INT_TYPE)
            err = max(err, abs(tmp1(rowLocal,colLocal) - 1.0_rk))
          endif
       end do
 #ifdef WITH_MPI
-      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+      call mpi_allreduce(err, errmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
       errmax = err
 #endif /* WITH_MPI */
@@ -228,7 +263,7 @@
       ! Initialize tmp2 to unit matrix
       tmp2 = 0
 #ifdef WITH_MPI
-      call scal_PRECISION_LASET('A', nev, nev, ZERO, ONE, tmp2, 1, 1, sc_desc)
+      call scal_PRECISION_LASET('A', nev, nev, ZERO, ONE, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       call PRECISION_LASET('A',nev,nev,ZERO,ONE,tmp2,na)
 #endif /* WITH_MPI */
@@ -239,7 +274,7 @@
       ! Get maximum error (max abs value in tmp1)
       err = maxval(abs(tmp1))
 #ifdef WITH_MPI
-      call mpi_allreduce(err, errmax, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+      call mpi_allreduce(err, errmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
       errmax = err
 #endif /* WITH_MPI */
@@ -259,25 +294,43 @@
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-    !c> int check_correctness_evp_numeric_residuals_real_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         double *as, double *z, double *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev,
+    !c>                                                                       TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                                       double *as, double *z, double *ev, 
+    !c>                                                                       TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                                       TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
+    !c>                                                                       TEST_C_INT_TYPE np_rows, 
+    !c>                                                                       TEST_C_INT_TYPE np_cols, 
+    !c>                                                                       TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
-    !c> int check_correctness_evp_numeric_residuals_real_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         float *as, float *z, float *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, 
+    !c>                                                                       TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                                       float *as, float *z, float *ev, 
+    !c>                                                                       TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                                       TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
+    !c>                                                                       TEST_C_INT_TYPE np_rows, 
+    !c>                                                                       TEST_C_INT_TYPE np_cols, 
+    !c>                                                                       TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #endif
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> int check_correctness_evp_numeric_residuals_complex_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex double *as, complex double *z, double *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, 
+    !c>                                                              TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                              complex double *as, complex double *z, double *ev, 
+    !c>                                                              TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                              TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
+    !c>                                                              TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, 
+    !c>                                                              TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
-    !c> int check_correctness_evp_numeric_residuals_complex_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex float *as, complex float *z, float *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, 
+    !c>                                                                  TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                                  complex float *as, complex float *z, float *ev, 
+    !c>                                                                  TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                                  TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
+    !c>                                                                  TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, 
+    !c>                                                                  TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -292,16 +345,17 @@ function check_correctness_evp_numeric_residuals_&
       &PRECISION&
       &_f")
 
+      use precision_for_tests
       use iso_c_binding
 
       implicit none
 #include "./test_precision_kinds.F90"
 
-      integer(kind=c_int)            :: status
-      integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
-      MATH_DATATYPE(kind=rck)     :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
-      real(kind=rck)    :: ev(1:na)
-      integer(kind=c_int)            :: sc_desc(1:9)
+      TEST_INT_TYPE            :: status
+      TEST_INT_TYPE, value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
+      MATH_DATATYPE(kind=rck)  :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols)
+      real(kind=rck)           :: ev(1:na)
+      TEST_INT_TYPE            :: sc_desc(1:9)
 
       status = check_correctness_evp_numeric_residuals_&
       &MATH_DATATYPE&
@@ -316,29 +370,47 @@ function check_correctness_evp_numeric_residuals_&
 !---- we thus define a different function
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-    !c> int check_correctness_evp_gen_numeric_residuals_real_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         double *as, double *z, double *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol,
-    !c>                                         double *bs);
+    !c> TEST_C_INT_TYPE check_correctness_evp_gen_numeric_residuals_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, 
+    !c>                                                               TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                               double *as, double *z, double *ev,
+    !c>                                                               TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                               TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
+    !c>                                                               TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, 
+    !c>                                                               TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
+    !c>                                                               double *bs);
 #else
-    !c> int check_correctness_evp_gen_numeric_residuals_real_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         float *as, float *z, float *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol, 
-    !c>                                         float *bs);
+    !c> TEST_C_INT_TYPE check_correctness_evp_gen_numeric_residuals_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, 
+    !c>                                                                           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                                           float *as, float *z, float *ev, 
+    !c>                                                                           TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                                           TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                                                           TEST_C_INT_TYPE np_rows, 
+    !c>                                                                           TEST_C_INT_TYPE np_cols, 
+    !c>                                                                           TEST_C_INT_TYPE my_prow, 
+    !c>                                                                           TEST_C_INT_TYPE my_pcol, 
+    !c>                                                                           float *bs);
 #endif
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> int check_correctness_evp_gen_numeric_residuals_complex_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex double *as, complex double *z, double *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol,
-    !c>                                         complex double *bs);
+    !c> TEST_C_INT_TYPE check_correctness_evp_gen_numeric_residuals_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev,
+    !c>                                                                    TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                                    complex double *as, complex double *z, double *ev,
+    !c>                                                                    TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                                    TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
+    !c>                                                                    TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                                                    TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
+    !c>                                                                    complex double *bs);
 #else
-    !c> int check_correctness_evp_gen_numeric_residuals_complex_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex float *as, complex float *z, float *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol,
-    !c>                                         complex float *bs);
+    !c> TEST_C_INT_TYPE check_correctness_evp_gen_numeric_residuals_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev,
+    !c>                                                                    TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                                    complex float *as, complex float *z, float *ev, 
+    !c>                                                                    TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                                    TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
+    !c>                                                                    TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, 
+    !c>                                                                    TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
+    !c>                                                                    complex float *bs);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -354,15 +426,15 @@ function check_correctness_evp_gen_numeric_residuals_&
       &_f")
 
       use iso_c_binding
-
+      use precision_for_tests
       implicit none
 #include "./test_precision_kinds.F90"
 
-      integer(kind=c_int)            :: status
-      integer(kind=c_int), value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
-      MATH_DATATYPE(kind=rck)     :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols), bs(1:na_rows,1:na_cols)
-      real(kind=rck)    :: ev(1:na)
-      integer(kind=c_int)            :: sc_desc(1:9)
+      TEST_INT_TYPE            :: status
+      TEST_INT_TYPE, value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
+      MATH_DATATYPE(kind=rck)  :: as(1:na_rows,1:na_cols), z(1:na_rows,1:na_cols), bs(1:na_rows,1:na_cols)
+      real(kind=rck)           :: ev(1:na)
+      TEST_INT_TYPE            :: sc_desc(1:9)
 
       status = check_correctness_evp_numeric_residuals_&
       &MATH_DATATYPE&
@@ -380,11 +452,12 @@ function check_correctness_evp_gen_numeric_residuals_&
     &PRECISION&
     & (na, diagonalElement, subdiagonalElement, ev, z, myid) result(status)
       use iso_c_binding
+      use precision_for_tests
       implicit none
 #include "./test_precision_kinds.F90"
 
-      integer               :: status, ii, j, myid
-      integer, intent(in)   :: na
+      TEST_INT_TYPE               :: status, ii, j, myid
+      TEST_INT_TYPE, intent(in)   :: na
       real(kind=rck) :: diagonalElement, subdiagonalElement
       real(kind=rck) :: ev_analytic(na), ev(na)
       MATH_DATATYPE(kind=rck) :: z(:,:)
@@ -395,7 +468,7 @@ function check_correctness_evp_gen_numeric_residuals_&
       real(kind=rck), parameter   :: pi = 3.1415926535897932_c_float
 #endif
       real(kind=rck)              :: tmp, maxerr
-      integer                     :: loctmp
+      TEST_INT_TYPE               :: loctmp
       status = 0
 
      ! analytic solution
@@ -457,27 +530,24 @@ function check_correctness_evp_gen_numeric_residuals_&
     &PRECISION&
     & (na, a, as, na_rows, sc_desc, myid) result(status)
       use precision_for_tests
+      use tests_blas_interfaces
+      use tests_scalapack_interfaces
       implicit none
 #include "./test_precision_kinds.F90"
-      integer(kind=ik)                 :: status
-      integer(kind=ik), intent(in)     :: na, myid, na_rows
+      TEST_INT_TYPE                                                     :: status
+      TEST_INT_TYPE, intent(in)                                         :: na, myid, na_rows
 
-      MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:), as(:,:)
+      MATH_DATATYPE(kind=rck), intent(in)                               :: a(:,:), as(:,:)
       MATH_DATATYPE(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      real(kind=rk)                   :: norm, normmax
+#if COMPLEXCASE == 1
+      ! needed for [z,c]lange from scalapack
+      real(kind=rk), dimension(2*size(as,dim=1),size(as,dim=2))         :: tmp1_real
+#endif
+      real(kind=rk)                                                     :: norm, normmax
 
-#ifdef WITH_MPI
-      real(kind=rck)                   :: p&
-                                           &BLAS_CHAR&
-                                           &lange
-#else /* WITH_MPI */
-      real(kind=rck)                   :: BLAS_CHAR&
-                                          &lange
-#endif /* WITH_MPI */
-
-      integer(kind=ik)                 :: sc_desc(:)
-      real(kind=rck)                   :: err, errmax
-      integer :: mpierr
+      TEST_INT_TYPE                                                     :: sc_desc(:)
+      real(kind=rck)                                                    :: err, errmax
+      TEST_INT_MPI_TYPE                                                 :: mpierr
 
       status = 0
       tmp1(:,:) = 0.0_rck
@@ -488,7 +558,8 @@ function check_correctness_evp_gen_numeric_residuals_&
 #ifdef WITH_MPI
       call p&
           &BLAS_CHAR&
-          &tran(na, na, 1.0_rck, a, 1, 1, sc_desc, 0.0_rck, tmp1, 1, 1, sc_desc)
+          &tran(na, na, 1.0_rck, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                0.0_rck, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       tmp1 = transpose(a)
 #endif /* WITH_MPI */
@@ -499,7 +570,8 @@ function check_correctness_evp_gen_numeric_residuals_&
 #ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
-            &tranc(na, na, ONE, a, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+            &tranc(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                   ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       tmp1 = transpose(conjg(a))
 #endif /* WITH_MPI */
@@ -509,8 +581,9 @@ function check_correctness_evp_gen_numeric_residuals_&
 #ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
-            &gemm("N","N", na, na, na, ONE, tmp1, 1, 1, sc_desc, a, 1, 1, &
-               sc_desc, ZERO, tmp2, 1, 1, sc_desc)
+            &gemm("N","N", na, na, na, ONE, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                  a, 1_BLAS_KIND, 1_BLAS_KIND, &
+                  sc_desc, ZERO, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       call BLAS_CHAR&
                     &gemm("N","N", na, na, na, ONE, tmp1, na, a, na, ZERO, tmp2, na)
@@ -522,15 +595,25 @@ function check_correctness_evp_gen_numeric_residuals_&
 #ifdef WITH_MPI
       norm = p&
               &BLAS_CHAR&
-              &lange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+              &lange("M",na, na, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+#if COMPLEXCASE == 1
+              tmp1_real)
+#else
+              tmp1)
+#endif
 #else /* WITH_MPI */
       norm = BLAS_CHAR&
-             &lange("M", na, na, tmp2, na_rows, tmp1)
+             &lange("M", na, na, tmp2, na_rows, &
+#if COMPLEXCASE == 1
+             tmp1_real)
+#else
+             tmp1)
+#endif
 #endif /* WITH_MPI */
 
 
 #ifdef WITH_MPI
-      call mpi_allreduce(norm,normmax,1,MPI_REAL_PRECISION,MPI_MAX,MPI_COMM_WORLD,mpierr)
+      call mpi_allreduce(norm, normmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
       normmax = norm
 #endif /* WITH_MPI */
@@ -574,26 +657,23 @@ function check_correctness_evp_gen_numeric_residuals_&
     &PRECISION&
     & (na, a, b, c, na_rows, sc_desc, myid) result(status)
       use precision_for_tests
+      use tests_blas_interfaces
+      use tests_scalapack_interfaces
       implicit none
 #include "./test_precision_kinds.F90"
-      integer(kind=ik)                 :: status
-      integer(kind=ik), intent(in)     :: na, myid, na_rows
-      MATH_DATATYPE(kind=rck), intent(in)       :: a(:,:), b(:,:), c(:,:)
+      TEST_INT_TYPE                                                   :: status
+      TEST_INT_TYPE, intent(in)                                       :: na, myid, na_rows
+      MATH_DATATYPE(kind=rck), intent(in)                             :: a(:,:), b(:,:), c(:,:)
       MATH_DATATYPE(kind=rck), dimension(size(a,dim=1),size(a,dim=2)) :: tmp1, tmp2
-      real(kind=rck)                   :: norm, normmax
+#if COMPLEXCASE == 1
+      real(kind=rk), dimension(2*size(a,dim=1),size(a,dim=2))         :: tmp1_real
+#endif
+      real(kind=rck)                                                  :: norm, normmax
 
-#ifdef WITH_MPI
-      real(kind=rck)                   :: p&
-                                           &BLAS_CHAR&
-                                           &lange
-#else /* WITH_MPI */
-      real(kind=rck)                   :: BLAS_CHAR&
-                                          &lange
-#endif /* WITH_MPI */
 
-      integer(kind=ik)                 :: sc_desc(:)
-      real(kind=rck)                   :: err, errmax
-      integer :: mpierr
+      TEST_INT_TYPE                                                   :: sc_desc(:)
+      real(kind=rck)                                                  :: err, errmax
+      TEST_INT_MPI_TYPE                                               :: mpierr
 
       status = 0
       tmp1(:,:) = ZERO
@@ -603,7 +683,7 @@ function check_correctness_evp_gen_numeric_residuals_&
 #ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
-            &tran(na, na, ONE, a, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+            &tran(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       tmp1 = transpose(a)
 #endif /* WITH_MPI */
@@ -615,7 +695,7 @@ function check_correctness_evp_gen_numeric_residuals_&
 #ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
-            &tranc(na, na, ONE, a, 1, 1, sc_desc, ZERO, tmp1, 1, 1, sc_desc)
+            &tranc(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else /* WITH_MPI */
       tmp1 = transpose(conjg(a))
 #endif /* WITH_MPI */
@@ -625,8 +705,8 @@ function check_correctness_evp_gen_numeric_residuals_&
 #ifdef WITH_MPI
    call p&
          &BLAS_CHAR&
-         &gemm("N","N", na, na, na, ONE, tmp1, 1, 1, sc_desc, b, 1, 1, &
-               sc_desc, ZERO, tmp2, 1, 1, sc_desc)
+         &gemm("N","N", na, na, na, ONE, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, b, 1_BLAS_KIND, 1_BLAS_KIND, &
+               sc_desc, ZERO, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else
    call BLAS_CHAR&
         &gemm("N","N", na, na, na, ONE, tmp1, na, b, na, ZERO, tmp2, na)
@@ -636,16 +716,30 @@ function check_correctness_evp_gen_numeric_residuals_&
       tmp2(:,:) = tmp2(:,:) - c(:,:)
 
 #ifdef WITH_MPI
+      ! dirty hack: the last argument should be a real array, but is not referenced
+      ! if mode = "M", thus we get away with a complex argument
       norm = p&
               &BLAS_CHAR&
-              &lange("M",na, na, tmp2, 1, 1, sc_desc, tmp1)
+              &lange("M", na, na, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+#if COMPLEXCASE == 1              
+              tmp1_real)
+#else
+              tmp1)
+#endif
 #else /* WITH_MPI */
+      ! dirty hack: the last argument should be a real array, but is not referenced
+      ! if mode = "M", thus we get away with a complex argument
       norm = BLAS_CHAR&
-             &lange("M", na, na, tmp2, na_rows, tmp1)
+             &lange("M", na, na, tmp2, na_rows, &
+#if COMPLEXCASE == 1              
+              tmp1_real)
+#else
+              tmp1)
+#endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
-      call mpi_allreduce(norm,normmax,1,MPI_REAL_PRECISION,MPI_MAX,MPI_COMM_WORLD,mpierr)
+      call mpi_allreduce(norm, normmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
       normmax = norm
 #endif /* WITH_MPI */
@@ -681,11 +775,12 @@ function check_correctness_evp_gen_numeric_residuals_&
     &PRECISION&
     & (na, ev, z, myid) result(status)
       use iso_c_binding
+      use precision_for_tests
       implicit none
 #include "./test_precision_kinds.F90"
 
-      integer                   :: status, i, j, myid
-      integer, intent(in)       :: na
+      TEST_INT_TYPE                   :: status, i, j, myid
+      TEST_INT_TYPE, intent(in)       :: na
       real(kind=rck)            :: ev_analytic(na), ev(na)
       MATH_DATATYPE(kind=rck)   :: z(:,:)
 
@@ -695,7 +790,7 @@ function check_correctness_evp_gen_numeric_residuals_&
       real(kind=rck), parameter :: pi = 3.1415926535897932_c_float
 #endif
       real(kind=rck)            :: tmp, maxerr
-      integer                   :: loctmp
+      TEST_INT_TYPE                  :: loctmp
       status = 0
 
      ! analytic solution

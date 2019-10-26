@@ -44,6 +44,21 @@
 #include "../Fortran/assert.h"
 #include "config-f90.h"
 
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
+
 module test_analytic
 
   use test_util
@@ -88,21 +103,21 @@ module test_analytic
 #endif
   end interface
 
-  integer(kind=ik), parameter, private  :: num_primes = 3
-  integer(kind=ik), parameter, private  :: primes(num_primes) = (/2,3,5/)
+  TEST_INT_TYPE, parameter, private  :: num_primes = 3
+  TEST_INT_TYPE, parameter, private  :: primes(num_primes) = (/2,3,5/)
 
-  integer(kind=ik), parameter, private  :: ANALYTIC_MATRIX = 0
-  integer(kind=ik), parameter, private  :: ANALYTIC_EIGENVECTORS = 1
-  integer(kind=ik), parameter, private  :: ANALYTIC_EIGENVALUES = 2
+  TEST_INT_TYPE, parameter, private  :: ANALYTIC_MATRIX = 0
+  TEST_INT_TYPE, parameter, private  :: ANALYTIC_EIGENVECTORS = 1
+  TEST_INT_TYPE, parameter, private  :: ANALYTIC_EIGENVALUES = 2
 
   contains
 
   function decompose(num, decomposition) result(possible)
     implicit none
-    integer(kind=ik), intent(in)   :: num
-    integer(kind=ik), intent(out)  :: decomposition(num_primes)
+    TEST_INT_TYPE, intent(in)   :: num
+    TEST_INT_TYPE, intent(out)  :: decomposition(num_primes)
     logical                        :: possible
-    integer(kind=ik)               :: reminder, prime, prime_id
+    TEST_INT_TYPE               :: reminder, prime, prime_id
 
     decomposition = 0
     possible = .true.
@@ -121,8 +136,8 @@ module test_analytic
 
   function compose(decomposition) result(num)
     implicit none
-    integer(kind=ik), intent(in)   :: decomposition(num_primes)
-    integer(kind=ik)               :: num, prime_id
+    TEST_INT_TYPE, intent(in)   :: decomposition(num_primes)
+    TEST_INT_TYPE               :: num, prime_id
 
     num = 1;
     do prime_id = 1, num_primes

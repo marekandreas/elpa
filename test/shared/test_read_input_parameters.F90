@@ -41,22 +41,33 @@
 !
 !
 #include "config-f90.h"
-module test_read_input_parameters
-  use elpa
-  use elpa_utilities, only : error_unit
 
-  use test_util
+
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+
+module test_read_input_parameters
+  use elpa, only : ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_2STAGE_REAL_DEFAULT, elpa_int_string_to_value, &
+                   elpa_int_value_to_string, ELPA_OK
+  use elpa_utilities, only : error_unit
+  use iso_c_binding
+  use test_util, only : x_ao, x_a
   use test_output_type
 
   implicit none
 
   type input_options_t
-    integer        :: datatype
-    integer        :: na, nev, nblk
+    TEST_INT_TYPE        :: datatype
+    TEST_INT_TYPE        :: na, nev, nblk
     type(output_t) :: write_to_file
-    integer        :: this_real_kernel, this_complex_kernel
+    TEST_INT_TYPE        :: this_real_kernel, this_complex_kernel
     logical        :: realKernelIsSet, complexKernelIsSet
-    integer        :: useQrIsSet, useGPUIsSet
+    TEST_INT_TYPE        :: useQrIsSet, useGPUIsSet
     logical        :: doSolveTridi, do1stage, do2stage, justHelpMessage, &
                       doCholesky, doInvertTrm, doTransposeMultiply
   end type
@@ -72,9 +83,9 @@ module test_read_input_parameters
     subroutine parse_arguments(command_line_argument, input_options)
       implicit none
 
-      type(input_options_t) :: input_options
-      character(len=128)    :: command_line_argument
-      integer               :: error
+      type(input_options_t)  :: input_options
+      character(len=128)     :: command_line_argument
+      integer(kind=c_int)    :: elpa_error
 
       if (command_line_argument == "--help") then
         print *,"usage: elpa_tests [--help] [datatype={real|complex}] [na=number] [nev=number] "
@@ -120,22 +131,27 @@ module test_read_input_parameters
       endif
 
       if (command_line_argument(1:14) == "--real-kernel=") then
-        input_options%this_real_kernel = elpa_int_string_to_value("real_kernel", command_line_argument(15:), error)
-        if (error /= ELPA_OK) then
+        input_options%this_real_kernel = int(elpa_int_string_to_value("real_kernel",     &
+                                             command_line_argument(15:), elpa_error), &
+                                             kind=INT_TYPE)
+        if (elpa_error /= ELPA_OK) then
           print *, "Invalid argument for --real-kernel"
           stop 1
         endif
-        print *,"Setting ELPA2 real kernel to ", elpa_int_value_to_string("real_kernel", input_options%this_real_kernel)
+        print *,"Setting ELPA2 real kernel to ", elpa_int_value_to_string("real_kernel", &
+                                                                        int(input_options%this_real_kernel,kind=c_int))
         input_options%realKernelIsSet = .true.
       endif
 
       if (command_line_argument(1:17) == "--complex-kernel=") then
-        input_options%this_complex_kernel = elpa_int_string_to_value("complex_kernel", command_line_argument(18:), error)
-        if (error /= ELPA_OK) then
+        input_options%this_complex_kernel = int(elpa_int_string_to_value("complex_kernel",    &
+                                                command_line_argument(18:), elpa_error), kind=INT_TYPE)
+        if (elpa_error /= ELPA_OK) then
           print *, "Invalid argument for --complex-kernel"
           stop 1
         endif
-        print *,"Setting ELPA2 complex kernel to ", elpa_int_value_to_string("complex_kernel", input_options%this_complex_kernel)
+        print *,"Setting ELPA2 complex kernel to ", elpa_int_value_to_string("complex_kernel", &
+                                                                          int(input_options%this_complex_kernel,kind=c_int))
         input_options%complexKernelIsSet = .true.
       endif
 
@@ -213,7 +229,6 @@ module test_read_input_parameters
 
       ! Command line arguments
       character(len=128)            :: arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10
-      integer(kind=ik)              :: mpierr
 
       ! default parameters
       input_options%datatype = 1
@@ -344,7 +359,7 @@ module test_read_input_parameters
       use precision_for_tests
       implicit none
 
-      integer(kind=ik), intent(out) :: na, nev, nblk
+      TEST_INT_TYPE, intent(out) :: na, nev, nblk
 
       type(output_t), intent(out)   :: write_to_file
       logical                       :: skip_check_correctness
@@ -356,14 +371,13 @@ module test_read_input_parameters
       use precision_for_tests
       implicit none
 
-      integer(kind=ik), intent(out) :: na, nev, nblk
+      TEST_INT_TYPE, intent(out) :: na, nev, nblk
 
       type(output_t), intent(out)   :: write_to_file
       logical, intent(out)          :: skip_check_correctness
 
       ! Command line arguments
       character(len=128)            :: arg1, arg2, arg3, arg4, arg5
-      integer(kind=ik)              :: mpierr
 
       ! default parameters
       na = 5000

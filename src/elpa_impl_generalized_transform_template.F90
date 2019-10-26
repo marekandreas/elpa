@@ -6,19 +6,22 @@
    subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, a, b, is_already_decomposed, error)
-        implicit none
+     use precision
+     implicit none
 #include "general/precision_kinds.F90"
-        class(elpa_impl_t)  :: self
+     class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck) :: a(self%local_nrows, *), b(self%local_nrows, *)
+     MATH_DATATYPE(kind=rck) :: a(self%local_nrows, *), b(self%local_nrows, *)
 #else
-      MATH_DATATYPE(kind=rck) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
+     MATH_DATATYPE(kind=rck) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
 #endif
      integer                :: error
      logical                :: is_already_decomposed
      integer                :: sc_desc(SC_DESC_LEN)
-     integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpierr, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+     integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+     integer(kind=MPI_KIND) :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
      integer(kind=ik)       :: BuffLevelInt, use_cannon
+     integer(kind=MPI_KIND) :: mpierr
 
      MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 
@@ -26,11 +29,17 @@
      call self%get("mpi_comm_cols",mpi_comm_cols,error)
      call self%get("mpi_comm_parent", mpi_comm_all,error)
 
-     call mpi_comm_rank(mpi_comm_all,my_p,mpierr)
-     call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-     call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-     call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_pMPI, mpierr)
+     call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND),my_prowMPI, mpierr)
+     call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND),np_rowsMPI, mpierr)
+     call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND),my_pcolMPI, mpierr)
+     call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND),np_colsMPI, mpierr)
+
+     my_p = int(my_pMPI, kind=c_int)
+     my_prow = int(my_prowMPI, kind=c_int)
+     np_rows = int(np_rowsMPI, kind=c_int)
+     my_pcol = int(my_pcolMPI, kind=c_int)
+     np_cols = int(np_colsMPI, kind=c_int)
 
      call self%timer_start("transform_generalized()")
      call self%get("cannon_for_generalized",use_cannon,error)
@@ -75,7 +84,9 @@
 #ifdef WITH_MPI
        call cannons_reduction_&
          &ELPA_IMPL_SUFFIX&
-         &(a, b, self%local_nrows, self%local_ncols, sc_desc, tmp, BuffLevelInt, mpi_comm_rows, mpi_comm_cols)
+         &(a, b, self%local_nrows, self%local_ncols, &
+           int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),                    &
+           int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND))
 #endif
        call self%timer_stop("cannons_reduction")
 
@@ -99,12 +110,13 @@
 #ifdef WITH_MPI
        call p&
            &BLAS_CHAR&
-           &trmm("R", "U", "N", "N", self%na, self%na, &
-                 ONE, b, 1, 1, sc_desc, a, 1, 1, sc_desc)
+           &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
+                 ONE, b, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+                 a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
 #else
        call BLAS_CHAR&
-           &trmm("R", "U", "N", "N", self%na, self%na, &
-                 ONE, b, self%na, a, self%na)
+           &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
+                 ONE, b, int(self%na,kind=BLAS_KIND), a, int(self%na,kind=BLAS_KIND))
 #endif
        call self%timer_stop("scalapack multiply A * inv(U)")
      endif ! use_cannon
@@ -126,7 +138,8 @@
 #else
       MATH_DATATYPE(kind=rck) :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
-     integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpierr, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+     integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+     integer(kind=MPI_KIND) :: mpierr, my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
      integer                :: error
      integer                :: sc_desc(SC_DESC_LEN)
      integer                :: sc_desc_ev(SC_DESC_LEN)
@@ -138,11 +151,17 @@
      call self%get("mpi_comm_cols",mpi_comm_cols,error)
      call self%get("mpi_comm_parent", mpi_comm_all,error)
 
-     call mpi_comm_rank(mpi_comm_all,my_p,mpierr)
-     call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-     call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-     call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-     call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_pMPI,mpierr)
+     call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND),my_prowMPI,mpierr)
+     call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND),np_rowsMPI,mpierr)
+     call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND),my_pcolMPI,mpierr)
+     call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND),np_colsMPI,mpierr)
+
+     my_p = int(my_pMPI,kind=c_int)
+     my_prow = int(my_prowMPI,kind=c_int)
+     np_rows = int(np_rowsMPI,kind=c_int)
+     my_pcol = int(my_pcolMPI,kind=c_int)
+     np_cols = int(np_colsMPI,kind=c_int)
 
      call self%timer_start("transform_back_generalized()")
      call self%get("cannon_for_generalized",use_cannon,error)
@@ -164,7 +183,9 @@
 #ifdef WITH_MPI
        call cannons_triang_rectangular_&
          &ELPA_IMPL_SUFFIX&
-         &(b, q, self%local_nrows, self%local_ncols, sc_desc, sc_desc_ev, tmp, mpi_comm_rows, mpi_comm_cols);
+         &(b, q, self%local_nrows, self%local_ncols, &
+           int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
+           int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND) );
 #endif
        call self%timer_stop("cannons_triang_rectangular")
 
@@ -175,12 +196,13 @@
        ! Q <- inv(U) * Q
        call p&
            &BLAS_CHAR&
-           &trmm("L", "U", "N", "N", self%na, self%nev, &
-                 ONE, b, 1, 1, sc_desc,  q, 1, 1, sc_desc)
+           &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
+                 ONE, b, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND),  &
+                 q, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
 #else
        call BLAS_CHAR&
-           &trmm("L", "U", "N", "N", self%na, self%nev, &
-                 ONE, b, self%na, q, self%na)
+           &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
+                 ONE, b, int(self%na,kind=BLAS_KIND), q, int(self%na,kind=BLAS_KIND))
 #endif
        call self%timer_stop("scalapack multiply inv(U) * Q")
      endif

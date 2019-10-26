@@ -120,7 +120,8 @@
 #endif
       integer(kind=C_intptr_T)               :: a_dev ! passed from bandred_real at the moment not used since copied in bandred_real
 
-      integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols, mpierr
+      integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols
+      integer(kind=MPI_KIND)                 :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
       integer(kind=ik)                       :: max_blocks_row, max_blocks_col, max_local_rows, &
                                                 max_local_cols
       integer(kind=ik)                       :: l_cols, l_rows, l_colh, n_cols
@@ -172,11 +173,15 @@
 #endif
       call obj%timer%start("mpi_communication")
 
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
 
+      my_prow = int(my_prowMPI,kind=c_int)
+      my_pcol = int(my_pcolMPI,kind=c_int)
+      np_rows = int(np_rowsMPI,kind=c_int)
+      np_cols = int(np_colsMPI,kind=c_int)
       call obj%timer%stop("mpi_communication")
 
       max_blocks_row = ((na -1)/nblk)/np_rows + 1  ! Rows of a_mat
@@ -329,8 +334,8 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_MATH_DATATYPE_PRECISION,&
-                             pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+              call MPI_Bcast(hvb(ns+1), int(nb-ns,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,&
+                             int(pcol(ncol, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
               call obj%timer%stop("mpi_communication")
 
@@ -393,8 +398,8 @@
 
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_MATH_DATATYPE_PRECISION, &
-                             MPI_SUM, mpi_comm_rows, mpierr)
+          call mpi_allreduce(tmp1, tmp2, int(n_cols*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -612,8 +617,8 @@
             if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call MPI_Bcast(hvb(ns+1), nb-ns, MPI_MATH_DATATYPE_PRECISION,    &
-                             pcol(ncol, nblk, np_cols), mpi_comm_cols, mpierr)
+              call MPI_Bcast(hvb(ns+1), int(nb-ns,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                             int(pcol(ncol, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
               call obj%timer%stop("mpi_communication")
 
@@ -652,20 +657,24 @@
             if (i > 1) then
               call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',      &
-                           t_rows, t_cols, l_rows, ONE, hvm(1,1), max_local_rows, hvm(1,(i-1)*nbw+1), &
-                                 max_local_rows, ZERO, t_tmp, cwy_blocking)
+                                  int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), &
+                                  ONE, hvm(1,1), int(max_local_rows,kind=BLAS_KIND), hvm(1,(i-1)*nbw+1), &
+                                  int(max_local_rows,kind=BLAS_KIND), ZERO, t_tmp, int(cwy_blocking,kind=BLAS_KIND) )
 
               call obj%timer%stop("blas")
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
 
-              call mpi_allreduce(t_tmp, t_tmp2, cwy_blocking*nbw, MPI_MATH_DATATYPE_PRECISION,    &
-                                 MPI_SUM, mpi_comm_rows, mpierr)
+              call mpi_allreduce(t_tmp, t_tmp2, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                                 MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
               call obj%timer%stop("mpi_communication")
               call obj%timer%start("blas")
-              call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, ONE, tmat_complete, cwy_blocking, t_tmp2, cwy_blocking)
-              call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -ONE, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
-                         t_tmp2, cwy_blocking)
+              call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), &
+                                  ONE, tmat_complete, int(cwy_blocking,kind=BLAS_KIND), t_tmp2, &
+                                  int(cwy_blocking,kind=BLAS_KIND) )
+              call PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), &
+                                  -ONE, tmat_complete(t_rows+1,t_rows+1), int(cwy_blocking,kind=BLAS_KIND), &
+                                  t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
               call obj%timer%stop("blas")
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
@@ -673,9 +682,12 @@
 #else /* WITH_MPI */
 !              t_tmp2(1:cwy_blocking,1:nbw) = t_tmp(1:cwy_blocking,1:nbw)
               call obj%timer%start("blas")
-              call PRECISION_TRMM('L', 'U', 'N', 'N', t_rows, t_cols, ONE, tmat_complete, cwy_blocking, t_tmp, cwy_blocking)
-              call PRECISION_TRMM('R', 'U', 'N', 'N', t_rows, t_cols, -ONE, tmat_complete(t_rows+1,t_rows+1), cwy_blocking, &
-                         t_tmp, cwy_blocking)
+              call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), &
+                                   ONE, tmat_complete, int(cwy_blocking,kind=BLAS_KIND), t_tmp, &
+                                   int(cwy_blocking,kind=BLAS_KIND))
+              call PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), &
+                                  -ONE, tmat_complete(t_rows+1,t_rows+1), int(cwy_blocking,kind=BLAS_KIND), &
+                                  t_tmp, int(cwy_blocking,kind=BLAS_KIND))
               call obj%timer%stop("blas")
 
               tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
@@ -699,8 +711,9 @@
             call obj%timer%start("blas")
 
             call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',         &
-                          n_cols, l_cols, l_rows, ONE, hvm, ubound(hvm,dim=1), &
-                                q_mat, ldq, ZERO, tmp1, n_cols)
+                                int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), &
+                                ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, int(n_cols,kind=BLAS_KIND))
             call obj%timer%stop("blas")
 
           else ! l_rows>0
@@ -710,7 +723,8 @@
 
 #ifdef WITH_MPI
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp1, tmp2, n_cols*l_cols, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, mpi_comm_rows ,mpierr)
+          call mpi_allreduce(tmp1, tmp2, int(n_cols*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                             int(mpi_comm_rows,kind=MPI_KIND) ,mpierr)
           call obj%timer%stop("mpi_communication")
 
           call obj%timer%start("blas")
@@ -719,15 +733,20 @@
 #ifdef BAND_TO_FULL_BLOCKING
 
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
-                          n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp2, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp2, n_cols, ONE, q_mat, ldq)
+                                int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                                int(cwy_blocking,kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND))
+            call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
+                                -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND), &
+                                 ONE, q_mat, int(ldq,kind=BLAS_KIND))
 
 #else /* BAND_TO_FULL_BLOCKING */
 
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
-                                n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp2, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
-                                tmp2, n_cols, ONE, q_mat, ldq)
+                                int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
+                                int(ubound(tmat,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND))
+            call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                int(n_cols,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                tmp2, int(n_cols,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
 
 #endif /* BAND_TO_FULL_BLOCKING */
 
@@ -739,14 +758,19 @@
           if (l_rows>0) then
 #ifdef BAND_TO_FULL_BLOCKING
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
-                                n_cols, l_cols, ONE, tmat_complete, cwy_blocking, tmp1, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), tmp1, n_cols, ONE, q_mat, ldq)
+                                int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                                int(cwy_blocking,kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND))
+            call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                int(n_cols,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
 #else /* BAND_TO_FULL_BLOCKING */
 
             call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',        &
-                                n_cols, l_cols, ONE, tmat(1,1,istep), ubound(tmat,dim=1), tmp1, n_cols)
-            call PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm, ubound(hvm,dim=1), &
-                                tmp1, n_cols, ONE, q_mat, ldq)
+                                int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
+                                int(ubound(tmat,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND))
+            call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                int(n_cols,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
 
 #endif  /* BAND_TO_FULL_BLOCKING */
           endif

@@ -79,12 +79,28 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #  define AUTOTUNE_DOMAIN ELPA_AUTOTUNE_DOMAIN_COMPLEX
 #endif
 
+
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
 #include "assert.h"
 
 program test
    use elpa
 
-   use test_util
+   !use test_util
    use test_setup_mpi
    use test_prepare_matrix
    use test_read_input_parameters
@@ -99,21 +115,22 @@ program test
    implicit none
 
    ! matrix dimensions
-   integer                     :: na, nev, nblk
-   integer                     :: num_groups, group_size, color, key
+   TEST_INT_TYPE                     :: na, nev, nblk
+   TEST_INT_TYPE                     :: num_groups, group_size, color, key
 
    ! mpi
-   integer                     :: myid, nprocs
-   integer                     :: na_cols, na_rows  ! local matrix size
-   integer                     :: np_cols, np_rows  ! number of MPI processes per column/row
-   integer                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   integer                     :: mpierr, ierr
-   integer                     :: mpi_sub_comm
-   integer                     :: myid_sub, nprocs_sub
+   TEST_INT_TYPE                     :: myid, nprocs
+   TEST_INT_TYPE                     :: na_cols, na_rows  ! local matrix size
+   TEST_INT_TYPE                     :: np_cols, np_rows  ! number of MPI processes per column/row
+   TEST_INT_TYPE                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
+   TEST_INT_MPI_TYPE                 :: mpierr, ierr,mpi_sub_commMPI, myidMPI, nprocsMPI, colorMPI, keyMPI, &
+                                        myid_subMPI, nprocs_subMPI
+   TEST_INT_TYPE                     :: mpi_sub_comm
+   TEST_INT_TYPE                     :: myid_sub, nprocs_sub
 
    ! blacs
    character(len=1)            :: layout
-   integer                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
    MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
@@ -122,12 +139,13 @@ program test
    ! eigenvalues
    EV_TYPE, allocatable        :: ev(:)
 
-   integer                     :: error, status
+   TEST_INT_TYPE               :: status
+   integer(kind=c_int)         :: error_elpa
 
    type(output_t)              :: write_to_file
    class(elpa_t), pointer      :: e
 
-   integer                     :: iter
+   TEST_INT_TYPE                     :: iter
    character(len=5)            :: iter_string
 
    status = 0
@@ -136,8 +154,10 @@ program test
    call read_input_parameters(na, nev, nblk, write_to_file)
    !call setup_mpi(myid, nprocs)
    call mpi_init(mpierr)
-   call mpi_comm_rank(mpi_comm_world,myid,mpierr)
-   call mpi_comm_size(mpi_comm_world,nprocs,mpierr)
+   call mpi_comm_rank(mpi_comm_world, myidMPI,mpierr)
+   call mpi_comm_size(mpi_comm_world, nprocsMPI,mpierr)
+   myid = int(myidMPI,kind=BLAS_KIND)
+   nprocs = int(nprocsMPI,kind=BLAS_KIND)
 
    if((mod(nprocs, 4) == 0) .and. (nprocs > 4)) then
      num_groups = 4
@@ -165,14 +185,21 @@ program test
    ! this will determine the myid in each group
    key = myid/num_groups
    !split the communicator
-   call mpi_comm_split(mpi_comm_world, color, key, mpi_sub_comm, mpierr)
+   colorMPI=int(color,kind=MPI_KIND)
+   keyMPI = int(key, kind=MPI_KIND)
+   call mpi_comm_split(mpi_comm_world, colorMPI, keyMPI, mpi_sub_commMPI, mpierr)
+   mpi_sub_comm = int(mpi_sub_commMPI,kind=BLAS_KIND)
+   color = int(colorMPI,kind=BLAS_KIND)
+   key = int(keyMPI,kind=BLAS_KIND)
    if(mpierr .ne. MPI_SUCCESS) then 
      print *, "communicator splitting not successfull", mpierr
      stop 1
    endif
 
-   call mpi_comm_rank(mpi_sub_comm, myid_sub, mpierr)
-   call mpi_comm_size(mpi_sub_comm, nprocs_sub, mpierr)
+   call mpi_comm_rank(mpi_sub_commMPI, myid_subMPI, mpierr)
+   call mpi_comm_size(mpi_sub_commMPI, nprocs_subMPI, mpierr)
+   myid_sub = int(myid_subMPI,kind=BLAS_KIND)
+   nprocs_sub = int(nprocs_subMPI,kind=BLAS_KIND)
 
    !print *, "glob ", myid, nprocs, ", loc ", myid_sub, nprocs_sub, ", color ", color, ", key ", key
 
@@ -212,7 +239,7 @@ program test
    endif
 
    ! USING the subcommunicator
-   call set_up_blacsgrid(mpi_sub_comm, np_rows, np_cols, layout, &
+   call set_up_blacsgrid(int(mpi_sub_comm,kind=BLAS_KIND), np_rows, np_cols, layout, &
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
@@ -231,14 +258,14 @@ program test
    call prepare_matrix_random(na, myid_sub, sc_desc, a, z, as)
    as(:,:) = a(:,:)
 
-   e => elpa_allocate(error)
+   e => elpa_allocate(error_elpa)
    call set_basic_params(e, na, nev, na_rows, na_cols, mpi_sub_comm, my_prow, my_pcol)
 
-   call e%set("timings",1, error)
+   call e%set("timings",1, error_elpa)
 
-   call e%set("debug",1, error)
-   call e%set("gpu", 0, error)
-   !call e%set("max_stored_rows", 15, error)
+   call e%set("debug",1, error_elpa)
+   call e%set("gpu", 0, error_elpa)
+   !call e%set("max_stored_rows", 15, error_elpa)
 
    assert_elpa_ok(e%setup())
 
@@ -250,10 +277,10 @@ program test
 
 
    call e%timer_start("eigenvectors")
-   call e%eigenvectors(a, ev, z, error)
+   call e%eigenvectors(a, ev, z, error_elpa)
    call e%timer_stop("eigenvectors")
 
-   assert_elpa_ok(error)
+   assert_elpa_ok(error_elpa)
 
    !status = check_correctness_analytic(na, nev, ev, z, nblk, myid_sub, np_rows, np_cols, my_prow, my_pcol, &
     !                   .true., .true., print_times=.false.)
@@ -267,14 +294,14 @@ program test
      call e%print_times("eigenvectors")
    endif
 
-   call elpa_deallocate(e, error)
+   call elpa_deallocate(e, error_elpa)
 
    deallocate(a)
    deallocate(as)
    deallocate(z)
    deallocate(ev)
 
-   call elpa_uninit(error)
+   call elpa_uninit(error_elpa)
 
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
@@ -284,28 +311,29 @@ program test
 
 contains
    subroutine set_basic_params(elpa, na, nev, na_rows, na_cols, communicator, my_prow, my_pcol)
+     use iso_c_binding
      implicit none
      class(elpa_t), pointer      :: elpa
-     integer, intent(in)         :: na, nev, na_rows, na_cols, my_prow, my_pcol, communicator
+     TEST_INT_TYPE, intent(in)         :: na, nev, na_rows, na_cols, my_prow, my_pcol, communicator
 
 #ifdef WITH_MPI
-     call elpa%set("na", na, error)
-     assert_elpa_ok(error)
-     call elpa%set("nev", nev, error)
-     assert_elpa_ok(error)
-     call elpa%set("local_nrows", na_rows, error)
-     assert_elpa_ok(error)
-     call elpa%set("local_ncols", na_cols, error)
-     assert_elpa_ok(error)
-     call elpa%set("nblk", nblk, error)
-     assert_elpa_ok(error)
+     call elpa%set("na", int(na,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+     call elpa%set("nev", int(nev,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+     call elpa%set("local_nrows", int(na_rows,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+     call elpa%set("local_ncols", int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+     call elpa%set("nblk", int(nblk,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
 
-     call elpa%set("mpi_comm_parent", communicator, error)
-     assert_elpa_ok(error)
-     call elpa%set("process_row", my_prow, error)
-     assert_elpa_ok(error)
-     call elpa%set("process_col", my_pcol, error)
-     assert_elpa_ok(error)
+     call elpa%set("mpi_comm_parent", int(communicator,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+     call elpa%set("process_row", int(my_prow,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+     call elpa%set("process_col", int(my_pcol,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
    end subroutine
 

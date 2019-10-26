@@ -248,6 +248,8 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
     name = "validate_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
 
     print("if ENABLE_AUTOTUNING")
+    if lang == "C":
+        print("if ENABLE_C_TESTS")
     print("check_SCRIPTS += " + name + "_extended.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":
@@ -267,6 +269,8 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         domain_flag[d],
         prec_flag[p]]))
     print("endif\n" * endifs)
+    if lang == "C":
+        print("endif")
     print("endif")
 
 name = "validate_multiple_objs_real_double"
@@ -282,6 +286,7 @@ print("  " + " \\\n  ".join([
 print("endif")
 
 name = "validate_multiple_objs_real_double_c_version"
+print("if ENABLE_C_TESTS")
 print("if ENABLE_AUTOTUNING")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
@@ -292,6 +297,8 @@ print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
 print("endif")
+print("endif")
+
 
 name = "validate_split_comm_real_double"
 print("check_SCRIPTS += " + name + "_extended.sh")

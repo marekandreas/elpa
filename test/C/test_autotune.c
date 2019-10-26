@@ -53,8 +53,6 @@
 #include <elpa/elpa.h>
 #include <assert.h>
 
-#include "test/shared/generated.h"
-
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
 //#error "define exactly one of TEST_REAL or TEST_COMPLEX"
 #endif
@@ -85,33 +83,46 @@
 
 #define assert_elpa_ok(x) assert(x == ELPA_OK)
 
+#ifdef HAVE_64BIT_INTEGER_SUPPORT
+#define TEST_C_INT_TYPE_PTR long int*
+#define C_INT_TYPE_PTR long int*
+#define TEST_C_INT_TYPE long int
+#define C_INT_TYPE long int
+#else
+#define TEST_C_INT_TYPE_PTR int*
+#define C_INT_TYPE_PTR int*
+#define TEST_C_INT_TYPE int
+#define C_INT_TYPE int
+#endif
+
+#include "test/shared/generated.h"
 
 int main(int argc, char** argv) {
    /* matrix dimensions */
-   int na, nev, nblk;
+   C_INT_TYPE na, nev, nblk;
 
    /* mpi */
-   int myid, nprocs;
-   int na_cols, na_rows;
-   int np_cols, np_rows;
-   int my_prow, my_pcol;
-   int mpi_comm;
+   C_INT_TYPE myid, nprocs;
+   C_INT_TYPE na_cols, na_rows;
+   C_INT_TYPE np_cols, np_rows;
+   C_INT_TYPE my_prow, my_pcol;
+   C_INT_TYPE mpi_comm;
 
    /* blacs */
-   int my_blacs_ctxt, sc_desc[9], info;
+   C_INT_TYPE my_blacs_ctxt, sc_desc[9], info;
 
    /* The Matrix */
    MATRIX_TYPE *a, *as, *z;
    EV_TYPE *ev;
 
-   int error, status;
-
+   C_INT_TYPE status;
+   int error_elpa; 
    elpa_t handle;
 
    elpa_autotune_t autotune_handle;
-   int i, unfinished;
+   C_INT_TYPE i, unfinished;
 
-   int value;
+   C_INT_TYPE value;
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -131,7 +142,7 @@ int main(int argc, char** argv) {
      nblk = 16;
    }
 
-   for (np_cols = (int) sqrt((double) nprocs); np_cols > 1; np_cols--) {
+   for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
      if (nprocs % np_cols == 0) {
        break;
      }
@@ -177,54 +188,54 @@ int main(int argc, char** argv) {
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
    handle = elpa_allocate();
 #else
-   handle = elpa_allocate(&error);
-   assert_elpa_ok(error);
+   handle = elpa_allocate(&error_elpa);
+   assert_elpa_ok(error_elpa);
 #endif
-   assert_elpa_ok(error);
+   assert_elpa_ok(error_elpa);
 
    /* Set parameters */
-   elpa_set(handle, "na", na, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "na", (int) na, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "nev", nev, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "nev", (int) nev, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
    if (myid == 0) {
      printf("Setting the matrix parameters na=%d, nev=%d \n",na,nev);
    }
-   elpa_set(handle, "local_nrows", na_rows, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "local_nrows", (int) na_rows, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "local_ncols", na_cols, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "local_ncols", (int) na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "nblk", nblk, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "nblk", (int) nblk, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
 #ifdef WITH_MPI
-   elpa_set(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "mpi_comm_parent", (int) (MPI_Comm_c2f(MPI_COMM_WORLD)), &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "process_row", my_prow, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "process_row", (int) my_prow, &error_elpa);
+   assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "process_col", my_pcol, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "process_col", (int) my_pcol, &error_elpa);
+   assert_elpa_ok(error_elpa);
 #endif
 
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
 
-   elpa_set(handle, "gpu", 0, &error);
-   assert_elpa_ok(error);
+   elpa_set(handle, "gpu", 0, &error_elpa);
+   assert_elpa_ok(error_elpa);
  
-   autotune_handle = elpa_autotune_setup(handle, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error);
-   assert_elpa_ok(error);
+   autotune_handle = elpa_autotune_setup(handle, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error_elpa);
+   assert_elpa_ok(error_elpa);
    /* mimic 20 scf steps */
 
    for (i=0; i < 20; i++) {
 
-      unfinished = elpa_autotune_step(handle, autotune_handle, &error);
+      unfinished = elpa_autotune_step(handle, autotune_handle, &error_elpa);
 
       if (unfinished == 0) {
         if (myid == 0) {
@@ -234,16 +245,16 @@ int main(int argc, char** argv) {
       }
       if (myid == 0) {
 	printf("The current setting of the ELPA object: \n");
-        elpa_print_settings(handle, &error);
+        elpa_print_settings(handle, &error_elpa);
 
 	printf("The state of the autotuning: \n");
-        elpa_autotune_print_state(handle, autotune_handle, &error);
+        elpa_autotune_print_state(handle, autotune_handle, &error_elpa);
       }
 
 
       /* Solve EV problem */
-      elpa_eigenvectors(handle, a, ev, z, &error);
-      assert_elpa_ok(error);
+      elpa_eigenvectors(handle, a, ev, z, &error_elpa);
+      assert_elpa_ok(error_elpa);
 
       /* check the results */
 #ifdef TEST_REAL
@@ -283,21 +294,21 @@ int main(int argc, char** argv) {
      }	     
 
    }
-   elpa_autotune_set_best(handle, autotune_handle, &error);
+   elpa_autotune_set_best(handle, autotune_handle, &error_elpa);
 
    if (myid == 0) {
      printf("The best combination found by the autotuning:\n");
-     elpa_autotune_print_best(handle, autotune_handle, &error);
+     elpa_autotune_print_best(handle, autotune_handle, &error_elpa);
    }
 
 #ifdef OPTIONAL_C_ERROR_ARGUMENT
    elpa_autotune_deallocate(autotune_handle);
    elpa_deallocate(handle);
 #else
-   elpa_autotune_deallocate(autotune_handle, &error);
-   elpa_deallocate(handle, &error);
+   elpa_autotune_deallocate(autotune_handle, &error_elpa);
+   elpa_deallocate(handle, &error_elpa);
 #endif
-   elpa_uninit(&error);
+   elpa_uninit(&error_elpa);
 
    if (myid == 0) {
      printf("\n");

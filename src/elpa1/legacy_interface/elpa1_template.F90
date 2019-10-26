@@ -70,7 +70,8 @@ function elpa_solve_evp_&
                                                       mpi_comm_cols, mpi_comm_all
    real(kind=REAL_DATATYPE), intent(out)           :: ev(na)
 
-   integer(kind=c_int)                             :: my_prow, my_pcol, mpierr,error
+   integer(kind=c_int)                             :: my_prow, my_pcol, error
+   integer(kind=MPI_KIND)                          :: mpierr, my_prowMPI, my_pcolMPI
 
 #if REALCASE == 1
 #ifdef USE_ASSUMED_SIZE
@@ -101,9 +102,11 @@ function elpa_solve_evp_&
    class(elpa_t), pointer                          :: e
 
 
-   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
 
+   my_prow = int(my_prowMPI,kind=c_int)
+   my_pcol = int(my_pcolMPI,kind=c_int)
    success = .true.
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *,  "ELPA API version not supported"

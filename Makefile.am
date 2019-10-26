@@ -591,6 +591,8 @@ noinst_LTLIBRARIES += libelpatest@SUFFIX@.la
 libelpatest@SUFFIX@_la_FCFLAGS = $(test_program_fcflags)
 libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/tests_variable_definitions.F90 \
+  test/shared/mod_tests_scalapack_interfaces.F90 \
+  test/shared/mod_tests_blas_interfaces.F90 \
   test/shared/test_util.F90 \
   test/shared/test_read_input_parameters.F90 \
   test/shared/test_check_correctness.F90 \
@@ -766,6 +768,8 @@ EXTRA_DIST = \
   manual_cpp \
   nvcc_wrap \
   remove_xcompiler \
+  src/helpers/fortran_blas_interfaces.F90 \
+  src/helpers/fortran_scalapack_interfaces.F90 \
   src/GPU/cuUtils_template.cu \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \

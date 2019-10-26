@@ -127,10 +127,12 @@ then
     echo "export DISTCHECK_CONFIGURE_FLAGS=\" $distcheckConfigureArgs \" "  >> ./run_${CLUSTER}_1node.sh
     echo "make distcheck TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" || { chmod u+rwX -R . ; exit 1 ; } " >> ./run_${CLUSTER}_1node.sh
     echo " " >> ./run_${CLUSTER}_1node.sh
+    echo "exitCode=\$?" >> ./run_${CLUSTER}_1node.sh
+    echo " " >> ./run_${CLUSTER}_1node.sh
     echo "#copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node.sh
     echo "cp -r * \$runner_path" >> ./run_${CLUSTER}_1node.sh
     echo "cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node.sh
-
+    echo "exit \$exitCode" >> ./run_${CLUSTER}_1node.sh
     echo " "
     echo "Job script for the run"
     cat ./run_${CLUSTER}_1node.sh

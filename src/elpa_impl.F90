@@ -558,8 +558,11 @@ module elpa_impl
 
 #ifdef WITH_MPI
       integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
-                                             mpierr, mpierr2, process_row, process_col, mpi_string_length, &
+                                             process_row, process_col, mpi_string_length, &
                                              present_np_rows, present_np_cols, np_total
+      integer(kind=MPI_KIND)              :: mpierr, mpierr2, my_idMPI, np_totalMPI, process_rowMPI, process_colMPI
+      integer(kind=MPI_KIND)              :: mpi_comm_rowsMPI, mpi_comm_colsMPI, np_rowsMPI, np_colsMPI, &
+                                             mpi_string_lengthMPI
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
       character(*), parameter             :: MPI_CONSISTENCY_MSG = &
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
@@ -602,11 +605,13 @@ module elpa_impl
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
-        call mpi_comm_rank(mpi_comm_parent, my_id, mpierr)
+        call mpi_comm_rank(int(mpi_comm_parent,kind=MPI_KIND), my_idMPI, mpierr)
+        my_id = int(my_idMPI, kind=c_int)
         call self%set("process_id", my_id, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
-        call mpi_comm_size(mpi_comm_parent, np_total, mpierr)
+        call mpi_comm_size(int(mpi_comm_parent,kind=MPI_KIND), np_totalMPI, mpierr)
+        np_total = int(np_totalMPI,kind=c_int)
         call self%set("num_processes", np_total, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       else
@@ -637,16 +642,22 @@ module elpa_impl
         ! So the "color" for splitting is process_col and the "key" is my row coordinate.
         ! Analogous for mpi_comm_cols
 
-        call mpi_comm_split(mpi_comm_parent,process_col,process_row,mpi_comm_rows,mpierr)
+        call mpi_comm_split(int(mpi_comm_parent,kind=MPI_KIND), int(process_col,kind=MPI_KIND), &
+                            int(process_row,kind=MPI_KIND), mpi_comm_rowsMPI, mpierr)
+        mpi_comm_rows = int(mpi_comm_rowsMPI,kind=c_int)
         if (mpierr .ne. MPI_SUCCESS) then
-          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_lengthMPI, mpierr2)
+          mpi_string_length = int(mpi_string_lengthMPI, kind=c_int)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_split for row communicator: ", trim(mpierr_string)
           return
         endif
 
-        call mpi_comm_split(mpi_comm_parent,process_row,process_col,mpi_comm_cols, mpierr)
+        call mpi_comm_split(int(mpi_comm_parent,kind=MPI_KIND), int(process_row,kind=MPI_KIND), &
+                            int(process_col,kind=MPI_KIND), mpi_comm_colsMPI, mpierr)
+        mpi_comm_cols = int(mpi_comm_colsMPI,kind=c_int)
         if (mpierr .ne. MPI_SUCCESS) then
-          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_lengthMPI, mpierr2)
+          mpi_string_length = int(mpi_string_lengthMPI, kind=c_int)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_split for col communicator: ", trim(mpierr_string)
           return
         endif
@@ -675,11 +686,15 @@ module elpa_impl
         call self%get("mpi_comm_cols", mpi_comm_cols,error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
-        call mpi_comm_rank(mpi_comm_rows, process_row, mpierr)
+        process_rowMPI = int(process_row,kind=c_int)
+        call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), process_rowMPI, mpierr)
+        process_row = int(process_rowMPI,kind=MPI_KIND)
         call self%set("process_row", process_row, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
-        call mpi_comm_rank(mpi_comm_cols, process_col, mpierr)
+        process_colMPI = int(process_col,kind=c_int)
+        call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), process_colMPI, mpierr)
+        process_col = int(process_colMPI,kind=MPI_KIND)
         call self%set("process_col", process_col, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
@@ -695,7 +710,8 @@ module elpa_impl
       ! set num_process_rows (and cols), if they are not supplied. Check them
       ! for consistency if they are. Maybe we could instead require, that they
       ! are never supplied?
-      call mpi_comm_size(mpi_comm_rows, np_rows, mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+      np_rows = int(np_rowsMPI, kind=c_int)
       if (self%is_set("num_process_rows") == 1) then
         call self%get("num_process_rows", present_np_rows, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
@@ -709,7 +725,8 @@ module elpa_impl
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       endif
 
-      call mpi_comm_size(mpi_comm_cols, np_cols, mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+      np_cols = int(np_colsMPI, kind=c_int)
       if (self%is_set("num_process_cols") == 1) then
         call self%get("num_process_cols", present_np_cols, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
@@ -1071,7 +1088,9 @@ module elpa_impl
     subroutine elpa_destroy(self, error)
 #ifdef WITH_MPI
       integer                              :: mpi_comm_rows, mpi_comm_cols, &
-                                              mpierr, mpierr2, mpi_string_length
+                                              mpi_string_length
+      integer(kind=MPI_KIND)               :: mpierr, mpierr2, mpi_string_lengthMPI, &
+                                              mpi_comm_rowsMPI, mpi_comm_colsMPI
       character(len=MPI_MAX_ERROR_STRING)  :: mpierr_string
 #endif
       class(elpa_impl_t)                   :: self
@@ -1127,9 +1146,12 @@ module elpa_impl
 
         ! this is just for debugging ! do not leave in a relase
         !write(error_unit, '(A,2I13)') "FREE comms", mpi_comm_rows, mpi_comm_cols
-        call mpi_comm_free(mpi_comm_rows, mpierr)
+        mpi_comm_rowsMPI = int(mpi_comm_rows,kind=MPI_KIND)
+        call mpi_comm_free(mpi_comm_rowsMPI, mpierr)
+        mpi_comm_rows = int(mpi_comm_rowsMPI,kind=c_int)
         if (mpierr .ne. MPI_SUCCESS) then
-          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_lengthMPI, mpierr2)
+          mpi_string_length = int(mpi_string_lengthMPI,kind=c_int)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
 #ifdef USE_FORTRAN2008
           if (present(error)) then
@@ -1153,9 +1175,12 @@ module elpa_impl
 #endif
           return
         endif ! error happend
-        call mpi_comm_free(mpi_comm_cols, mpierr)
+        mpi_comm_colsMPI = int(mpi_comm_cols,kind=MPI_KIND)
+        call mpi_comm_free(mpi_comm_colsMPI, mpierr)
+        mpi_comm_cols = int(mpi_comm_colsMPI, kind=c_int)
         if (mpierr .ne. MPI_SUCCESS) then
-          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_lengthMPI, mpierr2)
+          mpi_string_length = int(mpi_string_lengthMPI,kind=c_int)
           write(error_unit,*) "MPI ERROR occured during mpi_comm_free for col communicator: ", trim(mpierr_string)
 #ifdef USE_FORTRAN2008
           if (present(error)) then
@@ -1375,7 +1400,8 @@ module elpa_impl
       integer(kind=c_int),  intent(out)             :: error
 #endif
       integer(kind=c_int)                           :: error2, error3
-      integer                                       :: mpierr, mpierr2, mpi_comm_parent, mpi_string_length, np_total
+      integer                                       :: mpi_comm_parent, mpi_string_length, np_total
+      integer(kind=MPI_KIND)                        :: mpierr, mpierr2, mpi_string_lengthMPI
       logical                                       :: unfinished
       integer                                       :: i
       real(kind=C_DOUBLE)                           :: time_spent, sendbuf(1), recvbuf(1)
@@ -1441,9 +1467,10 @@ module elpa_impl
         endif
 
         sendbuf(1) = time_spent
-        call MPI_Allreduce(sendbuf, recvbuf, 1, MPI_REAL8, MPI_SUM, mpi_comm_parent, mpierr)
+        call MPI_Allreduce(sendbuf, recvbuf, 1_MPI_KIND, MPI_REAL8, MPI_SUM, int(mpi_comm_parent,kind=MPI_KIND), mpierr)
         if (mpierr .ne. MPI_SUCCESS) then
-          call MPI_ERROR_STRING(mpierr,mpierr_string, mpi_string_length, mpierr2)
+          call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_lengthMPI, mpierr2)
+          mpi_string_length = int(mpi_string_lengthMPI,kind=c_int)
           write(error_unit,*) "MPI ERROR occured during elpa_autotune_step: ", trim(mpierr_string)
           return
         endif

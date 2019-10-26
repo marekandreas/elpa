@@ -79,12 +79,27 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #  define AUTOTUNE_DOMAIN ELPA_AUTOTUNE_DOMAIN_COMPLEX
 #endif
 
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
 #include "assert.h"
 
 program test
    use elpa
 
-   use test_util
+   !use test_util
    use test_setup_mpi
    use test_prepare_matrix
    use test_read_input_parameters
@@ -99,18 +114,18 @@ program test
    implicit none
 
    ! matrix dimensions
-   integer                     :: na, nev, nblk
+   TEST_INT_TYPE                     :: na, nev, nblk
 
    ! mpi
-   integer                     :: myid, nprocs
-   integer                     :: na_cols, na_rows  ! local matrix size
-   integer                     :: np_cols, np_rows  ! number of MPI processes per column/row
-   integer                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   integer                     :: mpierr
+   TEST_INT_TYPE                     :: myid, nprocs
+   TEST_INT_TYPE                     :: na_cols, na_rows  ! local matrix size
+   TEST_INT_TYPE                     :: np_cols, np_rows  ! number of MPI processes per column/row
+   TEST_INT_TYPE                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
+   TEST_INT_MPI_TYPE                 :: mpierr
 
    ! blacs
    character(len=1)            :: layout
-   integer                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
    MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
@@ -119,13 +134,14 @@ program test
    ! eigenvalues
    EV_TYPE, allocatable        :: ev(:)
 
-   integer                     :: error, status
+   TEST_INT_TYPE               :: status
+   integer(kind=c_int)         :: error_elpa
 
    type(output_t)              :: write_to_file
    class(elpa_t), pointer      :: e
    class(elpa_autotune_t), pointer :: tune_state
 
-   integer                     :: iter
+   TEST_INT_TYPE                     :: iter
    character(len=5)            :: iter_string
 
    call read_input_parameters(na, nev, nblk, write_to_file)
@@ -161,7 +177,7 @@ program test
      print *,''
    endif
 
-   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
+   call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, np_cols, layout, &
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
@@ -179,57 +195,57 @@ program test
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times=.false.)
    as(:,:) = a(:,:)
 
-   e => elpa_allocate(error)
-   assert_elpa_ok(error)
+   e => elpa_allocate(error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e%set("na", na, error)
-   assert_elpa_ok(error)
-   call e%set("nev", nev, error)
-   assert_elpa_ok(error)
-   call e%set("local_nrows", na_rows, error)
-   assert_elpa_ok(error)
-   call e%set("local_ncols", na_cols, error)
-   assert_elpa_ok(error)
-   call e%set("nblk", nblk, error)
-   assert_elpa_ok(error)
+   call e%set("na", int(na,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("nev", int(nev,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("local_nrows", int(na_rows,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("local_ncols", int(na_cols,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("nblk", int(nblk,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 
 #ifdef WITH_MPI
-   call e%set("mpi_comm_parent", MPI_COMM_WORLD, error)
-   assert_elpa_ok(error)
-   call e%set("process_row", my_prow, error)
-   assert_elpa_ok(error)
-   call e%set("process_col", my_pcol, error)
-   assert_elpa_ok(error)
+   call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("process_row", int(my_prow,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("process_col", int(my_pcol,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
-   call e%set("timings",1, error)
-   assert_elpa_ok(error)
+   call e%set("timings",1, error_elpa)
+   assert_elpa_ok(error_elpa)
 
-   call e%set("debug",1, error)
-   assert_elpa_ok(error)
-   call e%set("gpu", 0, error)
-   assert_elpa_ok(error)
-   !call e%set("max_stored_rows", 15, error)
+   call e%set("debug",1, error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("gpu", 0, error_elpa)
+   assert_elpa_ok(error_elpa)
+   !call e%set("max_stored_rows", 15, error_elpa)
 
    assert_elpa_ok(e%setup())
 
    if (myid == 0) print *, ""
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error)
-   assert_elpa_ok(error)
+   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    iter=0
-   do while (e%autotune_step(tune_state, error))
-     assert_elpa_ok(error)
+   do while (e%autotune_step(tune_state, error_elpa))
+     assert_elpa_ok(error_elpa)
      iter=iter+1
      write(iter_string,'(I5.5)') iter
      !call e%print_settings()
      !call e%store_settings("saved_parameters_"//trim(iter_string)//".txt")
      call e%timer_start("eigenvectors: iteration "//trim(iter_string))
-     call e%eigenvectors(a, ev, z, error)
-     assert_elpa_ok(error)
+     call e%eigenvectors(a, ev, z, error_elpa)
+     assert_elpa_ok(error_elpa)
      call e%timer_stop("eigenvectors: iteration "//trim(iter_string))
 
-     assert_elpa_ok(error)
+     assert_elpa_ok(error_elpa)
      if (myid .eq. 0) then
        print *, ""
        call e%print_times("eigenvectors: iteration "//trim(iter_string))
@@ -242,26 +258,26 @@ program test
    end do
 
    ! set and print the autotuned-settings
-   call e%autotune_set_best(tune_state, error)
-   assert_elpa_ok(error)
+   call e%autotune_set_best(tune_state, error_elpa)
+   assert_elpa_ok(error_elpa)
    if (myid .eq. 0) then
      print *, "The best combination found by the autotuning:"
      flush(output_unit)
-     call e%autotune_print_best(tune_state, error)
-     assert_elpa_ok(error)
+     call e%autotune_print_best(tune_state, error_elpa)
+     assert_elpa_ok(error_elpa)
    endif
    ! de-allocate autotune object
-   call elpa_autotune_deallocate(tune_state, error)
-   assert_elpa_ok(error)
+   call elpa_autotune_deallocate(tune_state, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    if (myid .eq. 0) then
      print *, "Running once more time with the best found setting..."
    endif
    call e%timer_start("eigenvectors: best setting")
-   call e%eigenvectors(a, ev, z, error)
-   assert_elpa_ok(error)
+   call e%eigenvectors(a, ev, z, error_elpa)
+   assert_elpa_ok(error_elpa)
    call e%timer_stop("eigenvectors: best setting")
-   assert_elpa_ok(error)
+   assert_elpa_ok(error_elpa)
    if (myid .eq. 0) then
      print *, ""
      call e%print_times("eigenvectors: best setting")
@@ -269,16 +285,16 @@ program test
    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                        .true., .true., print_times=.false.)
 
-   call elpa_deallocate(e,error)
-   assert_elpa_ok(error)
+   call elpa_deallocate(e,error_elpa)
+   assert_elpa_ok(error_elpa)
 
    deallocate(a)
    deallocate(as)
    deallocate(z)
    deallocate(ev)
 
-   call elpa_uninit(error)
-   assert_elpa_ok(error)
+   call elpa_uninit(error_elpa)
+   assert_elpa_ok(error_elpa)
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
