@@ -148,7 +148,7 @@ def set_cflags_fcflags(instr, cc, fc, instruction_set):
             FCFLAGS += "-O3 -xMIC-AVX512"
 
     if (instr == "avx2"):
-        INSTRUCTION_OPTIONS = instruction_set[instr]
+        INSTRUCTION_OPTIONS = instruction_set[instr] + " --disable-avx512"
         if (cc == "gnu"):
             CFLAGS += "-O3 -mavx2 -mfma"
         else:

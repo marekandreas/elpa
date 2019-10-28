@@ -21,7 +21,7 @@ subroutine elpa_cssr2(n, x, y,  a, lda )
   implicit none
 #include "./precision_kinds.F90"
 
-  integer(kind=ik)            :: n, lda
+  integer(kind=BLAS_KIND)     :: n, lda
   MATH_DATATYPE(kind=rck)     :: a( lda, * ), x( * ), y( * )
   integer(kind=ik), parameter :: nb = 64
   MATH_DATATYPE(kind=rck)     :: temp1, temp2
@@ -69,7 +69,7 @@ subroutine elpa_cssr2(n, x, y,  a, lda )
 #if REALCASE == 1
       call PRECISION_GER(int(ic,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), -one, x( ix ), 1_BLAS_KIND, y( jy ), 1_BLAS_KIND, &
                           a( ii, jj ), int(lda,kind=BLAS_KIND) )
-      call PRECISION_GER(ic, int(nb,kind=BLAS_KIND), one, y( iy ), 1_BLAS_KIND, x( jx ), 1_BLAS_KIND, &
+      call PRECISION_GER(int(ic,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), one, y( iy ), 1_BLAS_KIND, x( jx ), 1_BLAS_KIND, &
                          a( ii, jj ), int(lda,kind=BLAS_KIND) )
 #endif
     end do

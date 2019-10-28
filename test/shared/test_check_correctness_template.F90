@@ -69,30 +69,31 @@
 #endif
 
 #if REALCASE == 1
-    function check_correctness_evp_numeric_residuals_ss_&
-    &MATH_DATATYPE&
-    &_&
+    function check_correctness_evp_numeric_residuals_ss_real_&
     &PRECISION&
     & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status)
       use tests_blas_interfaces
       use tests_scalapack_interfaces
+      use precision_for_tests
+      use iso_c_binding
       implicit none
 #include "../../src/general/precision_kinds.F90"
-      integer(kind=ik)                 :: status, na_cols, na_rows
-      integer(kind=ik), intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-      real(kind=rk), intent(in)        :: as(:,:)
-      real(kind=rk)                    :: tmpr
-      complex(kind=rck), intent(in)    :: z(:,:)
-      real(kind=rk)                    :: ev(:)
+      integer(kind=BLAS_KIND)             :: status, na_cols, na_rows
+      integer(kind=BLAS_KIND), intent(in) :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+      real(kind=rk), intent(in)           :: as(:,:)
+      real(kind=rk)                       :: tmpr
+      complex(kind=rck), intent(in)       :: z(:,:)
+      real(kind=rk)                       :: ev(:)
       complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      complex(kind=rck)                :: xc
+      complex(kind=rck)                   :: xc
       
-      complex(kind=rck), allocatable   :: as_complex(:,:)
+      complex(kind=rck), allocatable      :: as_complex(:,:)
 
-      integer(kind=ik)                 :: sc_desc(:)
+      integer(kind=BLAS_KIND)             :: sc_desc(:)
 
-      integer(kind=ik)                 :: i, j, rowLocal, colLocal
-      real(kind=rck)                   :: err, errmax
+      integer(kind=BLAS_KIND)             :: i, j, rowLocal, colLocal
+      integer(kind=c_int)                 :: row_Local, col_Local
+      real(kind=rck)                      :: err, errmax
 
       integer :: mpierr
 
@@ -259,7 +260,11 @@
       ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
       err = 0.0_rk
       do i=1, nev
-        if (map_global_array_index_to_local_index(i, i, rowLocal, colLocal, nblk, np_rows, np_cols, my_prow, my_pcol)) then
+        if (map_global_array_index_to_local_index(int(i,kind=c_int), int(i,kind=c_int), row_Local, col_Local, &
+                                                  int(nblk,kind=c_int), int(np_rows,kind=c_int), int(np_cols,kind=c_int), &
+                                                  int(my_prow,kind=c_int), int(my_pcol,kind=c_int)) ) then
+           rowLocal = int(row_Local,kind=INT_TYPE)
+           colLocal = int(col_Local,kind=INT_TYPE)
            err = max(err, abs(tmp1(rowLocal,colLocal) - CONE))
          endif
       end do
@@ -312,31 +317,48 @@
       deallocate(as_complex)
     end function
 
-#endif
+#endif /* REALCASE */
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-    !c> int check_correctness_evp_numeric_residuals_real_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         double *as, double *z, double *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_ss_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                         double *as, complex double *z, double *ev,  TEST_C_INT_TYPE sc_desc[9],
+    !c>                                         TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
-    !c> int check_correctness_evp_numeric_residuals_real_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         float *as, float *z, float *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
+    !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_ss_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                         float *as, complex float *z, float *ev, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                         TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #endif
 #endif /* REALCASE */
 
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION_COMPLEX
-    !c> int check_correctness_evp_numeric_residuals_complex_double_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex double *as, complex double *z, double *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
-#else
-    !c> int check_correctness_evp_numeric_residuals_complex_single_f(int na, int nev, int na_rows, int na_cols,
-    !c>                                         complex float *as, complex float *z, float *ev, int sc_desc[9],
-    !c>                                         int nblk, int myid, int np_rows, int np_cols, int my_prow, int my_pcol);
-#endif
-#endif /* COMPLEXCASE */
+#if REALCASE == 1
+function check_correctness_evp_numeric_residuals_ss_real_&
+&PRECISION&
+&_f (na, nev, na_rows, na_cols, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status) &
+      bind(C,name="check_correctness_evp_numeric_residuals_ss_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+
+      use precision_for_tests
+      use iso_c_binding
+
+      implicit none
+#include "./test_precision_kinds.F90"
+
+      TEST_INT_TYPE            :: status
+      TEST_INT_TYPE, value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
+      real(kind=rck)            :: as(1:na_rows,1:na_cols)
+      complex(kind=rck)         :: z(1:na_rows,1:na_cols)
+      real(kind=rck)            :: ev(1:na)
+      TEST_INT_TYPE            :: sc_desc(1:9)
+
+      status = check_correctness_evp_numeric_residuals_ss_real_&
+      &PRECISION&
+      & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+    end function
+#endif /* REALCASE */
 
 function check_correctness_evp_numeric_residuals_&
     &MATH_DATATYPE&

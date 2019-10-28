@@ -1552,7 +1552,7 @@
          endif
 #endif
 #if COMPLEXCASE == 1
-         call PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,     &
+         call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
                               (-0.5_rk, 0.0_rk),     &
                               umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav, &
                               int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))

@@ -176,8 +176,9 @@ program test
      print *,''
    endif
 
-   call set_up_blacsgrid(mpi_comm_world, np_rows, np_cols, layout, &
-                         my_blacs_ctxt, my_prow, my_pcol)
+   call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, &
+                             np_cols, layout, &
+                             my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
@@ -278,7 +279,7 @@ program test
    
    call e_skewsymmetric%set("solver", elpa_solver_2stage, error_elpa)
 
-   call e_skewsymmetric%get("is_skewsymmetric", i,error_elpa)
+   call e_skewsymmetric%get("is_skewsymmetric", int(i,kind=c_int),error_elpa)
    
    call e_skewsymmetric%timer_start("eigenvectors: skewsymmetric ")
    call e_skewsymmetric%eigenvectors(a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, error_elpa)
@@ -321,9 +322,14 @@ program test
 #ifdef WITH_MPI
    call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
-   status = check_correctness_evp_numeric_residuals_ss(na, nev, as_skewsymmetric, z_complex, ev_skewsymmetric, &
-                              sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
 
+#ifdef TEST_SINGLE
+   status = check_correctness_evp_numeric_residuals_ss_real_single(na, nev, as_skewsymmetric, z_complex, ev_skewsymmetric, &
+                              sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+#else
+   status = check_correctness_evp_numeric_residuals_ss_real_double(na, nev, as_skewsymmetric, z_complex, ev_skewsymmetric, &
+                              sc_desc, nblk, myid, np_rows,np_cols, my_prow, my_pcol)
+#endif
    
 #ifdef WITH_MPI
     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)

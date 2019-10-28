@@ -21,7 +21,7 @@ subroutine elpa_cssmv(n, alpha, a, lda, x,  y)
   implicit none
 #include "./precision_kinds.F90"
 
-  integer(kind=ik)            :: n, lda
+  integer(kind=BLAS_KIND)     :: n, lda
   MATH_DATATYPE(kind=rck)     :: alpha
   MATH_DATATYPE(kind=rck)     :: a( lda, * ), x( * ), y( * )
   integer(kind=ik), parameter :: nb = 64 

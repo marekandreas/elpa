@@ -1313,6 +1313,29 @@ if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
   AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
   ELPA_2STAGE_REAL_GPU_COMPILED=1
+
+  AC_MSG_CHECKING(whether --enable-nvtx is specified)
+  AC_ARG_ENABLE([nvtx],
+                AS_HELP_STRING([--enable-nvtx],
+                               [build and install nvtx wrapper for profiling th GPU version, default no.]),
+                [
+                 if test x"$enableval" = x"yes"; then
+                   enable_nvtx=yes
+                 else
+                   enable_nvtx=no
+                 fi
+                 ],
+                [enable_nvtx=no])
+  AC_MSG_RESULT([${enable_nvtx}])
+  if test x"${enable_nvtx}" = x"yes"; then
+    AC_DEFINE([WITH_NVTX],[1],[enable NVTX support])
+    AC_LANG_PUSH([C])
+    AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
+    if test x"${have_nvtoolsext}" = x"no"; then
+      AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable GPU support ])
+    fi
+    AC_LANG_POP([C])
+  fi
 else
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=0
   ELPA_2STAGE_REAL_GPU_COMPILED=0
