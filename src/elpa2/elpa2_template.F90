@@ -282,9 +282,11 @@
     endif
 
     do_useGPU_bandred = do_useGPU
-    do_useGPU_tridiag_band = do_useGPU
+    ! tridiag-band not ported to GPU yet
+    do_useGPU_tridiag_band = .false.
     do_useGPU_solve_tridi = do_useGPU
-    do_useGPU_trans_ev_tridi_to_band = do_useGPU
+    ! trans tridi to band GPU implementation does not work properly
+    do_useGPU_trans_ev_tridi_to_band = .false.
     do_useGPU_trans_ev_band_to_full = do_useGPU
 
     ! only if we want (and can) use GPU in general, look what are the
@@ -299,12 +301,14 @@
       endif
       do_useGPU_bandred = (gpu == 1)
 
-      call obj%get("gpu_tridiag_band", gpu, error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
-        stop
-      endif
-      do_useGPU_tridiag_band = (gpu == 1)
+!      call obj%get("gpu_tridiag_band", gpu, error)
+!      if (error .ne. ELPA_OK) then
+!        print *,"Problem getting option. Aborting..."
+!        stop
+!      endif
+!      do_useGPU_tridiag_band = (gpu == 1)
+    ! tridiag-band not ported to GPU yet
+      do_useGPU_tridiag_band = .false.
 
       call obj%get("gpu_solve_tridi", gpu, error)
       if (error .ne. ELPA_OK) then
@@ -313,12 +317,13 @@
       endif
       do_useGPU_solve_tridi = (gpu == 1)
 
-      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
-        stop
-      endif
-      do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
+!      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
+!      if (error .ne. ELPA_OK) then
+!        print *,"Problem getting option. Aborting..."
+!        stop
+!      endif
+!      do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
+      do_useGPU_trans_ev_tridi_to_band = .false.
 
       call obj%get("gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
@@ -329,16 +334,28 @@
     endif
 
     ! check consistency between request for GPUs and defined kernel
-
     if (do_useGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. GPU_KERNEL) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-        do_useGPU_trans_ev_tridi_to_band = .false.
-      else if (nblk .ne. 128) then
-        write(error_unit,*) "ELPA: Warning, GPU kernel can run only with scalapack block size 128!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-        do_useGPU_trans_ev_tridi_to_band = .false.
+    !!! this currently cannot happen,  GPU_trans_ev_tridi_to_band is always false
+        write(error_unit,*) "ELPA: internal error!"
+        stop
+!      if (kernel .ne. GPU_KERNEL) then
+!        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+!        write(error_unit,*) "The compute kernel will be executed on CPUs!"
+!        do_useGPU_trans_ev_tridi_to_band = .false.
+!      else if (nblk .ne. 128) then
+!        write(error_unit,*) "ELPA: Warning, GPU kernel can run only with scalapack block size 128!"
+!        write(error_unit,*) "The compute kernel will be executed on CPUs!"
+!        do_useGPU_trans_ev_tridi_to_band = .false.
+!        kernel = GENERIC_KERNEL
+!      endif
+    else
+      if (kernel .eq. GPU_KERNEL) then
+        ! We have currently forbidden to use GPU version of trans ev tridi to band, but we did not forbid the possibility
+        ! to select the GPU kernel. If done such, give warning and swicht to the  generic kernel
+        ! TODO it would be better to forbid the possibility to set the GPU kernel completely
+        write(error_unit,*) "ELPA: ERROR, GPU kernel currently not implemented.&
+                             & Use optimized CPU kernel even for GPU runs! &
+                           Switching to the non-optimized generic kernel"
         kernel = GENERIC_KERNEL
       endif
     endif
@@ -346,16 +363,19 @@
     ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band sould be
     ! finally consistent
     if (do_useGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. GPU_KERNEL) then
-        ! this should never happen, checking as an assert
-        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
-        stop
-      endif
-      if (nblk .ne. 128) then
-        ! this should never happen, checking as an assert
-        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel and blocksize!  Aborting..."
-        stop
-      endif
+    !!! this currently cannot happen,  GPU_trans_ev_tridi_to_band is always false
+      write(error_unit,*) "ELPA: internal error!"
+      stop
+!      if (kernel .ne. GPU_KERNEL) then
+!        ! this should never happen, checking as an assert
+!        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
+!        stop
+!      endif
+!      if (nblk .ne. 128) then
+!        ! this should never happen, checking as an assert
+!        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel and blocksize!  Aborting..."
+!        stop
+!      endif
     else
       if (kernel .eq. GPU_KERNEL) then
         ! combination not allowed
