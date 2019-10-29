@@ -67,6 +67,17 @@ export MKL_GFORTRAN_SCALAPACK_NOMPI_OMP_ILP64_BASELINE="-L$MKL_HOME/lib/intel64 
 export MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_OMP_ILP64="-I$MKL_HOME/include/intel64/ilp64"
 export MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_OMP_ILP64="$MKL_GFORTRAN_SCALAPACK_NOMPI_OMP_ILP64_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
+export MKL_GFORTRAN_SCALAPACK_MPI_NOOMP_ILP64_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_ilp64 -lmkl_gf_ilp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_ilp64 -lpthread"
+export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NOOMP_ILP64="-I$MKL_HOME/include/intel64/ilp64"
+export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NOOMP_ILP64="$MKL_GFORTRAN_SCALAPACK_MPI_NOOMP_ILP64_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+
+export MKL_GFORTRAN_SCALAPACK_MPI_OMP_ILP64_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_ilp64 -lmkl_gf_ilp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_ilp64 -lpthread"
+export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP_ILP64="-I$MKL_HOME/include/intel64/ilp64"
+export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP_ILP64="$MKL_GFORTRAN_SCALAPACK_MPI_OMP_ILP64_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
+
+
+
+
 
 export ASAN_OPTIONS=suppressions=./ci_test_scripts/no_asan_for_mpi.supp,fast_unwind_on_malloc=0
 export LSAN_OPTIONS=suppressions=./ci_test_scripts/no_lsan_for_mpi.supp
