@@ -1249,6 +1249,21 @@ if test x"${need_gpu}" = x"yes" ; then
   AC_LANG_POP([C])
 fi
 
+AC_MSG_CHECKING(whether GPU memory debugging should be enabled)
+AC_ARG_ENABLE([gpu-memory-debug],
+                AS_HELP_STRING([--enable-gpu-memory-debug],
+                               [Output information on GPU memory to be processed by utils/memory/check_memory.py]),
+                               [if test x"$enableval" = x"yes"; then
+                                  enable_gpu_memory_debug=yes
+                                else
+                                  enable_gpu_memory_debug=no
+                                fi],
+              [enable_gpu_memory_debug=no])
+AC_MSG_RESULT([${enable_gpu_memory_debug}])
+if test x"${enable_gpu_memory_debug}" = x"yes" ; then
+  AC_DEFINE([DEBUG_CUDA],[1],[enable CUDA debugging])
+fi
+
 
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
