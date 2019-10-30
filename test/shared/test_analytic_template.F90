@@ -72,7 +72,7 @@
     logical, optional                               :: print_times
     logical                                         :: print_timer
     TEST_INT_TYPE                                   :: globI, globJ, locI, locJ, pi, pj, levels(num_primes)
-    integer(kind=c_int)                             :: loc_I, loc_J
+    integer(kind=c_int)                             :: loc_I, loc_J, p_i, p_j
 #ifdef HAVE_DETAILED_TIMINGS
     type(timer_t)                                   :: timer
 #else
@@ -105,12 +105,14 @@
     call timer%start("loop")
     do globI = 1, na
 
-      pi = int(prow(int(globI,kind=c_int), int(nblk,kind=c_int), int(np_rows,kind=c_int)),kind=INT_TYPE)
+      p_i = prow(int(globI,kind=c_int), int(nblk,kind=c_int), int(np_rows,kind=c_int))
+      pi = int(p_i,kind=INT_TYPE)
       if (my_prow .ne. pi) cycle
 
       do globJ = 1, na
 
-        pj = int(pcol(int(globJ,kind=c_int), int(nblk,kind=c_int), int(np_cols,kind=c_int)),kind=INT_TYPE)
+        p_j = pcol(int(globJ,kind=c_int), int(nblk,kind=c_int), int(np_cols,kind=c_int))
+        pj = int(p_j,kind=INT_TYPE)
         if (my_pcol .ne. pj) cycle
 
         if(map_global_array_index_to_local_index(int(globI,kind=c_int), int(globJ,kind=c_int), loc_I, loc_J, &
@@ -180,10 +182,10 @@
                                               normalization_quotient
     MATH_DATATYPE(kind=rck)                :: max_values_array(np_rows * np_cols), &
                                               corresponding_exact_value
-    TEST_INT_TYPE                          :: max_value_idx, rank_with_max, &
+    integer(kind=c_int)                    :: max_value_idx, rank_with_max, &
                                               rank_with_max_reduced,        &
                                               num_checked_evals
-    TEST_INT_TYPE                          :: max_idx_array(np_rows * np_cols), &
+    integer(kind=c_int)                    :: max_idx_array(np_rows * np_cols), &
                                               rank
     logical, optional                      :: print_times
     logical                                :: print_timer
@@ -251,7 +253,7 @@
           computed_z = z(locI, locJ)
           if(abs(computed_z) > abs(max_value_for_normalization)) then
             max_value_for_normalization = computed_z
-            max_value_idx = globI
+            max_value_idx = int(globI,kind=c_int)
           end if
         end if
       end do
@@ -291,7 +293,7 @@
                                        &MATH_DATATYPE&
                                        &_&
                                        &PRECISION&
-                                       &(na, max_value_idx, globJ)
+                                       &(na, int(max_value_idx,kind=INT_TYPE), globJ)
       call timer%stop("evaluation_helper")
       normalization_quotient = corresponding_exact_value / max_value_for_normalization
       ! write(*,*) "normalization q", normalization_quotient
