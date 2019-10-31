@@ -50,6 +50,7 @@
 
 
 #include <stdio.h>
+#include <assert.h>
 #include <cuda_runtime.h>
 #include <stdlib.h>
 #include <cuComplex.h>
@@ -95,10 +96,16 @@ static __device__ __forceinline__ double shfl_down_complex_double(double r, int 
 static __device__ __forceinline__ float shfl_down_complex_single(float r, int offset)
 #endif
 {
-    int hi = __shfl_down(__double2hiint(r), offset);
-    int lo = __shfl_down(__double2loint(r), offset);
+    // The following operations do not exist in CUDA 10.1 any more
+    // It has been commented out. The code is still compiled, but not used
+    // TODO do it properly
 
-    return __hiloint2double(hi, lo);
+    assert(0);
+    //int hi = __shfl_down(__double2hiint(r), offset);
+    //int lo = __shfl_down(__double2loint(r), offset);
+
+    //return __hiloint2double(hi, lo);
+    return 0.;
 }
 
 #ifdef DOUBLE_PRECISION_COMPLEX

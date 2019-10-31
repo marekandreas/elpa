@@ -783,12 +783,12 @@ m4_define(elpa_m4_bgq_kernels, [
         complex_bgq
 ])
 
-m4_define(elpa_m4_gpu_kernels, [
-        real_gpu
-        complex_gpu
-])
+#m4_define(elpa_m4_gpu_kernels, [
+#        real_gpu
+#        complex_gpu
+#])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 bgp bgq gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 bgp bgq])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -829,7 +829,7 @@ ELPA_SELECT_KERNELS([sse_assembly],[enable])
 ELPA_SELECT_KERNELS([avx],[enable])
 ELPA_SELECT_KERNELS([avx2],[enable])
 ELPA_SELECT_KERNELS([avx512],[enable])
-ELPA_SELECT_KERNELS([gpu],[disable])
+#ELPA_SELECT_KERNELS([gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
 
@@ -871,16 +871,16 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
 ])
 
-AC_ARG_WITH(gpu-support-only, [AS_HELP_STRING([--with-gpu-support-only],
-            [Compile and always use the GPU version])],
-            [],[with_gpu_support_only=no])
-if test x"$with_gpu_support_only" = x"yes" ; then
-        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
-                      use_[]elpa_m4_kernel[]=no
-        ])
-        use_real_gpu=yes
-        use_complex_gpu=yes
-fi
+#AC_ARG_WITH(gpu-support-only, [AS_HELP_STRING([--with-gpu-support-only],
+#            [Compile and always use the GPU version])],
+#            [],[with_gpu_support_only=no])
+#if test x"$with_gpu_support_only" = x"yes" ; then
+#        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+#                      use_[]elpa_m4_kernel[]=no
+#        ])
+#        use_real_gpu=yes
+#        use_complex_gpu=yes
+#fi
 
 
 dnl
@@ -1266,6 +1266,24 @@ if test x"${need_bgq}" = x"yes"; then
 fi
 AC_LANG_POP([Fortran])
 
+
+AC_MSG_CHECKING(whether GPU version should be used)
+AC_ARG_ENABLE([gpu],
+                AS_HELP_STRING([--enable-gpu],
+                               [do use GPU version]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_gpu=yes
+                                else
+                                  use_gpu=no
+                                fi],
+              [use_gpu=no])
+AC_MSG_RESULT([${use_gpu}])
+if test x"${use_gpu}" = x"yes" ; then
+  need_gpu=yes
+  use_real_gpu=yes
+  use_complex_gpu=yes
+fi
+
 if test x"${need_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
   CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
@@ -1293,6 +1311,21 @@ if test x"${need_gpu}" = x"yes" ; then
   AC_LANG_POP([C])
 fi
 
+AC_MSG_CHECKING(whether GPU memory debugging should be enabled)
+AC_ARG_ENABLE([gpu-memory-debug],
+                AS_HELP_STRING([--enable-gpu-memory-debug],
+                               [Output information on GPU memory to be processed by utils/memory/check_memory.py]),
+                               [if test x"$enableval" = x"yes"; then
+                                  enable_gpu_memory_debug=yes
+                                else
+                                  enable_gpu_memory_debug=no
+                                fi],
+              [enable_gpu_memory_debug=no])
+AC_MSG_RESULT([${enable_gpu_memory_debug}])
+if test x"${enable_gpu_memory_debug}" = x"yes" ; then
+  AC_DEFINE([DEBUG_CUDA],[1],[enable CUDA debugging])
+fi
+
 
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
@@ -1306,11 +1339,10 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kernel)[_COMPILED])
 ])
 
-
 AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes"])
 if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
   AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
-  AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
+  #AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
   ELPA_2STAGE_REAL_GPU_COMPILED=1
 
