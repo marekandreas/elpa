@@ -52,8 +52,7 @@ module elpa_blas_interfaces
   implicit none
 
   public
-
 #include "./fortran_blas_interfaces.F90"
-end module
 
+end module
 

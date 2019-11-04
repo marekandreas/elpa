@@ -39,7 +39,7 @@ AC_SUBST([$1], ['$2'])
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20190524, "Current ELPA API version")
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20191110, "Current ELPA API version")
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20190524], [Current ELPA autotune version])
@@ -1505,6 +1505,27 @@ if test x"${want_single_precision}" = x"yes" ; then
 fi
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_REAL],[test x"$want_single_precision" = x"yes"])
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" = x"yes"])
+
+#always define SKEWSYMMETRIC for the moment
+
+AC_MSG_CHECKING(whether we should enable skew-symmetric support)
+AC_ARG_ENABLE([skew-symmetric-support],
+              AS_HELP_STRING([--enable-skew-symmetric-support],
+                             [enable support for real valued skew-symmetric matrices]),
+			     [if test x"$enableval" = x"yes"; then
+			        enable_skewsymmetric=yes
+		              else
+				enable_skewsymmetric=no
+			      fi],
+              [enable_skewsymmetric=no])
+AC_MSG_RESULT([${enable_skewsymmetric}])
+AM_CONDITIONAL([HAVE_SKEWSYMMETRIC],[test x"$enable_skewsymmetric" = x"yes"])
+if test x"${enable_skewsymmetric}" = x"yes"; then
+   if test x"${USE_ASSUMED_SIZE}" = x"no"; then
+     AC_MSG_ERROR(you have to enable assumed size arrays, if you want to build with skew-symmetric support)
+   fi
+AC_DEFINE([HAVE_SKEWSYMMETRIC],[1],[build for skewsyemmtric case])
+fi
 
 AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])

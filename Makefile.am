@@ -64,8 +64,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/elpa1.F90 \
   src/elpa2/elpa2.F90 \
   src/elpa_generalized/cannon.c \
-  #src/elpa_generalized/test_c_bindings.c \
   src/helpers/matrix_plot.F90 \
+  src/general/mod_elpa_skewsymmetric_blas.F90 \
   src/elpa_index.c
 
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c 
@@ -122,6 +122,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa_invert_trm.F90 \
   src/elpa1/elpa_multiply_a_b.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
+  src/general/elpa_ssr2_template.F90 \
+  src/general/elpa_ssmv_template.F90 \
   src/general/precision_macros.h \
   src/general/precision_typedefs.h \
   src/general/precision_kinds.F90
@@ -518,6 +520,10 @@ dist_man_MANS = \
   man/elpa_autotune_save_state.3 \
   man/elpa_autotune_load_state.3 \
   man/elpa_autotune_print_state.3 \
+  man/elpa_autotune_setup.3 \
+  man/elpa_autotune_step.3 \
+  man/elpa_autotune_set_best.3 \
+  man/elpa_autotune_deallocate.3 \
   man/elpa_uninit.3
 
 if ENABLE_LEGACY
@@ -542,11 +548,7 @@ dist_man_MANS += \
   man/elpa_solve_evp_real_double.3 \
   man/elpa_solve_evp_real_single.3 \
   man/elpa_solve_evp_complex_double.3 \
-  man/elpa_solve_evp_complex_single.3 \
-  man/elpa_autotune_setup.3 \
-  man/elpa_autotune_step.3 \
-  man/elpa_autotune_set_best.3 \
-  man/elpa_autotune_deallocate.3
+  man/elpa_solve_evp_complex_single.3 
 endif
 
 
@@ -824,6 +826,8 @@ EXTRA_DIST = \
   test/shared/test_precision_kinds.F90 \
   src/general/prow_pcol.F90 \
   src/general/sanity.F90 \
+  src/general/elpa_ssr2_template.F90 \
+  src/general/elpa_ssmv_template.F90 \
   test/Fortran/assert.h \
   test/Fortran/elpa_print_headers.F90 \
   test/shared/test_check_correctness_template.F90 \

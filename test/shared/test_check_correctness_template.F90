@@ -68,7 +68,299 @@
 #define TEST_C_INT_MPI_TYPE int
 #endif
 
-    function check_correctness_evp_numeric_residuals_&
+#if REALCASE == 1
+    function check_correctness_evp_numeric_residuals_ss_real_&
+    &PRECISION&
+    & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status)
+      use tests_blas_interfaces
+      use tests_scalapack_interfaces
+      use precision_for_tests
+      use iso_c_binding
+      implicit none
+#include "../../src/general/precision_kinds.F90"
+      integer(kind=BLAS_KIND)             :: status, na_cols, na_rows
+      integer(kind=BLAS_KIND), intent(in) :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+      real(kind=rk), intent(in)           :: as(:,:)
+      real(kind=rk)                       :: tmpr
+      complex(kind=rck), intent(in)       :: z(:,:)
+      real(kind=rk)                       :: ev(:)
+      complex(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
+      complex(kind=rck)                   :: xc
+      
+      complex(kind=rck), allocatable      :: as_complex(:,:)
+
+      integer(kind=BLAS_KIND)             :: sc_desc(:)
+
+      integer(kind=BLAS_KIND)             :: i, j, rowLocal, colLocal
+      integer(kind=c_int)                 :: row_Local, col_Local
+      real(kind=rck)                      :: err, errmax
+
+      integer :: mpierr
+
+      ! tolerance for the residual test for different math type/precision setups
+      real(kind=rk), parameter       :: tol_res_real_double      = 5e-4_rk
+      real(kind=rk), parameter       :: tol_res_real_single      = 3e-2_rk
+      real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
+      real(kind=rk), parameter       :: tol_res_complex_single   = 3e-2_rk
+      real(kind=rk)                  :: tol_res                  = tol_res_&
+                                                                          &MATH_DATATYPE&
+                                                                          &_&
+                                                                          &PRECISION
+      ! precision of generalized problem is lower
+      real(kind=rk), parameter       :: generalized_penalty = 10.0_rk
+
+      ! tolerance for the orthogonality test for different math type/precision setups
+!       real(kind=rk), parameter       :: tol_orth_real_double     = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_real_double     = 5e-4_rk
+      real(kind=rk), parameter       :: tol_orth_real_single     = 9e-2_rk
+      real(kind=rk), parameter       :: tol_orth_complex_double  = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_complex_single  = 9e-3_rk
+      real(kind=rk), parameter       :: tol_orth                 = tol_orth_&
+                                                                          &MATH_DATATYPE&
+                                                                          &_&
+                                                                          &PRECISION
+                                                  
+      complex(kind=rck), parameter   :: CZERO = (0.0_rck,0.0_rck), CONE = (1.0_rck,0.0_rck)
+
+
+      status = 0
+      ! Setup complex matrices and eigenvalues
+      na_rows = size(as,dim=1)
+      na_cols = size(as,dim=2)
+      
+      allocate(as_complex(na_rows,na_cols))
+      do j=1, na_cols
+        do i=1,na_rows
+#ifdef DOUBLE_PRECISION_REAL
+          as_complex(i,j) = dcmplx(as(i,j),0.0_rk)
+#else
+          as_complex(i,j) = cmplx(as(i,j),0.0_rk)
+#endif
+       enddo
+      enddo
+      
+      ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
+
+      ! tmp1 = Zi*EVi
+      tmp1(:,:) = z(:,:)
+      do i=1,nev
+#ifdef DOUBLE_PRECISION_REAL
+        xc = dcmplx(0.0_rk,ev(i))
+#else
+        xc = cmplx(0.0_rk,ev(i))
+#endif
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+        call pzscal(int(na,kind=BLAS_KIND), xc, tmp1, 1_BLAS_KIND, int(i,kind=BLAS_KIND), sc_desc, 1_BLAS_KIND)
+#else
+        call pcscal(int(na,kind=BLAS_KIND), xc, tmp1, 1_BLAS_KIND, int(i,kind=BLAS_KIND), sc_desc, 1_BLAS_KIND)
+#endif
+#else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
+        call zscal(int(na,kind=BLAS_KIND), xc, tmp1(:,i), 1_BLAS_KIND)
+#else
+        call cscal(int(na,kind=BLAS_KIND), xc, tmp1(:,i), 1_BLAS_KIND)
+#endif
+#endif /* WITH_MPI */
+      enddo
+
+      ! normal eigenvalue problem .. no need to multiply
+        tmp2(:,:) = tmp1(:,:)
+
+      ! tmp1 =  A * Z
+      ! as is original stored matrix, Z are the EVs
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+      call PZGEMM('N', 'N', int(na,kind=BLAS_KIND), int(nev,kind=BLAS_KIND), int(na,kind=BLAS_KIND), &
+                  CONE, as_complex, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                  z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, CZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+#else
+      call PCGEMM('N', 'N', int(na,kind=BLAS_KIND), int(nev,kind=BLAS_KIND), int(na,kind=BLAS_KIND), &
+                  CONE, as_complex, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                  z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, CZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+#endif
+#else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
+      call ZGEMM('N','N',int(na,kind=BLAS_KIND), int(nev,kind=BLAS_KIND), int(na,kind=BLAS_KIND), CONE, &
+                 as_complex, int(na,kind=BLAS_KIND), z,int(na,kind=BLAS_KIND), CZERO, tmp1, int(na,kind=BLAS_KIND) )
+#else
+      call CGEMM('N','N', int(na,kind=BLAS_KIND), int(nev,kind=BLAS_KIND), int(na,kind=BLAS_KIND), CONE, &
+                  as_complex, int(na,kind=BLAS_KIND), z, int(na,kind=BLAS_KIND), CZERO, tmp1, int(na,kind=BLAS_KIND) )
+#endif
+#endif /* WITH_MPI */
+
+      !  tmp1 = A*Zi - Zi*EVi
+      tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
+      
+      ! Get maximum norm of columns of tmp1
+      errmax = 0.0_rk
+
+      do i=1,nev
+        xc = (0.0_rk,0.0_rk)
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+        call PZDOTC(int(na,kind=BLAS_KIND), xc, tmp1, 1_BLAS_KIND, int(i,kind=BLAS_KIND), sc_desc, &
+                    1_BLAS_KIND, tmp1, 1_BLAS_KIND, int(i,kind=BLAS_KIND), sc_desc, 1_BLAS_KIND)
+#else
+        call PCDOTC(int(na,kind=BLAS_KIND), xc, tmp1, 1_BLAS_KIND, int(i,kind=BLAS_KIND), sc_desc, &
+                    1_BLAS_KIND, tmp1, 1_BLAS_KIND, int(i,kind=BLAS_KIND), sc_desc, 1_BLAS_KIND)
+#endif
+#else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
+        xc = ZDOTC(int(na,kind=BLAS_KIND) ,tmp1, 1_BLAS_KIND, tmp1, 1_BLAS_KIND)
+#else
+        xc = CDOTC(int(na,kind=BLAS_KIND) ,tmp1, 1_BLAS_KIND, tmp1, 1_BLAS_KIND)
+#endif
+#endif /* WITH_MPI */
+        errmax = max(errmax, sqrt(real(xc,kind=REAL_DATATYPE)))
+      enddo
+
+      ! Get maximum error norm over all processors
+      err = errmax
+#ifdef WITH_MPI
+      call mpi_allreduce(err, errmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+      if (myid==0) print *,'%Results of numerical residual checks, using complex arithmetic:'
+      if (myid==0) print *,'%Error Residual     :',errmax
+      if (nev .ge. 2) then
+        if (errmax .gt. tol_res .or. errmax .eq. 0.0_rk) then
+          status = 1
+        endif
+      else
+        if (errmax .gt. tol_res) then
+          status = 1
+        endif
+      endif
+
+      ! 2. Eigenvector orthogonality
+        tmp2(:,:) = z(:,:)
+      tmp1 = 0
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+      call PZGEMM('C', 'N', int(nev,kind=BLAS_KIND), int(nev,kind=BLAS_KIND), int(na,kind=BLAS_KIND), &
+                  CONE, z, 1_BLAS_KIND, 1_BLAS_KIND, &
+                  sc_desc, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, CZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+#else
+      call PCGEMM('C', 'N', int(nev,kind=BLAS_KIND), int(nev,kind=BLAS_KIND), int(na,kind=BLAS_KIND), &
+                  CONE, z, 1_BLAS_KIND, 1_BLAS_KIND, &
+                  sc_desc, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, CZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+#endif
+
+#else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
+      call ZGEMM('C','N', int(nev,kind=BLAS_KIND) , int(nev,kind=BLAS_KIND), int(na,kind=BLAS_KIND),CONE, z, &
+                 int(na,kind=BLAS_KIND), tmp2, int(na,kind=BLAS_KIND), CZERO, tmp1, int(na,kind=BLAS_KIND))
+#else
+      call CGEMM('C','N', int(nev,kind=BLAS_KIND) , int(nev,kind=BLAS_KIND), int(na,kind=BLAS_KIND),CONE, z, &
+                 int(na,kind=BLAS_KIND), tmp2, int(na,kind=BLAS_KIND), CZERO, tmp1, int(na,kind=BLAS_KIND))
+#endif
+#endif /* WITH_MPI */
+      ! First check, whether the elements on diagonal are 1 .. "normality" of the vectors
+      err = 0.0_rk
+      do i=1, nev
+        if (map_global_array_index_to_local_index(int(i,kind=c_int), int(i,kind=c_int), row_Local, col_Local, &
+                                                  int(nblk,kind=c_int), int(np_rows,kind=c_int), int(np_cols,kind=c_int), &
+                                                  int(my_prow,kind=c_int), int(my_pcol,kind=c_int)) ) then
+           rowLocal = int(row_Local,kind=INT_TYPE)
+           colLocal = int(col_Local,kind=INT_TYPE)
+           err = max(err, abs(tmp1(rowLocal,colLocal) - CONE))
+         endif
+      end do
+#ifdef WITH_MPI
+      call mpi_allreduce(err, errmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+      if (myid==0) print *,'%Maximal error in eigenvector lengths:',errmax
+
+      ! Second, find the maximal error in the whole Z**T * Z matrix (its diference from identity matrix)
+      ! Initialize tmp2 to unit matrix
+      tmp2 = 0
+#ifdef WITH_MPI
+#ifdef DOUBLE_PRECISION_REAL
+      call PZLASET('A', int(nev,kind=BLAS_KIND), int(nev,kind=BLAS_KIND), CZERO, CONE, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+#else
+      call PCLASET('A', int(nev,kind=BLAS_KIND), int(nev,kind=BLAS_KIND), CZERO, CONE, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+#endif
+#else /* WITH_MPI */
+#ifdef DOUBLE_PRECISION_REAL
+      call ZLASET('A',int(nev,kind=BLAS_KIND) ,int(nev,kind=BLAS_KIND) ,CZERO, CONE, tmp2, int(na,kind=BLAS_KIND))
+#else
+      call CLASET('A',int(nev,kind=BLAS_KIND) ,int(nev,kind=BLAS_KIND) ,CZERO, CONE, tmp2, int(na,kind=BLAS_KIND))
+#endif
+#endif /* WITH_MPI */
+
+      !      ! tmp1 = Z**T * Z - Unit Matrix
+      tmp1(:,:) =  tmp1(:,:) - tmp2(:,:)
+
+      ! Get maximum error (max abs value in tmp1)
+      err = maxval(abs(tmp1))
+#ifdef WITH_MPI
+      call mpi_allreduce(err, errmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+#else /* WITH_MPI */
+      errmax = err
+#endif /* WITH_MPI */
+      if (myid==0) print *,'%Error Orthogonality:',errmax
+
+      if (nev .ge. 2) then
+        if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
+          status = 1
+        endif
+      else
+        if (errmax .gt. tol_orth) then
+          status = 1
+        endif
+      endif
+      
+      deallocate(as_complex)
+    end function
+
+#endif /* REALCASE */
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_ss_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                         double *as, complex double *z, double *ev,  TEST_C_INT_TYPE sc_desc[9],
+    !c>                                         TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_ss_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                         float *as, complex float *z, float *ev, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                         TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#endif
+#endif /* REALCASE */
+
+#if REALCASE == 1
+function check_correctness_evp_numeric_residuals_ss_real_&
+&PRECISION&
+&_f (na, nev, na_rows, na_cols, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status) &
+      bind(C,name="check_correctness_evp_numeric_residuals_ss_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+
+      use precision_for_tests
+      use iso_c_binding
+
+      implicit none
+#include "./test_precision_kinds.F90"
+
+      TEST_INT_TYPE            :: status
+      TEST_INT_TYPE, value     :: na, nev, myid, na_rows, na_cols, nblk, np_rows, np_cols, my_prow, my_pcol
+      real(kind=rck)            :: as(1:na_rows,1:na_cols)
+      complex(kind=rck)         :: z(1:na_rows,1:na_cols)
+      real(kind=rck)            :: ev(1:na)
+      TEST_INT_TYPE            :: sc_desc(1:9)
+
+      status = check_correctness_evp_numeric_residuals_ss_real_&
+      &PRECISION&
+      & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+    end function
+#endif /* REALCASE */
+
+function check_correctness_evp_numeric_residuals_&
     &MATH_DATATYPE&
     &_&
     &PRECISION&
@@ -79,19 +371,13 @@
       use precision_for_tests
       implicit none
 #include "./test_precision_kinds.F90"
-      TEST_INT_TYPE                 :: status
-      TEST_INT_TYPE, intent(in)     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+      TEST_INT_TYPE                                 :: status
+      TEST_INT_TYPE, intent(in)                     :: na, nev, nblk, myid, np_rows, np_cols, my_prow, my_pcol
       MATH_DATATYPE(kind=rck), intent(in)           :: as(:,:), z(:,:)
       MATH_DATATYPE(kind=rck), intent(in), optional :: bs(:,:)
-      real(kind=rk)                 :: ev(:)
+      real(kind=rk)                                 :: ev(:)
       MATH_DATATYPE(kind=rck), dimension(size(as,dim=1),size(as,dim=2)) :: tmp1, tmp2
-      MATH_DATATYPE(kind=rck)                :: xc
-
-#ifndef WITH_MPI
-#if COMPLEXCASE == 1
-      complex(kind=rck)                :: zdotc, cdotc
-#endif /* COMPLEXCASE */
-#endif
+      MATH_DATATYPE(kind=rck)                       :: xc
 
       TEST_INT_TYPE                 :: sc_desc(:)
 
@@ -101,7 +387,7 @@
 
       TEST_INT_MPI_TYPE             :: mpierr
 
-      ! tolerance for the residual test for different math type/precision setups
+! tolerance for the residual test for different math type/precision setups
       real(kind=rk), parameter       :: tol_res_real_double      = 5e-12_rk
       real(kind=rk), parameter       :: tol_res_real_single      = 3e-2_rk
       real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
@@ -129,8 +415,8 @@
       status = 0
 
       ! 1. Residual (maximum of || A*Zi - Zi*EVi ||)
-
-      ! tmp1 = Zi*EVi
+     
+!       tmp1 = Zi*EVi
       tmp1(:,:) = z(:,:)
       do i=1,nev
         xc = ev(i)
@@ -290,7 +576,6 @@
         endif
       endif
     end function
-
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL

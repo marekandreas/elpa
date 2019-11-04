@@ -50,15 +50,7 @@
 #include "config-f90.h"
 #include "../general/sanity.F90"
 
-#undef ROUTINE_NAME
-#ifdef SKEW_SYMMETRIC_BUILD
-#define ROUTINE_NAME elpa_transpose_vectors_ss_
-#else
-#define ROUTINE_NAME elpa_transpose_vectors_
-#endif
-
-
-subroutine ROUTINE_NAME&
+subroutine elpa_transpose_vectors_ss_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
@@ -99,29 +91,22 @@ subroutine ROUTINE_NAME&
 
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable  :: aux(:)
    integer(kind=ik)                                  :: myps, mypt, nps, npt
-   integer(kind=MPI_KIND)                            :: mypsMPI, myptMPI, npsMPI, nptMPI
-   integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl
-   integer(kind=MPI_KIND)                            :: mpierr
+   integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl, mpierr
    integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
    integer(kind=ik)                                  :: auxstride
    integer(kind=ik), intent(in)                      :: nrThreads
 
-   call obj%timer%start("ROUTINE_NAME&
+   call obj%timer%start("elpa_transpose_vectors_&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &
    )
 
    call obj%timer%start("mpi_communication")
-   call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
-   call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
-   call mpi_comm_rank(int(comm_t,kind=MPI_KIND),myptMPI, mpierr)
-   call mpi_comm_size(int(comm_t,kind=MPI_KIND),nptMPI ,mpierr)
-   myps = int(mypsMPI,kind=c_int)
-   nps = int(npsMPI,kind=c_int)
-   mypt = int(myptMPI,kind=c_int)
-   npt = int(nptMPI,kind=c_int)
-
+   call mpi_comm_rank(comm_s,myps,mpierr)
+   call mpi_comm_size(comm_s,nps ,mpierr)
+   call mpi_comm_rank(comm_t,mypt,mpierr)
+   call mpi_comm_size(comm_t,npt ,mpierr)
 
    call obj%timer%stop("mpi_communication")
    ! The basic idea of this routine is that for every block (in the block cyclic
@@ -180,14 +165,14 @@ subroutine ROUTINE_NAME&
 #ifdef WITH_MPI
         call obj%timer%start("mpi_communication")
 
-        call MPI_Bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
+        call MPI_Bcast(aux, nblks_comm*nblk*nvc,    &
 #if REALCASE == 1
                        MPI_REAL_PRECISION,    &
 #endif
 #if COMPLEXCASE == 1
                        MPI_COMPLEX_PRECISION, &
 #endif
-                       int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND), mpierr)
+                       ips, comm_s, mpierr)
 
 
          call obj%timer%stop("mpi_communication")
@@ -205,11 +190,7 @@ subroutine ROUTINE_NAME&
                k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
                ns = (i/npt)*nblk ! local start of block i
                nl = min(nvr-i*nblk,nblk) ! length
-#ifdef SKEW_SYMMETRIC_BUILD
                vmat_t(ns+1:ns+nl,lc) = - aux(k+1:k+nl)
-#else
-               vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
-#endif
 !               k = k+nblk
             enddo
          enddo
@@ -222,7 +203,7 @@ subroutine ROUTINE_NAME&
 #endif
    deallocate(aux)
 
-   call obj%timer%stop("ROUTINE_NAME&
+   call obj%timer%stop("elpa_transpose_vectors_&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &

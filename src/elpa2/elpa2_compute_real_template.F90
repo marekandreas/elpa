@@ -59,7 +59,13 @@
 #undef COMPLEXCASE
 #include "elpa2_bandred_template.F90"
 #define REALCASE 1
+#undef SKEW_SYMMETRIC_BUILD
 #include "elpa2_symm_matrix_allreduce_real_template.F90"
+#ifdef HAVE_SKEWSYMMETRIC
+#define SKEW_SYMMETRIC_BUILD
+#include "elpa2_symm_matrix_allreduce_real_template.F90"
+#undef SKEW_SYMMETRIC_BUILD
+#endif
 #undef REALCASE
 #define REALCASE 1
 #include "elpa2_trans_ev_band_to_full_template.F90"

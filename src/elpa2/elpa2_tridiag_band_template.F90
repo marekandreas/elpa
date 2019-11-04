@@ -93,11 +93,13 @@
       use omp_lib
 #endif
       use elpa_blas_interfaces
-
+      use elpa_skewsymmetric_blas
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)   :: obj
       logical, intent(in)                          :: useGPU, wantDebug
+      integer(kind=c_int)                          :: skewsymmetric
+      logical                                      :: isSkewsymmetric
       integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #ifdef USE_ASSUMED_SIZE
       MATH_DATATYPE(kind=rck), intent(in)         :: a_mat(lda,*)
@@ -141,6 +143,13 @@
       integer(kind=ik)                             :: startAddr
 #endif
 
+      call obj%get("is_skewsymmetric",skewsymmetric,istat)
+      if (istat .ne. ELPA_OK) then
+           print *,"Problem getting option. Aborting..."
+           stop
+      endif
+      isSkewsymmetric = (skewsymmetric == 1)
+      
       if(useGPU) then
         gpuString = "_gpu"
       else
@@ -462,6 +471,7 @@
         if (my_pe==0) then
           n = MIN(na-na_s,nb) ! number of rows to be reduced
           hv(:) = 0.0_rck
+          hd(:) = 0.0_rck
           tau = 0.0_rck
 
           ! Transform first column of remaining matrix
@@ -501,7 +511,11 @@
 #endif
 
 #if REALCASE == 1
-          d(istep) = ab(1,na_s-n_off)
+          if (isSkewsymmetric) then
+            d(istep) = 0.0_rk
+          else
+            d(istep) = ab(1,na_s-n_off)
+          endif
           e(istep) = ab(2,na_s-n_off)
 #endif
 #if COMPLEXCASE == 1
@@ -511,8 +525,13 @@
 
           if (istep == na-1) then
 #if REALCASE == 1
-            d(na) = ab(1,na_s+1-n_off)
+            if (isSkewsymmetric) then
+              d(na) = 0
+            else
+              d(na) = ab(1,na_s+1-n_off)
+            endif
 #endif
+
 #if COMPLEXCASE == 1
             d(na) = real(ab(1,na_s+1-n_off),kind=rk)
 #endif
@@ -626,31 +645,44 @@
                 ! Transform diagonal block
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYMV( &
+                if (isSkewsymmetric) then
+                  hd(:) = 0.0_rk
+                  call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+                else
+                  call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                      hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+                endif
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_HEMV( &
+                call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
-                     'L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
-                     hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
-
                 if (wantDebug) call obj%timer%stop("blas")
 #if REALCASE == 1
-                x = dot_product(hv(1:nc),hd(1:nc))*tau
+                if (.NOT. isSkewsymmetric) then
+                  x = dot_product(hv(1:nc),hd(1:nc))*tau
+                endif
 #endif
 #if COMPLEXCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
 #endif
-                hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+                if (.NOT. isSkewsymmetric) then
+                  hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+                endif
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYR2( &
+                if (isSkewsymmetric) then
+                  call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd,  hv, ab(1,ns), &
+                                           int(2*nb-1,kind=BLAS_KIND) )
+                else
+                  call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                                    hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+                endif
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_HER2( &
-#endif
-                                    'L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
                                     hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+#endif
                 if (wantDebug) call obj%timer%stop("blas")
                 hv_t(:,my_thread) = 0.0_rck
                 tau_t(my_thread)  = 0.0_rck
@@ -884,8 +916,13 @@
               if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
-              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
-                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+              if (isSkewsymmetric) then
+                hd(:) = 0.0_rk
+                call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+              else
+                call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+              endif
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
@@ -925,8 +962,13 @@
               ! Normal matrix multiply
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
-                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+              if (isSkewsymmetric) then
+                hd(:) = 0.0_rk
+                call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+              else
+                call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+              endif
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
@@ -1000,18 +1042,31 @@
 
             ! Transform diagonal block
 #if REALCASE == 1
-            x = dot_product(hv(1:nc),hd(1:nc))*tau
+            if (.NOT. isSkewsymmetric) then
+              x = dot_product(hv(1:nc),hd(1:nc))*tau
+            endif
 #endif
 #if COMPLEXCASE == 1
             x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
 #endif
-            hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+
+#if REALCASE == 1
+            if (.NOT. isSkewsymmetric) then
+#endif
+              hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+#if REALCASE == 1
+            endif
+#endif
             if (my_pe>0 .and. iblk==1) then
 
               ! The first column of the diagonal block has to be send to the previous PE
               ! Calculate first column only ...
 #if REALCASE == 1
-              ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
+              if (isSkewsymmetric) then
+                ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) + hv(1:nc)*hd(1)
+              else
+                ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
+              endif
 #endif
 #if COMPLEXCASE == 1
               ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*conjg(hv(1)) - hv(1:nc)*conjg(hd(1))
@@ -1037,8 +1092,12 @@
               ! ... and calculate remaining columns with rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
-                                            hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+              if (isSkewsymmetric) then 
+                if (nc>1) call ELPA_PRECISION_SSR2(int(nc-1,kind=BLAS_KIND), hd(2), hv(2), ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+              else
+                if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                              hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+              endif
 #endif
 #if COMPLEXCASE == 1
               if (nc>1) call PRECISION_HER2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
@@ -1050,8 +1109,12 @@
               ! No need to  send, just a rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
-                                  hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
+              if (isSkewsymmetric) then 
+                call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd, hv, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+              else
+                call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
+                                    hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
+              endif
 #endif
 #if COMPLEXCASE == 1
               call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, hv, 1_BLAS_KIND, &
