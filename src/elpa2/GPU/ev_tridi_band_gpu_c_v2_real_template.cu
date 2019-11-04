@@ -50,6 +50,7 @@
 
 
 #include <stdio.h>
+#include <assert.h>
 #include <cuda_runtime.h>
 #include <stdlib.h>
 #include "config-f90.h"
@@ -64,10 +65,16 @@ static __device__ __forceinline__ double shfl_xor_real_double(double r, int mask
 static __device__ __forceinline__ float shfl_xor_real_single(float r, int mask)
 #endif
 {
-    int hi = __shfl_xor(__double2hiint(r), mask);
-    int lo = __shfl_xor(__double2loint(r), mask);
+    // The following operations do not exist in CUDA 10.1 any more
+    // It has been commented out. The code is still compiled, but not used
+    // TODO do it properly
+    assert(0);
 
-    return __hiloint2double(hi, lo);
+//    int hi = __shfl_xor(__double2hiint(r), mask);
+//    int lo = __shfl_xor(__double2loint(r), mask);
+//
+//    return __hiloint2double(hi, lo);
+    return 0.;
 }
 
 // Perform the equivalent of "__shfl_down" on an 8-byte value
@@ -77,10 +84,16 @@ static __device__ __forceinline__ double shfl_down_real_double(double r, int off
 static __device__ __forceinline__ float shfl_down_real_single(float r, int offset)
 #endif
 {
-    int hi = __shfl_down(__double2hiint(r), offset);
-    int lo = __shfl_down(__double2loint(r), offset);
+    // The following operations do not exist in CUDA 10.1 any more
+    // It has been commented out. The code is still compiled, but not used
+    // TODO do it properly
+    assert(0);
 
-    return __hiloint2double(hi, lo);
+//    int hi = __shfl_down(__double2hiint(r), offset);
+//    int lo = __shfl_down(__double2loint(r), offset);
+//
+//    return __hiloint2double(hi, lo);
+    return 0.;
 }
 
 // Perform a reduction on a warp or the first part of it
