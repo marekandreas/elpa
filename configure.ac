@@ -52,24 +52,6 @@ fi
 
 enable_legacy=no
 
-AC_MSG_CHECKING(whether legacy interface should be provided)
-AC_ARG_ENABLE([legacy-interface],
-              AS_HELP_STRING([--enable-legacy-interface],
-                             [build legacy API, default no]),
-              [
-	       if test x"$enableval" = x"yes"; then
-	         enable_legacy=yes
-	       else
-	         enable_legacy=no
-	       fi
-	       ],
-              [enable_legacy=no])
-AC_MSG_RESULT([${enable_legacy}])
-AM_CONDITIONAL([ENABLE_LEGACY],[test x"$enable_legacy" = x"yes"])
-if test x"${enable_legacy}" = x"yes"; then
-        AC_DEFINE([ENABLE_LEGACY], [1], [enable legacy interface])
-fi
-
 AC_MSG_CHECKING(whether in C interface the error argument should be optional)
 AC_ARG_ENABLE([optional-argument-in-C-API],
               AS_HELP_STRING([--enable-optional-argument-in-C-API],
@@ -83,7 +65,7 @@ AC_ARG_ENABLE([optional-argument-in-C-API],
 	       ],
               [optional_c_error_argument=no])
 AC_MSG_RESULT([${optional_c_error_argument}])
-AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$enable_legacy" = x"yes"])
+AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$optional_c_error_argument" = x"yes"])
 if test x"${optional_c_error_argument}" = x"yes"; then
         AC_DEFINE([OPTIONAL_C_ERROR_ARGUMENT], [1], [enable error argument in C-API to be optional])
 fi
@@ -228,9 +210,6 @@ AC_ARG_ENABLE([64bit-integer-math-support],
               [enable_64bit_integer_math_support="no"])
 AC_MSG_RESULT([$enable_64bit_integer_math_support])
 if test x"${enable_64bit_integer_math_support}" = x"yes"; then
-  if test x"${enable_legacy}" = x"yes"; then
-    AC_MSG_ERROR([You cannot both enable 64bit integer support and the legacy interface!])
-  fi
   dnl at least INTEL MPI does _NOT_ support 64BIT integer mode  for C thus disable C tests in this Case
   if test x"${enable_c_tests}" = x"yes"; then
      AC_MSG_ERROR([You cannot both define 64bit integer support and C tests. Reconfigure!])
@@ -261,9 +240,6 @@ AC_ARG_ENABLE([64bit-integer-mpi-support],
               [enable_64bit_integer_mpi_support="no"])
 AC_MSG_RESULT([$enable_64bit_integer_mpi_support])
 if test x"${enable_64bit_integer_mpi_support}" = x"yes"; then
-  if test x"${enable_legacy}" = x"yes"; then
-    AC_MSG_ERROR([You cannot both enable 64bit integer support and the legacy interface!])
-  fi
   AC_DEFINE([HAVE_64BIT_INTEGER_MPI_SUPPORT], [1], [allow to link against the 64bit integer versions of the MPI library])
 fi
 AM_CONDITIONAL([HAVE_64BIT_INTEGER_MPI_SUPPORT],[test x"$enable_64bit_integer_mpi_support" = x"yes"])

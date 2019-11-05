@@ -1,7 +1,7 @@
 ## Documentation how to switch from the legacy API to the new API of the *ELPA* library ##
 
 This document gives some hints how one can switch from the **deprecated** legacy API to new, long-term supported API of the *ELPA* library.
-**We strongly recommend users to switch as soon as possible, since the deprecated API will be removed at some point!**
+**At latest with the release ELPA 2019.11.001 you have to use the new API, since the old API has been removed**
 
 ### Using *ELPA* from a Fortran code ###
 

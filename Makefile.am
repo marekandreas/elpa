@@ -21,15 +21,6 @@ libelpa@SUFFIX@_public_la_SOURCES = \
   src/elpa_api.F90 \
   src/elpa_constants.F90
 
-if ENABLE_LEGACY
-libelpa@SUFFIX@_public_la_SOURCES += \
-  src/elpa_driver/legacy_interface/elpa.F90 \
-  src/elpa1/legacy_interface/elpa1.F90 \
-  src/elpa2/legacy_interface/elpa2.F90 \
-  src/elpa2/legacy_interface/elpa2_utilities.F90 \
-  src/elpa1/legacy_interface/elpa1_auxiliary.F90
-endif
-
 # internal parts
 noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
@@ -71,22 +62,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c 
 
 
-# elpa_utilities.F90 is private in new API, public in legacy
-if ENABLE_LEGACY
-libelpa@SUFFIX@_public_la_SOURCES += \
-  src/general/elpa_utilities.F90
-else
 libelpa@SUFFIX@_private_la_SOURCES += \
   src/general/elpa_utilities.F90
-endif
-
-
-if ENABLE_LEGACY
-libelpa@SUFFIX@_private_la_SOURCES += \
-  src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \
-  src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
-  src/elpa2/legacy_interface/elpa_2stage_c_interface.F90
-endif
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa_reduce_add_vectors.F90 \
@@ -128,24 +105,6 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/general/precision_typedefs.h \
   src/general/precision_kinds.F90
 
-if ENABLE_LEGACY
-EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES += \
-  src/elpa1/legacy_interface/elpa1_template.F90 \
-  src/elpa2/legacy_interface/elpa2_template.F90 \
-  src/elpa1/legacy_interface/elpa1_c_interface_template.F90 \
-  src/elpa2/legacy_interface/elpa2_c_interface_template.F90 \
-  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_cholesky_template.F90 \
-  src/elpa1/legacy_interface/elpa_invert_trm.F90 \
-  src/elpa1/legacy_interface/elpa_multiply_a_b.F90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi.F90
-endif
-
 if HAVE_DETAILED_TIMINGS
 libelpa@SUFFIX@_private_la_SOURCES += \
   src/ftimings/ftimings.F90 \
@@ -156,11 +115,6 @@ libelpa@SUFFIX@_private_la_SOURCES += \
   src/ftimings/time.c \
   src/ftimings/virtual_memory.c \
   src/ftimings/papi.c
-
-if ENABLE_LEGACY
-libelpa@SUFFIX@_private_la_SOURCES += \
-  src/helpers/timer.F90
-endif
 
 else
 libelpa@SUFFIX@_private_la_SOURCES += \
@@ -489,15 +443,13 @@ nobase_elpa_include_HEADERS = \
   src/helpers/scalapack_interfaces.h \
   elpa/elpa_simd_constants.h \
   elpa/elpa.h \
-  elpa/elpa_generic.h \
-  elpa/elpa_legacy.h
+  elpa/elpa_generic.h
 
 nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_version.h \
   elpa/elpa_constants.h \
   elpa/elpa_generated.h \
-  elpa/elpa_generated_c_api.h \
-  elpa/elpa_generated_legacy.h
+  elpa/elpa_generated_c_api.h
 
 dist_man_MANS = \
   man/elpa2_print_kernels.1 \
@@ -525,52 +477,6 @@ dist_man_MANS = \
   man/elpa_autotune_set_best.3 \
   man/elpa_autotune_deallocate.3 \
   man/elpa_uninit.3
-
-if ENABLE_LEGACY
-dist_man_MANS += \
-  man/solve_evp_real_1stage_double.3 \
-  man/solve_evp_complex_1stage_double.3 \
-  man/solve_evp_real_2stage_double.3 \
-  man/solve_evp_complex_2stage_double.3 \
-  man/elpa_solve_evp_real_1stage_double.3 \
-  man/elpa_solve_evp_complex_1stage_double.3 \
-  man/elpa_solve_evp_real_2stage_double.3 \
-  man/elpa_solve_evp_complex_2stage_double.3 \
-  man/elpa_get_communicators.3 \
-  man/elpa_mult_at_b_real_double.3 \
-  man/elpa_mult_at_b_real_single.3 \
-  man/elpa_mult_ah_b_complex_double.3 \
-  man/elpa_mult_ah_b_complex_single.3 \
-  man/elpa_invert_trm_real_double.3 \
-  man/elpa_invert_trm_real_single.3 \
-  man/elpa_invert_trm_complex_double.3 \
-  man/elpa_invert_trm_complex_single.3 \
-  man/elpa_solve_evp_real_double.3 \
-  man/elpa_solve_evp_real_single.3 \
-  man/elpa_solve_evp_complex_double.3 \
-  man/elpa_solve_evp_complex_single.3 
-endif
-
-
-if WANT_SINGLE_PRECISION_REAL
-if ENABLE_LEGACY
-dist_man_MANS += \
-  man/solve_evp_real_1stage_single.3 \
-  man/elpa_solve_evp_real_1stage_single.3 \
-  man/elpa_solve_evp_real_2stage_single.3 \
-  man/solve_evp_real_2stage_single.3
-endif
-endif
-
-if WANT_SINGLE_PRECISION_COMPLEX
-if ENABLE_LEGACY
-dist_man_MANS += \
-  man/solve_evp_complex_1stage_single.3 \
-  man/elpa_solve_evp_complex_1stage_single.3 \
-  man/elpa_solve_evp_complex_2stage_single.3 \
-  man/solve_evp_complex_2stage_single.3
-endif
-endif
 
 dist_doc_DATA = README.md USERS_GUIDE.md USERS_GUIDE_DEPRECATED_LEGACY_API.md INSTALL.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt
 
@@ -621,10 +527,6 @@ elpa2_print_kernels@SUFFIX@_LDADD = libelpa@SUFFIX@.la
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)modules
 
 include test_programs.am
-
-if ENABLE_LEGACY
-include legacy_test_programs.am
-endif
 
 #include test_programs_manual.am
 
@@ -726,10 +628,6 @@ CLEANFILES = \
   elpa1_real* \
   elpa*.sh \
   test*.sh \
-  legacy_real* \
-  legacy_complex* \
-  legacy_single_real* \
-  legacy_single_complex* \
   single_real* \
   single_complex* \
   real* \
@@ -742,7 +640,6 @@ CLEANFILES = \
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
 	-rm -rf validate_*.sh
-	-rm -rf legacy_*.sh
 	-rm -rf real_2stage*.sh
 	-rm -rf complex_2stage*.sh
 	-rm -rf single_complex_2stage*.sh
@@ -764,7 +661,6 @@ EXTRA_DIST = \
   elpa.spec \
   elpa/elpa.h \
   elpa/elpa_generic.h \
-  elpa/elpa_legacy.h \
   fdep/fortran_dependencies.mk \
   fdep/fortran_dependencies.pl \
   manual_cpp \
@@ -851,38 +747,7 @@ EXTRA_DIST = \
   test_project_C/fdep \
   test_project_C/m4 \
   test_project_C/src/test_real.c \
-  test_project_C/src/test_blacs_infrastructure.F90\
-  test_project_1stage_legacy_api/Makefile.am \
-  test_project_1stage_legacy_api/autogen.sh \
-  test_project_1stage_legacy_api/configure.ac \
-  test_project_1stage_legacy_api/fdep \
-  test_project_1stage_legacy_api/m4 \
-  test_project_1stage_legacy_api/src/test_real.F90 \
-  test_project_2stage_legacy_api/Makefile.am \
-  test_project_2stage_legacy_api/autogen.sh \
-  test_project_2stage_legacy_api/configure.ac \
-  test_project_2stage_legacy_api/fdep \
-  test_project_2stage_legacy_api/m4 \
-  test_project_2stage_legacy_api/src/test_real2.F90
-
-if ENABLE_LEGACY
-EXTRA_DIST += \
-  src/elpa1/elpa1_solve_tridi_real_template.F90 \
-  src/elpa1/legacy_interface/elpa1_template.F90 \
-  src/elpa2/legacy_interface/elpa2_template.F90 \
-  src/elpa1/legacy_interface/elpa1_c_interface_template.F90 \
-  src/elpa2/legacy_interface/elpa2_c_interface_template.F90 \
-  src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.F90 \
-  src/elpa1/legacy_interface/elpa_cholesky_template.F90 \
-  src/elpa1/legacy_interface/elpa_invert_trm.F90 \
-  src/elpa1/legacy_interface/elpa_multiply_a_b.F90 \
-  src/elpa1/legacy_interface/elpa_solve_tridi.F90
-endif
+  test_project_C/src/test_blacs_infrastructure.F90
 
 if WITH_SCALAPACK_TESTS
 EXTRA_DIST += \
