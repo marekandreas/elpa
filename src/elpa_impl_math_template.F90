@@ -94,7 +94,7 @@
           error = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in eigenvectors() and you did not check for errors!"
       endif
 #else
       if (success_l) then
@@ -161,6 +161,156 @@
               & (self, a, ev, q, error)
     end subroutine    
 
+#ifdef REALCASE 
+    !>  \brief elpa_skew_eigenvectors_d: class method to solve the real valued skew-symmetric eigenvalue problem
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param q                                    On output: Eigenvectors of a
+    !>                                              Distribution is like in Scalapack.
+    !>                                              Must be always dimensioned to the full size (corresponding to (na,na))
+    !>                                              even if only a part of the eigenvalues is needed.
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr   
+
+    subroutine elpa_skew_eigenvectors_&
+                    &ELPA_IMPL_SUFFIX&
+                    & (self, a, ev, q, error)
+      class(elpa_impl_t)  :: self
+
+#ifdef USE_ASSUMED_SIZE
+      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, *), q(self%local_nrows, *)
+#else
+      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols)
+      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: q(self%local_nrows, 2*self%local_ncols)
+#endif
+      real(kind=C_REAL_DATATYPE)          :: ev(self%na)
+
+#ifdef USE_FORTRAN2008
+      integer, optional                   :: error
+#else
+      integer                             :: error
+#endif
+      integer                             :: error2
+      integer(kind=c_int)                 :: solver
+      logical                             :: success_l
+
+
+      call self%get("solver", solver,error2)
+      call self%set("is_skewsymmetric",1)
+      if (error2 .ne. ELPA_OK) then
+        print *,"Problem setting option. Aborting..."
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = error2
+        endif
+#else
+        error = error2
+#endif
+        return
+      endif
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
+#if defined(INCLUDE_ROUTINES)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                &_1stage_&
+                &PRECISION&
+                &_impl(self, a, ev, q)
+#endif
+        call self%autotune_timer%stop("accumulator")
+
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
+#if defined(INCLUDE_ROUTINES)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                &_2stage_&
+                &PRECISION&
+                &_impl(self, a, ev, q)
+#endif
+        call self%autotune_timer%stop("accumulator")
+
+      else
+        print *,"unknown solver"
+        stop
+      endif
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in skew_eigenvectors() and you did not check for errors!"
+      endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+    end subroutine
+
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL
+    !c> void elpa_skew_eigenvectors_d(elpa_t handle, double *a, double *ev, double *q, int *error);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    !c> void elpa_skew_eigenvectors_f(elpa_t handle, float *a, float *ev, float *q, int *error);
+#endif
+#endif
+    subroutine elpa_skew_eigenvectors_&
+                    &ELPA_IMPL_SUFFIX&
+                    &_c(handle, a_p, ev_p, q_p, error) &
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL
+                    bind(C, name="elpa_skew_eigenvectors_d")
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                    bind(C, name="elpa_skew_eigenvectors_f")
+#endif
+#endif
+
+      type(c_ptr), intent(in), value            :: handle, a_p, ev_p, q_p
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+
+      MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer :: a(:, :), q(:, :)
+      real(kind=C_REAL_DATATYPE), pointer          :: ev(:)
+      type(elpa_impl_t), pointer                   :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+      call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
+
+      call elpa_skew_eigenvectors_&
+              &ELPA_IMPL_SUFFIX&
+              & (self, a, ev, q, error)
+    end subroutine
+#endif /* REALCASE */
 
     !>  \brief elpa_eigenvalues_d: class method to solve the eigenvalue problem
     !>
@@ -249,7 +399,7 @@
           error = ELPA_ERROR
         endif
       else if (.not. success_l) then
-        write(error_unit,'(a)') "ELPA: Error in solve() and you did not check for errors!"
+        write(error_unit,'(a)') "ELPA: Error in eigenvalues() and you did not check for errors!"
       endif
 #else
       if (success_l) then
@@ -312,7 +462,140 @@
               & (self, a, ev, error)
     end subroutine    
 
+#ifdef REALCASE
+    !>  \brief elpa_skew_eigenvalues_d: class method to solve the real valued skew-symmetric eigenvalue problem
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+    !>  blocksize, the number of eigenvectors
+    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
+    subroutine elpa_skew_eigenvalues_&
+                    &ELPA_IMPL_SUFFIX&
+                    & (self, a, ev, error)
+      class(elpa_impl_t)  :: self
+#ifdef USE_ASSUMED_SIZE
+      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, *)
+#else
+      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols)
+#endif
+      real(kind=C_REAL_DATATYPE)          :: ev(self%na)
+#ifdef USE_FORTRAN2008
+      integer, optional                   :: error
+#else
+      integer                             :: error
+#endif
+      integer                             :: error2
+      integer(kind=c_int)                 :: solver
+      logical                             :: success_l
 
+      call self%get("solver", solver,error2)
+      call self%set("is_skewsymmetric",1)
+      if (error2 .ne. ELPA_OK) then
+         print *,"Problem getting option. Aborting..."
+#ifdef USE_FORTRAN2008
+         if (present(error)) then
+           error = error2
+         endif
+#else
+         error = error2
+#endif
+         return
+      endif
+
+      if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
+#if defined(INCLUDE_ROUTINES)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                          &_1stage_&
+                          &PRECISION&
+                          &_impl(self, a, ev)
+#endif
+        call self%autotune_timer%stop("accumulator")
+
+      else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
+#if defined(INCLUDE_ROUTINES)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                                   &_2stage_&
+                                   &PRECISION&
+                                   &_impl(self, a, ev)
+#endif
+        call self%autotune_timer%stop("accumulator")
+
+      else
+        print *,"unknown solver"
+        stop
+      endif
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in skew_eigenvalues() and you did not check for errors!"
+      endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+    end subroutine
+
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL
+    !c> void elpa_skew_eigenvalues_d(elpa_t handle, double *a, double *ev, int *error);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    !c> void elpa_skew_eigenvalues_f(elpa_t handle, float *a, float *ev, int *error);
+#endif
+#endif
+    subroutine elpa_skew_eigenvalues_&
+                    &ELPA_IMPL_SUFFIX&
+                    &_c(handle, a_p, ev_p, error) &
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL
+                    bind(C, name="elpa_skew_eigenvalues_d")
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                    bind(C, name="elpa_skew_eigenvalues_f")
+#endif
+#endif
+      type(c_ptr), intent(in), value :: handle, a_p, ev_p
+      integer(kind=c_int), intent(in) :: error
+
+      MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer :: a(:, :)
+      real(kind=C_REAL_DATATYPE), pointer :: ev(:)
+      type(elpa_impl_t), pointer  :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+      call c_f_pointer(ev_p, ev, [self%na])
+
+      call elpa_skew_eigenvalues_&
+              &ELPA_IMPL_SUFFIX&
+              & (self, a, ev, error)
+    end subroutine
+#endif /* REALCASE */
 
     !>  \brief elpa_generalized_eigenvectors_d: class method to solve the eigenvalue problem
     !>
@@ -347,7 +630,7 @@
     !>                                              each subsequent call with the same b, since b then already contains
     !>                                              decomposition and thus the decomposing step is skipped
     !>
-    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr   
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr 
     subroutine elpa_generalized_eigenvectors_&
                     &ELPA_IMPL_SUFFIX&
                     & (self, a, b, ev, q, is_already_decomposed, error)
@@ -523,7 +806,7 @@
     !>                                              each subsequent call with the same b, since b then already contains
     !>                                              decomposition and thus the decomposing step is skipped
     !>
-    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr   
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_generalized_eigenvalues_&
                     &ELPA_IMPL_SUFFIX&
                     & (self, a, b, ev, is_already_decomposed, error)
@@ -693,7 +976,7 @@
     !> \param c                     matrix c
     !> \param nrows_c               number of rows of local (sub) matrix c
     !> \param ncols_c               number of columns of local (sub) matrix c
-    !> \param error                 optional argument, error code which can be queried with elpa_strerr   
+    !> \param error                 optional argument, error code which can be queried with elpa_strerr
     subroutine elpa_hermitian_multiply_&
                    &ELPA_IMPL_SUFFIX&
                    & (self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
@@ -824,7 +1107,7 @@
     !>                                              The full matrix must be set (not only one half like in scalapack).
     !>                                              Destroyed on exit (upper and lower half).
     !>
-    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr   
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
     subroutine elpa_cholesky_&
                    &ELPA_IMPL_SUFFIX&
                    & (self, a, error)

@@ -117,6 +117,15 @@ module elpa_impl
      procedure, public :: elpa_eigenvalues_dc
      procedure, public :: elpa_eigenvalues_fc
 
+     procedure, public :: elpa_skew_eigenvectors_d             !< public methods to implement the solve step for real skew-symmetric
+                                                               !< double/single matrices
+     procedure, public :: elpa_skew_eigenvectors_f
+
+     procedure, public :: elpa_skew_eigenvalues_d              !< public methods to implement the solve step for real skew-symmetric
+                                                               !< double/single matrices; only the eigenvalues are computed
+     procedure, public :: elpa_skew_eigenvalues_f
+
+
      procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized 
                                                                !< eigenproblem and real/complex double/single matrices
      procedure, public :: elpa_generalized_eigenvectors_f

@@ -1,0 +1,67 @@
+.TH "elpa_skew_eigenvalues" 3 "Thur Nov 7 2019" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_skew_eigenvalues \- computes the eigenvalues of a real skew-symmetric matrix
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+.RI  "call elpa%\fBskew_eigenvalues\fP (a, ev, error)"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.RI "class(elpa_t) :: \fBelpa\fP  ! returns an instance of the ELPA object"
+.br
+.TP
+.RI "datatype :: \fBa\fP"
+The matrix a for which the eigenvalues should be computed. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "real(kind=c_double)" or "real(kind=c_float)". The matrix has to be skew-symmetric, this is not checked by the routine.
+.TP
+.RI "datatype :: \fBev\fP"
+The vector ev where the eigenvalues will be stored in \fIascending\fP order. The datatype of the vector ev can be either "real(kind=c_double)", or "real(kind=c_float)", depending of the datatype of the matrix.
+.TP
+.RI "integer, optional :: \fBerror\fP"
+The return error code of the function. Should be "ELPA_OK". The error code can be querried with the function \fBelpa_strerr\fP(3)
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+.RI "void \fBelpa_skew_eigenvalues\fP(\fBelpa_t\fP handle, \fBdatatype\fP *a, \fBdatatype\fP *ev, \fBint\fP *error);"
+.br
+.RI " "
+.br
+.RI "With the definitions of the input and output variables:"
+
+.br
+.TP
+.RI "elpa_t \fBhandle\fP;"
+The handle to the ELPA object
+.TP
+.RI "datatype *\fBa\fP;"
+The matrix a for which the eigenvalues should be computed. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double" or "float".
+.TP
+.RI "datatype *\fBev\fP;"
+The storage for the computed eigenvalues. Eigenvalues will be stored in \fIascendig\fP order. The \fBdatatype\fP can be either "double" or "float". Note that the eigenvalues of complex hermitian matrices are also real. The matrix has to be skew-symmetric, this is not checked by the routine.
+.TP
+.RI "int *\fBerror\fP;"
+The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)
+
+.SH DESCRIPTION
+Compute the eigenvalues of a real skew-symmetric matrix.The functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3), \fBelpa_set\fP(3), and \fBelpa_setup\fP(3) must be called \fIBEFORE\fP \fBelpa_skew_eigenvalues\fP can be called.
+.br
+.SH "SEE ALSO"
+.br
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_skew_eigenvectors\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)

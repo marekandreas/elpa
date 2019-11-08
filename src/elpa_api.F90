@@ -123,6 +123,15 @@ module elpa_api
           elpa_eigenvalues_dc, &
           elpa_eigenvalues_fc
 
+      generic, public :: skew_eigenvectors => &                     !< method skew_eigenvectors for solving the full skew-symmetric eigenvalue problem
+          elpa_skew_eigenvectors_d, &                               !< the eigenvalues and (parts of) the eigenvectors are computed
+          elpa_skew_eigenvectors_f                                  !< for symmetric real valued skew-symmetric matrices
+
+      generic, public :: skew_eigenvalues => &                      !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
+          elpa_skew_eigenvalues_d, &                                !< only the eigenvalues are computed
+          elpa_skew_eigenvalues_f                                   !< for symmetric real valued skew-symmetric matrices
+
+
       generic, public :: generalized_eigenvectors => &              !< method eigenvectors for solving the full generalized eigenvalue problem
           elpa_generalized_eigenvectors_d, &                        !< the eigenvalues and (parts of) the eigenvectors are computed
           elpa_generalized_eigenvectors_f, &                        !< for symmetric real valued / hermitian complex valued matrices
@@ -187,6 +196,13 @@ module elpa_api
       procedure(elpa_eigenvalues_f_i),    deferred, public :: elpa_eigenvalues_f
       procedure(elpa_eigenvalues_dc_i), deferred, public :: elpa_eigenvalues_dc
       procedure(elpa_eigenvalues_fc_i), deferred, public :: elpa_eigenvalues_fc
+
+      procedure(elpa_skew_eigenvectors_d_i),    deferred, public :: elpa_skew_eigenvectors_d
+      procedure(elpa_skew_eigenvectors_f_i),    deferred, public :: elpa_skew_eigenvectors_f
+
+
+      procedure(elpa_skew_eigenvalues_d_i),    deferred, public :: elpa_skew_eigenvalues_d
+      procedure(elpa_skew_eigenvalues_f_i),    deferred, public :: elpa_skew_eigenvalues_f
 
       procedure(elpa_generalized_eigenvectors_d_i),    deferred, public :: elpa_generalized_eigenvectors_d
       procedure(elpa_generalized_eigenvectors_f_i),    deferred, public :: elpa_generalized_eigenvectors_f

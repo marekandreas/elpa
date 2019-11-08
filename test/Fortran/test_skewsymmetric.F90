@@ -274,15 +274,12 @@ program test
    call e_skewsymmetric%set("gpu", 0)
    call e_skewsymmetric%set("omp_threads",8, error_elpa)
 
-   call e_skewsymmetric%set("is_skewsymmetric",1)
    assert_elpa_ok(e_skewsymmetric%setup())
    
    call e_skewsymmetric%set("solver", elpa_solver_2stage, error_elpa)
 
-   call e_skewsymmetric%get("is_skewsymmetric", int(i,kind=c_int),error_elpa)
-   
    call e_skewsymmetric%timer_start("eigenvectors: skewsymmetric ")
-   call e_skewsymmetric%eigenvectors(a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, error_elpa)
+   call e_skewsymmetric%skew_eigenvectors(a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, error_elpa)
    call e_skewsymmetric%timer_stop("eigenvectors: skewsymmetric ")
 
    if (myid .eq. 0) then
