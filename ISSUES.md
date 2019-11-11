@@ -4,13 +4,21 @@ For more details and recent updates please visit the online [issue system] (http
 Issues which are not mentioned in a newer release are (considered as) solved.
 
 ### ELPA 2019.11.001 release ###
-- same issues as in ELPA 2017.11.001
+- memory leak in in GPU version has been fixed
+- no other issues currently known
+
+### ELPA 2019.05.002 release ###
+- memory leak in GPU version
+
+### ELPA 2019.05.001 release ###
+- memory leak in GPU version
 
 ### ELPA 2018.11.001 release ###
-- same issues as in ELPA 2017.11.001
+- on (officially not supported) 32bit systems hangs in MPI can occur
 
 ### ELPA 2018.05.001 release ###
-- same issues as in ELPA 2017.11.001
+- on (officially not supported) 32bit systems hangs in MPI can occur
+- printing of autotune has been implemented
 
 ### ELPA 2017.11.001 release ###
 - the elpa autotune print functions cannot print at the moment

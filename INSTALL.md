@@ -2,7 +2,7 @@
 
 ## Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2019.05.002**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2019.11.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
@@ -14,9 +14,11 @@ The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
-Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and not supported anymore.
+With this release ELPA 2019.11.001, the legacy API will be deprecated and not supported anymore.
 
-The release of ELPA 2019.05.002 does not change the API and ABI compared to the release 2019.05.001
+The release of ELPA 2019.11.001.rc1 does change the API and ABI compared to the release 2019.05.002, since
+the legacy API has been droped.
+
 ## How to install *ELPA* ##
 
 First of all, if you do not want to build *ELPA* yourself, and you run Linux,
@@ -48,7 +50,6 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 
 | configure option                     | description                                           |
 |:------------------------------------ |:----------------------------------------------------- |
-|  --enable-legacy-interface           | build legacy API, will not be build as default        |
 |  --enable-optional-argument-in-C-API | treat error arguments in C-API as optional            |
 |  --enable-openmp                     | use OpenMP threading, default no.                     |
 |  --enable-redirect                   | for ELPA test programs, allow redirection of <br> stdout/stderr per MPI taks in a file <br> (useful for timing), default no. |
@@ -85,6 +86,10 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  --enable-pyhton                     | build and install python wrapper, default no          |
 |  --enable-python-tests               | enable python tests, default no.                      |
 |  --enable-skew-symmetric-support     | enable support for real valued skew-symmetric matrices |
+|  --enable-store-build-config         | stores the build config in the library object |
+|  --64bit-integer-math-support        | assumes that BLAS/LAPACK/SCALAPACK use 64bit integers (experimentatl) |
+|  --64bit-integer-mpi-support         | assumes that MPI uses 64bit integers (experimental) |
+|  --heterogenous-cluster-support      | allows ELPA to run on clusters of nodes with different Intel CPUs (experimental) |
 
 We recommend that you do not build ELPA in its main directory but that you use it
 in a sub-directory:

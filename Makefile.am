@@ -459,6 +459,8 @@ dist_man_MANS = \
   man/elpa_setup.3 \
   man/elpa_eigenvalues.3 \
   man/elpa_eigenvectors.3 \
+  man/elpa_skew_eigenvalues.3 \
+  man/elpa_skew_eigenvectors.3 \
   man/elpa_generalized_eigenvectors.3 \
   man/elpa_generalized_eigenvalues.3 \
   man/elpa_cholesky.3 \

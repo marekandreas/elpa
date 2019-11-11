@@ -27,7 +27,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [14:0:0])
+AC_SUBST([ELPA_SO_VERSION], [15:0:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -1497,10 +1497,7 @@ AC_ARG_ENABLE([skew-symmetric-support],
 AC_MSG_RESULT([${enable_skewsymmetric}])
 AM_CONDITIONAL([HAVE_SKEWSYMMETRIC],[test x"$enable_skewsymmetric" = x"yes"])
 if test x"${enable_skewsymmetric}" = x"yes"; then
-   if test x"${USE_ASSUMED_SIZE}" = x"no"; then
-     AC_MSG_ERROR(you have to enable assumed size arrays, if you want to build with skew-symmetric support)
-   fi
-AC_DEFINE([HAVE_SKEWSYMMETRIC],[1],[build for skewsyemmtric case])
+  AC_DEFINE([HAVE_SKEWSYMMETRIC],[1],[build for skewsyemmtric case])
 fi
 
 AC_SUBST([MPI_BINARY])
@@ -1754,21 +1751,19 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  ELPA 2018.11.001 will be the last release where the old, obsolete, *"
-#echo "*  legacy API is enabled by default! In the 2019.05.001 release       *"
-#echo "*  the legacy API will be still available (but as default switched    *"
-#echo "*  off). With the 2019.11.001 release it will be abolished!	    *"					 
-#echo "***********************************************************************"
-#echo " "
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is a the first release candidate of ELPA 2019.05.001.rc2      *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2019.05.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  As announced, with this release candidate ELPA 2019.11.001.rc1,    *"
+echo "*  the legacy API has been finally removed !                          *"
+echo "***********************************************************************"
+echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is a the first release candidate of ELPA 2019.11.001.rc1      *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2019.11.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

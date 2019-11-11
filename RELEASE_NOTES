@@ -1,18 +1,19 @@
-This file contains the release notes for the ELPA 2019.05.002 version
+This file contains the release notes for the ELPA 2019.11.001.rc1 version
 
 What is new?
 -------------
-For detailed information about changes since release ELPA 2018.11 please have a look at the Changelog file
+For detailed information about changes since release ELPA 2019.05.002 please have a look at the Changelog file
 
-- repackaging of src files, to include forgotten files of the legacy interface
+- several new features have been implemented
+- the old, legacy interface has been removed
 ABI change
 ---------------------
 
-Since release 2019.05.001 the ABI has not changed.
+Since release 2019.05.002 the ABI has changed, since the legacy interface cannot be activated anymore
 
 Any incompatibilities to previous version?
 ---------------------------------------
 
-no
+yes, if the previous builds had the legacy interface activated
 
 

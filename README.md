@@ -2,7 +2,7 @@
 
 ## Current Release ##
 
-The current release is ELPA 2019.05.002 The current supported API version
+The current release is ELPA 2019.11.001.rc1 The current supported API version
 is 20190501. This release supports the earliest API version 20170403.
 
 The old, obsolete legacy API will be deprecated in the future !
@@ -13,7 +13,7 @@ The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
-Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and
+With the release ELPA 2019.11.001 the legacy API will be deprecated and
 not supported anymore.
 
 [![Build 
@@ -126,7 +126,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the [USERS_GUIDE](USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.002/html/index.html) doxygen
+Please have a look at the [USERS_GUIDE](USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001.rc1/html/index.html) doxygen
 documentation, where you find the definition of the interfaces.
 
 ## Contributing to *ELPA*
