@@ -9,8 +9,7 @@ Changelog for ELPA 2019.05.002
 - add experimental feature "heterogenous-cluster-support"
 - add experimental feature for 64bit integer LAS/LAPACK/SCALAPACK support
 - add experimental feature for 64bit integer MPI support
-- support of ELPA for real valued skew-symmetric matrices, please see:
-CITATION
+- support of ELPA for real valued skew-symmetric matrices
 - cleanup of the GPU version
 
 Changelog for ELPA 2019.05.002
