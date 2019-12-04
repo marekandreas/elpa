@@ -193,6 +193,8 @@
 
       logical                                     :: useGPU_reduction_lower_block_to_tridiagonal
       integer(kind=ik), intent(in)                :: max_threads
+      logical                                     :: do_memcpy
+      integer(kind=ik)                            :: i_blk,blk_off
 
       if(useGPU) then
         gpuString = "_gpu"
@@ -523,10 +525,19 @@
 
           if (lc_start .le. 0) lc_start = 1
 
-          ! Here we assume that the processor grid and the block grid are aligned
-          cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
+          do_memcpy = .false.
 
-          if (my_pcol == cur_pcol) then
+          ! Note: mod(nbw,nblk) == 0
+          do i_blk = 1, nbw/nblk
+            blk_off = (i_blk-1) * nblk
+            cur_pcol = pcol(istep*nbw+1+blk_off, nblk, np_cols)
+
+            if (my_pcol == cur_pcol) then
+              do_memcpy = .true.
+            endif
+          enddo
+
+          if (do_memcpy) then
             successCUDA = cuda_memcpy2d(int(loc(a_mat(1, lc_start)),kind=c_intptr_t), &
                           int((lda*size_of_datatype),kind=c_intptr_t), &
                           (a_dev + int( ( (lc_start-1) * lda*size_of_datatype),kind=c_intptr_t )), &
@@ -829,8 +840,7 @@
 
          if (useGPU_reduction_lower_block_to_tridiagonal) then
            ! store column tiles back to GPU
-           cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
-           if (my_pcol == cur_pcol) then
+           if (do_memcpy) then
              successCUDA = cuda_memcpy2d((a_dev+ &
                            int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)), &
                            int(lda*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
@@ -909,8 +919,7 @@
          ! copy the data for furhter usage
          ! qr worked on *CPU arrarys
          !vmrCUDA(1:cur_l_rows * n_cols) = vmrCPU(1:cur_l_rows,1:n_cols)
-         cur_pcol = pcol(istep*nbw+1, nblk, np_cols)
-         if (my_pcol == cur_pcol) then
+         if (do_memcpy) then
            successCUDA = cuda_memcpy2d((a_dev+ &
                          int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)), &
                          int(lda*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &

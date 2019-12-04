@@ -511,16 +511,11 @@
         ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
         ! For IBM Bluegene/Q this is not clear at the moment. We have to keep an eye
         ! on this and maybe allow a run-time optimization here
-        if (do_useGPU) then
-          nbw = nblk
-        else
 #if REALCASE == 1
-          nbw = (63/nblk+1)*nblk
+        nbw = (63/nblk+1)*nblk
 #elif COMPLEXCASE == 1
-          nbw = (31/nblk+1)*nblk
+        nbw = (31/nblk+1)*nblk
 #endif
-        endif
-
       else
         ! intermediate bandwidth has been specified by the user, check, whether correctly
         if (mod(nbw, nblk) .ne. 0) then
