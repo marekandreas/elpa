@@ -50,6 +50,7 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 
 | configure option                     | description                                           |
 |:------------------------------------ |:----------------------------------------------------- |
+|  --enable-legacy-interface           | build legacy API, will not be build as default        |
 |  --enable-optional-argument-in-C-API | treat error arguments in C-API as optional            |
 |  --enable-openmp                     | use OpenMP threading, default no.                     |
 |  --enable-redirect                   | for ELPA test programs, allow redirection of <br> stdout/stderr per MPI taks in a file <br> (useful for timing), default no. |
