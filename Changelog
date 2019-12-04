@@ -2,7 +2,7 @@ Changelog for upcoming release
 
 - not yet decided
 
-Changelog for ELPA 2019.05.002
+Changelog for ELPA 2019.11.001.rc1
 
 - solve a bug when using parallel make builds
 - check the cpuid set during build time
