@@ -104,9 +104,14 @@ Nonetheless, we are grateful if you cite the following publications:
   
   If you use the new API and/or autotuning:
  
-  Kus; P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
+  Kus, P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
   "Optimizations of the Eigenvaluesolvers in the ELPA Library",
   Parallel Computing 85, 167-177 (2019)
+
+  If you use the new support for skew-symmetric matrices:
+  Benner, P.; Draxl, C.; Marek, A.; Penke C.; Vorwerk, C.;
+  "High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving the Bethe-Salpeter Eigenvalue Problem",
+  https://arxiv.org/abs/1912.04062, submitted to Parallel Computing
   
 
 ## Installation of the *ELPA* library
