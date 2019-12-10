@@ -1887,7 +1887,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
 #if  VEC_SET == AVX_256
@@ -5181,7 +5181,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
 #if  VEC_SET == AVX_256
@@ -8198,7 +8198,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
 #if  VEC_SET == AVX_256
@@ -10922,7 +10922,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
 #if  VEC_SET == AVX_256
@@ -13381,7 +13381,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
 #if  VEC_SET == AVX_256
@@ -15554,7 +15554,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_spalts(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
 #if  VEC_SET == AVX_256
