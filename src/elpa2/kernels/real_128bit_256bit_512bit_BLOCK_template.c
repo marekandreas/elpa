@@ -197,7 +197,7 @@
 #endif /*  VEC_SET == SPARC64_SSE */
 
 #if VEC_SET == NEON_ARCH64_128
-#define __ELPA_USE_FMA__
+//#define __ELPA_USE_FMA__
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 2
 #define __SIMD_DATATYPE __Float64x2_t
