@@ -452,13 +452,13 @@
 
         info = 0
         infoBLAS = int(info,kind=BLAS_KIND)
-#ifdef WITH_OPENMP
-
-        call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
-!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,infoBLAS,j)
-        my_thread = omp_get_thread_num()
-!$OMP DO
-#endif
+!#ifdef WITH_OPENMP
+!
+!        call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+!!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,infoBLAS,j)
+!        my_thread = omp_get_thread_num()
+!!$OMP DO
+!#endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
           call obj%timer%start("blas")
           call PRECISION_LAED4(int(na1,kind=BLAS_KIND), int(i,kind=BLAS_KIND), d1, z1, delta, &
@@ -476,17 +476,17 @@
 
           ! Compute updated z
 
-#ifdef WITH_OPENMP
-          do j=1,na1
-            if (i/=j)  z_p(j,my_thread) = z_p(j,my_thread)*( delta(j) / (d1(j)-d1(i)) )
-          enddo
-          z_p(i,my_thread) = z_p(i,my_thread)*delta(i)
-#else
+!#ifdef WITH_OPENMP
+!          do j=1,na1
+!            if (i/=j)  z_p(j,my_thread) = z_p(j,my_thread)*( delta(j) / (d1(j)-d1(i)) )
+!          enddo
+!          z_p(i,my_thread) = z_p(i,my_thread)*delta(i)
+!#else
           do j=1,na1
             if (i/=j)  z(j) = z(j)*( delta(j) / (d1(j)-d1(i)) )
           enddo
           z(i) = z(i)*delta(i)
-#endif
+!#endif
           ! store dbase/ddiff
 
           if (i<na1) then
@@ -502,15 +502,15 @@
             ddiff(i) = delta(i)
           endif
         enddo
-#ifdef WITH_OPENMP
-!$OMP END PARALLEL
-
-        call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-
-        do i = 0, max_threads-1
-          z(1:na1) = z(1:na1)*z_p(1:na1,i)
-        enddo
-#endif
+!#ifdef WITH_OPENMP
+!!$OMP END PARALLEL
+!
+!        call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+!
+!        do i = 0, max_threads-1
+!          z(1:na1) = z(1:na1)*z_p(1:na1,i)
+!        enddo
+!#endif
 
         call global_product_&
         &PRECISION&
