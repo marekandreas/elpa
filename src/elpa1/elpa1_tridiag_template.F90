@@ -549,14 +549,16 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
 
                 if (i/=j) then
                   if (isSkewsymmetric) then
-                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                        -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), v_col(l_col_beg), 1_BLAS_KIND,  &
-                                        ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1, &
+                                        kind=BLAS_KIND), &
+                                        -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), v_col(l_col_beg),     &
+                                        1_BLAS_KIND, ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
 
                   else
-                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                        ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), v_col(l_col_beg), 1_BLAS_KIND,  &
-                                        ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1, &
+                                        kind=BLAS_KIND), &
+                                        ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), v_col(l_col_beg), &
+                                        1_BLAS_KIND, ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
                   endif
                 endif
                 if (wantDebug) call obj%timer%stop("blas")
@@ -577,12 +579,12 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
 
                 if (i/=j) then
                   if (isSkewsymmetric) then
-                    call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+                    call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                                         -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
                                         v_col(l_col_beg), 1_BLAS_KIND, ONE, u_row(l_row_beg), 1_BLAS_KIND)
 
                   else
-                    call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+                    call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                                         ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
                                         v_col(l_col_beg), 1_BLAS_KIND, ONE, u_row(l_row_beg), 1_BLAS_KIND)
                   endif
