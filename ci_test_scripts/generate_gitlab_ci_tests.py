@@ -662,8 +662,8 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
     # add tests for scalapack for some specific test cases
     runScalapackTest = False
     #if (instr == "avx2" and cov == "coverage" and m == "mpi"):
-    if (instr == "avx2" and m == "mpi"):
-        runScalapackTest = True
+    #if (instr == "avx2" and m == "mpi"):
+    #    runScalapackTest = True
 
 
     # address-sanitize only with gnu compiler

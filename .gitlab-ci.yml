@@ -222,7 +222,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -239,7 +239,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -365,7 +365,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -382,7 +382,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -508,7 +508,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -525,7 +525,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -651,7 +651,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -668,7 +668,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -790,7 +790,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -807,7 +807,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -925,7 +925,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -942,7 +942,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1064,7 +1064,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1081,7 +1081,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1207,7 +1207,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1224,7 +1224,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1350,7 +1350,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1367,7 +1367,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1476,7 +1476,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1493,7 +1493,7 @@ gnu-gnu-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1602,7 +1602,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1619,7 +1619,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1728,7 +1728,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1745,7 +1745,7 @@ gnu-gnu-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1850,7 +1850,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1867,7 +1867,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1968,7 +1968,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -1985,7 +1985,7 @@ gnu-gnu-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-gpu
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -2090,7 +2090,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -2107,7 +2107,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-gpu
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -2216,7 +2216,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma -fsanitize=address\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -2233,7 +2233,7 @@ gnu-gnu-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-no-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx2 -mfma\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -4462,7 +4462,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -4479,7 +4479,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-gp
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -4605,7 +4605,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -4622,7 +4622,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -4748,7 +4748,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -4765,7 +4765,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -4891,7 +4891,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -4908,7 +4908,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5030,7 +5030,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5047,7 +5047,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-gp
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5165,7 +5165,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5182,7 +5182,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5304,7 +5304,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5321,7 +5321,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5447,7 +5447,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5464,7 +5464,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5590,7 +5590,7 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5607,7 +5607,7 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5716,7 +5716,7 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5733,7 +5733,7 @@ gnu-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5842,7 +5842,7 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5859,7 +5859,7 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5968,7 +5968,7 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -5985,7 +5985,7 @@ gnu-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking-n
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -6090,7 +6090,7 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -6107,7 +6107,7 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gpu-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -6208,7 +6208,7 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -6225,7 +6225,7 @@ gnu-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -6330,7 +6330,7 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -6347,7 +6347,7 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no-g
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -6456,7 +6456,7 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -6473,7 +6473,7 @@ gnu-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking-n
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -mavx2 -mfma\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -8688,7 +8688,7 @@ intel-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-no-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -8751,7 +8751,7 @@ intel-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -8814,7 +8814,7 @@ intel-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -8877,7 +8877,7 @@ intel-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -8938,7 +8938,7 @@ intel-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-no-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -8997,7 +8997,7 @@ intel-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9058,7 +9058,7 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9121,7 +9121,7 @@ intel-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9184,7 +9184,7 @@ intel-intel-mpi-openmp-double-precision-assumed-size-band-to-full-blocking-no-gp
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9247,7 +9247,7 @@ intel-intel-mpi-openmp-double-precision-assumed-size-no-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9310,7 +9310,7 @@ intel-intel-mpi-openmp-double-precision-no-assumed-size-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9373,7 +9373,7 @@ intel-intel-mpi-openmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9434,7 +9434,7 @@ intel-intel-mpi-openmp-single-precision-assumed-size-band-to-full-blocking-no-gp
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9493,7 +9493,7 @@ intel-intel-mpi-openmp-single-precision-assumed-size-no-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9554,7 +9554,7 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-band-to-full-blocking-no
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
@@ -9617,7 +9617,7 @@ intel-intel-mpi-openmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -S $SLURM -g no
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX2\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX2\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --disable-gpu --enable-avx2 --disable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g no
 
 
 
