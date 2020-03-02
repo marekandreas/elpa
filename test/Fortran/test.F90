@@ -574,6 +574,12 @@ program test
    call e%set("nblk", int(nblk,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 
+   if (layout .eq. 'C') then
+     call e%set("matrix_order",COLUMN_MAJOR_ORDER)
+   else
+     call e%set("matrix_order",ROW_MAJOR_ORDER)
+   endif
+
 #ifdef WITH_MPI
 #ifdef SPLIT_COMM_MYSELF
    call mpi_comm_split(MPI_COMM_WORLD, int(my_pcol,kind=MPI_KIND), int(my_prow,kind=MPI_KIND), &
