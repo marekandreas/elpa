@@ -211,9 +211,6 @@ function elpa_solve_evp_&
 #ifdef REDISTRIBUTE_MATRIX
    doRedistributeMatrix = .false.
 
-
-   call obj%set("internal_nblk", 32, error)
-
    if (obj%is_set("internal_nblk") == 1) then
      if (obj%is_set("matrix_order") == 1) then
        reDistributeMatrix = .true.
