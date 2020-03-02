@@ -140,7 +140,15 @@
     end function
   end interface
 
-
+  interface
+    subroutine pdgenr2d(m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt) 
+    use PRECISION_MODULE
+    implicit none
+    integer(kind=BLAS_KIND) :: m, n, ia, ja, desca(*), ib, jb, descb(*)
+    real(kind=rk8)          :: a(*), b(*)
+    integer(kind=BLAS_KIND) :: ictxt
+    end subroutine
+  end interface
 
 
   interface
@@ -193,6 +201,16 @@
     real(kind=rk4)          :: a(*), work(*)
     real(kind=rk4)          :: norm2
     end function
+  end interface
+
+  interface
+    subroutine psgenr2d(m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt) 
+    use PRECISION_MODULE
+    implicit none
+    integer(kind=BLAS_KIND) :: m, n, ia, ja, desca(*), ib, jb, descb(*)
+    real(kind=rk8)          :: a(*), b(*)
+    integer(kind=BLAS_KIND) :: ictxt
+    end subroutine
   end interface
 
   interface
@@ -250,6 +268,16 @@
   end interface
 
   interface
+    subroutine pzgenr2d(m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt) 
+    use PRECISION_MODULE
+    implicit none
+    integer(kind=BLAS_KIND) :: m, n, ia, ja, desca(*), ib, jb, descb(*)
+    complex(kind=ck8)       :: a(*), b(*)
+    integer(kind=BLAS_KIND) :: ictxt
+    end subroutine
+  end interface
+
+  interface
     subroutine pcgemm(TRANSA, TRANSB, M, N, K, ALPHA, A, IA, JA, DESCA, B, IB, JB, DESCB, BETA, C, IC, JC, DESCC)
     use PRECISION_MODULE
     implicit none
@@ -303,3 +331,12 @@
     end function
   end interface
 
+  interface
+    subroutine pcgenr2d(m, n, a, ia, ja, desca, b, ib, jb, descb, ictxt) 
+    use PRECISION_MODULE
+    implicit none
+    integer(kind=BLAS_KIND) :: m, n, ia, ja, desca(*), ib, jb, descb(*)
+    complex(kind=ck4)       :: a(*), b(*)
+    integer(kind=BLAS_KIND) :: ictxt
+    end subroutine
+  end interface

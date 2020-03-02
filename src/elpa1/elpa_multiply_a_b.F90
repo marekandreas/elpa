@@ -87,7 +87,7 @@
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
       logical                       :: success
-      integer(kind=ik)              :: nblk, mpi_comm_rows, mpi_comm_cols, lda, ldaCols, error
+      integer(kind=ik)              :: nblk, mpi_comm_rows, mpi_comm_cols, matrixRows, matrixCols, error
 
       call obj%timer%start("elpa_mult_at_b_&
       &MATH_DATATYPE&
@@ -95,10 +95,10 @@
       &PRECISION&
       &")
 
-      na   = obj%na
-      nblk = obj%nblk
-      lda  = obj%local_nrows
-      ldaCols  = obj%local_ncols
+      na          = obj%na
+      nblk        = obj%nblk
+      matrixRows  = obj%local_nrows
+      matrixCols  = obj%local_ncols
 
 
       call obj%get("mpi_comm_rows",mpi_comm_rows,error)

@@ -177,7 +177,7 @@
       np_rows = int(np_rowsMPI,kind=MPI_KIND)
       my_pcol = int(my_pcolMPI,kind=MPI_KIND)
       np_cols = int(np_colsMPI,kind=MPI_KIND)
-      if (wantDebug) call obj%timer%stop(",kind=MPI_KIND)mpi_communication")
+      if (wantDebug) call obj%timer%stop("mpi_communication")
 
       ! Get global_id mapping 2D procssor coordinates to global id
 

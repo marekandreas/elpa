@@ -54,7 +54,7 @@
      implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)              :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #ifdef USE_ASSUMED_SIZE
       MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,*)
 #else
@@ -94,7 +94,7 @@
 #endif
 
       na         = obj%na
-      lda        = obj%local_nrows
+      matrixRows = obj%local_nrows
       nblk       = obj%nblk
       matrixCols = obj%local_ncols
 
@@ -200,7 +200,7 @@
             call obj%timer%start("blas")
 
             call PRECISION_POTRF('U', int(na-n+1,kind=BLAS_KIND), a(l_row1,l_col1), &
-                                 int(lda,kind=BLAS_KIND), infoBLAS )
+                                 int(matrixRows,kind=BLAS_KIND), infoBLAS )
             info = int(infoBLAS,kind=ik)
             call obj%timer%stop("blas")
 
@@ -233,7 +233,7 @@
             call obj%timer%start("blas")
 
             call PRECISION_POTRF('U', int(nblk,kind=BLAS_KIND), a(l_row1,l_col1), &
-                                 int(lda,kind=BLAS_KIND) , infoBLAS )
+                                 int(matrixRows,kind=BLAS_KIND) , infoBLAS )
             info = int(infoBLAS,kind=ik)
             call obj%timer%stop("blas")
 
@@ -283,7 +283,7 @@
           if (l_cols-l_colx+1>0) &
               call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
                                   int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, tmp2, &
-                                  int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(lda,kind=BLAS_KIND) )
+                                  int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND) )
           call obj%timer%stop("blas")
         endif
 
@@ -326,7 +326,7 @@
                               int(nblk,kind=BLAS_KIND), -ONE,  &
                               tmatr(lrs,1), int(ubound(tmatr,dim=1),kind=BLAS_KIND), tmatc(lcs,1), &
                               int(ubound(tmatc,dim=1),kind=BLAS_KIND), &
-                              ONE, a(lrs,lcs), int(lda,kind=BLAS_KIND))
+                              ONE, a(lrs,lcs), int(matrixRows,kind=BLAS_KIND))
           call obj%timer%stop("blas")
 
         enddo

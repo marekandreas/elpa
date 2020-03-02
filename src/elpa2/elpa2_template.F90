@@ -128,9 +128,9 @@
                                                                                             &PRECISION&
                                                                                             &_&
                                                                                             &MATH_DATATYPE
-    integer(kind=ik)                                                  :: na, nev, lda, ldq, nblk, matrixCols, &
+    integer(kind=ik)                                                  :: na, nev, nblk, matrixCols, &
                                                                          mpi_comm_rows, mpi_comm_cols,        &
-                                                                         mpi_comm_all, check_pd, error
+                                                                         mpi_comm_all, check_pd, error, matrixRows
 
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
@@ -187,10 +187,10 @@
 
     na         = obj%na
     nev        = obj%nev
-    lda        = obj%local_nrows
-    ldq        = obj%local_nrows
     nblk       = obj%nblk
     matrixCols = obj%local_ncols
+    matrixRows = obj%local_nrows
+
 
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
     if (error .ne. ELPA_OK) then
@@ -558,10 +558,10 @@
 
 
     if (.not. obj%eigenvalues_only) then
-      q_actual => q(1:obj%local_nrows,1:obj%local_ncols)
+      q_actual => q(1:matrixRows,1:matrixCols)
     else
-     allocate(q_dummy(1:obj%local_nrows,1:obj%local_ncols))
-     q_actual => q_dummy(1:obj%local_nrows,1:obj%local_ncols)
+     allocate(q_dummy(1:matrixRows,1:matrixCols))
+     q_actual => q_dummy(1:matrixRows,1:matrixCols)
     endif
 
 
@@ -701,7 +701,7 @@
       &_&
       &PRECISION &
       (obj, na, a, &
-      a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+      a_dev, matrixRows, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
       tmat_dev,  wantDebug, do_useGPU_bandred, success, &
 #if REALCASE == 1
       useQRActual, &
@@ -734,7 +734,7 @@
        &MATH_DATATYPE&
        &_&
        &PRECISION&
-       (obj, na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+       (obj, na, nbw, nblk, a, a_dev, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
        do_useGPU_tridiag_band, wantDebug, nrThreads)
 
 #ifdef WITH_MPI
@@ -753,6 +753,24 @@
      l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
      l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
+
+
+   ! test only
+   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
+
+   if (matrixCols .ne. l_cols) then
+     print *,"DFDSF ",matrixCols, l_cols
+   else
+    print *,"identical"
+   endif
+
+   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
+   if (matrixRows .ne. l_rows) then
+     print *,"DFDSF rows ",matrixRows, l_rows
+   else
+    print *,"identical rows"
+   endif
+
 
      allocate(q_real(l_rows,l_cols), stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
@@ -774,7 +792,7 @@
        &PRECISION &
        (obj, na, nev, ev, e, &
 #if REALCASE == 1
-       q_actual, ldq,   &
+       q_actual, matrixRows,   &
 #endif
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
@@ -843,23 +861,23 @@
        ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
        ! This makes the eigenvectors complex.
        ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
-         q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols) = 0.0
-         do i = 1, obj%local_nrows
+         q(1:matrixRows, matrixCols+1:2*matrixCols) = 0.0
+         do i = 1, matrixRows
 !          global_index = indxl2g(i, nblk, my_prow, 0, np_rows)
            global_index = np_rows*nblk*((i-1)/nblk) + MOD(i-1,nblk) + MOD(np_rows+my_prow-0, np_rows)*nblk + 1
            if (mod(global_index-1,4) .eq. 0) then
               ! do nothing
            end if
            if (mod(global_index-1,4) .eq. 1) then
-              q(i,obj%local_ncols+1:2*obj%local_ncols) = q(i,1:obj%local_ncols)
-              q(i,1:obj%local_ncols) = 0
+              q(i,matrixCols+1:2*matrixCols) = q(i,1:matrixCols)
+              q(i,1:matrixCols) = 0
            end if
            if (mod(global_index-1,4) .eq. 2) then
-              q(i,1:obj%local_ncols) = -q(i,1:obj%local_ncols)
+              q(i,1:matrixCols) = -q(i,1:matrixCols)
            end if
            if (mod(global_index-1,4) .eq. 3) then
-              q(i,obj%local_ncols+1:2*obj%local_ncols) = -q(i,1:obj%local_ncols)
-              q(i,1:obj%local_ncols) = 0
+              q(i,matrixCols+1:2*matrixCols) = -q(i,1:matrixCols)
+              q(i,1:matrixCols) = 0
            end if
          end do
        endif
@@ -881,27 +899,9 @@
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
        q_dev, &
-       ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+       matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
-!        if (isSkewsymmetric) then
-!        ! Transform imaginary part
-!        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
-!          call trans_ev_tridi_to_band_&
-!          &MATH_DATATYPE&
-!          &_&
-!          &PRECISION &
-!          (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
-!          q_dev, &
-!          ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
-!          nrThreads, success=success, kernel=kernel)
-!        endif
-!        print * , "After trans_ev_tridi_to_band: real part of q="
-!        do i=1,na
-!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
-!        enddo
-! #ifdef DOUBLE_PRECISION_REAL
-!        call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',0)
-! #endif
+
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_band")
 #endif
@@ -930,7 +930,8 @@
        ! if the second backward step is to be performed, but not on GPU, we have
        ! to transfer q to the host
        if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
-         successCUDA = cuda_memcpy(int(loc(q),kind=c_intptr_t), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
+         successCUDA = cuda_memcpy(int(loc(q),kind=c_intptr_t), q_dev, matrixRows*matrixCols* size_of_datatype, &
+                                   cudaMemcpyDeviceToHost)
          if (.not.(successCUDA)) then
            print *,"elpa2_template, error in copy to host"
            stop 1
@@ -956,15 +957,16 @@
        if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
          ! copy to device if we want to continue on GPU
  
-         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
+         successCUDA = cuda_malloc(q_dev, matrixRows*matrixCols*size_of_datatype)
 !          if (.not.(successCUDA)) then
 !            print *,"elpa2_template, error in cuda_malloc"
 !            stop 1
 !          endif         
 !          print *, 'q_dev=', q_dev, 'loc(q)=', loc(q)&
-!          , 'ldq*matrixCols* size_of_datatype=', ldq*matrixCols* size_of_datatype, ', q(1,1)=', q(1,1)
+!          , 'matrixRows*matrixCols* size_of_datatype=', matrixRows*matrixCols* size_of_datatype, ', q(1,1)=', q(1,1)
 
-         successCUDA = cuda_memcpy(q_dev, int(loc(q),kind=c_intptr_t), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+         successCUDA = cuda_memcpy(q_dev, int(loc(q),kind=c_intptr_t), matrixRows*matrixCols* size_of_datatype, &
+                                   cudaMemcpyHostToDevice)
          if (.not.(successCUDA)) then
            print *,"elpa2_template, error in copy to device", successCUDA
            stop 1
@@ -979,9 +981,9 @@
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, a, &
-       a_dev, lda, tmat, tmat_dev,  q,  &
+       a_dev, matrixRows, tmat, tmat_dev,  q,  &
        q_dev, &
-       ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
+       matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
        , useQRActual  &
 #endif
@@ -993,7 +995,7 @@
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
 ! #ifdef DOUBLE_PRECISION_REAL
-!        call prmat(na,useGPU,q(1:obj%local_nrows, 1:obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
+!        call prmat(na,useGPU,q(1:matrixRows, 1:matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
 ! #endif
 !        New position:
      if (do_trans_to_band) then
@@ -1004,9 +1006,9 @@
            &MATH_DATATYPE&
            &_&
            &PRECISION &
-           (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
+           (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
            q_dev, &
-           ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+           matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
          endif
 !          print * , "After trans_ev_tridi_to_band: imaginary part of q="
@@ -1014,7 +1016,7 @@
 !            write(*,"(100g15.5)") ( q(i,j+na), j=1,na )
 !          enddo
 ! #ifdef DOUBLE_PRECISION_REAL
-!        call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
+!        call prmat(na,useGPU,q(1:matrixRows, matrixCols+1:2*matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
 ! #endif
               ! We can now deallocate the stored householder vectors
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
@@ -1032,7 +1034,8 @@
           ! if the second backward step is to be performed, but not on GPU, we have
           ! to transfer q to the host
           if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
-            successCUDA = cuda_memcpy(loc(q(1,obj%local_ncols+1)), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
+            successCUDA = cuda_memcpy(loc(q(1,matrixCols+1)), q_dev, matrixRows*matrixCols* size_of_datatype, &
+                                      cudaMemcpyDeviceToHost)
             if (.not.(successCUDA)) then
               print *,"elpa2_template, error in copy to host"
               stop 1
@@ -1052,19 +1055,20 @@
        if (isSkewsymmetric) then
          if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
            ! copy to device if we want to continue on GPU
-           successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
+           successCUDA = cuda_malloc(q_dev, matrixRows*matrixCols*size_of_datatype)
 !            if (.not.(successCUDA)) then
 !              print *,"elpa2_template, error in cuda_malloc"
 !              stop 1
 !            endif
-           successCUDA = cuda_memcpy(q_dev, loc(q(1,obj%local_ncols+1)), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
+           successCUDA = cuda_memcpy(q_dev, loc(q(1,matrixCols+1)), matrixRows*matrixCols* size_of_datatype, &
+                                     cudaMemcpyHostToDevice)
            if (.not.(successCUDA)) then
              print *,"elpa2_template, error in copy to device"
              stop 1
            endif
          endif
 ! #ifdef DOUBLE_PRECISION_REAL
-!          call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',0)
+!          call prmat(na,useGPU,q(matrixRows, matrixCols+1:2*matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',0)
 ! #endif
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
@@ -1074,9 +1078,9 @@
          &_&
          &PRECISION &
          (obj, na, nev, nblk, nbw, a, &
-         a_dev, lda, tmat, tmat_dev,  q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),  &
+         a_dev, matrixRows, tmat, tmat_dev,  q(1:matrixRows, matrixCols+1:2*matrixCols),  &
          q_dev, &
-         ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
+         matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
          , useQRActual  &
 #endif
@@ -1086,7 +1090,7 @@
 !            write(*,"(100g15.5)") ( q(i,j+na), j=1,na )
 !          enddo
 ! #ifdef DOUBLE_PRECISION_REAL
-!          call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',1)
+!          call prmat(na,useGPU,q(1:matrixRows, matrixCols+1:2*matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',1)
 ! #endif
        endif
 
