@@ -58,7 +58,18 @@ function elpa_solve_evp_&
          &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
-   &_impl (obj, a, ev, q) result(success)
+   &_impl (obj, &
+#ifdef REDISTRIBUTE_MATRIX
+   aExtern, &
+#else
+   a, &
+#endif
+   ev, &
+#ifdef REDISTRIBUTE_MATRIX
+   qExtern) result(success)
+#else
+   q) result(success)
+#endif
    use precision
    use cuda_functions
    use mod_check_for_gpu
@@ -67,35 +78,58 @@ function elpa_solve_evp_&
    use elpa_mpi
    use elpa1_compute
    use elpa_omp
+#ifdef REDISTRIBUTE_MATRIX
+   use elpa_scalapack_interfaces
+#endif
 
    implicit none
 #include "../general/precision_kinds.F90"
-   class(elpa_abstract_impl_t), intent(inout) :: obj
-   real(kind=REAL_DATATYPE), intent(out)           :: ev(obj%na)
+   class(elpa_abstract_impl_t), intent(inout)                         :: obj
+   real(kind=REAL_DATATYPE), intent(out)                              :: ev(obj%na)
+
+#ifdef REDISTRIBUTE_MATRIX
 
 #ifdef USE_ASSUMED_SIZE
-   MATH_DATATYPE(kind=rck), intent(inout)       :: a(obj%local_nrows,*)
-   MATH_DATATYPE(kind=rck), optional,target,intent(out)  :: q(obj%local_nrows,*)
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,*)
+   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: qExtern(obj%local_nrows,*)
 #else
-   MATH_DATATYPE(kind=rck), intent(inout)       :: a(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,obj%local_ncols)
+#ifdef HAVE_SKEWSYMMETRIC
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
+#else
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
+#endif
+#endif
+
+#else /* REDISTRIBUTE_MATRIX */
+
+#ifdef USE_ASSUMED_SIZE
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,*)
+   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: q(obj%local_nrows,*)
+#else
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,obj%local_ncols)
 #ifdef HAVE_SKEWSYMMETRIC
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
 #endif
 #endif
+#endif /* REDISTRIBUTE_MATRIX */
+
+    MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
+    MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
 
 #if REALCASE == 1
-   real(kind=C_DATATYPE_KIND), allocatable         :: tau(:)
-   real(kind=C_DATATYPE_KIND), allocatable, target         :: q_dummy(:,:)
-   real(kind=C_DATATYPE_KIND), pointer             :: q_actual(:,:)
+   real(kind=C_DATATYPE_KIND), allocatable           :: tau(:)
+   real(kind=C_DATATYPE_KIND), allocatable, target   :: q_dummy(:,:)
+   real(kind=C_DATATYPE_KIND), pointer               :: q_actual(:,:)
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
-   real(kind=REAL_DATATYPE), allocatable           :: q_real(:,:)
-   complex(kind=C_DATATYPE_KIND), allocatable      :: tau(:)
+   real(kind=REAL_DATATYPE), allocatable             :: q_real(:,:)
+   complex(kind=C_DATATYPE_KIND), allocatable        :: tau(:)
    complex(kind=C_DATATYPE_KIND), allocatable,target :: q_dummy(:,:)
-   complex(kind=C_DATATYPE_KIND), pointer          :: q_actual(:,:)
+   complex(kind=C_DATATYPE_KIND), pointer            :: q_actual(:,:)
 #endif /* COMPLEXCASE */
 
 
@@ -117,19 +151,49 @@ function elpa_solve_evp_&
    logical                                         :: wantDebug
    integer(kind=c_int)                             :: istat, debug, gpu
    character(200)                                  :: errorMessage
-   integer(kind=ik)                                :: na, nev, lda, ldq, nblk, matrixCols, &
+   integer(kind=ik)                                :: na, nev, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols,        &
-                                                      mpi_comm_all, check_pd, i, error
+                                                      mpi_comm_all, check_pd, i, error, matrixRows
 
+#ifdef REDISTRIBUTE_MATRIX
+   integer(kind=ik)                                :: nblkInternal, matrixOrder
+   character(len=1)                                :: layoutInternal, layoutExternal
+   integer(kind=BLAS_KIND)                         :: external_blacs_ctxt, external_blacs_ctxt_
+   integer(kind=BLAS_KIND)                         :: np_rows_, np_cols_, my_prow_, my_pcol_
+   integer(kind=BLAS_KIND)                         :: np_rows__, np_cols__, my_prow__, my_pcol__
+   integer(kind=BLAS_KIND)                         :: sc_desc_(1:9), sc_desc(1:9)
+   integer(kind=BLAS_KIND)                         :: na_rows_, na_cols_, info_, blacs_ctxt_
+   integer(kind=ik)                                :: mpi_comm_rows_, mpi_comm_cols_
+   integer(kind=MPI_KIND)                          :: mpi_comm_rowsMPI_, mpi_comm_colsMPI_
+   character(len=1), parameter                     :: matrixLayouts(2) = [ 'C', 'R' ]
+
+   MATH_DATATYPE(kind=rck), allocatable, target               :: aIntern(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target   :: qIntern(:,:)
+#endif
    logical                                         :: do_tridiag, do_solve, do_trans_ev
    integer(kind=ik)                                :: nrThreads
    integer(kind=ik)                                :: global_index
+
+   logical                                         :: reDistributeMatrix, doRedistributeMatrix
    
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
    &")
+
+   reDistributeMatrix = .false.
+
+   matrixRows = obj%local_nrows
+   matrixCols = obj%local_ncols
+   
+   call obj%get("mpi_comm_parent", mpi_comm_all, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem getting option. Aborting..."
+     stop
+   endif
+   call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
+   my_pe = int(my_peMPI,kind=c_int)
 
 #ifdef WITH_OPENMP
    ! store the number of OpenMP threads used in the calling function
@@ -149,7 +213,7 @@ function elpa_solve_evp_&
 
    success = .true.
 
-   if (present(q)) then
+   if (present(qExtern)) then
      obj%eigenvalues_only = .false.
    else
      obj%eigenvalues_only = .true.
@@ -157,10 +221,174 @@ function elpa_solve_evp_&
 
    na         = obj%na
    nev        = obj%nev
-   lda        = obj%local_nrows
-   ldq        = obj%local_nrows
+   matrixRows = obj%local_nrows
    nblk       = obj%nblk
    matrixCols = obj%local_ncols
+
+   call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem getting option. Aborting..."
+     stop
+   endif
+   call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem getting option. Aborting..."
+     stop
+   endif
+
+#ifdef REDISTRIBUTE_MATRIX
+   doRedistributeMatrix = .false.
+
+   if (obj%is_set("internal_nblk") == 1) then
+     if (obj%is_set("matrix_order") == 1) then
+       reDistributeMatrix = .true.
+     else
+       reDistributeMatrix = .false.
+       if (my_pe == 0) then
+         write(error_unit,*) 'Warning: Matrix re-distribution is not used, since you did not set the matrix_order'
+         write(error_unit,*) '         Only task 0 prints this warning'
+       endif
+     endif
+   endif
+   if (reDistributeMatrix) then
+     ! get the block-size to be used
+     call obj%get("internal_nblk", nblkInternal, error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+
+     call obj%get("matrix_order", matrixOrder, error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option. Aborting..."
+       stop
+     endif
+
+     layoutExternal=matrixLayouts(matrixOrder)
+
+     if (nblkInternal == nblk) then
+       doRedistributeMatrix = .false.
+     else
+       doRedistributeMatrix = .true.
+     endif
+   endif
+
+   if (doRedistributeMatrix) then
+
+     ! create a new internal blacs discriptor
+     ! matrix will still be distributed over the same process grid
+     ! as input matrices A and Q where
+     external_blacs_ctxt = int(mpi_comm_all,kind=BLAS_KIND)
+     ! construct current descriptor
+     if (obj%is_set("blacs_context") == 0) then
+       call obj%set("blacs_context", int(external_blacs_ctxt,kind=c_int), error)
+       if (error .NE. ELPA_OK) then
+         stop "A"
+       endif
+     endif
+
+      sc_desc(1) = 1
+      sc_desc(2) = external_blacs_ctxt
+      sc_desc(3) = obj%na
+      sc_desc(4) = obj%na
+      sc_desc(5) = obj%nblk
+      sc_desc(6) = obj%nblk
+      sc_desc(7) = 0
+      sc_desc(8) = 0
+      sc_desc(9) = obj%local_nrows
+
+     layoutInternal = 'C'
+
+     ! and np_rows and np_cols
+     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+     call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+     call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+     call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+     np_rows = int(np_rowsMPI,kind=c_int)
+     np_cols = int(np_colsMPI,kind=c_int)
+
+     blacs_ctxt_ = int(mpi_comm_all,kind=BLAS_KIND)
+     ! we get new blacs context and the local process grid coordinates
+     call BLACS_Gridinit(blacs_ctxt_, layoutInternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
+     call BLACS_Gridinfo(blacs_ctxt_, np_rows_, np_cols_, my_prow_, my_pcol_)
+     if (np_rows /= np_rows_) then
+       print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
+       stop 1
+     endif
+     if (np_cols /= np_cols_) then
+       print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
+       stop 1
+     endif
+
+     call mpi_comm_split(int(mpi_comm_all,kind=MPI_KIND), int(my_pcol_,kind=MPI_KIND), &
+                         int(my_prow_,kind=MPI_KIND), mpi_comm_rowsMPI_, mpierr)
+     mpi_comm_rows_ = int(mpi_comm_rowsMPI_,kind=c_int)
+
+     call mpi_comm_split(int(mpi_comm_all,kind=MPI_KIND), int(my_prow_,kind=MPI_KIND), &
+                         int(my_pcol_,kind=MPI_KIND), mpi_comm_colsMPI_, mpierr)
+     mpi_comm_cols_ = int(mpi_comm_colsMPI_,kind=c_int)
+
+     if (int(np_rows_,kind=c_int) /= np_rows) then
+       print *,"OHO: ",np_rows,np_rows_
+       print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
+       stop
+     endif
+     if (int(np_cols_,kind=c_int) /= np_cols) then
+       print *,"OHO: ",np_cols,np_cols_
+       print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
+       stop
+     endif
+
+     ! now we can set up the the blacs descriptor
+
+     sc_desc_(:) = 0
+     na_rows_ = numroc(int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), my_prow_, 0_BLAS_KIND, np_rows_)
+     na_cols_ = numroc(int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), my_pcol_, 0_BLAS_KIND, np_cols_)
+     
+     info_ = 0
+     call descinit(sc_desc_, int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), &
+                   int(nblkInternal,kind=BLAS_KIND), 0_BLAS_KIND, 0_BLAS_KIND, &
+                   blacs_ctxt_, na_rows_, info_)
+
+     if (info_ .ne. 0) then
+       write(error_unit,*) 'Error in BLACS descinit! info=',info_
+       write(error_unit,*) 'the internal re-distribution of the matrices failed!'
+       call MPI_ABORT(int(mpi_comm_all,kind=MPI_KIND), 1_MPI_KIND, mpierr)
+     endif
+
+
+     ! allocate the memory for the redistributed matrices
+     allocate(aIntern(na_rows_,na_cols_))
+#ifdef HAVE_SKEWSYMMETRIC
+     allocate(qIntern(na_rows_,2*na_cols_))
+#else
+     allocate(qIntern(na_rows_,na_cols_))
+#endif
+
+     call scal_PRECISION_GEMR2D &
+     (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), aExtern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, aIntern, &
+     1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, blacs_ctxt_)
+
+     !call scal_PRECISION_GEMR2D &
+     !(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), qExtern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, qIntern, &
+     !1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, blacs_ctxt_)
+
+     !map all important new variables to be used from here
+     nblk                    = nblkInternal
+     matrixCols              = na_cols_
+     matrixRows              = na_rows_
+     mpi_comm_cols           = mpi_comm_cols_
+     mpi_comm_rows           = mpi_comm_rows_
+
+     a => aIntern(1:matrixRows,1:matrixCols)
+     q => qIntern(1:matrixRows,1:matrixCols)
+   else
+     a => aExtern(1:matrixRows,1:matrixCols)
+     q => qExtern(1:matrixRows,1:matrixCols)
+   endif
+
+#endif /* REDISTRIBUTE_MATRIX */
 
    ! special case na = 1
    if (na .eq. 1) then
@@ -191,18 +419,6 @@ function elpa_solve_evp_&
    if (nev == 0) then
      nev = 1
      obj%eigenvalues_only = .true.
-   endif
-
-
-   call obj%get("mpi_comm_rows",mpi_comm_rows,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
-     stop
-   endif
-   call obj%get("mpi_comm_cols",mpi_comm_cols,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
-     stop
    endif
 
    call obj%get("gpu",gpu,error)
@@ -251,13 +467,6 @@ function elpa_solve_evp_&
    
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
-     call obj%get("mpi_comm_parent", mpi_comm_all,error)
-     if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
-       stop
-     endif
-     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
-     my_pe = int(my_peMPI,kind=c_int)
 
      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = .true.
@@ -311,11 +520,15 @@ function elpa_solve_evp_&
 
    ! allocate a dummy q_intern, if eigenvectors should not be commputed and thus q is NOT present
    if (.not.(obj%eigenvalues_only)) then
-     q_actual => q(1:obj%local_nrows,1:obj%local_ncols)
+     q_actual => q(1:matrixRows,1:matrixCols)
    else
-     allocate(q_dummy(obj%local_nrows,obj%local_ncols))
+     allocate(q_dummy(1:matrixRows,1:matrixCols))
      q_actual => q_dummy
    endif
+
+   ! test only
+   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
+   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
 
 #if COMPLEXCASE == 1
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
@@ -363,7 +576,7 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
+     & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -382,12 +595,11 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("solve")
 #endif
-
      call solve_tridi_&
      &PRECISION&
      & (obj, na, nev, ev, e,  &
 #if REALCASE == 1
-        q_actual, ldq,          &
+        q_actual, matrixRows,          &
 #endif
 #if COMPLEXCASE == 1
         q_real, l_rows,  &
@@ -437,23 +649,23 @@ function elpa_solve_evp_&
      ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
      ! This makes the eigenvectors complex. 
      ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
-       q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols) = 0.0
-       do i = 1, obj%local_nrows
+       q(1:matrixRows, matrixCols+1:2*matrixCols) = 0.0
+       do i = 1, matrixRows
 !        global_index = indxl2g(i, nblk, my_prow, 0, np_rows)
          global_index = np_rows*nblk*((i-1)/nblk) + MOD(i-1,nblk) + MOD(np_rows+my_prow-0, np_rows)*nblk + 1
          if (mod(global_index-1,4) .eq. 0) then
             ! do nothing
          end if
          if (mod(global_index-1,4) .eq. 1) then
-            q(i,obj%local_ncols+1:2*obj%local_ncols) = q(i,1:obj%local_ncols)
-            q(i,1:obj%local_ncols) = 0
+            q(i,matrixCols+1:2*matrixCols) = q(i,1:matrixCols)
+            q(i,1:matrixCols) = 0
          end if
          if (mod(global_index-1,4) .eq. 2) then
-            q(i,1:obj%local_ncols) = -q(i,1:obj%local_ncols)
+            q(i,1:matrixCols) = -q(i,1:matrixCols)
          end if
          if (mod(global_index-1,4) .eq. 3) then
-            q(i,obj%local_ncols+1:2*obj%local_ncols) = -q(i,1:obj%local_ncols)
-            q(i,1:obj%local_ncols) = 0
+            q(i,matrixCols+1:2*matrixCols) = -q(i,1:matrixCols)
+            q(i,1:matrixCols) = 0
          end if
        end do       
      endif
@@ -465,13 +677,12 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("trans_ev")
 #endif
-
      ! In the skew-symmetric case this transforms the real part
      call trans_ev_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
      if (isSkewsymmetric) then
        ! Transform imaginary part
        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
@@ -479,7 +690,7 @@ function elpa_solve_evp_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             & (obj, na, nev, a, lda, tau, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), ldq, nblk, matrixCols, &
+             & (obj, na, nev, a, matrixRows, tau, q(1:matrixRows, matrixCols+1:2*matrixCols), matrixRows, nblk, matrixCols, &
                 mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
        endif
 
@@ -535,6 +746,46 @@ function elpa_solve_evp_&
    ! restore this at the end of ELPA 2
    call omp_set_num_threads(omp_threads_caller)
 #endif
+
+#ifdef REDISTRIBUTE_MATRIX
+   ! redistribute back if necessary
+   if (doRedistributeMatrix) then
+
+     !if (layoutInternal /= layoutExternal) then
+     !  ! maybe this can be skiped I now the process grid
+     !  ! and np_rows and np_cols
+
+     !  call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+     !  call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+     !  call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+     !  call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+     !  np_rows = int(np_rowsMPI,kind=c_int)
+     !  np_cols = int(np_colsMPI,kind=c_int)
+
+     !  ! we get new blacs context and the local process grid coordinates
+     !  call BLACS_Gridinit(external_blacs_ctxt, layoutInternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
+     !  call BLACS_Gridinfo(int(external_blacs_ctxt,KIND=BLAS_KIND), np_rows__, &
+     !                      np_cols__, my_prow__, my_pcol__)
+
+     !endif
+
+     !call scal_PRECISION_GEMR2D &
+     !(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), aIntern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, aExtern, &
+     !1_BLAS_KIND, 1_BLAS_KIND, sc_desc, external_blacs_ctxt)
+
+     call scal_PRECISION_GEMR2D &
+     (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), qIntern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, qExtern, &
+     1_BLAS_KIND, 1_BLAS_KIND, sc_desc, external_blacs_ctxt)
+
+
+     !clean MPI communicators and blacs grid
+     !of the internal re-distributed matrix
+     call mpi_comm_free(mpi_comm_rowsMPI_, mpierr)
+     call mpi_comm_free(mpi_comm_colsMPI_, mpierr)
+     call blacs_gridexit(blacs_ctxt_)
+   endif
+#endif /* REDISTRIBUTE_MATRIX */
 
    call obj%timer%stop("elpa_solve_evp_&
    &MATH_DATATYPE&
