@@ -116,8 +116,11 @@ function elpa_solve_evp_&
 #endif
 #endif /* REDISTRIBUTE_MATRIX */
 
+#ifdef REDISTRIBUTE_MATRIX
     MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
     MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
+#endif
+
 
 #if REALCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable           :: tau(:)
@@ -213,7 +216,11 @@ function elpa_solve_evp_&
 
    success = .true.
 
+#ifdef REDISTRIBUTE_MATRIX
    if (present(qExtern)) then
+#else
+   if (present(q)) then
+#endif
      obj%eigenvalues_only = .false.
    else
      obj%eigenvalues_only = .true.
