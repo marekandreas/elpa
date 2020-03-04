@@ -416,6 +416,48 @@ ilp64_no_omp_mpi_tests = [
 
 print("\n".join(ilp64_no_omp_mpi_tests))
 
+#two test for matrix-redistribute
+matrix_redistribute_mpi_tests = [
+    "# gnu-gnu-matrix-redistribute-mpi-noomp",
+    "gnu-gnu-mpi-noopenmp-matrix-redistribute:",
+    "  tags:",
+    "    - avx",
+    "  artifacts:",
+    "    when: on_success",
+    "    expire_in: 2 month",
+    "  script:",
+    '   - ./ci_test_scripts/run_ci_tests.sh -c "'
+    'CC=\\"mpicc\\" CFLAGS=\\"-O3 -mavx\\" '
+    'FC=\\"mpif90\\" FCFLAGS=\\"-O3 -mavx\\" '
+    'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NOOMP_ILP64 \\" '
+    'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NOOMP_ILP64 \\" '
+    '--enable-option-checking=fatal --with-mpi=yes --disable-openmp '
+    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
+    '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
+    '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
+    "\n",
+    "# gnu-gnu-matrix-redistribute-mpi-openmp",
+    "gnu-gnu-mpi-openmp-matrix-redistribute:",
+    "  tags:",
+    "    - avx",
+    "  artifacts:",
+    "    when: on_success",
+    "    expire_in: 2 month",
+    "  script:",
+    '   - ./ci_test_scripts/run_ci_tests.sh -c "'
+    'CC=\\"mpicc\\" CFLAGS=\\"-O3 -mavx\\" '
+    'FC=\\"mpif90\\" FCFLAGS=\\"-O3 -mavx\\" '
+    'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP_ILP64 \\" '
+    'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP_ILP64 \\" '
+    '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
+    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix|| { cat config.log; exit 1; }'
+    '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
+    '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
+    "\n",
+]
+
+print("\n".join(matrix_redistribute_mpi_tests))
+
 # add python tests
 python_ci_tests = [
     "# python tests",
