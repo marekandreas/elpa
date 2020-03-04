@@ -429,8 +429,8 @@ matrix_redistribute_mpi_tests = [
     '   - ./ci_test_scripts/run_ci_tests.sh -c "'
     'CC=\\"mpicc\\" CFLAGS=\\"-O3 -mavx\\" '
     'FC=\\"mpif90\\" FCFLAGS=\\"-O3 -mavx\\" '
-    'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NOOMP \\" '
-    'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NOOMP \\" '
+    'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \\" '
+    'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --disable-openmp '
     '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
@@ -450,7 +450,7 @@ matrix_redistribute_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix|| { cat config.log; exit 1; }'
+    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
