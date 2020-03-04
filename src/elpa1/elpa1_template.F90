@@ -320,7 +320,9 @@ function elpa_solve_evp_&
      call BLACS_Gridinit(blacs_ctxt_, layoutInternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
      call BLACS_Gridinfo(blacs_ctxt_, np_rows_, np_cols_, my_prow_, my_pcol_)
      if (np_rows /= np_rows_) then
+
        print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
+       print *," LayoutExternal ",layoutExternal," LayoutInternal ",layoutInternal,nblk,nblkInternal
        stop 1
      endif
      if (np_cols /= np_cols_) then
