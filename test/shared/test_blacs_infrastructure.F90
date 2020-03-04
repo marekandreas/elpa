@@ -103,10 +103,12 @@ module test_blacs_infrastructure
       call BLACS_Gridinfo(my_blacs_ctxt, np_rows_, np_cols_, my_prow, my_pcol)
       if (np_rows /= np_rows_) then
         print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
+        print *,"np_rows=",np_rows,"np_rows_=",np_rows_
         stop 1
       endif
       if (np_cols /= np_cols_) then
         print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
+        print *,"np_cols=",np_cols,"np_rows_=",np_cols_
         stop 1
       endif
 #else
