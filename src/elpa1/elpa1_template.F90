@@ -322,7 +322,6 @@ function elpa_solve_evp_&
      if (np_rows /= np_rows_) then
 
        print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
-       print *," LayoutExternal ",layoutExternal," LayoutInternal ",layoutInternal,nblk,nblkInternal
        stop 1
      endif
      if (np_cols /= np_cols_) then
@@ -339,12 +338,10 @@ function elpa_solve_evp_&
      mpi_comm_cols_ = int(mpi_comm_colsMPI_,kind=c_int)
 
      if (int(np_rows_,kind=c_int) /= np_rows) then
-       print *,"OHO: ",np_rows,np_rows_
        print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
        stop
      endif
      if (int(np_cols_,kind=c_int) /= np_cols) then
-       print *,"OHO: ",np_cols,np_cols_
        print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
        stop
      endif
