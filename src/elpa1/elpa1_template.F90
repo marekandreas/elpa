@@ -109,9 +109,9 @@ function elpa_solve_evp_&
 #else
    MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,obj%local_ncols)
 #ifdef HAVE_SKEWSYMMETRIC
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
 #else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
 #endif
 #endif
 #endif /* REDISTRIBUTE_MATRIX */
@@ -120,7 +120,6 @@ function elpa_solve_evp_&
     MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
     MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
 #endif
-
 
 #if REALCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable           :: tau(:)
