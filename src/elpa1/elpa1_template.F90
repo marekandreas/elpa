@@ -58,7 +58,18 @@ function elpa_solve_evp_&
          &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
-   &_impl (obj, aExtern, ev, qExtern) result(success)
+   &_impl (obj, &
+#ifdef REDISTRIBUTE_MATRIX
+   aExtern, &
+#else
+   a, &
+#endif
+   ev, &
+#ifdef REDISTRIBUTE_MATRIX
+   qExtern) result(success)
+#else
+   q) result(success)
+#endif
    use precision
    use cuda_functions
    use mod_check_for_gpu
@@ -76,6 +87,8 @@ function elpa_solve_evp_&
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
    real(kind=REAL_DATATYPE), intent(out)                              :: ev(obj%na)
 
+#ifdef REDISTRIBUTE_MATRIX
+
 #ifdef USE_ASSUMED_SIZE
    MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,*)
    MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: qExtern(obj%local_nrows,*)
@@ -88,8 +101,25 @@ function elpa_solve_evp_&
 #endif
 #endif
 
+#else /* REDISTRIBUTE_MATRIX */
+
+#ifdef USE_ASSUMED_SIZE
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,*)
+   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: q(obj%local_nrows,*)
+#else
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,obj%local_ncols)
+#ifdef HAVE_SKEWSYMMETRIC
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
+#else
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
+#endif
+#endif
+#endif /* REDISTRIBUTE_MATRIX */
+
+#ifdef REDISTRIBUTE_MATRIX
     MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
     MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
+#endif
 
 #if REALCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable           :: tau(:)
@@ -185,7 +215,11 @@ function elpa_solve_evp_&
 
    success = .true.
 
+#ifdef REDISTRIBUTE_MATRIX
    if (present(qExtern)) then
+#else
+   if (present(q)) then
+#endif
      obj%eigenvalues_only = .false.
    else
      obj%eigenvalues_only = .true.
@@ -285,6 +319,7 @@ function elpa_solve_evp_&
      call BLACS_Gridinit(blacs_ctxt_, layoutInternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
      call BLACS_Gridinfo(blacs_ctxt_, np_rows_, np_cols_, my_prow_, my_pcol_)
      if (np_rows /= np_rows_) then
+
        print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
        stop 1
      endif
@@ -302,12 +337,10 @@ function elpa_solve_evp_&
      mpi_comm_cols_ = int(mpi_comm_colsMPI_,kind=c_int)
 
      if (int(np_rows_,kind=c_int) /= np_rows) then
-       print *,"OHO: ",np_rows,np_rows_
        print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
        stop
      endif
      if (int(np_cols_,kind=c_int) /= np_cols) then
-       print *,"OHO: ",np_cols,np_cols_
        print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
        stop
      endif
