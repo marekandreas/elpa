@@ -37,6 +37,9 @@
 
    if (doRedistributeMatrix) then
 
+
+     call obj%timer%start("redistribute")
+
      ! create a new internal blacs discriptor
      ! matrix will still be distributed over the same process grid
      ! as input matrices A and Q where
@@ -126,10 +129,11 @@
 #else
      allocate(qIntern(na_rows_,na_cols_))
 #endif
-
+     call obj%timer%start("GEMR2D")
      call scal_PRECISION_GEMR2D &
      (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), aExtern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, aIntern, &
      1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, blacs_ctxt_)
+     call obj%timer%stop("GEMR2D")
 
      !call scal_PRECISION_GEMR2D &
      !(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), qExtern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, qIntern, &
@@ -144,6 +148,9 @@
 
      a => aIntern(1:matrixRows,1:matrixCols)
      q => qIntern(1:matrixRows,1:matrixCols)
+
+     
+     call obj%timer%stop("redistribute")
    else
      a => aExtern(1:matrixRows,1:matrixCols)
      q => qExtern(1:matrixRows,1:matrixCols)
