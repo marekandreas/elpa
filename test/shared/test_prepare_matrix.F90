@@ -44,6 +44,7 @@
 
 module test_prepare_matrix
 
+  use precision_for_tests
   interface prepare_matrix_random
     module procedure prepare_matrix_random_complex_double
     module procedure prepare_matrix_random_real_double

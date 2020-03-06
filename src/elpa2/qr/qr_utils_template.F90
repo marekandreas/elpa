@@ -181,13 +181,21 @@ subroutine reverse_matrix_2dcomm_ref_&
 
     integer(kind=ik)              :: mpirank_cols, mpirank_rows
     integer(kind=ik)              :: mpiprocs_cols, mpiprocs_rows
-    integer(kind=ik)              :: mpierr
+    integer(kind=MPI_KIND)        :: mpirank_colsMPI, mpirank_rowsMPI
+    integer(kind=MPI_KIND)        :: mpiprocs_colsMPI, mpiprocs_rowsMPI
+    integer(kind=MPI_KIND)        :: mpierr
     integer(kind=ik)              :: lrows, lcols, offset, baseoffset
 
-    call MPI_Comm_rank(mpicomm_cols,mpirank_cols,mpierr)
-    call MPI_Comm_rank(mpicomm_rows,mpirank_rows,mpierr)
-    call MPI_Comm_size(mpicomm_cols,mpiprocs_cols,mpierr)
-    call MPI_Comm_size(mpicomm_rows,mpiprocs_rows,mpierr)
+    call MPI_Comm_rank(int(mpicomm_cols,kind=MPI_KIND) ,mpirank_colsMPI,  mpierr)
+    call MPI_Comm_rank(int(mpicomm_rows,kind=MPI_KIND) ,mpirank_rowsMPI,  mpierr)
+    call MPI_Comm_size(int(mpicomm_cols,kind=MPI_KIND) ,mpiprocs_colsMPI, mpierr)
+    call MPI_Comm_size(int(mpicomm_rows,kind=MPI_KIND) ,mpiprocs_rowsMPI, mpierr)
+
+    mpirank_cols = int(mpirank_colsMPI,kind=c_int)
+    mpirank_rows = int(mpirank_rowsMPI,kind=c_int)
+    mpiprocs_cols = int(mpiprocs_colsMPI,kind=c_int)
+    mpiprocs_rows = int(mpiprocs_rowsMPI,kind=c_int)
+
     call local_size_offset_1d(m,mb,1,1,0,mpirank_cols,mpiprocs_cols, &
                                   lrows,baseoffset,offset)
 
@@ -229,7 +237,8 @@ subroutine reverse_matrix_1dcomm_&
     real(kind=C_DATATYPE_KIND)    :: a(lda,*), work(*)
 
     ! local scalars
-    integer(kind=ik)              :: mpirank,mpiprocs,mpierr
+    integer(kind=ik)              :: mpirank, mpiprocs
+    integer(kind=MPI_KIND)        :: mpirankMPI, mpiprocsMPI, mpierr
 #ifdef WITH_MPI
     integer(kind=ik)              :: my_mpistatus(MPI_STATUS_SIZE)
 #endif
@@ -242,8 +251,12 @@ subroutine reverse_matrix_1dcomm_&
     integer(kind=ik)              :: lcols,lrows,lroffset,lcoffset,dimsize,fixedsize
     real(kind=C_DATATYPE_KIND)    :: dworksize(1)
 
-    call MPI_Comm_rank(mpicomm, mpirank, mpierr)
-    call MPI_Comm_size(mpicomm, mpiprocs, mpierr)
+    call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND), mpirankMPI, mpierr)
+    call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
+
+    mpirank = int(mpirankMPI,kind=c_int)
+    mpiprocs = int(mpiprocsMPI,kind=c_int)
+
     if (trans .eq. 1) then
         call local_size_offset_1d(n,b,1,1,0,mpirank,mpiprocs, &
                                   lcols,baseoffset,lcoffset)
@@ -352,10 +365,9 @@ subroutine reverse_matrix_1dcomm_&
                 ! 6b. call MPI_Recv
 
 #ifdef WITH_MPI
-
-
-                call MPI_Recv(work(recvoffset), recvcount, MPI_REAL_PRECISION, &
-                              src_process, current_index, mpicomm, my_mpistatus, mpierr)
+                call MPI_Recv(work(recvoffset), int(recvcount,kind=MPI_KIND), MPI_REAL_PRECISION, &
+                              int(src_process,kind=MPI_KIND), int(current_index,kind=MPI_KIND),   &
+                              int(mpicomm,kind=MPI_KIND), my_mpistatus, mpierr)
 
 #else /* WITH_MPI */
                 work(recvoffset:recvoffset+recvcount-1) = work(sendoffset:sendoffset+sendcount-1)
@@ -406,9 +418,9 @@ subroutine reverse_matrix_1dcomm_&
 
                 ! 6a. call MPI_Send
 #ifdef WITH_MPI
-
-                call MPI_Send(work(sendoffset), sendcount, MPI_REAL_PRECISION, &
-                                  dest_process, current_index, mpicomm, mpierr)
+                call MPI_Send(work(sendoffset), int(sendcount,kind=MPI_KIND), MPI_REAL_PRECISION, &
+                              int(dest_process,kind=MPI_KIND), int(current_index,kind=MPI_KIND),  &
+                              int(mpicomm,kind=MPI_KIND), mpierr)
 #endif /* WITH_MPI */
             end if
         end if

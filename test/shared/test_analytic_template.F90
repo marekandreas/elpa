@@ -41,23 +41,42 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 
+#include "config-f90.h"
+
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define TEST_INT_TYPE integer(kind=c_int64_t)
+#define INT_TYPE c_int64_t
+#else
+#define TEST_INT_TYPE integer(kind=c_int32_t)
+#define INT_TYPE c_int32_t
+#endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define TEST_INT_MPI_TYPE integer(kind=c_int64_t)
+#define INT_MPI_TYPE c_int64_t
+#else
+#define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
+#define INT_MPI_TYPE c_int32_t
+#endif
+
+
   subroutine prepare_matrix_analytic_&
     &MATH_DATATYPE&
     &_&
     &PRECISION&
     &(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol, print_times)
-    use precision
+    use precision_for_tests
 
     implicit none
-    integer(kind=ik), intent(in)                       :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
-    MATH_DATATYPE(kind=REAL_DATATYPE), intent(inout)   :: a(:,:)
-    logical, optional                                  :: print_times
-    logical                                            :: print_timer
-    integer(kind=ik)                                   :: globI, globJ, locI, locJ, pi, pj, levels(num_primes)
+    TEST_INT_TYPE, intent(in)                       :: na, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+    MATH_DATATYPE(kind=REAL_DATATYPE), intent(inout):: a(:,:)
+    logical, optional                               :: print_times
+    logical                                         :: print_timer
+    TEST_INT_TYPE                                   :: globI, globJ, locI, locJ, pi, pj, levels(num_primes)
+    integer(kind=c_int)                             :: loc_I, loc_J, p_i, p_j
 #ifdef HAVE_DETAILED_TIMINGS
-    type(timer_t)                                      :: timer
+    type(timer_t)                                   :: timer
 #else
-    type(timer_dummy_t)                                :: timer
+    type(timer_dummy_t)                             :: timer
 #endif
 
     call timer%enable()
@@ -86,16 +105,21 @@
     call timer%start("loop")
     do globI = 1, na
 
-      pi = prow(globI, nblk, np_rows)
+      p_i = prow(int(globI,kind=c_int), int(nblk,kind=c_int), int(np_rows,kind=c_int))
+      pi = int(p_i,kind=INT_TYPE)
       if (my_prow .ne. pi) cycle
 
       do globJ = 1, na
 
-        pj = pcol(globJ, nblk, np_cols)
+        p_j = pcol(int(globJ,kind=c_int), int(nblk,kind=c_int), int(np_cols,kind=c_int))
+        pj = int(p_j,kind=INT_TYPE)
         if (my_pcol .ne. pj) cycle
 
-        if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
-                 nblk, np_rows, np_cols, my_prow, my_pcol)) then
+        if(map_global_array_index_to_local_index(int(globI,kind=c_int), int(globJ,kind=c_int), loc_I, loc_J, &
+                 int(nblk,kind=c_int), int(np_rows,kind=c_int), int(np_cols,kind=c_int), &
+                 int(my_prow,kind=c_int), int(my_pcol,kind=c_int) )) then
+           locI = int(loc_i,kind=INT_TYPE)      
+           locJ = int(loc_j,kind=INT_TYPE)      
            call timer%start("evaluation")
            a(locI, locJ) = analytic_matrix_&
               &MATH_DATATYPE&
@@ -123,19 +147,21 @@
     &PRECISION&
     &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, &
       check_eigenvectors, print_times) result(status)
-    use precision
+    use precision_for_tests
     
     implicit none
-#include "../../src/general/precision_kinds.F90"
-    integer(kind=ik), intent(in)           :: na, nev, nblk, myid, np_rows, &
+#include "./test_precision_kinds.F90"
+    TEST_INT_TYPE, intent(in)              :: na, nev, nblk, myid, np_rows, &
                                               np_cols, my_prow, my_pcol
-    integer(kind=ik)                       :: status, mpierr
+    TEST_INT_TYPE                          :: status
+    TEST_INT_MPI_TYPE                      :: mpierr
     MATH_DATATYPE(kind=rck), intent(inout) :: z(:,:)
     real(kind=rk), intent(inout)           :: ev(:)
     logical, intent(in)                    :: check_all_evals, check_eigenvectors
 
-    integer(kind=ik)                       :: globI, globJ, locI, locJ, &
+    TEST_INT_TYPE                          :: globI, globJ, locI, locJ, &
                                               levels(num_primes)
+    integer(kind=c_int)                    :: loc_I, loc_J
     real(kind=rk)                          :: diff, max_z_diff, max_ev_diff, &
                                               glob_max_z_diff, max_curr_z_diff
 #ifdef DOUBLE_PRECISION
@@ -156,10 +182,10 @@
                                               normalization_quotient
     MATH_DATATYPE(kind=rck)                :: max_values_array(np_rows * np_cols), &
                                               corresponding_exact_value
-    integer(kind=ik)                       :: max_value_idx, rank_with_max, &
+    integer(kind=c_int)                    :: max_value_idx, rank_with_max, &
                                               rank_with_max_reduced,        &
                                               num_checked_evals
-    integer(kind=ik)                       :: max_idx_array(np_rows * np_cols), &
+    integer(kind=c_int)                    :: max_idx_array(np_rows * np_cols), &
                                               rank
     logical, optional                      :: print_times
     logical                                :: print_timer
@@ -219,12 +245,15 @@
       max_value_for_normalization = 0.0_rk
       max_value_idx = -1
       do globI = 1, na
-        if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
-                 nblk, np_rows, np_cols, my_prow, my_pcol)) then
+        if(map_global_array_index_to_local_index(int(globI,kind=c_int), int(globJ,kind=c_int), loc_I, loc_J, &
+                 int(nblk,kind=c_int), int(np_rows,kind=c_int), int(np_cols,kind=c_int), &
+                 int(my_prow,kind=c_int), int(my_pcol,kind=c_int) )) then
+          locI = int(loc_I,kind=INT_TYPE)
+          locJ = int(loc_J,kind=INT_TYPE)
           computed_z = z(locI, locJ)
           if(abs(computed_z) > abs(max_value_for_normalization)) then
             max_value_for_normalization = computed_z
-            max_value_idx = globI
+            max_value_idx = int(globI,kind=c_int)
           end if
         end if
       end do
@@ -235,9 +264,11 @@
       ! it without this, it would be tricky.. question of uniquness - two complex numbers
       ! with the same absolut values, but completely different... 
 #ifdef WITH_MPI
-      call MPI_Gather(max_value_for_normalization, 1, MPI_MATH_DATATYPE_PRECISION, &
-                     max_values_array, 1, MPI_MATH_DATATYPE_PRECISION, 0, MPI_COMM_WORLD, mpierr)
-      call MPI_Gather(max_value_idx, 1, MPI_INT, max_idx_array, 1, MPI_INT, 0, MPI_COMM_WORLD, mpierr)
+      call MPI_Gather(max_value_for_normalization, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+                      max_values_array, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, 0_MPI_KIND, &
+                      int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+      call MPI_Gather(max_value_idx, 1_MPI_KIND, MPI_INT, max_idx_array, 1_MPI_KIND, MPI_INT, &
+                      0_MPI_KIND, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
       max_value_for_normalization = 0.0_rk
       max_value_idx = -1
       do rank = 1, np_cols * np_rows 
@@ -246,8 +277,10 @@
           max_value_idx = max_idx_array(rank)
         end if
       end do
-      call MPI_Bcast(max_value_for_normalization, 1, MPI_MATH_DATATYPE_PRECISION, 0, MPI_COMM_WORLD, mpierr)
-      call MPI_Bcast(max_value_idx, 1, MPI_INT, 0, MPI_COMM_WORLD, mpierr)
+      call MPI_Bcast(max_value_for_normalization, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+                     0_MPI_KIND, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+      call MPI_Bcast(max_value_idx, 1_MPI_KIND, MPI_INT, 0_MPI_KIND, &
+                     int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
 #endif
       ! we decided what the maximum computed value is. Calculate expected value on the same 
       if(abs(max_value_for_normalization) < 0.0001_rk) then 
@@ -260,15 +293,18 @@
                                        &MATH_DATATYPE&
                                        &_&
                                        &PRECISION&
-                                       &(na, max_value_idx, globJ)
+                                       &(na, int(max_value_idx,kind=INT_TYPE), globJ)
       call timer%stop("evaluation_helper")
       normalization_quotient = corresponding_exact_value / max_value_for_normalization
       ! write(*,*) "normalization q", normalization_quotient
 
       ! compare computed and expected eigenvector values, but take into account normalization quotient
       do globI = 1, na
-        if(map_global_array_index_to_local_index(globI, globJ, locI, locJ, &
-                 nblk, np_rows, np_cols, my_prow, my_pcol)) then
+        if(map_global_array_index_to_local_index(int(globI,kind=c_int), int(globJ,kind=c_int), loc_I, loc_J, &
+                 int(nblk,kind=c_int), int(np_rows,kind=c_int), int(np_cols,kind=c_int), &
+                 int(my_prow,kind=c_int), int(my_pcol,kind=c_int) )) then
+           locI = int(loc_I,kind=INT_TYPE)
+           locJ = int(loc_J,kind=INT_TYPE)
            computed_z = z(locI, locJ)
            call timer%start("evaluation")
            expected_z = analytic_eigenvectors_&
@@ -286,7 +322,8 @@
     call timer%stop("loop_eigenvectors")
 
 #ifdef WITH_MPI
-    call mpi_allreduce(max_z_diff, glob_max_z_diff, 1, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+    call mpi_allreduce(max_z_diff, glob_max_z_diff, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, &
+                       int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
 #else
     glob_max_z_diff = max_z_diff
 #endif
@@ -321,10 +358,10 @@
     &_&
     &PRECISION&
     &(na, i, j) result(element)
-    use precision
+    use precision_for_tests
 
     implicit none
-    integer(kind=ik), intent(in) :: na, i, j
+    TEST_INT_TYPE, intent(in) :: na, i, j
     MATH_DATATYPE(kind=REAL_DATATYPE)     :: element
 
     element = analytic_&
@@ -340,10 +377,10 @@
     &_&
     &PRECISION&
     &(na, i, j) result(element)
-    use precision
+    use precision_for_tests
 
     implicit none
-    integer(kind=ik), intent(in) :: na, i, j
+    TEST_INT_TYPE, intent(in) :: na, i, j
     MATH_DATATYPE(kind=REAL_DATATYPE)               :: element
 
     element = analytic_&
@@ -359,10 +396,10 @@
     &_&
     &PRECISION&
     &(na, i) result(element)
-    use precision
+    use precision_for_tests
 
     implicit none
-    integer(kind=ik), intent(in) :: na, i
+    TEST_INT_TYPE, intent(in) :: na, i
     real(kind=REAL_DATATYPE)              :: element
 
     element = analytic_real_&
@@ -376,15 +413,15 @@
     &_&
     &PRECISION&
     &(na, i, j, what) result(element)
-    use precision
+    use precision_for_tests
 
     implicit none
-#include "../../src/general/precision_kinds.F90"
-    integer(kind=ik), intent(in)   :: na, i, j, what
-    MATH_DATATYPE(kind=rck)        :: element, mat2x2(2,2), mat(5,5)
-    real(kind=rk)                  :: a, am, amp
-    integer(kind=ik)               :: levels(num_primes)
-    integer(kind=ik)               :: ii, jj, m, prime_id, prime, total_level, level
+#include "./test_precision_kinds.F90"
+    TEST_INT_TYPE, intent(in)     :: na, i, j, what
+    MATH_DATATYPE(kind=rck)       :: element, mat2x2(2,2), mat(5,5)
+    real(kind=rk)                 :: a, am, amp
+    TEST_INT_TYPE                 :: levels(num_primes)
+    TEST_INT_TYPE                 :: ii, jj, m, prime_id, prime, total_level, level
 
     real(kind=rk), parameter      :: s = 0.5_rk
     real(kind=rk), parameter      :: c = 0.86602540378443864679_rk
@@ -502,15 +539,15 @@
     &_&
     &PRECISION&
     &(myid, na, mat, mat_name)
-    use precision
+    use precision_for_tests
 
     implicit none
-#include "../../src/general/precision_kinds.F90"
-    integer(kind=ik), intent(in)    :: myid, na
-    character(len=*), intent(in)    :: mat_name
-    MATH_DATATYPE(kind=rck)         :: mat(na, na)
-    integer(kind=ik)                :: i,j
-    character(len=20)               :: na_str
+#include "./test_precision_kinds.F90"
+    TEST_INT_TYPE, intent(in)    :: myid, na
+    character(len=*), intent(in) :: mat_name
+    MATH_DATATYPE(kind=rck)      :: mat(na, na)
+    TEST_INT_TYPE                :: i,j
+    character(len=20)            :: na_str
 
     if(myid .ne. 0) &
       return
@@ -533,13 +570,13 @@
     &_&
     &PRECISION&
     &(myid, na)
-    use precision
+    use precision_for_tests
 
     implicit none
-#include "../../src/general/precision_kinds.F90"
-    integer(kind=ik), intent(in)    :: myid, na
-    MATH_DATATYPE(kind=rck)                  :: A(na, na), S(na, na), L(na, na), res(na, na)
-    integer(kind=ik)                :: i, j, decomposition(num_primes)
+#include "./test_precision_kinds.F90"
+    TEST_INT_TYPE, intent(in) :: myid, na
+    MATH_DATATYPE(kind=rck)   :: A(na, na), S(na, na), L(na, na), res(na, na)
+    TEST_INT_TYPE             :: i, j, decomposition(num_primes)
 
     real(kind=rk)             :: err
 #ifdef DOUBLE_PRECISION
@@ -597,16 +634,24 @@
     &_&
     &PRECISION&
     &(myid)
-    use precision
+    use precision_for_tests
 
     implicit none
-    integer(kind=ik), intent(in)   :: myid
-    integer(kind=ik)               :: decomposition(num_primes), i
-    integer(kind=ik), parameter    :: check_sizes(7) = (/2, 3, 5, 6, 10, 25, 150/)
+    TEST_INT_TYPE, intent(in)   :: myid
+    TEST_INT_TYPE               :: decomposition(num_primes), i
+    TEST_INT_TYPE, parameter    :: check_sizes(7) = (/2, 3, 5, 6, 10, 25, 150/)
     if(myid == 0) print *, "Checking test_analytic module sanity.... "
-    assert(decompose(1500, decomposition))
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+    assert(decompose(1500_lik, decomposition))
+#else
+    assert(decompose(1500_ik, decomposition))
+#endif
     assert(all(decomposition == (/2,1,3/)))
-    assert(decompose(6,decomposition))
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+    assert(decompose(6_lik,decomposition))
+#else
+    assert(decompose(6_ik,decomposition))
+#endif
     assert(all(decomposition == (/1,1,0/)))
 
     do i =1, size(check_sizes)

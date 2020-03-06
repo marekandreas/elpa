@@ -2,7 +2,7 @@
 
 ## Current Release ##
 
-The current release is ELPA 2019.05.002 The current supported API version
+The current release is ELPA 2019.11.001 The current supported API version
 is 20190501. This release supports the earliest API version 20170403.
 
 The old, obsolete legacy API will be deprecated in the future !
@@ -13,7 +13,7 @@ The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
-Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and
+With the release ELPA 2019.11.001 the legacy API will be deprecated and
 not supported anymore.
 
 [![Build 
@@ -104,9 +104,14 @@ Nonetheless, we are grateful if you cite the following publications:
   
   If you use the new API and/or autotuning:
  
-  Kus; P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
+  Kus, P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
   "Optimizations of the Eigenvaluesolvers in the ELPA Library",
   Parallel Computing 85, 167-177 (2019)
+
+  If you use the new support for skew-symmetric matrices:
+  Benner, P.; Draxl, C.; Marek, A.; Penke C.; Vorwerk, C.;
+  "High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving the Bethe-Salpeter Eigenvalue Problem",
+  https://arxiv.org/abs/1912.04062, submitted to Parallel Computing
   
 
 ## Installation of the *ELPA* library
@@ -126,7 +131,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the [USERS_GUIDE](USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.002/html/index.html) doxygen
+Please have a look at the [USERS_GUIDE](USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html) doxygen
 documentation, where you find the definition of the interfaces.
 
 ## Contributing to *ELPA*

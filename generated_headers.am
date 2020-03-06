@@ -39,14 +39,6 @@ elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
 #	$(call extract_interface,!c_no>)
 #endif
 
-generated_headers += elpa/elpa_generated_legacy.h
-elpa/elpa_generated_legacy.h: $(top_srcdir)/src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \
-                       $(top_srcdir)/src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
-                       $(top_srcdir)/src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 | elpa
-	@rm -f $@
-	$(call extract_interface,!lc>)
-
-
 generated_headers += test/shared/generated.h
 test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shared
 	@rm -f $@

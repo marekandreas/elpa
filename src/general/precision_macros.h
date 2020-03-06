@@ -41,6 +41,10 @@
 #undef  PRECISION_LAED5
 #undef  PRECISION_NRM2
 #undef  PRECISION_LASET
+#undef  PRECISION_SCAL
+#undef  PRECISION_COPY
+#undef  PRECISION_AXPY
+#undef  PRECISION_GER
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
@@ -50,6 +54,9 @@
 #undef  scal_PRECISION_LASET
 #undef  PRECISION_SUFFIX
 #undef  ELPA_IMPL_SUFFIX
+
+#undef ELPA_PRECISION_SSMV
+#undef ELPA_PRECISION_SSR2
 
 #undef  MPI_REAL_PRECISION
 #undef  MPI_MATH_DATATYPE_PRECISION
@@ -100,6 +107,10 @@
 #define  PRECISION_LAED5 DLAED5
 #define  PRECISION_NRM2 DNRM2
 #define  PRECISION_LASET DLASET
+#define  PRECISION_GER DGER
+#define  PRECISION_SCAL DSCAL
+#define  PRECISION_COPY DCOPY
+#define  PRECISION_AXPY DAXPY
 #define  cublas_PRECISION_GEMM cublas_DGEMM
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
@@ -112,6 +123,9 @@
 #define  MPI_MATH_DATATYPE_PRECISION_C MPI_DOUBLE
 #define  MPI_MATH_DATATYPE_PRECISION_EXPL MPI_REAL8
 #define  C_DATATYPE_KIND c_double
+
+#define ELPA_PRECISION_SSMV elpa_dssmv
+#define ELPA_PRECISION_SSR2 elpa_dssr2
 
 #define C_GEMM dgemm_
 #define C_LACPY dlacpy_
@@ -160,6 +174,10 @@
 #define  PRECISION_LAED5 SLAED5
 #define  PRECISION_NRM2 SNRM2
 #define  PRECISION_LASET SLASET
+#define  PRECISION_GER SGER
+#define  PRECISION_SCAL SSCAL
+#define  PRECISION_COPY SCOPY
+#define  PRECISION_AXPY SAXPY
 #define  cublas_PRECISION_GEMM cublas_SGEMM
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
@@ -172,6 +190,9 @@
 #define  MPI_MATH_DATATYPE_PRECISION_C MPI_FLOAT
 #define  MPI_MATH_DATATYPE_PRECISION_EXPL MPI_REAL4
 #define  C_DATATYPE_KIND c_float
+
+#define ELPA_PRECISION_SSMV elpa_sssmv
+#define ELPA_PRECISION_SSR2 elpa_sssr2
 
 #define C_GEMM sgemm_
 #define C_LACPY slacpy_
@@ -228,6 +249,10 @@
 #undef  PRECISION_LAED5
 #undef  PRECISION_DOTC
 #undef  PRECISION_LASET
+#undef  PRECISION_GER
+#undef  PRECISION_SCAL
+#undef  PRECISION_COPY
+#undef  PRECISION_AXPY
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
@@ -249,6 +274,8 @@
 #undef  PRECISION_REAL
 #undef  C_DATATYPE_KIND
 
+#undef ELPA_PRECISION_SSMV
+#undef ELPA_PRECISION_SSR2
 
 #undef THRESHOLD
 
@@ -298,6 +325,10 @@
 #define  PRECISION_LAED5 ZLAED5
 #define  PRECISION_DOTC ZDOTC
 #define  PRECISION_LASET ZLASET
+#define  PRECISION_GER ZGER
+#define  PRECISION_SCAL ZSCAL
+#define  PRECISION_COPY ZCOPY
+#define  PRECISION_AXPY ZAXPY
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
@@ -316,6 +347,10 @@
 #define  PRECISION_IMAG DIMAG
 #define  PRECISION_REAL DREAL
 #define  C_DATATYPE_KIND c_double
+
+#define ELPA_PRECISION_SSMV elpa_zssmv
+#define ELPA_PRECISION_SSR2 elpa_zssr2
+
 
 #define THRESHOLD 1e-11_rk8
 #endif /* DOUBLE PRECISION */
@@ -362,6 +397,10 @@
 #define  PRECISION_LAED5 CLAED5
 #define  PRECISION_DOTC CDOTC
 #define  PRECISION_LASET CLASET
+#define  PRECISION_SCAL CSCAL
+#define  PRECISION_COPY CCOPY
+#define  PRECISION_AXPY CAXPY
+#define  PRECISION_GER CGER
 #define  cublas_PRECISION_GEMM cublas_CGEMM
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
@@ -380,6 +419,9 @@
 #define  PRECISION_IMAG AIMAG
 #define  PRECISION_REAL REAL
 #define  C_DATATYPE_KIND c_float
+
+#define ELPA_PRECISION_SSMV elpa_cssmv
+#define ELPA_PRECISION_SSR2 elpa_cssr2
 
 #define THRESHOLD 1e-4_rk4
 #endif /* SINGLE PRECISION */

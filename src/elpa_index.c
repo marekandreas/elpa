@@ -118,6 +118,7 @@ static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
 static int output_build_config_is_valid(elpa_index_t index, int n, int new_value);
 static int gpu_is_valid(elpa_index_t index, int n, int new_value);
+static int skewsymmetric_is_valid(elpa_index_t index, int n, int new_value);
 
 static int is_positive(elpa_index_t index, int n, int new_value);
 
@@ -196,6 +197,8 @@ static const elpa_index_int_entry_t int_entries[] = {
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
         INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("is_skewsymmetric", "Matrix is skewsymmetic", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0,
+                        cardinality_bool, enumerate_identity, skewsymmetric_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
         INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
@@ -206,10 +209,12 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
         INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
+        // the routine has not been ported to GPU yet
+//        INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+//                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
+        // the GPU implementation of this routine (together with the kernel) has been abandoned 
+//        INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+//                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
@@ -644,7 +649,9 @@ static const char *real_kernel_name(int kernel) {
 }
 
 #define REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
+        kernel_number == ELPA_2STAGE_REAL_GPU ? 0 : 1
+// currently the GPU kernel is never valid
+// previously:       kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
 
 static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
@@ -683,7 +690,9 @@ static const char *complex_kernel_name(int kernel) {
 }
 
 #define COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
+        kernel_number == ELPA_2STAGE_COMPLEX_GPU ? 0 : 1
+// currenttly the GPU kernel is never valid
+// previously:       kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
 
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
@@ -744,6 +753,10 @@ static int output_build_config_is_valid(elpa_index_t index, int n, int new_value
 }
 
 static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
+        return new_value == 0 || new_value == 1;
+}
+
+static int skewsymmetric_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value == 0 || new_value == 1;
 }
 

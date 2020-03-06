@@ -2,6 +2,20 @@ Changelog for upcoming release
 
 - not yet decided
 
+Changelog for ELPA 2019.11.001
+
+- solve a bug when using parallel make builds
+- check the cpuid set during build time
+- add experimental feature "heterogenous-cluster-support"
+- add experimental feature for 64bit integer LAS/LAPACK/SCALAPACK support
+- add experimental feature for 64bit integer MPI support
+- support of ELPA for real valued skew-symmetric matrices, please cite:
+  https://arxiv.org/abs/1912.04062 
+- cleanup of the GPU version
+- bugfix in the OpenMP version
+- bugfix on the Power8/9 kernels
+- bugfix on ARM aarch64 FMA kernels
+
 
 Changelog for ELPA 2019.05.002
 

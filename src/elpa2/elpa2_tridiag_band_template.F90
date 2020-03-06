@@ -93,11 +93,13 @@
       use omp_lib
 #endif
       use elpa_blas_interfaces
-
+      use elpa_skewsymmetric_blas
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)   :: obj
       logical, intent(in)                          :: useGPU, wantDebug
+      integer(kind=c_int)                          :: skewsymmetric
+      logical                                      :: isSkewsymmetric
       integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #ifdef USE_ASSUMED_SIZE
       MATH_DATATYPE(kind=rck), intent(in)         :: a_mat(lda,*)
@@ -112,9 +114,11 @@
       MATH_DATATYPE(kind=rck)                     :: hd(nb), hs(nb)
 
       integer(kind=ik)                             :: i, n, nc, nr, ns, ne, istep, iblk, nblocks_total, nblocks, nt
-      integer(kind=ik)                             :: my_pe, n_pes, mpierr
+      integer(kind=ik)                             :: my_pe, n_pes
       integer(kind=ik)                             :: my_prow, np_rows, my_pcol, np_cols
-      integer(kind=ik)                             :: ireq_ab, ireq_hv
+      integer(kind=MPI_KIND)                       :: my_peMPI, n_pesMPI, mpierr
+      integer(kind=MPI_KIND)                       :: my_prowMPI, np_rowsMPI, my_pcolMPI, np_colsMPI
+      integer(kind=MPI_KIND)                       :: ireq_ab, ireq_hv
       integer(kind=ik)                             :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
       integer(kind=ik), intent(in)                 :: nrThreads
 #ifdef WITH_OPENMP
@@ -123,12 +127,13 @@
 #endif
       integer(kind=ik), allocatable                :: global_id_tmp(:,:)
       integer(kind=ik), allocatable                :: omp_block_limits(:)
-      MATH_DATATYPE(kind=rck), allocatable        :: hv_t(:,:), tau_t(:)
+      MATH_DATATYPE(kind=rck), allocatable         :: hv_t(:,:), tau_t(:)
 #endif /* WITH_OPENMP */
-      integer(kind=ik), allocatable                :: ireq_hhr(:), ireq_hhs(:), global_id(:,:), hh_cnt(:), hh_dst(:)
+      integer(kind=ik), allocatable                :: global_id(:,:), hh_cnt(:), hh_dst(:)
+      integer(kind=MPI_KIND), allocatable          :: ireq_hhr(:), ireq_hhs(:)
       integer(kind=ik), allocatable                :: limits(:), snd_limits(:,:)
       integer(kind=ik), allocatable                :: block_limits(:)
-      MATH_DATATYPE(kind=rck), allocatable        :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
+      MATH_DATATYPE(kind=rck), allocatable         :: ab(:,:), hh_gath(:,:,:), hh_send(:,:,:)
       integer                                      :: istat
       character(200)                               :: errorMessage
       character(20)                                :: gpuString
@@ -137,6 +142,13 @@
       integer(kind=ik)                             :: startAddr
 #endif
 
+      call obj%get("is_skewsymmetric",skewsymmetric,istat)
+      if (istat .ne. ELPA_OK) then
+           print *,"Problem getting option. Aborting..."
+           stop
+      endif
+      isSkewsymmetric = (skewsymmetric == 1)
+      
       if(useGPU) then
         gpuString = "_gpu"
       else
@@ -150,14 +162,21 @@
       gpuString)
 
       if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(communicator,my_pe,mpierr)
-      call mpi_comm_size(communicator,n_pes,mpierr)
+      call mpi_comm_rank(int(communicator,kind=MPI_KIND) ,my_peMPI ,mpierr)
+      call mpi_comm_size(int(communicator,kind=MPI_KIND) ,n_pesMPI ,mpierr)
 
-      call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-      call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-      call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-      call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND),my_prowMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND),np_rowsMPI ,mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND),my_pcolMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND),np_colsMPI ,mpierr)
+
+      my_pe = int(my_peMPI,kind=MPI_KIND)
+      n_pes = int(n_pesMPI,kind=MPI_KIND)
+      my_prow = int(my_prowMPI,kind=MPI_KIND)
+      np_rows = int(np_rowsMPI,kind=MPI_KIND)
+      my_pcol = int(my_pcolMPI,kind=MPI_KIND)
+      np_cols = int(np_colsMPI,kind=MPI_KIND)
+      if (wantDebug) call obj%timer%stop(",kind=MPI_KIND)mpi_communication")
 
       ! Get global_id mapping 2D procssor coordinates to global id
 
@@ -185,10 +204,12 @@
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
 #ifndef WITH_OPENMP
-      call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
+      call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
+                         mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
 #else
       global_id_tmp(:,:) = global_id(:,:)
-      call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
+      call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
+                         mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
       deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then
         print *,"tridiag_band_&
@@ -311,8 +332,9 @@
           num_chunks  = num_chunks+1
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_irecv(hh_trans(1,num_hh_vecs+1), nb*local_size,  MPI_MATH_DATATYPE_PRECISION_EXPL,     &
-                        nt, 10+n-block_limits(nt), communicator, ireq_hhr(num_chunks), mpierr)
+          call mpi_irecv(hh_trans(1,num_hh_vecs+1), int(nb*local_size,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION_EXPL,     &
+                         int(nt,kind=MPI_KIND), int(10+n-block_limits(nt),kind=MPI_KIND), &
+                         int(communicator,kind=MPI_KIND), ireq_hhr(num_chunks), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -429,8 +451,8 @@
         ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_isend(ab_s, nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-           my_pe-1, 1, communicator, ireq_ab, mpierr)
+        call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
       endif
@@ -448,6 +470,7 @@
         if (my_pe==0) then
           n = MIN(na-na_s,nb) ! number of rows to be reduced
           hv(:) = 0.0_rck
+          hd(:) = 0.0_rck
           tau = 0.0_rck
 
           ! Transform first column of remaining matrix
@@ -487,7 +510,11 @@
 #endif
 
 #if REALCASE == 1
-          d(istep) = ab(1,na_s-n_off)
+          if (isSkewsymmetric) then
+            d(istep) = 0.0_rk
+          else
+            d(istep) = ab(1,na_s-n_off)
+          endif
           e(istep) = ab(2,na_s-n_off)
 #endif
 #if COMPLEXCASE == 1
@@ -497,8 +524,13 @@
 
           if (istep == na-1) then
 #if REALCASE == 1
-            d(na) = ab(1,na_s+1-n_off)
+            if (isSkewsymmetric) then
+              d(na) = 0
+            else
+              d(na) = ab(1,na_s+1-n_off)
+            endif
 #endif
+
 #if COMPLEXCASE == 1
             d(na) = real(ab(1,na_s+1-n_off),kind=rk)
 #endif
@@ -512,8 +544,9 @@
 
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_recv(hv, nb, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                          my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
+            call mpi_recv(hv, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                          int(my_pe-1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                          MPI_STATUS_IGNORE, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -527,8 +560,9 @@
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
 
-            call mpi_recv(hv, nb, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                          my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
+            call mpi_recv(hv, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                          int(my_pe-1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                          MPI_STATUS_IGNORE, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -610,25 +644,43 @@
                 ! Transform diagonal block
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                if (isSkewsymmetric) then
+                  hd(:) = 0.0_rk
+                  call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+                else
+                  call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                      hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+                endif
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+                call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
                 if (wantDebug) call obj%timer%stop("blas")
 #if REALCASE == 1
-                x = dot_product(hv(1:nc),hd(1:nc))*tau
+                if (.NOT. isSkewsymmetric) then
+                  x = dot_product(hv(1:nc),hd(1:nc))*tau
+                endif
 #endif
 #if COMPLEXCASE == 1
                 x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
 #endif
-                hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+                if (.NOT. isSkewsymmetric) then
+                  hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+                endif
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-                call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                if (isSkewsymmetric) then
+                  call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd,  hv, ab(1,ns), &
+                                           int(2*nb-1,kind=BLAS_KIND) )
+                else
+                  call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                                    hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+                endif
 #endif
 #if COMPLEXCASE == 1
-                call PRECISION_HER2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+                call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                                    hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
                 if (wantDebug) call obj%timer%stop("blas")
                 hv_t(:,my_thread) = 0.0_rck
@@ -637,7 +689,9 @@
 
                 ! Transform subdiagonal block
                 if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
+                call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
+                                    ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                    ZERO, hs, 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("blas")
                 if (nr>1) then
 
@@ -672,7 +726,9 @@
                   ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
                   if (wantDebug) call obj%timer%start("blas")
                   call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
-                          nr, nb-1, tau_t(my_thread), ab(nb,ns+1), 2*nb-1, hv_t(1,my_thread), 1, ZERO, h(2), 1)
+                                      int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                      tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                      hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
                   if (wantDebug) call obj%timer%stop("blas")
 
                   x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
@@ -725,8 +781,9 @@
                 ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call mpi_isend(ab_s, nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-             my_pe-1, 1, communicator, ireq_ab, mpierr)
+                call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                               int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, &
+                               int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -738,8 +795,9 @@
               if (wantDebug) call obj%timer%start("mpi_communication")
 
               if (istep>=max_threads .and. ne <= na) then
-                call mpi_recv(ab(1,ne-n_off), nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-                              my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
+                call mpi_recv(ab(1,ne-n_off), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
+                              int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                              MPI_STATUS_IGNORE, mpierr)
               endif
               if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -763,8 +821,9 @@
 
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call mpi_isend(hv_s, nb, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                               my_pe+1, 2, communicator, ireq_hv, mpierr)
+                call mpi_isend(hv_s, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                               int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                               ireq_hv, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -819,9 +878,9 @@
 
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
-              call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+              call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                              global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                             10+iblk, communicator, ireq_hhs(iblk), mpierr)
+                             int(10+iblk,kind=MPI_KIND), int(communicator,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
              ! do the post-poned irecv here
@@ -856,24 +915,35 @@
               if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
-              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+              if (isSkewsymmetric) then
+                hd(:) = 0.0_rk
+                call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+              else
+                call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+              endif
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd,1)
+              call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
               ! Subdiagonal block
-              if (nr>0) call PRECISION_GEMV('N', nr, nb-1, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
+              if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                            tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                            ZERO, hs, 1_BLAS_KIND)
               if (wantDebug) call obj%timer%stop("blas")
 
               ! ... then request last column ...
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
 #ifdef WITH_OPENMP
-              call mpi_recv(ab(1,ne), nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-          my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
+                            int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                            MPI_STATUS_IGNORE, mpierr)
 #else /* WITH_OPENMP */
-              call mpi_recv(ab(1,ne), nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-                      my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
+                            int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                            MPI_STATUS_IGNORE, mpierr)
 #endif /* WITH_OPENMP */
               if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -891,12 +961,20 @@
               ! Normal matrix multiply
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_SYMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+              if (isSkewsymmetric) then
+                hd(:) = 0.0_rk
+                call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+              else
+                call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+              endif
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HEMV('L', nc, tau, ab(1,ns), 2*nb-1, hv, 1, ZERO, hd, 1)
+              call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
-              if (nr>0) call PRECISION_GEMV('N', nr, nb, tau, ab(nb+1,ns), 2*nb-1, hv, 1, ZERO, hs, 1)
+              if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, ab(nb+1,ns), &
+                                            int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
               if (wantDebug) call obj%timer%stop("blas")
             endif
 
@@ -951,8 +1029,9 @@
 
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                call mpi_isend(hv_s, nb, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-             my_pe+1, 2, communicator, ireq_hv, mpierr)
+                call mpi_isend(hv_s, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                               int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                               ireq_hv, mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -962,18 +1041,31 @@
 
             ! Transform diagonal block
 #if REALCASE == 1
-            x = dot_product(hv(1:nc),hd(1:nc))*tau
+            if (.NOT. isSkewsymmetric) then
+              x = dot_product(hv(1:nc),hd(1:nc))*tau
+            endif
 #endif
 #if COMPLEXCASE == 1
             x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
 #endif
-            hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+
+#if REALCASE == 1
+            if (.NOT. isSkewsymmetric) then
+#endif
+              hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+#if REALCASE == 1
+            endif
+#endif
             if (my_pe>0 .and. iblk==1) then
 
               ! The first column of the diagonal block has to be send to the previous PE
               ! Calculate first column only ...
 #if REALCASE == 1
-              ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
+              if (isSkewsymmetric) then
+                ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) + hv(1:nc)*hd(1)
+              else
+                ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
+              endif
 #endif
 #if COMPLEXCASE == 1
               ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*conjg(hv(1)) - hv(1:nc)*conjg(hd(1))
@@ -981,7 +1073,7 @@
               ! ... send it away ...
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
-              call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+              call mpi_wait(ireq_ab, MPI_STATUS_IGNORE, mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -990,18 +1082,25 @@
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
 
-              call mpi_isend(ab_s, nb+1, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                             my_pe-1, 1, communicator, ireq_ab, mpierr)
+              call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                             int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                             ireq_ab, mpierr)
               if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
               ! ... and calculate remaining columns with rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              if (nc>1) call PRECISION_SYR2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+              if (isSkewsymmetric) then 
+                if (nc>1) call ELPA_PRECISION_SSR2(int(nc-1,kind=BLAS_KIND), hd(2), hv(2), ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+              else
+                if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                              hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+              endif
 #endif
 #if COMPLEXCASE == 1
-              if (nc>1) call PRECISION_HER2('L', nc-1, -ONE, hd(2), 1, hv(2), 1, ab(1,ns+1), 2*nb-1)
+              if (nc>1) call PRECISION_HER2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                            hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
 #endif
               if (wantDebug) call obj%timer%stop("blas")
 
@@ -1009,10 +1108,16 @@
               ! No need to  send, just a rank-2 update
               if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-              call PRECISION_SYR2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+              if (isSkewsymmetric) then 
+                call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd, hv, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+              else
+                call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
+                                    hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
+              endif
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HER2('L', nc, -ONE, hd, 1, hv, 1, ab(1,ns), 2*nb-1)
+              call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, hv, 1_BLAS_KIND, &
+                                  ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
               if (wantDebug) call obj%timer%stop("blas")
 
@@ -1023,8 +1128,9 @@
             if (nr>0) then
               if (nr>1) then
                 if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, nr, nb-1, tau_new, ab(nb,ns+1), 2*nb-1, &
-                                    hv_new, 1, ZERO, h(2), 1)
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                    tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("blas")
 
                 x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
@@ -1080,9 +1186,10 @@
 
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_isend(hh_send(1,1,iblk), nb*hh_cnt(iblk), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+            call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), &
+                           MPI_MATH_DATATYPE_PRECISION_EXPL, &
                            global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
-                           10+iblk, communicator, ireq_hhs(iblk), mpierr)
+                           int(10+iblk,kind=MPI_KIND), int(communicator,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
             ! do the post-poned irecv here
@@ -1140,7 +1247,7 @@
 
 #ifdef  WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_barrier(communicator,mpierr)
+      call mpi_barrier(int(communicator,kind=MPI_KIND),mpierr)
       if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
       deallocate(ab, stat=istat, errmsg=errorMessage)

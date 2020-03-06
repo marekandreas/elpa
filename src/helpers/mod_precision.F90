@@ -53,5 +53,15 @@ module precision
   integer, parameter :: ik  = C_INT32_T
   integer, parameter :: lik = C_INT64_T
 
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+  integer, parameter :: BLAS_KIND = C_INT64_T
+#else
   integer, parameter :: BLAS_KIND = C_INT32_T
+#endif
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+  integer, parameter :: MPI_KIND  = C_INT64_T
+#else
+  integer, parameter :: MPI_KIND  = C_INT32_T
+#endif
+
 end module precision

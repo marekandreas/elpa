@@ -24,7 +24,7 @@ class(elpa_t), pointer :: elpa
 .br
 .TP
 .RI "datatype :: \fBa\fP"
-The matrix a for which the eigenvalues should be computed. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)"
+The matrix a for which the eigenvalues should be computed. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)". The matrix has to be symmetric or hermitian, this is not checked by the routine.
 .TP
 .RI "datatype :: \fBev\fP"
 The vector ev where the eigenvalues will be stored in \fIascending\fP order. The datatype of the vector ev can be either "real(kind=c_double)", or "real(kind=c_float)", depending of the datatype of the matrix. Note that complex hermitian matrices also have real valued eigenvalues.
@@ -51,7 +51,7 @@ elpa_t handle;
 The handle to the ELPA object
 .TP
 .RI "datatype *\fBa\fP;"
-The matrix a for which the eigenvalues should be computed. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".
+The matrix a for which the eigenvalues should be computed. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex". The matrix has to be symmetric or hermitian, this is not checked by the routine.
 .TP
 .RI "datatype *\fBev\fP;"
 The storage for the computed eigenvalues. Eigenvalues will be stored in \fIascendig\fP order. The \fBdatatype\fP can be either "double" or "float". Note that the eigenvalues of complex hermitian matrices are also real.
@@ -60,8 +60,8 @@ The storage for the computed eigenvalues. Eigenvalues will be stored in \fIascen
 The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)
 
 .SH DESCRIPTION
-Compute the eigenvalues of a real symmtric or complex hermitian matrix.The functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3), \fBelpa_set\fP(3), and \fBelpa_setup\fP(3) must be called \fIBEFORE\fP \fBelpa_eigenvalues\fP can be called.
+Compute the eigenvalues of a real symmetric or complex hermitian matrix.The functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3), \fBelpa_set\fP(3), and \fBelpa_setup\fP(3) must be called \fIBEFORE\fP \fBelpa_eigenvalues\fP can be called.
 .br
 .SH "SEE ALSO"
 .br
-\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
+\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_skew_eigenvalues\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_skew_eigenvectors\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)

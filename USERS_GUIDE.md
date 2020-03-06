@@ -1,8 +1,9 @@
 ## Users guide for the *ELPA* library ##
 
 This document provides the guide for using the *ELPA* library with the new API (API version 20170403 or higher).
-If you want to use the deprecated legacy API (we strongly recommend against this), please refer to the document
-[USERS_GUIDE_DEPRECATED_LEGACY_API.md] (USERS_GUIDE_DEPRECATED_LEGACY_API.md).
+Please do understand that this release deprecated the old, legacy interface API!
+If you want to use the deprecated legacy API (we strongly recommend against this), please use the ELPA release
+2019.05.002 or older.
 
 If you need instructions on how to build *ELPA*, please look at [INSTALL.md] (INSTALL.md).
 
@@ -13,7 +14,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program, which prints all
 the available kernels.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.002/html/index.html)
+Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html)
 for each *ELPA* release is available.
 
 
@@ -22,26 +23,11 @@ for each *ELPA* release is available.
 With release 2017.05.001 of the *ELPA* library the interface has been rewritten substantially, in order to have a more generic 
 interface and to avoid future interface changes.
 
-For compatibility reasons the interface defined in the previous release 2016.11.001 is also still available
-**IF AND ONLY IF** *ELPA* has been build with support of this legacy interface.
-
-The legacy API defines all the functionality as it has been defined in *ELPA* release 2016.11.011. Note, however,
-that all future features of *ELPA* will only be accessible via the new API defined in release 2017.05.001 or later.
-
-As mentioned, we advise against it, but if you want to use the legacy API please look at the document 
-[USERS_GUIDE_DEPRECATED_LEGACY_API.md] (USERS_GUIDE_DEPRECATED_LEGACY_API.md).
-
-
-The old, obsolete legacy API will be deprecated in the future !
-Allready now, all new features of ELPA are only available with the new API. Thus, there
-is no reason to keep the legacy API arround for too long.
-
 The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
-Most likely with the release ELPA 2019.11.001 the legacy API will be deprecated and
-not supported anymore.
+With the release ELPA 2019.11.001 the legacy API will has been deprecated and has been removed.
 
 
 ### Table of Contents: ###
@@ -201,7 +187,7 @@ The following table gives a list of all supported parameters which can be used t
 
 ## III) List of computational routines ##
 
-The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.05.002/html/index.html) for details.
+The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html) for details.
 
 
 | Name         | Purpose                                                                 | since API version |

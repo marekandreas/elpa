@@ -59,7 +59,13 @@
 #undef COMPLEXCASE
 #include "elpa2_bandred_template.F90"
 #define REALCASE 1
+#undef SKEW_SYMMETRIC_BUILD
 #include "elpa2_symm_matrix_allreduce_real_template.F90"
+#ifdef HAVE_SKEWSYMMETRIC
+#define SKEW_SYMMETRIC_BUILD
+#include "elpa2_symm_matrix_allreduce_real_template.F90"
+#undef SKEW_SYMMETRIC_BUILD
+#endif
 #undef REALCASE
 #define REALCASE 1
 #include "elpa2_trans_ev_band_to_full_template.F90"
@@ -117,18 +123,21 @@
 
       real(kind=rk)                              :: work(nb*nb2), work2(nb2*nb2)
       integer(kind=ik)                         :: lwork, info
+      integer(kind=BLAS_KIND)                  :: infoBLAS
 
       integer(kind=ik)                         :: istep, i, n, dest
       integer(kind=ik)                         :: n_off, na_s
-      integer(kind=ik)                         :: my_pe, n_pes, mpierr
+      integer(kind=ik)                         :: my_pe, n_pes
+      integer(kind=MPI_KIND)                   :: my_peMPI, n_pesMPI, mpierr
       integer(kind=ik)                         :: nblocks_total, nblocks
       integer(kind=ik)                         :: nblocks_total2, nblocks2
-      integer(kind=ik)                         :: ireq_ab, ireq_hv
+      integer(kind=MPI_KIND)                   :: ireq_ab, ireq_hv
 #ifdef WITH_MPI
 !      integer(kind=ik)                         :: MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
 #endif
 !      integer(kind=ik), allocatable            :: mpi_statuses(:,:)
-      integer(kind=ik), allocatable            :: block_limits(:), block_limits2(:), ireq_ab2(:)
+      integer(kind=ik), allocatable            :: block_limits(:), block_limits2(:)
+      integer(kind=MPI_KIND), allocatable      :: ireq_ab2(:)
 
       integer(kind=ik)                         :: j, nc, nr, ns, ne, iblk
       integer(kind=ik)                         :: istat
@@ -137,8 +146,11 @@
       call obj%timer%start("band_band_real" // PRECISION_SUFFIX)
 
       call obj%timer%start("mpi_communication")
-      call mpi_comm_rank(communicator,my_pe,mpierr)
-      call mpi_comm_size(communicator,n_pes,mpierr)
+      call mpi_comm_rank(int(communicator,kind=MPI_KIND) ,my_peMPI ,mpierr)
+      call mpi_comm_size(int(communicator,kind=MPI_KIND) ,n_pesMPI ,mpierr)
+
+      my_pe = int(my_peMPI,kind=c_int)
+      n_pes = int(n_pesMPI,kind=c_int)
       call obj%timer%stop("mpi_communication")
 
       ! Total number of blocks in the band:
@@ -179,7 +191,8 @@
       if (nb2>1) then
         do i=0,nblocks2-1
 
-          call mpi_irecv(ab2(1,i*nb2+1), 2*nb2*nb2, MPI_REAL_PRECISION, 0, 3, communicator, ireq_ab2(i+1), mpierr)
+          call mpi_irecv(ab2(1,i*nb2+1), int(2*nb2*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, &
+                         0_MPI_KIND, 3_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_ab2(i+1), mpierr)
         enddo
       endif
       call obj%timer%stop("mpi_communication")
@@ -215,7 +228,8 @@
 #ifdef WITH_MPI
         call obj%timer%start("mpi_communication")
 
-        call mpi_isend(ab_s, (nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, communicator, ireq_ab, mpierr)
+        call mpi_isend(ab_s, int((nb+1)*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe-1,kind=MPI_KIND), &
+                       1_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
         call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
       endif
@@ -234,7 +248,10 @@
 
             ! Transform first block column of remaining matrix
       call obj%timer%start("blas")
-            call PRECISION_GEQRF(n, nb2, ab(1+nb2,na_s-n_off), 2*nb-1, tau, work, lwork, info)
+            call PRECISION_GEQRF(int(n,kind=BLAS_KIND), int(nb2,kind=BLAS_KIND), ab(1+nb2,na_s-n_off), &
+                                 int(2*nb-1,kind=BLAs_KIND), tau, work, int(lwork,kind=BLAS_KIND), &
+                                 infoBLAS)
+      info = int(infoBLAS,kind=ik)
       call obj%timer%stop("blas")
 
             do i=1,nb2
@@ -259,7 +276,8 @@
             endif
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call mpi_send(ab_s2, 2*nb2*nb2, MPI_REAL_PRECISION, dest, 3, communicator, mpierr)
+            call mpi_send(ab_s2, int(2*nb2*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(dest,kind=MPI_KIND), &
+                          3_MPI_KIND, int(communicator,kind=MPI_KIND), mpierr)
             call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -278,7 +296,8 @@
             ! Receive Householder vectors from previous task, from PE owning subdiagonal
 #ifdef WITH_MPI
             call obj%timer%start("mpi_communication")
-            call mpi_recv(hv, nb*nb2, MPI_REAL_PRECISION, my_pe-1, 2, communicator, MPI_STATUS_IGNORE, mpierr)
+            call mpi_recv(hv, int(nb*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe-1,kind=MPI_KIND), &
+                          2_MPI_KIND, int(communicator,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
             call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -316,7 +335,8 @@
               !request last nb2 columns
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_recv(ab_r,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe+1, 1, communicator, MPI_STATUS_IGNORE, mpierr)
+              call mpi_recv(ab_r, int((nb+1)*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe+1,kind=MPI_KIND), &
+                            1_MPI_KIND, int(communicator,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
               call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -334,7 +354,10 @@
         &PRECISION&
         &(obj,nr,nb,nb2,ab(nb+1,ns),2*nb-1,w,hv,work,nb)
         call obj%timer%start("blas")
-              call PRECISION_GEQRF(nr, nb2, ab(nb+1,ns), 2*nb-1, tau_new, work, lwork, info)
+              call PRECISION_GEQRF(int(nr,kind=BLAS_KIND), int(nb2,kind=BLAS_KIND), ab(nb+1,ns), &
+                                   int(2*nb-1,kind=BLAS_KIND), tau_new, work, int(lwork,kind=BLAS_KIND), &
+                                   infoBLAS)
+        info = int(infoBLAS,kind=ik)
         call obj%timer%stop("blas")
               do i=1,nb2
                 hv_new(i,i) = 1.0_rk
@@ -357,7 +380,8 @@
                 enddo
 #ifdef WITH_MPI
                 call obj%timer%start("mpi_communication")
-                call mpi_isend(hv_s,nb*nb2, MPI_REAL_PRECISION, my_pe+1, 2, communicator, ireq_hv, mpierr)
+                call mpi_isend(hv_s, int(nb*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe+1,kind=MPI_KIND), &
+                               2_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_hv, mpierr)
                 call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -384,7 +408,8 @@
               enddo
 #ifdef WITH_MPI
               call obj%timer%start("mpi_communication")
-              call mpi_isend(ab_s,(nb+1)*nb2, MPI_REAL_PRECISION, my_pe-1, 1, communicator, ireq_ab, mpierr)
+              call mpi_isend(ab_s, int((nb+1)*nb2,kind=MPI_KIND), MPI_REAL_PRECISION, int(my_pe-1,kind=MPI_KIND), &
+                             1_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
               call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -426,7 +451,7 @@
 !          stop 1
 !        endif
 
-        call mpi_barrier(communicator,mpierr)
+        call mpi_barrier(int(communicator,kind=MPI_KIND) ,mpierr)
         call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -480,8 +505,10 @@
    do i=2,nb
      W(1:n,i) = tau(i)*Y(1:n,i)
      call obj%timer%start("blas")
-     call PRECISION_GEMV('T', n, i-1,  1.0_rk, Y, lda, W(1,i), 1, 0.0_rk, mem,1)
-     call PRECISION_GEMV('N', n, i-1, -1.0_rk, W, lda, mem, 1, 1.0_rk, W(1,i),1)
+     call PRECISION_GEMV('T', int(n,kind=BLAS_KIND), int(i-1,kind=BLAS_KIND),  1.0_rk, Y, int(lda,kind=BLAS_KIND), &
+                         W(1,i), 1_BLAS_KIND, 0.0_rk, mem, 1_BLAS_KIND)
+     call PRECISION_GEMV('N', int(n,kind=BLAS_KIND), int(i-1,kind=BLAS_KIND), -1.0_rk, W, int(lda,kind=BLAS_KIND), &
+                         mem, 1_BLAS_KIND, 1.0_rk, W(1,i), 1_BLAS_KIND)
      call obj%timer%stop("blas")
    enddo
    call obj%timer%stop("wy_gen" // PRECISION_SUFFIX)
@@ -509,8 +536,11 @@
 
    call obj%timer%start("wy_left" // PRECISION_SUFFIX)
    call obj%timer%start("blas")
-   call PRECISION_GEMM('T', 'N', nb, n, m, 1.0_rk, W, lda2, A, lda, 0.0_rk, mem, nb)
-   call PRECISION_GEMM('N', 'N', m, n, nb, -1.0_rk, Y, lda2, mem, nb, 1.0_rk, A, lda)
+   call PRECISION_GEMM('T', 'N', int(nb,kind=BLAS_KIND), int(n,kind=BLAS_KIND), int(m,kind=BLAS_KIND), &
+                       1.0_rk, W, int(lda2,kind=BLAS_KIND), A, int(lda,kind=BLAS_KIND), 0.0_rk, mem, &
+                       int(nb,kind=BLAS_KIND))
+   call PRECISION_GEMM('N', 'N', int(m,kind=BLAS_KIND), int(n,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), &
+                       -1.0_rk, Y, int(lda2,kind=BLAS_KIND), mem, int(nb,kind=BLAS_KIND), 1.0_rk, A, int(lda,kind=BLAS_KIND))
    call obj%timer%stop("blas")
    call obj%timer%stop("wy_left" // PRECISION_SUFFIX)
     end subroutine
@@ -538,8 +568,10 @@
 
       call obj%timer%start("wy_right" // PRECISION_SUFFIX)
       call obj%timer%start("blas")
-      call PRECISION_GEMM('N', 'N', n, nb, m, 1.0_rk, A, lda, W, lda2, 0.0_rk, mem, n)
-      call PRECISION_GEMM('N', 'T', n, m, nb, -1.0_rk, mem, n, Y, lda2, 1.0_rk, A, lda)
+      call PRECISION_GEMM('N', 'N', int(n,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), int(m,kind=BLAS_KIND), &
+                          1.0_rk, A, int(lda,kind=BLAS_KIND), W, int(lda2,kind=BLAS_KIND), 0.0_rk, mem, int(n,kind=BLAS_KIND))
+      call PRECISION_GEMM('N', 'T', int(n,kind=BLAS_KIND), int(m,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), &
+                          -1.0_rk, mem, int(n,kind=BLAS_KIND), Y, int(lda2,kind=BLAS_KIND), 1.0_rk, A, int(lda,kind=BLAS_KIND))
       call obj%timer%stop("blas")
       call obj%timer%stop("wy_right" // PRECISION_SUFFIX)
 
@@ -568,10 +600,15 @@
 
       call obj%timer%start("wy_symm" // PRECISION_SUFFIX)
       call obj%timer%start("blas")
-      call PRECISION_SYMM('L', 'L', n, nb, 1.0_rk, A, lda, W, lda2, 0.0_rk, mem, n)
-      call PRECISION_GEMM('T', 'N', nb, nb, n, 1.0_rk, mem, n, W, lda2, 0.0_rk, mem2, nb)
-      call PRECISION_GEMM('N', 'N', n, nb, nb, -0.5_rk, Y, lda2, mem2, nb, 1.0_rk, mem, n)
-      call PRECISION_SYR2K('L', 'N', n, nb, -1.0_rk, Y, lda2, mem, n, 1.0_rk, A, lda)
+      call PRECISION_SYMM('L', 'L', int(n, kind=BLAS_KIND), int(nb,kind=BLAS_KIND), 1.0_rk, A, &
+                          int(lda,kind=BLAS_KIND), W, int(lda2,kind=BLAS_KIND), 0.0_rk, mem, int(n,kind=BLAS_KIND))
+      call PRECISION_GEMM('T', 'N', int(nb,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), int(n,kind=BLAS_KIND), &
+                          1.0_rk, mem, int(n,kind=BLAS_KIND), W, int(lda2,kind=BLAS_KIND), 0.0_rk, mem2, &
+                          int(nb,kind=BLAS_KIND))
+      call PRECISION_GEMM('N', 'N', int(n,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), &
+                          -0.5_rk, Y, int(lda2,kind=BLAS_KIND), mem2, int(nb,kind=BLAS_KIND), 1.0_rk, mem, int(n,kind=BLAS_KIND))
+      call PRECISION_SYR2K('L', 'N',int(n,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), -1.0_rk, Y, int(lda2,kind=BLAS_KIND), &
+                           mem, int(n,kind=BLAS_KIND), 1.0_rk, A, int(lda,kind=BLAS_KIND))
       call obj%timer%stop("blas")
       call obj%timer%stop("wy_symm" // PRECISION_SUFFIX)
 

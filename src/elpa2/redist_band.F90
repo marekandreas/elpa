@@ -69,11 +69,14 @@ subroutine redist_band_&
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(out) :: ab(:,:)
 
    integer(kind=ik), allocatable                    :: ncnt_s(:), nstart_s(:), ncnt_r(:), nstart_r(:), &
-                                                       global_id(:,:), global_id_tmp(:,:), block_limits(:)
+                                                       block_limits(:)
+   integer(kind=ik), allocatable                    :: global_id(:,:), global_id_tmp(:,:)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable :: sbuf(:,:,:), rbuf(:,:,:), buf(:,:)
 
    integer(kind=ik)                                 :: i, j, my_pe, n_pes, my_prow, np_rows, my_pcol, np_cols, &
-                                                       nfact, np, npr, npc, mpierr, is, js
+                                                       nfact, np, npr, npc, is, js
+   integer(kind=MPI_KIND)                           :: my_peMPI, n_pesMPI, my_prowMPI, np_rowsMPI, my_pcolMPI, np_colsMPI
+   integer(kind=MPI_KIND)                           :: mpierr
    integer(kind=ik)                                 :: nblocks_total, il, jl, l_rows, l_cols, n_off
 
    logical                                          :: successCUDA
@@ -90,17 +93,25 @@ subroutine redist_band_&
 
 
    call obj%timer%start("mpi_communication")
-   call mpi_comm_rank(communicator,my_pe,mpierr)
-   call mpi_comm_size(communicator,n_pes,mpierr)
+   call mpi_comm_rank(int(communicator,kind=MPI_KIND), my_peMPI, mpierr)
+   call mpi_comm_size(int(communicator,kind=MPI_KIND), n_pesMPI, mpierr)
 
-   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-   call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-   call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
+   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
+   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI, mpierr)
+
+   my_pe = int(my_peMPI,kind=c_int)
+   n_pes = int(n_pesMPI,kind=c_int)
+   my_prow = int(my_prowMPI,kind=c_int)
+   np_rows = int(np_rowsMPI,kind=c_int)
+   my_pcol = int(my_pcolMPI,kind=c_int)
+   np_cols = int(np_colsMPI,kind=c_int)
+
    call obj%timer%stop("mpi_communication")
 
    ! Get global_id mapping 2D procssor coordinates to global id
-
+   
    allocate(global_id(0:np_rows-1,0:np_cols-1))
 #ifdef WITH_OPENMP
    allocate(global_id_tmp(0:np_rows-1,0:np_cols-1))
@@ -111,10 +122,12 @@ subroutine redist_band_&
    call obj%timer%start("mpi_communication")
 #ifdef WITH_OPENMP
    global_id_tmp(:,:) = global_id(:,:)
-   call mpi_allreduce(global_id_tmp, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
+   call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
+                      int(communicator,kind=MPI_KIND), mpierr)
    deallocate(global_id_tmp)
 #else
-   call mpi_allreduce(mpi_in_place, global_id, np_rows*np_cols, mpi_integer, mpi_sum, communicator, mpierr)
+   call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
+                      int(communicator,kind=MPI_KIND), mpierr)
 #endif
    call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -191,7 +204,7 @@ subroutine redist_band_&
      npr = mod(j,np_rows)
      do i=0,nfact
        npc = mod(i+j,np_cols)
-       np = global_id(npr,npc)
+       np = global_id(npr, npc)
        ncnt_r(np) = ncnt_r(np) + 1
      enddo
    enddo
@@ -221,8 +234,9 @@ subroutine redist_band_&
 #ifdef WITH_MPI
    call obj%timer%start("mpi_communication")
 
-    call MPI_Alltoallv(sbuf, ncnt_s, nstart_s, MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                       rbuf, ncnt_r, nstart_r, MPI_MATH_DATATYPE_PRECISION_EXPL, communicator, mpierr)
+    call MPI_Alltoallv(sbuf, int(ncnt_s,kind=MPI_KIND), int(nstart_s,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       rbuf, int(ncnt_r,kind=MPI_KIND), int(nstart_r,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       int(communicator,kind=MPI_KIND), mpierr)
 
     call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
@@ -247,7 +261,7 @@ subroutine redist_band_&
      npr = mod(j,np_rows)
      do i=0,nfact
        npc = mod(i+j,np_cols)
-       np = global_id(npr,npc)
+       np = global_id(npr, npc)
        nstart_r(np) = nstart_r(np) + 1
 #if REALCASE==1
        buf(i*nblk+1:i*nblk+nblk,:) = transpose(rbuf(:,:,nstart_r(np)))

@@ -27,7 +27,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [14:0:0])
+AC_SUBST([ELPA_SO_VERSION], [15:0:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -39,7 +39,7 @@ AC_SUBST([$1], ['$2'])
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20190524, "Current ELPA API version")
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20191110, "Current ELPA API version")
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20190524], [Current ELPA autotune version])
@@ -51,24 +51,6 @@ if test x$_cv_gnu_make_command = x ; then
 fi
 
 enable_legacy=no
-
-AC_MSG_CHECKING(whether legacy interface should be provided)
-AC_ARG_ENABLE([legacy-interface],
-              AS_HELP_STRING([--enable-legacy-interface],
-                             [build legacy API, default no]),
-              [
-	       if test x"$enableval" = x"yes"; then
-	         enable_legacy=yes
-	       else
-	         enable_legacy=no
-	       fi
-	       ],
-              [enable_legacy=no])
-AC_MSG_RESULT([${enable_legacy}])
-AM_CONDITIONAL([ENABLE_LEGACY],[test x"$enable_legacy" = x"yes"])
-if test x"${enable_legacy}" = x"yes"; then
-        AC_DEFINE([ENABLE_LEGACY], [1], [enable legacy interface])
-fi
 
 AC_MSG_CHECKING(whether in C interface the error argument should be optional)
 AC_ARG_ENABLE([optional-argument-in-C-API],
@@ -83,7 +65,7 @@ AC_ARG_ENABLE([optional-argument-in-C-API],
 	       ],
               [optional_c_error_argument=no])
 AC_MSG_RESULT([${optional_c_error_argument}])
-AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$enable_legacy" = x"yes"])
+AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$optional_c_error_argument" = x"yes"])
 if test x"${optional_c_error_argument}" = x"yes"; then
         AC_DEFINE([OPTIONAL_C_ERROR_ARGUMENT], [1], [enable error argument in C-API to be optional])
 fi
@@ -199,6 +181,83 @@ if test x"$c11_standard" = x"no"; then
     CFLAGS+=" -c11"
   fi
 fi
+
+AX_EXT
+
+dnl heterogenous-cluster-support
+AC_MSG_CHECKING(whether heterogenous-cluster-support should be enabled)
+AC_ARG_ENABLE([heterogenous-cluster-support],
+              AS_HELP_STRING([--heterogenous-cluster-support],
+                             [allow ELPA to automatically switch to a kernel supported on all CPUs of a cluster (only works for Intel CPUs at the moment), default no. Activate only if necessary has a performance penalty! This feature is exerpimental!]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_heterogenous_cluster_support=yes
+	       else
+	         enable_heterogenous_cluster_support=no
+	       fi
+	       ],
+              [enable_heterogenous_cluster_support="no"])
+AC_MSG_RESULT([$enable_heterogenous_cluster_support])
+if test x"${enable_heterogenous_cluster_support}" = x"yes"; then
+  AC_DEFINE([HAVE_HETEROGENOUS_CLUSTER_SUPPORT], [1], [automatically support clusters with different Intel CPUs])
+fi
+AM_CONDITIONAL([HAVE_HETEROGENOUS_CLUSTER_SUPPORT],[test x"$enable_heterogenous_cluster_support" = x"yes"])
+
+dnl 64bit integer support for BLACS/LAPACK/SCALAPACK support
+dnl first long int
+AC_CHECK_SIZEOF([long int])
+size_of_long_int="${ac_cv_sizeof_long_int}"
+
+dnl then 64bit blas
+AC_MSG_CHECKING(whether 64bit integers should be used for math libraries (BLAS/LAPACK/SCALAPACK))
+AC_ARG_ENABLE([64bit-integer-math-support],
+              AS_HELP_STRING([--64bit-integer-math-support],
+                             [allows to link against the 64bit integer versions of the math libraries BLAS, LAPACK, and SCALAPACK]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_64bit_integer_math_support=yes
+	       else
+	         enable_64bit_integer_math_support=no
+	       fi
+	       ],
+              [enable_64bit_integer_math_support="no"])
+AC_MSG_RESULT([$enable_64bit_integer_math_support])
+if test x"${enable_64bit_integer_math_support}" = x"yes"; then
+  dnl at least INTEL MPI does _NOT_ support 64BIT integer mode  for C thus disable C tests in this Case
+  if test x"${enable_c_tests}" = x"yes"; then
+     AC_MSG_ERROR([You cannot both define 64bit integer support and C tests. Reconfigure!])
+  fi
+  dnl check whether long int is the correct data-type in C
+  if test x"${size_of_long_int}" = x"8"; then
+    echo "Found C data-type \"long int\" with 8 bytes"
+  else
+    AC_MSG_ERROR([The C data-type "long int" is only ${size_of_long_int} bytes; Needed is 8 bytes])
+  fi
+
+  AC_DEFINE([HAVE_64BIT_INTEGER_MATH_SUPPORT], [1], [allow to link against the 64bit integer versions of math libraries])
+fi
+AM_CONDITIONAL([HAVE_64BIT_INTEGER_MATH_SUPPORT],[test x"$enable_64bit_integer_math_support" = x"yes"])
+
+dnl then 64bit blas
+AC_MSG_CHECKING(whether 64bit integers should be used for the MPI library)
+AC_ARG_ENABLE([64bit-integer-mpi-support],
+              AS_HELP_STRING([--64bit-integer-mpi-support],
+                             [allows to link against the 64bit integer versions of the MPI library]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_64bit_integer_mpi_support=yes
+	       else
+	         enable_64bit_integer_mpi_support=no
+	       fi
+	       ],
+              [enable_64bit_integer_mpi_support="no"])
+AC_MSG_RESULT([$enable_64bit_integer_mpi_support])
+if test x"${enable_64bit_integer_mpi_support}" = x"yes"; then
+  AC_DEFINE([HAVE_64BIT_INTEGER_MPI_SUPPORT], [1], [allow to link against the 64bit integer versions of the MPI library])
+fi
+AM_CONDITIONAL([HAVE_64BIT_INTEGER_MPI_SUPPORT],[test x"$enable_64bit_integer_mpi_support" = x"yes"])
+
+
 
 AC_MSG_CHECKING(whether C compiler can use _Generic )
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -713,12 +772,12 @@ m4_define(elpa_m4_bgq_kernels, [
         complex_bgq
 ])
 
-m4_define(elpa_m4_gpu_kernels, [
-        real_gpu
-        complex_gpu
-])
+#m4_define(elpa_m4_gpu_kernels, [
+#        real_gpu
+#        complex_gpu
+#])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 bgp bgq gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 bgp bgq])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -758,8 +817,8 @@ ELPA_SELECT_KERNELS([sse],[enable])
 ELPA_SELECT_KERNELS([sse_assembly],[enable])
 ELPA_SELECT_KERNELS([avx],[enable])
 ELPA_SELECT_KERNELS([avx2],[enable])
-ELPA_SELECT_KERNELS([avx512],[disable])
-ELPA_SELECT_KERNELS([gpu],[disable])
+ELPA_SELECT_KERNELS([avx512],[enable])
+#ELPA_SELECT_KERNELS([gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
 
@@ -801,16 +860,16 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
 ])
 
-AC_ARG_WITH(gpu-support-only, [AS_HELP_STRING([--with-gpu-support-only],
-            [Compile and always use the GPU version])],
-            [],[with_gpu_support_only=no])
-if test x"$with_gpu_support_only" = x"yes" ; then
-        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
-                      use_[]elpa_m4_kernel[]=no
-        ])
-        use_real_gpu=yes
-        use_complex_gpu=yes
-fi
+#AC_ARG_WITH(gpu-support-only, [AS_HELP_STRING([--with-gpu-support-only],
+#            [Compile and always use the GPU version])],
+#            [],[with_gpu_support_only=no])
+#if test x"$with_gpu_support_only" = x"yes" ; then
+#        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+#                      use_[]elpa_m4_kernel[]=no
+#        ])
+#        use_real_gpu=yes
+#        use_complex_gpu=yes
+#fi
 
 
 dnl
@@ -1009,7 +1068,7 @@ if test x"${need_sse_assembly}" = x"yes"; then
   rm -f ./conftest.o
   AC_MSG_RESULT([${can_compile_sse_asm_double}])
   if test x"$can_compile_sse_asm_double" != x"yes"; then
-    AC_MSG_ERROR([Could not compile test program, try with --disable-sse-assembly, or adjust the C compiler or CFLAGS])
+    AC_MSG_ERROR([Could not compile test program, try with --disable-sse-assembly, or adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
 
   if test x"${want_single_precision}" = x"yes" ; then
@@ -1025,7 +1084,7 @@ if test x"${need_sse_assembly}" = x"yes"; then
     rm -f ./conftest.o
     AC_MSG_RESULT([${can_compile_sse_asm_single}])
     if test x"$can_compile_sse_asm_single" != x"yes"; then
-      AC_MSG_ERROR([Could not compile test program, try with --disable-sse-assembly, or adjust the C compiler or CFLAGS])
+      AC_MSG_ERROR([Could not compile test program, try with --disable-sse-assembly, or adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
     fi
   fi
 fi
@@ -1048,7 +1107,7 @@ if test x"${need_avx}" = x"yes"; then
   )
   AC_MSG_RESULT([${can_compile_avx}])
   if test x"$can_compile_avx" != x"yes"; then
-    AC_MSG_ERROR([Could not compile a test program with AVX, try with --disable-avx, or adjust the C compiler or CFLAGS])
+    AC_MSG_ERROR([Could not compile a test program with AVX, try with --disable-avx, or adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
   AC_DEFINE([HAVE_AVX],[1],[AVX is supported on this CPU])
 fi
@@ -1070,7 +1129,7 @@ if test x"${need_avx2}" = x"yes"; then
   )
   AC_MSG_RESULT([${can_compile_avx2}])
   if test x"$can_compile_avx2" != x"yes"; then
-    AC_MSG_ERROR([Could not compile a test program with AVX2, try with --disable-avx2, or adjust the C compiler or CFLAGS])
+    AC_MSG_ERROR([Could not compile a test program with AVX2, try with --disable-avx2, or adjust the C compiler or CFLAGS.  Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
   AC_DEFINE([HAVE_AVX2],[1],[AVX2 is supported on this CPU])
 fi
@@ -1092,7 +1151,7 @@ if test x"${need_avx512}" = x"yes"; then
   )
   AC_MSG_RESULT([${can_compile_avx512}])
   if test x"$can_compile_avx512" != x"yes"; then
-    AC_MSG_ERROR([Could not compile a test program with AVX512, adjust the C compiler or CFLAGS])
+    AC_MSG_ERROR([Could not compile a test program with AVX512, adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
   AC_DEFINE([HAVE_AVX512],[1],[AVX512 is supported on this CPU])
 
@@ -1196,6 +1255,24 @@ if test x"${need_bgq}" = x"yes"; then
 fi
 AC_LANG_POP([Fortran])
 
+
+AC_MSG_CHECKING(whether GPU version should be used)
+AC_ARG_ENABLE([gpu],
+                AS_HELP_STRING([--enable-gpu],
+                               [do use GPU version]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_gpu=yes
+                                else
+                                  use_gpu=no
+                                fi],
+              [use_gpu=no])
+AC_MSG_RESULT([${use_gpu}])
+if test x"${use_gpu}" = x"yes" ; then
+  need_gpu=yes
+  use_real_gpu=yes
+  use_complex_gpu=yes
+fi
+
 if test x"${need_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
   CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
@@ -1223,6 +1300,21 @@ if test x"${need_gpu}" = x"yes" ; then
   AC_LANG_POP([C])
 fi
 
+AC_MSG_CHECKING(whether GPU memory debugging should be enabled)
+AC_ARG_ENABLE([gpu-memory-debug],
+                AS_HELP_STRING([--enable-gpu-memory-debug],
+                               [Output information on GPU memory to be processed by utils/memory/check_memory.py]),
+                               [if test x"$enableval" = x"yes"; then
+                                  enable_gpu_memory_debug=yes
+                                else
+                                  enable_gpu_memory_debug=no
+                                fi],
+              [enable_gpu_memory_debug=no])
+AC_MSG_RESULT([${enable_gpu_memory_debug}])
+if test x"${enable_gpu_memory_debug}" = x"yes" ; then
+  AC_DEFINE([DEBUG_CUDA],[1],[enable CUDA debugging])
+fi
+
 
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
@@ -1236,13 +1328,35 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kernel)[_COMPILED])
 ])
 
-
 AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes"])
 if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
   AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
-  AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
+  #AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
   ELPA_2STAGE_REAL_GPU_COMPILED=1
+
+  AC_MSG_CHECKING(whether --enable-nvtx is specified)
+  AC_ARG_ENABLE([nvtx],
+                AS_HELP_STRING([--enable-nvtx],
+                               [build and install nvtx wrapper for profiling th GPU version, default no.]),
+                [
+                 if test x"$enableval" = x"yes"; then
+                   enable_nvtx=yes
+                 else
+                   enable_nvtx=no
+                 fi
+                 ],
+                [enable_nvtx=no])
+  AC_MSG_RESULT([${enable_nvtx}])
+  if test x"${enable_nvtx}" = x"yes"; then
+    AC_DEFINE([WITH_NVTX],[1],[enable NVTX support])
+    AC_LANG_PUSH([C])
+    AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
+    if test x"${have_nvtoolsext}" = x"no"; then
+      AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable GPU support ])
+    fi
+    AC_LANG_POP([C])
+  fi
 else
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=0
   ELPA_2STAGE_REAL_GPU_COMPILED=0
@@ -1380,6 +1494,24 @@ if test x"${want_single_precision}" = x"yes" ; then
 fi
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_REAL],[test x"$want_single_precision" = x"yes"])
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" = x"yes"])
+
+#always define SKEWSYMMETRIC for the moment
+
+AC_MSG_CHECKING(whether we should enable skew-symmetric support)
+AC_ARG_ENABLE([skew-symmetric-support],
+              AS_HELP_STRING([--enable-skew-symmetric-support],
+                             [enable support for real valued skew-symmetric matrices]),
+			     [if test x"$enableval" = x"yes"; then
+			        enable_skewsymmetric=yes
+		              else
+				enable_skewsymmetric=no
+			      fi],
+              [enable_skewsymmetric=no])
+AC_MSG_RESULT([${enable_skewsymmetric}])
+AM_CONDITIONAL([HAVE_SKEWSYMMETRIC],[test x"$enable_skewsymmetric" = x"yes"])
+if test x"${enable_skewsymmetric}" = x"yes"; then
+  AC_DEFINE([HAVE_SKEWSYMMETRIC],[1],[build for skewsyemmtric case])
+fi
 
 AC_SUBST([MPI_BINARY])
 AC_SUBST([WITH_MKL])
@@ -1597,19 +1729,52 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         ])
 ])
 
+if test x"${ax_cv_have_sse3_cpu_ext}" = x"yes" -a  x"${need_sse}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request SSE support (--enable-sse), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+if test x"${ax_cv_have_sse3_cpu_ext}" = x"yes" -a  x"${need_sse_assembly}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request SSE-ASSEMBLY support (--enable-sse-assembly), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+if test x"${ax_cv_have_avx_cpu_ext}" = x"yes" -a  x"${need_avx}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request AVX support (--enable-avx), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+if test x"${ax_cv_have_avx2_cpu_ext}" = x"yes" -a  x"${need_avx2}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request AVX2 support (--enable-avx2), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no"; then
+  echo " "
+  AC_MSG_WARN([You did not request AVX512 support (--enable-avx512), but your local CPU supports it.])
+  AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
+  echo " "
+fi
+
+echo " "
+echo "***********************************************************************"
+echo "*  As announced, with this release candidate ELPA 2019.11.001,    *"
+echo "*  the legacy API has been finally removed !                          *"
+echo "***********************************************************************"
+echo " "
 #echo " "
 #echo "***********************************************************************"
-#echo "*  ELPA 2018.11.001 will be the last release where the old, obsolete, *"
-#echo "*  legacy API is enabled by default! In the 2019.05.001 release       *"
-#echo "*  the legacy API will be still available (but as default switched    *"
-#echo "*  off). With the 2019.11.001 release it will be abolished!	    *"					 
-#echo "***********************************************************************"
-#echo " "
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is a the first release candidate of ELPA 2019.05.001.rc2      *"
+#echo "*  This is a the first release candidate of ELPA 2019.11.001      *"
 #echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2019.05.001                                                   *"
+#echo "*  ELPA 2019.11.001                                                   *"
 #echo "***********************************************************************"
 #echo " "
 

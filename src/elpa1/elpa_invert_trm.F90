@@ -69,9 +69,11 @@
        MATH_DATATYPE(kind=rck)     :: a(obj%local_nrows,obj%local_ncols)
 #endif
 
-       integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, mpierr
+       integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols
+       integer(kind=MPI_KIND)       :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
        integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
        integer(kind=ik)             :: n, nc, i, info, ns, nb
+       integer(kind=BLAS_KIND)      :: infoBLAS
        MATH_DATATYPE(kind=rck), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
        logical                      :: wantDebug
        logical                      :: success
@@ -111,10 +113,15 @@
          wantDebug = .true.
        endif
        call obj%timer%start("mpi_communication")
-       call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-       call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-       call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
-       call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
+       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+       call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+       call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+       call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+       my_prow = int(my_prowMPI,kind=c_int)
+       np_rows = int(np_rowsMPI,kind=c_int)
+       my_pcol = int(my_pcolMPI,kind=c_int)
+       np_cols = int(np_colsMPI,kind=c_int)
        call obj%timer%stop("mpi_communication")
        success = .true.
 
@@ -178,8 +185,9 @@
            if (my_pcol==pcol(n, nblk, np_cols)) then
              call obj%timer%start("blas")
 
-             call PRECISION_TRTRI('U', 'N', nb, a(l_row1,l_col1), lda, info)
-
+             call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a(l_row1,l_col1), int(lda,kind=BLAS_KIND), &
+                                  infoBLAS)
+             info = int(infoBLAS,kind=ik)
              call obj%timer%stop("blas")
 
              if (info/=0) then
@@ -210,8 +218,8 @@
            endif
 #ifdef WITH_MPI
            call obj%timer%start("mpi_communication")
-           call MPI_Bcast(tmp1, nb*(nb+1)/2, MPI_MATH_DATATYPE_PRECISION,       &
-                          pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+           call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
+                          int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
            call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
            nc = 0
@@ -222,8 +230,8 @@
 
            call obj%timer%start("blas")
            if (l_cols-l_colx+1>0) &
-        call PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, &
-                                   tmp2, ubound(tmp2,dim=1), a(l_row1,l_colx), lda)
+           call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
+                                   tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(lda,kind=BLAS_KIND))
            call obj%timer%stop("blas")
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -239,8 +247,8 @@
            do i=1,nb
 #ifdef WITH_MPI
              call obj%timer%start("mpi_communication")
-             call MPI_Bcast(tmat1(1,i), l_row1-1, MPI_MATH_DATATYPE_PRECISION, &
-                             pcol(n, nblk, np_cols), mpi_comm_cols, mpierr)
+             call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                            int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
              call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -249,17 +257,19 @@
 #ifdef WITH_MPI
          call obj%timer%start("mpi_communication")
          if (l_cols-l_col1+1>0) &
-      call MPI_Bcast(tmat2(1,l_col1), (l_cols-l_col1+1)*nblk, MPI_MATH_DATATYPE_PRECISION, &
-                             prow(n, nblk, np_rows), mpi_comm_rows, mpierr)
+      call MPI_Bcast(tmat2(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                     int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
           call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
          call obj%timer%start("blas")
          if (l_row1>1 .and. l_cols-l_col1+1>0) &
-           call PRECISION_GEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -ONE, &
-                                tmat1, ubound(tmat1,dim=1), tmat2(1,l_col1), ubound(tmat2,dim=1), ONE, &
-                                 a(1,l_col1), lda)
+           call PRECISION_GEMM('N', 'N', int(l_row1-1,kind=BLAS_KIND), int(l_cols-l_col1+1,kind=BLAS_KIND), &
+                               int(nb,kind=BLAS_KIND), -ONE, &
+                                tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
+                                int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
+                                 a(1,l_col1), int(lda,kind=BLAS_KIND) )
 
          call obj%timer%stop("blas")
 

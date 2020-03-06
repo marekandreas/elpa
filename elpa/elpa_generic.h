@@ -60,6 +60,25 @@
                   elpa_eigenvectors_fc \
         )(handle, a, ev, q, error)
 
+/*! \brief generic C method for elpa_skew_eigenvectors
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float/double float complex/double complex pointer to matrix a
+ *  \param  ev      on return: float/double pointer to eigenvalues
+ *  \param  q       on return: float/double float complex/double complex pointer to eigenvectors
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+#define elpa_skew_eigenvectors(handle, a, ev, q, error) _Generic((a), \
+                double*: \
+                  elpa_eigenvectors_d, \
+                \
+                float*: \
+                  elpa_eigenvectors_f, \
+        )(handle, a, ev, q, error)
+
+
 
 /*! \brief generic C method for elpa_generalized_eigenvectors
  *
@@ -110,6 +129,24 @@
                 float complex*: \
                   elpa_eigenvalues_fc \
         )(handle, a, ev, error)
+
+/*! \brief generic C method for elpa_skew_eigenvalues
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float/double float complex/double complex pointer to matrix a
+ *  \param  ev      on return: float/double pointer to eigenvalues
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+#define elpa_skew_eigenvalues(handle, a, ev, error) _Generic((a), \
+                double*: \
+                  elpa_eigenvalues_d, \
+                \
+                float*: \
+                  elpa_eigenvalues_f, \
+        )(handle, a, ev, error)
+
 
 /*  \brief generic C method for elpa_cholesky
  *

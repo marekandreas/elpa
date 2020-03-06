@@ -4,6 +4,7 @@ import sys
 simple_tokens = [
     "PRECISION",
     "elpa_transpose_vectors_NUMBER_PRECISION",
+    "elpa_transpose_vectors_ssNUMBER_PRECISION",
     "elpa_reduce_add_vectors_NUMBER_PRECISION",
     "bandred_NUMBER_PRECISION",
     "trans_ev_band_to_full_NUMBER_PRECISION",
@@ -19,6 +20,7 @@ simple_tokens = [
     "qr_pdgeqrf_2dcomm_PRECISION",
     "hh_transform_NUMBER_PRECISION",
     "symm_matrix_allreduce_PRECISION",
+    "ssymm_matrix_allreduce_PRECISION",
     "herm_matrix_allreduce_PRECISION",
     "redist_band_NUMBER_PRECISION",
     "unpack_row_NUMBER_cpu_PRECISION",

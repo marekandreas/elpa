@@ -88,7 +88,9 @@ subroutine elpa_reduce_add_vectors_&
 
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable   :: aux1(:), aux2(:)
    integer(kind=ik)                                   :: myps, mypt, nps, npt
-   integer(kind=ik)                                   :: n, lc, k, i, ips, ipt, ns, nl, mpierr
+   integer(kind=MPI_KIND)                             :: mypsMPI, npsMPI, myptMPI, nptMPI
+   integer(kind=ik)                                   :: n, lc, k, i, ips, ipt, ns, nl
+   integer(kind=MPI_KIND)                             :: mpierr
    integer(kind=ik)                                   :: lcm_s_t, nblks_tot
    integer(kind=ik)                                   :: auxstride
    integer(kind=ik), intent(in)                       :: nrThreads
@@ -101,10 +103,15 @@ subroutine elpa_reduce_add_vectors_&
    )
 
    call obj%timer%start("mpi_communication")
-   call mpi_comm_rank(comm_s,myps,mpierr)
-   call mpi_comm_size(comm_s,nps ,mpierr)
-   call mpi_comm_rank(comm_t,mypt,mpierr)
-   call mpi_comm_size(comm_t,npt ,mpierr)
+   call mpi_comm_rank(int(comm_s,kind=MPI_KIND), mypsMPI, mpierr)
+   call mpi_comm_size(int(comm_s,kind=MPI_KIND), npsMPI,  mpierr)
+   call mpi_comm_rank(int(comm_t,kind=MPI_KIND), myptMPI, mpierr)
+   call mpi_comm_size(int(comm_t,kind=MPI_KIND), nptMPI ,mpierr)
+   myps = int(mypsMPI,kind=c_int)
+   nps = int(npsMPI,kind=c_int)
+   mypt = int(myptMPI,kind=c_int)
+   npt = int(nptMPI,kind=c_int)
+
    call obj%timer%stop("mpi_communication")
 
    ! Look to elpa_transpose_vectors for the basic idea!
@@ -164,7 +171,7 @@ subroutine elpa_reduce_add_vectors_&
 #if COMPLEXCASE == 1
                                   MPI_COMPLEX_PRECISION, &
 #endif
-                                  MPI_SUM, ipt, comm_t, mpierr)
+                                  MPI_SUM, int(ipt,kind=MPI_KIND), int(comm_t,kind=MPI_KIND), mpierr)
 
           call obj%timer%stop("mpi_communication")
 

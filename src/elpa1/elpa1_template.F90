@@ -78,7 +78,11 @@ function elpa_solve_evp_&
    MATH_DATATYPE(kind=rck), optional,target,intent(out)  :: q(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=rck), intent(inout)       :: a(obj%local_nrows,obj%local_ncols)
-   MATH_DATATYPE(kind=rck), optional, target, intent(out)  :: q(obj%local_nrows,obj%local_ncols)
+#ifdef HAVE_SKEWSYMMETRIC
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
+#else
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
+#endif
 #endif
 
 #if REALCASE == 1
@@ -92,17 +96,23 @@ function elpa_solve_evp_&
    complex(kind=C_DATATYPE_KIND), allocatable      :: tau(:)
    complex(kind=C_DATATYPE_KIND), allocatable,target :: q_dummy(:,:)
    complex(kind=C_DATATYPE_KIND), pointer          :: q_actual(:,:)
-   integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
 #endif /* COMPLEXCASE */
 
+
+   integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
+   integer(kind=MPI_KIND)                          :: np_rowsMPI, np_colsMPI
+
    logical                                         :: useGPU
+   integer(kind=c_int)                             :: skewsymmetric
+   logical                                         :: isSkewsymmetric
    logical                                         :: success
 
    logical                                         :: do_useGPU, do_useGPU_tridiag, &
                                                       do_useGPU_solve_tridi, do_useGPU_trans_ev
    integer(kind=ik)                                :: numberOfGPUDevices
 
-   integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol, mpierr
+   integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol
+   integer(kind=MPI_KIND)                          :: mpierr, my_peMPI, n_pesMPI, my_prowMPI, my_pcolMPI
    real(kind=C_DATATYPE_KIND), allocatable         :: e(:)
    logical                                         :: wantDebug
    integer(kind=c_int)                             :: istat, debug, gpu
@@ -113,7 +123,8 @@ function elpa_solve_evp_&
 
    logical                                         :: do_tridiag, do_solve, do_trans_ev
    integer(kind=ik)                                :: nrThreads
-
+   integer(kind=ik)                                :: global_index
+   
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
@@ -130,6 +141,9 @@ function elpa_solve_evp_&
    call omp_set_num_threads(nrThreads)
 #else
    nrThreads = 1
+#endif
+#ifdef WITH_NVTX
+   call nvtxRangePush("elpa1")
 #endif
 
 
@@ -201,16 +215,28 @@ function elpa_solve_evp_&
    else
      useGPU = .false.
    endif
-
+   
+   call obj%get("is_skewsymmetric",skewsymmetric,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem getting option. Aborting..."
+     stop
+   endif
+    
+   isSkewsymmetric = (skewsymmetric == 1)
+   
    call obj%timer%start("mpi_communication")
 
-   call mpi_comm_rank(mpi_comm_rows,my_prow,mpierr)
-   call mpi_comm_rank(mpi_comm_cols,my_pcol,mpierr)
+   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
 
-#if COMPLEXCASE == 1
-   call mpi_comm_size(mpi_comm_rows,np_rows,mpierr)
-   call mpi_comm_size(mpi_comm_cols,np_cols,mpierr)
-#endif
+   my_prow = int(my_prowMPI,kind=c_int)
+   my_pcol = int(my_pcolMPI,kind=c_int)
+
+   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+   np_rows = int(np_rowsMPI,kind=c_int)
+   np_cols = int(np_colsMPI,kind=c_int)
 
    call obj%timer%stop("mpi_communication")
 
@@ -230,7 +256,9 @@ function elpa_solve_evp_&
        print *,"Problem getting option. Aborting..."
        stop
      endif
-     call mpi_comm_rank(mpi_comm_all,my_pe,mpierr)
+     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
+     my_pe = int(my_peMPI,kind=c_int)
+
      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = .true.
        ! set the neccessary parameters
@@ -327,6 +355,9 @@ function elpa_solve_evp_&
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("tridi")
 #endif
+#ifdef WITH_NVTX
+     call nvtxRangePush("tridi")
+#endif
 
      call tridiag_&
      &MATH_DATATYPE&
@@ -334,6 +365,9 @@ function elpa_solve_evp_&
      &PRECISION&
      & (obj, na, a, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
 
+#ifdef WITH_NVTX
+     call nvtxRangePop()
+#endif
 #ifdef HAVE_LIKWID
      call likwid_markerStopRegion("tridi")
 #endif
@@ -344,6 +378,9 @@ function elpa_solve_evp_&
      call obj%timer%start("solve")
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("solve")
+#endif
+#ifdef WITH_NVTX
+     call nvtxRangePush("solve")
 #endif
 
      call solve_tridi_&
@@ -357,6 +394,9 @@ function elpa_solve_evp_&
 #endif
         nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
 
+#ifdef WITH_NVTX
+     call nvtxRangePop()
+#endif
 #ifdef HAVE_LIKWID
      call likwid_markerStopRegion("solve")
 #endif
@@ -393,18 +433,59 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
      q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 #endif
+     if (isSkewsymmetric) then
+     ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
+     ! This makes the eigenvectors complex. 
+     ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
+       q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols) = 0.0
+       do i = 1, obj%local_nrows
+!        global_index = indxl2g(i, nblk, my_prow, 0, np_rows)
+         global_index = np_rows*nblk*((i-1)/nblk) + MOD(i-1,nblk) + MOD(np_rows+my_prow-0, np_rows)*nblk + 1
+         if (mod(global_index-1,4) .eq. 0) then
+            ! do nothing
+         end if
+         if (mod(global_index-1,4) .eq. 1) then
+            q(i,obj%local_ncols+1:2*obj%local_ncols) = q(i,1:obj%local_ncols)
+            q(i,1:obj%local_ncols) = 0
+         end if
+         if (mod(global_index-1,4) .eq. 2) then
+            q(i,1:obj%local_ncols) = -q(i,1:obj%local_ncols)
+         end if
+         if (mod(global_index-1,4) .eq. 3) then
+            q(i,obj%local_ncols+1:2*obj%local_ncols) = -q(i,1:obj%local_ncols)
+            q(i,1:obj%local_ncols) = 0
+         end if
+       end do       
+     endif
 
      call obj%timer%start("back")
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("trans_ev")
 #endif
+#ifdef WITH_NVTX
+     call nvtxRangePush("trans_ev")
+#endif
 
+     ! In the skew-symmetric case this transforms the real part
      call trans_ev_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
      & (obj, na, nev, a, lda, tau, q, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+     if (isSkewsymmetric) then
+       ! Transform imaginary part
+       ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
+       call trans_ev_&
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION&
+             & (obj, na, nev, a, lda, tau, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), ldq, nblk, matrixCols, &
+                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+       endif
 
+#ifdef WITH_NVTX
+     call nvtxRangePop()
+#endif
 #ifdef HAVE_LIKWID
      call likwid_markerStopRegion("trans_ev")
 #endif
@@ -445,6 +526,9 @@ function elpa_solve_evp_&
      endif
    endif
 
+#ifdef WITH_NVTX
+   call nvtxRangePop()
+#endif
    ! restore original OpenMP settings
 #ifdef WITH_OPENMP
    ! store the number of OpenMP threads used in the calling function

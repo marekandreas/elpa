@@ -77,10 +77,11 @@ module elpa2_impl
   contains
 
 #define REALCASE 1
+
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 !-------------------------------------------------------------------------------
-!>  \brief elpasolve_evp_real_2stage_double_impl: Fortran function to solve the double-precision real eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_evp_real_2stage_double_impl: Fortran function to solve the double-precision real eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
