@@ -11,14 +11,14 @@ the user application)
 
 1. including the *ELPA* modules
 
-```Fortran
+```fortran
    use elpa1
    use elpa2   ! this step was only needed if you wanted to use the ELPA 2stage solver
 ```
 
-2. invoke the "elpa_get_communicators" routine, in order to obtain the row/column MPI communicators needed by *ELPA*
+2. invoke the `elpa_get_communicators` routine, in order to obtain the row/column MPI communicators needed by *ELPA*
 
-```Fortran
+```fortran
    mpierr = elpa_get_communicators(mpi_comm_world, my_prow, my_pcol, &
                                    mpi_comm_rows, mpi_comm_cols)
 ```
@@ -45,7 +45,7 @@ the user application):
 
 1. include the correct *ELPA* module and define a name for the ELPA instance
 
-```Fortran
+```fortran
    use elpa   ! this is the only module needed for ELPA
 
    class(elpa_t), pointer :: e   ! name the ELPA instance "e"
@@ -53,7 +53,7 @@ the user application):
 
 2. initialize ELPA and create the instance
 
-```Fortran
+```fortran
    if (elpa_init(20170403) /= ELPA_OK) then       ! put here the version number of the API
      error stop "ELPA API version not supported"  ! which you are using
    endif
@@ -63,7 +63,7 @@ the user application):
 
 3. set the parameters which describe the matrix setup and the MPI
 
-```Fortran
+```fortran
    call e%set("na", na,success)                          ! size of matrix
    call e%set("local_nrows", na_rows,success)            ! MPI process local rows of the distributed matrixdo the
                                                          ! desired task with the *ELPA* library, which could be
@@ -79,11 +79,11 @@ the user application):
 
 4. setup the ELPA instance
 
-```Fortran
+```fortran
    success = e%setup()
 ```
 
-5. set/get any possible option (see man pages, or the document USERS_GUIDE.md)
+5. set/get any possible option (see man pages, or the document [USERS_GUIDE.md](USERS_GUIDE.md))
 
 ```Fortran
    call e%get("qr", qr, success)                        ! query whether QR-decomposition is set
@@ -98,7 +98,7 @@ the user application):
 
 ```
 
-   At the moment, the following configurable runtime options are supported ([see here if you cannot read it in your editor] (https://gitlab.mpcdf.mpg.de/elpa/elpa/wikis/USERS_GUIDE)):
+   At the moment, the following configurable runtime options are supported ([see here if you cannot read it in your editor](https://gitlab.mpcdf.mpg.de/elpa/elpa/wikis/USERS_GUIDE)):
 
 
 | Parameter name | Short description     | default value               | possible values         | since API version | 
@@ -129,13 +129,13 @@ the user application):
 
 7. when not needed anymore, destroy the instance
 
-```Fortran
+```fortran
    call elpa_deallocate()
 ```
 
 8. when *ELPA* is not needed anymore, unitialize the *ELPA* library
 
-```Fortran
+```fortran
    call elpa_uninit()
 ```
 
@@ -143,10 +143,10 @@ the user application):
 
 Local documentation (via man pages) should be available (if *ELPA* has been installed with the documentation):
 
-For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program which prints all
+For example `man elpa2_print_kernels` should provide the documentation for the *ELPA* program which prints all
 the available kernels.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html)
+Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html)
 for each *ELPA* release is available.
 
 

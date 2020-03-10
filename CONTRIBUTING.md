@@ -1,6 +1,6 @@
 ### How to contribute to the *ELPA* library: ###
 
-We are very happy and gratefull if you are willing to help us improve *ELPA*.
+We are very happy and grateful if you are willing to help us improve *ELPA*.
 Thus, we would like to make this process as simple as possible for you,
 but at the same time still keep it manageable for us
 

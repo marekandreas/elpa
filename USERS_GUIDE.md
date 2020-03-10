@@ -11,10 +11,10 @@ If you need instructions on how to build *ELPA*, please look at [INSTALL.md] (IN
 
 Local documentation (via man pages) should be available (if *ELPA* has been installed with the documentation):
 
-For example "man elpa2_print_kernels" should provide the documentation for the *ELPA* program, which prints all
+For example `man elpa2_print_kernels` should provide the documentation for the *ELPA* program, which prints all
 the available kernels.
 
-Also a [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html)
+Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html)
 for each *ELPA* release is available.
 
 
@@ -44,7 +44,7 @@ With the release ELPA 2019.11.001 the legacy API will has been deprecated and ha
 
 Using *ELPA* just requires a few steps:
 
-- include elpa headers "elpa/elpa.h" (C-Case) or use the Fortran module "use elpa"
+- include elpa headers `elpa/elpa.h` (C-Case) or use the Fortran module `use elpa`
 
 - define a instance of the elpa type
 
@@ -70,7 +70,7 @@ To be more precise a basic call sequence for Fortran and C looks as follows:
 
 Fortran synopsis
 
-```Fortran
+```fortran
  use elpa
  class(elpa_t), pointer :: elpa
  integer :: success
@@ -119,7 +119,7 @@ Fortran synopsis
 ```
 
 C Synopsis:
-```C
+```x
    #include <elpa/elpa.h>
 
    elpa_t handle;
@@ -171,7 +171,7 @@ C Synopsis:
 
 ## II) List of supported tunable parameters ##
 
-The following table gives a list of all supported parameters which can be used to tune (influence) the runtime behaviour of *ELPA* ([see here if you cannot read it in your editor] (https://gitlab.mpcdf.mpg.de/elpa/elpa/wikis/USERS_GUIDE))
+The following table gives a list of all supported parameters which can be used to tune (influence) the runtime behaviour of *ELPA* ([see here if you cannot read it in your editor](https://gitlab.mpcdf.mpg.de/elpa/elpa/wikis/USERS_GUIDE))
 
 | Parameter name | Short description     | default value               | possible values         | since API version | 
 | :------------- |:--------------------- | :-------------------------- | :---------------------- | :---------------- | 
@@ -208,13 +208,15 @@ If *ELPA* has been build with OpenMP threading support you can specify the numbe
 Please note that it is **mandatory**  to set the number of threads to be used with the OMP_NUM_THREADS environment variable **and**
 with the **set method** 
 
-```Fortran
+```fortran
 call e%set("omp_threads", 4, error)
 ```
 
 **or the *ELPA* environment variable**
 
+```
 export ELPA_DEFAULT_omp_threads=4 (see Section V for an explanation of this variable).
+```
 
 Just setting the environment variable OMP_NUM_THREADS is **not** sufficient.
 
@@ -223,7 +225,7 @@ This is necessary to make the threading an autotunable option.
 ## V) Influencing default values with environment variables ##
 
 For each tunable parameter mentioned in Section II, there exists a default value. This means, that if this parameter is **not explicitly** set by the user by the
-*ELPA* set method, *ELPA* takes the default value for the parameter. E.g. if the user does not set a solver method, than *ELPA* will take the default "ELPA_SOLVER_1STAGE".
+*ELPA* set method, *ELPA* takes the default value for the parameter. E.g. if the user does not set a solver method, than *ELPA* will take the default 1`ELPA_SOLVER_1STAGE`.
 
 The user can change this default value by setting an enviroment variable to the desired value.
 
@@ -243,7 +245,7 @@ in order to define the 2stage solver as the default.
 **Important note**
 The default valule is completly ignored, if the user has manually set a parameter-value pair with the *ELPA* set method!
 Thus the above environemnt variable will **not** have an effect, if the user code contains a line
-```Fortran
+```fortran
 call e%set("solver",ELPA_SOLVER_1STAGE,error)
 ```
 .
@@ -266,13 +268,12 @@ sets are supported:
 | :---------------------- | :------------------------------------------------------ |
 | ELPA_AUTOTUNE_FAST      | { solver, real_kernel, complex_kernel, omp_threads }    |
 | ELPA_AUTOTUNE_MEDIUM    | all of abvoe + { gpu, partly gpu }                      |
-| ELPA_AUTOTUNE_EXTENSIVE | all of above + { various blocking factors, stripewidth, |
-|                         | intermediate_bandwidth }                                |
+| ELPA_AUTOTUNE_EXTENSIVE | all of above + { various blocking factors, stripewidth, intermediate_bandwidth } |
 
 2.) the user can **remove** tunable parameters from the list of autotuning possibilites by explicetly setting this parameter,
 e.g. if the user sets in his code 
 
-```Fortran
+```fortran
 call e%set("solver", ELPA_SOLVER_2STAGE, error)
 ```
 **before** invoking the autotuning, then the solver is fixed and not considered anymore for autotuning. Thus the ELPA_SOLVER_1STAGE would be skipped and, consequently, all possible autotuning parameters, which depend on ELPA_SOLVER_1STAGE.
@@ -282,7 +283,7 @@ The user can invoke autotuning in the following way:
 
 Fortran synopsis
 
-```Fortran
+```fortran
  ! prepare elpa as you are used to (see Section I)
  ! only steps for autotuning are commentd
  use elpa
@@ -328,7 +329,7 @@ Fortran synopsis
 ```
 
 C Synopsis
-```C
+```c
    /* prepare ELPA the usual way; only steps for autotuning are commented */
    #include <elpa/elpa.h>
 
@@ -381,7 +382,7 @@ The following is a skeleton code of an basic example on how to use ELPA. The pur
 to be done in the application using MPI which wants to call ELPA, namely
 
 - Initializing the MPI
-- creating a blacs distributed matrics
+- creating a blacs distributed matrix
 - using this matrix within ELPA
 
 The skeleton is not ment to be copied and pasted, since the details will always be dependent on the application which should 
@@ -390,7 +391,7 @@ call ELPA.
 For simplicity only a Fortran example is shown
 
 
-```Fortran
+```fortran
 
 use mpi
 
