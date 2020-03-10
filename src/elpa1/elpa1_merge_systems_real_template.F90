@@ -245,7 +245,7 @@
       idx(:) = int(idxBLAS(:),kind=ik)
       call obj%timer%stop("blas")
 
-! Calculate the allowable deflation tolerance
+      ! Calculate the allowable deflation tolerance
 
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
@@ -637,12 +637,6 @@
 
           successCUDA = cuda_malloc(qtmp2_dev, gemm_dim_k * gemm_dim_m * size_of_datatype)
           check_alloc_cuda("merge_systems: qtmp2_dev", successCUDA)
-
-          successCUDA = cuda_memset(qtmp1_dev, 0, gemm_dim_k * gemm_dim_l * size_of_datatype)
-          check_memcpy_cuda("merge_systems: qtmp1_dev", successCUDA)
-
-          successCUDA = cuda_memset(qtmp2_dev, 0, gemm_dim_k * gemm_dim_m * size_of_datatype)
-          check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
         endif
 
         ! Gather nonzero upper/lower components of old matrix Q
@@ -804,20 +798,6 @@
               endif ! useGPU
             endif
 
-            if(useGPU) then
-              !TODO: it should be enough to copy l_rows x ncnt
-              !TODO: actually this will be done after the second mutiplication
-
-              !TODO or actually maybe I should copy the half of the qtmp2 array
-              !here and the rest after the next gemm
-              !TODO either copy only half of the matrix here, and half after the
-              !second gemm, or copy whole array after the next gemm
-
-!              successCUDA = cuda_memcpy(c_loc(qtmp2(1,1)), qtmp2_dev, &
-!                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
-!              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
-            endif
-
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
 
@@ -895,7 +875,7 @@
           check_dealloc_cuda("merge_systems: ev_dev", successCUDA)
         endif
 
-      endif !very outer test (na1==1 .or. na1==2) 
+      endif !very outer test (na1==1 .or. na1==2)
 #ifdef WITH_OPENMP
       deallocate(z_p, stat=istat, errmsg=errorMessage)
       if (istat .ne. 0) then

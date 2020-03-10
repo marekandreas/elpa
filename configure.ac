@@ -137,11 +137,24 @@ if test x"$c11_standard" = x"no"; then
   AX_CHECK_COMPILE_FLAG([-std=c11], [
     c11_standard=yes
   ], [
+    echo "C compiler cannot compile -std=c11 code"
+    echo "testing -c11.."
+  ])
+  if test x"$c11_standard" = x"yes"; then
+    CFLAGS+=" -std=c11"
+  fi
+fi
+
+if test x"$c11_standard" = x"no"; then
+  AX_CHECK_COMPILE_FLAG([-c11], [
+    c11_standard=yes
+  ], [
+    echo "C compiler cannot compile -c11 code"
     echo "C compiler cannot compile C11 code"
     exit -1
   ])
   if test x"$c11_standard" = x"yes"; then
-    CFLAGS+=" -std=c11"
+    CFLAGS+=" -c11"
   fi
 fi
 

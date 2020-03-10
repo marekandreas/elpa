@@ -99,7 +99,7 @@ function elpa_solve_evp_&
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
 #endif
-#endif
+#endif /* USE_ASSUMED_SIZE */
 
 #else /* REDISTRIBUTE_MATRIX */
 
@@ -109,11 +109,12 @@ function elpa_solve_evp_&
 #else
    MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,obj%local_ncols)
 #ifdef HAVE_SKEWSYMMETRIC
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
 #else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
 #endif
-#endif
+#endif /* USE_ASSUMED_SIZE */
+
 #endif /* REDISTRIBUTE_MATRIX */
 
 #ifdef REDISTRIBUTE_MATRIX
@@ -160,7 +161,8 @@ function elpa_solve_evp_&
 #ifdef REDISTRIBUTE_MATRIX
    integer(kind=ik)                                :: nblkInternal, matrixOrder
    character(len=1)                                :: layoutInternal, layoutExternal
-   integer(kind=BLAS_KIND)                         :: external_blacs_ctxt, external_blacs_ctxt_
+   integer(kind=c_int)                             :: external_blacs_ctxt
+   integer(kind=BLAS_KIND)                         :: external_blacs_ctxt_
    integer(kind=BLAS_KIND)                         :: np_rows_, np_cols_, my_prow_, my_pcol_
    integer(kind=BLAS_KIND)                         :: np_rows__, np_cols__, my_prow__, my_pcol__
    integer(kind=BLAS_KIND)                         :: sc_desc_(1:9), sc_desc(1:9)
@@ -194,6 +196,7 @@ function elpa_solve_evp_&
      print *,"Problem getting option. Aborting..."
      stop
    endif
+
    call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
    my_pe = int(my_peMPI,kind=c_int)
 
@@ -632,7 +635,7 @@ function elpa_solve_evp_&
 
      call scal_PRECISION_GEMR2D &
      (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), qIntern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, qExtern, &
-     1_BLAS_KIND, 1_BLAS_KIND, sc_desc, external_blacs_ctxt)
+     1_BLAS_KIND, 1_BLAS_KIND, sc_desc, int(external_blacs_ctxt,kind=BLAS_KIND))
 
 
      !clean MPI communicators and blacs grid

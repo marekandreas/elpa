@@ -150,9 +150,7 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer                       :: q_actual(:,:)
 
 
-   integer(kind=c_intptr_t)                                           :: tmat_dev, q_dev, a_dev
-
-   integer(kind=c_int)                                                :: i, j
+   integer(kind=c_int)                                                :: i
    logical                                                            :: success, successCUDA
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
@@ -188,6 +186,7 @@
 
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
+    logical                                                           :: good_nblk_gpu
 
     integer(kind=ik)                                                  :: nrThreads
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
@@ -351,7 +350,6 @@
       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
          do_useGPU = .true.
-         a_dev = 0
 
          ! set the neccessary parameters
          cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
@@ -367,12 +365,21 @@
       call obj%timer%stop("check_for_gpu")
     endif
 
+    if (nblk*(max(np_rows,np_cols)-1) >= na) then
+      write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
+      write(error_unit,*) "Choose a smaller block size if possible."
+
+      do_useGPU = .false.
+
+      if (kernel == GPU_KERNEL) then
+        kernel = GENERIC_KERNEL
+      endif
+    endif
+
     do_useGPU_bandred = do_useGPU
-    ! tridiag-band not ported to GPU yet
-    do_useGPU_tridiag_band = .false.
+    do_useGPU_tridiag_band = do_useGPU
     do_useGPU_solve_tridi = do_useGPU
-    ! trans tridi to band GPU implementation does not work properly
-    do_useGPU_trans_ev_tridi_to_band = .false.
+    do_useGPU_trans_ev_tridi_to_band = do_useGPU
     do_useGPU_trans_ev_band_to_full = do_useGPU
 
     ! only if we want (and can) use GPU in general, look what are the
@@ -387,14 +394,12 @@
       endif
       do_useGPU_bandred = (gpu == 1)
 
-!      call obj%get("gpu_tridiag_band", gpu, error)
-!      if (error .ne. ELPA_OK) then
-!        print *,"Problem getting option. Aborting..."
-!        stop
-!      endif
-!      do_useGPU_tridiag_band = (gpu == 1)
-    ! tridiag-band not ported to GPU yet
-      do_useGPU_tridiag_band = .false.
+      call obj%get("gpu_tridiag_band", gpu, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      do_useGPU_tridiag_band = (gpu == 1)
 
       call obj%get("gpu_solve_tridi", gpu, error)
       if (error .ne. ELPA_OK) then
@@ -403,14 +408,13 @@
       endif
       do_useGPU_solve_tridi = (gpu == 1)
 
-!      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
-!      if (error .ne. ELPA_OK) then
-!        print *,"Problem getting option. Aborting..."
-!        stop
-!      endif
-!      do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
-      do_useGPU_trans_ev_tridi_to_band = .false.
-
+      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option. Aborting..."
+        stop
+      endif
+      do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
+ 
       call obj%get("gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option. Aborting..."
@@ -421,47 +425,38 @@
 
     ! check consistency between request for GPUs and defined kernel
     if (do_useGPU_trans_ev_tridi_to_band) then
-    !!! this currently cannot happen,  GPU_trans_ev_tridi_to_band is always false
-        write(error_unit,*) "ELPA: internal error!"
-        stop
-!      if (kernel .ne. GPU_KERNEL) then
-!        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-!        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-!        do_useGPU_trans_ev_tridi_to_band = .false.
-!      else if (nblk .ne. 128) then
-!        write(error_unit,*) "ELPA: Warning, GPU kernel can run only with scalapack block size 128!"
-!        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-!        do_useGPU_trans_ev_tridi_to_band = .false.
-!        kernel = GENERIC_KERNEL
-!      endif
-    else
-      if (kernel .eq. GPU_KERNEL) then
-        ! We have currently forbidden to use GPU version of trans ev tridi to band, but we did not forbid the possibility
-        ! to select the GPU kernel. If done such, give warning and swicht to the  generic kernel
-        ! TODO it would be better to forbid the possibility to set the GPU kernel completely
-        write(error_unit,*) "ELPA: ERROR, GPU kernel currently not implemented.&
-                             & Use optimized CPU kernel even for GPU runs! &
-                           Switching to the non-optimized generic kernel"
-        kernel = GENERIC_KERNEL
+      if (kernel .ne. GPU_KERNEL) then
+        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+        write(error_unit,*) "The compute kernel will be executed on CPUs!"
+        do_useGPU_trans_ev_tridi_to_band = .false.
+      else
+        good_nblk_gpu = .false.
+
+        ! Accepted values are 2,4,8,16,...,512
+        do i = 1,10
+           if (nblk == 2**i) then
+              good_nblk_gpu = .true.
+              exit
+           endif
+        enddo
+
+        if (.not. good_nblk_gpu) then
+           write(error_unit,*) "ELPA: Warning, CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
+           write(error_unit,*) "The compute kernel will be executed on CPUs!"
+           do_useGPU_trans_ev_tridi_to_band = .false.
+           kernel = GENERIC_KERNEL
+        endif
       endif
     endif
 
     ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band sould be
     ! finally consistent
     if (do_useGPU_trans_ev_tridi_to_band) then
-    !!! this currently cannot happen,  GPU_trans_ev_tridi_to_band is always false
-      write(error_unit,*) "ELPA: internal error!"
-      stop
-!      if (kernel .ne. GPU_KERNEL) then
-!        ! this should never happen, checking as an assert
-!        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
-!        stop
-!      endif
-!      if (nblk .ne. 128) then
-!        ! this should never happen, checking as an assert
-!        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel and blocksize!  Aborting..."
-!        stop
-!      endif
+      if (kernel .ne. GPU_KERNEL) then
+        ! this should never happen, checking as an assert
+        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
+        stop
+      endif
     else
       if (kernel .eq. GPU_KERNEL) then
         ! combination not allowed
@@ -642,7 +637,7 @@
     endif
 
     if (obj%is_set("bandwidth") == 1) then
-      ! bandwidth is set. That means, that the inputed matrix is actually banded and thus the 
+      ! bandwidth is set. That means, that the inputed matrix is actually banded and thus the
       ! first step of ELPA2 should be skipped
       call obj%get("bandwidth",nbw,error)
       if (nbw == 0) then
@@ -694,16 +689,11 @@
         ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
         ! For IBM Bluegene/Q this is not clear at the moment. We have to keep an eye
         ! on this and maybe allow a run-time optimization here
-        if (do_useGPU) then
-          nbw = nblk
-        else
 #if REALCASE == 1
-          nbw = (63/nblk+1)*nblk
+        nbw = (63/nblk+1)*nblk
 #elif COMPLEXCASE == 1
-          nbw = (31/nblk+1)*nblk
+        nbw = (31/nblk+1)*nblk
 #endif
-        endif
-
       else
         ! intermediate bandwidth has been specified by the user, check, whether correctly
         if (mod(nbw, nblk) .ne. 0) then
@@ -727,18 +717,6 @@
         stop 1
       endif
 
-      ! if either of full->band or band->full steps are to be done on GPU,
-      ! allocate also corresponding array on GPU.
-      if (do_useGPU_bandred .or.  do_useGPU_trans_ev_band_to_full) then
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc tmat_dev 1"
-          stop 1
-        endif
-      endif
-
       do_bandred       = .true.
       do_solve_tridi   = .true.
       do_trans_to_band = .true.
@@ -746,15 +724,7 @@
     endif  ! matrix not already banded on input
 
     ! start the computations in 5 steps
-!     print *
-!     print *, 'do_useGPU_bandred', do_useGPU_bandred
-!     print *, 'do_useGPU_tridiag_band', do_useGPU_tridiag_band
-!     print *, 'do_useGPU_solve_tridi', do_useGPU_solve_tridi
-!     print *, 'do_useGPU_trans_ev_tridi_to_band', do_useGPU_trans_ev_tridi_to_band
-!     print *, 'do_useGPU_trans_ev_band_to_full', do_useGPU_trans_ev_band_to_full
-!     print *
     if (do_bandred) then
-!       print *, 'do_useGPU_bandred=', do_useGPU_bandred
       call obj%timer%start("bandred")
 #ifdef HAVE_LIKWID
       call likwid_markerStartRegion("bandred")
@@ -765,8 +735,8 @@
       &_&
       &PRECISION &
       (obj, na, a, &
-      a_dev, matrixRows, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-      tmat_dev,  wantDebug, do_useGPU_bandred, success, &
+      matrixRows, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+      wantDebug, do_useGPU_bandred, success, &
 #if REALCASE == 1
       useQRActual, &
 #endif
@@ -798,7 +768,7 @@
        &MATH_DATATYPE&
        &_&
        &PRECISION&
-       (obj, na, nbw, nblk, a, a_dev, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+       (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
        do_useGPU_tridiag_band, wantDebug, nrThreads)
 
 #ifdef WITH_MPI
@@ -945,10 +915,6 @@
            end if
          end do
        endif
-!        print * , "q="
-!        do i=1,na
-!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
-!        enddo
        ! Backtransform stage 1
      if (do_trans_to_band) then
        call obj%timer%start("trans_ev_to_band")
@@ -962,10 +928,8 @@
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
-       q_dev, &
        matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
-
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_band")
 #endif
@@ -983,60 +947,15 @@
 !          stop 1
 !        endif
      endif ! do_trans_to_band
-!      print *, 'after do_useGPU_trans_ev_tridi_to_band', do_useGPU_trans_ev_tridi_to_band
-!      print*, 'do_useGPU_trans_ev_band_to_full=', do_useGPU_trans_ev_band_to_full
-     ! the array q might reside on device or host, depending on whether GPU is
-     ! used or not. We thus have to transfer he data manually, if one of the
-     ! routines is run on GPU and the other not.
 
-     ! first deal with the situation that first backward step was on GPU
-     if(do_useGPU_trans_ev_tridi_to_band) then
-       ! if the second backward step is to be performed, but not on GPU, we have
-       ! to transfer q to the host
-       if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
-         successCUDA = cuda_memcpy(int(loc(q),kind=c_intptr_t), q_dev, matrixRows*matrixCols* size_of_datatype, &
-                                   cudaMemcpyDeviceToHost)
-         if (.not.(successCUDA)) then
-           print *,"elpa2_template, error in copy to host"
-           stop 1
-         endif
-       endif
-
-       ! if the last step is not required at all, or will be performed on CPU,
-       ! release the memmory allocated on the device
-       if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
-         successCUDA = cuda_free(q_dev)
-         print *, 'q_dev is freed'
-       endif
-     endif
-
-     !TODO check that the memory is properly deallocated on the host in case that
-     !the last step is not required
+     ! the array q (currently) always resides on host even when using GPU
 
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("trans_ev_to_full")
 #endif
-       if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
-         ! copy to device if we want to continue on GPU
- 
-         successCUDA = cuda_malloc(q_dev, matrixRows*matrixCols*size_of_datatype)
-!          if (.not.(successCUDA)) then
-!            print *,"elpa2_template, error in cuda_malloc"
-!            stop 1
-!          endif         
-!          print *, 'q_dev=', q_dev, 'loc(q)=', loc(q)&
-!          , 'matrixRows*matrixCols* size_of_datatype=', matrixRows*matrixCols* size_of_datatype, ', q(1,1)=', q(1,1)
 
-         successCUDA = cuda_memcpy(q_dev, int(loc(q),kind=c_intptr_t), matrixRows*matrixCols* size_of_datatype, &
-                                   cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"elpa2_template, error in copy to device", successCUDA
-           stop 1
-         endif
-       endif
-         
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
        
@@ -1045,8 +964,7 @@
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, a, &
-       a_dev, matrixRows, tmat, tmat_dev,  q,  &
-       q_dev, &
+       matrixRows, tmat, q,  &
        matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
        , useQRActual  &
@@ -1071,7 +989,6 @@
            &_&
            &PRECISION &
            (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
-           q_dev, &
            matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
          endif
@@ -1097,40 +1014,40 @@
        if(do_useGPU_trans_ev_tridi_to_band) then
           ! if the second backward step is to be performed, but not on GPU, we have
           ! to transfer q to the host
-          if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
-            successCUDA = cuda_memcpy(loc(q(1,matrixCols+1)), q_dev, matrixRows*matrixCols* size_of_datatype, &
-                                      cudaMemcpyDeviceToHost)
-            if (.not.(successCUDA)) then
-              print *,"elpa2_template, error in copy to host"
-              stop 1
-            endif
-          endif
+          !if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
+          !  successCUDA = cuda_memcpy(loc(q(1,matrixCols+1)), q_dev, matrixRows*matrixCols* size_of_datatype, &
+          !                            cudaMemcpyDeviceToHost)
+          !  if (.not.(successCUDA)) then
+          !    print *,"elpa2_template, error in copy to host"
+          !    stop 1
+          !  endif
+          !endif
 
          ! if the last step is not required at all, or will be performed on CPU,
          ! release the memmory allocated on the device
-         if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
-           successCUDA = cuda_free(q_dev)
-         endif
+         !if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
+         !  successCUDA = cuda_free(q_dev)
+         !endif
        endif
      endif
      
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")  
        if (isSkewsymmetric) then
-         if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
-           ! copy to device if we want to continue on GPU
-           successCUDA = cuda_malloc(q_dev, matrixRows*matrixCols*size_of_datatype)
-!            if (.not.(successCUDA)) then
-!              print *,"elpa2_template, error in cuda_malloc"
-!              stop 1
-!            endif
-           successCUDA = cuda_memcpy(q_dev, loc(q(1,matrixCols+1)), matrixRows*matrixCols* size_of_datatype, &
-                                     cudaMemcpyHostToDevice)
-           if (.not.(successCUDA)) then
-             print *,"elpa2_template, error in copy to device"
-             stop 1
-           endif
-         endif
+         !if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
+         !  ! copy to device if we want to continue on GPU
+         !  successCUDA = cuda_malloc(q_dev, matrixRows*matrixCols*size_of_datatype)
+!        !    if (.not.(successCUDA)) then
+!        !      print *,"elpa2_template, error in cuda_malloc"
+!        !      stop 1
+!        !    endif
+         !  successCUDA = cuda_memcpy(q_dev, loc(q(1,matrixCols+1)), matrixRows*matrixCols* size_of_datatype, &
+         !                            cudaMemcpyHostToDevice)
+         !  if (.not.(successCUDA)) then
+         !    print *,"elpa2_template, error in copy to device"
+         !    stop 1
+         !  endif
+         !endif
 ! #ifdef DOUBLE_PRECISION_REAL
 !          call prmat(na,useGPU,q(matrixRows, matrixCols+1:2*matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',0)
 ! #endif
@@ -1142,8 +1059,7 @@
          &_&
          &PRECISION &
          (obj, na, nev, nblk, nbw, a, &
-         a_dev, matrixRows, tmat, tmat_dev,  q(1:matrixRows, matrixCols+1:2*matrixCols),  &
-         q_dev, &
+         matrixRows, tmat, q(1:matrixRows, matrixCols+1:2*matrixCols),  &
          matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
          , useQRActual  &
@@ -1171,25 +1087,6 @@
 #endif
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
-
-     if(do_bandred .or. do_trans_to_full) then
-       if (do_useGPU_bandred .or. do_useGPU_trans_ev_band_to_full) then
-         successCUDA = cuda_free(tmat_dev)
-         if (.not.(successCUDA)) then
-           print *,"elpa2_template: error in cudaFree, tmat_dev"
-           stop 1
-         endif
-       endif
-     endif
-
-     if(do_useGPU .and. (a_dev .ne. 0)) then
-       successCUDA = cuda_free(a_dev)
-       if (.not.(successCUDA)) then
-         print *,"elpa2_template: error in cudaFree, a_dev"
-         stop 1
-       endif
-     endif
-
 
      if (obj%eigenvalues_only) then
        deallocate(q_dummy, stat=istat, errmsg=errorMessage)

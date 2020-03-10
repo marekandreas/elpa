@@ -51,7 +51,7 @@ subroutine redist_band_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-           (obj, a_mat, a_dev, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+           (obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
 
    use elpa_abstract_impl
    use elpa2_workload
@@ -80,7 +80,6 @@ subroutine redist_band_&
    integer(kind=ik)                                 :: nblocks_total, il, jl, l_rows, l_cols, n_off
 
    logical                                          :: successCUDA
-   integer(kind=c_intptr_t)                         :: a_dev
    integer(kind=c_intptr_t), parameter              :: size_of_datatype = size_of_&
                                                                         &PRECISION&
                                                                         &_&

@@ -56,9 +56,6 @@
        l_nev, &
 #endif
        a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
-#if REALCASE == 1
-       hh_dot_dev, &
-#endif
        hh_tau_dev, kernel_flops, kernel_time, n_times, off, ncols, istripe, &
 #ifdef WITH_OPENMP
        my_thread, thread_width, &
@@ -148,7 +145,7 @@
 #if REALCASE == 1
 !         real(kind=C_DATATYPE_KIND)                :: a(stripe_width,a_dim2,stripe_count,max_threads)
          real(kind=C_DATATYPE_KIND), pointer        :: a(:,:,:,:)
- 
+
 #endif
 #if COMPLEXCASE == 1
 !          complex(kind=C_DATATYPE_KIND)            :: a(stripe_width,a_dim2,stripe_count,max_threads)
@@ -160,10 +157,7 @@
          integer(kind=ik), intent(in)               :: kernel
 
          integer(kind=c_intptr_t)                   :: a_dev
-   integer(kind=c_intptr_t)                         :: bcast_buffer_dev
-#if REALCASE == 1
-         integer(kind=c_intptr_t)                   :: hh_dot_dev ! why not needed in complex case
-#endif
+         integer(kind=c_intptr_t)                   :: bcast_buffer_dev
          integer(kind=c_intptr_t)                   :: hh_tau_dev
          integer(kind=c_intptr_t)                   :: dev_offset, dev_offset_1, dev_offset_2
 
@@ -180,6 +174,12 @@
          complex(kind=C_DATATYPE_KIND)              :: w(nbw,2)
 #endif
          real(kind=c_double)                        :: ttt ! MPI_WTIME always needs double
+
+         integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
+                                                                        &PRECISION&
+                                                                        &_&
+                                                                        &MATH_DATATYPE
+
 
          j = -99
 
@@ -278,51 +278,28 @@
 #if REALCASE == 1
 ! GPU kernel real
          if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
-           if (wantDebug) then
-             call obj%timer%start("compute_hh_trafo: GPU")
-           endif
-           dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_&
-                  &PRECISION&
-                  &_&
-                  &MATH_DATATYPE
-
-           call launch_compute_hh_trafo_gpu_kernel_&
-                &MATH_DATATYPE&
-                &_&
-                &PRECISION&
-                & (a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, hh_tau_dev, nl, nbw, stripe_width, off, ncols)
-#endif /* REALCASE */
+#endif
 #if COMPLEXCASE == 1
 ! GPU kernel complex
          if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+#endif
            if (wantDebug) then
              call obj%timer%start("compute_hh_trafo: GPU")
            endif
 
-           dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * size_of_&
-                  &PRECISION&
-                  &_&
-                  &MATH_DATATYPE
+           dev_offset = ((a_off+off-1)*stripe_width+(istripe-1)*stripe_width*a_dim2)*size_of_datatype
 
-           dev_offset_1 = (0 +  (  off-1 )* nbw) * size_of_&
-                  &PRECISION&
-                  &_&
-                  &MATH_DATATYPE
+           dev_offset_1 = (off-1)*nbw*size_of_datatype
 
-           dev_offset_2 =( off-1 )* size_of_&
-                  &PRECISION&
-                  &_&
-                  &MATH_DATATYPE
+           dev_offset_2 = (off-1)*size_of_datatype
 
            call launch_compute_hh_trafo_gpu_kernel_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION&
-                & (a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
-                                                         hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
+                &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
+                hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
 
-
-#endif /* COMPLEXCASE */
            if (wantDebug) then
              call obj%timer%stop("compute_hh_trafo: GPU")
            endif

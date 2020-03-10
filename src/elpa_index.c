@@ -198,10 +198,10 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", PRINT_NO),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator", PRINT_NO),
         INT_ANY_ENTRY("blacs_context", "BLACS context", PRINT_NO),
-#ifdef REDISTRIBUTE_MATRIX
+//#ifdef REDISTRIBUTE_MATRIX
         INT_ENTRY("internal_nblk", "Internally used block size of scalapack block-cyclic distribution", 0, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                    internal_nblk_cardinality, internal_nblk_enumerate, internal_nblk_is_valid, NULL, PRINT_YES),
-#endif
+//#endif
 #ifdef STORE_BUILD_CONFIG
         INT_ENTRY("output_build_config", "Output the build config", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, output_build_config_is_valid, NULL, PRINT_NO),
@@ -277,6 +277,7 @@ static const elpa_index_int_entry_t int_entries[] = {
 
 static const elpa_index_double_entry_t double_entries[] = {
         /* Empty for now */
+        READONLY_DOUBLE_ENTRY("dummy", "dummy"),
 };
 
 void elpa_index_free(elpa_index_t index) {
