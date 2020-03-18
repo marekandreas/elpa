@@ -66,7 +66,11 @@
 #undef THRESHOLD
 
 
+#if 0
 /* General definitions needed in single and double case */
+/* the if 0 bracket is just to make the IBM Fortran compiler happy */
+#endif
+
 #define  MATH_DATATYPE real
 #define  BLAS_TRANS_OR_CONJ 'T'
 
@@ -214,7 +218,12 @@
 #undef  BLAS_CHAR_AND_SY_OR_HE
 #undef  PRECISION
 #undef COMPLEX_DATATYPE
+
+#if 0
 /* in the complex case also sometime real valued variables are needed */
+/* the if 0 bracket is just to make the IBM Fortran compiler happy */
+#endif
+
 #undef REAL_DATATYPE
 #undef C_REAL_DATATYPE
 
@@ -279,7 +288,11 @@
 
 #undef THRESHOLD
 
+#if 0
 /* General definitions needed in single and double case */
+/* the if 0 bracket is just to make the IBM Fortran compiler happy */
+#endif
+
 #define  MATH_DATATYPE complex
 #define  BLAS_TRANS_OR_CONJ 'C'
 #ifdef DOUBLE_PRECISION
