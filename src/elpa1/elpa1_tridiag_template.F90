@@ -107,7 +107,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       implicit none
 #include "../general/precision_kinds.F90"
-      class(elpa_abstract_impl_t), intent(inout) :: obj
+      class(elpa_abstract_impl_t), intent(inout)    :: obj
       integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU, wantDebug
       integer(kind=c_int)                           :: skewsymmetric
@@ -155,8 +155,11 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       complex(kind=rck)                             :: aux3(1)
 #endif
 
+      integer(kind=c_intptr_t)                      :: num
       MATH_DATATYPE(kind=rck), allocatable          :: tmp(:)
-      MATH_DATATYPE(kind=rck), allocatable          :: v_row(:), &   ! used to store calculated Householder Vector
+      MATH_DATATYPE(kind=rck), allocatable          :: v_row(:) ! used to store calculated Householder Vector
+
+      MATH_DATATYPE(kind=rck), allocatable          ::  &   ! used to store calculated Householder Vector
                                                        v_col(:), &   ! the same Vector, but transposed 
                                                                      ! - differently distributed among MPI tasks
                                                        u_row(:), &
@@ -185,7 +188,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                                                                           &MATH_DATATYPE
       call obj%get("is_skewsymmetric",skewsymmetric,istat)
       if (istat .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
+           print *,"Problem getting option for skewsymmetric settings. Aborting..."
            stop
       endif
       isSkewsymmetric = (skewsymmetric == 1)
@@ -201,7 +204,6 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       &" // &
       PRECISION_SUFFIX // &
       gpuString )
-
 
       if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
@@ -244,7 +246,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       ! it can, however, be set by the user
       call obj%get("min_tile_size", min_tile_size ,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem setting option. Aborting..."
+        print *,"Problem setting option for min_tile_size. Aborting..."
         stop
       endif
       if(min_tile_size == 0) then
@@ -356,11 +358,13 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
 
-        successCUDA = cuda_malloc(a_dev, lda * matrixCols * size_of_datatype)
+        num = lda * matrixCols * size_of_datatype
+
+        successCUDA = cuda_malloc(a_dev, num)
         check_alloc_cuda("tridiag: a_dev", successCUDA)
 
         successCUDA = cuda_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
-                      lda * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
+                                  num, cudaMemcpyHostToDevice)
         check_memcpy_cuda("tridiag: a_dev", successCUDA)
       endif
 
@@ -1045,6 +1049,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         print *,"tridiag: error when deallocating tmp_real "//errorMessage
         stop 1
       endif
+
 
       call obj%timer%stop("tridiag_&
       &MATH_DATATYPE&

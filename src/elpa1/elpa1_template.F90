@@ -196,18 +196,18 @@ function elpa_solve_evp_&
 
    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
+     print *,"Problem getting option for mpi_comm_rows. Aborting..."
      stop
    endif
    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
+     print *,"Problem getting option for mpi_comm_cols. Aborting..."
      stop
    endif
 
    call obj%get("gpu",gpu,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
+     print *,"Problem getting option for gpu. Aborting..."
      stop
    endif
    if (gpu .eq. 1) then
@@ -218,7 +218,7 @@ function elpa_solve_evp_&
    
    call obj%get("is_skewsymmetric",skewsymmetric,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
+     print *,"Problem getting option for skewsymmetric. Aborting..."
      stop
    endif
     
@@ -242,7 +242,7 @@ function elpa_solve_evp_&
 
    call obj%get("debug", debug,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
+     print *,"Problem setting option for debug. Aborting..."
      stop
    endif
    wantDebug = debug == 1
@@ -253,7 +253,7 @@ function elpa_solve_evp_&
      call obj%timer%start("check_for_gpu")
      call obj%get("mpi_comm_parent", mpi_comm_all,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for mpi_comm_parent. Aborting..."
        stop
      endif
      call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
@@ -286,21 +286,21 @@ function elpa_solve_evp_&
    if(do_useGPU) then
      call obj%get("gpu_tridiag", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for gpu_tridiag. Aborting..."
        stop
      endif
      do_useGPU_tridiag = (gpu == 1)
 
      call obj%get("gpu_solve_tridi", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for gpu_solve_tridi. Aborting..."
        stop
      endif
      do_useGPU_solve_tridi = (gpu == 1)
 
      call obj%get("gpu_trans_ev", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for gpu_trans_ev. Aborting..."
        stop
      endif
      do_useGPU_trans_ev = (gpu == 1)
@@ -409,7 +409,7 @@ function elpa_solve_evp_&
    else
      call obj%get("check_pd",check_pd,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem setting option. Aborting..."
+       print *,"Problem setting option for check_pd. Aborting..."
        stop
      endif
      if (check_pd .eq. 1) then

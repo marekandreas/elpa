@@ -206,7 +206,7 @@
 
       call obj%get("is_skewsymmetric",skewsymmetric,error)
       if (error .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
+           print *,"Problem getting option for skewsymmetric settings. Aborting..."
            stop
       endif
       isSkewsymmetric = (skewsymmetric == 1)
@@ -314,7 +314,7 @@
       ! it can, however, be set by the user
       call obj%get("min_tile_size", min_tile_size ,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem setting option. Aborting..."
+        print *,"Problem setting option for min_tile_size. Aborting..."
         stop
       endif
       if(min_tile_size == 0) then

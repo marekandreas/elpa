@@ -93,18 +93,18 @@
 
        call obj%get("mpi_comm_rows",mpi_comm_rows,error)
        if (error .ne. ELPA_OK) then
-         print *,"Error getting option. Aborting..."
+         print *,"Error getting option for mpi_comm_rows. Aborting..."
          stop
        endif
        call obj%get("mpi_comm_cols",mpi_comm_cols,error)
        if (error .ne. ELPA_OK) then
-         print *,"Error getting option. Aborting..."
+         print *,"Error getting option for mpi_comm_cols. Aborting..."
          stop
        endif
 
        call obj%get("debug", debug,error)
        if (error .ne. ELPA_OK) then
-         print *,"Error getting option. Aborting..."
+         print *,"Error getting option for debug. Aborting..."
          stop
        endif
        if (debug == 1) then

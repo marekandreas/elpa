@@ -111,7 +111,7 @@
       ! GPU settings
       call obj%get("gpu", gpu,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu. Aborting..."
         stop
       endif
 
@@ -136,17 +136,17 @@
 
       call obj%get("mpi_comm_rows",mpi_comm_rows,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for mpi_comm_rows. Aborting..."
         stop
       endif
       call obj%get("mpi_comm_cols",mpi_comm_cols,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for mpi_comm_cols. Aborting..."
         stop
       endif
       call obj%get("mpi_comm_parent",mpi_comm_all,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for mpi_comm_parent. Aborting..."
         stop
       endif
 

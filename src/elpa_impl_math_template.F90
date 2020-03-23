@@ -49,7 +49,7 @@
 
       call self%get("solver", solver,error2)
       if (error2 .ne. ELPA_OK) then
-        print *,"Problem setting option. Aborting..."
+        print *,"Problem setting solver. Aborting..."
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = error2
@@ -214,7 +214,7 @@
       call self%get("solver", solver,error2)
       call self%set("is_skewsymmetric",1)
       if (error2 .ne. ELPA_OK) then
-        print *,"Problem setting option. Aborting..."
+        print *,"Problem setting is_skewsymmetric. Aborting..."
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = error2
@@ -354,7 +354,7 @@
 
       call self%get("solver", solver,error2)
       if (error2 .ne. ELPA_OK) then
-         print *,"Problem getting option. Aborting..."
+         print *,"Problem getting solver option. Aborting..."
 #ifdef USE_FORTRAN2008
          if (present(error)) then
            error = error2
@@ -505,7 +505,7 @@
       call self%get("solver", solver,error2)
       call self%set("is_skewsymmetric",1)
       if (error2 .ne. ELPA_OK) then
-         print *,"Problem getting option. Aborting..."
+         print *,"Problem getting solver option. Aborting..."
 #ifdef USE_FORTRAN2008
          if (present(error)) then
            error = error2

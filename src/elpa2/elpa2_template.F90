@@ -193,17 +193,17 @@
 
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_rows. Aborting..."
       stop
     endif
     call obj%get("mpi_comm_cols",mpi_comm_cols,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_cols. Aborting..."
       stop
     endif
     call obj%get("mpi_comm_parent",mpi_comm_all,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_parent. Aborting..."
       stop
     endif
 
@@ -259,13 +259,13 @@
 
     call obj%get(KERNEL_STRING,kernel,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for kernel settings. Aborting..."
       stop
     endif
  
     call obj%get("is_skewsymmetric",skewsymmetric,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for skewsymmetric settings. Aborting..."
       stop
     endif
 
@@ -273,7 +273,7 @@
 
     call obj%get("debug",debug,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for debug settings. Aborting..."
       stop
     endif
     wantDebug = debug == 1
@@ -281,7 +281,7 @@
     ! GPU settings
     call obj%get("gpu", gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option gpu settings. Aborting..."
       stop
     endif
 
@@ -332,35 +332,35 @@
     if(do_useGPU) then
       call obj%get("gpu_bandred", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option gpu_bandred settings. Aborting..."
         stop
       endif
       do_useGPU_bandred = (gpu == 1)
 
       call obj%get("gpu_tridiag_band", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_tridiag_band settings. Aborting..."
         stop
       endif
       do_useGPU_tridiag_band = (gpu == 1)
 
       call obj%get("gpu_solve_tridi", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_solve_tridi settings. Aborting..."
         stop
       endif
       do_useGPU_solve_tridi = (gpu == 1)
 
       call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_trans_ev_tridi_to_band settings. Aborting..."
         stop
       endif
       do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
  
       call obj%get("gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
         stop
       endif
       do_useGPU_trans_ev_band_to_full = (gpu == 1)
@@ -437,14 +437,14 @@
      ! we change it above? This is a mess and should be cleaned up
      call obj%get(KERNEL_STRING,kernelByUser,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for user kernel settings. Aborting..."
        stop
      endif
 
      if (kernelByUser .ne. kernel) then
        call obj%set(KERNEL_STRING, kernel, error)
        if (error .ne. ELPA_OK) then
-         print *,"Problem setting option. Aborting..."
+         print *,"Problem setting kernel. Aborting..."
          stop
        endif
      endif
@@ -461,7 +461,7 @@
      ! compare user chosen kernel with possible kernels
      call obj%get(KERNEL_STRING,kernelByUser,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for user kernel settings. Aborting..."
        stop
      endif
 
@@ -503,7 +503,7 @@
             if (obj%can_set(KERNEL_STRING, kernel) == ELPA_OK) then
               call obj%set(KERNEL_STRING, kernel, error)
               if (error .ne. ELPA_OK) then
-                print *,"Problem setting option. Aborting..."
+                print *,"Problem setting kernel. Aborting..."
                 stop
               endif
               if (my_pe == 0 ) write(error_unit,*) "ELPA decided to use ",elpa_int_value_to_string(KERNEL_STRING, kernel)
@@ -519,7 +519,7 @@
 #if REALCASE == 1
     call obj%get("qr",qr,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for qr settings. Aborting..."
       stop
     endif
     if (qr .eq. 1) then
@@ -612,7 +612,7 @@
       !first check if the intermediate bandwidth was set by the user
       call obj%get("intermediate_bandwidth", nbw, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for intermediate_bandwidth. Aborting..."
         stop
       endif
 
@@ -771,7 +771,7 @@
 
        call obj%get("check_pd",check_pd,error)
        if (error .ne. ELPA_OK) then
-         print *,"Problem getting option. Aborting..."
+         print *,"Problem getting option for check_pd. Aborting..."
          stop
        endif
        if (check_pd .eq. 1) then

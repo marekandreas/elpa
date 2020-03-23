@@ -166,7 +166,7 @@
 #ifdef BAND_TO_FULL_BLOCKING
       call obj%get("blocking_in_band_to_full",blocking_factor,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for blocking_in_band_to_full. Aborting..."
         stop
       endif
 #else

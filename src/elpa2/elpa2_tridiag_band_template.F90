@@ -144,7 +144,7 @@
 
       call obj%get("is_skewsymmetric",skewsymmetric,istat)
       if (istat .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
+           print *,"Problem getting option for skewsymmetric settings. Aborting..."
            stop
       endif
       isSkewsymmetric = (skewsymmetric == 1)
