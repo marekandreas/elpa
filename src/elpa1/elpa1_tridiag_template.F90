@@ -280,6 +280,64 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         call check_alloc("tridiag_&
         &MATH_DATATYPE ", "uv_stored_cols", istat, errorMessage)
 
+        successCUDA = cuda_malloc_host(v_row_host,num)
+        check_alloc_cuda("tridiag: v_row_host", successCUDA)
+
+        call c_f_pointer(v_row_host,v_row,(/num/))
+
+        num = (max_local_cols) * size_of_datatype
+        successCUDA = cuda_malloc_host(v_col_host,num)
+        check_alloc_cuda("tridiag: v_col_host", successCUDA)
+
+        call c_f_pointer(v_col_host,v_col,(/num/))
+
+        num = (max_local_cols) * size_of_datatype
+        successCUDA = cuda_malloc_host(u_col_host,num)
+        check_alloc_cuda("tridiag: u_col_host", successCUDA)
+
+        call c_f_pointer(u_col_host,u_col,(/num/))
+
+        num = (max_local_rows) * size_of_datatype
+        successCUDA = cuda_malloc_host(u_row_host,num)
+        check_alloc_cuda("tridiag: u_row_host", successCUDA)
+
+        call c_f_pointer(u_row_host,u_row,(/num/))
+
+        num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
+        successCUDA = cuda_malloc_host(vu_stored_rows_host,num)
+        check_alloc_cuda("tridiag: vu_stored_rows_host", successCUDA)
+
+        call c_f_pointer(vu_stored_rows_host,vu_stored_rows,(/max_local_rows,2*max_stored_uv/))
+
+        num = (max_local_cols * 2*max_stored_uv) * size_of_datatype
+        !successCUDA = cuda_malloc_host(uv_stored_cols_host,num)
+        !check_alloc_cuda("tridiag: uv_stored_cols_host", successCUDA)
+
+        !call c_f_pointer(uv_stored_cols_host,uv_stored_cols,(/max_local_cols,2*max_stored_uv/))
+
+        successCUDA = cuda_host_register(int(loc(uv_stored_cols),kind=c_intptr_t),num,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("tridiag: uv_stored_cols", successCUDA)
+
+#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
+        num = na * 8
+#else
+        num = na * 4
+#endif
+        successCUDA = cuda_host_register(int(loc(e_vec),kind=c_intptr_t),num,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("tridiag: e_vec", successCUDA)
+
+#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
+        num = na * 8
+#else
+        num = na * 4
+#endif
+        successCUDA = cuda_host_register(int(loc(d_vec),kind=c_intptr_t),num,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("tridiag: d_vec", successCUDA)
+
+      else
         allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
         call check_alloc("tridiag_&
         &MATH_DATATYPE ", "v_row", istat, errorMessage)
@@ -362,6 +420,10 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
         successCUDA = cuda_malloc(a_dev, num)
         check_alloc_cuda("tridiag: a_dev", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(a_mat),kind=c_intptr_t),num,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("tridiag: a_mat", successCUDA)
 
         successCUDA = cuda_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
                                   num, cudaMemcpyHostToDevice)
@@ -1056,6 +1118,40 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         print *,"tridiag: error when deallocating tmp_real "//errorMessage
         stop 1
       endif
+
+      if (useGPU) then
+        successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
+        check_host_unregister_cuda("tridiag: a_mat", successCUDA)
+
+        successCUDA = cuda_free_host(v_row_host)
+        check_host_dealloc_cuda("tridiag: v_row_host", successCUDA)
+        nullify(v_row)
+
+        successCUDA = cuda_free_host(v_col_host)
+        check_host_dealloc_cuda("tridiag: v_col_host", successCUDA)
+        nullify(v_col)
+
+        successCUDA = cuda_free_host(u_col_host)
+        check_host_dealloc_cuda("tridiag: u_col_host", successCUDA)
+        nullify(u_col)
+
+        successCUDA = cuda_free_host(u_row_host)
+        check_host_dealloc_cuda("tridiag: u_row_host", successCUDA)
+        nullify(u_row)
+
+        successCUDA = cuda_free_host(vu_stored_rows_host)
+        check_host_dealloc_cuda("tridiag: uv_stored_rows", successCUDA)
+        nullify(vu_stored_rows)
+
+        successCUDA = cuda_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
+        check_host_unregister_cuda("tridiag: uv_stored_cols", successCUDA)
+
+        successCUDA = cuda_host_unregister(int(loc(e_vec),kind=c_intptr_t))
+        check_host_unregister_cuda("tridiag: e_vec", successCUDA)
+
+        successCUDA = cuda_host_unregister(int(loc(d_vec),kind=c_intptr_t))
+        check_host_unregister_cuda("tridiag: d_vec", successCUDA)
+      else
         deallocate(v_row, v_col, u_row, u_col, vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"tridiag: error when deallocating "//errorMessage
