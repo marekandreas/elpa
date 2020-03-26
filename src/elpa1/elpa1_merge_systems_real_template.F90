@@ -115,6 +115,7 @@
       character(200)                              :: errorMessage
       integer(kind=ik)                            :: gemm_dim_k, gemm_dim_l, gemm_dim_m
 
+      integer(kind=c_intptr_t)                    :: num
       integer(kind=C_intptr_T)                    :: qtmp1_dev, qtmp2_dev, ev_dev
       logical                                     :: successCUDA
       integer(kind=c_intptr_t), parameter         :: size_of_datatype = size_of_&
@@ -629,13 +630,29 @@
         qtmp2 = 0 ! Not really needed
 
         if (useGPU) then
-          successCUDA = cuda_malloc(qtmp1_dev, gemm_dim_k * gemm_dim_l * size_of_datatype)
+          num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
+          successCUDA = cuda_host_register(int(loc(qtmp1),kind=c_intptr_t),num,&
+                        cudaHostRegisterDefault)
+          check_host_register_cuda("merge_systems: qtmp1", successCUDA)
+
+          successCUDA = cuda_malloc(qtmp1_dev, num)
           check_alloc_cuda("merge_systems: qtmp1_dev", successCUDA)
 
-          successCUDA = cuda_malloc(ev_dev, gemm_dim_l * gemm_dim_m * size_of_datatype)
+          num = (gemm_dim_l * gemm_dim_m) * size_of_datatype
+          successCUDA = cuda_host_register(int(loc(ev),kind=c_intptr_t),num,&
+                        cudaHostRegisterDefault)
+          check_host_register_cuda("merge_systems: ev", successCUDA)
+
+          successCUDA = cuda_malloc(ev_dev, num)
           check_alloc_cuda("merge_systems: ev_dev", successCUDA)
 
-          successCUDA = cuda_malloc(qtmp2_dev, gemm_dim_k * gemm_dim_m * size_of_datatype)
+
+          num = (gemm_dim_k * gemm_dim_m) * size_of_datatype
+          successCUDA = cuda_host_register(int(loc(qtmp2),kind=c_intptr_t),num,&
+                        cudaHostRegisterDefault)
+          check_host_register_cuda("merge_systems: qtmp2", successCUDA)
+
+          successCUDA = cuda_malloc(qtmp2_dev, num)
           check_alloc_cuda("merge_systems: qtmp2_dev", successCUDA)
         endif
 
@@ -860,21 +877,31 @@
           enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
         enddo    !do np = 1, npc_n
 
+        if(useGPU) then
+          successCUDA = cuda_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
+          check_host_unregister_cuda("merge_systems: qtmp1", successCUDA)
+
+          successCUDA = cuda_free(qtmp1_dev)
+          check_dealloc_cuda("merge_systems: qtmp1_dev", successCUDA)
+          
+          successCUDA = cuda_host_unregister(int(loc(qtmp2),kind=c_intptr_t))
+          check_host_unregister_cuda("merge_systems: qtmp2", successCUDA)
+
+          successCUDA = cuda_free(qtmp2_dev)
+          check_dealloc_cuda("merge_systems: qtmp2_dev", successCUDA)
+
+          successCUDA = cuda_host_unregister(int(loc(ev),kind=c_intptr_t))
+          check_host_unregister_cuda("merge_systems: ev", successCUDA)
+
+          successCUDA = cuda_free(ev_dev)
+          check_dealloc_cuda("merge_systems: ev_dev", successCUDA)
+        endif
+
         deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"merge_systems: error when deallocating ev "//errorMessage
           stop 1
         endif
-
-        if(useGPU) then
-          successCUDA = cuda_free(qtmp1_dev)
-          check_dealloc_cuda("merge_systems: qtmp1_dev", successCUDA)
-          successCUDA = cuda_free(qtmp2_dev)
-          check_dealloc_cuda("merge_systems: qtmp2_dev", successCUDA)
-          successCUDA = cuda_free(ev_dev)
-          check_dealloc_cuda("merge_systems: ev_dev", successCUDA)
-        endif
-
       endif !very outer test (na1==1 .or. na1==2)
 #ifdef WITH_OPENMP
       deallocate(z_p, stat=istat, errmsg=errorMessage)
