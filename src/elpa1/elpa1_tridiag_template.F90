@@ -157,9 +157,9 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       integer(kind=c_intptr_t)                      :: num
       MATH_DATATYPE(kind=rck), allocatable          :: tmp(:)
-      MATH_DATATYPE(kind=rck), allocatable          :: v_row(:), & ! used to store calculated Householder Vector
+      MATH_DATATYPE(kind=rck), pointer              :: v_row(:), & ! used to store calculated Householder Vector
                                                        v_col(:)   ! the same Vector, but transposed 
-      MATH_DATATYPE(kind=rck), allocatable          :: u_col(:), u_row(:)
+      MATH_DATATYPE(kind=rck), pointer              :: u_col(:), u_row(:)
 
       ! the following two matrices store pairs of vectors v and u calculated in each step
       ! at most max_stored_uv Vector pairs are stored, than the matrix A_i is explicitli updated
@@ -280,6 +280,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         call check_alloc("tridiag_&
         &MATH_DATATYPE ", "uv_stored_cols", istat, errorMessage)
 
+      if (useGPU) then
+        num = (max_local_rows+1) * size_of_datatype
         successCUDA = cuda_malloc_host(v_row_host,num)
         check_alloc_cuda("tridiag: v_row_host", successCUDA)
 
@@ -358,6 +360,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         call check_alloc("tridiag_&
         &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
         
+      endif
+
 #ifdef WITH_OPENMP
       allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
       call check_alloc("tridiag_&
@@ -453,7 +457,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, 
             ! (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
 
-            successCUDA = cuda_memcpy(int(loc(v_row(1)),kind=c_intptr_t), &
+            successCUDA = cuda_memcpy(int(loc(v_row),kind=c_intptr_t), &
                                       a_dev + a_offset, (l_rows)* size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag a_dev 1", successCUDA)
           else
@@ -611,17 +615,19 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                                     int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                                     ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),         &
-                                    v_row(l_row_beg), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
+                                    v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
 
                 if (i/=j) then
                   if (isSkewsymmetric) then
-                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                        int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                                         -ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), &
                                         v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
                                         ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
 
                   else
-                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                    call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                        int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                                         ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), &
                                         v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
                                         ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
@@ -1119,6 +1125,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         stop 1
       endif
 
+
       if (useGPU) then
         successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
         check_host_unregister_cuda("tridiag: a_mat", successCUDA)
@@ -1157,6 +1164,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           print *,"tridiag: error when deallocating "//errorMessage
           stop 1
         endif
+      endif
 
       call obj%timer%stop("tridiag_&
       &MATH_DATATYPE&
