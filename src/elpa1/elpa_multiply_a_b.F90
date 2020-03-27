@@ -465,6 +465,7 @@
        stop
       endif
 
+
       call obj%timer%stop("elpa_mult_at_b_&
       &MATH_DATATYPE&
       &_&
