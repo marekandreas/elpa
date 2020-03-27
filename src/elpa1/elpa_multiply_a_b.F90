@@ -469,5 +469,4 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &")
-
+      &"//gpuString)

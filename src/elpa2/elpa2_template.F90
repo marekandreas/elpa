@@ -1,3 +1,4 @@
+#if 0
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -49,6 +50,7 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+#endif
 
 #include "elpa/elpa_simd_constants.h"
 
