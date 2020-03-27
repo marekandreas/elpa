@@ -502,49 +502,23 @@
       if (useGPU) then
         num =  (stripe_width*a_dim2*stripe_count)* size_of_datatype
         successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count* size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMalloc aIntern_dev "//errorMessage
-          stop 1
-        endif
+        check_alloc_cuda("trans_ev_tridi_to_band: aIntern_dev", successCUDA)
 
         successCUDA = cuda_memset(aIntern_dev , 0, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMemset aIntern_dev "//errorMessage
-          stop 1
-        endif
+        check_memset_cuda("trans_ev_tridi_to_band: aIntern_dev", successCUDA)
 
         ! "row_group" and "row_group_dev" are needed for GPU optimizations
         successCUDA = cuda_malloc_host(row_group_host,l_nev*nblk*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMallocHost row_group_host"
-          stop 1
-        endif
-
+        check_host_alloc_cuda("trans_ev_tridi_to_band: row_group_host", successCUDA)
         call c_f_pointer(row_group_host, row_group, (/l_nev,nblk/))
 
         row_group(:, :) = 0.0_rck
         num =  (l_nev*nblk)* size_of_datatype
         successCUDA = cuda_malloc(row_group_dev, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMalloc row_group_dev "//errorMessage
-          stop 1
-        endif
+        check_alloc_cuda("trans_ev_tridi_to_band: row_group_dev", successCUDA)
 
         successCUDA = cuda_memset(row_group_dev , 0, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMemset row_group_dev "//errorMessage
-          stop 1
-        endif
+        check_memset_cuda("trans_ev_tridi_to_band: row_group_dev", successCUDA)
 
       else ! GPUs are not used
 
@@ -1069,13 +1043,7 @@
 
       if (useGPU) then
         successCUDA = cuda_malloc_host(bcast_buffer_host,nbw*max_blk_size*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMallocHost bcast_buffer_host"
-          stop 1
-        endif
-
+        check_host_alloc_cuda("trans_ev_tridi_to_band: bcast_buffer_host", successCUDA)
         call c_f_pointer(bcast_buffer_host, bcast_buffer, (/nbw,max_blk_size/))
       else
         allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
@@ -1092,37 +1060,17 @@
       if (useGPU) then
         num =  ( nbw * max_blk_size) * size_of_datatype
         successCUDA = cuda_malloc(bcast_buffer_dev, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMalloc bcast_buffer_dev"
-          stop 1
-        endif
+        check_alloc_cuda("trans_ev_tridi_to_band: bcast_buffer_dev", successCUDA)
 
         successCUDA = cuda_memset( bcast_buffer_dev, 0, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMemset bcast_buffer_dev"
-          stop 1
-        endif
+        check_memset_cuda("trans_ev_tridi_to_band: bcast_buffer_dev", successCUDA)
 
         num =  (max_blk_size)* size_of_datatype
         successCUDA = cuda_malloc( hh_tau_dev, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMalloc hh_tau_dev"
-          stop 1
-        endif
+        check_alloc_cuda("trans_ev_tridi_to_band: hh_tau_dev", successCUDA)
 
         successCUDA = cuda_memset( hh_tau_dev, 0, num)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error in cudaMemset hh_tau_dev"
-          stop 1
-        endif
+        check_memset_cuda("trans_ev_tridi_to_band: hh_tau_dev", successCUDA)
       endif ! useGPU
 
       current_tv_off = 0 ! Offset of next row to be broadcast
@@ -1226,12 +1174,7 @@
                                        nbw * current_local_n *    &
                                        size_of_datatype, &
                                        cudaMemcpyHostToDevice)
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_tridi_to_band_&
-              &MATH_DATATYPE&
-              &: error in cudaMemcpy bcast_buffer_dev H2D"
-              stop 1
-            endif
+            check_memcpy_cuda("trans_ev_tridi_to_band: bcast_buffer -> bcast_buffer_dev", successCUDA)
 
             call extract_hh_tau_&
                  &MATH_DATATYPE&
@@ -1247,12 +1190,7 @@
           bcast_buffer(:,1) = 0.0_rck
           if (useGPU) then
             successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * size_of_datatype)
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_tridi_to_band_&
-              &MATH_DATATYPE&
-              &: error in cudaMemset bcast_buffer_dev"
-              stop 1
-            endif
+            check_memset_cuda("trans_ev_tridi_to_band: bcast_buffer_dev", successCUDA)
 
             call extract_hh_tau_&
                  &MATH_DATATYPE&
@@ -1326,12 +1264,7 @@
                                            int(loc(bottom_border_recv_buffer(1,1,i)),kind=c_intptr_t), &
                                            stripe_width*nbw*  size_of_datatype,    &
                                            cudaMemcpyHostToDevice)
-                if (.not.(successCUDA)) then
-                  print *,"trans_ev_tridi_to_band_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMemcpy aIntern_dev H2D"
-                  stop 1
-                endif
+                check_memcpy_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successCUDA)
 
               else
                 aIntern(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
@@ -1415,12 +1348,7 @@
                successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , int(loc(top_border_recv_buffer(1,1,i)),kind=c_intptr_t),  &
                                            stripe_width*top_msg_length* size_of_datatype,      &
                                            cudaMemcpyHostToDevice)
-               if (.not.(successCUDA)) then
-                 print *,"trans_ev_tridi_to_band_&
-                         &MATH_DATATYPE&
-                         &: error in cudaMemcpy aIntern_dev H2D"
-                 stop 1
-                endif
+                check_memcpy_cuda("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successCUDA)
              else ! useGPU
                aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
              endif ! useGPU
@@ -1503,12 +1431,7 @@
                successCUDA =  cuda_memcpy( int(loc(bottom_border_send_buffer(1,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                           stripe_width * bottom_msg_length * size_of_datatype,      &
                                           cudaMemcpyDeviceToHost)
-               if (.not.(successCUDA)) then
-                 print *,"trans_ev_tridi_to_band_&
-                 &MATH_DATATYPE&
-                 &: error in cudaMemcpy aIntern_dev D2H"
-                 stop 1
-               endif
+                check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successCUDA)
              else
                bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
              endif
@@ -1608,12 +1531,7 @@
             successCUDA =  cuda_memcpy(int(loc(bottom_border_send_buffer(1,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
                                          stripe_width*bottom_msg_length* size_of_datatype,  &
                                          cudaMemcpyDeviceToHost)
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_tridi_to_band_&
-              &MATH_DATATYPE&
-              &: error cudaMemcpy aIntern_dev D2H"
-              stop 1
-            endif
+                check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successCUDA)
           else
             bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
           endif
@@ -1699,12 +1617,7 @@
             successCUDA =  cuda_memcpy( aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,1,i)),kind=c_intptr_t),  &
                                        stripe_width * top_msg_length * size_of_datatype,   &
                cudaMemcpyHostToDevice)
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_tridi_to_band_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy aIntern_dev H2D"
-              stop 1
-            endif
+            check_memcpy_cuda("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successCUDA)
           else
             aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
           endif
@@ -1824,13 +1737,7 @@
           successCUDA =  cuda_memcpy( int(loc(top_border_send_buffer(:,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                      stripe_width*nbw * size_of_datatype, &
                                      cudaMemcpyDeviceToHost)
-          if (.not.(successCUDA)) then
-            print *,"trans_ev_tridi_to_band_&
-                    &MATH_DATATYPE&
-                    &: error in cudaMemcpy aIntern_dev D2H"
-            stop 1
-          endif
-
+          check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> top_border_send_buffer", successCUDA)
         else
           top_border_send_buffer(:,1:nbw,i) = aIntern(:,a_off+1:a_off+nbw,i)
         endif
@@ -2099,12 +2006,7 @@
                num = stripe_width*this_chunk*size_of_datatype
                successCUDA = cuda_memcpy(aIntern_dev+dev_offset,aIntern_dev+dev_offset_1,num,cudaMemcpyDeviceToDevice)
 
-               if (.not. successCUDA) then
-                 print *,"trans_ev_tridi_to_band_&
-                   &MATH_DATATYPE&
-                   &: error cudaMemcpy aIntern_dev D2D"
-                 stop 1
-               end if
+               check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> aIntern_dev", successCUDA)
              end do
            else ! not useGPU
              do j = top_msg_length+1, top_msg_length+next_local_n
@@ -2244,12 +2146,7 @@
        nullify(bcast_buffer)
 
        successCUDA = cuda_free_host(bcast_buffer_host)
-       if (.not.(successCUDA)) then
-         print *,"trans_ev_band_to_full_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFreeHost bcast_buffer_host"
-         stop 1
-       endif
+       check_host_dealloc_cuda("trans_ev_tridi_to_band: bcast_buffer_host", successCUDA)
      else
        deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
@@ -2294,44 +2191,21 @@
 
      if (useGPU) then
        successCUDA = cuda_free(aIntern_dev)
-       if (.not.(successCUDA)) then
-         print *,"trans_ev_tridi_to_band_complex: error in cudaFree aIntern_dev"
-         stop 1
-       endif
+       check_dealloc_cuda("trans_ev_tridi_to_band: aIntern_dev", successCUDA)
 
        successCUDA = cuda_free(hh_tau_dev)
-       if (.not.(successCUDA)) then
-         print *,"trans_ev_tridi_to_band_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree hh_tau_dev"
-         stop 1
-       endif
+       check_dealloc_cuda("trans_ev_tridi_to_band: hh_tau_dev", successCUDA)
 
        nullify(row_group)
 
        successCUDA = cuda_free_host(row_group_host)
-       if (.not.(successCUDA)) then
-         print *,"trans_ev_band_to_full_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFreeHost row_group_host"
-         stop 1
-       endif
+       check_host_dealloc_cuda("trans_ev_tridi_to_band: row_group_host", successCUDA)
 
        successCUDA = cuda_free(row_group_dev)
-       if (.not.(successCUDA)) then
-         print *,"trans_ev_tridi_to_band_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree row_group_dev"
-         stop 1
-       endif
+       check_dealloc_cuda("trans_ev_tridi_to_band: row_group_dev", successCUDA)
 
        successCUDA =  cuda_free(bcast_buffer_dev)
-       if (.not.(successCUDA)) then
-         print *,"trans_ev_tridi_to_band_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree bcast_buffer_dev"
-         stop 1
-       endif
+       check_dealloc_cuda("trans_ev_tridi_to_band: bcast_buffer_dev", successCUDA)
      endif ! useGPU
 
 
