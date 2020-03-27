@@ -290,6 +290,11 @@
         successCUDA = cuda_malloc(a_dev, lda*na_cols* size_of_datatype)
         check_alloc_cuda("bandred: a_dev", successCUDA)
 
+        successCUDA = cuda_host_register(int(loc(vav),kind=c_intptr_t), &
+                      nbw * nbw * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("bandred: vav", successCUDA)
+
         successCUDA = cuda_malloc(vav_dev, nbw*nbw* size_of_datatype)
         check_alloc_cuda("bandred: vav_dev", successCUDA)
       endif ! useGPU
@@ -1566,6 +1571,9 @@
 
        successCUDA = cuda_free(tmat_dev)
        check_dealloc_cuda("bandred: tmat_dev ", successCUDA)
+
+       successCUDA = cuda_host_unregister(int(loc(vav),kind=c_intptr_t))
+       check_host_unregister_cuda("bandred: vav", successCUDA)
 
        if (associated(umcCUDA)) then
          nullify(umcCUDA)
