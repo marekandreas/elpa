@@ -197,57 +197,26 @@
       if (useGPU) then
         ! copy q_mat to q_dev
         successCUDA = cuda_malloc(q_dev,ldq*matrixCols*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc q_dev"
-        endif
+        check_alloc_cuda("trans_ev_band_to_full: q_dev", successCUDA)
 
         successCUDA = cuda_host_register(int(loc(q_mat),kind=c_intptr_t),&
                       ldq*matrixCols*size_of_datatype,cudaHostRegisterDefault)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaHostRegister q_mat"
-          stop 1
-        endif
+        check_host_register_cuda("trans_ev_band_to_full: q_mat", successCUDA)
 
         successCUDA = cuda_memcpy(q_dev,int(loc(q_mat),kind=c_intptr_t),&
                       ldq*matrixCols*size_of_datatype,cudaMemcpyHostToDevice)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMemcpy, q_mat H2D"
-        endif
+        check_memcpy_cuda("trans_ev_band_to_full: q_mat -> q_dev", successCUDA)
 
         successCUDA = cuda_malloc_host(tmp1_host,max_local_cols*cwy_blocking*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMallocHost tmp1_host"
-          stop 1
-        endif
-
+        check_host_alloc_cuda("trans_ev_band_to_full: tmp1_host", successCUDA)
         call c_f_pointer(tmp1_host, tmp1, (/max_local_cols*cwy_blocking/))
 
         successCUDA = cuda_malloc_host(tmp2_host,max_local_cols*cwy_blocking*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMallocHost tmp2_host"
-          stop 1
-        endif
-
+        check_host_alloc_cuda("trans_ev_band_to_full: tmp2_host", successCUDA)
         call c_f_pointer(tmp2_host, tmp2, (/max_local_cols*cwy_blocking/))
 
         successCUDA = cuda_malloc_host(hvm_host,max_local_rows*cwy_blocking*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMallocHost hvm_host"
-          stop 1
-        endif
-
+        check_host_alloc_cuda("trans_ev_band_to_full: hvm_host", successCUDA)
         call c_f_pointer(hvm_host, hvm, (/max_local_rows,cwy_blocking/))
       else ! useGPU
         allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
@@ -311,28 +280,13 @@
 
       if (useGPU) then
         successCUDA = cuda_malloc(hvm_dev,max_local_rows*cwy_blocking*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc hvm_dev"
-          stop 1
-        endif
+        check_alloc_cuda("trans_ev_band_to_full: hvm_dev", successCUDA)
 
         successCUDA = cuda_malloc(tmp_dev,max_local_cols*cwy_blocking*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc tmp_dev"
-          stop 1
-        endif
+        check_alloc_cuda("trans_ev_band_to_full: tmp_dev", successCUDA)
 
         successCUDA = cuda_malloc(tmat_dev,cwy_blocking*cwy_blocking*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc tmat_dev"
-          stop 1
-        endif
+        check_alloc_cuda("trans_ev_band_to_full: tmat_dev", successCUDA)
       endif
 
       hvm = 0.0_rck ! Must be set to 0 !!!
@@ -450,12 +404,7 @@
           if (useGPU) then
             successCUDA = cuda_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
                           max_local_rows*cwy_blocking*size_of_datatype, cudaMemcpyHostToDevice)
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy hvm H2D"
-              stop 1
-            endif
+            check_memcpy_cuda("trans_ev_band_to_full: hvm -> hvm_dev", successCUDA)
 
             call obj%timer%start("cublas")
             call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
@@ -467,12 +416,7 @@
             ! copy data from device to host for a later MPI_ALLREDUCE
             successCUDA = cuda_memcpy(int(loc(tmp1),kind=c_intptr_t), &
                           tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy tmp1 D2H"
-              stop 1
-            endif
+            check_memcpy_cuda("trans_ev_band_to_full: tmp_dev -> tmp1", successCUDA)
 #endif /* WITH_MPI */
 
           else
@@ -497,23 +441,11 @@
           if (useGPU) then
             successCUDA = cuda_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                           l_cols*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
-
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy tmp H2D"
-              stop 1
-            endif
+            check_memcpy_cuda("trans_ev_band_to_full: tmp2 -> tmp_dev", successCUDA)
 
             successCUDA = cuda_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                           cwy_blocking*cwy_blocking*size_of_datatype, cudaMemcpyHostToDevice)
-
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy tmat H2D"
-              stop 1
-            endif
+            check_memcpy_cuda("trans_ev_band_to_full: tmat_complete -> tmat_dev", successCUDA)
 
             call obj%timer%start("cublas")
             call cublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -539,13 +471,7 @@
           if (useGPU) then
             successCUDA = cuda_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                           cwy_blocking*cwy_blocking*size_of_datatype, cudaMemcpyHostToDevice)
-
-            if (.not.(successCUDA)) then
-              print *,"trans_ev_band_to_full_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy tmat H2D"
-              stop 1
-            endif
+            check_memcpy_cuda("trans_ev_band_to_full: tmat_complete -> tmat_dev", successCUDA)
 
             call obj%timer%start("cublas")
             call cublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -580,83 +506,36 @@
 
       if (useGPU) then
         successCUDA = cuda_free(hvm_dev)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaFree hvm_dev"
-          stop 1
-        endif
+        check_dealloc_cuda("trans_ev_band_to_full: hvm_dev", successCUDA)
 
         successCUDA = cuda_free(tmp_dev)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaFree tmp_dev"
-          stop 1
-        endif
+        check_dealloc_cuda("trans_ev_band_to_full: tmp_dev", successCUDA)
 
         successCUDA = cuda_free(tmat_dev)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaFree tmat_dev"
-          stop 1
-        endif
+        check_dealloc_cuda("trans_ev_band_to_full: tmat_dev", successCUDA)
 
         ! final transfer of q_dev
         successCUDA = cuda_memcpy(int(loc(q_mat),kind=c_intptr_t), q_dev, ldq*matrixCols*size_of_datatype, &
                       cudaMemcpyDeviceToHost)
-
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudamemcpy q_dev D2H"
-          stop 1
-        endif
+        check_memcpy_cuda("trans_ev_band_to_full: q_dev -> q_mat", successCUDA)
 
         successCUDA = cuda_free(q_dev)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaFree q_dev"
-          stop 1
-        endif
+        check_dealloc_cuda("trans_ev_band_to_full: q_dev", successCUDA)
 
         successCUDA = cuda_host_unregister(int(loc(q_mat),kind=c_intptr_t))
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaHostUnregister q_mat"
-          stop 1
-        endif
-
+        check_host_unregister_cuda("trans_ev_band_to_full: q_mat", successCUDA)
         nullify(tmp1)
         nullify(tmp2)
         nullify(hvm)
 
         successCUDA = cuda_free_host(tmp1_host)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaFreeHost tmp1_host"
-          stop 1
-        endif
+        check_host_dealloc_cuda("trans_ev_band_to_full: tmp1_host", successCUDA)
 
         successCUDA = cuda_free_host(tmp2_host)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaFreeHost tmp2_host"
-          stop 1
-        endif
+        check_host_dealloc_cuda("trans_ev_band_to_full: tmp2_host", successCUDA)
 
         successCUDA = cuda_free_host(hvm_host)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaFreeHost hvm_host"
-          stop 1
-        endif
+        check_host_dealloc_cuda("trans_ev_band_to_full: hvm_host", successCUDA)
       else ! useGPU
         deallocate(tmp1, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
