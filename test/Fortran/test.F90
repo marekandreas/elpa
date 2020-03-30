@@ -575,9 +575,9 @@ program test
    assert_elpa_ok(error_elpa)
 
    if (layout .eq. 'C') then
-     call e%set("matrix_order",COLUMN_MAJOR_ORDER)
+     call e%set("matrix_order",COLUMN_MAJOR_ORDER,error_elpa)
    else
-     call e%set("matrix_order",ROW_MAJOR_ORDER)
+     call e%set("matrix_order",ROW_MAJOR_ORDER,error_elpa)
    endif
 
 #ifdef WITH_MPI
