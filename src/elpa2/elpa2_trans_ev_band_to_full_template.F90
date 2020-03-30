@@ -218,6 +218,7 @@
         successCUDA = cuda_malloc_host(hvm_host,max_local_rows*cwy_blocking*size_of_datatype)
         check_host_alloc_cuda("trans_ev_band_to_full: hvm_host", successCUDA)
         call c_f_pointer(hvm_host, hvm, (/max_local_rows,cwy_blocking/))
+
       else ! useGPU
         allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
@@ -258,6 +259,13 @@
                 &MATH_DATATYPE&
                 &: error when allocating tmat_complete "//errorMessage
         stop 1
+      endif
+
+      if (useGPU) then
+        successCUDA = cuda_host_register(int(loc(tmat_complete),kind=c_intptr_t), &
+                      cwy_blocking * cwy_blocking * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_band_to_full: tmat_complete", successCUDA)
       endif
 
       if (blocking_factor > 1) then
@@ -536,6 +544,9 @@
 
         successCUDA = cuda_free_host(hvm_host)
         check_host_dealloc_cuda("trans_ev_band_to_full: hvm_host", successCUDA)
+
+        successCUDA = cuda_host_unregister(int(loc(tmat_complete),kind=c_intptr_t))
+        check_host_unregister_cuda("trans_ev_band_to_full: tmat_complete", successCUDA)
       else ! useGPU
         deallocate(tmp1, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
