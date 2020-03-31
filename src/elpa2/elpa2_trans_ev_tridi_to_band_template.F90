@@ -2139,7 +2139,13 @@
        stop 1
      endif
 
-
+     deallocate(result_recv_request, stat=istat, errmsg=errorMessage)
+     if (istat .ne. 0) then
+       print *,"trans_ev_tridi_to_band_&
+               &MATH_DATATYPE&
+               &: error when deallocating result_recv_request "//errorMessage
+       stop 1
+     endif
 
      deallocate(result_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
