@@ -997,6 +997,29 @@
       top_border_recv_buffer(:,:) = 0.0_rck
       bottom_border_send_buffer(:,:) = 0.0_rck
       bottom_border_recv_buffer(:,:) = 0.0_rck
+
+      if (useGPU) then
+        successCUDA = cuda_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw*max_threads * stripe_count * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_tridi_to_band: top_border_send_buffer", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(top_border_recv_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw*max_threads * stripe_count * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_tridi_to_band: top_border_recv_buffer", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(bottom_border_send_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw*max_threads * stripe_count * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_tridi_to_band: bottom_border_send_buffer", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw*max_threads * stripe_count * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer", successCUDA)
+      endif
+
       ! Initialize broadcast buffer
 
 #else /* WITH_OPENMP */
@@ -1037,6 +1060,28 @@
       top_border_recv_buffer(:,:,:) = 0.0_rck
       bottom_border_send_buffer(:,:,:) = 0.0_rck
       bottom_border_recv_buffer(:,:,:) = 0.0_rck
+
+      if (useGPU) then
+        successCUDA = cuda_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw* stripe_count * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_tridi_to_band: top_border_send_buffer", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(top_border_recv_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw* stripe_count * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_tridi_to_band: top_border_recv_buffer", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(bottom_border_send_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw* stripe_count * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_tridi_to_band: bottom_border_send_buffer", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw* stripe_count * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer", successCUDA)
+      endif
 #endif /* WITH_OPENMP */
 
       ! Initialize broadcast buffer
@@ -2094,13 +2139,62 @@
        stop 1
      endif
 
-     deallocate(result_recv_request, stat=istat, errmsg=errorMessage)
+
+
+     deallocate(result_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating result_recv_request "//errorMessage
+       &MATH_DATATYPE&
+       &: error when deallocating result_buffer "//errorMessage
        stop 1
      endif
+
+     if (useGPU) then
+       nullify(bcast_buffer)
+
+       successCUDA = cuda_free_host(bcast_buffer_host)
+       check_host_dealloc_cuda("trans_ev_tridi_to_band: bcast_buffer_host", successCUDA)
+     else
+       deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
+       if (istat .ne. 0) then
+         print *,"trans_ev_tridi_to_band_&
+                 &MATH_DATATYPE&
+                 &: error when deallocating bcast_buffer "//errorMessage
+         stop 1
+       endif
+     endif
+
+
+     if (useGPU) then
+       successCUDA = cuda_free(aIntern_dev)
+       check_dealloc_cuda("trans_ev_tridi_to_band: aIntern_dev", successCUDA)
+
+       successCUDA = cuda_free(hh_tau_dev)
+       check_dealloc_cuda("trans_ev_tridi_to_band: hh_tau_dev", successCUDA)
+
+       nullify(row_group)
+
+       successCUDA = cuda_free_host(row_group_host)
+       check_host_dealloc_cuda("trans_ev_tridi_to_band: row_group_host", successCUDA)
+
+       successCUDA = cuda_free(row_group_dev)
+       check_dealloc_cuda("trans_ev_tridi_to_band: row_group_dev", successCUDA)
+
+       successCUDA =  cuda_free(bcast_buffer_dev)
+       check_dealloc_cuda("trans_ev_tridi_to_band: bcast_buffer_dev", successCUDA)
+
+       successCUDA = cuda_host_unregister(int(loc(top_border_send_buffer),kind=c_intptr_t))
+       check_host_unregister_cuda("trans_ev_tridi_to_band: top_border_send_buffer", successCUDA)
+
+       successCUDA = cuda_host_unregister(int(loc(top_border_recv_buffer),kind=c_intptr_t))
+       check_host_unregister_cuda("trans_ev_tridi_to_band: top_border_recv_buffer", successCUDA)
+
+       successCUDA = cuda_host_unregister(int(loc(bottom_border_send_buffer),kind=c_intptr_t))
+       check_host_unregister_cuda("trans_ev_tridi_to_band: bottom_border_send_buffer", successCUDA)
+
+       successCUDA = cuda_host_unregister(int(loc(bottom_border_recv_buffer),kind=c_intptr_t))
+       check_host_unregister_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer", successCUDA)
+     endif ! useGPU
 
      deallocate(top_border_send_buffer, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
@@ -2134,29 +2228,6 @@
        stop 1
      endif
 
-     deallocate(result_buffer, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating result_buffer "//errorMessage
-       stop 1
-     endif
-
-     if (useGPU) then
-       nullify(bcast_buffer)
-
-       successCUDA = cuda_free_host(bcast_buffer_host)
-       check_host_dealloc_cuda("trans_ev_tridi_to_band: bcast_buffer_host", successCUDA)
-     else
-       deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating bcast_buffer "//errorMessage
-         stop 1
-       endif
-     endif
-
      deallocate(top_send_request, stat=istat, errmsg=errorMessage)
      if (istat .ne. 0) then
        print *,"trans_ev_tridi_to_band_&
@@ -2188,27 +2259,6 @@
                &: error when deallocating bottom_recv_request "//errorMessage
        stop 1
      endif
-
-     if (useGPU) then
-       successCUDA = cuda_free(aIntern_dev)
-       check_dealloc_cuda("trans_ev_tridi_to_band: aIntern_dev", successCUDA)
-
-       successCUDA = cuda_free(hh_tau_dev)
-       check_dealloc_cuda("trans_ev_tridi_to_band: hh_tau_dev", successCUDA)
-
-       nullify(row_group)
-
-       successCUDA = cuda_free_host(row_group_host)
-       check_host_dealloc_cuda("trans_ev_tridi_to_band: row_group_host", successCUDA)
-
-       successCUDA = cuda_free(row_group_dev)
-       check_dealloc_cuda("trans_ev_tridi_to_band: row_group_dev", successCUDA)
-
-       successCUDA =  cuda_free(bcast_buffer_dev)
-       check_dealloc_cuda("trans_ev_tridi_to_band: bcast_buffer_dev", successCUDA)
-     endif ! useGPU
-
-
      call obj%timer%stop("trans_ev_tridi_to_band_&
                          &MATH_DATATYPE&
                          &" // &
