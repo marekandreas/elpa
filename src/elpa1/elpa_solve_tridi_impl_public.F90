@@ -67,7 +67,7 @@
 
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)         :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)         :: na, nev, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE) :: d(obj%na), e(obj%na)
 #ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE) :: q(obj%local_nrows,*)
@@ -89,7 +89,7 @@
       na         = obj%na
       nev        = obj%nev
       nblk       = obj%nblk
-      ldq        = obj%local_nrows
+      matrixRows = obj%local_nrows
       matrixCols = obj%local_ncols
 
 #ifdef WITH_OPENMP
@@ -129,7 +129,7 @@
 
       call solve_tridi_&
       &PRECISION&
-      &_private_impl(obj, na, nev, d, e, q, ldq, nblk, matrixCols, &
+      &_private_impl(obj, na, nev, d, e, q, matrixRows, nblk, matrixCols, &
                mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success, &
                nrThreads)
 

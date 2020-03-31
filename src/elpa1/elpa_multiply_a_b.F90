@@ -105,7 +105,7 @@
       logical                       :: useGPU
       integer(kind=c_int)           :: gpu, numGPU
       integer(kind=ik)              :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-      integer(kind=ik)              :: nblk, lda, ldaCols, error
+      integer(kind=ik)              :: nblk, matrixRows, matrixCols, error
       integer(kind=c_intptr_t)      :: aux_dev, b_dev, tmp1_dev
       type(c_ptr)                   :: aux_host, tmp1_host
       integer(kind=c_intptr_t)      :: num
@@ -138,10 +138,10 @@
       &PRECISION&
       &"//gpuString)
 
-      na   = obj%na
-      nblk = obj%nblk
-      lda  = obj%local_nrows
-      ldaCols  = obj%local_ncols
+      na          = obj%na
+      nblk        = obj%nblk
+      matrixRows  = obj%local_nrows
+      matrixCols  = obj%local_ncols
 
       call obj%get("mpi_comm_rows",mpi_comm_rows,error)
       if (error .ne. ELPA_OK) then

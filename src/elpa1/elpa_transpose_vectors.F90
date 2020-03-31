@@ -106,7 +106,8 @@ subroutine ROUTINE_NAME&
    integer(kind=ik)                                  :: auxstride
    integer(kind=ik), intent(in)                      :: nrThreads
 
-   call obj%timer%start("ROUTINE_NAME&
+   call obj%timer%start("&
+           &ROUTINE_NAME&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &
@@ -222,7 +223,8 @@ subroutine ROUTINE_NAME&
 #endif
    deallocate(aux)
 
-   call obj%timer%stop("ROUTINE_NAME&
+   call obj%timer%stop("&
+           &ROUTINE_NAME&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &

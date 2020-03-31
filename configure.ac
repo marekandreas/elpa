@@ -104,30 +104,6 @@ if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
 
-
-dnl Scalapack tests
-AC_MSG_CHECKING(whether --enable-scalapack-tests is specified)
-AC_ARG_ENABLE([scalapack-tests],
-              AS_HELP_STRING([--enable-scalapack-tests],
-                             [build SCALAPACK test cases for performance comparison, needs MPI, default no.]),
-              [
-	       if test x"$enableval" = x"yes"; then
-	         enable_scalapack_tests=yes
-	       else
-	         enable_scalapack_tests=no
-	       fi
-	       ],
-              [enable_scalapack_tests="no"])
-AC_MSG_RESULT([$enable_scalapack_tests])
-if test x"${enable_scalapack_tests}" = x"yes"; then
-        if test x"$with_mpi" = x"no"; then
-                AC_MSG_ERROR([You cannot build the SCALAPCK test cases without MPI])
-        fi
-        AC_DEFINE([WITH_SCALAPACK_TESTS], [1], [build SCALAPACK test cases])
-fi
-AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"])
-
-
 dnl C
 AC_LANG_PUSH([C])
 
@@ -1423,6 +1399,100 @@ AM_CONDITIONAL([ENABLE_AUTOTUNING],[test x"$enable_autotuning" = x"yes"])
 if test x"${enable_autotuning}" = x"yes"; then
  AC_DEFINE([ENABLE_AUTOTUNING], [1], [enable autotuning functionality])
 fi
+
+dnl Scalapack tests
+AC_MSG_CHECKING(whether --enable-scalapack-tests is specified)
+AC_ARG_ENABLE([scalapack-tests],
+              AS_HELP_STRING([--enable-scalapack-tests],
+                             [build SCALAPACK test cases for performance comparison, needs MPI, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_scalapack_tests=yes
+	       else
+	         enable_scalapack_tests=no
+	       fi
+	       ],
+              [enable_scalapack_tests="no"])
+AC_MSG_RESULT([$enable_scalapack_tests])
+if test x"${enable_scalapack_tests}" = x"yes"; then
+        if test x"$with_mpi" = x"no"; then
+                AC_MSG_ERROR([You cannot build the SCALAPCK test cases without MPI])
+        fi
+        AC_DEFINE([WITH_SCALAPACK_TESTS], [1], [build SCALAPACK test cases])
+fi
+AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"])
+
+
+AC_MSG_CHECKING(whether matrix redistribution should be considered in autotuning)
+AC_ARG_ENABLE([autotune-redistribute-matrix],
+                AS_HELP_STRING([--enable-autotune-redistribute-matrix],
+			       [Allows ELPA during autotuning to re-distribute the matrix to find the best (ELPA internal) block size for block-cyclic distribution (Needs Scalapack functionality)]),
+                               [if test x"$enableval" = x"yes"; then
+                                  enable_autotune_redistribute_matrix=yes
+                                else
+                                  enable_autotune_redistribute_matrix=no
+                                fi],
+              [enable_autotune_redistribute_matrix=no])
+AC_MSG_RESULT([${enable_autotune_redistribute_matrix}])
+if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
+  if test x"${enable_scalapack_tests}" = x"no"; then
+    AC_MSG_ERROR([Please also set --enable_scalapack_tests in this case])
+  fi
+  if test x"${with_mpi}" = x"no"; then
+    AC_MSG_ERROR([For this option ELPA must be build with MPI enabled])
+  fi
+  AC_DEFINE([REDISTRIBUTE_MATRIX],[1],[enable matrix re-distribution during autotuning])
+fi
+
+
+
+
+dnl Scalapack tests
+AC_MSG_CHECKING(whether --enable-scalapack-tests is specified)
+AC_ARG_ENABLE([scalapack-tests],
+              AS_HELP_STRING([--enable-scalapack-tests],
+                             [build SCALAPACK test cases for performance comparison, needs MPI, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_scalapack_tests=yes
+	       else
+	         enable_scalapack_tests=no
+	       fi
+	       ],
+              [enable_scalapack_tests="no"])
+AC_MSG_RESULT([$enable_scalapack_tests])
+if test x"${enable_scalapack_tests}" = x"yes"; then
+        if test x"$with_mpi" = x"no"; then
+                AC_MSG_ERROR([You cannot build the SCALAPCK test cases without MPI])
+        fi
+        AC_DEFINE([WITH_SCALAPACK_TESTS], [1], [build SCALAPACK test cases])
+fi
+AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"])
+
+
+AC_MSG_CHECKING(whether matrix redistribution should be considered in autotuning)
+AC_ARG_ENABLE([autotune-redistribute-matrix],
+                AS_HELP_STRING([--enable-autotune-redistribute-matrix],
+			       [Allows ELPA during autotuning to re-distribute the matrix to find the best (ELPA internal) block size for block-cyclic distribution (Needs Scalapack functionality)]),
+                               [if test x"$enableval" = x"yes"; then
+                                  enable_autotune_redistribute_matrix=yes
+                                else
+                                  enable_autotune_redistribute_matrix=no
+                                fi],
+              [enable_autotune_redistribute_matrix=no])
+AC_MSG_RESULT([${enable_autotune_redistribute_matrix}])
+if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
+  if test x"${enable_scalapack_tests}" = x"no"; then
+    AC_MSG_ERROR([Please also set --enable_scalapack_tests in this case])
+  fi
+  if test x"${with_mpi}" = x"no"; then
+    AC_MSG_ERROR([For this option ELPA must be build with MPI enabled])
+  fi
+  AC_DEFINE([REDISTRIBUTE_MATRIX],[1],[enable matrix re-distribution during autotuning])
+fi
+
+
+
 
 AC_MSG_CHECKING(whether C tests should be provided)
 AC_ARG_ENABLE([c-tests],

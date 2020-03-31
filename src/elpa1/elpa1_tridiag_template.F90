@@ -57,7 +57,7 @@
 #undef SAVE_MATR
 #ifdef DOUBLE_PRECISION_REAL
 #define SAVE_MATR(name, iteration) \
-call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,name,iteration)
+call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_pcol, np_rows, np_cols, name, iteration)
 #else
 #define SAVE_MATR(name, iteration)
 #endif
@@ -69,12 +69,12 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 !> \param obj	      object of elpa_type
 !> \param na          Order of matrix
 !>
-!> \param a_mat(lda,matrixCols)    Distributed matrix which should be reduced.
+!> \param a_mat(matrixRows,matrixCols)    Distributed matrix which should be reduced.
 !>              Distribution is like in Scalapack.
 !>              Opposed to PDSYTRD, a(:,:) must be set completely (upper and lower half)
 !>              a(:,:) is overwritten on exit with the Householder vectors
 !>
-!> \param lda         Leading dimension of a
+!> \param matrixRows         Leading dimension of a
 !>
 !> \param nblk        blocksize of cyclic distribution, must be the same in both directions!
 !>
@@ -96,7 +96,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, a_mat, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, max_threads)
+    (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, max_threads)
       use cuda_functions
       use iso_c_binding
       use precision
@@ -108,16 +108,16 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)    :: obj
-      integer(kind=ik), intent(in)                  :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik), intent(in)                  :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
       logical, intent(in)                           :: useGPU, wantDebug
       integer(kind=c_int)                           :: skewsymmetric
       logical                                       :: isSkewsymmetric
 
       MATH_DATATYPE(kind=rck), intent(out)          :: tau(na)
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,*)
+      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(matrixRows,*)
 #else
-      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,matrixCols)
+      MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(matrixRows,matrixCols)
 #endif
       real(kind=rk), intent(out)                    :: d_vec(na)
       real(kind=rk), intent(out)                    :: e_vec(na)
@@ -415,7 +415,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
       if (useGPU) then
         ! allocate memmory for matrix A on the device and than copy the matrix
 
-        num = lda * matrixCols * size_of_datatype
+        num = matrixRows * matrixCols * size_of_datatype
 
         successCUDA = cuda_malloc(a_dev, num)
         check_alloc_cuda("tridiag: a_dev", successCUDA)
@@ -448,7 +448,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
           ! copy l_cols + 1 column of A to v_row
           if (useGPU) then
-            a_offset = l_cols * lda * size_of_datatype
+            a_offset = l_cols * matrixRows * size_of_datatype
             ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, 
             ! (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
 
@@ -609,21 +609,21 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                                     int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                    ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),         &
+                                    ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
                                     v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
 
                 if (i/=j) then
                   if (isSkewsymmetric) then
                     call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
                                         int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                        -ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), &
+                                        -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
                                         v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
                                         ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
 
                   else
                     call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
                                         int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                        ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND), &
+                                        ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
                                         v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
                                         ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
                   endif
@@ -640,20 +640,20 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                             int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                            ONE, a_mat(l_row_beg, l_col_beg), int(lda,kind=BLAS_KIND),         &
+                            ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
                             v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,                           &
                             ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
 
                 if (i/=j) then
                   if (isSkewsymmetric) then
-                    call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
-                                        -ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),               &
+                    call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                        -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
                                         v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, ONE, u_row(l_row_beg:max_local_rows), &
                                         1_BLAS_KIND)
 
                   else
                     call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
-                                        ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND),               &
+                                        ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
                                         v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, ONE, u_row(l_row_beg:max_local_rows), &
                                         1_BLAS_KIND)
                   endif
@@ -666,20 +666,20 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
           enddo  ! i=0,(istep-2)/tile_size
 
           if (useGPU) then
-            if(mat_vec_as_one_block) then
+            if (mat_vec_as_one_block) then
               ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
               ! this requires altering of the algorithm when later explicitly updating the matrix
               ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
               if (wantDebug) call obj%timer%start("cublas")
               call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
-                                        ONE, a_dev, lda,                   &
+                                        ONE, a_dev, matrixRows,                   &
                                         v_row_dev , 1,                          &
                                         ONE, u_col_dev, 1)
 
        ! todo: try with non transposed!!!
 !                 if(i/=j) then
 !                   call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
-!                                             ONE, a_dev + a_offset, lda,                        &
+!                                             ONE, a_dev + a_offset, matrixRows,                        &
 !                                             v_col_dev + (l_col_beg - 1) *                      &
 !                                             size_of_datatype, 1,                          &
 !                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
@@ -687,7 +687,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 !                 endif
               if (wantDebug) call obj%timer%stop("cublas")
 
-            else
+            else  ! mat_vec_as_one_block
               !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
               !larger matrices. In general, however, this algorithm is very simmilar to the one with CPU
               do i=0,(istep-2)/tile_size
@@ -698,12 +698,12 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                   l_row_beg = 1
                   l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
 
-                  a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
+                  a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                           size_of_datatype
 
                   call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                               l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                              ONE, a_dev + a_offset, lda,  &
+                              ONE, a_dev + a_offset, matrixRows,  &
                               v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
                               ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
               enddo
@@ -716,16 +716,16 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                   l_row_beg = 1
                   l_row_end = min(l_rows,i*l_rows_per_tile)
 
-                  a_offset = ((l_row_beg-1) + (l_col_beg - 1) * lda) * &
+                  a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                           size_of_datatype
                   if (isSkewsymmetric) then
                      call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                                 -ONE, a_dev + a_offset, lda, &
+                                 -ONE, a_dev + a_offset, matrixRows, &
                                  v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                                  ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
                   else
                      call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                                 ONE, a_dev + a_offset, lda, &
+                                 ONE, a_dev + a_offset, matrixRows, &
                                  v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                                  ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
                   endif
@@ -739,14 +739,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
             successCUDA = cuda_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
                           u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
-          endif
-
-!              call PRECISION_SYMV('U', l_cols,  &
-!                         1.d0, a_mat, ubound(a_mat,1),  &
-!                         v_row, 1,  &
-!                         0.d0, u_col, 1)
-
-!            endif ! useGPU
+          endif ! useGPU
 
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
@@ -902,8 +895,8 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                                           size_of_datatype,  &
                                           max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
                                           size_of_datatype,  &
-                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * lda) *            &
-                                          size_of_datatype , lda)
+                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
+                                          size_of_datatype , matrixRows)
                 if (wantDebug) call obj%timer%stop("cublas")
               endif
             else !useGPU
@@ -915,7 +908,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
                                    int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
                                    uv_stored_cols(l_col_beg,1), &
                                    int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
-                                   ONE, a_mat(l_row_beg,l_col_beg), int(lda,kind=BLAS_KIND))
+                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
               if (wantDebug) call obj%timer%stop("blas")
             endif !useGPU
           enddo
@@ -928,7 +921,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
               call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
                                         ONE, vu_stored_rows_dev, max_local_rows, &
                                         uv_stored_cols_dev, max_local_cols,  &
-                                        ONE, a_dev, lda)
+                                        ONE, a_dev, matrixRows)
               if (wantDebug) call obj%timer%stop("cublas")
             endif
           endif
@@ -939,7 +932,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
           if (useGPU) then
             !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
-             a_offset = ((l_rows - 1) + lda * (l_cols - 1)) * size_of_datatype
+             a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 
              successCUDA = cuda_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
                                        1 *  size_of_datatype, cudaMemcpyDeviceToHost)
@@ -981,7 +974,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
         if (my_prow==prow(1, nblk, np_rows)) then
           ! We use last l_cols value of loop above
           if(useGPU) then
-            successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
+            successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
             vrl = aux3(1)
@@ -1035,7 +1028,7 @@ call prmat(na,useGpu,a_mat,a_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
         if(useGPU) then
-          successCUDA = cuda_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (lda * (l_cols - 1)) * size_of_datatype, &
+          successCUDA = cuda_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
         else !useGPU
