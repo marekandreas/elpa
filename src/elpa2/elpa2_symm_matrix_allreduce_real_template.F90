@@ -86,7 +86,7 @@
       integer(kind=MPI_KIND)       :: mpierr
       real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
-      call obj%timer%start(" &
+      call obj%timer%start("&
               &ROUTINE_NAME&
               &" // &
               &PRECISION_SUFFIX&
