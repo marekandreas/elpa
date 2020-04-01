@@ -206,7 +206,7 @@
 
       call obj%get("is_skewsymmetric",skewsymmetric,error)
       if (error .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
+           print *,"Problem getting option for skewsymmetric settings. Aborting..."
            stop
       endif
       isSkewsymmetric = (skewsymmetric == 1)
@@ -288,20 +288,15 @@
 
         ! Here we convert the regular host array into a pinned host array
         successCUDA = cuda_malloc(a_dev, lda*na_cols* size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc a_dev 1"
-          stop 1
-        endif
+        check_alloc_cuda("bandred: a_dev", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(vav),kind=c_intptr_t), &
+                      nbw * nbw * size_of_datatype,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("bandred: vav", successCUDA)
 
         successCUDA = cuda_malloc(vav_dev, nbw*nbw* size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc vav_dev 1"
-          stop 1
-        endif
+        check_alloc_cuda("bandred: vav_dev", successCUDA)
       endif ! useGPU
 
       ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
@@ -314,7 +309,7 @@
       ! it can, however, be set by the user
       call obj%get("min_tile_size", min_tile_size ,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem setting option. Aborting..."
+        print *,"Problem setting option for min_tile_size. Aborting..."
         stop
       endif
       if(min_tile_size == 0) then
@@ -390,32 +385,17 @@
 
         successCUDA = cuda_host_register(int(loc(a_mat),kind=c_intptr_t), &
                       lda*na_cols*size_of_datatype, cudaHostRegisterDefault)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaHostRegister a_mat"
-          stop 1
-        endif
+        check_host_register_cuda("bandred: a_mat", successCUDA)
 
         cur_l_rows = 0
         cur_l_cols = 0
 
         successCUDA = cuda_memcpy(a_dev, int(loc(a_mat),kind=c_intptr_t), &
                       lda*na_cols*size_of_datatype, cudaMemcpyHostToDevice)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMemcpy a_dev 2"
-          stop 1
-        endif
+        check_memcpy_cuda("bandred: a_dev", successCUDA)
 
         successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc tmat_dev 1"
-          stop 1
-        endif
+        check_alloc_cuda("bandred: tmat_dev", successCUDA)
 
         istep = (na-1)/nbw
         n_cols = min(na,(istep+1)*nbw)-istep*nbw
@@ -448,40 +428,18 @@
         endif
 
         successCUDA = cuda_malloc_host(vmr_host,vmr_size*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMallocHost vmr_host"
-          stop 1
-        endif
-
+        check_host_alloc_cuda("bandred: vmr_host", successCUDA)
         call c_f_pointer(vmr_host, vmrCUDA, (/vmr_size/))
 
         successCUDA = cuda_malloc(vmr_dev, vmr_size*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc: vmr_dev2"
-          stop 1
-        endif
+        check_alloc_cuda("bandred: vmr_dev", successCUDA)
 
         successCUDA = cuda_malloc_host(umc_host,umc_size*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMallocHost umc_host"
-          stop 1
-        endif
-
+        check_host_alloc_cuda("bandred: umc_host", successCUDA)
         call c_f_pointer(umc_host, umcCUDA, (/umc_size/))
 
         successCUDA = cuda_malloc(umc_dev, umc_size*size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc umc_dev 2"
-          stop 1
-        endif
+        check_alloc_cuda("bandred: umc_dev", successCUDA)
 
       endif ! useGPU
 
@@ -569,12 +527,7 @@
                           int(lr_end*size_of_datatype,kind=c_intptr_t), &
                           int((lc_end - lc_start+1),kind=c_intptr_t),int(cudaMemcpyDeviceToHost,kind=c_int))
 
-            if (.not.(successCUDA)) then
-              print *,"bandred_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy2d"
-              stop 1
-            endif
+            check_memcpy_cuda("bandred: a_dev -> a_mat", successCUDA)
           endif
         endif ! useGPU
 
@@ -873,12 +826,7 @@
                            int(lr_end*size_of_datatype,kind=c_intptr_t), &
                            int((lc_end - lc_start+1),kind=c_intptr_t), &
                            int(cudaMemcpyHostToDevice,kind=c_int))
-             if (.not.(successCUDA)) then
-               print *, "bandred_&
-                        &MATH_DATATYPE&
-                        &: cuda memcpy a_dev failed ", istat
-               stop 1
-             endif
+             check_memcpy_cuda("bandred: a_mat -> a_dev", successCUDA)
            endif
          endif
 
@@ -954,12 +902,7 @@
                          int(lr_end*size_of_datatype,kind=c_intptr_t), &
                          int((lc_end - lc_start+1),kind=c_intptr_t), &
                          int(cudaMemcpyHostToDevice,kind=c_int))
-           if (.not.(successCUDA)) then
-             print *, "bandred_&
-                      &MATH_DATATYPE&
-                      &: cuda memcpy a_dev failed ", istat
-             stop 1
-           endif
+           check_memcpy_cuda("bandred: a_mat -> a_dev", successCUDA)
          endif
 
        endif
@@ -1119,40 +1062,20 @@
           if (useGPU) then
             successCUDA = cuda_memset(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
                           0, cur_l_rows*n_cols*size_of_datatype)
-            if (.not.(successCUDA)) then
-              print *,"bandred_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemset vmr_dev 3"
-              stop 1
-            endif
+            check_memset_cuda("bandred: vmr_dev", successCUDA)
 
             successCUDA = cuda_memcpy(vmr_dev, int(loc(vmrCUDA(1)),kind=c_intptr_t), &
                           cur_l_rows*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
-            if (.not.(successCUDA)) then
-              print *,"bandred_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy vmr_dev 3"
-              stop 1
-            endif
+            check_memcpy_cuda("bandred: vmrCUDA -> vmr_dev", successCUDA)
 
             successCUDA = cuda_memset(umc_dev, 0, l_cols*n_cols*size_of_datatype)
-            if (.not.(successCUDA)) then
-              print *,"bandred_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemset umc_dev 3"
-              stop 1
-            endif
+            check_memset_cuda("bandred: umc_dev", successCUDA)
 
             successCUDA = cuda_memcpy(umc_dev+l_cols*n_cols*size_of_datatype, &
                           int(loc(umcCUDA(1+l_cols*n_cols)),kind=c_intptr_t), &
                           (umc_size-l_cols*n_cols)*size_of_datatype, &
                           cudaMemcpyHostToDevice)
-            if (.not.(successCUDA)) then
-              print *,"bandred_&
-                      &MATH_DATATYPE&
-                      &: error in cudaMemcpy umc_dev 3"
-              stop 1
-            endif
+            check_memcpy_cuda("bandred: umcCUDA -> umc_dev", successCUDA)
           endif ! useGPU
 
           do i=0,(istep*nbw-1)/tile_size
@@ -1233,22 +1156,12 @@
               successCUDA = cuda_memcpy(int(loc(vmrCUDA(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
                             vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
                             (vmr_size-cur_l_rows*n_cols)*size_of_datatype, cudaMemcpyDeviceToHost)
-              if (.not.(successCUDA)) then
-                print *,"bandred_&
-                        &MATH_DATATYPE&
-                        &: error in cudaMemcpy vmr_dev 4"
-                stop 1
-              endif
+              check_memcpy_cuda("bandred: vmr_dev -> vmrCUDA", successCUDA)
             endif
 
             successCUDA = cuda_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
                           umc_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
-            if (.not.(successCUDA)) then
-              print *,"bandred_&
-              &MATH_DATATYPE&
-              &: error in cudaMemcpy umc_dev 4"
-              stop 1
-            endif
+            check_memcpy_cuda("bandred: umc_dev -> umcCUDA", successCUDA)
           endif ! useGPU
         endif ! l_cols>0 .and. l_rows>0
 
@@ -1351,21 +1264,11 @@
        if (useGPU) then
          successCUDA = cuda_memcpy(umc_dev, int(loc(umcCUDA(1)),kind=c_intptr_t), &
                        l_cols*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-                   &MATH_DATATYPE&
-                   &: error in cudaMemcpy umc_dev 5"
-           stop 1
-         endif
+         check_memcpy_cuda("bandred: umcCUDA -> umc_dev ", successCUDA)
 
          successCUDA = cuda_memcpy(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
                        nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-                   &MATH_DATATYPE&
-                   &: error in cudaMemcpy tmat_dev 2"
-           stop 1
-         endif
+         check_memcpy_cuda("bandred: tmat -> tmat_dev ", successCUDA)
 
          call obj%timer%start("cublas")
          call cublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
@@ -1385,12 +1288,7 @@
 
          successCUDA = cuda_memcpy(int(loc(vav),kind=c_intptr_t), &
                        vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-                   &MATH_DATATYPE&
-                   &: error in cudaMemcpy vav_dev3"
-           stop 1
-         endif
+         check_memcpy_cuda("bandred: vav_dev -> vav ", successCUDA)
        else ! useGPU
 
          call obj%timer%start("blas")
@@ -1438,12 +1336,7 @@
        if (useGPU) then
          successCUDA = cuda_memcpy(vav_dev, int(loc(vav),kind=c_intptr_t), &
                        nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-           &MATH_DATATYPE&
-           &: error in cudaMemcpy vav_dev4"
-           stop 1
-         endif
+         check_memcpy_cuda("bandred: vav -> vav_dev ", successCUDA)
        endif
 
        ! U = U - 0.5 * V * VAV
@@ -1479,12 +1372,7 @@
 
          successCUDA = cuda_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
                        umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-                   &MATH_DATATYPE&
-                   &: error in cudaMemcpy umc_dev 6"
-           stop 1
-         endif
+         check_memcpy_cuda("bandred: umc_dev -> umcCUDA ", successCUDA)
 
          ! Transpose umc -> umr (stored in vmr, second half)
          if (isSkewsymmetric) then
@@ -1508,12 +1396,7 @@
          successCUDA = cuda_memcpy(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
                        int(loc(vmrCUDA(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
                        (vmr_size-cur_l_rows*n_cols)*size_of_datatype, cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"bandred_&
-                   &MATH_DATATYPE&
-                   &: error in cudaMemcpy vmr_dev 5 "
-           stop 1
-         endif
+         check_memcpy_cuda("bandred: vmr -> vmrCUDA ", successCUDA)
 
        else ! useGPU
          call obj%timer%start("blas")
@@ -1675,83 +1558,41 @@
                      int(a_dev,kind=c_intptr_t), &
                      int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
                      cudaMemcpyDeviceToHost)
-       if (.not.(successCUDA)) then
-         print *,"bandred_&
-         &MATH_DATATYPE&
-         &: error in cudaMemcpy"
-         stop 1
-       endif
+       check_memcpy_cuda("bandred: a_dev -> a_mat ", successCUDA)
 
        successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
-       if (.not.(successCUDA)) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error in cudaHostUnregister a_mat"
-         stop 1
-       endif
+       check_host_unregister_cuda("bandred: a_mat ", successCUDA)
 
        successCUDA = cuda_free(a_dev)
-       if (.not.(successCUDA)) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree a_dev"
-         stop 1
-       endif
+       check_dealloc_cuda("bandred: a_dev ", successCUDA)
 
        successCUDA = cuda_free(vav_dev)
-       if (.not.(successCUDA)) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree vav_dev 4"
-         stop 1
-       endif
+       check_dealloc_cuda("bandred: vav_dev ", successCUDA)
 
        successCUDA = cuda_free(tmat_dev)
-       if (.not. successCUDA) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error in cudaFree tmat_dev"
-         stop 1
-       endif
+       check_dealloc_cuda("bandred: tmat_dev ", successCUDA)
+
+       successCUDA = cuda_host_unregister(int(loc(vav),kind=c_intptr_t))
+       check_host_unregister_cuda("bandred: vav", successCUDA)
 
        if (associated(umcCUDA)) then
          nullify(umcCUDA)
 
          successCUDA = cuda_free_host(umc_host)
-         if (.not.(successCUDA)) then
-           print *,"trans_ev_band_to_full_&
-                   &MATH_DATATYPE&
-                   &: error in cudaFreeHost umc_host"
-           stop 1
-         endif
+         check_host_dealloc_cuda("bandred: umc_host ", successCUDA)
 
          successCUDA = cuda_free(umc_dev)
-         if (.not. successCUDA) then
-           print *,"bandred_&
-                   &MATH_DATATYPE&
-                   &: error in cudaFree umc_dev 8"
-           stop
-         endif
+         check_dealloc_cuda("bandred: umc_dev ", successCUDA)
        endif
 
        if (associated(vmrCUDA)) then
          nullify(vmrCUDA)
 
          successCUDA = cuda_free_host(vmr_host)
-         if (.not.(successCUDA)) then
-           print *,"trans_ev_band_to_full_&
-                   &MATH_DATATYPE&
-                   &: error in cudaFreeHost vmr_host"
-           stop 1
-         endif
+         check_host_dealloc_cuda("bandred: vmr_host ", successCUDA)
 
          successCUDA = cuda_free(vmr_dev)
-         if (.not. successCUDA) then
-           print *,"bandred_&
-                   &MATH_DATATYPE&
-                   &: error in cudaFree vmr_dev 6"
-           stop 1
-         endif
+         check_dealloc_cuda("bandred: vmr_dev ", successCUDA)
        endif
      endif ! useGPU
 

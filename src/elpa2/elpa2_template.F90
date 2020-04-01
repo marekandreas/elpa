@@ -1,3 +1,4 @@
+#if 0
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -49,6 +50,7 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+#endif
 
 #include "elpa/elpa_simd_constants.h"
 
@@ -252,17 +254,17 @@
 
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_rows. Aborting..."
       stop
     endif
     call obj%get("mpi_comm_cols",mpi_comm_cols,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_cols. Aborting..."
       stop
     endif
     call obj%get("mpi_comm_parent",mpi_comm_all,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_parent. Aborting..."
       stop
     endif
 
@@ -323,13 +325,13 @@
 
     call obj%get(KERNEL_STRING,kernel,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for kernel settings. Aborting..."
       stop
     endif
  
     call obj%get("is_skewsymmetric",skewsymmetric,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for skewsymmetric settings. Aborting..."
       stop
     endif
 
@@ -337,7 +339,7 @@
 
     call obj%get("debug",debug,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for debug settings. Aborting..."
       stop
     endif
     wantDebug = debug == 1
@@ -345,7 +347,7 @@
     ! GPU settings
     call obj%get("gpu", gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option gpu settings. Aborting..."
       stop
     endif
 
@@ -396,35 +398,35 @@
     if(do_useGPU) then
       call obj%get("gpu_bandred", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option gpu_bandred settings. Aborting..."
         stop
       endif
       do_useGPU_bandred = (gpu == 1)
 
       call obj%get("gpu_tridiag_band", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_tridiag_band settings. Aborting..."
         stop
       endif
       do_useGPU_tridiag_band = (gpu == 1)
 
       call obj%get("gpu_solve_tridi", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_solve_tridi settings. Aborting..."
         stop
       endif
       do_useGPU_solve_tridi = (gpu == 1)
 
       call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_trans_ev_tridi_to_band settings. Aborting..."
         stop
       endif
       do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
  
       call obj%get("gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
         stop
       endif
       do_useGPU_trans_ev_band_to_full = (gpu == 1)
@@ -501,14 +503,14 @@
      ! we change it above? This is a mess and should be cleaned up
      call obj%get(KERNEL_STRING,kernelByUser,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for user kernel settings. Aborting..."
        stop
      endif
 
      if (kernelByUser .ne. kernel) then
        call obj%set(KERNEL_STRING, kernel, error)
        if (error .ne. ELPA_OK) then
-         print *,"Problem setting option. Aborting..."
+         print *,"Problem setting kernel. Aborting..."
          stop
        endif
      endif
@@ -525,7 +527,7 @@
      ! compare user chosen kernel with possible kernels
      call obj%get(KERNEL_STRING,kernelByUser,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for user kernel settings. Aborting..."
        stop
      endif
 
@@ -567,7 +569,7 @@
             if (obj%can_set(KERNEL_STRING, kernel) == ELPA_OK) then
               call obj%set(KERNEL_STRING, kernel, error)
               if (error .ne. ELPA_OK) then
-                print *,"Problem setting option. Aborting..."
+                print *,"Problem setting kernel. Aborting..."
                 stop
               endif
               if (my_pe == 0 ) write(error_unit,*) "ELPA decided to use ",elpa_int_value_to_string(KERNEL_STRING, kernel)
@@ -583,7 +585,7 @@
 #if REALCASE == 1
     call obj%get("qr",qr,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for qr settings. Aborting..."
       stop
     endif
     if (qr .eq. 1) then
@@ -613,15 +615,12 @@
     endif
 #endif /* REALCASE */
 
-
-
     if (.not. obj%eigenvalues_only) then
       q_actual => q(1:matrixRows,1:matrixCols)
     else
      allocate(q_dummy(1:matrixRows,1:matrixCols))
      q_actual => q_dummy(1:matrixRows,1:matrixCols)
     endif
-
 
     ! set the default values for each of the 5 compute steps
     do_bandred        = .true.
@@ -676,7 +675,7 @@
       !first check if the intermediate bandwidth was set by the user
       call obj%get("intermediate_bandwidth", nbw, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for intermediate_bandwidth. Aborting..."
         stop
       endif
 
@@ -853,7 +852,7 @@
 
        call obj%get("check_pd",check_pd,error)
        if (error .ne. ELPA_OK) then
-         print *,"Problem getting option. Aborting..."
+         print *,"Problem getting option for check_pd. Aborting..."
          stop
        endif
        if (check_pd .eq. 1) then
@@ -936,15 +935,6 @@
 
        if (.not.(success)) return
  
-!        ! We can now deallocate the stored householder vectors
-!        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
-!        if (istat .ne. 0) then
-!          print *, "solve_evp_&
-!          &MATH_DATATYPE&
-!          &_2stage_&
-!          &PRECISION " // ": error when deallocating hh_trans "//errorMessage
-!          stop 1
-!        endif
      endif ! do_trans_to_band
 
      ! the array q (currently) always resides on host even when using GPU
@@ -969,10 +959,6 @@
        , useQRActual  &
 #endif
        )
-!        print * , "After trans_ev_band_to_full: real part of q="
-!        do i=1,na
-!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
-!        enddo
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
 ! #ifdef DOUBLE_PRECISION_REAL
@@ -991,13 +977,6 @@
            matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
          endif
-!          print * , "After trans_ev_tridi_to_band: imaginary part of q="
-!          do i=1,na
-!            write(*,"(100g15.5)") ( q(i,j+na), j=1,na )
-!          enddo
-! #ifdef DOUBLE_PRECISION_REAL
-!        call prmat(na,useGPU,q(1:matrixRows, matrixCols+1:2*matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
-! #endif
               ! We can now deallocate the stored householder vectors
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
        if (istat .ne. 0) then
@@ -1008,48 +987,10 @@
          stop 1
        endif
      endif
-     if (isSkewsymmetric) then
-       ! first deal with the situation that first backward step was on GPU
-       if(do_useGPU_trans_ev_tridi_to_band) then
-          ! if the second backward step is to be performed, but not on GPU, we have
-          ! to transfer q to the host
-          !if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
-          !  successCUDA = cuda_memcpy(loc(q(1,matrixCols+1)), q_dev, matrixRows*matrixCols* size_of_datatype, &
-          !                            cudaMemcpyDeviceToHost)
-          !  if (.not.(successCUDA)) then
-          !    print *,"elpa2_template, error in copy to host"
-          !    stop 1
-          !  endif
-          !endif
-
-         ! if the last step is not required at all, or will be performed on CPU,
-         ! release the memmory allocated on the device
-         !if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
-         !  successCUDA = cuda_free(q_dev)
-         !endif
-       endif
-     endif
      
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")  
        if (isSkewsymmetric) then
-         !if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
-         !  ! copy to device if we want to continue on GPU
-         !  successCUDA = cuda_malloc(q_dev, matrixRows*matrixCols*size_of_datatype)
-!        !    if (.not.(successCUDA)) then
-!        !      print *,"elpa2_template, error in cuda_malloc"
-!        !      stop 1
-!        !    endif
-         !  successCUDA = cuda_memcpy(q_dev, loc(q(1,matrixCols+1)), matrixRows*matrixCols* size_of_datatype, &
-         !                            cudaMemcpyHostToDevice)
-         !  if (.not.(successCUDA)) then
-         !    print *,"elpa2_template, error in copy to device"
-         !    stop 1
-         !  endif
-         !endif
-! #ifdef DOUBLE_PRECISION_REAL
-!          call prmat(na,useGPU,q(matrixRows, matrixCols+1:2*matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',0)
-! #endif
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
 
@@ -1064,13 +1005,6 @@
          , useQRActual  &
 #endif
          )
-!          print * , "After trans_ev_band_to_full: imaginary part of q="
-!          do i=1,na
-!            write(*,"(100g15.5)") ( q(i,j+na), j=1,na )
-!          enddo
-! #ifdef DOUBLE_PRECISION_REAL
-!          call prmat(na,useGPU,q(1:matrixRows, matrixCols+1:2*matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',1)
-! #endif
        endif
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)

@@ -62,7 +62,10 @@
 #define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
 #define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
 #define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
-
+#define check_host_register_cuda(file, success) call check_host_register_CUDA_f(file, __LINE__, success)
+#define check_host_unregister_cuda(file, success) call check_host_unregister_CUDA_f(file, __LINE__, success)
+#define check_host_alloc_cuda(file, success) call check_host_alloc_CUDA_f(file, __LINE__, success)
+#define check_host_dealloc_cuda(file, success) call check_host_dealloc_CUDA_f(file, __LINE__, success)
 #endif
 
 #if REALCASE == 1
