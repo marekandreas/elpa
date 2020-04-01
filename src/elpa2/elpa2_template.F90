@@ -335,6 +335,13 @@
 
     isSkewsymmetric = (skewsymmetric == 1)
 
+    call obj%get("debug",debug,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option. Aborting..."
+      stop
+    endif
+    wantDebug = debug == 1
+
     ! GPU settings
     call obj%get("gpu", gpu,error)
     if (error .ne. ELPA_OK) then
@@ -586,14 +593,6 @@
     endif
 
 #endif
-
-    call obj%get("debug",debug,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    wantDebug = debug == 1
-
 
 
 #if REALCASE == 1
