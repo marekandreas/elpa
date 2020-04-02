@@ -299,6 +299,13 @@
 
       hvm = 0.0_rck ! Must be set to 0 !!!
       hvb = 0.0_rck ! Safety only
+      tmp1 = 0.0_rck
+      tmp2 = 0.0_rck
+      tmat_complete = 0.0_rck
+      if (blocking_factor > 1) then
+         t_tmp = 0.0_rck ! Must be set to 0 !!!
+         t_tmp2 = 0.0_rck
+      endif
       l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q_mat
 
       do istep=1,((na-1)/nbw-1)/blocking_factor + 1
@@ -485,7 +492,7 @@
             call cublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                                        n_cols, l_cols, ONE, tmat_dev, cwy_blocking, &
                                        tmp_dev, n_cols)
-            call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &  
+            call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
                                        -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq)
             call obj%timer%stop("cublas")
           else
