@@ -384,7 +384,7 @@
                   call obj%timer%start("blas")
                   call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
                                     int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), &
-                                    ONE, aux_mat(lrs:l_rows,1:nblk_mult), int(ubound(aux_mat,dim=1),kind=BLAS_KIND), &
+                                    ONE, aux_mat(lrs:lre,1:nstor), int(lre-lrs+1,kind=BLAS_KIND), &
                                     b(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, tmp1, &
                                     int(nstor,kind=BLAS_KIND))
                   call obj%timer%stop("blas")
