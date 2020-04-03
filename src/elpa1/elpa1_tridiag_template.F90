@@ -276,9 +276,13 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
       &MATH_DATATYPE ", "tmp", istat, errorMessage)
 
       ! allocate v_row 1 element longer to allow store and broadcast tau together with it
-        allocate(uv_stored_cols(max_local_cols,2*max_stored_uv), stat=istat, errmsg=errorMessage)
-        call check_alloc("tridiag_&
-        &MATH_DATATYPE ", "uv_stored_cols", istat, errorMessage)
+      allocate(uv_stored_cols(max_local_cols,2*max_stored_uv), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_&
+           &MATH_DATATYPE ", "uv_stored_cols", istat, errorMessage)
+
+      allocate(vu_stored_rows(max_local_rows,2*max_stored_uv), stat=istat, errmsg=errorMessage)
+      call check_alloc("tridiag_&
+           &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
 
       if (useGPU) then
         num = (max_local_rows+1) * size_of_datatype
@@ -302,16 +306,11 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
         call c_f_pointer(u_row_host,u_row,(/num/))
 
         num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
-        successCUDA = cuda_malloc_host(vu_stored_rows_host,num)
-        check_host_alloc_cuda("tridiag: vu_stored_rows_host", successCUDA)
-        call c_f_pointer(vu_stored_rows_host,vu_stored_rows,(/max_local_rows,2*max_stored_uv/))
+        successCUDA = cuda_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("tridiag: vu_stored_roes", successCUDA)
 
         num = (max_local_cols * 2*max_stored_uv) * size_of_datatype
-        !successCUDA = cuda_malloc_host(uv_stored_cols_host,num)
-        !check_alloc_cuda("tridiag: uv_stored_cols_host", successCUDA)
-
-        !call c_f_pointer(uv_stored_cols_host,uv_stored_cols,(/max_local_cols,2*max_stored_uv/))
-
         successCUDA = cuda_host_register(int(loc(uv_stored_cols),kind=c_intptr_t),num,&
                       cudaHostRegisterDefault)
         check_host_register_cuda("tridiag: uv_stored_cols", successCUDA)
@@ -350,10 +349,6 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
         allocate(u_row(max_local_rows), stat=istat, errmsg=errorMessage)
         call check_alloc("tridiag_&
         &MATH_DATATYPE ", "u_row", istat, errorMessage)
-
-        allocate(vu_stored_rows(max_local_rows,2*max_stored_uv), stat=istat, errmsg=errorMessage)
-        call check_alloc("tridiag_&
-        &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
         
       endif
 
@@ -1134,12 +1129,11 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
         check_host_dealloc_cuda("tridiag: u_row_host", successCUDA)
         nullify(u_row)
 
-        successCUDA = cuda_free_host(vu_stored_rows_host)
-        check_host_dealloc_cuda("tridiag: uv_stored_rows", successCUDA)
-        nullify(vu_stored_rows)
-
         successCUDA = cuda_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
         check_host_unregister_cuda("tridiag: uv_stored_cols", successCUDA)
+
+        successCUDA = cuda_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
+        check_host_unregister_cuda("tridiag: vu_stored_rows", successCUDA)
 
         successCUDA = cuda_host_unregister(int(loc(e_vec),kind=c_intptr_t))
         check_host_unregister_cuda("tridiag: e_vec", successCUDA)
@@ -1147,11 +1141,17 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
         successCUDA = cuda_host_unregister(int(loc(d_vec),kind=c_intptr_t))
         check_host_unregister_cuda("tridiag: d_vec", successCUDA)
       else
-        deallocate(v_row, v_col, u_row, u_col, vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
+        deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           print *,"tridiag: error when deallocating "//errorMessage
           stop 1
         endif
+      endif
+
+      deallocate(vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
+      if (istat .ne. 0) then
+        print *,"tridiag: error when deallocating "//errorMessage
+        stop 1
       endif
 
       call obj%timer%stop("tridiag_&

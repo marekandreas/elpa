@@ -386,7 +386,7 @@
     endif
 
     do_useGPU_bandred = do_useGPU
-    do_useGPU_tridiag_band = do_useGPU
+    do_useGPU_tridiag_band = .false.  ! not yet ported
     do_useGPU_solve_tridi = do_useGPU
     do_useGPU_trans_ev_tridi_to_band = do_useGPU
     do_useGPU_trans_ev_band_to_full = do_useGPU
@@ -403,12 +403,13 @@
       endif
       do_useGPU_bandred = (gpu == 1)
 
-      call obj%get("gpu_tridiag_band", gpu, error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for gpu_tridiag_band settings. Aborting..."
-        stop
-      endif
-      do_useGPU_tridiag_band = (gpu == 1)
+      ! not yet ported
+      !call obj%get("gpu_tridiag_band", gpu, error)
+      !if (error .ne. ELPA_OK) then
+      !  print *,"Problem getting option for gpu_tridiag_band settings. Aborting..."
+      !  stop
+      !endif
+      !do_useGPU_tridiag_band = (gpu == 1)
 
       call obj%get("gpu_solve_tridi", gpu, error)
       if (error .ne. ELPA_OK) then

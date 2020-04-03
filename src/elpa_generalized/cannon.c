@@ -86,6 +86,7 @@
 #ifdef WITH_MPI
 #include <mpi.h>
 
+#if 0
 #ifndef Add_
 #define numroc_ numroc
 #define dlacpy_ dlacpy
@@ -102,6 +103,7 @@
 #define pctranc_ pctranc
 #define pclacpy_ pclacpy
 #endif /* Add_ */
+#endif
 
 //***********************************************************************************************************
 

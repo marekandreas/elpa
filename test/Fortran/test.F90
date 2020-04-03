@@ -656,6 +656,14 @@ program test
 #endif
 
 #ifdef TEST_SOLVER_2STAGE
+#if TEST_GPU == 1
+#if defined TEST_REAL
+     kernel = ELPA_2STAGE_REAL_GPU
+#endif
+#if defined TEST_COMPLEX
+     kernel = ELPA_2STAGE_COMPLEX_GPU
+#endif
+#endif
      call e%set(KERNEL_KEY, kernel, error_elpa)
 #ifdef TEST_KERNEL
      assert_elpa_ok(error_elpa)
