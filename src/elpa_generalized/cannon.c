@@ -86,24 +86,39 @@
 #ifdef WITH_MPI
 #include <mpi.h>
 
-#if 0
-#ifndef Add_
+#ifdef NEED_NO_UNDERSCORE_TO_LINK_AGAINST_FORTRAN
 #define numroc_ numroc
 #define dlacpy_ dlacpy
-#define pdtran_ pdtran
-#define dlacpy_ dlacpy
-#define pdlacpy_ pdlacpy
 #define slacpy_ slacpy
-#define pstran_ pstran
-#define pslacpy_ pslacpy
 #define zlacpy_ zlacpy
-#define pztranc_ pztranc
-#define pzlacpy_ pzlacpy
 #define clacpy_ clacpy
+#define pdtran_ pdtran
+#define pstran_ pstran
+#define pztranc_ pztranc
 #define pctranc_ pctranc
+#define pdlacpy_ pdlacpy
+#define pslacpy_ pslacpy
+#define pzlacpy_ pzlacpy
 #define pclacpy_ pclacpy
-#endif /* Add_ */
 #endif
+
+#ifdef NEED_UNDERSCORE_TO_LINK_AGAINST_FORTRAN
+#define numroc_ numroc_
+#define dlacpy_ dlacpy_
+#define slacpy_ slacpy_
+#define zlacpy_ zlacpy_
+#define clacpy_ clacpy_
+#define pdtran_ pdtran_
+#define pstran_ pstran_
+#define pztranc_ pztranc_
+#define pctranc_ pctranc_
+#define pdlacpy_ pdlacpy_
+#define pslacpy_ pslacpy_
+#define pzlacpy_ pzlacpy_
+#define pclacpy_ pclacpy_
+#endif
+
+
 
 //***********************************************************************************************************
 

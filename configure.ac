@@ -947,6 +947,43 @@ dnl   __m128d h1 = _fjsp_neg_v2r8(q);
 dnl   return 0;
 dnl }
 AC_LANG_PUSH([C])
+dnl check whether one can link against Fortran programs from C
+AC_MSG_CHECKING(whether we need _ in C programs to link against a Fortran library)
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+int main(int argc, char **argv) {
+
+  int m, n, k, lda, ldb, ldc;
+  double alpha, beta;
+  double *a, *b, *c;
+  dgemm_("N", "N", &m, &n, &k, &alpha, a, lda, b, &ldb, &beta, c, &ldc);
+}
+ ])],
+   [can_link_with_=yes],
+   [can_link_with_=no]
+ )
+AC_MSG_RESULT([${can_link_with_}])
+if test x"$can_link_with_" = x"yes"; then
+  AC_DEFINE([NEED_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need to append an underscore])
+fi
+  
+AC_MSG_CHECKING(whether we do not need _ in C programs to link against a Fortran library)
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+int main(int argc, char **argv) {
+
+  int m, n, k, lda, ldb, ldc;
+  double alpha, beta;
+  double *a, *b, *c;
+  dgemm("N", "N", &m, &n, &k, &alpha, a, lda, b, &ldb, &beta, c, &ldc);
+}
+ ])],
+   [can_link_without_=yes],
+   [can_link_without_=no]
+ )
+AC_MSG_RESULT([${can_link_without_}])
+if test x"$can_link_with_" = x"yes"; then
+  AC_DEFINE([NEED_NO_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need not to append an underscore])
+fi
+
 
 if test x"${need_vsx}" = x"yes"; then
   AC_MSG_CHECKING(whether we can compile Altivec VSX with intrinsics in C)
