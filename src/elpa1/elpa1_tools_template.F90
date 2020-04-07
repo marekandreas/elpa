@@ -80,8 +80,8 @@
 #include "../general/precision_kinds.F90"
 
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      real(kind=rk)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
       integer(kind=ik)             :: noff, nlen, my_prow, np_rows, nblk
+      real(kind=rk)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
 
       integer(kind=ik)  :: nbs, nbe, jb, g_off, l_off, js, je
 

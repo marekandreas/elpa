@@ -695,15 +695,13 @@ module elpa_impl
         call self%get("mpi_comm_cols", mpi_comm_cols,error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
-        process_rowMPI = int(process_row,kind=c_int)
         call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), process_rowMPI, mpierr)
-        process_row = int(process_rowMPI,kind=MPI_KIND)
+        process_row = int(process_rowMPI,kind=c_int)
         call self%set("process_row", process_row, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 
-        process_colMPI = int(process_col,kind=c_int)
         call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), process_colMPI, mpierr)
-        process_col = int(process_colMPI,kind=MPI_KIND)
+        process_col = int(process_colMPI,kind=c_int)
         call self%set("process_col", process_col, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 

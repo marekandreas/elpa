@@ -212,7 +212,7 @@
 
 
       call self%get("solver", solver,error2)
-      call self%set("is_skewsymmetric",1)
+      call self%set("is_skewsymmetric",1,error2)
       if (error2 .ne. ELPA_OK) then
         print *,"Problem setting is_skewsymmetric. Aborting..."
 #ifdef USE_FORTRAN2008
@@ -503,7 +503,7 @@
       logical                             :: success_l
 
       call self%get("solver", solver,error2)
-      call self%set("is_skewsymmetric",1)
+      call self%set("is_skewsymmetric",1,error2)
       if (error2 .ne. ELPA_OK) then
          print *,"Problem getting solver option. Aborting..."
 #ifdef USE_FORTRAN2008

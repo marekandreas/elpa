@@ -227,13 +227,13 @@ program test
    as_complex(1:na_rows,1:na_cols) = a_complex(1:na_rows,1:na_cols)
 
    ! first set up and solve the brute force problem
-   e_complex => elpa_allocate()
+   e_complex => elpa_allocate(error_elpa)
    call set_basic_params(e_complex, na, nev, na_rows, na_cols, my_prow, my_pcol)
 
    call e_complex%set("timings",1, error_elpa)
 
-   call e_complex%set("debug",1)
-   call e_complex%set("gpu", 0)
+   call e_complex%set("debug",1,error_elpa)
+   call e_complex%set("gpu", 0,error_elpa)
    call e_complex%set("omp_threads", 8, error_elpa)
 
    assert_elpa_ok(e_complex%setup())
@@ -265,13 +265,13 @@ program test
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
    ! now run the skewsymmetric case
-   e_skewsymmetric => elpa_allocate()
+   e_skewsymmetric => elpa_allocate(error_elpa)
    call set_basic_params(e_skewsymmetric, na, nev, na_rows, na_cols, my_prow, my_pcol)
 
    call e_skewsymmetric%set("timings",1, error_elpa)
 
-   call e_skewsymmetric%set("debug",1)
-   call e_skewsymmetric%set("gpu", 0)
+   call e_skewsymmetric%set("debug",1,error_elpa)
+   call e_skewsymmetric%set("gpu", 0,error_elpa)
    call e_skewsymmetric%set("omp_threads",8, error_elpa)
 
    assert_elpa_ok(e_skewsymmetric%setup())
@@ -331,8 +331,8 @@ program test
 #ifdef WITH_MPI
     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
-   call elpa_deallocate(e_complex)
-   call elpa_deallocate(e_skewsymmetric)
+   call elpa_deallocate(e_complex,error_elpa)
+   call elpa_deallocate(e_skewsymmetric,error_elpa)
 
 
    !to do 
@@ -348,7 +348,7 @@ program test
    deallocate(as_skewsymmetric)
    deallocate(z_skewsymmetric)
    deallocate(ev_skewsymmetric)
-   call elpa_uninit()
+   call elpa_uninit(error_elpa)
 
 
 
