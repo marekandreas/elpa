@@ -488,12 +488,9 @@
       enddo ! istep=1,na,nblk
 
       deallocate(h1, h2, hvb, hvm, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_&
+      check_deallocate("trans_ev_&
         &MATH_DATATYPE&
-        &: error when deallocating hvm "//errorMessage
-        stop 1
-      endif
+        &: h1, h2, hvb, hvm", istat, errorMessage)
 
       if (useGPU) then
         !q_mat = q_dev
@@ -542,12 +539,9 @@
         check_dealloc_cuda("trans_ev", successCUDA)
       else
         deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_&
-          &MATH_DATATYPE&
-          &: error when deallocating hvm "//errorMessage
-          stop 1
-        endif
+        check_deallocate("trans_ev_&
+        &MATH_DATATYPE&
+        &: tmat, tmp1, tmp2", istat, errorMessage)
       endif
 
 

@@ -51,6 +51,7 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "../general/sanity.F90"
+#include "../general/error_checking_template.F90"
 
        use precision
        use elpa1_compute
@@ -129,39 +130,19 @@
        l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
        allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when allocating tmp1 "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa_invert_trm: tmp1", istat, errorMessage)
 
        allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when allocating tmp2 "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa_invert_trm: tmp2", istat, errorMessage)
 
        tmp1 = 0
        tmp2 = 0
 
        allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when allocating tmat1 "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa_invert_trm: tmat1", istat, errorMessage)
 
        allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when allocating tmat2 "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
 
        tmat1 = 0
        tmat2 = 0
@@ -276,12 +257,7 @@
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when deallocating tmp1 "//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa_invert_trm: tmp1, tmp2, tmat1, tmat2", istat, errorMessage)
 
        call obj%timer%stop("elpa_invert_trm_&
        &MATH_DATATYPE&

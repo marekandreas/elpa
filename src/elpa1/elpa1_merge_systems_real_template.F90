@@ -126,10 +126,7 @@
       integer(kind=ik)                            :: my_thread
 
       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"merge_systems: error when allocating z_p "//errorMessage
-        stop 1
-      endif
+      check_allocate("merge_systems: z_p",istat, errorMessage)
 #endif
 
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
@@ -609,22 +606,13 @@
         gemm_dim_m = MIN(max_strip,MAX(1,nqcols1))
 
         allocate(qtmp1(gemm_dim_k, gemm_dim_l), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when allocating qtmp1 "//errorMessage
-          stop 1
-        endif
+        check_allocate("merge_systems: qtmp1",istat, errorMessage)
 
         allocate(ev(gemm_dim_l,gemm_dim_m), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when allocating ev "//errorMessage
-          stop 1
-        endif
+        check_allocate("merge_systems: ev",istat, errorMessage)
 
         allocate(qtmp2(gemm_dim_k, gemm_dim_m), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when allocating qtmp2 "//errorMessage
-          stop 1
-        endif
+        check_allocate("merge_systems: qtmp2",istat, errorMessage)
 
         qtmp1 = 0 ! May contain empty (unset) parts
         qtmp2 = 0 ! Not really needed
@@ -898,17 +886,11 @@
         endif
 
         deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when deallocating ev "//errorMessage
-          stop 1
-        endif
+        check_deallocate("merge_systems: ev, qtmp1, qtmp2",istat, errorMessage)
       endif !very outer test (na1==1 .or. na1==2)
 #ifdef WITH_OPENMP
       deallocate(z_p, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"merge_systems: error when deallocating z_p "//errorMessage
-        stop 1
-      endif
+      check_deallocate("merge_systems: z_p",istat, errorMessage)
 #endif
 
       call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
@@ -966,10 +948,7 @@
 
           l_cols_out = COUNT(p_col_out(1:na)==my_pcol)
           allocate(qtmp(l_rows,l_cols_out), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"resort_ev: error when allocating qtmp "//errorMessage
-            stop 1
-          endif
+          check_allocate("resort_ev: qtmp",istat, errorMessage)
 
           nc = 0
 
@@ -1023,10 +1002,7 @@
           enddo
 
           deallocate(qtmp, stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"resort_ev: error when deallocating qtmp "//errorMessage
-            stop 1
-          endif
+          check_deallocate("resort_ev: qtmp",istat, errorMessage)
         end subroutine resort_ev_&
         &PRECISION
 

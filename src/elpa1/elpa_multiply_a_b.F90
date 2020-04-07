@@ -52,16 +52,9 @@
 ! Author: A. Marek, MPCDF
 
 
-!cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
-#define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
-#define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
-#define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
-#define check_host_register_cuda(file, success) call check_host_register_CUDA_f(file, __LINE__, success)
-#define check_host_unregister_cuda(file, success) call check_host_unregister_CUDA_f(file, __LINE__, success)
-#define check_host_alloc_cuda(file, success) call check_host_alloc_CUDA_f(file, __LINE__, success)
-#define check_host_dealloc_cuda(file, success) call check_host_dealloc_CUDA_f(file, __LINE__, success)
 
 #include "../general/sanity.F90"
+#include "../general/error_checking_template.F90"
 
       use elpa1_compute
       use elpa_mpi
@@ -232,25 +225,17 @@
         check_alloc_cuda("elpa_mult_at_b: tmp1_dev", successCUDA)
       else ! useGPU
         allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"elpa_mult_at_b_&
-          &MATH_DATATYPE&
-          &: error when allocating aux_mat "//errorMessage
-          stop
-        endif
+        check_allocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
       endif ! useGPU
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
-      call check_alloc("elpa_mult_at_b_&
-        &MATH_DATATYPE ", "aux_bc", istat, errorMessage)
+      check_allocate("elpa_mult_at_b: aux_bc", istat, errorMessage)
 
       allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
-      call check_alloc("elpa_mult_at_b_&
-        &MATH_DATATYPE ", "lrs_save", istat, errorMessage)
+      check_allocate("elpa_mult_at_b: lrs_save", istat, errorMessage)
 
       allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
-      call check_alloc("elpa_mult_at_b_&
-        &MATH_DATATYPE ", "lre_save", istat, errorMessage)
+      check_allocate("elpa_mult_at_b: lre_save", istat, errorMessage)
 
       a_lower = .false.
       a_upper = .false.
@@ -410,13 +395,7 @@
 #endif /* WITH_MPI */
 
               deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
-              if (istat .ne. 0) then
-               print *,"elpa_mult_at_b_&
-               &MATH_DATATYPE&
-               &: error when deallocating tmp1 "//errorMessage
-               stop
-              endif
-
+              check_deallocate("elpa_mult_at_b: tmp1, tmp2", istat, errorMessage)
             endif
 
             nr_done = nr_done+nstor
@@ -449,21 +428,11 @@
         check_dealloc_cuda("elpa_multiply_a_b: tmp1_dev", successCUDA)
       else ! useGPU
         deallocate(aux_mat, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-         print *,"elpa_mult_at_b_&
-         &MATH_DATATYPE&
-         &: error when deallocating aux_mat "//errorMessage
-         stop
-        endif
+        check_deallocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
       endif ! useGPU
 
       deallocate(aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-       print *,"elpa_mult_at_b_&
-       &MATH_DATATYPE&
-       &: error when deallocating aux_bc, lrs_save, lre_save "//errorMessage
-       stop
-      endif
+      check_deallocate("elpa_mult_at_b: aux_bc, lrs_save, lre_save", istat, errorMessage)
 
 
       call obj%timer%stop("elpa_mult_at_b_&

@@ -43,6 +43,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 
 #include "../general/sanity.F90"
+#include "../general/error_checking_template.F90"
      use elpa1_compute
      use elpa_utilities
      use elpa_mpi
@@ -145,38 +146,19 @@
       l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
       allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&: error when allocating tmp1 "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_cholesky: tmp1", istat, errorMessage)
 
       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&
-  &: error when allocating tmp2 "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_cholesky: tmp2", istat, errorMessage)
 
       tmp1 = 0
       tmp2 = 0
 
       allocate(tmatr(l_rows,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&
-  &: error when allocating tmatr "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_cholesky: tmatr", istat, errorMessage)
 
       allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&
-  &: error when allocating tmatc "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_cholesky: tmatc", istat, errorMessage)
 
       tmatr = 0
       tmatc = 0
@@ -334,12 +316,7 @@
       enddo
 
       deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&
-  &: error when deallocating tmp1 "//errorMessage
-        stop 1
-      endif
+      check_deallocate("elpa_cholesky: tmp1, tmp2, tmatr, tmatc", istat, errorMessage)
 
       ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
 

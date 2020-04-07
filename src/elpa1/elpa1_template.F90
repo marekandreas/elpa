@@ -53,6 +53,7 @@
 #endif
 
 #include "../general/sanity.F90"
+#include "../general/error_checking_template.F90"
 
 function elpa_solve_evp_&
          &MATH_DATATYPE&
@@ -381,7 +382,8 @@ function elpa_solve_evp_&
    if (.not.(obj%eigenvalues_only)) then
      q_actual => q(1:matrixRows,1:matrixCols)
    else
-     allocate(q_dummy(1:matrixRows,1:matrixCols))
+     allocate(q_dummy(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa1_template: q_dummy", istat, errorMessage)
      q_actual => q_dummy
    endif
 
@@ -396,25 +398,10 @@ function elpa_solve_evp_&
    l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
 
    allocate(q_real(l_rows,l_cols), stat=istat, errmsg=errorMessage)
-   if (istat .ne. 0) then
-     print *,"solve_evp_&
-     &MATH_DATATYPE&
-     &_1stage_&
-     &PRECISION&
-     &" // ": error when allocating q_real "//errorMessage
-     stop 1
-   endif
+   check_allocate("elpa1_template: q_real", istat, errorMessage)
 #endif
    allocate(e(na), tau(na), stat=istat, errmsg=errorMessage)
-   if (istat .ne. 0) then
-     print *,"solve_evp_&
-     &MATH_DATATYPE&
-     &_1stage_&
-     &PRECISION&
-     &" // ": error when allocating e, tau "//errorMessage
-     stop 1
-   endif
-
+   check_allocate("elpa1_template: e, tau", istat, errorMessage)
 
    ! start the computations
    ! as default do all three steps (this might change at some point)
@@ -564,36 +551,15 @@ function elpa_solve_evp_&
 
 #if COMPLEXCASE == 1
     deallocate(q_real, stat=istat, errmsg=errorMessage)
-    if (istat .ne. 0) then
-      print *,"solve_evp_&
-      &MATH_DATATYPE&
-      &_1stage_&
-      &PRECISION&
-      &" // ": error when deallocating q_real "//errorMessage
-      stop 1
-    endif
+    check_deallocate("elpa1_template: q_real", istat, errorMessage)
 #endif
 
    deallocate(e, tau, stat=istat, errmsg=errorMessage)
-   if (istat .ne. 0) then
-     print *,"solve_evp_&
-     &MATH_DATATYPE&
-     &_1stage_&
-     &PRECISION&
-     &" // ": error when deallocating e, tau "//errorMessage
-     stop 1
-   endif
+   check_deallocate("elpa1_template: e, tau", istat, errorMessage)
 
    if (obj%eigenvalues_only) then
      deallocate(q_dummy, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"solve_evp_&
-       &MATH_DATATYPE&
-       &_1stage_&
-       &PRECISION&
-       &" // ": error when deallocating q_dummy "//errorMessage
-       stop 1
-     endif
+     check_deallocate("elpa1_template: q_dummy", istat, errorMessage)
    endif
 
 #ifdef WITH_NVTX

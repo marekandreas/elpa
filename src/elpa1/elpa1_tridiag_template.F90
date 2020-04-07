@@ -1047,10 +1047,7 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
 #endif
 
       deallocate(tmp, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag: error when deallocating "//errorMessage
-        stop 1
-      endif
+      check_deallocate("tridiag: tmp", istat, errorMessage)
 
       if (useGPU) then
         ! todo: should we leave a_mat on the device for further use?
@@ -1079,11 +1076,7 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
       ! distribute the arrays d_vec and e_vec to all processors
 
       allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag: error when allocating tmp_real "//errorMessage
-        stop 1
-      endif
-
+      check_allocate("tridiag: tmp_real", istat, errorMessage)
 
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1103,11 +1096,7 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
 #endif /* WITH_MPI */
 
       deallocate(tmp_real, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag: error when deallocating tmp_real "//errorMessage
-        stop 1
-      endif
-
+      check_deallocate("tridiag: tmp_real", istat, errorMessage)
 
       if (useGPU) then
         successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
@@ -1142,17 +1131,11 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
         check_host_unregister_cuda("tridiag: d_vec", successCUDA)
       else
         deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"tridiag: error when deallocating "//errorMessage
-          stop 1
-        endif
+        check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)
       endif
 
       deallocate(vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag: error when deallocating "//errorMessage
-        stop 1
-      endif
+      check_deallocate("tridiag: vu_stored_rows, uv_stored_cols", istat, errorMessage)
 
       call obj%timer%stop("tridiag_&
       &MATH_DATATYPE&

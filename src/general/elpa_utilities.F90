@@ -63,6 +63,7 @@ module ELPA_utilities
   public :: check_alloc, check_alloc_CUDA_f, check_memcpy_CUDA_f, check_dealloc_CUDA_f
   public :: check_host_alloc_CUDA_f, check_host_dealloc_CUDA_f, check_host_register_CUDA_f, check_host_unregister_CUDA_f
   public :: check_memset_cuda_f
+  public :: check_allocate_f, check_deallocate_f
   public :: map_global_array_index_to_local_index
   public :: pcol, prow
   public :: local_index                ! Get local index of a block cyclic distributed matrix
@@ -274,6 +275,36 @@ module ELPA_utilities
 
     if (.not.(successCUDA)) then
       print *, file_name, ":", line,  " error in cuda_memset "
+      stop 1
+    endif
+ end subroutine
+
+ subroutine check_allocate_f(file_name, line, success, errorMessage)
+
+    implicit none
+
+    character(len=*), intent(in)    :: file_name
+    integer(kind=c_int), intent(in) :: line
+    integer(kind=c_int)             :: success
+    character(len=*)                :: errorMessage
+
+    if ( success .ne. 0) then
+      print *, file_name, ":", line,  " error in allocate: " // errorMessage
+      stop 1
+    endif
+ end subroutine
+
+ subroutine check_deallocate_f(file_name, line, success, errorMessage)
+
+    implicit none
+
+    character(len=*), intent(in)    :: file_name
+    integer(kind=c_int), intent(in) :: line
+    integer(kind=c_int)             :: success
+    character(len=*)                :: errorMessage
+
+    if ( success .ne. 0) then
+      print *, file_name, ":", line,  " error in deallocate: " // errorMessage
       stop 1
     endif
  end subroutine
