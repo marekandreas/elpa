@@ -53,7 +53,7 @@
 #endif
 
 #include "../general/sanity.F90"
-#include "../general/error_checking_template.F90"
+#include "../general/error_checking.inc"
 
 function elpa_solve_evp_&
          &MATH_DATATYPE&

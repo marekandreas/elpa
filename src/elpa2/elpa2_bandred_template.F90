@@ -327,23 +327,14 @@
         if (which_qr_decomposition == 1) then
           call qr_pqrparam_init(obj,pqrparam(1:11),    nblk,'M',0,   nblk,'M',0,   nblk,'M',1,'s')
           allocate(tauvector(na), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_real: error when allocating tauvector "//errorMessage
-            stop 1
-          endif
+          check_allocate("bandred: tauvector", istat, errorMessage)
 
           allocate(blockheuristic(nblk), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_real: error when allocating blockheuristic "//errorMessage
-            stop 1
-          endif
+          check_allocate("bandred: blockheuristic", istat, errorMessage)
 
           l_rows = local_index(na, my_prow, np_rows, nblk, -1)
           allocate(vmrCPU(max(l_rows,1),na), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_real: error when allocating vmrCPU "//errorMessage
-            stop 1
-          endif
+          check_allocate("bandred: vmrCPU", istat, errorMessage)
 
           vmrCols = na
 
@@ -365,16 +356,10 @@
 
           work_size = int(dwork_size(1))
           allocate(work_blocked(work_size), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_real: error when allocating work_blocked "//errorMessage
-            stop 1
-          endif
+          check_allocate("bandred: work_blocked", istat, errorMessage)
           work_blocked = 0.0_rk
           deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_real: error when deallocating vmrCPU "//errorMessage
-            stop 1
-          endif
+          check_deallocate("bandred: vmrCPU", istat, errorMessage)
 
         endif ! which_qr_decomposition
 
@@ -466,28 +451,13 @@
           ! Allocate vmr and umcCPU to their exact sizes so that they can be used in bcasts and reduces
 
           allocate(vmrCPU(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_&
-                     &MATH_DATATYPE&
-                     &: error when allocating vmrCPU "//errorMessage
-            stop 1
-          endif
+          check_allocate("bandred: vmrCPU", istat, errorMessage)
 
           allocate(umcCPU(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_&
-                    &MATH_DATATYPE&
-                    &: error when allocating umcCPU "//errorMessage
-            stop 1
-          endif
+          check_allocate("bandred: umcCPU", istat, errorMessage)
 
           allocate(vr(l_rows+1), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"bandred_&
-                    &MATH_DATATYPE&
-                    &: error when allocating vr "//errorMessage
-            stop 1
-          endif
+          check_allocate("bandred: vr", istat, errorMessage)
 
         endif ! use GPU
 
@@ -1205,12 +1175,7 @@
          if (useGPU) then
 #ifdef WITH_MPI
            allocate(tmpCUDA(l_cols * n_cols), stat=istat, errmsg=errorMessage)
-           if (istat .ne. 0) then
-             print *,"bandred_&
-                      &MATH_DATATYPE&
-                      &: error when allocating tmpCUDA "//errorMessage
-             stop 1
-           endif
+           check_allocate("bandred: tmpCUDA", istat, errorMessage)
 
            if (wantDebug) call obj%timer%start("mpi_communication")
 
@@ -1223,23 +1188,13 @@
 
            if (allocated(tmpCUDA)) then
              deallocate(tmpCUDA, stat=istat, errmsg=errorMessage)
-             if (istat .ne. 0) then
-               print *,"bandred_&
-                       &MATH_DATATYPE&
-                       &: error when deallocating tmpCUDA "//errorMessage
-               stop 1
-             endif
+             check_deallocate("bandred: tmpCUDA", istat, errorMessage)
            endif
 
          else ! useGPU
 
            allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-           if (istat .ne. 0) then
-             print *,"bandred_&
-                     &MATH_DATATYPE&
-                     &: error when allocating tmpCPU "//errorMessage
-             stop 1
-           endif
+           check_allocate("bandred: tmpCPU", istat, errorMessage)
 
 #ifdef WITH_MPI
            if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1250,12 +1205,7 @@
 #endif /* WITH_MPI */
 
            deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
-           if (istat .ne. 0) then
-             print *,"bandred_&
-                     &MATH_DATATYPE&
-                     &: error when deallocating tmpCPU "//errorMessage
-             stop 1
-           endif
+           check_deallocate("bandred: tmpCPU", istat, errorMessage)
          endif ! useGPU
        endif ! l_cols > 0
 
@@ -1517,32 +1467,17 @@
        if (.not.(useGPU)) then
          if (allocated(vr)) then
            deallocate(vr, stat=istat, errmsg=errorMessage)
-           if (istat .ne. 0) then
-             print *,"bandred_&
-                     &MATH_DATATYPE&
-                     &: error when deallocating vr "//errorMessage
-             stop 1
-           endif
+           check_deallocate("bandred: vr", istat, errorMessage)
          endif
 
          if (allocated(umcCPU)) then
            deallocate(umcCPU, stat=istat, errmsg=errorMessage)
-           if (istat .ne. 0) then
-             print *,"bandred_&
-                     &MATH_DATATYPE&
-                     &: error when deallocating umcCPU "//errorMessage
-             stop 1
-           endif
+           check_deallocate("bandred: umcCPU", istat, errorMessage)
          endif
 
          if (allocated(vmrCPU)) then
            deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
-           if (istat .ne. 0) then
-             print *,"bandred_&
-                     &MATH_DATATYPE&
-                     &: error when deallocating vmrCPU "//errorMessage
-             stop 1
-           endif
+           check_deallocate("bandred: vmrCPU", istat, errorMessage)
          endif
        endif !useGPU
 
@@ -1598,48 +1533,27 @@
 
      if (allocated(vr)) then
        deallocate(vr, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating vr "//errorMessage
-         stop 1
-       endif
+       check_deallocate("bandred: vr", istat, errorMessage)
      endif
 
      if (allocated(umcCPU)) then
        deallocate(umcCPU, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating umcCPU "//errorMessage
-         stop 1
-       endif
+       check_deallocate("bandred: umcCPU", istat, errorMessage)
      endif
 
      if (allocated(vmrCPU)) then
        deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"bandred_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating vmrCPU "//errorMessage
-         stop 1
-       endif
+       check_deallocate("bandred: vmrCPU", istat, errorMessage)
      endif
 
 #if REALCASE == 1
      if (useQR) then
        if (which_qr_decomposition == 1) then
          deallocate(work_blocked, stat=istat, errmsg=errorMessage)
-         if (istat .ne. 0) then
-           print *,"bandred_real: error when deallocating work_blocked "//errorMessage
-           stop 1
-         endif
+         check_deallocate("bandred: work_blocked", istat, errorMessage)
 
          deallocate(tauvector, stat=istat, errmsg=errorMessage)
-         if (istat .ne. 0) then
-           print *,"bandred_real: error when deallocating tauvector "//errorMessage
-           stop 1
-         endif
+         check_deallocate("bandred: tauvector", istat, errorMessage)
        endif
      endif
 #endif

@@ -221,45 +221,20 @@
 
       else ! useGPU
         allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when allocating tmp1 "//errorMessage
-          stop 1
-        endif
+        check_allocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
 
         allocate(tmp2(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when allocating tmp2 "//errorMessage
-          stop 1
-        endif
+        check_allocate("trans_ev_band_to_full: tmp2", istat, errorMessage)
 
         allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when allocating hvm "//errorMessage
-          stop 1
-        endif
+        check_allocate("trans_ev_band_to_full: hvm", istat, errorMessage)
       endif !useGPU
 
       allocate(hvb(max_local_rows*cwy_blocking), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_band_to_full_&
-                &MATH_DATATYPE&
-                &: error when allocating hvb "//errorMessage
-        stop 1
-      endif
+      check_allocate("trans_ev_band_to_full: hvb", istat, errorMessage)
 
       allocate(tmat_complete(cwy_blocking,cwy_blocking), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_band_to_full_&
-                &MATH_DATATYPE&
-                &: error when allocating tmat_complete "//errorMessage
-        stop 1
-      endif
+      check_allocate("trans_ev_band_to_full: tmat_complete", istat, errorMessage)
 
       if (useGPU) then
         successCUDA = cuda_host_register(int(loc(tmat_complete),kind=c_intptr_t), &
@@ -270,20 +245,10 @@
 
       if (blocking_factor > 1) then
         allocate(t_tmp(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when allocating t_tmp "//errorMessage
-          stop 1
-        endif
+        check_allocate("trans_ev_band_to_full: t_tmp", istat, errorMessage)
 
         allocate(t_tmp2(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when allocating t_tmp2 "//errorMessage
-          stop 1
-        endif
+        check_allocate("trans_ev_band_to_full: t_tmp2", istat, errorMessage)
       endif
 
       if (useGPU) then
@@ -512,12 +477,7 @@
       enddo ! istep
 
       deallocate(hvb, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_band_to_full_&
-                &MATH_DATATYPE&
-                &: error when deallocating hvb "//errorMessage
-        stop 1
-      endif
+      check_deallocate("trans_ev_band_to_full: hvb", istat, errorMessage)
 
       if (useGPU) then
         successCUDA = cuda_free(hvm_dev)
@@ -556,54 +516,24 @@
         check_host_unregister_cuda("trans_ev_band_to_full: tmat_complete", successCUDA)
       else ! useGPU
         deallocate(tmp1, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when deallocating tmp1 "//errorMessage
-          stop 1
-        endif
+        check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
 
         deallocate(tmp2, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-                  print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when deallocating tmp2 "//errorMessage
-          stop 1
-        endif
+        check_deallocate("trans_ev_band_to_full: tmp2", istat, errorMessage)
 
         deallocate(hvm, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when deallocating hvm "//errorMessage
-          stop 1
-        endif
+        check_deallocate("trans_ev_band_to_full: hvm", istat, errorMessage)
       endif ! useGPU
 
       deallocate(tmat_complete, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_band_to_full_&
-                &MATH_DATATYPE&
-                &: error when deallocating tmat_complete "//errorMessage
-        stop 1
-      endif
+      check_deallocate("trans_ev_band_to_full: tmat_complete", istat, errorMessage)
 
       if (blocking_factor > 1) then
         deallocate(t_tmp, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when deallocating t_tmp "//errorMessage
-          stop 1
-        endif
+        check_deallocate("trans_ev_band_to_full: t_tmp", istat, errorMessage)
 
         deallocate(t_tmp2, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_band_to_full_&
-                  &MATH_DATATYPE&
-                  &: error when deallocating t_tmp2 "//errorMessage
-          stop 1
-        endif
+        check_deallocate("trans_ev_band_to_full: t_tmp2", istat, errorMessage)
       endif
 
       call obj%timer%stop("trans_ev_band_to_full_&

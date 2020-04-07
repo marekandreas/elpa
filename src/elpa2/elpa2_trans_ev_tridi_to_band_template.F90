@@ -487,12 +487,7 @@
       ! Determine the matrix distribution at the beginning
 
       allocate(limits(0:np_rows), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_tridi_to_band_&
-                &MATH_DATATYPE&
-                &: error when allocating limits"//errorMessage
-        stop 1
-      endif
+      check_allocate("trans_ev_tridi_to_band: limits", istat, errorMessage)
       call determine_workload(obj,na, nbw, np_rows, limits)
 
       max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
@@ -557,12 +552,7 @@
       endif !useGPU
 
       allocate(row(l_nev), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_tridi_to_band_&
-        &MATH_DATATYPE&
-        &: error when allocating row"//errorMessage
-        stop 1
-      endif
+      check_allocate("trans_ev_tridi_to_band: row", istat, errorMessage)
 
       row(:) = 0.0_rck
 
@@ -870,28 +860,13 @@
 
       num_result_buffers = 4*nfact
       allocate(result_buffer(l_nev,nblk,num_result_buffers), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_tridi_to_band_&
-        &MATH_DATATYPE&
-        &: error when allocating result_buffer"//errorMessage
-        stop 1
-      endif
+      check_allocate("trans_ev_tridi_to_band: result_buffer", istat, errorMessage)
 
       allocate(result_send_request(num_result_buffers), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_tridi_to_band_&
-        &MATH_DATATYPE&
-        &: error when allocating result_send_request"//errorMessage
-        stop 1
-      endif
+      check_allocate("trans_ev_tridi_to_band: result_send_request", istat, errorMessage)
 
       allocate(result_recv_request(num_result_buffers), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_tridi_to_band_&
-        &MATH_DATATYPE&
-        &: error when allocating result_recv_request"//errorMessage
-        stop 1
-      endif
+      check_allocate("trans_ev_tridi_to_band: result_recv_request", istat, errorMessage)
 
 #ifdef WITH_MPI
       result_send_request(:) = MPI_REQUEST_NULL
@@ -922,36 +897,16 @@
       ! Initialize top/bottom requests
 
       allocate(top_send_request(stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MPI_DATATYPE&
-         &: error when allocating top_send_request"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: top_send_request", istat, errorMessage)
 
       allocate(top_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating top_recv_request"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: top_recv_request", istat, errorMessage)
 
       allocate(bottom_send_request(stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating bottom_send_request"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: bottom_send_request", istat, errorMessage)
 
       allocate(bottom_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating bottom_recv_request"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: bottom_recv_request", istat, errorMessage)
 
 #ifdef WITH_MPI
       top_send_request(:) = MPI_REQUEST_NULL
@@ -962,36 +917,16 @@
 
 #ifdef WITH_OPENMP
       allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating top_border_send_buffer"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
 
       allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating top_border_recv_buffer"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: top_border_recv_buffer", istat, errorMessage)
 
       allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating bottom_border_send_buffer"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
 
       allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating bottom_border_recv_buffer"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
 
       top_border_send_buffer(:,:) = 0.0_rck
       top_border_recv_buffer(:,:) = 0.0_rck
@@ -1024,37 +959,17 @@
 
 #else /* WITH_OPENMP */
 
-       allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating top_border_send_bufer"//errorMessage
-         stop 1
-       endif
+      allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      check_allocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
 
       allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating top_border_recv_buffer"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: top_border_recv_buffer", istat, errorMessage)
 
       allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating bottom_border_send_buffer"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
 
       allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-         &MATH_DATATYPE&
-         &: error when allocating bottom_border_recv_buffer"//errorMessage
-         stop 1
-       endif
+      check_allocate("trans_ev_tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
 
       top_border_send_buffer(:,:,:) = 0.0_rck
       top_border_recv_buffer(:,:,:) = 0.0_rck
@@ -1092,12 +1007,7 @@
         call c_f_pointer(bcast_buffer_host, bcast_buffer, (/nbw,max_blk_size/))
       else
         allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_tridi_to_band_&
-          &MATH_DATATYPE&
-          &: error when allocating bcast_buffer"//errorMessage
-          stop 1
-        endif
+        check_allocate("trans_ev_tridi_to_band: bcast_buffer", istat, errorMessage)
       endif
 
       bcast_buffer = 0.0_rck
@@ -2116,44 +2026,19 @@
      endif
 
      deallocate(row, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating row "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: row", istat, errorMessage)
 
      deallocate(limits, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating limits"//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: limits", istat, errorMessage)
 
      deallocate(result_send_request, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating result_send_request "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: result_send_request", istat, errorMessage)
 
      deallocate(result_recv_request, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating result_recv_request "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: result_recv_request", istat, errorMessage)
 
      deallocate(result_buffer, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-       &MATH_DATATYPE&
-       &: error when deallocating result_buffer "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: result_buffer", istat, errorMessage)
 
      if (useGPU) then
        nullify(bcast_buffer)
@@ -2162,12 +2047,7 @@
        check_host_dealloc_cuda("trans_ev_tridi_to_band: bcast_buffer_host", successCUDA)
      else
        deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"trans_ev_tridi_to_band_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating bcast_buffer "//errorMessage
-         stop 1
-       endif
+       check_deallocate("trans_ev_tridi_to_band: bcast_buffer", istat, errorMessage)
      endif
 
 
@@ -2203,68 +2083,29 @@
      endif ! useGPU
 
      deallocate(top_border_send_buffer, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating top_border_send_buffer "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
 
      deallocate(top_border_recv_buffer, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating top_border_recv_buffer "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: top_border_recv_buffer", istat, errorMessage)
 
      deallocate(bottom_border_send_buffer, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating bottom_border_send_buffer "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
 
      deallocate(bottom_border_recv_buffer, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating bottom_border_recv_buffer "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
 
      deallocate(top_send_request, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating top_send_request "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: top_send_request", istat, errorMessage)
 
      deallocate(top_recv_request, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating top_recv_request "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: top_recv_request", istat, errorMessage)
 
      deallocate(bottom_send_request, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating bottom_send_request "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: bottom_send_request", istat, errorMessage)
 
      deallocate(bottom_recv_request, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"trans_ev_tridi_to_band_&
-               &MATH_DATATYPE&
-               &: error when deallocating bottom_recv_request "//errorMessage
-       stop 1
-     endif
+     check_deallocate("trans_ev_tridi_to_band: bottom_recv_request", istat, errorMessage)
+
      call obj%timer%stop("trans_ev_tridi_to_band_&
                          &MATH_DATATYPE&
                          &" // &

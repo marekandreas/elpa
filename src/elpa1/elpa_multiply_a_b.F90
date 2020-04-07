@@ -54,7 +54,7 @@
 
 
 #include "../general/sanity.F90"
-#include "../general/error_checking_template.F90"
+#include "../general/error_checking.inc"
 
       use elpa1_compute
       use elpa_mpi

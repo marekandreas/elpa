@@ -53,6 +53,7 @@
 #endif
 
 #include "elpa/elpa_simd_constants.h"
+#include "../general/error_checking.inc"
 
  function elpa_solve_evp_&
   &MATH_DATATYPE&
@@ -72,7 +73,7 @@
    q) result(success)
 #endif
 
-   use matrix_plot
+   !use matrix_plot
    use elpa_abstract_impl
    use elpa_utilities
    use elpa1_compute
@@ -619,7 +620,8 @@
     if (.not. obj%eigenvalues_only) then
       q_actual => q(1:matrixRows,1:matrixCols)
     else
-     allocate(q_dummy(1:matrixRows,1:matrixCols))
+     allocate(q_dummy(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa2_template: q_dummy", istat, errorMessage)
      q_actual => q_dummy(1:matrixRows,1:matrixCols)
     endif
 
@@ -707,14 +709,7 @@
       ! tmat is needed only in full->band and band->full steps, so alocate here
       ! (not allocated for banded matrix on input)
       allocate(tmat(nbw,nbw,num_blocks), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"solve_evp_&
-        &MATH_DATATYPE&
-        &_2stage_&
-        &PRECISION&
-        &" // ": error when allocating tmat "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa2_template: tmat", istat, errorMessage)
 
       do_bandred       = .true.
       do_solve_tridi   = .true.
@@ -751,13 +746,7 @@
      ! Reduction band -> tridiagonal
      if (do_tridiag) then
        allocate(e(na), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage_&
-         &PRECISION " // ": error when allocating e "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa2_template: e", istat, errorMessage)
 
        call obj%timer%start("tridiag")
 #ifdef HAVE_LIKWID
@@ -806,12 +795,7 @@
 
 
      allocate(q_real(l_rows,l_cols), stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"solve_evp_&
-       &MATH_DATATYPE&
-       &_2stage: error when allocating q_real"//errorMessage
-       stop 1
-     endif
+     check_allocate("elpa2_template: q_real", istat, errorMessage)
 #endif
 
      ! Solve tridiagonal system
@@ -839,12 +823,7 @@
      endif ! do_solve_tridi
 
      deallocate(e, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"solve_evp_&
-       &MATH_DATATYPE&
-       &_2stage: error when deallocating e "//errorMessage
-       stop 1
-     endif
+     check_deallocate("elpa2_template: e", istat, errorMessage)
 
      if (obj%eigenvalues_only) then
        do_trans_to_band = .false.
@@ -881,12 +860,7 @@
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 
        deallocate(q_real, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage: error when deallocating q_real"//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa2_template: q_real", istat, errorMessage)
 #endif
      endif
  
@@ -980,13 +954,7 @@
          endif
               ! We can now deallocate the stored householder vectors
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *, "solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage_&
-         &PRECISION " // ": error when deallocating hh_trans "//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa2_template: hh_trans", istat, errorMessage)
      endif
      
      if (do_trans_to_full) then
@@ -1009,13 +977,7 @@
        endif
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage_&
-         &PRECISION " // ": error when deallocating tmat"//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa2_template: tmat", istat, errorMessage)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_full")
 #endif
@@ -1024,14 +986,7 @@
 
      if (obj%eigenvalues_only) then
        deallocate(q_dummy, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"solve_evp_&
-         &MATH_DATATYPE&
-         &_1stage_&
-         &PRECISION&
-         &" // ": error when deallocating q_dummy "//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa2_template: q_dummy", istat, errorMessage)
      endif
 
      ! restore original OpenMP settings

@@ -49,7 +49,7 @@
 
 #include "config-f90.h"
 #include "../general/sanity.F90"
-#include "../general/error_checking_template.F90"
+#include "../general/error_checking.inc"
 
 #undef ROUTINE_NAME
 #ifdef SKEW_SYMMETRIC_BUILD

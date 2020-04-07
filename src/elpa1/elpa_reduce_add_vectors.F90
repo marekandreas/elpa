@@ -45,7 +45,7 @@
 
 #include "config-f90.h"
 #include "../general/sanity.F90"
-#include "../general/error_checking_template.F90"
+#include "../general/error_checking.inc"
 
 subroutine elpa_reduce_add_vectors_&
 &MATH_DATATYPE&

@@ -96,7 +96,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/compute_hh_trafo.F90 \
   src/elpa2/redist_band.F90 \
   src/general/sanity.F90 \
-  src/general/error_checking_template.F90 \
+  src/general/error_checking.inc \
   src/elpa1/elpa_cholesky_template.F90 \
   src/elpa1/elpa_invert_trm.F90 \
   src/elpa1/elpa_multiply_a_b.F90 \
@@ -724,7 +724,7 @@ EXTRA_DIST = \
   test/shared/test_precision_kinds.F90 \
   src/general/prow_pcol.F90 \
   src/general/sanity.F90 \
-  src/general/error_checking_template.F90 \
+  src/general/error_checking.inc \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
   test/Fortran/assert.h \

@@ -57,7 +57,7 @@
 #include "../general/sanity.F90"
 
 #if REALCASE == 1
-#include "../general/error_checking_template.F90"
+#include "../general/error_checking.inc"
 #endif
 
 #if REALCASE == 1

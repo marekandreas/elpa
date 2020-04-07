@@ -51,7 +51,7 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "../general/sanity.F90"
-#include "../general/error_checking_template.F90"
+#include "../general/error_checking.inc"
 
        use precision
        use elpa1_compute
