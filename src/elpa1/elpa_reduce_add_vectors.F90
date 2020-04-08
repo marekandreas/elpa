@@ -45,6 +45,7 @@
 
 #include "config-f90.h"
 #include "../general/sanity.F90"
+#include "../general/error_checking.inc"
 
 subroutine elpa_reduce_add_vectors_&
 &MATH_DATATYPE&
@@ -94,7 +95,8 @@ subroutine elpa_reduce_add_vectors_&
    integer(kind=ik)                                   :: lcm_s_t, nblks_tot
    integer(kind=ik)                                   :: auxstride
    integer(kind=ik), intent(in)                       :: nrThreads
-
+   integer(kind=ik)                                   :: istat
+   character(200)                                     :: errorMessage
 
    call obj%timer%start("elpa_reduce_add_vectors_&
    &MATH_DATATYPE&
@@ -123,8 +125,11 @@ subroutine elpa_reduce_add_vectors_&
 
    nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
 
-   allocate(aux1( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
-   allocate(aux2( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
+   allocate(aux1( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa_reduce_add: aux1", istat, errorMessage)
+
+   allocate(aux2( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa_reduce_add: aux2", istat, errorMessage)
    aux1(:) = 0
    aux2(:) = 0
 #ifdef WITH_OPENMP
@@ -206,8 +211,8 @@ subroutine elpa_reduce_add_vectors_&
    !$omp end parallel
 #endif
 
-   deallocate(aux1)
-   deallocate(aux2)
+   deallocate(aux1, aux2, stat=istat, errmsg=errorMessage)
+   check_deallocate("elpa_reduce_add: aux1, aux2", istat, errorMessage)
 
    call obj%timer%stop("elpa_reduce_add_vectors_&
    &MATH_DATATYPE&

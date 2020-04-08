@@ -52,12 +52,17 @@
 ! Author: A. Marek, MPCDF
 
 
+
 #include "../general/sanity.F90"
+#include "../general/error_checking.inc"
 
       use elpa1_compute
       use elpa_mpi
       use precision
       use elpa_abstract_impl
+      use iso_c_binding
+      use cuda_functions
+      use mod_check_for_gpu
       use elpa_blas_interfaces
       implicit none
 
@@ -73,101 +78,164 @@
 #else
       MATH_DATATYPE(kind=rck)       :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols
+      integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, myid
       integer(kind=MPI_KIND)        :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
+      integer(kind=MPI_KIND)        :: mpierr, myidMPI
       integer(kind=ik)              :: l_cols, l_rows, l_rows_np
       integer(kind=ik)              :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
       integer(kind=ik)              :: gcol_min, gcol, goff
       integer(kind=ik)              :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
       integer(kind=ik), allocatable :: lrs_save(:), lre_save(:)
-      integer(kind=MPI_KIND)        :: mpierr
 
       logical                       :: a_lower, a_upper, c_lower, c_upper
-      MATH_DATATYPE(kind=rck), allocatable    :: aux_mat(:,:), aux_bc(:), tmp1(:,:), tmp2(:,:)
+      MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_mat(:,:), tmp1(:,:)
+      MATH_DATATYPE(kind=rck), allocatable :: aux_bc(:), tmp2(:,:)
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
+      character(20)                 :: gpuString
       logical                       :: success
-      integer(kind=ik)              :: nblk, mpi_comm_rows, mpi_comm_cols, lda, ldaCols, error
+      logical                       :: successCUDA
+      logical                       :: useGPU
+      integer(kind=c_int)           :: gpu, numGPU
+      integer(kind=ik)              :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+      integer(kind=ik)              :: nblk, matrixRows, matrixCols, error
+      integer(kind=c_intptr_t)      :: aux_dev, b_dev, tmp1_dev
+      type(c_ptr)                   :: aux_host, tmp1_host
+      integer(kind=c_intptr_t)      :: num
+      integer(kind=c_intptr_t)      :: aux_off, b_off
+      integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
+                                                                &PRECISION&
+                                                                &_&
+                                                                &MATH_DATATYPE
+
+      success = .true.
+
+      ! GPU settings
+      call obj%get("gpu", gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for gpu. Aborting..."
+        stop
+      endif
+
+      useGPU = (gpu == 1)
+
+      if(useGPU) then
+        gpuString = "_gpu"
+      else
+        gpuString = ""
+      endif
 
       call obj%timer%start("elpa_mult_at_b_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &")
+      &"//gpuString)
 
-      na   = obj%na
-      nblk = obj%nblk
-      lda  = obj%local_nrows
-      ldaCols  = obj%local_ncols
-
+      na          = obj%na
+      nblk        = obj%nblk
+      matrixRows  = obj%local_nrows
+      matrixCols  = obj%local_ncols
 
       call obj%get("mpi_comm_rows",mpi_comm_rows,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for mpi_comm_rows. Aborting..."
         stop
       endif
       call obj%get("mpi_comm_cols",mpi_comm_cols,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for mpi_comm_cols. Aborting..."
         stop
       endif
-
-
-      success = .true.
+      call obj%get("mpi_comm_parent",mpi_comm_all,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for mpi_comm_parent. Aborting..."
+        stop
+      endif
 
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
       call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
       call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
       call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
+      call mpi_comm_size(int(mpi_comm_all, kind=MPI_KIND) ,myidMPI ,mpierr)
 
       my_prow = int(my_prowMPI,kind=c_int)
       np_rows = int(np_rowsMPI,kind=c_int)
       my_pcol = int(my_pcolMPI,kind=c_int)
       np_cols = int(np_colsMPI,kind=c_int)
+      myid    = int(myidMPI,kind=c_int)
       call obj%timer%stop("mpi_communication")
       l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
       l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
 
       ! Block factor for matrix multiplications, must be a multiple of nblk
 
-      if (na/np_rows<=256) then
+      if (na/np_rows <= 256) then
          nblk_mult = (31/nblk+1)*nblk
       else
          nblk_mult = (63/nblk+1)*nblk
       endif
 
-      allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_mult_at_b_&
-  &MATH_DATATYPE&
-  &: error when allocating aux_mat "//errorMessage
-        stop 1
-      endif
+      if (useGPU) then
+        call obj%timer%start("check_for_gpu")
+        if (check_for_gpu(myid,numGPU)) then
+          ! set the neccessary parameters
+          cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+          cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+          cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+          cudaHostRegisterPortable = cuda_hostRegisterPortable()
+          cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+        else
+          print *,"GPUs are requested but not detected! Aborting..."
+          success = .false.
+          return
+        endif
+        call obj%timer%stop("check_for_gpu")
+
+        ! copy b to b_dev
+        num = ldb*ldbCols*size_of_datatype
+        successCUDA = cuda_malloc(b_dev,num)
+        check_alloc_cuda("elpa_mult_at_b: b_dev", successCUDA)
+
+        successCUDA = cuda_host_register(int(loc(b),kind=c_intptr_t),num,&
+                      cudaHostRegisterDefault)
+
+        check_host_register_cuda("elpa_mult_at_b: b", successCUDA)
+
+        successCUDA = cuda_memcpy(b_dev,int(loc(b),kind=c_intptr_t),num,&
+                      cudaMemcpyHostToDevice)
+        check_memcpy_cuda("elpa_mult_at_b: b to b_dev", successCUDA)
+
+        num = l_rows*nblk_mult*size_of_datatype
+        successCUDA = cuda_malloc_host(aux_host,num)
+        check_host_alloc_cuda("elpa_mult_at_b: aux_host", successCUDA)
+
+        call c_f_pointer(aux_host,aux_mat,(/l_rows,nblk_mult/))
+
+        successCUDA = cuda_malloc(aux_dev,num)
+        check_alloc_cuda("elpa_mult_at_b: aux_dev", successCUDA)
+
+        num = nblk_mult*l_cols*size_of_datatype
+        successCUDA = cuda_malloc_host(tmp1_host,num)
+        check_host_alloc_cuda("elpa_mult_at_b: tmp1_host", successCUDA)
+
+        call c_f_pointer(tmp1_host,tmp1,(/nblk_mult,l_cols/))
+
+        successCUDA = cuda_malloc(tmp1_dev,num)
+        check_alloc_cuda("elpa_mult_at_b: tmp1_dev", successCUDA)
+      else ! useGPU
+        allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
+        check_allocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
+      endif ! useGPU
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_mult_at_b_&
-  &MATH_DATATYPE&
-  &: error when allocating aux_bc "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_mult_at_b: aux_bc", istat, errorMessage)
 
       allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_mult_at_b_&
-        &MATH_DATATYPE&
-        &: error when allocating lrs_save "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_mult_at_b: lrs_save", istat, errorMessage)
 
       allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_mult_at_b_&
-        &MATH_DATATYPE&
-        &: error when allocating lre_save "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_mult_at_b: lre_save", istat, errorMessage)
 
       a_lower = .false.
       a_upper = .false.
@@ -273,22 +341,39 @@
             if (c_lower) lce = MIN(local_index(gcol, my_pcol, np_cols, nblk, -1),l_cols)
 
             if (lcs<=lce) then
-              allocate(tmp1(nstor,lcs:lce),tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
-              if (istat .ne. 0) then
-               print *,"elpa_mult_at_b_&
-               &MATH_DATATYPE&
-               &: error when allocating tmp1 "//errorMessage
-               stop 1
-              endif
+              allocate(tmp1(nstor,lcs:lce), tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
+              call check_alloc("elpa_mult_at_b_&
+        &MATH_DATATYPE ", "tmp1", istat, errorMessage)
 
               if (lrs<=lre) then
-                call obj%timer%start("blas")
-                call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
+                if (useGPU) then
+                  num = l_rows*nblk_mult*size_of_datatype
+                  successCUDA = cuda_memcpy(aux_dev, int(loc(aux_mat),kind=c_intptr_t), &
+                                num, cudaMemcpyHostToDevice)
+                  check_memcpy_cuda("elpa_mult_at_b: aux_mat to aux_dev", successCUDA)
+
+                  aux_off = (lrs-1)*size_of_datatype
+                  b_off = ((lcs-1)*ldb+lrs-1)*size_of_datatype
+
+                  call obj%timer%start("cublas")
+                  call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nstor, lce-lcs+1, &
+                       lre-lrs+1, ONE, aux_dev+aux_off, l_rows, b_dev+b_off, ldb, ZERO, &
+                       tmp1_dev, nstor)
+                  call obj%timer%stop("cublas")
+
+                  num = nstor*(lce-lcs+1)*size_of_datatype
+                  successCUDA = cuda_memcpy(int(loc(tmp1),kind=c_intptr_t), &
+                                tmp1_dev, num, cudaMemcpyDeviceToHost)
+                  check_memcpy_cuda("elpa_mult_at_b: tmp1_dev to tmp1", successCUDA)
+                else ! useGPU
+                  call obj%timer%start("blas")
+                  call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
                                     int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), &
-                                    ONE, aux_mat(lrs,1), int(ubound(aux_mat,dim=1),kind=BLAS_KIND), &
+                                    ONE, aux_mat(lrs:lre,1:nstor), int(lre-lrs+1,kind=BLAS_KIND), &
                                     b(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, tmp1, &
                                     int(nstor,kind=BLAS_KIND))
-                call obj%timer%stop("blas")
+                  call obj%timer%stop("blas")
+                endif ! useGPU
               else
                 tmp1 = 0
               endif
@@ -310,13 +395,7 @@
 #endif /* WITH_MPI */
 
               deallocate(tmp1,tmp2, stat=istat, errmsg=errorMessage)
-              if (istat .ne. 0) then
-               print *,"elpa_mult_at_b_&
-               &MATH_DATATYPE&
-               &: error when deallocating tmp1 "//errorMessage
-               stop 1
-              endif
-
+              check_deallocate("elpa_mult_at_b: tmp1, tmp2", istat, errorMessage)
             endif
 
             nr_done = nr_done+nstor
@@ -326,17 +405,38 @@
         enddo
       enddo
 
-      deallocate(aux_mat, aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-       print *,"elpa_mult_at_b_&
-       &MATH_DATATYPE&
-       &: error when deallocating aux_mat "//errorMessage
-       stop 1
-      endif
+      if (useGPU) then
+        successCUDA = cuda_free(b_dev)
+        check_dealloc_cuda("elpa_multiply_a_b: b_dev", successCUDA)
+
+        successCUDA = cuda_host_unregister(int(loc(b),kind=c_intptr_t))
+        check_host_unregister_cuda("elpa_multiply_a_b: b", successCUDA)
+
+        nullify(aux_mat)
+        nullify(tmp1)
+
+        successCUDA = cuda_free_host(aux_host)
+        check_host_dealloc_cuda("elpa_multiply_a_b: aux_host", successCUDA)
+
+        successCUDA = cuda_free(aux_dev)
+        check_dealloc_cuda("elpa_multiply_a_b: aux_dev", successCUDA)
+
+        successCUDA = cuda_free_host(tmp1_host)
+        check_host_dealloc_cuda("elpa_multiply_a_b: tmp1_host", successCUDA)
+
+        successCUDA = cuda_free(tmp1_dev)
+        check_dealloc_cuda("elpa_multiply_a_b: tmp1_dev", successCUDA)
+      else ! useGPU
+        deallocate(aux_mat, stat=istat, errmsg=errorMessage)
+        check_deallocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
+      endif ! useGPU
+
+      deallocate(aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
+      check_deallocate("elpa_mult_at_b: aux_bc, lrs_save, lre_save", istat, errorMessage)
+
 
       call obj%timer%stop("elpa_mult_at_b_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &")
-
+      &"//gpuString)

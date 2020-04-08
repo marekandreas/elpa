@@ -55,7 +55,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION &
-    (obj, na, nb, nblk, a_mat, a_dev, lda, d, e, matrixCols, &
+    (obj, na, nb, nblk, a_mat, lda, d, e, matrixCols, &
     hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug, nrThreads)
     !-------------------------------------------------------------------------------
     ! tridiag_band_real/complex:
@@ -106,7 +106,6 @@
 #else
       MATH_DATATYPE(kind=rck), intent(in)         :: a_mat(lda,matrixCols)
 #endif
-      integer(kind=c_intptr_t)                     :: a_dev
       real(kind=rk), intent(out)        :: d(na), e(na) ! set only on PE 0
       MATH_DATATYPE(kind=rck), intent(out), allocatable   :: hh_trans(:,:)
 
@@ -145,7 +144,7 @@
 
       call obj%get("is_skewsymmetric",skewsymmetric,istat)
       if (istat .ne. ELPA_OK) then
-           print *,"Problem getting option. Aborting..."
+           print *,"Problem getting option for skewsymmetric settings. Aborting..."
            stop
       endif
       isSkewsymmetric = (skewsymmetric == 1)
@@ -177,29 +176,19 @@
       np_rows = int(np_rowsMPI,kind=MPI_KIND)
       my_pcol = int(my_pcolMPI,kind=MPI_KIND)
       np_cols = int(np_colsMPI,kind=MPI_KIND)
-      if (wantDebug) call obj%timer%stop(",kind=MPI_KIND)mpi_communication")
+      if (wantDebug) call obj%timer%stop("mpi_communication")
 
       ! Get global_id mapping 2D procssor coordinates to global id
 
       allocate(global_id(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when allocating global_id "//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: global_id", istat, errorMessage)
 
       global_id(:,:) = 0
       global_id(my_prow, my_pcol) = my_pe
 
 #ifdef WITH_OPENMP
       allocate(global_id_tmp(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                &MATH_DATATYPE&
-                &: error when allocating global_id_tmp "//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: global_id_tmp", istat, errorMessage)
 #endif
 
 #ifdef WITH_MPI
@@ -212,12 +201,7 @@
       call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
                          mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
       deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating global_id_tmp "//errorMessage
-        stop 1
-      endif
+      check_deallocate("tridiag_band: global_id_tmp", istat, errorMessage)
 #endif /* WITH_OPENMP */
       if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -229,12 +213,7 @@
       ! Set work distribution
 
       allocate(block_limits(0:n_pes), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when allocating block_limits"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: block_limits", istat, errorMessage)
 
       call divide_band(obj,nblocks_total, n_pes, block_limits)
 
@@ -244,12 +223,7 @@
       ! allocate the part of the band matrix which is needed by this PE
       ! The size is 1 block larger than needed to avoid extensive shifts
       allocate(ab(2*nb,(nblocks+1)*nb), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when allocating ab"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: ab", istat, errorMessage)
 
       ab = 0.0_rck ! needed for lower half, the extra block should also be set to 0 for safety
 
@@ -261,18 +235,13 @@
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      &(obj,a_mat, a_dev, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+      &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
 
       ! Calculate the workload for each sweep in the back transformation
       ! and the space requirements to hold the HH vectors
 
       allocate(limits(0:np_rows), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when allocating limits"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: limits", istat, errorMessage)
 
       call determine_workload(obj,na, nb, np_rows, limits)
       max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
@@ -295,32 +264,14 @@
       ! Allocate space for HH vectors
 
       allocate(hh_trans(nb,num_hh_vecs), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-#if REALCASE == 1
-        print *,"tridiag_band_real: error when allocating hh_trans"//errorMessage
-#endif
-#if COMPLEXCASE == 1
-        print *,"tridiag_band_complex: error when allocating hh_trans "//errorMessage
-#endif
-        stop 1
-      endif
+      check_allocate("tridiag_band: hh_trans", istat, errorMessage)
 
       ! Allocate and init MPI requests
 
       allocate(ireq_hhr(num_chunks), stat=istat, errmsg=errorMessage) ! Recv requests
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when allocating ireq_hhr"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: ireq_hhr", istat, errorMessage)
       allocate(ireq_hhs(nblocks), stat=istat, errmsg=errorMessage)    ! Send requests
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYEP&
-                 &: error when allocating ireq_hhs"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: ireq_hhs", istat, errorMessage)
 
       num_hh_vecs = 0
       num_chunks  = 0
@@ -356,20 +307,10 @@
       ! Buffers for gathering/sending the HH vectors
 
       allocate(hh_gath(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! gathers HH vectors
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when allocating hh_gath"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: hh_gath", istat, errorMessage)
 
       allocate(hh_send(nb,max_blk_size,nblocks), stat=istat, errmsg=errorMessage) ! send buffer for HH vectors
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                &MATH_DATATYPE&
-                &: error when allocating hh_send"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: hh_send", istat, errorMessage)
 
       hh_gath(:,:,:) = 0.0_rck
       hh_send(:,:,:) = 0.0_rck
@@ -377,20 +318,10 @@
       ! Some counters
 
       allocate(hh_cnt(nblocks), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                &MATH_DATATYPE&
-                &: error when allocating hh_cnt"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: hh_cnt", istat, errorMessage)
 
       allocate(hh_dst(nblocks), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                &MATH_DATATYPE&
-                &: error when allocating hh_dst"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: hh_dst", istat, errorMessage)
 
       hh_cnt(:) = 1 ! The first transfomation Vector is always 0 and not calculated at all
       hh_dst(:) = 0 ! PE number for receive
@@ -401,12 +332,8 @@
       ! Limits for sending
 
       allocate(snd_limits(0:np_rows,nblocks), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                &MATH_DATATYPE&
-                &: error when allocating snd_limits"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: snd_limits", istat, errorMessage)
+
       do iblk=1,nblocks
         call determine_workload(obj, na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
       enddo
@@ -419,23 +346,13 @@
       if (max_threads==0) max_threads = 1
 
       allocate(omp_block_limits(0:max_threads), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when allocating omp_block_limits"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: omp_block_limits", istat, errorMessage)
 
       ! Get the OpenMP block limits
       call divide_band(obj,nblocks, max_threads, omp_block_limits)
 
       allocate(hv_t(nb,max_threads), tau_t(max_threads), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                &MATH_DATATYPE&
-                &: error when allocating hv_t, tau_t"//errorMessage
-        stop 1
-      endif
+      check_allocate("tridiag_band: hv_t", istat, errorMessage)
 
       hv_t = 0.0_rck
       tau_t = 0.0_rck
@@ -1252,60 +1169,25 @@
       if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
       deallocate(ab, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                &MATH_DATATYPE&
-                &: error when deallocating ab"//errorMessage
-        stop 1
-      endif
+      check_deallocate("tridiag_band: ab", istat, errorMessage)
 
       deallocate(ireq_hhr, ireq_hhs, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating ireq_hhr, ireq_hhs"//errorMessage
-        stop 1
-      endif
+      check_deallocate("tridiag_band: ireq_hhr", istat, errorMessage)
 
       deallocate(hh_cnt, hh_dst, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating hh_cnt, hh_dst"//errorMessage
-         stop 1
-       endif
+      check_deallocate("tridiag_band: hh_dst", istat, errorMessage)
 
       deallocate(hh_gath, hh_send, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating hh_gath, hh_send"//errorMessage
-         stop 1
-       endif
+      check_deallocate("tridiag_band: hh_gath", istat, errorMessage)
 
       deallocate(limits, snd_limits, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating limits, send_limits"//errorMessage
-         stop 1
-       endif
+      check_deallocate("tridiag_band: limits", istat, errorMessage)
 
       deallocate(block_limits, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"tridiag_band_&
-                 &MATH_DATATYPE&
-                 &: error when deallocating block_limits"//errorMessage
-         stop 1
-       endif
+      check_deallocate("tridiag_band: block_limits", istat, errorMessage)
 
       deallocate(global_id, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"tridiag_band_&
-                  &MATH_DATATYPE&
-                  &: error when allocating global_id"//errorMessage
-         stop 1
-       endif
+      check_deallocate("tridiag_band: global_id", istat, errorMessage)
 
       call obj%timer%stop("tridiag_band_&
       &MATH_DATATYPE&

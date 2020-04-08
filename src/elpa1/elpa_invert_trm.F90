@@ -51,6 +51,7 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "../general/sanity.F90"
+#include "../general/error_checking.inc"
 
        use precision
        use elpa1_compute
@@ -62,7 +63,7 @@
        implicit none
 #include "../general/precision_kinds.F90"
        class(elpa_abstract_impl_t), intent(inout) :: obj
-       integer(kind=ik)             :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+       integer(kind=ik)             :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #ifdef USE_ASSUMED_SIZE
        MATH_DATATYPE(kind=rck)     :: a(obj%local_nrows,*)
 #else
@@ -87,24 +88,24 @@
       &")
 
        na         = obj%na
-       lda        = obj%local_nrows
+       matrixRows = obj%local_nrows
        nblk       = obj%nblk
        matrixCols = obj%local_ncols
 
        call obj%get("mpi_comm_rows",mpi_comm_rows,error)
        if (error .ne. ELPA_OK) then
-         print *,"Error getting option. Aborting..."
+         print *,"Error getting option for mpi_comm_rows. Aborting..."
          stop
        endif
        call obj%get("mpi_comm_cols",mpi_comm_cols,error)
        if (error .ne. ELPA_OK) then
-         print *,"Error getting option. Aborting..."
+         print *,"Error getting option for mpi_comm_cols. Aborting..."
          stop
        endif
 
        call obj%get("debug", debug,error)
        if (error .ne. ELPA_OK) then
-         print *,"Error getting option. Aborting..."
+         print *,"Error getting option for debug. Aborting..."
          stop
        endif
        if (debug == 1) then
@@ -129,39 +130,19 @@
        l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
        allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when allocating tmp1 "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa_invert_trm: tmp1", istat, errorMessage)
 
        allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when allocating tmp2 "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa_invert_trm: tmp2", istat, errorMessage)
 
        tmp1 = 0
        tmp2 = 0
 
        allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when allocating tmat1 "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa_invert_trm: tmat1", istat, errorMessage)
 
        allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when allocating tmat2 "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
 
        tmat1 = 0
        tmat2 = 0
@@ -185,7 +166,7 @@
            if (my_pcol==pcol(n, nblk, np_cols)) then
              call obj%timer%start("blas")
 
-             call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a(l_row1,l_col1), int(lda,kind=BLAS_KIND), &
+             call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a(l_row1,l_col1), int(matrixRows,kind=BLAS_KIND), &
                                   infoBLAS)
              info = int(infoBLAS,kind=ik)
              call obj%timer%stop("blas")
@@ -231,7 +212,7 @@
            call obj%timer%start("blas")
            if (l_cols-l_colx+1>0) &
            call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
-                                   tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(lda,kind=BLAS_KIND))
+                                   tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
            call obj%timer%stop("blas")
            if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
            if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -269,19 +250,14 @@
                                int(nb,kind=BLAS_KIND), -ONE, &
                                 tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
                                 int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
-                                 a(1,l_col1), int(lda,kind=BLAS_KIND) )
+                                 a(1,l_col1), int(matrixRows,kind=BLAS_KIND) )
 
          call obj%timer%stop("blas")
 
        enddo
 
        deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"elpa_invert_trm_&
-   &MATH_DATATYPE&
-   &: error when deallocating tmp1 "//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa_invert_trm: tmp1, tmp2, tmat1, tmat2", istat, errorMessage)
 
        call obj%timer%stop("elpa_invert_trm_&
        &MATH_DATATYPE&

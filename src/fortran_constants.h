@@ -6,6 +6,8 @@
 ! General constants
  ELPA_FOR_ALL_ERRORS(FORTRAN_CONSTANT)
 
+! matrix layout constants
+ ELPA_FOR_ALL_MATRIX_LAYOUTS(FORTRAN_CONSTANT)
 
 ! Solver constants
  ELPA_FOR_ALL_SOLVERS(FORTRAN_CONSTANT)

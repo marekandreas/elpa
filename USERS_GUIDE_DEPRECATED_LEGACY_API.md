@@ -2,7 +2,7 @@
 
 **DISCLAIMER**
 This document provides some guidelines for using the legacy interface of the *ELPA* library with user applications.
-The legacy interface is deprecated and will be disabled at some point without any special anouncement.
+The legacy interface is deprecated and will be disabled at some point without any special announcement.
 The following guidelines will not be updated or corrected anymore.
 **We strongly recommend all users to use the long-term supported new API of ELPA, which has been published with the
 release of 2017.05.001.**
@@ -22,7 +22,7 @@ The *ELPA* library consists of two main parts:
 
 Both variants of the *ELPA* solvers are available for real or complex singe and double precision valued matrices.
 
-Thus *ELPA* provides the following user functions (see man pages or [online] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html) for details):
+Thus *ELPA* provides the following user functions (see man pages or [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html) for details):
 
 - elpa_get_communicators                        : set the row / column communicators for *ELPA*
 - elpa_solve_evp_complex_1stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 1stage* solver
@@ -57,6 +57,7 @@ please have a look at the man pages and/or the online documentation (see above).
 of a simple example program can be found in ./test_project_1stage_legacy_api/src.
 
 
+```fortran
    ! All ELPA routines need MPI communicators for communicating within
    ! rows or columns of processes, these are set in elpa_get_communicators
 
@@ -88,11 +89,12 @@ of a simple example program can be found in ./test_project_1stage_legacy_api/src
      print '(a)','| One-step ELPA solver complete.'
      print *
    end if
+```fortran
 
 
 #### Shared-memory version of *ELPA* ####
 
-If the *ELPA* library has been compiled with the configure option "--with-mpi=0",
+If the *ELPA* library has been compiled with the configure option `--with-mpi=0`,
 no MPI will be used.
 
 Still the **same** call sequence as in the MPI case can be used (see above).
@@ -103,6 +105,7 @@ Still the **same** call sequence as in the MPI case can be used (see above).
 
 SYNOPSIS
    FORTRAN INTERFACE
+```fortran
        use elpa1
 
        success = elpa_get_communicators (mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
@@ -114,8 +117,10 @@ SYNOPSIS
        integer, intent(out)  mpi_comm_row:     communicator for communication within columns of processes
 
        integer               success:          return value indicating success or failure of the underlying MPI_COMM_SPLIT function
+```
 
    C INTERFACE
+```c
        #include "elpa_generated.h"
 
        success = elpa_get_communicators (int mpi_comm_world, int my_prow, my_pcol, int *mpi_comm_rows, int *Pmpi_comm_cols);
@@ -127,7 +132,7 @@ SYNOPSIS
        int *mpi_comm_row:    pointer to the communicator for communication within columns of processes
 
        int  success:         return value indicating success or failure of the underlying MPI_COMM_SPLIT function
-
+```
 
 #### Using *ELPA 1stage* ####
 
@@ -136,9 +141,11 @@ only the real or complex valued solver has to be called:
 
 SYNOPSIS
    FORTRAN INTERFACE
+```fortran
        use elpa1
        success = elpa_solve_evp_real_1stage_{single|double} (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
        mpi_comm_cols)
+```
 
        With the definintions of the input and output variables:
 
@@ -157,11 +164,12 @@ SYNOPSIS
        logical                success:       return value indicating success or failure
 
    C INTERFACE
+```c
        #include "elpa.h"
 
        success = elpa_solve_evp_real_1stage_{single|double} (int na, int nev,  double *a, int lda,  double *ev, double *q, int ldq, int nblk, int matrixCols, int
        mpi_comm_rows, int mpi_comm_cols);
-
+```
        With the definintions of the input and output variables:
 
        int     na:            global dimension of quadratic matrix a to solve
@@ -185,10 +193,11 @@ DESCRIPTION
        will be stored in q. All memory of the arguments must be allocated outside the call to the solver.
 
    FORTRAN INTERFACE
+```fortran
        use elpa1
        success = elpa_solve_evp_complex_1stage_{single|double} (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
        mpi_comm_cols)
-
+```
        With the definintions of the input and output variables:
 
        integer,     intent(in)    na:            global dimension of quadratic matrix a to solve
@@ -206,11 +215,13 @@ DESCRIPTION
        logical                    success:       return value indicating success or failure
 
    C INTERFACE
+```c
        #include "elpa.h"
        #include <complex.h>
 
        success = elpa_solve_evp_complex_1stage_{single|double} (int na, int nev,  double complex *a, int lda,  double *ev, double complex*q, int ldq, int nblk, int
        matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+```
 
        With the definintions of the input and output variables:
 
@@ -256,13 +267,13 @@ If no kernel is set via the *ELPA 2stage API* then the default kernels will be s
 
 ##### Setting the *ELPA 2stage* compute kernels #####
 
-##### Setting the *ELPA 2stage* compute kernels with environment variables#####
+##### Setting the *ELPA 2stage* compute kernels with environment variables #####
 
 
 The utility program "elpa2_print_kernels" can list which kernels are available and which
 would be chosen. This reflects the setting of the default kernel.
 
-##### Setting the *ELPA 2stage* compute kernels with API calls#####
+##### Setting the *ELPA 2stage* compute kernels with API calls #####
 
 It is also possible to set the *ELPA 2stage* compute kernels via the API.
 
@@ -270,10 +281,12 @@ As an example the API for ELPA real double-precision 2stage is shown:
 
 SYNOPSIS
    FORTRAN INTERFACE
+```fortran
        use elpa1
        use elpa2
        success = elpa_solve_evp_real_2stage_double (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows,
        mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL, useQR, useGPU)
+```
 
        With the definintions of the input and output variables:
 
@@ -295,10 +308,12 @@ SYNOPSIS
       logical                        success:       return value indicating success or failure
 
    C INTERFACE
+```c
        #include "elpa.h"
 
        success = elpa_solve_evp_real_2stage_double (int na, int nev,  double *a, int lda,  double *ev, double *q, int ldq, int nblk, int matrixCols, int
        mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_ELPA_REAL_KERNEL, int useQR, int useGPU);
+```
 
        With the definintions of the input and output variables:
 
@@ -335,10 +350,11 @@ As an exmple the real double-precision case is explained:
  SYNOPSIS
 
  FORTRAN INTERFACE
-
+```fortran
   use elpa_driver
 
   success = elpa_solve_evp_real_double (na, nev, a(lda,matrixCols), ev(nev), q(ldq, matrixCols), ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, THIS_REAL_ELPA_KERNEL=THIS_REAL_ELPA_KERNEL, useQR, useGPU, method=method)
+```
 
   Generalized interface to the ELPA 1stage and 2stage solver for real-valued problems
 
@@ -381,10 +397,11 @@ As an exmple the real double-precision case is explained:
 
 
  C INTERFACE
-
+```c
  #include "elpa.h"
 
  success = elpa_solve_evp_real_double (int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_ELPA_REAL_KERNEL, int useQR, int useGPU, char *method);"
+```
 
 
  With the definintions of the input and output variables:"
@@ -437,7 +454,7 @@ argument "useGPU = .true." or "useGPU = 1" for the Fortran and C case, respectiv
 *ELPA* 2stage compute kernels, the enviroment variable takes precendence over the setting in the API call.
 
 Further note that it is NOT allowed to define the usage of GPUs AND to EXPLICITLY set an ELPA 2stage compute kernel other than
-"REAL_ELPA_KERNEL_GPU" or "COMPLEX_ELPA_KERNEL_GPU".
+`REAL_ELPA_KERNEL_GPU` or `COMPLEX_ELPA_KERNEL_GPU`.
 
 
 

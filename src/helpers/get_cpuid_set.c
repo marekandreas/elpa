@@ -58,7 +58,7 @@ static inline void get_cpu_manufacturer(int *set)
 {
   u_int32_t registers[4];
   registers[0] = 0;
-  asm volatile("cpuid": "=a" (registers[0]),"=b" (registers[1]),"=c" (registrers[3]),"=d" (registers[2]): "0" (registers[0]), "2" (registers[2]): "memory");
+  asm volatile("cpuid": "=a" (registers[0]),"=b" (registers[1]),"=c" (registers[3]),"=d" (registers[2]): "0" (registers[0]), "2" (registers[2]): "memory");
 
   char str[13]="GenuineIntel\0";
   char manufacturer[13];

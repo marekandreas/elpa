@@ -95,6 +95,8 @@ subroutine elpa_transpose_vectors_ss_&
    integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
    integer(kind=ik)                                  :: auxstride
    integer(kind=ik), intent(in)                      :: nrThreads
+   integer(kind=ik)                                  :: istat
+   character(200)                                    :: errorMessage
 
    call obj%timer%start("elpa_transpose_vectors_&
    &MATH_DATATYPE&
@@ -127,6 +129,7 @@ subroutine elpa_transpose_vectors_ss_&
    nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
 
    allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
+   check_allocate("elpa_transpose_vectors_ss: aux", istat, errorMessage)
 #ifdef WITH_OPENMP
    !$omp parallel private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n)
 #endif
@@ -201,7 +204,8 @@ subroutine elpa_transpose_vectors_ss_&
 #ifdef WITH_OPENMP
    !$omp end parallel
 #endif
-   deallocate(aux)
+   deallocate(aux, stat=istat, errmsg=errorMessage)
+   check_deallocate("elpa_transpose_vectors_ss: aux", istat, errorMessage)
 
    call obj%timer%stop("elpa_transpose_vectors_&
    &MATH_DATATYPE&

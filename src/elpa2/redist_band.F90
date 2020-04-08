@@ -46,19 +46,20 @@
 ! redist_band: redistributes band from 2D block cyclic form to 1D band
 
 #include "config-f90.h"
+#include "../general/error_checking.inc"
 
 subroutine redist_band_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-           (obj, a_mat, a_dev, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+           (obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
 
    use elpa_abstract_impl
    use elpa2_workload
    use precision
    use iso_c_binding
    use cuda_functions
-   use elpa_utilities, only : local_index
+   use elpa_utilities, only : local_index, check_allocate_f, check_deallocate_f
    use elpa_mpi
    implicit none
 
@@ -79,8 +80,10 @@ subroutine redist_band_&
    integer(kind=MPI_KIND)                           :: mpierr
    integer(kind=ik)                                 :: nblocks_total, il, jl, l_rows, l_cols, n_off
 
+   integer(kind=ik)                                 :: istat
+   character(200)                                   :: errorMessage
+
    logical                                          :: successCUDA
-   integer(kind=c_intptr_t)                         :: a_dev
    integer(kind=c_intptr_t), parameter              :: size_of_datatype = size_of_&
                                                                         &PRECISION&
                                                                         &_&
@@ -113,9 +116,11 @@ subroutine redist_band_&
 
    ! Get global_id mapping 2D procssor coordinates to global id
    
-   allocate(global_id(0:np_rows-1,0:np_cols-1))
+   allocate(global_id(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: global_id", istat, errorMessage)
 #ifdef WITH_OPENMP
-   allocate(global_id_tmp(0:np_rows-1,0:np_cols-1))
+   allocate(global_id_tmp(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: global_id_tmp", istat, errorMessage)
 #endif
    global_id(:,:) = 0
    global_id(my_prow, my_pcol) = my_pe
@@ -125,7 +130,8 @@ subroutine redist_band_&
    global_id_tmp(:,:) = global_id(:,:)
    call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
                       int(communicator,kind=MPI_KIND), mpierr)
-   deallocate(global_id_tmp)
+   deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
+   check_deallocate("redist_band: global_id_tmp", istat, errorMessage)
 #else
    call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
                       int(communicator,kind=MPI_KIND), mpierr)
@@ -136,14 +142,19 @@ subroutine redist_band_&
 
    nblocks_total = (na-1)/nbw + 1
 
-   allocate(block_limits(0:n_pes))
+   allocate(block_limits(0:n_pes), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: block_limits", istat, errorMessage)
    call divide_band(obj, nblocks_total, n_pes, block_limits)
 
 
-   allocate(ncnt_s(0:n_pes-1))
-   allocate(nstart_s(0:n_pes-1))
-   allocate(ncnt_r(0:n_pes-1))
-   allocate(nstart_r(0:n_pes-1))
+   allocate(ncnt_s(0:n_pes-1), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: ncnt_s", istat, errorMessage)
+   allocate(nstart_s(0:n_pes-1), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: nstart_s", istat, errorMessage)
+   allocate(ncnt_r(0:n_pes-1), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: ncnt_r", istat, errorMessage)
+   allocate(nstart_r(0:n_pes-1), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: nstart_r", istat, errorMessage)
 
 
    nfact = nbw/nblk
@@ -165,7 +176,8 @@ subroutine redist_band_&
 
    ! Allocate send buffer
 
-   allocate(sbuf(nblk,nblk,sum(ncnt_s)))
+   allocate(sbuf(nblk,nblk,sum(ncnt_s)), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: sbuf", istat, errorMessage)
    sbuf(:,:,:) = 0.
 
    ! Determine start offsets in send buffer
@@ -212,7 +224,8 @@ subroutine redist_band_&
 
    ! Allocate receive buffer
 
-   allocate(rbuf(nblk,nblk,sum(ncnt_r)))
+   allocate(rbuf(nblk,nblk,sum(ncnt_r)), stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: rbuf", istat, errorMessage)
 
    ! Set send counts/send offsets, receive counts/receive offsets
    ! now actually in variables, not in blocks
@@ -253,7 +266,8 @@ subroutine redist_band_&
      nstart_r(i) = nstart_r(i-1) + ncnt_r(i-1)
    enddo
 
-   allocate(buf((nfact+1)*nblk,nblk))
+   allocate(buf((nfact+1)*nblk,nblk),stat=istat, errmsg=errorMessage)
+   check_allocate("redist_band: buf", istat, errorMessage)
 
    ! n_off: Offset of ab within band
    n_off = block_limits(my_pe)*nbw
@@ -276,12 +290,17 @@ subroutine redist_band_&
      enddo
    enddo
 
-   deallocate(ncnt_s, nstart_s)
-   deallocate(ncnt_r, nstart_r)
-   deallocate(global_id)
-   deallocate(block_limits)
+   deallocate(ncnt_s, nstart_s, stat=istat, errmsg=errorMessage)
+   check_deallocate("redist_band: ncnt_s, nstart_s", istat, errorMessage)
+   deallocate(ncnt_r, nstart_r, stat=istat, errmsg=errorMessage)
+   check_deallocate("redist_band: ncnt_r, nstart_r", istat, errorMessage)
+   deallocate(global_id, stat=istat, errmsg=errorMessage)
+   check_deallocate("redist_band: global_id", istat, errorMessage)
+   deallocate(block_limits, stat=istat, errmsg=errorMessage)
+   check_deallocate("redist_band: block_limits", istat, errorMessage)
 
-   deallocate(sbuf, rbuf, buf)
+   deallocate(sbuf, rbuf, buf, stat=istat, errmsg=errorMessage)
+   check_deallocate("redist_band: sbuf, rbuf, buf", istat, errorMessage)
 
    call obj%timer%stop("redist_band_&
    &MATH_DATATYPE&

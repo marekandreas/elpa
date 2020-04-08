@@ -1,3 +1,4 @@
+#if 0
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -49,16 +50,30 @@
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
+#endif
 
 #include "elpa/elpa_simd_constants.h"
+#include "../general/error_checking.inc"
 
  function elpa_solve_evp_&
   &MATH_DATATYPE&
   &_&
   &2stage_&
   &PRECISION&
-  &_impl (obj, a, ev, q) result(success)
-   use matrix_plot
+  &_impl (obj, &
+#ifdef REDISTRIBUTE_MATRIX
+   aExtern, &
+#else
+   a, &
+#endif
+   ev, &
+#ifdef REDISTRIBUTE_MATRIX
+   qExtern) result(success)
+#else
+   q) result(success)
+#endif
+
+   !use matrix_plot
    use elpa_abstract_impl
    use elpa_utilities
    use elpa1_compute
@@ -69,6 +84,9 @@
    use elpa_omp
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
    use simd_kernel
+#endif
+#ifdef REDISTRIBUTE_MATRIX
+   use elpa_scalapack_interfaces
 #endif
    use iso_c_binding
    implicit none
@@ -81,6 +99,21 @@
    logical                                                            :: useQRActual
 #endif
    integer(kind=c_int)                                                :: kernel, kernelByUser
+#ifdef REDISTRIBUTE_MATRIX 
+
+#ifdef USE_ASSUMED_SIZE
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout), target         :: aExtern(obj%local_nrows,*)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target :: qExtern(obj%local_nrows,*)
+#else
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout), target         :: aExtern(obj%local_nrows,obj%local_ncols)
+#ifdef HAVE_SKEWSYMMETRIC
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
+#else
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
+#endif
+#endif
+
+#else /* REDISTRIBUTE_MATRIX */ 
 
 #ifdef USE_ASSUMED_SIZE
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,*)
@@ -93,6 +126,14 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
 #endif
 #endif
+
+#endif /* REDISTRIBUTE_MATRIX */ 
+
+#ifdef REDISTRIBUTE_MATRIX
+    MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
+    MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
+#endif
+
    real(kind=C_DATATYPE_KIND), intent(inout)                          :: ev(obj%na)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: hh_trans(:,:)
 
@@ -112,9 +153,7 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer                       :: q_actual(:,:)
 
 
-   integer(kind=c_intptr_t)                                           :: tmat_dev, q_dev, a_dev
-
-   integer(kind=c_int)                                                :: i, j
+   integer(kind=c_int)                                                :: i
    logical                                                            :: success, successCUDA
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
@@ -128,18 +167,36 @@
                                                                                             &PRECISION&
                                                                                             &_&
                                                                                             &MATH_DATATYPE
-    integer(kind=ik)                                                  :: na, nev, lda, ldq, nblk, matrixCols, &
+    integer(kind=ik)                                                  :: na, nev, nblk, matrixCols, &
                                                                          mpi_comm_rows, mpi_comm_cols,        &
-                                                                         mpi_comm_all, check_pd, error
+                                                                         mpi_comm_all, check_pd, error, matrixRows
+#ifdef REDISTRIBUTE_MATRIX
+   integer(kind=ik)                                                   :: nblkInternal, matrixOrder
+   character(len=1)                                                   :: layoutInternal, layoutExternal
+   integer(kind=BLAS_KIND)                                            :: external_blacs_ctxt, external_blacs_ctxt_
+   integer(kind=BLAS_KIND)                                            :: np_rows_, np_cols_, my_prow_, my_pcol_
+   integer(kind=BLAS_KIND)                                            :: np_rows__, np_cols__, my_prow__, my_pcol__
+   integer(kind=BLAS_KIND)                                            :: sc_desc_(1:9), sc_desc(1:9)
+   integer(kind=BLAS_KIND)                                            :: na_rows_, na_cols_, info_, blacs_ctxt_
+   integer(kind=ik)                                                   :: mpi_comm_rows_, mpi_comm_cols_
+   integer(kind=MPI_KIND)                                             :: mpi_comm_rowsMPI_, mpi_comm_colsMPI_
+   character(len=1), parameter                                        :: matrixLayouts(2) = [ 'C', 'R' ]
+
+   MATH_DATATYPE(kind=rck), allocatable, target                       :: aIntern(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target           :: qIntern(:,:)
+#endif
+
 
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
+    logical                                                           :: good_nblk_gpu
 
     integer(kind=ik)                                                  :: nrThreads
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
     integer(kind=c_int)                                               :: simdSetAvailable(NUMBER_OF_INSTR)
 #endif
     integer(kind=ik)                                                  :: global_index
+   logical                                                            :: reDistributeMatrix, doRedistributeMatrix
 
 #if REALCASE == 1
 #undef GPU_KERNEL
@@ -164,6 +221,7 @@
     &PRECISION&
     &")
 
+   reDistributeMatrix = .false.
 
 #ifdef WITH_OPENMP
     ! store the number of OpenMP threads used in the calling function
@@ -179,7 +237,11 @@
 
     success = .true.
 
+#ifdef REDISTRIBUTE_MATRIX
+    if (present(qExtern)) then
+#else
     if (present(q)) then
+#endif
       obj%eigenvalues_only = .false.
     else
       obj%eigenvalues_only = .true.
@@ -187,24 +249,23 @@
 
     na         = obj%na
     nev        = obj%nev
-    lda        = obj%local_nrows
-    ldq        = obj%local_nrows
     nblk       = obj%nblk
     matrixCols = obj%local_ncols
+    matrixRows = obj%local_nrows
 
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_rows. Aborting..."
       stop
     endif
     call obj%get("mpi_comm_cols",mpi_comm_cols,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_cols. Aborting..."
       stop
     endif
     call obj%get("mpi_comm_parent",mpi_comm_all,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for mpi_comm_parent. Aborting..."
       stop
     endif
 
@@ -225,6 +286,11 @@
     np_cols = int(np_colsMPI, kind=c_int)
 
     call obj%timer%stop("mpi_communication")
+
+
+#ifdef REDISTRIBUTE_MATRIX
+#include "../helpers/elpa_redistribute_template.F90"
+#endif /* REDISTRIBUTE_MATRIX */
 
    ! special case na = 1
    if (na .eq. 1) then
@@ -260,22 +326,29 @@
 
     call obj%get(KERNEL_STRING,kernel,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for kernel settings. Aborting..."
       stop
     endif
  
     call obj%get("is_skewsymmetric",skewsymmetric,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for skewsymmetric settings. Aborting..."
       stop
     endif
 
     isSkewsymmetric = (skewsymmetric == 1)
 
+    call obj%get("debug",debug,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option for debug settings. Aborting..."
+      stop
+    endif
+    wantDebug = debug == 1
+
     ! GPU settings
     call obj%get("gpu", gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option gpu settings. Aborting..."
       stop
     endif
 
@@ -287,7 +360,6 @@
       if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
 
          do_useGPU = .true.
-         a_dev = 0
 
          ! set the neccessary parameters
          cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
@@ -303,12 +375,21 @@
       call obj%timer%stop("check_for_gpu")
     endif
 
+    if (nblk*(max(np_rows,np_cols)-1) >= na) then
+      write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
+      write(error_unit,*) "Choose a smaller block size if possible."
+
+      do_useGPU = .false.
+
+      if (kernel == GPU_KERNEL) then
+        kernel = GENERIC_KERNEL
+      endif
+    endif
+
     do_useGPU_bandred = do_useGPU
-    ! tridiag-band not ported to GPU yet
-    do_useGPU_tridiag_band = .false.
+    do_useGPU_tridiag_band = .false.  ! not yet ported
     do_useGPU_solve_tridi = do_useGPU
-    ! trans tridi to band GPU implementation does not work properly
-    do_useGPU_trans_ev_tridi_to_band = .false.
+    do_useGPU_trans_ev_tridi_to_band = do_useGPU
     do_useGPU_trans_ev_band_to_full = do_useGPU
 
     ! only if we want (and can) use GPU in general, look what are the
@@ -318,38 +399,36 @@
     if(do_useGPU) then
       call obj%get("gpu_bandred", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option gpu_bandred settings. Aborting..."
         stop
       endif
       do_useGPU_bandred = (gpu == 1)
 
-!      call obj%get("gpu_tridiag_band", gpu, error)
-!      if (error .ne. ELPA_OK) then
-!        print *,"Problem getting option. Aborting..."
-!        stop
-!      endif
-!      do_useGPU_tridiag_band = (gpu == 1)
-    ! tridiag-band not ported to GPU yet
-      do_useGPU_tridiag_band = .false.
+      ! not yet ported
+      !call obj%get("gpu_tridiag_band", gpu, error)
+      !if (error .ne. ELPA_OK) then
+      !  print *,"Problem getting option for gpu_tridiag_band settings. Aborting..."
+      !  stop
+      !endif
+      !do_useGPU_tridiag_band = (gpu == 1)
 
       call obj%get("gpu_solve_tridi", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_solve_tridi settings. Aborting..."
         stop
       endif
       do_useGPU_solve_tridi = (gpu == 1)
 
-!      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
-!      if (error .ne. ELPA_OK) then
-!        print *,"Problem getting option. Aborting..."
-!        stop
-!      endif
-!      do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
-      do_useGPU_trans_ev_tridi_to_band = .false.
-
+      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for gpu_trans_ev_tridi_to_band settings. Aborting..."
+        stop
+      endif
+      do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
+ 
       call obj%get("gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
         stop
       endif
       do_useGPU_trans_ev_band_to_full = (gpu == 1)
@@ -357,47 +436,38 @@
 
     ! check consistency between request for GPUs and defined kernel
     if (do_useGPU_trans_ev_tridi_to_band) then
-    !!! this currently cannot happen,  GPU_trans_ev_tridi_to_band is always false
-        write(error_unit,*) "ELPA: internal error!"
-        stop
-!      if (kernel .ne. GPU_KERNEL) then
-!        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-!        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-!        do_useGPU_trans_ev_tridi_to_band = .false.
-!      else if (nblk .ne. 128) then
-!        write(error_unit,*) "ELPA: Warning, GPU kernel can run only with scalapack block size 128!"
-!        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-!        do_useGPU_trans_ev_tridi_to_band = .false.
-!        kernel = GENERIC_KERNEL
-!      endif
-    else
-      if (kernel .eq. GPU_KERNEL) then
-        ! We have currently forbidden to use GPU version of trans ev tridi to band, but we did not forbid the possibility
-        ! to select the GPU kernel. If done such, give warning and swicht to the  generic kernel
-        ! TODO it would be better to forbid the possibility to set the GPU kernel completely
-        write(error_unit,*) "ELPA: ERROR, GPU kernel currently not implemented.&
-                             & Use optimized CPU kernel even for GPU runs! &
-                           Switching to the non-optimized generic kernel"
-        kernel = GENERIC_KERNEL
+      if (kernel .ne. GPU_KERNEL) then
+        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
+        write(error_unit,*) "The compute kernel will be executed on CPUs!"
+        do_useGPU_trans_ev_tridi_to_band = .false.
+      else
+        good_nblk_gpu = .false.
+
+        ! Accepted values are 2,4,8,16,...,512
+        do i = 1,10
+           if (nblk == 2**i) then
+              good_nblk_gpu = .true.
+              exit
+           endif
+        enddo
+
+        if (.not. good_nblk_gpu) then
+           write(error_unit,*) "ELPA: Warning, CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
+           write(error_unit,*) "The compute kernel will be executed on CPUs!"
+           do_useGPU_trans_ev_tridi_to_band = .false.
+           kernel = GENERIC_KERNEL
+        endif
       endif
     endif
 
     ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band sould be
     ! finally consistent
     if (do_useGPU_trans_ev_tridi_to_band) then
-    !!! this currently cannot happen,  GPU_trans_ev_tridi_to_band is always false
-      write(error_unit,*) "ELPA: internal error!"
-      stop
-!      if (kernel .ne. GPU_KERNEL) then
-!        ! this should never happen, checking as an assert
-!        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
-!        stop
-!      endif
-!      if (nblk .ne. 128) then
-!        ! this should never happen, checking as an assert
-!        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel and blocksize!  Aborting..."
-!        stop
-!      endif
+      if (kernel .ne. GPU_KERNEL) then
+        ! this should never happen, checking as an assert
+        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
+        stop
+      endif
     else
       if (kernel .eq. GPU_KERNEL) then
         ! combination not allowed
@@ -435,14 +505,14 @@
      ! we change it above? This is a mess and should be cleaned up
      call obj%get(KERNEL_STRING,kernelByUser,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for user kernel settings. Aborting..."
        stop
      endif
 
      if (kernelByUser .ne. kernel) then
        call obj%set(KERNEL_STRING, kernel, error)
        if (error .ne. ELPA_OK) then
-         print *,"Problem setting option. Aborting..."
+         print *,"Problem setting kernel. Aborting..."
          stop
        endif
      endif
@@ -459,7 +529,7 @@
      ! compare user chosen kernel with possible kernels
      call obj%get(KERNEL_STRING,kernelByUser,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option. Aborting..."
+       print *,"Problem getting option for user kernel settings. Aborting..."
        stop
      endif
 
@@ -501,7 +571,7 @@
             if (obj%can_set(KERNEL_STRING, kernel) == ELPA_OK) then
               call obj%set(KERNEL_STRING, kernel, error)
               if (error .ne. ELPA_OK) then
-                print *,"Problem setting option. Aborting..."
+                print *,"Problem setting kernel. Aborting..."
                 stop
               endif
               if (my_pe == 0 ) write(error_unit,*) "ELPA decided to use ",elpa_int_value_to_string(KERNEL_STRING, kernel)
@@ -517,7 +587,7 @@
 #if REALCASE == 1
     call obj%get("qr",qr,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
+      print *,"Problem getting option for qr settings. Aborting..."
       stop
     endif
     if (qr .eq. 1) then
@@ -527,14 +597,6 @@
     endif
 
 #endif
-
-    call obj%get("debug",debug,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option. Aborting..."
-      stop
-    endif
-    wantDebug = debug == 1
-
 
 
 #if REALCASE == 1
@@ -555,15 +617,13 @@
     endif
 #endif /* REALCASE */
 
-
-
     if (.not. obj%eigenvalues_only) then
-      q_actual => q(1:obj%local_nrows,1:obj%local_ncols)
+      q_actual => q(1:matrixRows,1:matrixCols)
     else
-     allocate(q_dummy(1:obj%local_nrows,1:obj%local_ncols))
-     q_actual => q_dummy(1:obj%local_nrows,1:obj%local_ncols)
+     allocate(q_dummy(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa2_template: q_dummy", istat, errorMessage)
+     q_actual => q_dummy(1:matrixRows,1:matrixCols)
     endif
-
 
     ! set the default values for each of the 5 compute steps
     do_bandred        = .true.
@@ -578,7 +638,7 @@
     endif
 
     if (obj%is_set("bandwidth") == 1) then
-      ! bandwidth is set. That means, that the inputed matrix is actually banded and thus the 
+      ! bandwidth is set. That means, that the inputed matrix is actually banded and thus the
       ! first step of ELPA2 should be skipped
       call obj%get("bandwidth",nbw,error)
       if (nbw == 0) then
@@ -618,7 +678,7 @@
       !first check if the intermediate bandwidth was set by the user
       call obj%get("intermediate_bandwidth", nbw, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for intermediate_bandwidth. Aborting..."
         stop
       endif
 
@@ -630,16 +690,11 @@
         ! For Intel(R) Xeon(R) E5 v2 and v3, better use 64 instead of 32!
         ! For IBM Bluegene/Q this is not clear at the moment. We have to keep an eye
         ! on this and maybe allow a run-time optimization here
-        if (do_useGPU) then
-          nbw = nblk
-        else
 #if REALCASE == 1
-          nbw = (63/nblk+1)*nblk
+        nbw = (63/nblk+1)*nblk
 #elif COMPLEXCASE == 1
-          nbw = (31/nblk+1)*nblk
+        nbw = (31/nblk+1)*nblk
 #endif
-        endif
-
       else
         ! intermediate bandwidth has been specified by the user, check, whether correctly
         if (mod(nbw, nblk) .ne. 0) then
@@ -654,26 +709,7 @@
       ! tmat is needed only in full->band and band->full steps, so alocate here
       ! (not allocated for banded matrix on input)
       allocate(tmat(nbw,nbw,num_blocks), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"solve_evp_&
-        &MATH_DATATYPE&
-        &_2stage_&
-        &PRECISION&
-        &" // ": error when allocating tmat "//errorMessage
-        stop 1
-      endif
-
-      ! if either of full->band or band->full steps are to be done on GPU,
-      ! allocate also corresponding array on GPU.
-      if (do_useGPU_bandred .or.  do_useGPU_trans_ev_band_to_full) then
-        successCUDA = cuda_malloc(tmat_dev, nbw*nbw* size_of_datatype)
-        if (.not.(successCUDA)) then
-          print *,"bandred_&
-                  &MATH_DATATYPE&
-                  &: error in cudaMalloc tmat_dev 1"
-          stop 1
-        endif
-      endif
+      check_allocate("elpa2_template: tmat", istat, errorMessage)
 
       do_bandred       = .true.
       do_solve_tridi   = .true.
@@ -682,15 +718,7 @@
     endif  ! matrix not already banded on input
 
     ! start the computations in 5 steps
-!     print *
-!     print *, 'do_useGPU_bandred', do_useGPU_bandred
-!     print *, 'do_useGPU_tridiag_band', do_useGPU_tridiag_band
-!     print *, 'do_useGPU_solve_tridi', do_useGPU_solve_tridi
-!     print *, 'do_useGPU_trans_ev_tridi_to_band', do_useGPU_trans_ev_tridi_to_band
-!     print *, 'do_useGPU_trans_ev_band_to_full', do_useGPU_trans_ev_band_to_full
-!     print *
     if (do_bandred) then
-!       print *, 'do_useGPU_bandred=', do_useGPU_bandred
       call obj%timer%start("bandred")
 #ifdef HAVE_LIKWID
       call likwid_markerStartRegion("bandred")
@@ -701,8 +729,8 @@
       &_&
       &PRECISION &
       (obj, na, a, &
-      a_dev, lda, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-      tmat_dev,  wantDebug, do_useGPU_bandred, success, &
+      matrixRows, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+      wantDebug, do_useGPU_bandred, success, &
 #if REALCASE == 1
       useQRActual, &
 #endif
@@ -718,13 +746,7 @@
      ! Reduction band -> tridiagonal
      if (do_tridiag) then
        allocate(e(na), stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage_&
-         &PRECISION " // ": error when allocating e "//errorMessage
-         stop 1
-       endif
+       check_allocate("elpa2_template: e", istat, errorMessage)
 
        call obj%timer%start("tridiag")
 #ifdef HAVE_LIKWID
@@ -734,7 +756,7 @@
        &MATH_DATATYPE&
        &_&
        &PRECISION&
-       (obj, na, nbw, nblk, a, a_dev, lda, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+       (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
        do_useGPU_tridiag_band, wantDebug, nrThreads)
 
 #ifdef WITH_MPI
@@ -754,13 +776,26 @@
      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
      l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
 
+
+   ! test only
+   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
+
+   if (matrixCols .ne. l_cols) then
+     print *,"DFDSF ",matrixCols, l_cols
+   else
+    print *,"identical"
+   endif
+
+   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
+   if (matrixRows .ne. l_rows) then
+     print *,"DFDSF rows ",matrixRows, l_rows
+   else
+    print *,"identical rows"
+   endif
+
+
      allocate(q_real(l_rows,l_cols), stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"solve_evp_&
-       &MATH_DATATYPE&
-       &_2stage: error when allocating q_real"//errorMessage
-       stop 1
-     endif
+     check_allocate("elpa2_template: q_real", istat, errorMessage)
 #endif
 
      ! Solve tridiagonal system
@@ -774,7 +809,7 @@
        &PRECISION &
        (obj, na, nev, ev, e, &
 #if REALCASE == 1
-       q_actual, ldq,   &
+       q_actual, matrixRows,   &
 #endif
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
@@ -788,12 +823,7 @@
      endif ! do_solve_tridi
 
      deallocate(e, stat=istat, errmsg=errorMessage)
-     if (istat .ne. 0) then
-       print *,"solve_evp_&
-       &MATH_DATATYPE&
-       &_2stage: error when deallocating e "//errorMessage
-       stop 1
-     endif
+     check_deallocate("elpa2_template: e", istat, errorMessage)
 
      if (obj%eigenvalues_only) then
        do_trans_to_band = .false.
@@ -802,7 +832,7 @@
 
        call obj%get("check_pd",check_pd,error)
        if (error .ne. ELPA_OK) then
-         print *,"Problem getting option. Aborting..."
+         print *,"Problem getting option for check_pd. Aborting..."
          stop
        endif
        if (check_pd .eq. 1) then
@@ -830,12 +860,7 @@
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
 
        deallocate(q_real, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage: error when deallocating q_real"//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa2_template: q_real", istat, errorMessage)
 #endif
      endif
  
@@ -843,30 +868,26 @@
        ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
        ! This makes the eigenvectors complex.
        ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
-         q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols) = 0.0
-         do i = 1, obj%local_nrows
+         q(1:matrixRows, matrixCols+1:2*matrixCols) = 0.0
+         do i = 1, matrixRows
 !          global_index = indxl2g(i, nblk, my_prow, 0, np_rows)
            global_index = np_rows*nblk*((i-1)/nblk) + MOD(i-1,nblk) + MOD(np_rows+my_prow-0, np_rows)*nblk + 1
            if (mod(global_index-1,4) .eq. 0) then
               ! do nothing
            end if
            if (mod(global_index-1,4) .eq. 1) then
-              q(i,obj%local_ncols+1:2*obj%local_ncols) = q(i,1:obj%local_ncols)
-              q(i,1:obj%local_ncols) = 0
+              q(i,matrixCols+1:2*matrixCols) = q(i,1:matrixCols)
+              q(i,1:matrixCols) = 0
            end if
            if (mod(global_index-1,4) .eq. 2) then
-              q(i,1:obj%local_ncols) = -q(i,1:obj%local_ncols)
+              q(i,1:matrixCols) = -q(i,1:matrixCols)
            end if
            if (mod(global_index-1,4) .eq. 3) then
-              q(i,obj%local_ncols+1:2*obj%local_ncols) = -q(i,1:obj%local_ncols)
-              q(i,1:obj%local_ncols) = 0
+              q(i,matrixCols+1:2*matrixCols) = -q(i,1:matrixCols)
+              q(i,1:matrixCols) = 0
            end if
          end do
        endif
-!        print * , "q="
-!        do i=1,na
-!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
-!        enddo
        ! Backtransform stage 1
      if (do_trans_to_band) then
        call obj%timer%start("trans_ev_to_band")
@@ -880,28 +901,8 @@
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
-       q_dev, &
-       ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+       matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
-!        if (isSkewsymmetric) then
-!        ! Transform imaginary part
-!        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
-!          call trans_ev_tridi_to_band_&
-!          &MATH_DATATYPE&
-!          &_&
-!          &PRECISION &
-!          (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
-!          q_dev, &
-!          ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
-!          nrThreads, success=success, kernel=kernel)
-!        endif
-!        print * , "After trans_ev_tridi_to_band: real part of q="
-!        do i=1,na
-!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
-!        enddo
-! #ifdef DOUBLE_PRECISION_REAL
-!        call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',0)
-! #endif
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_band")
 #endif
@@ -909,68 +910,16 @@
 
        if (.not.(success)) return
  
-!        ! We can now deallocate the stored householder vectors
-!        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
-!        if (istat .ne. 0) then
-!          print *, "solve_evp_&
-!          &MATH_DATATYPE&
-!          &_2stage_&
-!          &PRECISION " // ": error when deallocating hh_trans "//errorMessage
-!          stop 1
-!        endif
      endif ! do_trans_to_band
-!      print *, 'after do_useGPU_trans_ev_tridi_to_band', do_useGPU_trans_ev_tridi_to_band
-!      print*, 'do_useGPU_trans_ev_band_to_full=', do_useGPU_trans_ev_band_to_full
-     ! the array q might reside on device or host, depending on whether GPU is
-     ! used or not. We thus have to transfer he data manually, if one of the
-     ! routines is run on GPU and the other not.
 
-     ! first deal with the situation that first backward step was on GPU
-     if(do_useGPU_trans_ev_tridi_to_band) then
-       ! if the second backward step is to be performed, but not on GPU, we have
-       ! to transfer q to the host
-       if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
-         successCUDA = cuda_memcpy(int(loc(q),kind=c_intptr_t), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
-         if (.not.(successCUDA)) then
-           print *,"elpa2_template, error in copy to host"
-           stop 1
-         endif
-       endif
-
-       ! if the last step is not required at all, or will be performed on CPU,
-       ! release the memmory allocated on the device
-       if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
-         successCUDA = cuda_free(q_dev)
-         print *, 'q_dev is freed'
-       endif
-     endif
-
-     !TODO check that the memory is properly deallocated on the host in case that
-     !the last step is not required
+     ! the array q (currently) always resides on host even when using GPU
 
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("trans_ev_to_full")
 #endif
-       if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
-         ! copy to device if we want to continue on GPU
- 
-         successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
-!          if (.not.(successCUDA)) then
-!            print *,"elpa2_template, error in cuda_malloc"
-!            stop 1
-!          endif         
-!          print *, 'q_dev=', q_dev, 'loc(q)=', loc(q)&
-!          , 'ldq*matrixCols* size_of_datatype=', ldq*matrixCols* size_of_datatype, ', q(1,1)=', q(1,1)
 
-         successCUDA = cuda_memcpy(q_dev, int(loc(q),kind=c_intptr_t), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
-         if (.not.(successCUDA)) then
-           print *,"elpa2_template, error in copy to device", successCUDA
-           stop 1
-         endif
-       endif
-         
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
        
@@ -979,21 +928,16 @@
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, a, &
-       a_dev, lda, tmat, tmat_dev,  q,  &
-       q_dev, &
-       ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
+       matrixRows, tmat, q,  &
+       matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
        , useQRActual  &
 #endif
        )
-!        print * , "After trans_ev_band_to_full: real part of q="
-!        do i=1,na
-!          write(*,"(100g15.5)") ( q(i,j), j=1,na )
-!        enddo
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
 ! #ifdef DOUBLE_PRECISION_REAL
-!        call prmat(na,useGPU,q(1:obj%local_nrows, 1:obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
+!        call prmat(na,useGPU,q(1:matrixRows, 1:matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
 ! #endif
 !        New position:
      if (do_trans_to_band) then
@@ -1004,68 +948,18 @@
            &MATH_DATATYPE&
            &_&
            &PRECISION &
-           (obj, na, nev, nblk, nbw, q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols), &
-           q_dev, &
-           ldq, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+           (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
+           matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
          endif
-!          print * , "After trans_ev_tridi_to_band: imaginary part of q="
-!          do i=1,na
-!            write(*,"(100g15.5)") ( q(i,j+na), j=1,na )
-!          enddo
-! #ifdef DOUBLE_PRECISION_REAL
-!        call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
-! #endif
               ! We can now deallocate the stored householder vectors
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *, "solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage_&
-         &PRECISION " // ": error when deallocating hh_trans "//errorMessage
-         stop 1
-       endif
-     endif
-     if (isSkewsymmetric) then
-       ! first deal with the situation that first backward step was on GPU
-       if(do_useGPU_trans_ev_tridi_to_band) then
-          ! if the second backward step is to be performed, but not on GPU, we have
-          ! to transfer q to the host
-          if(do_trans_to_full .and. (.not. do_useGPU_trans_ev_band_to_full)) then
-            successCUDA = cuda_memcpy(loc(q(1,obj%local_ncols+1)), q_dev, ldq*matrixCols* size_of_datatype, cudaMemcpyDeviceToHost)
-            if (.not.(successCUDA)) then
-              print *,"elpa2_template, error in copy to host"
-              stop 1
-            endif
-          endif
-
-         ! if the last step is not required at all, or will be performed on CPU,
-         ! release the memmory allocated on the device
-         if((.not. do_trans_to_full) .or. (.not. do_useGPU_trans_ev_band_to_full)) then
-           successCUDA = cuda_free(q_dev)
-         endif
-       endif
+       check_deallocate("elpa2_template: hh_trans", istat, errorMessage)
      endif
      
      if (do_trans_to_full) then
        call obj%timer%start("trans_ev_to_full")  
        if (isSkewsymmetric) then
-         if ( (do_useGPU_trans_ev_band_to_full) .and. .not.(do_useGPU_trans_ev_tridi_to_band) ) then
-           ! copy to device if we want to continue on GPU
-           successCUDA = cuda_malloc(q_dev, ldq*matrixCols*size_of_datatype)
-!            if (.not.(successCUDA)) then
-!              print *,"elpa2_template, error in cuda_malloc"
-!              stop 1
-!            endif
-           successCUDA = cuda_memcpy(q_dev, loc(q(1,obj%local_ncols+1)), ldq*matrixCols* size_of_datatype, cudaMemcpyHostToDevice)
-           if (.not.(successCUDA)) then
-             print *,"elpa2_template, error in copy to device"
-             stop 1
-           endif
-         endif
-! #ifdef DOUBLE_PRECISION_REAL
-!          call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',0)
-! #endif
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
 
@@ -1074,65 +968,25 @@
          &_&
          &PRECISION &
          (obj, na, nev, nblk, nbw, a, &
-         a_dev, lda, tmat, tmat_dev,  q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),  &
-         q_dev, &
-         ldq, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
+         matrixRows, tmat, q(1:matrixRows, matrixCols+1:2*matrixCols),  &
+         matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
          , useQRActual  &
 #endif
          )
-!          print * , "After trans_ev_band_to_full: imaginary part of q="
-!          do i=1,na
-!            write(*,"(100g15.5)") ( q(i,j+na), j=1,na )
-!          enddo
-! #ifdef DOUBLE_PRECISION_REAL
-!          call prmat(na,useGPU,q(1:obj%local_nrows, obj%local_ncols+1:2*obj%local_ncols),q_dev,lda,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'I',1)
-! #endif
        endif
 
        deallocate(tmat, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"solve_evp_&
-         &MATH_DATATYPE&
-         &_2stage_&
-         &PRECISION " // ": error when deallocating tmat"//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa2_template: tmat", istat, errorMessage)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_full")
 #endif
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
 
-     if(do_bandred .or. do_trans_to_full) then
-       if (do_useGPU_bandred .or. do_useGPU_trans_ev_band_to_full) then
-         successCUDA = cuda_free(tmat_dev)
-         if (.not.(successCUDA)) then
-           print *,"elpa2_template: error in cudaFree, tmat_dev"
-           stop 1
-         endif
-       endif
-     endif
-
-     if(do_useGPU .and. (a_dev .ne. 0)) then
-       successCUDA = cuda_free(a_dev)
-       if (.not.(successCUDA)) then
-         print *,"elpa2_template: error in cudaFree, a_dev"
-         stop 1
-       endif
-     endif
-
-
      if (obj%eigenvalues_only) then
        deallocate(q_dummy, stat=istat, errmsg=errorMessage)
-       if (istat .ne. 0) then
-         print *,"solve_evp_&
-         &MATH_DATATYPE&
-         &_1stage_&
-         &PRECISION&
-         &" // ": error when deallocating q_dummy "//errorMessage
-         stop 1
-       endif
+       check_deallocate("elpa2_template: q_dummy", istat, errorMessage)
      endif
 
      ! restore original OpenMP settings
@@ -1141,6 +995,50 @@
     ! restore this at the end of ELPA 2
     call omp_set_num_threads(omp_threads_caller)
 #endif
+
+
+#ifdef REDISTRIBUTE_MATRIX
+   ! redistribute back if necessary
+   if (doRedistributeMatrix) then
+
+     !if (layoutInternal /= layoutExternal) then
+     !  ! maybe this can be skiped I now the process grid
+     !  ! and np_rows and np_cols
+
+     !  call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+     !  call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+     !  call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+     !  call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+     !  np_rows = int(np_rowsMPI,kind=c_int)
+     !  np_cols = int(np_colsMPI,kind=c_int)
+
+     !  ! we get new blacs context and the local process grid coordinates
+     !  call BLACS_Gridinit(external_blacs_ctxt, layoutInternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
+     !  call BLACS_Gridinfo(int(external_blacs_ctxt,KIND=BLAS_KIND), np_rows__, &
+     !                      np_cols__, my_prow__, my_pcol__)
+
+     !endif
+
+     !call scal_PRECISION_GEMR2D &
+     !(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), aIntern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, aExtern, &
+     !1_BLAS_KIND, 1_BLAS_KIND, sc_desc, external_blacs_ctxt)
+
+     call scal_PRECISION_GEMR2D &
+     (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), qIntern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, qExtern, &
+     1_BLAS_KIND, 1_BLAS_KIND, sc_desc, external_blacs_ctxt)
+
+
+     !clean MPI communicators and blacs grid
+     !of the internal re-distributed matrix
+     call mpi_comm_free(mpi_comm_rowsMPI_, mpierr)
+     call mpi_comm_free(mpi_comm_colsMPI_, mpierr)
+     call blacs_gridexit(blacs_ctxt_)
+   endif
+#endif /* REDISTRIBUTE_MATRIX */
+
+
+
 
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&

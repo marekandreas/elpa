@@ -86,7 +86,11 @@
       integer(kind=MPI_KIND)       :: mpierr
       real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
-      call obj%timer%start("ROUTINE_NAME" // PRECISION_SUFFIX)
+      call obj%timer%start("&
+              &ROUTINE_NAME&
+              &" // &
+              &PRECISION_SUFFIX&
+              )
 
       nc = 0
       do i=1,n
@@ -132,7 +136,11 @@
 !        nc = nc+i
 !      enddo
 
-      call obj%timer%stop("ROUTINE_NAME" // PRECISION_SUFFIX)
+      call obj%timer%stop("&
+              &ROUTINE_NAME&
+              &" // &
+              &PRECISION_SUFFIX&
+              )
 
 #ifdef SKEW_SYMMETRIC_BUILD
     end subroutine ssymm_matrix_allreduce_&

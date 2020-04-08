@@ -49,6 +49,7 @@
 
 #include "config-f90.h"
 #include "../general/sanity.F90"
+#include "../general/error_checking.inc"
 
 #undef ROUTINE_NAME
 #ifdef SKEW_SYMMETRIC_BUILD
@@ -105,8 +106,11 @@ subroutine ROUTINE_NAME&
    integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
    integer(kind=ik)                                  :: auxstride
    integer(kind=ik), intent(in)                      :: nrThreads
+   integer(kind=ik)                                  :: istat
+   character(200)                                    :: errorMessage
 
-   call obj%timer%start("ROUTINE_NAME&
+   call obj%timer%start("&
+           &ROUTINE_NAME&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &
@@ -141,7 +145,8 @@ subroutine ROUTINE_NAME&
 
    nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
 
-   allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
+   allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa_transpose_vectors: aux", istat, errorMessage)
 #ifdef WITH_OPENMP
    !$omp parallel private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n)
 #endif
@@ -220,9 +225,11 @@ subroutine ROUTINE_NAME&
 #ifdef WITH_OPENMP
    !$omp end parallel
 #endif
-   deallocate(aux)
+   deallocate(aux, stat=istat, errmsg=errorMessage)
+   check_deallocate("elpa_transpose_vectors: aux", istat, errorMessage)
 
-   call obj%timer%stop("ROUTINE_NAME&
+   call obj%timer%stop("&
+           &ROUTINE_NAME&
    &MATH_DATATYPE&
    &" // &
    &PRECISION_SUFFIX &

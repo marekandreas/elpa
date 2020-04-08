@@ -68,10 +68,11 @@
 //define instruction set numbers
 #define SSE_128 128
 #define AVX_256 256
+#define AVX2_256 2562
 #define AVX_512 512
 #define NEON_ARCH64_128 1285
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX_512
+#if VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512
 #include <x86intrin.h>
 #ifdef BLOCK2
 #if VEC_SET == SSE_128 
@@ -81,7 +82,7 @@
 
 #define __forceinline __attribute__((always_inline))
 
-#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX_512 */
+#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512 */
 
 #if VEC_SET == NEON_ARCH64_128
 #include <arm_neon.h>
@@ -111,7 +112,11 @@
 #endif
 
 #if VEC_SET == AVX_256
-#define SIMD_SET AVX_AVX2
+#define SIMD_SET AVX
+#endif
+
+#if VEC_SET == AVX2_256
+#define SIMD_SET AVX2
 #endif
 
 #if VEC_SET == AVX_512
@@ -205,7 +210,7 @@
 
 #endif /* VEC_SET == NEON_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define offset 4
@@ -224,7 +229,7 @@
 #define _SHUFFLE 0x5
 
 #ifdef HAVE_AVX2
-
+#if VEC_SET == AVX2_256
 #ifdef __FMA4__
 #define __ELPA_USE_FMA__
 #define _mm256_FMADDSUB_pd(a,b,c) _mm256_maddsub_pd(a,b,c)
@@ -239,6 +244,7 @@
 
 #define _SIMD_FMADDSUB _mm256_FMADDSUB_pd
 #define _SIMD_FMSUBADD _mm256_FMSUBADD_pd
+#endif /* VEC_SET == AVX2_256 */
 #endif /* HAVE_AVX2 */
 
 #endif /* DOUBLE_PRECISION_COMPLEX */
@@ -260,6 +266,7 @@
 #define _SHUFFLE 0xb1
 
 #ifdef HAVE_AVX2
+#if VEC_SET == AVX2_256
 
 #ifdef __FMA4__
 #define __ELPA_USE_FMA__
@@ -275,11 +282,12 @@
 
 #define _SIMD_FMADDSUB _mm256_FMADDSUB_ps
 #define _SIMD_FMSUBADD _mm256_FMSUBADD_ps
+#endif /* VEC_SET == AVX2_256 */
 #endif /* HAVE_AVX2 */
 
 #endif /* SINGLE_PRECISION_COMPLEX */
 
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 
@@ -389,7 +397,7 @@
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-#if VEC_SET  == AVX_256
+#if VEC_SET  == AVX_256 || VEC_SET  == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
 #define ROW_LENGTH 12
@@ -398,7 +406,7 @@
 #undef ROW_LENGTH 
 #define ROW_LENGTH 24
 #endif
-#endif /* VEC_SET  == AVX_256 */
+#endif /* VEC_SET  == AVX_256 || VEC_SET  == AVX2_256 */
 
 #if VEC_SET  == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -429,7 +437,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-#if VEC_SET  == AVX_256
+#if VEC_SET  == AVX_256 || VEC_SET  == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
 #define ROW_LENGTH 10
@@ -438,7 +446,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #undef ROW_LENGTH 
 #define ROW_LENGTH 20
 #endif
-#endif /* VEC_SET  == AVX_256 */
+#endif /* VEC_SET  == AVX_256 || VEC_SET  == AVX2_256 */
 
 #if VEC_SET  == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -471,7 +479,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-#if VEC_SET  == AVX_256
+#if VEC_SET  == AVX_256 || VEC_SET  == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
 #define ROW_LENGTH 8
@@ -480,7 +488,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #undef ROW_LENGTH 
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET  == AVX_256 */
+#endif /* VEC_SET  == AVX_256 || VEC_SET  == AVX2_256 */
 
 #if VEC_SET  == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -512,7 +520,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-#if VEC_SET  == AVX_256
+#if VEC_SET  == AVX_256 || VEC_SET  == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
 #define ROW_LENGTH 6
@@ -521,7 +529,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #undef ROW_LENGTH 
 #define ROW_LENGTH 12
 #endif
-#endif /* VEC_SET  == AVX_256 */
+#endif /* VEC_SET  == AVX_256 || VEC_SET  == AVX2_256 */
 
 #if VEC_SET  == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -553,7 +561,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-#if VEC_SET  == AVX_256
+#if VEC_SET  == AVX_256 || VEC_SET  == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
 #define ROW_LENGTH 4
@@ -562,7 +570,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #undef ROW_LENGTH 
 #define ROW_LENGTH 8
 #endif
-#endif /* VEC_SET  == AVX_256 */
+#endif /* VEC_SET  == AVX_256 || VEC_SET  == AVX2_256 */
 
 #if VEC_SET  == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -594,7 +602,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET  == SSE_128 */
 
-#if VEC_SET  == AVX_256
+#if VEC_SET  == AVX_256 || VEC_SET  == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #undef ROW_LENGTH 
 #define ROW_LENGTH 2
@@ -603,7 +611,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #undef ROW_LENGTH 
 #define ROW_LENGTH 4
 #endif
-#endif /* VEC_SET  == AVX_256 */
+#endif /* VEC_SET  == AVX_256 || VEC_SET  == AVX2_256 */
 
 #if VEC_SET  == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -657,10 +665,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 
 /*
-!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
+!f>#if defined(HAVE_AVX)
 !f> interface
-!f>   subroutine single_hh_trafo_complex_AVX_AVX2_1hv_double(q, hh, pnb, pnq, pldq) &
-!f>                             bind(C, name="single_hh_trafo_complex_AVX_AVX2_1hv_double")
+!f>   subroutine single_hh_trafo_complex_AVX_1hv_double(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_AVX_1hv_double")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq
 !f>     ! complex(kind=c_double_complex)     :: q(*)
@@ -672,10 +680,41 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 */
 
 /*
-!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
+!f>#if defined(HAVE_AVX)
 !f> interface
-!f>   subroutine single_hh_trafo_complex_AVX_AVX2_1hv_single(q, hh, pnb, pnq, pldq) &
-!f>                             bind(C, name="single_hh_trafo_complex_AVX_AVX2_1hv_single")
+!f>   subroutine single_hh_trafo_complex_AVX_1hv_single(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_AVX_1hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     ! complex(kind=c_float_complex)   :: q(*)
+!f>     type(c_ptr), value              :: q
+!f>     complex(kind=c_float_complex)   :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+
+/*
+!f>#if defined(HAVE_AVX2)
+!f> interface
+!f>   subroutine single_hh_trafo_complex_AVX2_1hv_double(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_AVX2_1hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     ! complex(kind=c_double_complex)     :: q(*)
+!f>     type(c_ptr), value                   :: q
+!f>     complex(kind=c_double_complex)       :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#if defined(HAVE_AVX2)
+!f> interface
+!f>   subroutine single_hh_trafo_complex_AVX2_1hv_single(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_AVX2_1hv_single")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq
 !f>     ! complex(kind=c_float_complex)   :: q(*)
@@ -748,10 +787,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 */
 
 /*
-!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
+!f>#if defined(HAVE_AVX)
 !f> interface
-!f>   subroutine double_hh_trafo_complex_AVX_AVX2_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
-!f>                                bind(C, name="double_hh_trafo_complex_AVX_AVX2_2hv_double")
+!f>   subroutine double_hh_trafo_complex_AVX_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="double_hh_trafo_complex_AVX_2hv_double")
 !f>        use, intrinsic :: iso_c_binding
 !f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
 !f>        ! complex(kind=c_double_complex)     :: q(*)
@@ -763,10 +802,40 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 */
 
 /*
-!f>#if defined(HAVE_AVX) || defined(HAVE_AVX2)
+!f>#if defined(HAVE_AVX)
 !f> interface
-!f>   subroutine double_hh_trafo_complex_AVX_AVX2_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
-!f>                                bind(C, name="double_hh_trafo_complex_AVX_AVX2_2hv_single")
+!f>   subroutine double_hh_trafo_complex_AVX_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="double_hh_trafo_complex_AVX_2hv_single")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
+!f>        ! complex(kind=c_float_complex)   :: q(*)
+!f>        type(c_ptr), value                  :: q
+!f>        complex(kind=c_float_complex)        :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#if defined(HAVE_AVX2)
+!f> interface
+!f>   subroutine double_hh_trafo_complex_AVX2_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="double_hh_trafo_complex_AVX2_2hv_double")
+!f>        use, intrinsic :: iso_c_binding
+!f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
+!f>        ! complex(kind=c_double_complex)     :: q(*)
+!f>        type(c_ptr), value                     :: q
+!f>        complex(kind=c_double_complex)           :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#if defined(HAVE_AVX2)
+!f> interface
+!f>   subroutine double_hh_trafo_complex_AVX2_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                                bind(C, name="double_hh_trafo_complex_AVX2_2hv_single")
 !f>        use, intrinsic :: iso_c_binding
 !f>        integer(kind=c_int)        :: pnb, pnq, pldq, pldh
 !f>        ! complex(kind=c_float_complex)   :: q(*)
@@ -849,7 +918,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #define STEP_SIZE 12
@@ -860,7 +929,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #define STEP_SIZE 24
 #define UPPER_BOUND 20
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -897,7 +966,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 10
@@ -905,7 +974,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 20
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -933,7 +1002,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
@@ -941,7 +1010,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -969,7 +1038,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 6
@@ -977,7 +1046,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -1005,7 +1074,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
@@ -1013,7 +1082,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -1041,7 +1110,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 2
@@ -1049,7 +1118,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -1085,7 +1154,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
@@ -1097,7 +1166,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #define STEP_SIZE 16
 #define UPPER_BOUND 12
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -1134,7 +1203,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 6
@@ -1142,7 +1211,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -1170,7 +1239,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
@@ -1178,7 +1247,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -1206,7 +1275,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 2
@@ -1214,7 +1283,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #undef ROW_LENGTH
@@ -1253,14 +1322,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 24
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -1270,6 +1339,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #define ROW_LENGTH 48
 #endif
 #endif /* VEC_SET == AVX_512 */
+
 static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
 #ifdef BLOCK1
 		)
@@ -1304,14 +1374,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -1341,10 +1411,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -1427,10 +1497,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
        h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
        h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
        h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -1500,10 +1570,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -1572,10 +1642,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -1646,10 +1716,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /*  VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
     h1_real = _SIMD_BROADCAST(&hh_dbl[0]);
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
     h1_real = _SIMD_SET1(hh_dbl[0]);
@@ -1739,12 +1809,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == 128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
      h2_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[ldh*2]);
@@ -1798,7 +1868,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
      tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
@@ -1806,7 +1876,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
                              s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -1845,10 +1915,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_SET1(tmp2[0]);
      h2_imag = _SIMD_SET1(tmp2[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
      tmp1 = _SIMD_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -1977,10 +2047,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -2064,10 +2134,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
         h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -2132,10 +2202,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	  h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 	  h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -2204,10 +2274,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -2281,14 +2351,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 10
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 20
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -2332,14 +2402,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -2368,10 +2438,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -2446,10 +2516,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
        h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
        h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
        h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -2513,10 +2583,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -2578,10 +2648,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -2645,7 +2715,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /*  VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
     h1_real = _SIMD_BROADCAST(&hh_dbl[0]);
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
 #endif /* AVX_256 */
@@ -2732,12 +2802,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
      h2_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[ldh*2]);
@@ -2791,7 +2861,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
      tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
@@ -2799,7 +2869,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
                              s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -2838,10 +2908,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_SET1(tmp2[0]);
      h2_imag = _SIMD_SET1(tmp2[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
      tmp1 = _SIMD_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
      y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
@@ -2952,10 +3022,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -3031,10 +3101,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
         h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -3092,10 +3162,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	  h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 	  h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -3156,10 +3226,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -3224,14 +3294,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -3274,14 +3344,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -3309,10 +3379,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -3379,10 +3449,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
           h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -3440,10 +3510,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -3496,10 +3566,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -3557,7 +3627,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
     h1_real = _SIMD_BROADCAST(&hh_dbl[0]);
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
 #endif /* AVX_256 */
@@ -3640,12 +3710,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == 128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
      h2_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[ldh*2]);
@@ -3699,7 +3769,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
      tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
@@ -3707,7 +3777,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
                              s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -3746,10 +3816,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_SET1(tmp2[0]);
      h2_imag = _SIMD_SET1(tmp2[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
      tmp1 = _SIMD_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
      y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE));
@@ -3845,10 +3915,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -3914,10 +3984,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	  h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
           h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -3969,10 +4039,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	  h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 	  h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -4026,10 +4096,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -4085,14 +4155,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 6
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -4136,14 +4206,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -4170,10 +4240,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -4231,10 +4301,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
           h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -4285,10 +4355,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -4335,10 +4405,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -4388,10 +4458,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
     h1_real = _SIMD_BROADCAST(&hh_dbl[0]);
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
     h1_real = _SIMD_SET1(hh_dbl[0]);
@@ -4463,12 +4533,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == 128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
      h2_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[ldh*2]);
@@ -4520,7 +4590,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
      tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
@@ -4528,7 +4598,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
                              s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -4568,10 +4638,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_SET1(tmp2[0]);
      h2_imag = _SIMD_SET1(tmp2[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
      tmp1 = _SIMD_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -4650,10 +4720,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -4710,10 +4780,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
         h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -4757,10 +4827,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	  h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
         h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -4807,10 +4877,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -4858,14 +4928,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -4910,14 +4980,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -4943,10 +5013,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -4994,10 +5064,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
           h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -5039,10 +5109,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -5084,10 +5154,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -5128,10 +5198,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
     h1_real = _SIMD_BROADCAST(&hh_dbl[0]);
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
     h1_real = _SIMD_SET1(hh_dbl[0]);
@@ -5195,12 +5265,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == 128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
      h2_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[ldh*2]);
@@ -5251,7 +5321,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
      tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
@@ -5259,7 +5329,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
                              s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -5299,10 +5369,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_SET1(tmp2[0]);
      h2_imag = _SIMD_SET1(tmp2[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
      tmp1 = _SIMD_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -5360,10 +5430,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -5408,10 +5478,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	  h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
           h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -5449,10 +5519,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	  h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
          h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -5490,10 +5560,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -5532,14 +5602,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 2
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -5585,14 +5655,14 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi64x(0x8000000000000000, 0x8000000000000000, 0x8000000000000000, 0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set_epi32(0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -5617,10 +5687,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -5660,10 +5730,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
           h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
          h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -5697,10 +5767,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
           h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
           h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
           h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -5736,10 +5806,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);
@@ -5773,10 +5843,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
     h1_real = _SIMD_BROADCAST(&hh_dbl[0]);
     h1_imag = _SIMD_BROADCAST(&hh_dbl[1]);
-#endif /*  VEC_SET == AVX_256 */
+#endif /*  VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
     h1_real = _SIMD_SET1(hh_dbl[0]);
@@ -5833,12 +5903,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == 128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
      h2_real = _SIMD_BROADCAST(&hh_dbl[ldh*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[(ldh*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[ldh*2]);
@@ -5889,7 +5959,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
      tmp2 = _mm256_set_pd(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
@@ -5897,7 +5967,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      tmp2 = _mm256_set_ps(s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0],
                           s_dbl[1], s_dbl[0], s_dbl[1], s_dbl[0]);
 #endif
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -5937,10 +6007,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /*  VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_SET1(tmp2[0]);
      h2_imag = _SIMD_SET1(tmp2[1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
      tmp1 = _SIMD_MUL(h1_imag, y1);
 #ifdef __ELPA_USE_FMA__
@@ -5982,10 +6052,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+1)*2]);
      h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h2_real = _SIMD_SET1(hh_dbl[(ldh+1)*2]);
@@ -6020,10 +6090,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	h1_real = _SIMD_BROADCAST(&hh_dbl[(i-BLOCK+1)*2]);
         h1_imag = _SIMD_BROADCAST(&hh_dbl[((i-BLOCK+1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
         h1_real = _SIMD_SET1(hh_dbl[(i-BLOCK+1)*2]);
@@ -6052,10 +6122,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 	h2_real = _SIMD_BROADCAST(&hh_dbl[(ldh+i)*2]);
         h2_imag = _SIMD_BROADCAST(&hh_dbl[((ldh+i)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
         h2_real = _SIMD_SET1(hh_dbl[(ldh+i)*2]);
@@ -6085,10 +6155,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == SSE_128 */
 
-#if VEC_SET == AVX_256
+#if VEC_SET == AVX_256 || VEC_SET == AVX2_256
      h1_real = _SIMD_BROADCAST(&hh_dbl[(nb-1)*2]);
      h1_imag = _SIMD_BROADCAST(&hh_dbl[((nb-1)*2)+1]);
-#endif /* VEC_SET == AVX_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
      h1_real = _SIMD_SET1(hh_dbl[(nb-1)*2]);

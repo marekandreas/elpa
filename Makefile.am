@@ -59,7 +59,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/general/mod_elpa_skewsymmetric_blas.F90 \
   src/elpa_index.c
 
-libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c 
+libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c
 
 
 libelpa@SUFFIX@_private_la_SOURCES += \
@@ -74,6 +74,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
+  src/helpers/elpa_redistribute_template.F90 \
   src/elpa1/elpa1_template.F90 \
   src/elpa2/elpa2_template.F90 \
   src/elpa2/qr/qr_utils_template.F90 \
@@ -95,6 +96,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/compute_hh_trafo.F90 \
   src/elpa2/redist_band.F90 \
   src/general/sanity.F90 \
+  src/general/error_checking.inc \
   src/elpa1/elpa_cholesky_template.F90 \
   src/elpa1/elpa_invert_trm.F90 \
   src/elpa1/elpa_multiply_a_b.F90 \
@@ -122,8 +124,7 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES +=  src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2.cu
-  EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES +=   src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_real.cu src/elpa2/GPU/ev_tridi_band_gpu_complex.cu
 endif
 
 if !WITH_MPI
@@ -214,16 +215,16 @@ endif
 endif
 
 if WITH_REAL_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx_2hv_single_precision.c
 endif
-else
+endif
+
 if WITH_REAL_AVX2_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx2_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_2hv_single_precision.c
-endif
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx2_2hv_single_precision.c
 endif
 endif
 
@@ -263,16 +264,16 @@ endif
 endif
 
 if WITH_REAL_AVX_BLOCK4_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_4hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_4hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx_4hv_single_precision.c
 endif
-else
+endif
+
 if WITH_REAL_AVX2_BLOCK4_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_4hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx2_4hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_4hv_single_precision.c
-endif
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx2_4hv_single_precision.c
 endif
 endif
 
@@ -312,16 +313,16 @@ endif
 endif
 
 if WITH_REAL_AVX_BLOCK6_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_6hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx_6hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_6hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx_6hv_single_precision.c
 endif
-else
+endif
+
 if WITH_REAL_AVX2_BLOCK6_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_6hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx2_6hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx-avx2_6hv_single_precision.c
-endif
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx2_6hv_single_precision.c
 endif
 endif
 
@@ -354,16 +355,16 @@ endif
 endif
 
 if WITH_COMPLEX_AVX_BLOCK1_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_1hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_1hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx_1hv_single_precision.c
 endif
-else
+endif
+
 if WITH_COMPLEX_AVX2_BLOCK1_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_1hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx2_1hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_1hv_single_precision.c
-endif
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx2_1hv_single_precision.c
 endif
 endif
 
@@ -397,16 +398,16 @@ endif
 endif
 
 if WITH_COMPLEX_AVX_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_2hv_single_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx_2hv_single_precision.c
 endif
-else
+endif
+
 if WITH_COMPLEX_AVX2_BLOCK2_KERNEL
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_2hv_double_precision.c
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx2_2hv_double_precision.c
 if WANT_SINGLE_PRECISION_COMPLEX
-  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx-avx2_2hv_single_precision.c
-endif
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/complex_avx2_2hv_single_precision.c
 endif
 endif
 
@@ -673,6 +674,7 @@ EXTRA_DIST = \
   src/GPU/cuUtils_template.cu \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
+  src/helpers/elpa_redistribute_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa1/elpa1_merge_systems_real_template.F90 \
@@ -687,8 +689,6 @@ EXTRA_DIST = \
   src/elpa1/elpa_reduce_add_vectors.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/elpa1/elpa_transpose_vectors.F90 \
-  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_complex_template.cu \
-  src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu \
   src/elpa2/compute_hh_trafo.F90 \
   src/elpa2/elpa2_bandred_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -724,6 +724,7 @@ EXTRA_DIST = \
   test/shared/test_precision_kinds.F90 \
   src/general/prow_pcol.F90 \
   src/general/sanity.F90 \
+  src/general/error_checking.inc \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
   test/Fortran/assert.h \

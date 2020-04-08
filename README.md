@@ -6,7 +6,7 @@ The current release is ELPA 2019.11.001 The current supported API version
 is 20190501. This release supports the earliest API version 20170403.
 
 The old, obsolete legacy API will be deprecated in the future !
-Allready now, all new features of ELPA are only available with the new API. Thus, there
+Already now, all new features of ELPA are only available with the new API. Thus, there
 is no reason to keep the legacy API arround for too long.
 
 The release ELPA 2018.11.001 was the last release, where the legacy API has been
@@ -81,7 +81,7 @@ Nonetheless, we are grateful if you cite the following publications:
   If you use ELPA in general:
 
   T. Auckenthaler, V. Blum, H.-J. Bungartz, T. Huckle, R. Johanni,
-  L. Kr\"amer, B. Lang, H. Lederer, and P. R. Willems,
+  L. Krämer, B. Lang, H. Lederer, and P. R. Willems,
   "Parallel solution of partial symmetric eigenvalue problems from
   electronic structure calculations",
   Parallel Computing 37, 783-794 (2011).

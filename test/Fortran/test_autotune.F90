@@ -209,6 +209,12 @@ program test
    call e%set("nblk", int(nblk,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 
+   if (layout .eq. 'C') then
+     call e%set("matrix_order",COLUMN_MAJOR_ORDER,error_elpa)
+   else
+     call e%set("matrix_order",ROW_MAJOR_ORDER,error_elpa)
+   endif
+
 #ifdef WITH_MPI
    call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
@@ -230,7 +236,7 @@ program test
 
    if (myid == 0) print *, ""
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error_elpa)
+   tune_state => e%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error_elpa)
    assert_elpa_ok(error_elpa)
 
    iter=0
