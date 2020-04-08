@@ -574,6 +574,12 @@ program test
    call e%set("nblk", int(nblk,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 
+   if (layout .eq. 'C') then
+     call e%set("matrix_order",COLUMN_MAJOR_ORDER,error_elpa)
+   else
+     call e%set("matrix_order",ROW_MAJOR_ORDER,error_elpa)
+   endif
+
 #ifdef WITH_MPI
 #ifdef SPLIT_COMM_MYSELF
    call mpi_comm_split(MPI_COMM_WORLD, int(my_pcol,kind=MPI_KIND), int(my_prow,kind=MPI_KIND), &
@@ -650,6 +656,14 @@ program test
 #endif
 
 #ifdef TEST_SOLVER_2STAGE
+#if TEST_GPU == 1
+#if defined TEST_REAL
+     kernel = ELPA_2STAGE_REAL_GPU
+#endif
+#if defined TEST_COMPLEX
+     kernel = ELPA_2STAGE_COMPLEX_GPU
+#endif
+#endif
      call e%set(KERNEL_KEY, kernel, error_elpa)
 #ifdef TEST_KERNEL
      assert_elpa_ok(error_elpa)

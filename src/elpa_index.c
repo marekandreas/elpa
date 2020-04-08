@@ -62,6 +62,11 @@ static int enumerate_identity(elpa_index_t index, int i);
 static int cardinality_bool(elpa_index_t index);
 static int valid_bool(elpa_index_t index, int n, int new_value);
 
+static int number_of_matrix_layouts(elpa_index_t index);
+static int matrix_layout_enumerate(elpa_index_t index, int i);
+static int matrix_layout_is_valid(elpa_index_t index, int n, int new_value);
+static const char* elpa_matrix_layout_name(int layout);
+
 static int number_of_solvers(elpa_index_t index);
 static int solver_enumerate(elpa_index_t index, int i);
 static int solver_is_valid(elpa_index_t index, int n, int new_value);
@@ -84,6 +89,10 @@ static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
 static int stripewidth_real_cardinality(elpa_index_t index);
 static int stripewidth_real_enumerate(elpa_index_t index, int i);
 static int stripewidth_real_is_valid(elpa_index_t index, int n, int new_value);
+
+static int internal_nblk_cardinality(elpa_index_t index);
+static int internal_nblk_enumerate(elpa_index_t index, int i);
+static int internal_nblk_is_valid(elpa_index_t index, int n, int new_value);
 
 static int stripewidth_complex_cardinality(elpa_index_t index);
 static int stripewidth_complex_enumerate(elpa_index_t index, int i);
@@ -189,10 +198,16 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", PRINT_NO),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator", PRINT_NO),
         INT_ANY_ENTRY("blacs_context", "BLACS context", PRINT_NO),
+//#ifdef REDISTRIBUTE_MATRIX
+        INT_ENTRY("internal_nblk", "Internally used block size of scalapack block-cyclic distribution", 0, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                   internal_nblk_cardinality, internal_nblk_enumerate, internal_nblk_is_valid, NULL, PRINT_YES),
+//#endif
 #ifdef STORE_BUILD_CONFIG
         INT_ENTRY("output_build_config", "Output the build config", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, output_build_config_is_valid, NULL, PRINT_NO),
 #endif
+	INT_ENTRY("matrix_order","Order of the matrix layout", COLUMN_MAJOR_ORDER, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                         number_of_matrix_layouts, matrix_layout_enumerate, matrix_layout_is_valid, elpa_matrix_layout_name, PRINT_YES), \
         INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
         INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
@@ -209,12 +224,11 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
         INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        // the routine has not been ported to GPU yet
-//        INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-//                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        // the GPU implementation of this routine (together with the kernel) has been abandoned 
-//        INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-//                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
+	//not yet ported to GPU
+        //INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+        //                cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
+        INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
@@ -262,6 +276,7 @@ static const elpa_index_int_entry_t int_entries[] = {
 
 static const elpa_index_double_entry_t double_entries[] = {
         /* Empty for now */
+        READONLY_DOUBLE_ENTRY("dummy", "dummy"),
 };
 
 void elpa_index_free(elpa_index_t index) {
@@ -582,6 +597,48 @@ static int enumerate_identity(elpa_index_t index, int i) {
         case value: \
                 return available && (other_checks(value));
 
+static const char* elpa_matrix_layout_name(int layout) {
+	switch(layout) {
+		ELPA_FOR_ALL_MATRIX_LAYOUTS(NAME_CASE)
+		default:
+			return "(Invalid matrix layout)";
+	}
+}
+
+static int number_of_matrix_layouts(elpa_index_t index) {
+        return ELPA_NUMBER_OF_MATRIX_LAYOUTS;
+}
+
+static int matrix_layout_enumerate(elpa_index_t index, int i) {
+#define OPTION_RANK(name, value, ...) \
+        +(value >= sizeof(array_of_size_value)/sizeof(int) ? 0 : 1)
+
+#define EMPTY()
+#define DEFER1(m) m EMPTY()
+#define EVAL(...) __VA_ARGS__
+
+#define ENUMERATE_CASE(name, value, ...) \
+        { const int array_of_size_value[value]; \
+        case 0 DEFER1(INNER_ITERATOR)()(OPTION_RANK): \
+                return value; }
+
+        switch(i) {
+#define INNER_ITERATOR() ELPA_FOR_ALL_MATRIX_LAYOUTS
+                EVAL(ELPA_FOR_ALL_MATRIX_LAYOUTS(ENUMERATE_CASE))
+#undef INNER_ITERATOR
+                default:
+                        return 0;
+        }
+}
+
+static int matrix_layout_is_valid(elpa_index_t index, int n, int new_value) {
+        switch(new_value) {
+                ELPA_FOR_ALL_MATRIX_LAYOUTS(VALID_CASE)
+                default:
+                        return 0;
+        }
+}
+
 static const char* elpa_solver_name(int solver) {
         switch(solver) {
                 ELPA_FOR_ALL_SOLVERS(NAME_CASE)
@@ -648,9 +705,7 @@ static const char *real_kernel_name(int kernel) {
 }
 
 #define REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_REAL_GPU ? 0 : 1
-// currently the GPU kernel is never valid
-// previously:       kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
+        kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
 
 static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
@@ -689,9 +744,7 @@ static const char *complex_kernel_name(int kernel) {
 }
 
 #define COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_COMPLEX_GPU ? 0 : 1
-// currenttly the GPU kernel is never valid
-// previously:       kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
+        kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
 
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
@@ -764,6 +817,36 @@ static int band_to_full_cardinality(elpa_index_t index) {
 }
 static int band_to_full_enumerate(elpa_index_t index, int i) {
 	return i+1;
+}
+
+static int internal_nblk_is_valid(elpa_index_t index, int n, int new_value) {
+        return (0 <= new_value);
+}
+static int internal_nblk_cardinality(elpa_index_t index) {
+	return 9;
+}
+
+static int internal_nblk_enumerate(elpa_index_t index, int i) {
+	switch(i) {
+	  case 0:
+	    return 2;
+	  case 1:
+	    return 4;
+	  case 2:
+	    return 8;
+	  case 3:
+	    return 16;
+	  case 4:
+	    return 32;
+	  case 5:
+	    return 64;
+	  case 6:
+	    return 128;
+	  case 7:
+	    return 256;
+	  case 8:
+	    return 1024;
+	}
 }
 
 // TODO shouldnt it be only for ELPA2??

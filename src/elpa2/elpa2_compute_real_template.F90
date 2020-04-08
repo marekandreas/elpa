@@ -55,6 +55,11 @@
 
 #include "../general/sanity.F90"
 
+#if REALCASE == 1
+#include "../general/error_checking.inc"
+#endif
+
+
 #define REALCASE 1
 #undef COMPLEXCASE
 #include "elpa2_bandred_template.F90"

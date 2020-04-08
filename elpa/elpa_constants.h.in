@@ -9,6 +9,16 @@
         name = value,
 #define ELPA_ENUM_SUM(name, value, ...) +1
 
+/* MATRIX layout */
+#define ELPA_FOR_ALL_MATRIX_LAYOUTS(X) \
+	X(COLUMN_MAJOR_ORDER, 1) \
+	X(ROW_MAJOR_ORDER, 2)
+
+enum MATRIX_LAYOUTS {
+	ELPA_FOR_ALL_MATRIX_LAYOUTS(ELPA_ENUM_ENTRY)
+};
+
+#define ELPA_NUMBER_OF_MATRIX_LAYOUTS (0 ELPA_FOR_ALL_MATRIX_LAYOUTS(ELPA_ENUM_SUM))
 
 /* Solver constants */
 #define ELPA_FOR_ALL_SOLVERS(X) \

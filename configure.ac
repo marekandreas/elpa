@@ -104,30 +104,6 @@ if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
 
-
-dnl Scalapack tests
-AC_MSG_CHECKING(whether --enable-scalapack-tests is specified)
-AC_ARG_ENABLE([scalapack-tests],
-              AS_HELP_STRING([--enable-scalapack-tests],
-                             [build SCALAPACK test cases for performance comparison, needs MPI, default no.]),
-              [
-	       if test x"$enableval" = x"yes"; then
-	         enable_scalapack_tests=yes
-	       else
-	         enable_scalapack_tests=no
-	       fi
-	       ],
-              [enable_scalapack_tests="no"])
-AC_MSG_RESULT([$enable_scalapack_tests])
-if test x"${enable_scalapack_tests}" = x"yes"; then
-        if test x"$with_mpi" = x"no"; then
-                AC_MSG_ERROR([You cannot build the SCALAPCK test cases without MPI])
-        fi
-        AC_DEFINE([WITH_SCALAPACK_TESTS], [1], [build SCALAPACK test cases])
-fi
-AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"])
-
-
 dnl C
 AC_LANG_PUSH([C])
 
@@ -161,11 +137,24 @@ if test x"$c11_standard" = x"no"; then
   AX_CHECK_COMPILE_FLAG([-std=c11], [
     c11_standard=yes
   ], [
+    echo "C compiler cannot compile -std=c11 code"
+    echo "testing -c11.."
+  ])
+  if test x"$c11_standard" = x"yes"; then
+    CFLAGS+=" -std=c11"
+  fi
+fi
+
+if test x"$c11_standard" = x"no"; then
+  AX_CHECK_COMPILE_FLAG([-c11], [
+    c11_standard=yes
+  ], [
+    echo "C compiler cannot compile -c11 code"
     echo "C compiler cannot compile C11 code"
     exit -1
   ])
   if test x"$c11_standard" = x"yes"; then
-    CFLAGS+=" -std=c11"
+    CFLAGS+=" -c11"
   fi
 fi
 
@@ -759,12 +748,12 @@ m4_define(elpa_m4_bgq_kernels, [
         complex_bgq
 ])
 
-#m4_define(elpa_m4_gpu_kernels, [
-#        real_gpu
-#        complex_gpu
-#])
+m4_define(elpa_m4_gpu_kernels, [
+        real_gpu
+        complex_gpu
+])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 bgp bgq])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 bgp bgq gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -805,7 +794,7 @@ ELPA_SELECT_KERNELS([sse_assembly],[enable])
 ELPA_SELECT_KERNELS([avx],[enable])
 ELPA_SELECT_KERNELS([avx2],[enable])
 ELPA_SELECT_KERNELS([avx512],[enable])
-#ELPA_SELECT_KERNELS([gpu],[disable])
+ELPA_SELECT_KERNELS([gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
 
@@ -847,16 +836,16 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
 ])
 
-#AC_ARG_WITH(gpu-support-only, [AS_HELP_STRING([--with-gpu-support-only],
-#            [Compile and always use the GPU version])],
-#            [],[with_gpu_support_only=no])
-#if test x"$with_gpu_support_only" = x"yes" ; then
-#        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
-#                      use_[]elpa_m4_kernel[]=no
-#        ])
-#        use_real_gpu=yes
-#        use_complex_gpu=yes
-#fi
+AC_ARG_WITH(gpu-support-only, [AS_HELP_STRING([--with-gpu-support-only],
+            [Compile and always use the GPU version])],
+            [],[with_gpu_support_only=no])
+if test x"$with_gpu_support_only" = x"yes" ; then
+        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+                      use_[]elpa_m4_kernel[]=no
+        ])
+        use_real_gpu=yes
+        use_complex_gpu=yes
+fi
 
 
 dnl
@@ -958,6 +947,43 @@ dnl   __m128d h1 = _fjsp_neg_v2r8(q);
 dnl   return 0;
 dnl }
 AC_LANG_PUSH([C])
+dnl check whether one can link against Fortran programs from C
+AC_MSG_CHECKING(whether we need _ in C programs to link against a Fortran library)
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+int main(int argc, char **argv) {
+
+  int m, n, k, lda, ldb, ldc;
+  double alpha, beta;
+  double *a, *b, *c;
+  dgemm_("N", "N", &m, &n, &k, &alpha, a, lda, b, &ldb, &beta, c, &ldc);
+}
+ ])],
+   [can_link_with_=yes],
+   [can_link_with_=no]
+ )
+AC_MSG_RESULT([${can_link_with_}])
+if test x"$can_link_with_" = x"yes"; then
+  AC_DEFINE([NEED_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need to append an underscore])
+fi
+  
+AC_MSG_CHECKING(whether we do not need _ in C programs to link against a Fortran library)
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+int main(int argc, char **argv) {
+
+  int m, n, k, lda, ldb, ldc;
+  double alpha, beta;
+  double *a, *b, *c;
+  dgemm("N", "N", &m, &n, &k, &alpha, a, lda, b, &ldb, &beta, c, &ldc);
+}
+ ])],
+   [can_link_without_=yes],
+   [can_link_without_=no]
+ )
+AC_MSG_RESULT([${can_link_without_}])
+if test x"$can_link_with_" = x"yes"; then
+  AC_DEFINE([NEED_NO_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need not to append an underscore])
+fi
+
 
 if test x"${need_vsx}" = x"yes"; then
   AC_MSG_CHECKING(whether we can compile Altivec VSX with intrinsics in C)
@@ -1318,7 +1344,7 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
 AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes"])
 if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
   AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
-  #AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
+  AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
   ELPA_2STAGE_REAL_GPU_COMPILED=1
 
@@ -1410,6 +1436,100 @@ AM_CONDITIONAL([ENABLE_AUTOTUNING],[test x"$enable_autotuning" = x"yes"])
 if test x"${enable_autotuning}" = x"yes"; then
  AC_DEFINE([ENABLE_AUTOTUNING], [1], [enable autotuning functionality])
 fi
+
+dnl Scalapack tests
+AC_MSG_CHECKING(whether --enable-scalapack-tests is specified)
+AC_ARG_ENABLE([scalapack-tests],
+              AS_HELP_STRING([--enable-scalapack-tests],
+                             [build SCALAPACK test cases for performance comparison, needs MPI, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_scalapack_tests=yes
+	       else
+	         enable_scalapack_tests=no
+	       fi
+	       ],
+              [enable_scalapack_tests="no"])
+AC_MSG_RESULT([$enable_scalapack_tests])
+if test x"${enable_scalapack_tests}" = x"yes"; then
+        if test x"$with_mpi" = x"no"; then
+                AC_MSG_ERROR([You cannot build the SCALAPCK test cases without MPI])
+        fi
+        AC_DEFINE([WITH_SCALAPACK_TESTS], [1], [build SCALAPACK test cases])
+fi
+AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"])
+
+
+AC_MSG_CHECKING(whether matrix redistribution should be considered in autotuning)
+AC_ARG_ENABLE([autotune-redistribute-matrix],
+                AS_HELP_STRING([--enable-autotune-redistribute-matrix],
+			       [Allows ELPA during autotuning to re-distribute the matrix to find the best (ELPA internal) block size for block-cyclic distribution (Needs Scalapack functionality)]),
+                               [if test x"$enableval" = x"yes"; then
+                                  enable_autotune_redistribute_matrix=yes
+                                else
+                                  enable_autotune_redistribute_matrix=no
+                                fi],
+              [enable_autotune_redistribute_matrix=no])
+AC_MSG_RESULT([${enable_autotune_redistribute_matrix}])
+if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
+  if test x"${enable_scalapack_tests}" = x"no"; then
+    AC_MSG_ERROR([Please also set --enable_scalapack_tests in this case])
+  fi
+  if test x"${with_mpi}" = x"no"; then
+    AC_MSG_ERROR([For this option ELPA must be build with MPI enabled])
+  fi
+  AC_DEFINE([REDISTRIBUTE_MATRIX],[1],[enable matrix re-distribution during autotuning])
+fi
+
+
+
+
+dnl Scalapack tests
+AC_MSG_CHECKING(whether --enable-scalapack-tests is specified)
+AC_ARG_ENABLE([scalapack-tests],
+              AS_HELP_STRING([--enable-scalapack-tests],
+                             [build SCALAPACK test cases for performance comparison, needs MPI, default no.]),
+              [
+	       if test x"$enableval" = x"yes"; then
+	         enable_scalapack_tests=yes
+	       else
+	         enable_scalapack_tests=no
+	       fi
+	       ],
+              [enable_scalapack_tests="no"])
+AC_MSG_RESULT([$enable_scalapack_tests])
+if test x"${enable_scalapack_tests}" = x"yes"; then
+        if test x"$with_mpi" = x"no"; then
+                AC_MSG_ERROR([You cannot build the SCALAPCK test cases without MPI])
+        fi
+        AC_DEFINE([WITH_SCALAPACK_TESTS], [1], [build SCALAPACK test cases])
+fi
+AM_CONDITIONAL([WITH_SCALAPACK_TESTS], [test x"$enable_scalapack_tests" = x"yes"])
+
+
+AC_MSG_CHECKING(whether matrix redistribution should be considered in autotuning)
+AC_ARG_ENABLE([autotune-redistribute-matrix],
+                AS_HELP_STRING([--enable-autotune-redistribute-matrix],
+			       [Allows ELPA during autotuning to re-distribute the matrix to find the best (ELPA internal) block size for block-cyclic distribution (Needs Scalapack functionality)]),
+                               [if test x"$enableval" = x"yes"; then
+                                  enable_autotune_redistribute_matrix=yes
+                                else
+                                  enable_autotune_redistribute_matrix=no
+                                fi],
+              [enable_autotune_redistribute_matrix=no])
+AC_MSG_RESULT([${enable_autotune_redistribute_matrix}])
+if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
+  if test x"${enable_scalapack_tests}" = x"no"; then
+    AC_MSG_ERROR([Please also set --enable_scalapack_tests in this case])
+  fi
+  if test x"${with_mpi}" = x"no"; then
+    AC_MSG_ERROR([For this option ELPA must be build with MPI enabled])
+  fi
+  AC_DEFINE([REDISTRIBUTE_MATRIX],[1],[enable matrix re-distribution during autotuning])
+fi
+
+
+
 
 AC_MSG_CHECKING(whether C tests should be provided)
 AC_ARG_ENABLE([c-tests],

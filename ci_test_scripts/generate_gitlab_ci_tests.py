@@ -416,6 +416,48 @@ ilp64_no_omp_mpi_tests = [
 
 print("\n".join(ilp64_no_omp_mpi_tests))
 
+#two test for matrix-redistribute
+matrix_redistribute_mpi_tests = [
+    "# gnu-gnu-matrix-redistribute-mpi-noomp",
+    "gnu-gnu-mpi-noopenmp-matrix-redistribute:",
+    "  tags:",
+    "    - avx",
+    "  artifacts:",
+    "    when: on_success",
+    "    expire_in: 2 month",
+    "  script:",
+    '   - ./ci_test_scripts/run_ci_tests.sh -c "'
+    'CC=\\"mpicc\\" CFLAGS=\\"-O3 -mavx\\" '
+    'FC=\\"mpif90\\" FCFLAGS=\\"-O3 -mavx\\" '
+    'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \\" '
+    'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \\" '
+    '--enable-option-checking=fatal --with-mpi=yes --disable-openmp '
+    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
+    '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
+    '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
+    "\n",
+    "# gnu-gnu-matrix-redistribute-mpi-openmp",
+    "gnu-gnu-mpi-openmp-matrix-redistribute:",
+    "  tags:",
+    "    - avx",
+    "  artifacts:",
+    "    when: on_success",
+    "    expire_in: 2 month",
+    "  script:",
+    '   - ./ci_test_scripts/run_ci_tests.sh -c "'
+    'CC=\\"mpicc\\" CFLAGS=\\"-O3 -mavx\\" '
+    'FC=\\"mpif90\\" FCFLAGS=\\"-O3 -mavx\\" '
+    'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \\" '
+    'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \\" '
+    '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
+    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
+    '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
+    '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
+    "\n",
+]
+
+print("\n".join(matrix_redistribute_mpi_tests))
+
 # add python tests
 python_ci_tests = [
     "# python tests",
@@ -661,8 +703,9 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     # add tests for scalapack for some specific test cases
     runScalapackTest = False
-    if (instr == "avx2" and cov == "coverage" and m == "mpi"):
-        runScalapackTest = True
+    #if (instr == "avx2" and cov == "coverage" and m == "mpi"):
+    #if (instr == "avx2" and m == "mpi"):
+    #    runScalapackTest = True
 
 
     # address-sanitize only with gnu compiler
@@ -734,9 +777,9 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     print("# " + cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" + a + "-" + b + "-" +g + "-" + cov + "-" + instr + "-" + addr)
     print(cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" +a + "-" +b + "-" +g + "-" + cov + "-" + instr + "-" + addr + "-jobs:")
-    if (MasterOnly):
-        print("  only:")
-        print("    - /.*master.*/")
+    #if (MasterOnly):
+    #    print("  only:")
+    #    print("    - /.*master.*/")
     if (instr == "power8"):
         print("  allow_failure: true")
     print("  tags:")
@@ -790,7 +833,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         if (runScalapackTest):
             print("    - ./ci_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
                 + libs + " " + ldflags + " " + " "+ scalapackldflags +" " + scalapackfcflags \
-                + " --enable-option-checking=fatal --enable-scalapack-tests" + " " + mpi_configure_flag + " " + openmp[o] \
+                + " --enable-option-checking=fatal --enable-scalapack-tests --enable-autotune-redistribute-matrix" + " " + mpi_configure_flag + " " + openmp[o] \
                 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
                 + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q \"srun\" -S $SLURM -g " +gpuJob)
             

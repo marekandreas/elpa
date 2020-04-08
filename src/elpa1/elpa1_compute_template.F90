@@ -57,12 +57,7 @@
 #include "../general/sanity.F90"
 
 #if REALCASE == 1
-
-!cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
-#define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
-#define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
-#define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
-
+#include "../general/error_checking.inc"
 #endif
 
 #if REALCASE == 1

@@ -56,9 +56,6 @@
        l_nev, &
 #endif
        a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
-#if REALCASE == 1
-       hh_dot_dev, &
-#endif
        hh_tau_dev, kernel_flops, kernel_time, n_times, off, ncols, istripe, &
 #ifdef WITH_OPENMP
        my_thread, thread_width, &
@@ -148,7 +145,7 @@
 #if REALCASE == 1
 !         real(kind=C_DATATYPE_KIND)                :: a(stripe_width,a_dim2,stripe_count,max_threads)
          real(kind=C_DATATYPE_KIND), pointer        :: a(:,:,:,:)
- 
+
 #endif
 #if COMPLEXCASE == 1
 !          complex(kind=C_DATATYPE_KIND)            :: a(stripe_width,a_dim2,stripe_count,max_threads)
@@ -160,10 +157,7 @@
          integer(kind=ik), intent(in)               :: kernel
 
          integer(kind=c_intptr_t)                   :: a_dev
-   integer(kind=c_intptr_t)                         :: bcast_buffer_dev
-#if REALCASE == 1
-         integer(kind=c_intptr_t)                   :: hh_dot_dev ! why not needed in complex case
-#endif
+         integer(kind=c_intptr_t)                   :: bcast_buffer_dev
          integer(kind=c_intptr_t)                   :: hh_tau_dev
          integer(kind=c_intptr_t)                   :: dev_offset, dev_offset_1, dev_offset_2
 
@@ -180,6 +174,12 @@
          complex(kind=C_DATATYPE_KIND)              :: w(nbw,2)
 #endif
          real(kind=c_double)                        :: ttt ! MPI_WTIME always needs double
+
+         integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
+                                                                        &PRECISION&
+                                                                        &_&
+                                                                        &MATH_DATATYPE
+
 
          j = -99
 
@@ -278,51 +278,28 @@
 #if REALCASE == 1
 ! GPU kernel real
          if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
-           if (wantDebug) then
-             call obj%timer%start("compute_hh_trafo: GPU")
-           endif
-           dev_offset = (0 + (a_off * stripe_width) + ( (istripe - 1) * stripe_width *a_dim2 )) *size_of_&
-                  &PRECISION&
-                  &_&
-                  &MATH_DATATYPE
-
-           call launch_compute_hh_trafo_gpu_kernel_&
-                &MATH_DATATYPE&
-                &_&
-                &PRECISION&
-                & (a_dev + dev_offset, bcast_buffer_dev, hh_dot_dev, hh_tau_dev, nl, nbw, stripe_width, off, ncols)
-#endif /* REALCASE */
+#endif
 #if COMPLEXCASE == 1
 ! GPU kernel complex
          if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+#endif
            if (wantDebug) then
              call obj%timer%start("compute_hh_trafo: GPU")
            endif
 
-           dev_offset = (0 + ( (  a_off + off-1 )* stripe_width) + ( (istripe - 1)*stripe_width*a_dim2 )) * size_of_&
-                  &PRECISION&
-                  &_&
-                  &MATH_DATATYPE
+           dev_offset = ((a_off+off-1)*stripe_width+(istripe-1)*stripe_width*a_dim2)*size_of_datatype
 
-           dev_offset_1 = (0 +  (  off-1 )* nbw) * size_of_&
-                  &PRECISION&
-                  &_&
-                  &MATH_DATATYPE
+           dev_offset_1 = (off-1)*nbw*size_of_datatype
 
-           dev_offset_2 =( off-1 )* size_of_&
-                  &PRECISION&
-                  &_&
-                  &MATH_DATATYPE
+           dev_offset_2 = (off-1)*size_of_datatype
 
            call launch_compute_hh_trafo_gpu_kernel_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION&
-                & (a_dev + dev_offset,bcast_buffer_dev + dev_offset_1, &
-                                                         hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, off,ncols)
+                &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
+                hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
 
-
-#endif /* COMPLEXCASE */
            if (wantDebug) then
              call obj%timer%stop("compute_hh_trafo: GPU")
            endif
@@ -746,35 +723,65 @@
 #if COMPLEXCASE == 1
 
 ! avx block1 complex kernel
-#if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK1_KERNEL)
+#if defined(WITH_COMPLEX_AVX_BLOCK1_KERNEL)
 #ifndef WITH_FIXED_COMPLEX_KERNEL
-          if ((kernel .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK1) .or. &
-              (kernel .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK1)) then
+          if ((kernel .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK1)) then
 #endif /* not WITH_FIXED_COMPLEX_KERNEL */
 
-#if (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL))
+#if (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) )
             ttt = mpi_wtime()
             do j = ncols, 1, -1
 #ifdef WITH_OPENMP
               call single_hh_trafo_&
                    &MATH_DATATYPE&
-                   &_avx_avx2_1hv_&
+                   &_avx_1hv_&
                    &PRECISION&
                    & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #else
               call single_hh_trafo_&
                    &MATH_DATATYPE&
-                   &_avx_avx2_1hv_&
+                   &_avx_1hv_&
                    &PRECISION&
                    & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
             enddo
-#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
+#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL)) */
 
 #ifndef WITH_FIXED_COMPLEX_KERNEL
-          endif ! ((kernel .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK1) .or. (kernel .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK1))
+          endif ! ((kernel .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK1) )
 #endif /* not WITH_FIXED_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL || WITH_COMPLEX_AVX2_BLOCK1_KERNEL */
+#endif /* WITH_COMPLEX_AVX_BLOCK1_KERNEL */
+
+#if defined(WITH_COMPLEX_AVX2_BLOCK1_KERNEL)
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          if ((kernel .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK1)) then
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
+
+#if (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL))
+            ttt = mpi_wtime()
+            do j = ncols, 1, -1
+#ifdef WITH_OPENMP
+              call single_hh_trafo_&
+                   &MATH_DATATYPE&
+                   &_avx2_1hv_&
+                   &PRECISION&
+                   & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#else
+              call single_hh_trafo_&
+                   &MATH_DATATYPE&
+                   &_avx2_1hv_&
+                   &PRECISION&
+                   & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#endif
+            enddo
+#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)) */
+
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+          endif ! ((kernel .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK1))
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_AVX2_BLOCK1_KERNEL */
+
+
 
 #endif /* COMPLEXCASE */
 
@@ -1104,15 +1111,14 @@
 #if REALCASE == 1
 ! implementation of avx block 2 real case
 
-#if defined(WITH_REAL_AVX_BLOCK2_KERNEL) || defined(WITH_REAL_AVX2_BLOCK2_KERNEL)
+#if defined(WITH_REAL_AVX_BLOCK2_KERNEL)
 #ifndef WITH_FIXED_REAL_KERNEL
 
-           if ((kernel .eq. ELPA_2STAGE_REAL_AVX_BLOCK2) .or. &
-               (kernel .eq. ELPA_2STAGE_REAL_AVX2_BLOCK2))  then
+           if ((kernel .eq. ELPA_2STAGE_REAL_AVX_BLOCK2))  then
 
 #endif /* not WITH_FIXED_REAL_KERNEL */
 
-#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX_BLOCK4_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK4_KERNEL))
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX_BLOCK4_KERNEL) )
                do j = ncols, 2, -2
                  w(:,1) = bcast_buffer(1:nbw,j+off)
                  w(:,2) = bcast_buffer(1:nbw,j+off-1)
@@ -1120,13 +1126,13 @@
 
                call double_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_2hv_&
+                    &_avx_2hv_&
                     &PRECISION&
                     & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_2hv_&
+                    &_avx_2hv_&
                     &PRECISION&
                     & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
@@ -1136,17 +1142,48 @@
 #ifndef WITH_FIXED_REAL_KERNEL
              endif
 #endif /* not WITH_FIXED_REAL_KERNEL */
-#endif /* WITH_REAL_AVX_BLOCK2_KERNEL || WITH_REAL_AVX2_BLOCK2_KERNEL */
+#endif /* WITH_REAL_AVX_BLOCK2_KERNEL */
 
+#if defined(WITH_REAL_AVX2_BLOCK2_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
+
+           if ((kernel .eq. ELPA_2STAGE_REAL_AVX2_BLOCK2))  then
+
+#endif /* not WITH_FIXED_REAL_KERNEL */
+
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK4_KERNEL))
+               do j = ncols, 2, -2
+                 w(:,1) = bcast_buffer(1:nbw,j+off)
+                 w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+               enddo
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) ... */
+
+#ifndef WITH_FIXED_REAL_KERNEL
+             endif
+#endif /* not WITH_FIXED_REAL_KERNEL */
+#endif /* WITH_REAL_AVX2_BLOCK2_KERNEL */
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 
 ! implementation of avx block 2 complex case
-#if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL) || defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)
+#if defined(WITH_COMPLEX_AVX_BLOCK2_KERNEL)
 #ifndef WITH_FIXED_COMPLEX_KERNEL
-           if ( (kernel .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK2) .or. &
-                (kernel .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK2) ) then
+           if ( (kernel .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK2) ) then
 #endif  /* not WITH_FIXED_COMPLEX_KERNEL */
 
               ttt = mpi_wtime()
@@ -1156,13 +1193,13 @@
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_2hv_&
+                    &_avx_2hv_&
                     &PRECISION&
                     & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_2hv_&
+                    &_avx_2hv_&
                     &PRECISION&
                     & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
@@ -1170,22 +1207,64 @@
 #ifdef WITH_OPENMP
              if (j==1) call single_hh_trafo_&
                  &MATH_DATATYPE&
-                 &_avx_avx2_1hv_&
+                 &_avx_1hv_&
                  &PRECISION&
                  & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #else
              if (j==1) call single_hh_trafo_&
                  &MATH_DATATYPE&
-                 &_avx_avx2_1hv_&
+                 &_avx_1hv_&
                  &PRECISION&
                  & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
 #endif
 
 #ifndef WITH_FIXED_COMPLEX_KERNEL
-           endif ! ( (kernel .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK2) .or. (kernel .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK2) )
+           endif ! ( (kernel .eq. ELPA_2STAGE_COMPLEX_AVX_BLOCK2) )
 #endif  /* not WITH_FIXED_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL || WITH_COMPLEX_AVX2_BLOCK2_KERNEL */
+#endif /* WITH_COMPLEX_AVX_BLOCK2_KERNEL */
 
+! implementation of avx2 block 2 complex case
+#if defined(WITH_COMPLEX_AVX2_BLOCK2_KERNEL)
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           if ( (kernel .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK2) ) then
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
+
+              ttt = mpi_wtime()
+             do j = ncols, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+#ifdef WITH_OPENMP
+             if (j==1) call single_hh_trafo_&
+                 &MATH_DATATYPE&
+                 &_avx2_1hv_&
+                 &PRECISION&
+                 & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#else
+             if (j==1) call single_hh_trafo_&
+                 &MATH_DATATYPE&
+                 &_avx2_1hv_&
+                 &PRECISION&
+                 & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#endif
+
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+           endif ! ( (kernel .eq. ELPA_2STAGE_COMPLEX_AVX2_BLOCK2) )
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
+#endif /*  WITH_COMPLEX_AVX2_BLOCK2_KERNEL */
 #endif /* COMPLEXCASE */
 
 #if REALCASE == 1
@@ -1913,14 +1992,13 @@
 
 #if REALCASE == 1
 ! avx block4 real kernel
-#if defined(WITH_REAL_AVX_BLOCK4_KERNEL) || defined(WITH_REAL_AVX2_BLOCK4_KERNEL)
+#if defined(WITH_REAL_AVX_BLOCK4_KERNEL) 
 #ifndef WITH_FIXED_REAL_KERNEL
-           if ((kernel .eq. ELPA_2STAGE_REAL_AVX_BLOCK4) .or.  &
-               (kernel .eq. ELPA_2STAGE_REAL_AVX2_BLOCK4)) then
+           if ((kernel .eq. ELPA_2STAGE_REAL_AVX_BLOCK4)) then
 
 #endif /* not WITH_FIXED_REAL_KERNEL */
 
-#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL))
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) )
              ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
              do j = ncols, 4, -4
                w(:,1) = bcast_buffer(1:nbw,j+off)
@@ -1930,13 +2008,13 @@
 #ifdef WITH_OPENMP
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_4hv_&
+                    &_avx_4hv_&
                     &PRECISION&
                     & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_4hv_&
+                    &_avx_4hv_&
                     &PRECISION&
                     & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
@@ -1947,13 +2025,13 @@
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_2hv_&
+                    &_avx_2hv_&
                     &PRECISION&
                     & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)),w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_2hv_&
+                    &_avx_2hv_&
                     &PRECISION&
                     & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
@@ -1973,13 +2051,79 @@
                   & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
 #endif
 
-#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL)) */
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX_BLOCK6_KERNEL)) */
 
 #ifndef WITH_FIXED_REAL_KERNEL
            endif
 #endif /* not WITH_FIXED_REAL_KERNEL */
-#endif /* WITH_REAL_AVX_BLOCK4_KERNEL || WITH_REAL_AVX2_BLOCK4_KERNEL */
+#endif /* WITH_REAL_AVX_BLOCK4_KERNEL */
 
+! avx2 block4 real kernel
+#if defined(WITH_REAL_AVX2_BLOCK4_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
+           if ((kernel .eq. ELPA_2STAGE_REAL_AVX2_BLOCK4)) then
+
+#endif /* not WITH_FIXED_REAL_KERNEL */
+
+#if (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL))
+             ! X86 INTRINSIC CODE, USING 4 HOUSEHOLDER VECTORS
+             do j = ncols, 4, -4
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               w(:,3) = bcast_buffer(1:nbw,j+off-2)
+               w(:,4) = bcast_buffer(1:nbw,j+off-3)
+#ifdef WITH_OPENMP
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_4hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_4hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+             do jj = j, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,jj+off)
+               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+#ifdef WITH_OPENMP
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jj+off+a_off-1,istripe,my_thread)),w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+#ifdef WITH_OPENMP
+             if (jj==1) call single_hh_trafo_&
+                  &MATH_DATATYPE&
+                  &_cpu_openmp_&
+                  &PRECISION&
+                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                                          bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#else
+             if (jj==1) call single_hh_trafo_&
+                  &MATH_DATATYPE&
+                  &_cpu_&
+                  &PRECISION&
+                  & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#endif
+
+#endif /* (!defined(WITH_FIXED_REAL_KERNEL)) || (defined(WITH_FIXED_REAL_KERNEL) && !defined(WITH_REAL_AVX2_BLOCK6_KERNEL)) */
+
+#ifndef WITH_FIXED_REAL_KERNEL
+           endif
+#endif /* not WITH_FIXED_REAL_KERNEL */
+#endif /* WITH_REAL_AVX2_BLOCK4_KERNEL */
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
@@ -2418,10 +2562,9 @@
 #if REALCASE == 1
 ! avx block6 real kernel
 
-#if defined(WITH_REAL_AVX_BLOCK6_KERNEL) || defined(WITH_REAL_AVX2_BLOCK6_KERNEL)
+#if defined(WITH_REAL_AVX_BLOCK6_KERNEL)
 #ifndef WITH_FIXED_REAL_KERNEL
-           if ((kernel .eq. ELPA_2STAGE_REAL_AVX_BLOCK6) .or. &
-               (kernel .eq. ELPA_2STAGE_REAL_AVX2_BLOCK6)) then
+           if ((kernel .eq. ELPA_2STAGE_REAL_AVX_BLOCK6)) then
 
 #endif /* not WITH_FIXED_REAL_KERNEL */
              ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
@@ -2435,13 +2578,13 @@
 #ifdef WITH_OPENMP
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_6hv_&
+                    &_avx_6hv_&
                     &PRECISION&
                     & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call hexa_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_6hv_&
+                    &_avx_6hv_&
                     &PRECISION&
                     & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
@@ -2454,13 +2597,13 @@
 #ifdef WITH_OPENMP
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_4hv_&
+                    &_avx_4hv_&
                     &PRECISION&
                     & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call quad_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_4hv_&
+                    &_avx_4hv_&
                     &PRECISION&
                     & (c_loc(a(1,jj+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
@@ -2471,13 +2614,13 @@
 #ifdef WITH_OPENMP
                call double_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_2hv_&
+                    &_avx_2hv_&
                     &PRECISION&
                     & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
 #else
                call double_hh_trafo_&
                     &MATH_DATATYPE&
-                    &_avx_avx2_2hv_&
+                    &_avx_2hv_&
                     &PRECISION&
                     & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
 #endif
@@ -2500,7 +2643,92 @@
 #ifndef WITH_FIXED_REAL_KERNEL
            endif
 #endif /* not WITH_FIXED_REAL_KERNEL */
-#endif /* WITH_REAL_AVX_BLOCK6_KERNEL || WITH_REAL_AVX2_BLOCK6_KERNEL */
+#endif /* WITH_REAL_AVX_BLOCK6_KERNEL */
+
+! avx2 block6 real kernel
+
+#if defined(WITH_REAL_AVX2_BLOCK6_KERNEL)
+#ifndef WITH_FIXED_REAL_KERNEL
+           if ((kernel .eq. ELPA_2STAGE_REAL_AVX2_BLOCK6)) then
+
+#endif /* not WITH_FIXED_REAL_KERNEL */
+             ! X86 INTRINSIC CODE, USING 6 HOUSEHOLDER VECTORS
+             do j = ncols, 6, -6
+               w(:,1) = bcast_buffer(1:nbw,j+off)
+               w(:,2) = bcast_buffer(1:nbw,j+off-1)
+               w(:,3) = bcast_buffer(1:nbw,j+off-2)
+               w(:,4) = bcast_buffer(1:nbw,j+off-3)
+               w(:,5) = bcast_buffer(1:nbw,j+off-4)
+               w(:,6) = bcast_buffer(1:nbw,j+off-5)
+#ifdef WITH_OPENMP
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_6hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-5,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call hexa_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_6hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,j+off+a_off-5,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+             do jj = j, 4, -4
+               w(:,1) = bcast_buffer(1:nbw,jj+off)
+               w(:,2) = bcast_buffer(1:nbw,jj+off-1)
+               w(:,3) = bcast_buffer(1:nbw,jj+off-2)
+               w(:,4) = bcast_buffer(1:nbw,jj+off-3)
+#ifdef WITH_OPENMP
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_4hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jj+off+a_off-3,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call quad_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_4hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jj+off+a_off-3,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+             do jjj = jj, 2, -2
+               w(:,1) = bcast_buffer(1:nbw,jjj+off)
+               w(:,2) = bcast_buffer(1:nbw,jjj+off-1)
+#ifdef WITH_OPENMP
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jjj+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+               call double_hh_trafo_&
+                    &MATH_DATATYPE&
+                    &_avx2_2hv_&
+                    &PRECISION&
+                    & (c_loc(a(1,jjj+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+             enddo
+#ifdef WITH_OPENMP
+             if (jjj==1) call single_hh_trafo_&
+                   &MATH_DATATYPE&
+                   &_cpu_openmp_&
+                   &PRECISION&
+                   & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1, istripe,my_thread), &
+                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#else
+             if (jjj==1) call single_hh_trafo_&
+                   &MATH_DATATYPE&
+                   &_cpu_&
+                   &PRECISION&
+                   & (a(1:stripe_width,1+off+a_off:1+off+a_off+nbw-1,istripe), &
+                                           bcast_buffer(1:nbw,off+1), nbw, nl, stripe_width)
+#endif
+#ifndef WITH_FIXED_REAL_KERNEL
+           endif
+#endif /* not WITH_FIXED_REAL_KERNEL */
+#endif /* WITH_REAL_AVX2_BLOCK6_KERNEL */
 
 #endif /* REALCASE */
 

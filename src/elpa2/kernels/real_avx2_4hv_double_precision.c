@@ -42,37 +42,18 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//
-// --------------------------------------------------------------------------------------------------
-//
-// This file was originally written by NVIDIA
-// and re-written by A. Marek, MPCDF
+// Author: Andreas Marek, MPCDF
 
-
-#include <stdio.h>
-#include <cuda_runtime.h>
-#include <stdlib.h>
-#include <cuComplex.h>
 #include "config-f90.h"
 
-//the complex part
-#define DOUBLE_PRECISION_COMPLEX 1
-#include "ev_tridi_band_gpu_c_v2_complex_template.cu"
-#undef DOUBLE_PRECISION_COMPLEX
-
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-#undef DOUBLE_PRECISION_COMPLEX
-#include "ev_tridi_band_gpu_c_v2_complex_template.cu"
-#endif
-
-
-//the real part
-#define DOUBLE_PRECISION_REAL 1
-#include "ev_tridi_band_gpu_c_v2_real_template.cu"
-#undef DOUBLE_PRECISION_REAL
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-#undef DOUBLE_PRECISION_REAL
-#include "ev_tridi_band_gpu_c_v2_real_template.cu"
-#endif
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#define BLOCK4 1
+#define VEC_SET AVX2_256
+#include "../../general/precision_macros.h"
+#include "real_128bit_256bit_512bit_BLOCK_template.c"
+#undef BLOCK4
+#undef VEC_SET
+#undef REALCASE
+#undef DOUBLE_PRECISION
 

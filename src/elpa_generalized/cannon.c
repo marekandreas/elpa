@@ -59,6 +59,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
+#include "../helpers/scalapack_interfaces.h"
 
 #ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define C_INT_TYPE_PTR long int*
@@ -84,6 +85,39 @@
 // most of the file is not compiled if not using MPI
 #ifdef WITH_MPI
 #include <mpi.h>
+
+#ifdef NEED_NO_UNDERSCORE_TO_LINK_AGAINST_FORTRAN
+#define numroc_ numroc
+#define dlacpy_ dlacpy
+#define slacpy_ slacpy
+#define zlacpy_ zlacpy
+#define clacpy_ clacpy
+#define pdtran_ pdtran
+#define pstran_ pstran
+#define pztranc_ pztranc
+#define pctranc_ pctranc
+#define pdlacpy_ pdlacpy
+#define pslacpy_ pslacpy
+#define pzlacpy_ pzlacpy
+#define pclacpy_ pclacpy
+#endif
+
+#ifdef NEED_UNDERSCORE_TO_LINK_AGAINST_FORTRAN
+#define numroc_ numroc_
+#define dlacpy_ dlacpy_
+#define slacpy_ slacpy_
+#define zlacpy_ zlacpy_
+#define clacpy_ clacpy_
+#define pdtran_ pdtran_
+#define pstran_ pstran_
+#define pztranc_ pztranc_
+#define pctranc_ pctranc_
+#define pdlacpy_ pdlacpy_
+#define pslacpy_ pslacpy_
+#define pzlacpy_ pzlacpy_
+#define pclacpy_ pclacpy_
+#endif
+
 
 
 //***********************************************************************************************************

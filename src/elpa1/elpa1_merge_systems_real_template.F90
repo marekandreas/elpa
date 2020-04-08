@@ -115,6 +115,7 @@
       character(200)                              :: errorMessage
       integer(kind=ik)                            :: gemm_dim_k, gemm_dim_l, gemm_dim_m
 
+      integer(kind=c_intptr_t)                    :: num
       integer(kind=C_intptr_T)                    :: qtmp1_dev, qtmp2_dev, ev_dev
       logical                                     :: successCUDA
       integer(kind=c_intptr_t), parameter         :: size_of_datatype = size_of_&
@@ -125,10 +126,7 @@
       integer(kind=ik)                            :: my_thread
 
       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"merge_systems: error when allocating z_p "//errorMessage
-        stop 1
-      endif
+      check_allocate("merge_systems: z_p",istat, errorMessage)
 #endif
 
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
@@ -245,7 +243,7 @@
       idx(:) = int(idxBLAS(:),kind=ik)
       call obj%timer%stop("blas")
 
-! Calculate the allowable deflation tolerance
+      ! Calculate the allowable deflation tolerance
 
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
@@ -608,41 +606,42 @@
         gemm_dim_m = MIN(max_strip,MAX(1,nqcols1))
 
         allocate(qtmp1(gemm_dim_k, gemm_dim_l), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when allocating qtmp1 "//errorMessage
-          stop 1
-        endif
+        check_allocate("merge_systems: qtmp1",istat, errorMessage)
 
         allocate(ev(gemm_dim_l,gemm_dim_m), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when allocating ev "//errorMessage
-          stop 1
-        endif
+        check_allocate("merge_systems: ev",istat, errorMessage)
 
         allocate(qtmp2(gemm_dim_k, gemm_dim_m), stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when allocating qtmp2 "//errorMessage
-          stop 1
-        endif
+        check_allocate("merge_systems: qtmp2",istat, errorMessage)
 
         qtmp1 = 0 ! May contain empty (unset) parts
         qtmp2 = 0 ! Not really needed
 
         if (useGPU) then
-          successCUDA = cuda_malloc(qtmp1_dev, gemm_dim_k * gemm_dim_l * size_of_datatype)
+          num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
+          successCUDA = cuda_host_register(int(loc(qtmp1),kind=c_intptr_t),num,&
+                        cudaHostRegisterDefault)
+          check_host_register_cuda("merge_systems: qtmp1", successCUDA)
+
+          successCUDA = cuda_malloc(qtmp1_dev, num)
           check_alloc_cuda("merge_systems: qtmp1_dev", successCUDA)
 
-          successCUDA = cuda_malloc(ev_dev, gemm_dim_l * gemm_dim_m * size_of_datatype)
+          num = (gemm_dim_l * gemm_dim_m) * size_of_datatype
+          successCUDA = cuda_host_register(int(loc(ev),kind=c_intptr_t),num,&
+                        cudaHostRegisterDefault)
+          check_host_register_cuda("merge_systems: ev", successCUDA)
+
+          successCUDA = cuda_malloc(ev_dev, num)
           check_alloc_cuda("merge_systems: ev_dev", successCUDA)
 
-          successCUDA = cuda_malloc(qtmp2_dev, gemm_dim_k * gemm_dim_m * size_of_datatype)
+
+          num = (gemm_dim_k * gemm_dim_m) * size_of_datatype
+          successCUDA = cuda_host_register(int(loc(qtmp2),kind=c_intptr_t),num,&
+                        cudaHostRegisterDefault)
+          check_host_register_cuda("merge_systems: qtmp2", successCUDA)
+
+          successCUDA = cuda_malloc(qtmp2_dev, num)
           check_alloc_cuda("merge_systems: qtmp2_dev", successCUDA)
-
-          successCUDA = cuda_memset(qtmp1_dev, 0, gemm_dim_k * gemm_dim_l * size_of_datatype)
-          check_memcpy_cuda("merge_systems: qtmp1_dev", successCUDA)
-
-          successCUDA = cuda_memset(qtmp2_dev, 0, gemm_dim_k * gemm_dim_m * size_of_datatype)
-          check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
         endif
 
         ! Gather nonzero upper/lower components of old matrix Q
@@ -804,20 +803,6 @@
               endif ! useGPU
             endif
 
-            if(useGPU) then
-              !TODO: it should be enough to copy l_rows x ncnt
-              !TODO: actually this will be done after the second mutiplication
-
-              !TODO or actually maybe I should copy the half of the qtmp2 array
-              !here and the rest after the next gemm
-              !TODO either copy only half of the matrix here, and half after the
-              !second gemm, or copy whole array after the next gemm
-
-!              successCUDA = cuda_memcpy(c_loc(qtmp2(1,1)), qtmp2_dev, &
-!                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
-!              check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
-            endif
-
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
 
@@ -880,28 +865,32 @@
           enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
         enddo    !do np = 1, npc_n
 
-        deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"merge_systems: error when deallocating ev "//errorMessage
-          stop 1
-        endif
-
         if(useGPU) then
+          successCUDA = cuda_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
+          check_host_unregister_cuda("merge_systems: qtmp1", successCUDA)
+
           successCUDA = cuda_free(qtmp1_dev)
           check_dealloc_cuda("merge_systems: qtmp1_dev", successCUDA)
+          
+          successCUDA = cuda_host_unregister(int(loc(qtmp2),kind=c_intptr_t))
+          check_host_unregister_cuda("merge_systems: qtmp2", successCUDA)
+
           successCUDA = cuda_free(qtmp2_dev)
           check_dealloc_cuda("merge_systems: qtmp2_dev", successCUDA)
+
+          successCUDA = cuda_host_unregister(int(loc(ev),kind=c_intptr_t))
+          check_host_unregister_cuda("merge_systems: ev", successCUDA)
+
           successCUDA = cuda_free(ev_dev)
           check_dealloc_cuda("merge_systems: ev_dev", successCUDA)
         endif
 
-      endif !very outer test (na1==1 .or. na1==2) 
+        deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
+        check_deallocate("merge_systems: ev, qtmp1, qtmp2",istat, errorMessage)
+      endif !very outer test (na1==1 .or. na1==2)
 #ifdef WITH_OPENMP
       deallocate(z_p, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"merge_systems: error when deallocating z_p "//errorMessage
-        stop 1
-      endif
+      check_deallocate("merge_systems: z_p",istat, errorMessage)
 #endif
 
       call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
@@ -959,10 +948,7 @@
 
           l_cols_out = COUNT(p_col_out(1:na)==my_pcol)
           allocate(qtmp(l_rows,l_cols_out), stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"resort_ev: error when allocating qtmp "//errorMessage
-            stop 1
-          endif
+          check_allocate("resort_ev: qtmp",istat, errorMessage)
 
           nc = 0
 
@@ -1016,10 +1002,7 @@
           enddo
 
           deallocate(qtmp, stat=istat, errmsg=errorMessage)
-          if (istat .ne. 0) then
-            print *,"resort_ev: error when deallocating qtmp "//errorMessage
-            stop 1
-          endif
+          check_deallocate("resort_ev: qtmp",istat, errorMessage)
         end subroutine resort_ev_&
         &PRECISION
 

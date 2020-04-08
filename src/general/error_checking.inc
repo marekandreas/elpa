@@ -1,0 +1,12 @@
+!cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
+#define check_memcpy_cuda(file, success) call check_memcpy_CUDA_f(file, __LINE__, success)
+#define check_alloc_cuda(file, success) call check_alloc_CUDA_f(file, __LINE__, success)
+#define check_dealloc_cuda(file, success) call check_dealloc_CUDA_f(file, __LINE__, success)
+#define check_host_register_cuda(file, success) call check_host_register_CUDA_f(file, __LINE__, success)
+#define check_host_unregister_cuda(file, success) call check_host_unregister_CUDA_f(file, __LINE__, success)
+#define check_host_alloc_cuda(file, success) call check_host_alloc_CUDA_f(file, __LINE__, success)
+#define check_host_dealloc_cuda(file, success) call check_host_dealloc_CUDA_f(file, __LINE__, success)
+#define check_memset_cuda(file, success) call check_memset_CUDA_f(file, __LINE__, success)
+#define check_allocate(file, success, errorMessage) call check_allocate_f(file, __LINE__, success, errorMessage)
+#define check_deallocate(file, success, errorMessage) call check_deallocate_f(file, __LINE__, success, errorMessage)
+

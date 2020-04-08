@@ -43,6 +43,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 
 #include "../general/sanity.F90"
+#include "../general/error_checking.inc"
      use elpa1_compute
      use elpa_utilities
      use elpa_mpi
@@ -54,7 +55,7 @@
      implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)              :: na, lda, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)              :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
 #ifdef USE_ASSUMED_SIZE
       MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,*)
 #else
@@ -94,24 +95,24 @@
 #endif
 
       na         = obj%na
-      lda        = obj%local_nrows
+      matrixRows = obj%local_nrows
       nblk       = obj%nblk
       matrixCols = obj%local_ncols
 
       call obj%get("mpi_comm_rows",mpi_comm_rows,error )
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for mpi_comm_rows. Aborting..."
         stop
       endif
       call obj%get("mpi_comm_cols",mpi_comm_cols,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for mpi_comm_cols. Aborting..."
         stop
       endif
 
       call obj%get("debug",debug,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option. Aborting..."
+        print *,"Problem getting option for debug settings. Aborting..."
         stop
       endif
       if (debug == 1) then
@@ -145,38 +146,19 @@
       l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
       allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&: error when allocating tmp1 "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_cholesky: tmp1", istat, errorMessage)
 
       allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&
-  &: error when allocating tmp2 "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_cholesky: tmp2", istat, errorMessage)
 
       tmp1 = 0
       tmp2 = 0
 
       allocate(tmatr(l_rows,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&
-  &: error when allocating tmatr "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_cholesky: tmatr", istat, errorMessage)
 
       allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&
-  &: error when allocating tmatc "//errorMessage
-        stop 1
-      endif
+      check_allocate("elpa_cholesky: tmatc", istat, errorMessage)
 
       tmatr = 0
       tmatc = 0
@@ -200,7 +182,7 @@
             call obj%timer%start("blas")
 
             call PRECISION_POTRF('U', int(na-n+1,kind=BLAS_KIND), a(l_row1,l_col1), &
-                                 int(lda,kind=BLAS_KIND), infoBLAS )
+                                 int(matrixRows,kind=BLAS_KIND), infoBLAS )
             info = int(infoBLAS,kind=ik)
             call obj%timer%stop("blas")
 
@@ -233,7 +215,7 @@
             call obj%timer%start("blas")
 
             call PRECISION_POTRF('U', int(nblk,kind=BLAS_KIND), a(l_row1,l_col1), &
-                                 int(lda,kind=BLAS_KIND) , infoBLAS )
+                                 int(matrixRows,kind=BLAS_KIND) , infoBLAS )
             info = int(infoBLAS,kind=ik)
             call obj%timer%stop("blas")
 
@@ -283,7 +265,7 @@
           if (l_cols-l_colx+1>0) &
               call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
                                   int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, tmp2, &
-                                  int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(lda,kind=BLAS_KIND) )
+                                  int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND) )
           call obj%timer%stop("blas")
         endif
 
@@ -326,7 +308,7 @@
                               int(nblk,kind=BLAS_KIND), -ONE,  &
                               tmatr(lrs,1), int(ubound(tmatr,dim=1),kind=BLAS_KIND), tmatc(lcs,1), &
                               int(ubound(tmatc,dim=1),kind=BLAS_KIND), &
-                              ONE, a(lrs,lcs), int(lda,kind=BLAS_KIND))
+                              ONE, a(lrs,lcs), int(matrixRows,kind=BLAS_KIND))
           call obj%timer%stop("blas")
 
         enddo
@@ -334,12 +316,7 @@
       enddo
 
       deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"elpa_cholesky_&
-  &MATH_DATATYPE&
-  &: error when deallocating tmp1 "//errorMessage
-        stop 1
-      endif
+      check_deallocate("elpa_cholesky: tmp1, tmp2, tmatr, tmatc", istat, errorMessage)
 
       ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
 

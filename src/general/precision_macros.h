@@ -52,6 +52,7 @@
 #undef  scal_PRECISION_GEMM
 #undef  scal_PRECISION_NRM2
 #undef  scal_PRECISION_LASET
+#undef  scal_PRECISION_GEMR2D
 #undef  PRECISION_SUFFIX
 #undef  ELPA_IMPL_SUFFIX
 
@@ -66,7 +67,11 @@
 #undef THRESHOLD
 
 
+#if 0
 /* General definitions needed in single and double case */
+/* the if 0 bracket is just to make the IBM Fortran compiler happy */
+#endif
+
 #define  MATH_DATATYPE real
 #define  BLAS_TRANS_OR_CONJ 'T'
 
@@ -118,6 +123,7 @@
 #define  scal_PRECISION_GEMM PDGEMM
 #define  scal_PRECISION_NRM2 PDNRM2
 #define  scal_PRECISION_LASET PDLASET
+#define  scal_PRECISION_GEMR2D PDGEMR2D
 #define  MPI_REAL_PRECISION MPI_REAL8
 #define  MPI_MATH_DATATYPE_PRECISION MPI_REAL8
 #define  MPI_MATH_DATATYPE_PRECISION_C MPI_DOUBLE
@@ -185,6 +191,7 @@
 #define  scal_PRECISION_GEMM PSGEMM
 #define  scal_PRECISION_NRM2 PSNRM2
 #define  scal_PRECISION_LASET PSLASET
+#define  scal_PRECISION_GEMR2D PSGEMR2D
 #define  MPI_REAL_PRECISION MPI_REAL4
 #define  MPI_MATH_DATATYPE_PRECISION MPI_REAL4
 #define  MPI_MATH_DATATYPE_PRECISION_C MPI_FLOAT
@@ -214,7 +221,12 @@
 #undef  BLAS_CHAR_AND_SY_OR_HE
 #undef  PRECISION
 #undef COMPLEX_DATATYPE
+
+#if 0
 /* in the complex case also sometime real valued variables are needed */
+/* the if 0 bracket is just to make the IBM Fortran compiler happy */
+#endif
+
 #undef REAL_DATATYPE
 #undef C_REAL_DATATYPE
 
@@ -260,6 +272,7 @@
 #undef  scal_PRECISION_GEMM
 #undef  scal_PRECISION_DOTC
 #undef  scal_PRECISION_LASET
+#undef  scal_PRECISION_GEMR2D
 #undef  PRECISION_SUFFIX
 #undef  ELPA_IMPL_SUFFIX
 #undef  MPI_COMPLEX_PRECISION
@@ -279,7 +292,11 @@
 
 #undef THRESHOLD
 
+#if 0
 /* General definitions needed in single and double case */
+/* the if 0 bracket is just to make the IBM Fortran compiler happy */
+#endif
+
 #define  MATH_DATATYPE complex
 #define  BLAS_TRANS_OR_CONJ 'C'
 #ifdef DOUBLE_PRECISION
@@ -336,6 +353,7 @@
 #define  scal_PRECISION_GEMM PZGEMM
 #define  scal_PRECISION_DOTC PZDOTC
 #define  scal_PRECISION_LASET PZLASET
+#define  scal_PRECISION_GEMR2D PZGEMR2D
 #define  MPI_COMPLEX_PRECISION MPI_DOUBLE_COMPLEX
 #define  MPI_MATH_DATATYPE_PRECISION MPI_DOUBLE_COMPLEX
 #define  MPI_MATH_DATATYPE_PRECISION_C MPI_DOUBLE_COMPLEX
@@ -408,6 +426,7 @@
 #define  scal_PRECISION_GEMM PCGEMM
 #define  scal_PRECISION_DOTC PCDOTC
 #define  scal_PRECISION_LASET PCLASET
+#define  scal_PRECISION_GEMR2D PCGEMR2D
 #define  MPI_COMPLEX_PRECISION MPI_COMPLEX
 #define  MPI_MATH_DATATYPE_PRECISION MPI_COMPLEX
 #define  MPI_MATH_DATATYPE_PRECISION_C MPI_COMPLEX

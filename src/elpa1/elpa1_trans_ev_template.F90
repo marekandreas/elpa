@@ -123,14 +123,18 @@
       integer(kind=ik)                              :: hvn_ubnd, hvm_ubnd
 
       MATH_DATATYPE(kind=rck), allocatable          :: hvb(:), hvm(:,:)
-      MATH_DATATYPE(kind=rck), allocatable          :: tmp1(:), tmp2(:)
+      MATH_DATATYPE(kind=rck), pointer              :: tmp1(:), tmp2(:)
       MATH_DATATYPE(kind=rck), allocatable          :: h1(:), h2(:)
-      MATH_DATATYPE(kind=rck), allocatable          :: tmat(:,:), hvm1(:)
+      MATH_DATATYPE(kind=rck), pointer              :: tmat(:,:)
+      MATH_DATATYPE(kind=rck), pointer              :: hvm1(:)
+      type(c_ptr)                                   :: tmp1_host, tmp2_host
+      type(c_ptr)                                   :: hvm1_host, tmat_host
 
       integer(kind=ik)                              :: istat
       character(200)                                :: errorMessage
       character(20)                                 :: gpuString
 
+      integer(kind=c_intptr_t)                      :: num
       integer(kind=C_intptr_T)                      :: q_dev, tmp_dev, hvm_dev, tmat_dev
       logical                                       :: successCUDA
       integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
@@ -173,10 +177,22 @@
 
       max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
 
-      allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
-      call check_alloc("trans_ev_&
-      &MATH_DATATYPE&
-      &", "tmat", istat, errorMessage)
+      if (.not.(useGPU)) then
+        allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
+        call check_alloc("trans_ev_&
+        &MATH_DATATYPE&
+        &", "tmat", istat, errorMessage)
+
+        allocate(tmp1(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
+        call check_alloc("trans_ev_&
+        &MATH_DATATYPE&
+        &", "tmp1", istat, errorMessage)
+
+        allocate(tmp2(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
+        call check_alloc("trans_ev_&
+        &MATH_DATATYPE&
+        &", "tmp2", istat, errorMessage)
+      endif
 
       allocate(h1(max_stored_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
       call check_alloc("trans_ev_&
@@ -187,16 +203,6 @@
       call check_alloc("trans_ev_&
       &MATH_DATATYPE&
       &", "h2", istat, errorMessage)
-
-      allocate(tmp1(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
-      call check_alloc("trans_ev_&
-      &MATH_DATATYPE&
-      &", "tmp1", istat, errorMessage)
-
-      allocate(tmp2(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
-      call check_alloc("trans_ev_&
-      &MATH_DATATYPE&
-      &", "tmp2", istat, errorMessage)
 
       allocate(hvb(max_local_rows*nblk), stat=istat, errmsg=errorMessage)
       call check_alloc("trans_ev_&
@@ -227,10 +233,29 @@
 
       if (useGPU) then
         ! todo: this is used only for copying hmv to device.. it should be possible to go without it
-        allocate(hvm1(max_local_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
-        call check_alloc("trans_ev_&
-        &MATH_DATATYPE&
-        &", "hvm1", istat, errorMessage)
+        !allocate(hvm1(max_local_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
+        !call check_alloc("trans_ev_&
+        !&MATH_DATATYPE&
+        !&", "hvm1", istat, errorMessage)
+        num = (max_local_rows*max_stored_rows) * size_of_datatype
+        successCUDA = cuda_malloc_host(hvm1_host,num)
+        check_alloc_cuda("trans_ev: hvm1_host", successCUDA)
+        call c_f_pointer(hvm1_host,hvm1,(/num/))
+
+        num = (max_stored_rows*max_stored_rows) * size_of_datatype
+        successCUDA = cuda_malloc_host(tmat_host,num)
+        check_alloc_cuda("trans_ev: tmat_host", successCUDA)
+        call c_f_pointer(tmat_host,tmat,(/max_stored_rows,max_stored_rows/))
+
+        num = (max_local_cols*max_stored_rows) * size_of_datatype
+        successCUDA = cuda_malloc_host(tmp1_host,num)
+        check_alloc_cuda("trans_ev: tmp1_host", successCUDA)
+        call c_f_pointer(tmp1_host,tmp1,(/num/))
+
+        num = (max_local_cols*max_stored_rows) * size_of_datatype
+        successCUDA = cuda_malloc_host(tmp2_host,num)
+        check_alloc_cuda("trans_ev: tmp2_host", successCUDA)
+        call c_f_pointer(tmp2_host,tmp2,(/num/))
 
         successCUDA = cuda_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
         check_alloc_cuda("trans_ev", successCUDA)
@@ -241,12 +266,16 @@
         successCUDA = cuda_malloc(tmp_dev, max_local_cols * max_stored_rows * size_of_datatype)
         check_alloc_cuda("trans_ev", successCUDA)
 
-        successCUDA = cuda_malloc(q_dev, ldq * matrixCols * size_of_datatype)
+        num = ldq * matrixCols * size_of_datatype
+        successCUDA = cuda_malloc(q_dev, num)
         check_alloc_cuda("trans_ev", successCUDA)
 
-!         q_dev = q_mat
+        successCUDA = cuda_host_register(int(loc(q_mat),kind=c_intptr_t),num,&
+                      cudaHostRegisterDefault)
+        check_host_register_cuda("trans_ev: q_mat", successCUDA)
+
         successCUDA = cuda_memcpy(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
-                      ldq * matrixCols * size_of_datatype, cudaMemcpyHostToDevice)
+                      num, cudaMemcpyHostToDevice)
         check_memcpy_cuda("trans_ev", successCUDA)
       endif  ! useGPU
 
@@ -458,13 +487,10 @@
 
       enddo ! istep=1,na,nblk
 
-      deallocate(tmat, h1, h2, tmp1, tmp2, hvb, hvm, stat=istat, errmsg=errorMessage)
-      if (istat .ne. 0) then
-        print *,"trans_ev_&
+      deallocate(h1, h2, hvb, hvm, stat=istat, errmsg=errorMessage)
+      check_deallocate("trans_ev_&
         &MATH_DATATYPE&
-        &: error when deallocating hvm "//errorMessage
-        stop 1
-      endif
+        &: h1, h2, hvb, hvm", istat, errorMessage)
 
       if (useGPU) then
         !q_mat = q_dev
@@ -472,13 +498,32 @@
                       q_dev, ldq * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
         check_memcpy_cuda("trans_ev", successCUDA)
 
-        deallocate(hvm1, stat=istat, errmsg=errorMessage)
-        if (istat .ne. 0) then
-          print *,"trans_ev_&
-          &MATH_DATATYPE&
-          &: error when deallocating hvm1 "//errorMessage
-          stop 1
-        endif
+        successCUDA = cuda_host_unregister(int(loc(q_mat),kind=c_intptr_t))
+        check_host_unregister_cuda("trans_ev: q_mat", successCUDA)
+
+        successCUDA = cuda_free_host(hvm1_host)
+        check_host_dealloc_cuda("trans_ev: hvm1_host", successCUDA)
+        nullify(hvm1)
+
+        successCUDA = cuda_free_host(tmat_host)
+        check_host_dealloc_cuda("trans_ev: tmat_host", successCUDA)
+        nullify(tmat)
+
+        successCUDA = cuda_free_host(tmp1_host)
+        check_host_dealloc_cuda("trans_ev: tmp1_host", successCUDA)
+        nullify(tmp1)
+
+        successCUDA = cuda_free_host(tmp2_host)
+        check_host_dealloc_cuda("trans_ev: tmp2_host", successCUDA)
+        nullify(tmp2)
+
+        !deallocate(hvm1, stat=istat, errmsg=errorMessage)
+        !if (istat .ne. 0) then
+        !  print *,"trans_ev_&
+        !  &MATH_DATATYPE&
+        !  &: error when deallocating hvm1 "//errorMessage
+        !  stop 1
+        !endif
 
         !deallocate(q_dev, tmp_dev, hvm_dev, tmat_dev)
         successCUDA = cuda_free(q_dev)
@@ -492,8 +537,13 @@
 
         successCUDA = cuda_free(tmat_dev)
         check_dealloc_cuda("trans_ev", successCUDA)
-
+      else
+        deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
+        check_deallocate("trans_ev_&
+        &MATH_DATATYPE&
+        &: tmat, tmp1, tmp2", istat, errorMessage)
       endif
+
 
       call obj%timer%stop("trans_ev_&
       &MATH_DATATYPE&
