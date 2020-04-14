@@ -3,6 +3,9 @@
 For more details and recent updates please visit the online [issue system](https://gitlab.mpcdf.mpg.de/elpa/elpa/issues)
 Issues which are not mentioned in a newer release are (considered as) solved.
 
+### ELPA 2020.05.001.rc1 release ###
+- no other issues currently known
+
 ### ELPA 2019.11.001 release ###
 - memory leak in in GPU version has been fixed
 - no other issues currently known

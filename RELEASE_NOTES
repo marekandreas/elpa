@@ -1,15 +1,18 @@
-This file contains the release notes for the ELPA 2019.11.001 version
+This file contains the release notes for the ELPA 2020.05.001.rc1 version
 
 What is new?
 -------------
-For detailed information about changes since release ELPA 2019.05.002 please have a look at the Changelog file
+For detailed information about changes since release ELPA 2019.11.001 please have a look at the Changelog file
 
-- several new features have been implemented
-- the old, legacy interface has been removed
+- improved GPU version of ELPA 2stage
+- some new experimental features
+- bugfixes
+
+
 ABI change
 ---------------------
 
-Since release 2019.05.002 the ABI has changed, since the legacy interface cannot be activated anymore
+Since release 2019.11.001 the ABI has not changed.
 
 Any incompatibilities to previous version?
 ---------------------------------------

@@ -102,6 +102,10 @@ Nonetheless, we are grateful if you cite the following publications:
   Numerical Mathematics and Advanced Applications ENUMATH 2017. ENUMATH 2017. 
   Lecture Notes in Computational Science and Engineering, vol 126. Springer, Cham
   
+  Yu, V.; Moussa, J.; Kus, P.; Marek, A.; Messmer, P.; Yoon, M.; Lederer, H.; Blum, V.
+  "GPU-Acceleration of the ELPA2 Distributed Eigensolver for Dense Symmetric and Hermitian Eigenproblems",
+  https://arxiv.org/abs/2002.10991
+
   If you use the new API and/or autotuning:
  
   Kus, P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
@@ -131,8 +135,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the [USERS_GUIDE](USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2019.11.001/html/index.html) doxygen
-documentation, where you find the definition of the interfaces.
+Please have a look at the [USERS_GUIDE](USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2020.05.001.rc1/html/index.html) doxygen documentation, where you find the definition of the interfaces.
 
 ## Contributing to *ELPA*
 
