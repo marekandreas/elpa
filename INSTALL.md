@@ -10,9 +10,9 @@ The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
-With this release ELPA 2019.11.001, the legacy API will be deprecated and not supported anymore.
+With the release ELPA 2019.11.001, the legacy API will be deprecated and not supported anymore.
 
-The release of ELPA 2020.05.001.rc1 does change the API and ABI compared to the release 2019.05.002, since
+The release of ELPA 2020.05.001.rc1 does change the API and ABI compared to the release 2019.11.001, since
 the legacy API has been dropped.
 
 ## How to install *ELPA* ##

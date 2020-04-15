@@ -1,7 +1,6 @@
 ## Users guide for the *ELPA* library ##
 
 This document provides the guide for using the *ELPA* library with the new API (API version 20170403 or higher).
-Please do understand that this release deprecated the old, legacy interface API!
 If you want to use the deprecated legacy API (we strongly recommend against this), please use the ELPA release
 2019.05.002 or older.
 
@@ -22,12 +21,6 @@ for each *ELPA* release is available.
 
 With release 2017.05.001 of the *ELPA* library the interface has been rewritten substantially, in order to have a more generic 
 interface and to avoid future interface changes.
-
-The release ELPA 2018.11.001 was the last release, where the legacy API has been
-enabled by default (and can be disabled at build time).
-With release ELPA 2019.05.001 the legacy API is disabled by default, however,
-can be still switched on at build time.
-With the release ELPA 2019.11.001 the legacy API will has been deprecated and has been removed.
 
 
 ### Table of Contents: ###

@@ -1873,17 +1873,11 @@ fi
 
 echo " "
 echo "***********************************************************************"
-echo "*  As announced, with this release candidate ELPA 2019.11.001,    *"
-echo "*  the legacy API has been finally removed !                          *"
+echo "*  This is the first release candidate of ELPA 2020.05.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2020.05.001                                                   *"
 echo "***********************************************************************"
-echo " "
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is a the first release candidate of ELPA 2019.11.001      *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2019.11.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo" "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

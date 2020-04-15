@@ -2,7 +2,7 @@
 
 ## Current Release ##
 
-The current release is ELPA 2019.11.001 The current supported API version
+The current release is ELPA 2020.05.001.rc1 The current supported API version
 is 20190501. This release supports the earliest API version 20170403.
 
 The old, obsolete legacy API will be deprecated in the future !
@@ -13,8 +13,7 @@ The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With release ELPA 2019.05.001 the legacy API is disabled by default, however,
 can be still switched on at build time.
-With the release ELPA 2019.11.001 the legacy API will be deprecated and
-not supported anymore.
+With the release ELPA 2019.11.001 the legacy API has been deprecated and support has been droped.
 
 [![Build 
 status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)
