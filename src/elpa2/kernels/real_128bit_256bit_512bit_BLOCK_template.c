@@ -3475,10 +3475,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -3511,10 +3511,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -6641,10 +6641,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -6677,10 +6677,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -9527,10 +9527,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -9562,10 +9562,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -12119,10 +12119,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -12153,10 +12153,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -14448,10 +14448,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -14481,10 +14481,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -16493,10 +16493,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau1, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
@@ -16524,10 +16524,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #if VEC_SET == AVX_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi64((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    h1 = (__AVX512_DATATYPE) _mm512_xor_epi32((__AVX512i) tau2, (__AVX512i) sign);
+    h1 = (__SIMD_DATATYPE) _mm512_xor_epi32((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
 #endif
 #endif /* HAVE_AVX512_XEON_PHI */
 
