@@ -1,11 +1,19 @@
-Changelog for upcoming release
+Changelog for next release
 
 - not yet decided
 
-Changelog for ELPA 2020.05.001
+Changelog for ELPA 2020.05.001.rc1
+
 - improved documentation, including fixing of typos and errors in markdown
 - Fix a bug in the calling of Cannons algorithm which might lead to crashes
 for a squared process grid
+- improvements and bugfixes of the ELPA2 stage GPU version, see
+   https://arxiv.org/abs/2002.10991
+- bugfix for the build of AVX-512 KNL kernels
+- clean seperation of SIMD instructions for AVX and AVX2 kernels
+- better error checking for allocations / deallocations of CPU and GPU memory
+- experimental feature of matrix redistribution
+- bugfix in the cpuid tests
 
 Changelog for ELPA 2019.11.001
 
