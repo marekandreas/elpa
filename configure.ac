@@ -27,7 +27,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [15:0:0])
+AC_SUBST([ELPA_SO_VERSION], [15:1:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -39,11 +39,11 @@ AC_SUBST([$1], ['$2'])
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20191110, "Current ELPA API version")
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20200417, "Current ELPA API version")
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20190524], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20190524, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20200417, "Current ELPA autotune version")
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -1873,17 +1873,11 @@ fi
 
 echo " "
 echo "***********************************************************************"
-echo "*  As announced, with this release candidate ELPA 2019.11.001,    *"
-echo "*  the legacy API has been finally removed !                          *"
+echo "*  This is the first release candidate of ELPA 2020.05.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2020.05.001                                                   *"
 echo "***********************************************************************"
-echo " "
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is a the first release candidate of ELPA 2019.11.001      *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2019.11.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo" "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
