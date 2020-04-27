@@ -776,24 +776,6 @@
      l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
      l_cols_nev = local_index(nev, my_pcol, np_cols, nblk, -1) ! Local columns corresponding to nev
 
-
-   ! test only
-   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
-
-   if (matrixCols .ne. l_cols) then
-     print *,"DFDSF ",matrixCols, l_cols
-   else
-    print *,"identical"
-   endif
-
-   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
-   if (matrixRows .ne. l_rows) then
-     print *,"DFDSF rows ",matrixRows, l_rows
-   else
-    print *,"identical rows"
-   endif
-
-
      allocate(q_real(l_rows,l_cols), stat=istat, errmsg=errorMessage)
      check_allocate("elpa2_template: q_real", istat, errorMessage)
 #endif

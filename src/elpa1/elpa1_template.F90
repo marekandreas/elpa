@@ -387,10 +387,6 @@ function elpa_solve_evp_&
      q_actual => q_dummy
    endif
 
-   ! test only
-   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
-   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
-
 #if COMPLEXCASE == 1
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
    l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local columns of q
