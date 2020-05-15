@@ -1873,7 +1873,7 @@ fi
 
 echo " "
 echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2020.05.001.rc1        *"
+echo "*  This is the first release candidate of ELPA 2020.05.001.rc2        *"
 echo "*  There might be still some changes until the final release of       *"
 echo "*  ELPA 2020.05.001                                                   *"
 echo "***********************************************************************"

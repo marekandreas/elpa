@@ -2,7 +2,7 @@ Changelog for next release
 
 - not yet decided
 
-Changelog for ELPA 2020.05.001.rc1
+Changelog for ELPA 2020.05.001.rc2
 
 - improved documentation, including fixing of typos and errors in markdown
 - Fix a bug in the calling of Cannons algorithm which might lead to crashes
@@ -14,6 +14,8 @@ for a squared process grid
 - better error checking for allocations / deallocations of CPU and GPU memory
 - experimental feature of matrix redistribution
 - bugfix in the cpuid tests
+- bugfix in elpa2_print_kernels
+- bugfix when configuring --with-gpu-support-only
 
 Changelog for ELPA 2019.11.001
 
