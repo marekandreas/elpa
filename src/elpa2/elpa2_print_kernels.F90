@@ -140,8 +140,8 @@ program print_available_elpa2_kernels
          kernel = elpa_option_enumerate(KERNEL_KEY, i)
          if (elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_COMPLEX_GPU" .or. &
              elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_REAL_GPU") then
-           if (e%can_set("use_gpu",1) == ELPA_OK) then
-             call e%set("use_gpu",1, error)
+           if (e%can_set("gpu",1) == ELPA_OK) then
+             call e%set("gpu",1, error)
            endif
          endif 
 

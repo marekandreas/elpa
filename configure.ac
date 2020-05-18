@@ -921,7 +921,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_gpu_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -1873,7 +1873,7 @@ fi
 
 echo " "
 echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2020.05.001.rc1        *"
+echo "*  This is the first release candidate of ELPA 2020.05.001.rc2        *"
 echo "*  There might be still some changes until the final release of       *"
 echo "*  ELPA 2020.05.001                                                   *"
 echo "***********************************************************************"
