@@ -2,7 +2,7 @@
 
 ## Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2020.05.001.rc2**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2020.05.001**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
@@ -10,7 +10,7 @@ The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With the release ELPA 2019.11.001, the legacy API has been deprecated and the support has been closed.
 
-The release of ELPA 2020.05.001.rc2 does change the API and ABI compared to the release 2019.11.001, since
+The release of ELPA 2020.05.001 does change the API and ABI compared to the release 2019.11.001, since
 the legacy API has been dropped.
 
 ## How to install *ELPA* ##

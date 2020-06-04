@@ -2,7 +2,7 @@ Changelog for next release
 
 - not yet decided
 
-Changelog for ELPA 2020.05.001.rc2
+Changelog for ELPA 2020.05.001
 
 - improved documentation, including fixing of typos and errors in markdown
 - Fix a bug in the calling of Cannons algorithm which might lead to crashes

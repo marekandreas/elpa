@@ -19,12 +19,12 @@
 %define with_openmp 0
 
 Name:           elpa
-Version:        2020.05.001.rc2
+Version:        2020.05.001
 Release:        1
 Summary:        A massively parallel eigenvector solver
 License:        LGPL-3.0
 Group:          System/Libraries
-Url:            https://elpa.rzg.mpg.de/
+Url:            https://elpa.mpcdf.mpg.de/
 Source0:        https://elpa.mpcdf.mpg.de/html/Releases/%{version}/%{name}-%{version}.tar.gz
 BuildRequires:  c_compiler
 BuildRequires:  gcc-fortran >= 4.8
