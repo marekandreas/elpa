@@ -777,9 +777,9 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     print("# " + cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" + a + "-" + b + "-" +g + "-" + cov + "-" + instr + "-" + addr)
     print(cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" +a + "-" +b + "-" +g + "-" + cov + "-" + instr + "-" + addr + "-jobs:")
-    #if (MasterOnly):
-    #    print("  only:")
-    #    print("    - /.*master.*/")
+    if (MasterOnly):
+        print("  only:")
+        print("    - /.*master.*/")
     if (instr == "power8"):
         print("  allow_failure: true")
     print("  tags:")

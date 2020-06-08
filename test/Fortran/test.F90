@@ -195,7 +195,7 @@ program test
                          do_test_frank_eigenvalues,  &
                          do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                          do_test_hermitian_multiply
-
+   logical            :: ignoreError
 #ifdef WITH_OPENMP
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
@@ -204,6 +204,8 @@ program test
    TEST_INT_MPI_TYPE  :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
    character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
 #endif
+
+   ignoreError = .false.
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
    call setup_mpi(myid, nprocs)
@@ -301,6 +303,15 @@ program test
    call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, &
                          np_cols, layout, my_blacs_ctxt, my_prow, &
                          my_pcol)
+
+
+#if defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_ALL_LAYOUTS)
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                 np_rows, np_cols, &
