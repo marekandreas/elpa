@@ -63,7 +63,7 @@
       use precision
       use elpa_abstract_impl
       use elpa_blas_interfaces
-
+      use global_product
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
@@ -512,7 +512,7 @@
 
         call global_product_&
         &PRECISION&
-        (obj, z, na1)
+        (obj, z, na1, mpi_comm_rows, mpi_comm_cols, npc_0, npc_n)
         z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
 
         call global_gather_&
@@ -1117,6 +1117,7 @@
         end subroutine global_gather_&
         &PRECISION
 
+#if 0
         subroutine global_product_&
         &PRECISION&
         &(obj, z, n)
@@ -1199,6 +1200,7 @@
           endif
         end subroutine global_product_&
         &PRECISION
+#endif
 
         subroutine check_monotony_&
         &PRECISION&

@@ -57,6 +57,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_generalized/cannon.c \
   src/helpers/matrix_plot.F90 \
   src/general/mod_elpa_skewsymmetric_blas.F90 \
+  src/solve_tridi/mod_global_product.F90 \
   src/elpa_index.c
 
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c
@@ -677,6 +678,7 @@ EXTRA_DIST = \
   src/helpers/elpa_redistribute_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
+  src/solve_tridi/global_product_template.F90 \
   src/elpa1/elpa1_merge_systems_real_template.F90 \
   src/elpa1/elpa1_solve_tridi_real_template.F90 \
   src/elpa1/elpa1_template.F90 \
