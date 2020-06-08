@@ -65,6 +65,7 @@
       use elpa_blas_interfaces
       use global_product
       use global_gather
+      use resort_ev
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
@@ -266,7 +267,8 @@
         ! Rearrange eigenvectors
         call resort_ev_&
         &PRECISION &
-                       (obj, idx, na)
+                       (obj, idx, na, na, p_col_out, q, ldq, matrixCols, l_rows, l_rqe, &
+                        l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
 
         call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
 
@@ -437,7 +439,9 @@
         enddo
         call resort_ev_&
         &PRECISION&
-        &(obj, idxq1, na)
+        &(obj, idxq1, na, na, p_col_out, q, ldq, matrixCols, l_rows, l_rqe, &
+          l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
+
       else if (na1>2) then
 
         ! Solve secular equation
@@ -928,6 +932,7 @@
         end subroutine add_tmp_&
         &PRECISION
 
+#if 0
         subroutine resort_ev_&
         &PRECISION&
         &(obj, idx_ev, nLength)
@@ -1006,6 +1011,7 @@
           check_deallocate("resort_ev: qtmp",istat, errorMessage)
         end subroutine resort_ev_&
         &PRECISION
+#endif
 
         subroutine transform_columns_&
         &PRECISION&
