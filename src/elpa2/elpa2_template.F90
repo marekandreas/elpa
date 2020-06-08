@@ -88,6 +88,7 @@
 #ifdef REDISTRIBUTE_MATRIX
    use elpa_scalapack_interfaces
 #endif
+   use solve_tridi
    use iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
@@ -796,7 +797,8 @@
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
 #endif
-       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+       nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, &
+               success, nrThreads)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("solve")
 #endif

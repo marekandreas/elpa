@@ -53,6 +53,7 @@
 #endif
 
 #include "../general/sanity.F90"
+#include "../general/error_checking.inc"
 
     subroutine merge_systems_&
     &PRECISION &
@@ -66,6 +67,13 @@
       use global_product
       use global_gather
       use resort_ev
+      use transform_columns
+      use check_monotony
+      use add_tmp
+      use v_add_s
+      use ELPA_utilities
+      use elpa_mpi
+      use solve_secular_equation
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
@@ -362,7 +370,9 @@
             qtrans(2,1) = S; qtrans(2,2) = C
             call transform_columns_&
             &PRECISION &
-                        (obj, idx(i), idx1(na1))
+                        (obj, idx(i), idx1(na1), na, tmp, l_rqs, l_rqe, &
+                         q, ldq, matrixCols, l_rows, mpi_comm_cols, &
+                          p_col, l_col, qtrans)
             if (coltyp(idx(i))==1 .and. coltyp(idx1(na1))/=1) coltyp(idx1(na1)) = 2
             if (coltyp(idx(i))==3 .and. coltyp(idx1(na1))/=3) coltyp(idx1(na1)) = 2
 
@@ -409,7 +419,10 @@
           call obj%timer%stop("blas")
           call transform_columns_&
           &PRECISION&
-          &(obj, idx1(1), idx1(2))
+          &(obj, idx1(1), idx1(2), na, tmp, l_rqs, l_rqe, q, &
+            ldq, matrixCols, l_rows, mpi_comm_cols, &
+             p_col, l_col, qtrans)
+
         endif
 
         ! Add the deflated eigenvalues
@@ -902,6 +915,7 @@
 
       return
 
+#if 0
       contains
         subroutine add_tmp_&
         &PRECISION&
@@ -931,6 +945,7 @@
 
         end subroutine add_tmp_&
         &PRECISION
+#endif
 
 #if 0
         subroutine resort_ev_&
@@ -1013,6 +1028,7 @@
         &PRECISION
 #endif
 
+#if 0
         subroutine transform_columns_&
         &PRECISION&
         &(obj, col1, col2)
@@ -1064,7 +1080,7 @@
           endif
         end subroutine transform_columns_&
         &PRECISION
-
+#endif
 #if 0
         subroutine global_gather_&
         &PRECISION&
@@ -1209,7 +1225,7 @@
         end subroutine global_product_&
         &PRECISION
 #endif
-
+#if 0
         subroutine check_monotony_&
         &PRECISION&
         &(obj, n,d,text, wantDebug, success)
@@ -1238,6 +1254,6 @@
           enddo
         end subroutine check_monotony_&
         &PRECISION
-
+#endif
     end subroutine merge_systems_&
     &PRECISION

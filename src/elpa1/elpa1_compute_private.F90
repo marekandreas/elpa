@@ -64,7 +64,7 @@ module elpa1_compute
   public :: trans_ev_real_double              ! Transform real eigenvectors of a tridiagonal matrix back
   public :: trans_ev_real
 
-  public :: solve_tridi_double
+  !public :: solve_tridi_double
   public :: solve_tridi_double_impl
 
   interface tridiag_real
@@ -78,7 +78,7 @@ module elpa1_compute
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: tridiag_real_single        ! Transform real single-precision symmetric matrix to tridiagonal form
   public :: trans_ev_real_single       ! Transform real  single-precision eigenvectors of a tridiagonal matrix back
-  public :: solve_tridi_single
+  !public :: solve_tridi_single
   public :: solve_tridi_single_impl
 #endif
 

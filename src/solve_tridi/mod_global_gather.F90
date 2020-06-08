@@ -18,7 +18,6 @@ module global_gather
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
 #include "./global_gather_template.F90"
-#undef DOUBLE_PRECISION_REAL
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -29,7 +28,6 @@ module global_gather
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
 #include "./global_gather_template.F90"
-#undef SINGLE_PRECISION_REAL
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif
