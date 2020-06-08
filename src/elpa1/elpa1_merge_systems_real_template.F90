@@ -64,6 +64,7 @@
       use elpa_abstract_impl
       use elpa_blas_interfaces
       use global_product
+      use global_gather
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
@@ -231,7 +232,7 @@
 
       call global_gather_&
       &PRECISION&
-      &(obj, z, na)
+      &(obj, z, na, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
       ! Normalize z so that norm(z) = 1.  Since z is the concatenation of
       ! two normalized vectors, norm2(z) = sqrt(2).
       z = z/sqrt(2.0_rk)
@@ -517,10 +518,10 @@
 
         call global_gather_&
         &PRECISION&
-        &(obj, dbase, na1)
+        &(obj, dbase, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
         call global_gather_&
         &PRECISION&
-        &(obj, ddiff, na1)
+        &(obj, ddiff, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
         ! Calculate scale factors for eigenvectors
@@ -557,7 +558,7 @@
 
         call global_gather_&
         &PRECISION&
-        &(obj, ev_scale, na1)
+        &(obj, ev_scale, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
@@ -1058,6 +1059,7 @@
         end subroutine transform_columns_&
         &PRECISION
 
+#if 0
         subroutine global_gather_&
         &PRECISION&
         &(obj, z, n)
@@ -1116,7 +1118,7 @@
           enddo
         end subroutine global_gather_&
         &PRECISION
-
+#endif
 #if 0
         subroutine global_product_&
         &PRECISION&
