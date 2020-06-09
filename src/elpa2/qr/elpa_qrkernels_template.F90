@@ -52,6 +52,7 @@ subroutine qr_pdlarfb_kernel_local_&
 &PRECISION &
 (m,n,k,a,lda,v,ldv,t,ldt,z,ldz)
     use precision
+    use elpa_blas_interfaces
     implicit none
 
     ! input variables (local)
@@ -180,14 +181,18 @@ subroutine qr_pdlarfb_kernel_local_&
         ! reference implementation
 #ifdef DOUBLE_PRECISION_REAL
             ! V' = T * Z'
-            call dtrmm("Left","Upper","Notrans","Nonunit",k,n,1.0_rk8,t,ldt,z,ldz)
+            call dtrmm("Left","Upper","Notrans","Nonunit",int(k,kind=BLAS_KIND),int(n,kind=BLAS_KIND), &
+                       1.0_rk8,t,int(ldt,kind=BLAS_KIND),z,int(ldz,kind=BLAS_KIND))
             ! A = A - Y * V'
-            call dgemm("Notrans","Notrans",m,n,k,-1.0_rk8,v,ldv,z,ldz,1.0_rk8,a,lda)
+            call dgemm("Notrans","Notrans",int(m,kind=BLAS_KIND),int(n,kind=BLAS_KIND),int(k,kind=BLAS_KIND),&
+                       -1.0_rk8,v,int(ldv,kind=BLAS_KIND),z,int(ldz,kind=BLAS_KIND),1.0_rk8,a,int(lda,kind=BLAS_KIND))
 #else
             ! V' = T * Z'
-            call dtrmm("Left","Upper","Notrans","Nonunit",k,n,1.0_rk4,t,ldt,z,ldz)
+            call strmm("Left","Upper","Notrans","Nonunit",int(k,kind=BLAS_KIND),int(n,kind=BLAS_KIND),1.0_rk4,t,&
+                       int(ldt,kind=BLAS_KIND),z,int(ldz,kind=BLAS_KIND))
             ! A = A - Y * V'
-            call dgemm("Notrans","Notrans",m,n,k,-1.0_rk4,v,ldv,z,ldz,1.0_rk4,a,lda)
+            call sgemm("Notrans","Notrans",int(m,kind=BLAS_KIND),int(n,kind=BLAS_KIND),int(k,kind=BLAS_KIND),&
+                       -1.0_rk4,v,int(ldv,kind=BLAS_KIND),z,int(ldz,kind=BLAS_KIND),1.0_rk4,a,int(lda,kind=BLAS_KIND))
 #endif
     end if
 

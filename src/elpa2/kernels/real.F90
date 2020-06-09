@@ -55,7 +55,6 @@
 ! --------------------------------------------------------------------------------------------------
 #include "config-f90.h"
 #ifdef USE_ASSUMED_SIZE
-#define PACK_REAL_TO_COMPLEX
 #else
 #undef PACK_REAL_TO_COMPLEX
 #endif

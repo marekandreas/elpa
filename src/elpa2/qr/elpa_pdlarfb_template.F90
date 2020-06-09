@@ -255,15 +255,21 @@ subroutine qr_pdlarft_pdlarfb_1dcomm_&
         ! update matrix (pdlarfb)
         ! Z' = T * Z'
 #ifdef DOUBLE_PRECISION_REAL
-        call strmm("Left","Upper","Notrans","Nonunit",k,n,1.0_rk8,t,ldt,work(1,recvoffset+k),k)
+        call dtrmm("Left","Upper","Notrans","Nonunit",int(k,kind=BLAS_KIND), int(n,kind=BLAS_KIND),1.0_rk8, &
+                   t,int(ldt,kind=BLAS_KIND),work(1,recvoffset+k),int(k,kind=BLAS_KIND))
 
         ! A = A - Y * V'
-        call sgemm("Notrans","Notrans",localsize,n,k,-1.0_rk8,v(baseoffset,1),ldv,work(1,recvoffset+k),k,1.0_rk8,a(offset,1),lda)
+        call dgemm("Notrans","Notrans",int(localsize,kind=BLAS_KIND),int(n,kind=BLAS_KIND),int(k,kind=BLAS_KIND), &
+                   -1.0_rk8,v(baseoffset,1),int(ldv,kind=BLAS_KIND),work(1,recvoffset+k), int(k,kind=BLAS_KIND), &
+                    1.0_rk8,a(offset,1), int(lda,kind=BLAS_KIND))
 #else
-        call strmm("Left","Upper","Notrans","Nonunit",k,n,1.0_rk4,t,ldt,work(1,recvoffset+k),k)
+        call strmm("Left","Upper","Notrans","Nonunit",int(k,kind=BLAS_KIND), int(n,kind=BLAS_KIND),1.0_rk4, &
+                   t,int(ldt,kind=BLAS_KIND),work(1,recvoffset+k),int(k,kind=BLAS_KIND))
 
         ! A = A - Y * V'
-        call sgemm("Notrans","Notrans",localsize,n,k,-1.0_rk4,v(baseoffset,1),ldv,work(1,recvoffset+k),k,1.0_rk4,a(offset,1),lda)
+        call sgemm("Notrans","Notrans",int(localsize,kind=BLAS_KIND),int(n,kind=BLAS_KIND),int(k,kind=BLAS_KIND), &
+                   -1.0_rk4,v(baseoffset,1),int(ldv,kind=BLAS_KIND),work(1,recvoffset+k), int(k,kind=BLAS_KIND), &
+                    1.0_rk4,a(offset,1), int(lda,kind=BLAS_KIND))
 
 #endif
 end subroutine 
