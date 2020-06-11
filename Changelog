@@ -4,6 +4,8 @@ Changelog for next release
 
 Changelog for ELPA 2020.05.001
 
+- Enable compilation with gcc v10
+- Fix a bug in elpa_multiply_a_b (GPU)
 - improved documentation, including fixing of typos and errors in markdown
 - Fix a bug in the calling of Cannons algorithm which might lead to crashes
 for a squared process grid
