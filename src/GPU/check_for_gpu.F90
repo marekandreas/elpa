@@ -60,21 +60,6 @@ module mod_check_for_gpu
       logical                       :: gpuAvailable
       !character(len=1024)           :: envname
 
-      gpuAvailable = .false.
-
-      if (cublasHandle .ne. -1) then
-        gpuAvailable = .true.
-        numberOfDevices = -1
-        if (myid == 0) then
-          print *, "Skipping GPU init, should have already been initialized "
-        endif
-        return
-      else
-        if (myid == 0) then
-          print *, "Initializing the GPU devices"
-        endif
-      endif
-
       if (.not.(present(wantDebug))) then
         wantDebugMessage = .false.
       else
@@ -82,6 +67,21 @@ module mod_check_for_gpu
           wantDebugMessage=.true.
         else
           wantDebugMessage=.false.
+        endif
+      endif
+
+      gpuAvailable = .false.
+
+      if (cublasHandle .ne. -1) then
+        gpuAvailable = .true.
+        numberOfDevices = -1
+        if (myid == 0 .and. wantDebugMessage) then
+          print *, "Skipping GPU init, should have already been initialized "
+        endif
+        return
+      else
+        if (myid == 0 .and. wantDebugMessage) then
+          print *, "Initializing the GPU devices"
         endif
       endif
 

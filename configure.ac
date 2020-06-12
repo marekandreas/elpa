@@ -107,6 +107,7 @@ fi
 dnl C
 AC_LANG_PUSH([C])
 
+
 AX_PROG_CC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_c=yes],[found_mpi_c=no])
 if test x"$with_mpi" = x"yes"; then
   if test x"$found_mpi_c" = x"no"; then
@@ -233,8 +234,6 @@ if test x"${enable_64bit_integer_mpi_support}" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_64BIT_INTEGER_MPI_SUPPORT],[test x"$enable_64bit_integer_mpi_support" = x"yes"])
 
-
-
 AC_MSG_CHECKING(whether C compiler can use _Generic )
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 int main(int argc, char **argv) {
@@ -267,6 +266,7 @@ AC_LANG_POP([C])
 
 # Fortran
 AC_LANG_PUSH([Fortran])
+
 m4_include([m4/ax_prog_fc_mpi.m4])
 AX_PROG_FC_MPI([test x"$with_mpi" = x"yes"],[found_mpi_f=yes],[found_mpi_f=no])
 if test x"$with_mpi" = x"yes"; then
@@ -280,6 +280,50 @@ AC_FC_FREEFORM
 AC_FC_MODULE_FLAG
 AC_FC_MODULE_OUTPUT_FLAG
 AC_FC_LIBRARY_LDFLAGS
+
+AC_MSG_CHECKING(whether Fortran compiler infers interfaces )
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+program test
+implicit none
+integer :: a
+real*8  :: b
+
+  call foo(a)
+  call foo(b)
+
+end program
+    ])],
+    [FC_does_infer_interfaces=no],
+    [FC_does_infer_interfaces=yes]
+  )
+AC_MSG_RESULT([${FC_does_infer_interfaces}])
+
+if test x"${FC_does_infer_interfaces}" = x"yes"; then
+  #test whether compiler allows switching of argument-checking
+  FCFLAGS_SAVE2="$FCFLAGS"
+  FCFLAGS="$FCFLAGS -fallow-argument-mismatch"
+  # test again
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+  program test
+  implicit none
+  integer :: a
+  real*8  :: b
+  
+    call foo(a)
+    call foo(b)
+  
+  end program
+      ])],
+      [FC_does_still_infer_interfaces=no],
+      [FC_does_still_infer_interfaces=yes]
+    )
+  if test x"${FC_does_still_infer_interfaces}" = x"yes"; then
+    FCFLAGS = "$FCFLAGS_SAVE2"
+    AC_MSG_ERROR([Fortran compiler infers interfaces])
+  fi
+else
+  AC_DEFINE([PACK_REAL_TO_COMPLEX], [1], [In some kernels pack real to complex])
+fi
 
 
 if test x"${enable_openmp}" = x"yes"; then

@@ -5,10 +5,6 @@
 The current release is ELPA 2020.05.001 The current supported API version
 is 20190501. This release supports the earliest API version 20170403.
 
-The old, obsolete legacy API will be deprecated in the future !
-Already now, all new features of ELPA are only available with the new API. Thus, there
-is no reason to keep the legacy API arround for too long.
-
 The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With release ELPA 2019.05.001 the legacy API is disabled by default, however,
