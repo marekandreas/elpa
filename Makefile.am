@@ -655,6 +655,9 @@ distclean-local:
 	-rm -rf ./src
 	-rm -rf ./test
 	-rm -rf ./modules
+	-rm -rf ./private_modules
+	-rm -rf ./test_modules
+	-rm -rf ./.fortran-dependencies
 	-rm -rf .fortran_dependencies
 	-rm config-f90.h
 	-rm -rf ./test/.deps
