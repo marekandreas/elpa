@@ -299,32 +299,73 @@ end program
 AC_MSG_RESULT([${FC_does_infer_interfaces}])
 
 if test x"${FC_does_infer_interfaces}" = x"yes"; then
-  #test whether compiler allows switching of argument-checking
-  FCFLAGS_SAVE2="$FCFLAGS"
-  FCFLAGS="$FCFLAGS -fallow-argument-mismatch"
-  # test again
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-  program test
-  implicit none
-  integer :: a
-  real*8  :: b
-  
-    call foo(a)
-    call foo(b)
-  
-  end program
+  # two problems
+  # 1. some MPIs (at least Intel) do not provide all
+  #    interfaces, which will fail
+  #    in case of MPI and not all interfaces -> switch of
+  #    argument checking or fail
+  # 2. no MPI case: switch of PACK_REAL_TO_COMPLEX
+  if test x"${with_mpi}" = x"yes"; then
+    # check whether MPI module defines all interfaces; not the case for Intel MPI!
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+    program test_mpi_interfaces
+      use mpi
+      implicit none
+      integer :: rank
+      integer :: buf(10)
+      integer :: ierr
+
+      call MPI_Init(ierr)
+      call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+
+      if (rank == 0) then
+         buf(:) = 42;
+      end if
+
+      ! this is OK
+      call MPI_Bcast(buf, 10, MPI_INT, 0, MPI_COMM_WORLD, ierr)
+
+      ! Oops, wrong order here:
+      call MPI_Bcast(10, buf, MPI_INT, 0, MPI_COMM_WORLD, ierr)
+
+      call MPI_Finalize(ierr)
+    end program
+      ])],
+      [MPImodule_has_interfaces=no],
+      [MPImodule_has_interfaces=yes]
+    )
+    if test x"${MPImodule_has_interfaces}" = x"no"; then
+      #check whether we can cure this by disabling argument checking
+      FCFLAGS_SAVE2="$FCFLAGS"
+      FCFLAGS="$FCFLAGS -fallow-argument-mismatch"
+      # test again
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      program test
+      implicit none
+      integer :: a
+      real*8  :: b
+      
+        call foo(a)
+        call foo(b)
+      
+      end program
+
       ])],
       [FC_does_still_infer_interfaces=no],
       [FC_does_still_infer_interfaces=yes]
-    )
-  if test x"${FC_does_still_infer_interfaces}" = x"yes"; then
-    FCFLAGS = "$FCFLAGS_SAVE2"
-    AC_MSG_ERROR([Fortran compiler infers interfaces])
+      )
+      if test x"${FC_does_still_infer_interfaces}" = x"yes"; then
+        FCFLAGS = "$FCFLAGS_SAVE2"
+        AC_MSG_ERROR([Fortran compiler infers interfaces; but MPI module does not supply all of them])
+      fi
+    fi
+  #else
+  #  # no MPI case switch of PACK_REAL_TO_COMPLEX
+  #  # i.e. do _not_ define it
   fi
 else
   AC_DEFINE([PACK_REAL_TO_COMPLEX], [1], [In some kernels pack real to complex])
 fi
-
 
 if test x"${enable_openmp}" = x"yes"; then
   AX_ELPA_OPENMP
