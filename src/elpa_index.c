@@ -274,9 +274,14 @@ static const elpa_index_int_entry_t int_entries[] = {
                 BASE_ENTRY(option_name, option_description, 0, 1, 0) \
         }
 
+#define DOUBLE_ENTRY(option_name, option_description, default, print_flag) \
+        { \
+                BASE_ENTRY(option_name, option_description, 0, 0, print_flag), \
+                .default_value = default, \
+        }
+
 static const elpa_index_double_entry_t double_entries[] = {
-        /* Empty for now */
-        READONLY_DOUBLE_ENTRY("dummy", "dummy"),
+        DOUBLE_ENTRY("thres_pd", "Threshold to define ill-conditioning, default 0.00001", 0.00001, PRINT_YES),
 };
 
 void elpa_index_free(elpa_index_t index) {

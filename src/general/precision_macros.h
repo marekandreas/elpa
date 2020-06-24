@@ -64,7 +64,6 @@
 #undef  MPI_MATH_DATATYPE_PRECISION_C
 #undef  MPI_MATH_DATATYPE_PRECISION_EXPL
 #undef  C_DATATYPE_KIND
-#undef THRESHOLD
 
 
 #if 0
@@ -138,7 +137,6 @@
 #define C_PLACPY pdlacpy_
 #define C_PTRAN pdtran_
 
-#define THRESHOLD 1e-11_rk8
 #endif /* DOUBLE_PRECISION */
 
 #ifdef SINGLE_PRECISION
@@ -206,7 +204,6 @@
 #define C_PLACPY pslacpy_
 #define C_PTRAN pstran_
 
-#define THRESHOLD 1e-4_rk4
 #endif /* SINGLE_PRECISION */
 
 #endif /* REALCASE */
@@ -290,7 +287,6 @@
 #undef ELPA_PRECISION_SSMV
 #undef ELPA_PRECISION_SSR2
 
-#undef THRESHOLD
 
 #if 0
 /* General definitions needed in single and double case */
@@ -369,8 +365,6 @@
 #define ELPA_PRECISION_SSMV elpa_zssmv
 #define ELPA_PRECISION_SSR2 elpa_zssr2
 
-
-#define THRESHOLD 1e-11_rk8
 #endif /* DOUBLE PRECISION */
 
 #ifdef SINGLE_PRECISION
@@ -442,7 +436,6 @@
 #define ELPA_PRECISION_SSMV elpa_cssmv
 #define ELPA_PRECISION_SSR2 elpa_cssr2
 
-#define THRESHOLD 1e-4_rk4
 #endif /* SINGLE PRECISION */
 
 #endif /* COMPLEXCASE */
