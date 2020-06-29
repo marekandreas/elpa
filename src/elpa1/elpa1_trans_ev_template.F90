@@ -240,7 +240,7 @@
         num = (max_local_rows*max_stored_rows) * size_of_datatype
         successCUDA = cuda_malloc_host(hvm1_host,num)
         check_alloc_cuda("trans_ev: hvm1_host", successCUDA)
-        call c_f_pointer(hvm1_host,hvm1,(/num/))
+        call c_f_pointer(hvm1_host,hvm1,(/(max_local_rows*max_stored_rows)/))
 
         num = (max_stored_rows*max_stored_rows) * size_of_datatype
         successCUDA = cuda_malloc_host(tmat_host,num)
@@ -250,12 +250,12 @@
         num = (max_local_cols*max_stored_rows) * size_of_datatype
         successCUDA = cuda_malloc_host(tmp1_host,num)
         check_alloc_cuda("trans_ev: tmp1_host", successCUDA)
-        call c_f_pointer(tmp1_host,tmp1,(/num/))
+        call c_f_pointer(tmp1_host,tmp1,(/(max_local_cols*max_stored_rows)/))
 
         num = (max_local_cols*max_stored_rows) * size_of_datatype
         successCUDA = cuda_malloc_host(tmp2_host,num)
         check_alloc_cuda("trans_ev: tmp2_host", successCUDA)
-        call c_f_pointer(tmp2_host,tmp2,(/num/))
+        call c_f_pointer(tmp2_host,tmp2,(/(max_local_cols*max_stored_rows)/))
 
         successCUDA = cuda_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
         check_alloc_cuda("trans_ev", successCUDA)

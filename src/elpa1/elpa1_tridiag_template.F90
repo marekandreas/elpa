@@ -288,22 +288,22 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
         num = (max_local_rows+1) * size_of_datatype
         successCUDA = cuda_malloc_host(v_row_host,num)
         check_host_alloc_cuda("tridiag: v_row_host", successCUDA)
-        call c_f_pointer(v_row_host,v_row,(/num/))
+        call c_f_pointer(v_row_host,v_row,(/(max_local_rows+1)/))
 
         num = (max_local_cols) * size_of_datatype
         successCUDA = cuda_malloc_host(v_col_host,num)
         check_host_alloc_cuda("tridiag: v_col_host", successCUDA)
-        call c_f_pointer(v_col_host,v_col,(/num/))
+        call c_f_pointer(v_col_host,v_col,(/(max_local_cols)/))
 
         num = (max_local_cols) * size_of_datatype
         successCUDA = cuda_malloc_host(u_col_host,num)
         check_host_alloc_cuda("tridiag: u_col_host", successCUDA)
-        call c_f_pointer(u_col_host,u_col,(/num/))
+        call c_f_pointer(u_col_host,u_col,(/(max_local_cols)/))
 
         num = (max_local_rows) * size_of_datatype
         successCUDA = cuda_malloc_host(u_row_host,num)
         check_host_alloc_cuda("tridiag: u_row_host", successCUDA)
-        call c_f_pointer(u_row_host,u_row,(/num/))
+        call c_f_pointer(u_row_host,u_row,(/(max_local_rows)/))
 
         num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
         successCUDA = cuda_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
