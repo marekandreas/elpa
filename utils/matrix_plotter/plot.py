@@ -27,25 +27,25 @@ class Trace:
       header = f.readline()
       val = [int(x) for x in header.split()]
       val.append(f.readline()[:-1])
-      print val
+      print(val)
     return  val
 
   def __load_matrix(self, directory, filenames):
     mat = []
     for (mpi_rank, filename) in filenames:
-      #print filename, mpi_rank, prow, pcol, p_cols
+      #print(filename, mpi_rank, prow, pcol, p_cols)
       (na, nblk, lda, localCols, my_prow, my_pcol, p_rows, p_cols, iteration, name) = self.__get_header(directory + '/' + filename)
       if(mat == []):
           mat = np.zeros((na, na))
       (self._na, self._nblk, self._p_rows, self._p_cols) = (na, nblk, p_rows, p_cols)
       prow = mpi_rank % p_rows
       pcol = mpi_rank / p_rows
-      #print (na, nblk, lda, localCols, my_prow, my_pcol, my_nprows, my_npcols)
+      #print(na, nblk, lda, localCols, my_prow, my_pcol, my_nprows, my_npcols)
       assert(my_prow == prow) 
       assert(my_pcol == pcol) 
         
       loc_mat = np.loadtxt(fname = directory + '/' + filename, skiprows = 2)
-      #print "lda, localCols ", lda, localCols
+      #print("lda, localCols ", lda, localCols)
       for row_blk in range((lda-1)/nblk + 1):
         loc_row_beg = row_blk * nblk
         if(loc_row_beg >= lda):
@@ -54,7 +54,7 @@ class Trace:
         loc_row_end = min(loc_row_beg + nblk, lda)
               
         glob_row_beg = (row_blk * p_rows + prow) * nblk  
-        #print "glob_row_beg = row_blk * nblk * p_rows ", glob_row_beg, row_blk, nblk, p_rows 
+        #print("glob_row_beg = row_blk * nblk * p_rows ", glob_row_beg, row_blk, nblk, p_rows)
         assert(glob_row_beg < na)
         
         glob_row_end = min(glob_row_beg + nblk, na)
@@ -71,8 +71,8 @@ class Trace:
           
           glob_col_end = min(glob_col_beg + nblk, na)
           
-          #print "local", (loc_row_beg, loc_row_end), (loc_col_beg, loc_col_end)
-          #print "global", (glob_row_beg, glob_row_end), (glob_col_beg, glob_col_end)
+          #print("local", (loc_row_beg, loc_row_end), (loc_col_beg, loc_col_end))
+          #print("global", (glob_row_beg, glob_row_end), (glob_col_beg, glob_col_end))
           
           mat[glob_row_beg:glob_row_end, glob_col_beg:glob_col_end] = loc_mat[loc_row_beg:loc_row_end, loc_col_beg:loc_col_end]
     return ((name, iteration), mat)
@@ -271,7 +271,7 @@ class Snapshot(View):
     self.set_limits(np.percentile(mat,1), np.percentile(mat,99))
   
   def write(self):
-    print self._matrix, ", ", it._index
+    print(self._matrix, ", ", it._index)
     
   def _get_matrix(self):
     return self._trace._matrices[self._iterator.current()][self._matrix]
