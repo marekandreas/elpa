@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
-
-from __future__ import print_function
+#!/usr/bin/python3
 from itertools import product
+
 
 def set_number_of_cores(mpi_tasks, o):
     cores = 1

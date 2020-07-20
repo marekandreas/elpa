@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import os
 import subprocess
 
@@ -8,10 +8,10 @@ with open("results_raw.txt", "w") as logfile:
     path = subprocess.check_output('pwd')[:-1].decode() + "/"
     for subdir, dirs, files in os.walk(rootdir):
       #  for file in files:
-      #      print os.path.join(subdir, file)
-       # print subdir, dirs, files 
+      #      print(os.path.join(subdir, file))
+       # print(subdir, dirs, files )
         if(len(files) != 0):
-            #print subdir, dirs, files 
+            #print(subdir, dirs, files)
             print("cd " + path + subdir)
             logfile.write(subdir + "\n")
             os.chdir(path + subdir)

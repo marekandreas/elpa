@@ -1,5 +1,4 @@
-#!/usr/bin/python
-import sys
+#!/usr/bin/python3
 
 simple_tokens = [
     "PRECISION",
@@ -113,62 +112,63 @@ blas_prefixes = {("real","single") : "S", ("real","double") : "D", ("complex","s
 
 def print_variant(number, precision, explicit):
     for token in simple_tokens:
-        print "#define ", token, token.replace("PRECISION", precision).replace("UPCASENUMBER", number.upper()).replace("NUMBER", number)
-        print "#define ", token + "_STR", "'" + token.replace("PRECISION", precision).replace("UPCASENUMBER", number.upper()).replace("NUMBER", number) + "'"
+        print("#define ", token, token.replace("PRECISION", precision).replace("UPCASENUMBER", number.upper()).replace("NUMBER", number))
+        print("#define ", token + "_STR", "'" + token.replace("PRECISION", precision).replace("UPCASENUMBER", number.upper()).replace("NUMBER", number) + "'")
         if("NUMBER" in token):
-            print "#define ", token.replace("NUMBER", number), token.replace("PRECISION", precision).replace("NUMBER", number)
+            print("#define ", token.replace("NUMBER", number), token.replace("PRECISION", precision).replace("NUMBER", number))
     for token in blas_tokens:
-        print "#define ", token, token.replace("PRECISION_", blas_prefixes[(number, precision)])    
+        print("#define ", token, token.replace("PRECISION_", blas_prefixes[(number, precision)]))
     for token in explicit:
-        print "#define ", token[0], token[explicit_order[precision]]
-    
+        print("#define ", token[0], token[explicit_order[precision]])
+
+
 def print_undefs(number, explicit):
     for token in simple_tokens:
-        print "#undef ", token
-        print "#undef ", token + "_STR"
+        print("#undef ", token)
+        print("#undef ", token + "_STR")
         if("NUMBER" in token):
-            print "#undef ", token.replace("NUMBER", number)
+            print("#undef ", token.replace("NUMBER", number))
     for token in blas_tokens:
-        print "#undef ", token
+        print("#undef ", token)
     for token in explicit:
-        print "#undef ", token[0]
+        print("#undef ", token[0])
 
 
-print "#ifdef REALCASE"
-print "#undef  MATH_DATATYPE"
-print "#define  MATH_DATATYPE real"
+print("#ifdef REALCASE")
+print("#undef  MATH_DATATYPE")
+print("#define  MATH_DATATYPE real")
 print_undefs("real", explicit_tokens_real)
-#print_undefs("complex", explicit_tokens_complex)
-print "#ifdef DOUBLE_PRECISION"
+# print_undefs("complex", explicit_tokens_complex)
+print("#ifdef DOUBLE_PRECISION")
 print_variant("real", "double", explicit_tokens_real)
-print "#endif"
-print "#ifdef SINGLE_PRECISION"
+print("#endif")
+print("#ifdef SINGLE_PRECISION")
 print_variant("real", "single", explicit_tokens_real)
-print "#endif"
-print "#endif"
+print("#endif")
+print("#endif")
 
-print "#ifdef COMPLEXCASE"
-print "#undef  MATH_DATATYPE"
-print "#define  MATH_DATATYPE complex"
-#print_undefs("real", explicit_tokens_real)
+print("#ifdef COMPLEXCASE")
+print("#undef  MATH_DATATYPE")
+print("#define  MATH_DATATYPE complex")
+# print_undefs("real", explicit_tokens_real)
 print_undefs("complex", explicit_tokens_complex)
-print "#ifdef DOUBLE_PRECISION"
+print("#ifdef DOUBLE_PRECISION")
 print_variant("complex", "double", explicit_tokens_complex)
-print "#endif"
-print "#ifdef SINGLE_PRECISION"
+print("#endif")
+print("#ifdef SINGLE_PRECISION")
 print_variant("complex", "single", explicit_tokens_complex)
-print "#endif"
-print "#endif"
+print("#endif")
+print("#endif")
 
-#print "#elif MACROS_TYPE == COMPLEX_DOUBLE"
-#print "#undef  NUMBER"
-#print_undefs("complex", explicit_tokens_complex)
-#print "#define  NUMBER complex"
-#print_variant("complex", "double", explicit_tokens_complex)
+# print("#elif MACROS_TYPE == COMPLEX_DOUBLE")
+# print("#undef  NUMBER")
+# print_undefs("complex", explicit_tokens_complex)
+# print("#define  NUMBER complex")
+# print_variant("complex", "double", explicit_tokens_complex)
 
-#print "#elif MACROS_TYPE == COMPLEX_SINGLE"
-#print "#undef  NUMBER"
-#print_undefs("complex", explicit_tokens_complex)
-#print "#define  NUMBER complex"
-#print_variant("complex", "single", explicit_tokens_complex)
-#print "#endif"
+# print("#elif MACROS_TYPE == COMPLEX_SINGLE")
+# print("#undef  NUMBER")
+# print_undefs("complex", explicit_tokens_complex)
+# print("#define  NUMBER complex")
+# print_variant("complex", "single", explicit_tokens_complex)
+# print("#endif")

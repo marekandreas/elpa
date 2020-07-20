@@ -1,19 +1,22 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from __future__ import print_function
 import os
 import sys
 import subprocess
 
+
 def cpp_arg(arg):
-    return arg.startswith("-I") or \
-           arg.startswith("-D") or \
-           arg.startswith("-U")
+    return \
+        arg.startswith("-I") or \
+        arg.startswith("-D") or \
+        arg.startswith("-U")
 
 
 def check_call(args, **kwargs):
     if os.getenv("V") == "1":
         print(" ".join(args))
     return subprocess.check_call(args, **kwargs)
+
 
 def check_call_redirect(args, filename=None, **kwargs):
     if os.getenv("V") == "1":
@@ -25,11 +28,12 @@ def check_call_redirect(args, filename=None, **kwargs):
             os.remove(filename)
             raise SystemExit(e.returncode)
 
-args = sys.argv[1:]
-cpp_args = filter(cpp_arg, args)
 
-files = filter(lambda q : q.endswith(".F90"), args)
-args = filter(lambda q : not q.endswith(".F90"), args)
+args = sys.argv[1:]
+cpp_args = list(filter(cpp_arg, args))
+files = list(filter(lambda q: q.endswith(".F90"), args))
+args = list(filter(lambda q: not q.endswith(".F90"), args))
+
 if len(files) > 1:
     raise Exception("Specify exactly one .F90 file")
 elif len(files) == 0:
@@ -54,7 +58,7 @@ except ValueError:
 tmp_filename = tmp_filename[-250:]
 
 # preprocess
-check_call_redirect(["cpp","-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
+check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
 
 # compile
 check_call(args + [tmp_filename])

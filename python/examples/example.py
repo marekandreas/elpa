@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 import numpy as np
 from pyelpa import DistributedMatrix
 import sys

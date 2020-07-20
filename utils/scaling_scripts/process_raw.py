@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 from collections import namedtuple
 from subprocess import Popen, PIPE, STDOUT
 
@@ -89,5 +89,3 @@ with open("results_sorted.txt", "w") as sortedfile:
       sortedfile.write("*"*num_stars + "\n")
 
       lines_to_write = []
-
-
