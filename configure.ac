@@ -440,7 +440,7 @@ AC_ARG_WITH([papi],
             [AS_HELP_STRING([--with-papi],
                             [Use PAPI to also measure flop count in the detailed timing (--enable-timing), disabled by default])],
             [
-               if test x"$enableval" = x"yes"; then
+               if test x"$withval" = x"yes"; then
                  with_papi=yes
                else
                  with_papi=no
