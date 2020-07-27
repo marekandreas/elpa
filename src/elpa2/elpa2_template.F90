@@ -813,16 +813,19 @@
        do_trans_to_band = .false.
        do_trans_to_full = .false.
      else
-
        call obj%get("check_pd",check_pd,error)
        if (error .ne. ELPA_OK) then
          print *,"Problem getting option for check_pd. Aborting..."
          stop
        endif
        if (check_pd .eq. 1) then
-         call obj%get("thres_pd",thres_pd,error)
+         call obj%get("thres_pd_&
+         &PRECISION&
+         &",thres_pd,error)
          if (error .ne. ELPA_OK) then
-            print *,"Problem getting option for thres_pd. Aborting..."
+            print *,"Problem getting option for thres_pd_&
+            &PRECISION&
+            &. Aborting..."
             stop
          endif
 
@@ -1040,8 +1043,8 @@
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&
      &_2stage_&
-    &PRECISION&
-    &")
+     &PRECISION&
+     &")
 1    format(a,f10.3)
 
    end function elpa_solve_evp_&

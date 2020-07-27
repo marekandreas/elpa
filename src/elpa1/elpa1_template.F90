@@ -468,9 +468,13 @@ function elpa_solve_evp_&
        stop
      endif
      if (check_pd .eq. 1) then
-       call obj%get("thres_pd",thres_pd,error)
+       call obj%get("thres_pd_&
+       &PRECISION&
+       &",thres_pd,error)
        if (error .ne. ELPA_OK) then
-          print *,"Problem getting option for thres_pd. Aborting..."
+          print *,"Problem getting option for thres_pd_&
+          &PRECISION&
+          &. Aborting..."
           stop
        endif
 

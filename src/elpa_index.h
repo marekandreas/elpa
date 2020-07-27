@@ -61,6 +61,7 @@
 
 #define FOR_ALL_TYPES(X) \
         X(int, "%d", "%d", -1) \
+        X(float, "%g", "%lg", NAN) \
         X(double, "%g", "%lg", NAN)
 
 /* A simple structure for storing values to a pre-set
@@ -77,6 +78,7 @@ typedef int (*elpa_index_enumerate_int_option_t)(elpa_index_t index, int i);
 
 /* Function types to check the validity of a value */
 typedef int (*elpa_index_valid_int_t)(elpa_index_t index, int n, int new_value);
+typedef int (*elpa_index_valid_float_t)(elpa_index_t index, int n, float new_value);
 typedef int (*elpa_index_valid_double_t)(elpa_index_t index, int n, double new_value);
 
 /* Function type to give a string representation of a value */
@@ -104,6 +106,13 @@ typedef struct {
         elpa_index_enumerate_int_option_t enumerate;
         elpa_index_to_string_int_t to_string;
 } elpa_index_int_entry_t;
+
+
+typedef struct {
+        elpa_index_entry_t base;
+        float default_value;
+        elpa_index_valid_float_t valid;
+} elpa_index_float_entry_t;
 
 
 typedef struct {
@@ -214,6 +223,66 @@ int elpa_index_int_value_is_set(elpa_index_t index, char *name);
  !f> end interface
  */
 int* elpa_index_get_int_loc(elpa_index_t index, char *name);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_get_float_value_c(index, name, success) result(value) bind(C, name="elpa_index_get_float_value")
+ !f>     import c_ptr, c_int, c_float, c_char
+ !f>     type(c_ptr), value                              :: index
+ !f>     character(kind=c_char), intent(in)              :: name(*)
+ !f>#ifdef USE_FORTRAN2008
+ !f>     integer(kind=c_int), intent(out), optional      :: success
+ !f>#else
+ !f>     integer(kind=c_int), intent(out)                :: success
+ !f>#endif
+ !f>     real(kind=c_float)                             :: value
+ !f>   end function
+ !f> end interface
+ */
+float elpa_index_get_float_value(elpa_index_t index, char *name, int *success);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_set_float_value_c(index, name, value) result(success) &
+ !f>       bind(C, name="elpa_index_set_float_value")
+ !f>     import c_ptr, c_int, c_float, c_char
+ !f>     type(c_ptr), value                    :: index
+ !f>     character(kind=c_char), intent(in)    :: name(*)
+ !f>     real(kind=c_float),intent(in), value :: value
+ !f>     integer(kind=c_int)                   :: success
+ !f>   end function
+ !f> end interface
+ */
+int elpa_index_set_float_value(elpa_index_t index, char *name, float value);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_float_value_is_set_c(index, name) result(success) &
+ !f>       bind(C, name="elpa_index_float_value_is_set")
+ !f>     import c_ptr, c_int, c_char
+ !f>     type(c_ptr), value                    :: index
+ !f>     character(kind=c_char), intent(in)    :: name(*)
+ !f>     integer(kind=c_int)                   :: success
+ !f>   end function
+ !f> end interface
+ */
+int elpa_index_float_value_is_set(elpa_index_t index, char *name);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_get_float_loc_c(index, name) result(loc) bind(C, name="elpa_index_get_float_loc")
+ !f>     import c_ptr, c_char
+ !f>     type(c_ptr), value                 :: index
+ !f>     character(kind=c_char), intent(in) :: name(*)
+ !f>     type(c_ptr)                        :: loc
+ !f>   end function
+ !f> end interface
+ */
+float* elpa_index_get_float_loc(elpa_index_t index, char *name);
 
 
 /*

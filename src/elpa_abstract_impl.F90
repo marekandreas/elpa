@@ -79,10 +79,12 @@ module elpa_abstract_impl
     type(c_ptr)         :: index = C_NULL_PTR
     logical             :: eigenvalues_only
     contains
-      procedure, public :: elpa_set_integer                      !< private methods to implement the setting of an integer/double key/value pair
+      procedure, public :: elpa_set_integer                      !< private methods to implement the setting of an integer/float/double key/value pair
+      procedure, public :: elpa_set_float
       procedure, public :: elpa_set_double
 
-      procedure, public :: elpa_get_integer                      !< private methods to implement the querry of an integer/double key/value pair
+      procedure, public :: elpa_get_integer                      !< private methods to implement the querry of an integer/float/double key/value pair
+      procedure, public :: elpa_get_float
       procedure, public :: elpa_get_double
 
   end type
@@ -144,6 +146,71 @@ module elpa_abstract_impl
 
       value = elpa_index_get_int_value_c(self%index, name // c_null_char, actual_error)
 
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+       error = actual_error
+      else if (actual_error /= ELPA_OK) then
+        write(error_unit,'(a)') "ELPA: Error getting option '" // name // "'" // &
+                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
+      end if
+#else
+      error = actual_error
+#endif
+    end subroutine
+
+    !> \brief internal subroutine to set a float key/value pair
+    !> Parameters
+    !> \param   self       the allocated ELPA object
+    !> \param   name       string, the key
+    !> \param   value      float, the value to be set
+    !> \result  error      integer, the error code
+    subroutine elpa_set_float(self, name, value, error)
+      use iso_c_binding
+      use elpa_utilities, only : error_unit
+      class(elpa_abstract_impl_t)     :: self
+      character(*), intent(in)        :: name
+      real(kind=c_float), intent(in) :: value
+      integer                         :: actual_error
+
+#ifdef USE_FORTRAN2008
+      integer,              optional  :: error
+#else
+      integer                         :: error
+#endif
+      actual_error = elpa_index_set_float_value_c(self%index, name // c_null_char, value)
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+       error = actual_error
+      else if (actual_error /= ELPA_OK) then
+        write(error_unit,'(a,es12.5,a)') "ELPA: Error setting option '" // name // "' to value ", value, &
+                " (got: " // elpa_strerr(actual_error) // ") and you did not check for errors!"
+      end if
+#else
+      error = actual_error
+#endif
+    end subroutine
+
+    !> \brief internal subroutine to get an float key/value pair
+    !> Parameters
+    !> \param   self       the allocated ELPA object
+    !> \param   name       string, the key
+    !> \param   value      float, the value of the key/vaue pair
+    !> \param   error      integer, optional, to store an error code
+    subroutine elpa_get_float(self, name, value, error)
+      use iso_c_binding
+      use elpa_utilities, only : error_unit
+      class(elpa_abstract_impl_t)    :: self
+      character(*), intent(in)       :: name
+      real(kind=c_float)            :: value
+#ifdef USE_FORTRAN2008
+      integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
+      integer                        :: actual_error
+
+      value = elpa_index_get_float_value_c(self%index, name // c_null_char, actual_error)
 #ifdef USE_FORTRAN2008
       if (present(error)) then
        error = actual_error

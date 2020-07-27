@@ -131,6 +131,9 @@ static int skewsymmetric_is_valid(elpa_index_t index, int n, int new_value);
 
 static int is_positive(elpa_index_t index, int n, int new_value);
 
+static int elpa_float_string_to_value(char *name, char *string, float *value);
+static int elpa_float_value_to_string(char *name, float value, const char **string);
+
 static int elpa_double_string_to_value(char *name, char *string, double *value);
 static int elpa_double_value_to_string(char *name, double value, const char **string);
 
@@ -269,6 +272,21 @@ static const elpa_index_int_entry_t int_entries[] = {
         BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
 };
 
+#define READONLY_FLOAT_ENTRY(option_name, option_description) \
+        { \
+                BASE_ENTRY(option_name, option_description, 0, 1, 0) \
+        }
+
+#define FLOAT_ENTRY(option_name, option_description, default, print_flag) \
+        { \
+                BASE_ENTRY(option_name, option_description, 0, 0, print_flag), \
+                .default_value = default, \
+        }
+
+static const elpa_index_float_entry_t float_entries[] = {
+        FLOAT_ENTRY("thres_pd_single", "Threshold to define ill-conditioning, default 0.00001", 0.00001, PRINT_YES),
+};
+
 #define READONLY_DOUBLE_ENTRY(option_name, option_description) \
         { \
                 BASE_ENTRY(option_name, option_description, 0, 1, 0) \
@@ -281,7 +299,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         }
 
 static const elpa_index_double_entry_t double_entries[] = {
-        DOUBLE_ENTRY("thres_pd", "Threshold to define ill-conditioning, default 0.00001", 0.00001, PRINT_YES),
+        DOUBLE_ENTRY("thres_pd_double", "Threshold to define ill-conditioning, default 0.00001", 0.00001, PRINT_YES),
 };
 
 void elpa_index_free(elpa_index_t index) {
@@ -539,6 +557,23 @@ int elpa_int_string_to_value(char *name, char *string, int *value) {
                 }
         }
         return ELPA_ERROR_ENTRY_INVALID_VALUE;
+}
+
+int elpa_float_string_to_value(char *name, char *string, float *value) {
+        float val;
+        int ret = sscanf(string, "%lf", &val);
+        if (ret == 1) {
+                *value = val;
+                return ELPA_OK;
+        } else {
+                /* \todo: remove */
+                fprintf(stderr, "ELPA: DEBUG: Could not parse float value '%s' for option '%s'\n", string, name);
+                return ELPA_ERROR_ENTRY_INVALID_VALUE;
+        }
+}
+
+int elpa_float_value_to_string(char *name, float value, const char **string) {
+        return ELPA_ERROR_ENTRY_NO_STRING_REPRESENTATION;
 }
 
 int elpa_double_string_to_value(char *name, char *string, double *value) {
