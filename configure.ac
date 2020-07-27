@@ -11,7 +11,6 @@ AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
-
 # ABI version
 #
 # Set the libtool library version, see LIBRARY_INTERFACE
@@ -36,6 +35,8 @@ AC_DEFINE([$1], [$2], [$3])
 AC_SUBST([$1], ['$2'])
 ])
 
+AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
+
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 
@@ -44,6 +45,8 @@ AC_DEFINE_SUBST(CURRENT_API_VERSION, 20200417, "Current ELPA API version")
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
 AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20200417, "Current ELPA autotune version")
+AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
+
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -51,7 +54,6 @@ if test x$_cv_gnu_make_command = x ; then
 fi
 
 enable_legacy=no
-
 AC_MSG_CHECKING(whether in C interface the error argument should be optional)
 AC_ARG_ENABLE([optional-argument-in-C-API],
               AS_HELP_STRING([--enable-optional-argument-in-C-API],
