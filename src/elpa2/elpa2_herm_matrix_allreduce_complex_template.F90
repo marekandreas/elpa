@@ -52,68 +52,66 @@
 
 #include "../general/sanity.F90"
 
-     subroutine herm_matrix_allreduce_&
-     &PRECISION &
-                                    (obj, n, a, lda, ldb, comm)
-     !-------------------------------------------------------------------------------
-     !  herm_matrix_allreduce: Does an mpi_allreduce for a hermitian matrix A.
-     !  On entry, only the upper half of A needs to be set
-     !  On exit, the complete matrix is set
-      use elpa_abstract_impl
-      use precision
-      implicit none
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)               :: n, lda, ldb, comm
-      complex(kind=COMPLEX_DATATYPE) :: a(lda,ldb)
+subroutine herm_matrix_allreduce_&
+&PRECISION &
+                               (obj, n, a, lda, ldb, comm)
+!-------------------------------------------------------------------------------
+!  herm_matrix_allreduce: Does an mpi_allreduce for a hermitian matrix A.
+!  On entry, only the upper half of A needs to be set
+!  On exit, the complete matrix is set
+  use elpa_abstract_impl
+  use precision
+  implicit none
+  class(elpa_abstract_impl_t), intent(inout) :: obj
+  integer(kind=ik)               :: n, lda, ldb, comm
+  complex(kind=COMPLEX_DATATYPE) :: a(lda,ldb)
 
-      integer(kind=ik)               :: i, nc
-      integer(kind=MPI_KIND)         :: mpierr
-      complex(kind=COMPLEX_DATATYPE) :: h1(n*n), h2(n*n)
+  integer(kind=ik)               :: i, nc
+  integer(kind=MPI_KIND)         :: mpierr
+  complex(kind=COMPLEX_DATATYPE) :: h1(n*n), h2(n*n)
 
-       call obj%timer%start("herm_matrix_allreduce" // PRECISION_SUFFIX)
+  call obj%timer%start("herm_matrix_allreduce" // PRECISION_SUFFIX)
 
-       nc = 0
-       do i=1,n
-         h1(nc+1:nc+i) = a(1:i,i)
-         nc = nc+i
-       enddo
+  nc = 0
+  do i=1,n
+    h1(nc+1:nc+i) = a(1:i,i)
+    nc = nc+i
+  enddo
 #ifdef WITH_MPI
-       call obj%timer%start("mpi_communication")
-       call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
-                          int(comm,kind=MPI_KIND), mpierr)
-       call obj%timer%stop("mpi_communication")
+  call obj%timer%start("mpi_communication")
+  call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
+                     int(comm,kind=MPI_KIND), mpierr)
+  call obj%timer%stop("mpi_communication")
 
-       nc = 0
-       do i=1,n
-         a(1:i,i) = h2(nc+1:nc+i)
-         a(i,1:i-1) = conjg(a(1:i-1,i))
-         nc = nc+i
-       enddo
-
+  nc = 0
+  do i=1,n
+    a(1:i,i) = h2(nc+1:nc+i)
+    a(i,1:i-1) = conjg(a(1:i-1,i))
+    nc = nc+i
+  enddo
 
 #else /* WITH_MPI */
 !       h2(1:nc) = h1(1:nc)
 
-       nc = 0
-       do i=1,n
-         a(1:i,i) = h1(nc+1:nc+i)
-         a(i,1:i-1) = conjg(a(1:i-1,i))
-         nc = nc+i
-       enddo
-
+  nc = 0
+  do i=1,n
+    a(1:i,i) = h1(nc+1:nc+i)
+    a(i,1:i-1) = conjg(a(1:i-1,i))
+    nc = nc+i
+  enddo
 
 #endif /* WITH_MPI */
 
-!       nc = 0
-!       do i=1,n
-!         a(1:i,i) = h2(nc+1:nc+i)
-!         a(i,1:i-1) = conjg(a(1:i-1,i))
-!         nc = nc+i
-!       enddo
+! nc = 0
+! do i=1,n
+!   a(1:i,i) = h2(nc+1:nc+i)
+!   a(i,1:i-1) = conjg(a(1:i-1,i))
+!   nc = nc+i
+! enddo
 
-       call obj%timer%stop("herm_matrix_allreduce" // PRECISION_SUFFIX)
+  call obj%timer%stop("herm_matrix_allreduce" // PRECISION_SUFFIX)
 
-     end subroutine herm_matrix_allreduce_&
-     &PRECISION
+end subroutine herm_matrix_allreduce_&
+&PRECISION
 
 
