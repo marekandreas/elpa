@@ -46,7 +46,7 @@ AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, w
 AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
 AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20200417, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1604905771],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -1776,6 +1776,9 @@ else
 	echo "build config should be compiled into the library: no"
 fi
 
+if test x"$have_loop_blocking" = x"yes"; then
+  AC_DEFINE([LOOP_BLOCKING],[1],[use blocking in loops])
+fi
 
 AC_SUBST([SUFFIX])
 AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
@@ -1986,4 +1989,10 @@ else
 
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi
-
+if test x"$old_elpa_version" = x"yes"; then
+  echo " "
+  echo " It is possible that your current version of ELPA is not the latest one."
+  echo " You might want to have a look at https://elpa.mpcdf.mpg.de, whether a more recent"
+  echo " version has been released already"
+  echo " "
+fi

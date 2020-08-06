@@ -745,407 +745,405 @@ subroutine tridiag_&
           do i=0,max_threads-1
             u_col(1:l_cols) = u_col(1:l_cols) + uc_p(1:l_cols,i)
             u_row(1:l_rows) = u_row(1:l_rows) + ur_p(1:l_rows,i)
-          enddo
+         enddo
 #endif /* WITH_OPENMP */
 
-          ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
-          if (n_stored_vecs > 0) then
-            if (wantDebug) call obj%timer%start("blas")
+         ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
+         if (n_stored_vecs > 0) then
+           if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
-            call PRECISION_GEMV('T',     &
+           call PRECISION_GEMV('T',     &
 #endif
 #if COMPLEXCASE == 1
-            call PRECISION_GEMV('C',     &
+           call PRECISION_GEMV('C',     &
 #endif
-                                int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
-                                ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
-                                v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
+                               int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                               ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                               v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
 
-            call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
-                                ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
-                                aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
-            if (wantDebug) call obj%timer%stop("blas")
-          endif
+           call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                               ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
+                               aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
+           if (wantDebug) call obj%timer%stop("blas")
+         endif
 
-        endif  ! (l_rows>0 .and. l_cols>0)
+       endif  ! (l_rows>0 .and. l_cols>0)
 
-        ! Sum up all u_row(:) parts along rows and add them to the u_col(:) parts
-        ! on the processors containing the diagonal
-        ! This is only necessary if u_row has been calculated, i.e. if the
-        ! global tile size is smaller than the global remaining matrix
+       ! Sum up all u_row(:) parts along rows and add them to the u_col(:) parts
+       ! on the processors containing the diagonal
+       ! This is only necessary if u_row has been calculated, i.e. if the
+       ! global tile size is smaller than the global remaining matrix
 
-        if (tile_size < istep-1) then
+       if (tile_size < istep-1) then
 
-          call elpa_reduce_add_vectors_&
+         call elpa_reduce_add_vectors_&
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
+         (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
+         mpi_comm_cols, istep-1, 1, nblk, max_threads)
+
+       endif
+
+       ! Sum up all the u_col(:) parts, transpose u_col -> u_row
+
+       if (l_cols>0) then
+         tmp(1:l_cols) = u_col(1:l_cols)
+#ifdef WITH_MPI
+         if (wantDebug) call obj%timer%start("mpi_communication")
+         call mpi_allreduce(tmp, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+         if (wantDebug) call obj%timer%stop("mpi_communication")
+#else /* WITH_MPI */
+         u_col = tmp
+#endif /* WITH_MPI */
+       endif
+       if (isSkewsymmetric) then
+          call elpa_transpose_vectors_ss_&
           &MATH_DATATYPE&
           &_&
           &PRECISION &
-          (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
-           mpi_comm_cols, istep-1, 1, nblk, max_threads)
+          (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
+       else
+          call elpa_transpose_vectors_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION &
+          (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
+       endif
 
-        endif
-
-        ! Sum up all the u_col(:) parts, transpose u_col -> u_row
-
-        if (l_cols>0) then
-          tmp(1:l_cols) = u_col(1:l_cols)
-#ifdef WITH_MPI
-          if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_allreduce(tmp, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          if (wantDebug) call obj%timer%stop("mpi_communication")
-#else /* WITH_MPI */
-          u_col = tmp
-#endif /* WITH_MPI */
-        endif
-        if (isSkewsymmetric) then
-           call elpa_transpose_vectors_ss_&
-           &MATH_DATATYPE&
-           &_&
-           &PRECISION &
-           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-            mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
-        else
-           call elpa_transpose_vectors_&
-           &MATH_DATATYPE&
-           &_&
-           &PRECISION &
-           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-            mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
-        endif
-
-        ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
-        x = 0
-        if (l_cols>0)  &
-           x = dot_product(v_col(1:l_cols),u_col(1:l_cols))
+       ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
+       x = 0
+       if (l_cols>0)  &
+       x = dot_product(v_col(1:l_cols),u_col(1:l_cols))
 
 #ifdef WITH_MPI
-        if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_allreduce(x, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-        if (wantDebug) call obj%timer%stop("mpi_communication")
+       if (wantDebug) call obj%timer%start("mpi_communication")
+       call mpi_allreduce(x, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+       if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
-        vav = x
+       vav = x
 
 #endif /* WITH_MPI */
 
-        ! store u and v in the matrices U and V
-        ! these matrices are stored combined in one here
+       ! store u and v in the matrices U and V
+       ! these matrices are stored combined in one here
 
-        do j=1,l_rows
+       do j=1,l_rows
 #if REALCASE == 1
-          vu_stored_rows(j,2*n_stored_vecs+1) = tau(istep)*v_row(j)
-          vu_stored_rows(j,2*n_stored_vecs+2) = 0.5*tau(istep)*vav*v_row(j) - u_row(j)
+         vu_stored_rows(j,2*n_stored_vecs+1) = tau(istep)*v_row(j)
+         vu_stored_rows(j,2*n_stored_vecs+2) = 0.5*tau(istep)*vav*v_row(j) - u_row(j)
 #endif
 #if COMPLEXCASE == 1
-          vu_stored_rows(j,2*n_stored_vecs+1) = conjg(tau(istep))*v_row(j)
-          vu_stored_rows(j,2*n_stored_vecs+2) = 0.5*conjg(tau(istep))*vav*v_row(j) - u_row(j)
+         vu_stored_rows(j,2*n_stored_vecs+1) = conjg(tau(istep))*v_row(j)
+         vu_stored_rows(j,2*n_stored_vecs+2) = 0.5*conjg(tau(istep))*vav*v_row(j) - u_row(j)
 #endif
-        enddo
-        do j=1,l_cols
+       enddo
+       do j=1,l_cols
 #if REALCASE == 1
-          uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*tau(istep)*vav*v_col(j) - u_col(j)
-          uv_stored_cols(j,2*n_stored_vecs+2) = tau(istep)*v_col(j)
+         uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*tau(istep)*vav*v_col(j) - u_col(j)
+         uv_stored_cols(j,2*n_stored_vecs+2) = tau(istep)*v_col(j)
 #endif
 #if COMPLEXCASE == 1
-          uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*conjg(tau(istep))*vav*v_col(j) - u_col(j)
-          uv_stored_cols(j,2*n_stored_vecs+2) = conjg(tau(istep))*v_col(j)
+         uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*conjg(tau(istep))*vav*v_col(j) - u_col(j)
+         uv_stored_cols(j,2*n_stored_vecs+2) = conjg(tau(istep))*v_col(j)
 #endif
-        enddo
+       enddo
 
-        ! We have calculated another Hauseholder Vector, number of implicitly stored increased
-        n_stored_vecs = n_stored_vecs+1
+       ! We have calculated another Hauseholder Vector, number of implicitly stored increased
+       n_stored_vecs = n_stored_vecs+1
 
-        ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
-        if (n_stored_vecs == max_stored_uv .or. istep == 3) then
+       ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
+       if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
-          if (useGPU) then
-            successCUDA = cuda_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
-                                      max_local_rows * 2 * max_stored_uv *          &
-                                      size_of_datatype, cudaMemcpyHostToDevice)
-            check_memcpy_cuda("tridiag: uv_stored_rows_dev", successCUDA)
+         if (useGPU) then
+           successCUDA = cuda_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
+                                     max_local_rows * 2 * max_stored_uv *          &
+                                     size_of_datatype, cudaMemcpyHostToDevice)
+           check_memcpy_cuda("tridiag: uv_stored_rows_dev", successCUDA)
 
-            successCUDA = cuda_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
-                                      max_local_cols * 2 * max_stored_uv *          &
-                                      size_of_datatype, cudaMemcpyHostToDevice)
-            check_memcpy_cuda("tridiag: uv_stored_cols_dev", successCUDA)
-          endif
+           successCUDA = cuda_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
+                                     max_local_cols * 2 * max_stored_uv *          &
+                                     size_of_datatype, cudaMemcpyHostToDevice)
+           check_memcpy_cuda("tridiag: uv_stored_cols_dev", successCUDA)
+         endif
 
-          do i = 0, (istep-2)/tile_size
-            ! go over tiles above (or on) the diagonal
-            l_col_beg = i*l_cols_per_tile+1
-            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-            l_row_beg = 1
-            l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
-            if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) &
-              cycle
+         do i = 0, (istep-2)/tile_size
+           ! go over tiles above (or on) the diagonal
+           l_col_beg = i*l_cols_per_tile+1
+           l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+           l_row_beg = 1
+           l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
+           if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) &
+           cycle
 
 
-            if (useGPU) then
-              if(.not. mat_vec_as_one_block) then
-                ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
-                ! we than use the same calls as for CPU version
-                if (wantDebug) call obj%timer%start("cublas")
-                call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
-                                          l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
-                                          ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
-                                          size_of_datatype,  &
-                                          max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
-                                          size_of_datatype,  &
-                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
-                                          size_of_datatype , matrixRows)
-                if (wantDebug) call obj%timer%stop("cublas")
-              endif
-            else !useGPU
-              if (wantDebug) call obj%timer%start("blas")
-              call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
-                                   int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                   int(2*n_stored_vecs,kind=BLAS_KIND),    &
-                                   ONE, vu_stored_rows(l_row_beg:max_local_rows,1:2*max_stored_uv), &
-                                   int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
-                                   uv_stored_cols(l_col_beg,1), &
-                                   int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
-                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
-              if (wantDebug) call obj%timer%stop("blas")
-            endif !useGPU
-          enddo
+           if (useGPU) then
+             if (.not. mat_vec_as_one_block) then
+               ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
+               ! we than use the same calls as for CPU version
+               if (wantDebug) call obj%timer%start("cublas")
+               call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+                                         l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
+                                         ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
+                                         size_of_datatype,  &
+                                         max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
+                                         size_of_datatype,  &
+                                         max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
+                                         size_of_datatype , matrixRows)
+               if (wantDebug) call obj%timer%stop("cublas")
+             endif
+           else !useGPU
+             if (wantDebug) call obj%timer%start("blas")
+             call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
+                                  int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                  int(2*n_stored_vecs,kind=BLAS_KIND),    &
+                                  ONE, vu_stored_rows(l_row_beg:max_local_rows,1:2*max_stored_uv), &
+                                  int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                  uv_stored_cols(l_col_beg,1), &
+                                  int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
+                                  ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
+             if (wantDebug) call obj%timer%stop("blas")
+           endif !useGPU
+         enddo
 
-          if (useGPU) then
-            if(mat_vec_as_one_block) then
-              !update whole (remaining) part of matrix, including tiles below diagonal
-              !we can do that in one large cublas call
-              if (wantDebug) call obj%timer%start("cublas")
-              call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
-                                        ONE, vu_stored_rows_dev, max_local_rows, &
-                                        uv_stored_cols_dev, max_local_cols,  &
-                                        ONE, a_dev, matrixRows)
-              if (wantDebug) call obj%timer%stop("cublas")
-            endif
-          endif
+         if (useGPU) then
+           if (mat_vec_as_one_block) then
+             !update whole (remaining) part of matrix, including tiles below diagonal
+             !we can do that in one large cublas call
+             if (wantDebug) call obj%timer%start("cublas")
+             call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
+                                       ONE, vu_stored_rows_dev, max_local_rows, &
+                                       uv_stored_cols_dev, max_local_cols,  &
+                                       ONE, a_dev, matrixRows)
+             if (wantDebug) call obj%timer%stop("cublas")
+           endif
+         endif
 
-          n_stored_vecs = 0
-        endif
+         n_stored_vecs = 0
+       endif
 
-        if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
-          if (useGPU) then
-            !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
-             a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
+       if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
+         if (useGPU) then
+           !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
+            a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 
-             successCUDA = cuda_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
-                                       1 *  size_of_datatype, cudaMemcpyDeviceToHost)
-             check_memcpy_cuda("tridiag: a_dev 3", successCUDA)
+            successCUDA = cuda_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
+                                      1 *  size_of_datatype, cudaMemcpyDeviceToHost)
+            check_memcpy_cuda("tridiag: a_dev 3", successCUDA)
 
-          endif
-          if (n_stored_vecs > 0) then
-            a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
-                        + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
-          end if
+         endif
+         if (n_stored_vecs > 0) then
+           a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
+                       + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
+         end if
 #if REALCASE == 1
-          if (isSkewsymmetric) then
-            d_vec(istep-1) = 0.0_rk
-          else
-            d_vec(istep-1) = a_mat(l_rows,l_cols)
-          endif
+         if (isSkewsymmetric) then
+           d_vec(istep-1) = 0.0_rk
+         else
+           d_vec(istep-1) = a_mat(l_rows,l_cols)
+         endif
 #endif
 #if COMPLEXCASE == 1
-          d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
+         d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
 #endif
 
-          if (useGPU) then
-            !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-            !successCUDA = cuda_threadsynchronize()
-            !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
+         if (useGPU) then
+           !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
+           !successCUDA = cuda_threadsynchronize()
+           !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
 
-             successCUDA = cuda_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
-                                       int(1 * size_of_datatype, kind=c_intptr_t), cudaMemcpyHostToDevice)
-             check_memcpy_cuda("tridiag: a_dev 4", successCUDA)
-          endif
-        endif
+           successCUDA = cuda_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
+                                     int(1 * size_of_datatype, kind=c_intptr_t), cudaMemcpyHostToDevice)
+           check_memcpy_cuda("tridiag: a_dev 4", successCUDA)
+         endif
+       endif
 
-      enddo ! main cycle over istep=na,3,-1
+     enddo ! main cycle over istep=na,3,-1
 
 #if COMPLEXCASE == 1
-      ! Store e_vec(1) and d_vec(1)
+     ! Store e_vec(1) and d_vec(1)
 
-      if (my_pcol==pcol(2, nblk, np_cols)) then
-        if (my_prow==prow(1, nblk, np_rows)) then
-          ! We use last l_cols value of loop above
-          if(useGPU) then
-            successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
-                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
-            vrl = aux3(1)
-          else !useGPU
-            vrl = a_mat(1,l_cols)
-          endif !useGPU
-          call hh_transform_complex_&
-                                    &PRECISION &
-                                    (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
+     if (my_pcol==pcol(2, nblk, np_cols)) then
+      if (my_prow==prow(1, nblk, np_rows)) then
+       ! We use last l_cols value of loop above
+       if (useGPU) then
+         successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
+                                   1 * size_of_datatype, cudaMemcpyDeviceToHost)
+         check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
+         vrl = aux3(1)
+       else !useGPU
+         vrl = a_mat(1,l_cols)
+       endif !useGPU
+       call hh_transform_complex_&
+       &PRECISION &
+       (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
 #if REALCASE == 1
-          e_vec(1) = vrl
+       e_vec(1) = vrl
 #endif
 #if COMPLEXCASE == 1
-          e_vec(1) = real(vrl,kind=rk)
+       e_vec(1) = real(vrl,kind=rk)
 #endif
-
-
-          a_mat(1,l_cols) = 1. ! for consistency only
-        endif
+       a_mat(1,l_cols) = 1. ! for consistency only
+     endif
 #ifdef WITH_MPI
-        if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-        if (wantDebug) call obj%timer%stop("mpi_communication")
+     if (wantDebug) call obj%timer%start("mpi_communication")
+     call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
+                   int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+     if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
-      endif
+   endif
 
 #ifdef WITH_MPI
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
-                     int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
+   if (wantDebug) call obj%timer%start("mpi_communication")
+   call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
+                  int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+   if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
-      if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
-        if(useGPU) then
-          successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
-                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag: a_dev 6", successCUDA)
-          d_vec(1) = PRECISION_REAL(aux3(1))
-        else !useGPU
-          d_vec(1) = PRECISION_REAL(a_mat(1,1))
-        endif !useGPU
-      endif
+  if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
+    if (useGPU) then
+      successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
+                               1 * size_of_datatype, cudaMemcpyDeviceToHost)
+      check_memcpy_cuda("tridiag: a_dev 6", successCUDA)
+      d_vec(1) = PRECISION_REAL(aux3(1))
+    else !useGPU
+      d_vec(1) = PRECISION_REAL(a_mat(1,1))
+    endif !useGPU
+  endif
 
 #endif /* COMPLEXCASE == 1 */
 
 #if REALCASE == 1
-      ! Store e_vec(1)
+  ! Store e_vec(1)
 
-      if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
-        if(useGPU) then
-          successCUDA = cuda_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
-                                    1 * size_of_datatype, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
-        else !useGPU
-          e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
-        endif !useGPU
-      endif
+  if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
+    if (useGPU) then
+      successCUDA = cuda_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
+                                1 * size_of_datatype, cudaMemcpyDeviceToHost)
+      check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
+    else !useGPU
+      e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
+    endif !useGPU
+  endif
 
-     ! Store d_vec(1)
-      if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
-        if(useGPU) then
-          successCUDA = cuda_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
-          check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
-        else !useGPU
-          if (isSkewsymmetric) then
-            d_vec(1) = 0.0_rk
-          else
-            d_vec(1) = a_mat(1,1)
-          endif
-        endif !useGPU
+  ! Store d_vec(1)
+  if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
+    if(useGPU) then
+      successCUDA = cuda_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
+      check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
+    else !useGPU
+      if (isSkewsymmetric) then
+        d_vec(1) = 0.0_rk
+      else
+        d_vec(1) = a_mat(1,1)
       endif
+    endif !useGPU
+  endif
 #endif
 
-      deallocate(tmp, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag: tmp", istat, errorMessage)
+  deallocate(tmp, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag: tmp", istat, errorMessage)
 
-      if (useGPU) then
-        ! todo: should we leave a_mat on the device for further use?
-        successCUDA = cuda_free(a_dev)
-        check_dealloc_cuda("tridiag: a_dev 9", successCUDA)
+  if (useGPU) then
+    ! todo: should we leave a_mat on the device for further use?
+    successCUDA = cuda_free(a_dev)
+    check_dealloc_cuda("tridiag: a_dev 9", successCUDA)
 
-        successCUDA = cuda_free(v_row_dev)
-        check_dealloc_cuda("tridiag: v_row_dev", successCUDA)
+    successCUDA = cuda_free(v_row_dev)
+    check_dealloc_cuda("tridiag: v_row_dev", successCUDA)
 
-        successCUDA = cuda_free(u_row_dev)
-        check_dealloc_cuda("tridiag: (u_row_dev", successCUDA)
+    successCUDA = cuda_free(u_row_dev)
+    check_dealloc_cuda("tridiag: (u_row_dev", successCUDA)
 
-        successCUDA = cuda_free(v_col_dev)
-        check_dealloc_cuda("tridiag: v_col_dev", successCUDA)
+    successCUDA = cuda_free(v_col_dev)
+    check_dealloc_cuda("tridiag: v_col_dev", successCUDA)
 
-        successCUDA = cuda_free(u_col_dev)
-        check_dealloc_cuda("tridiag: u_col_dev ", successCUDA)
+    successCUDA = cuda_free(u_col_dev)
+    check_dealloc_cuda("tridiag: u_col_dev ", successCUDA)
 
-        successCUDA = cuda_free(vu_stored_rows_dev)
-        check_dealloc_cuda("tridiag: vu_stored_rows_dev ", successCUDA)
+    successCUDA = cuda_free(vu_stored_rows_dev)
+    check_dealloc_cuda("tridiag: vu_stored_rows_dev ", successCUDA)
 
-        successCUDA = cuda_free(uv_stored_cols_dev)
-        check_dealloc_cuda("tridiag:uv_stored_cols_dev ", successCUDA)
-      endif
+    successCUDA = cuda_free(uv_stored_cols_dev)
+    check_dealloc_cuda("tridiag:uv_stored_cols_dev ", successCUDA)
+  endif
 
-      ! distribute the arrays d_vec and e_vec to all processors
+  ! distribute the arrays d_vec and e_vec to all processors
 
-      allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
-      check_allocate("tridiag: tmp_real", istat, errorMessage)
+  allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
+  check_allocate("tridiag: tmp_real", istat, errorMessage)
 
 #ifdef WITH_MPI
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      tmp_real = d_vec
-      call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-      tmp_real = d_vec
-      call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                         int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-      tmp_real = e_vec
-      call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-      tmp_real = e_vec
-      call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                         int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
+  if (wantDebug) call obj%timer%start("mpi_communication")
+  tmp_real = d_vec
+  call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                     int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+  tmp_real = d_vec
+  call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                     int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+  tmp_real = e_vec
+  call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                     int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+  tmp_real = e_vec
+  call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                     int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+  if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
-      deallocate(tmp_real, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag: tmp_real", istat, errorMessage)
+  deallocate(tmp_real, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag: tmp_real", istat, errorMessage)
 
-      if (useGPU) then
-        successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
-        check_host_unregister_cuda("tridiag: a_mat", successCUDA)
+  if (useGPU) then
+    successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: a_mat", successCUDA)
 
-        successCUDA = cuda_free_host(v_row_host)
-        check_host_dealloc_cuda("tridiag: v_row_host", successCUDA)
-        nullify(v_row)
+    successCUDA = cuda_free_host(v_row_host)
+    check_host_dealloc_cuda("tridiag: v_row_host", successCUDA)
+    nullify(v_row)
 
-        successCUDA = cuda_free_host(v_col_host)
-        check_host_dealloc_cuda("tridiag: v_col_host", successCUDA)
-        nullify(v_col)
+    successCUDA = cuda_free_host(v_col_host)
+    check_host_dealloc_cuda("tridiag: v_col_host", successCUDA)
+    nullify(v_col)
 
-        successCUDA = cuda_free_host(u_col_host)
-        check_host_dealloc_cuda("tridiag: u_col_host", successCUDA)
-        nullify(u_col)
+    successCUDA = cuda_free_host(u_col_host)
+    check_host_dealloc_cuda("tridiag: u_col_host", successCUDA)
+    nullify(u_col)
 
-        successCUDA = cuda_free_host(u_row_host)
-        check_host_dealloc_cuda("tridiag: u_row_host", successCUDA)
-        nullify(u_row)
+    successCUDA = cuda_free_host(u_row_host)
+    check_host_dealloc_cuda("tridiag: u_row_host", successCUDA)
+    nullify(u_row)
 
-        successCUDA = cuda_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
-        check_host_unregister_cuda("tridiag: uv_stored_cols", successCUDA)
+    successCUDA = cuda_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: uv_stored_cols", successCUDA)
 
-        successCUDA = cuda_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
-        check_host_unregister_cuda("tridiag: vu_stored_rows", successCUDA)
+    successCUDA = cuda_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: vu_stored_rows", successCUDA)
 
-        successCUDA = cuda_host_unregister(int(loc(e_vec),kind=c_intptr_t))
-        check_host_unregister_cuda("tridiag: e_vec", successCUDA)
+    successCUDA = cuda_host_unregister(int(loc(e_vec),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: e_vec", successCUDA)
 
-        successCUDA = cuda_host_unregister(int(loc(d_vec),kind=c_intptr_t))
-        check_host_unregister_cuda("tridiag: d_vec", successCUDA)
-      else
-        deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
-        check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)
-      endif
+    successCUDA = cuda_host_unregister(int(loc(d_vec),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: d_vec", successCUDA)
+  else
+    deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
+    check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)
+  endif
 
-      deallocate(vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag: vu_stored_rows, uv_stored_cols", istat, errorMessage)
+  deallocate(vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag: vu_stored_rows, uv_stored_cols", istat, errorMessage)
 
-      call obj%timer%stop("tridiag_&
-      &MATH_DATATYPE&
-      &" // &
-      PRECISION_SUFFIX // &
-      gpuString )
+  call obj%timer%stop("tridiag_&
+  &MATH_DATATYPE&
+  &" // &
+  PRECISION_SUFFIX // &
+  gpuString )
 
-    end subroutine tridiag_&
-    &MATH_DATATYPE&
-    &_&
-    &PRECISION
+end subroutine tridiag_&
+&MATH_DATATYPE&
+&_&
+&PRECISION
