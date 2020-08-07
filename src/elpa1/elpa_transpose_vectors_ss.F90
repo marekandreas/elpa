@@ -54,7 +54,7 @@ subroutine elpa_transpose_vectors_ss_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-             (obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads)
+(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads)
 
 !-------------------------------------------------------------------------------
 ! This routine transposes an array of vectors which are distributed in
@@ -76,93 +76,93 @@ subroutine elpa_transpose_vectors_ss_&
 ! nblk      block size of block cyclic distribution
 !
 !-------------------------------------------------------------------------------
-    use precision
-    use elpa_abstract_impl
+  use precision
+  use elpa_abstract_impl
 #ifdef WITH_OPENMP
-   use omp_lib
+  use omp_lib
 #endif
-   use elpa_mpi
+  use elpa_mpi
 
-   implicit none
-   class(elpa_abstract_impl_t), intent(inout) :: obj
-   integer(kind=ik), intent(in)                      :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)   :: vmat_s(ld_s,nvc)
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout):: vmat_t(ld_t,nvc)
+  implicit none
+  class(elpa_abstract_impl_t), intent(inout) :: obj
+  integer(kind=ik), intent(in)                      :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
+  MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)   :: vmat_s(ld_s,nvc)
+  MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout):: vmat_t(ld_t,nvc)
 
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable  :: aux(:)
-   integer(kind=ik)                                  :: myps, mypt, nps, npt
-   integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl, mpierr
-   integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-   integer(kind=ik)                                  :: auxstride
-   integer(kind=ik), intent(in)                      :: nrThreads
-   integer(kind=ik)                                  :: istat
-   character(200)                                    :: errorMessage
+  MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable  :: aux(:)
+  integer(kind=ik)                                  :: myps, mypt, nps, npt
+  integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl, mpierr
+  integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
+  integer(kind=ik)                                  :: auxstride
+  integer(kind=ik), intent(in)                      :: nrThreads
+  integer(kind=ik)                                  :: istat
+  character(200)                                    :: errorMessage
 
-   call obj%timer%start("elpa_transpose_vectors_&
-   &MATH_DATATYPE&
-   &" // &
-   &PRECISION_SUFFIX &
-   )
+  call obj%timer%start("elpa_transpose_vectors_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX &
+  )
 
-   call obj%timer%start("mpi_communication")
-   call mpi_comm_rank(comm_s,myps,mpierr)
-   call mpi_comm_size(comm_s,nps ,mpierr)
-   call mpi_comm_rank(comm_t,mypt,mpierr)
-   call mpi_comm_size(comm_t,npt ,mpierr)
+  call obj%timer%start("mpi_communication")
+  call mpi_comm_rank(comm_s,myps,mpierr)
+  call mpi_comm_size(comm_s,nps ,mpierr)
+  call mpi_comm_rank(comm_t,mypt,mpierr)
+  call mpi_comm_size(comm_t,npt ,mpierr)
 
-   call obj%timer%stop("mpi_communication")
-   ! The basic idea of this routine is that for every block (in the block cyclic
-   ! distribution), the processor within comm_t which owns the diagonal
-   ! broadcasts its values of vmat_s to all processors within comm_t.
-   ! Of course this has not to be done for every block separately, since
-   ! the communictation pattern repeats in the global matrix after
-   ! the least common multiple of (nps,npt) blocks
+  call obj%timer%stop("mpi_communication")
+  ! The basic idea of this routine is that for every block (in the block cyclic
+  ! distribution), the processor within comm_t which owns the diagonal
+  ! broadcasts its values of vmat_s to all processors within comm_t.
+  ! Of course this has not to be done for every block separately, since
+  ! the communictation pattern repeats in the global matrix after
+  ! the least common multiple of (nps,npt) blocks
 
-   lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
+  lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
 
-   nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
+  nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
 
-   ! Get the number of blocks to be skipped at the begin.
-   ! This must be a multiple of lcm_s_t (else it is getting complicated),
-   ! thus some elements before nvs will be accessed/set.
+  ! Get the number of blocks to be skipped at the begin.
+  ! This must be a multiple of lcm_s_t (else it is getting complicated),
+  ! thus some elements before nvs will be accessed/set.
 
-   nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
+  nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
 
-   allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
-   check_allocate("elpa_transpose_vectors_ss: aux", istat, errorMessage)
+  allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
+  check_allocate("elpa_transpose_vectors_ss: aux", istat, errorMessage)
 #ifdef WITH_OPENMP
-   !$omp parallel private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n)
+  !$omp parallel private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n)
 #endif
-   do n = 0, lcm_s_t-1
+  do n = 0, lcm_s_t-1
 
-      ips = mod(n,nps)
-      ipt = mod(n,npt)
+    ips = mod(n,nps)
+    ipt = mod(n,npt)
 
-      if(mypt == ipt) then
+    if (mypt == ipt) then
 
-         nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
-         auxstride = nblk * nblks_comm
-!         if(nblks_comm==0) cycle
-         if (nblks_comm .ne. 0) then
-         if(myps == ips) then
-!            k = 0
+      nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
+      auxstride = nblk * nblks_comm
+!      if(nblks_comm==0) cycle
+      if (nblks_comm .ne. 0) then
+        if (myps == ips) then
+!          k = 0
 #ifdef WITH_OPENMP
-            !$omp do
+          !$omp do
 #endif
-            do lc=1,nvc
-               do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-                  k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
-                  ns = (i/nps)*nblk ! local start of block i
-                  nl = min(nvr-i*nblk,nblk) ! length
-                  aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-!                  k = k+nblk
-               enddo
+          do lc=1,nvc
+            do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+              k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+              ns = (i/nps)*nblk ! local start of block i
+              nl = min(nvr-i*nblk,nblk) ! length
+              aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
+!              k = k+nblk
             enddo
-         endif
+          enddo
+        endif
 
 #ifdef WITH_OPENMP
-         !$omp barrier
-         !$omp master
+        !$omp barrier
+        !$omp master
 #endif
 
 #ifdef WITH_MPI
@@ -178,40 +178,40 @@ subroutine elpa_transpose_vectors_ss_&
                        ips, comm_s, mpierr)
 
 
-         call obj%timer%stop("mpi_communication")
+        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP
-         !$omp end master
-         !$omp barrier
+        !$omp end master
+        !$omp barrier
 
-         !$omp do
+        !$omp do
 #endif
-!         k = 0
-         do lc=1,nvc
-            do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-               k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
-               ns = (i/npt)*nblk ! local start of block i
-               nl = min(nvr-i*nblk,nblk) ! length
-               vmat_t(ns+1:ns+nl,lc) = - aux(k+1:k+nl)
-!               k = k+nblk
-            enddo
-         enddo
-         endif
+!        k = 0
+        do lc=1,nvc
+          do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+            k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+            ns = (i/npt)*nblk ! local start of block i
+            nl = min(nvr-i*nblk,nblk) ! length
+            vmat_t(ns+1:ns+nl,lc) = - aux(k+1:k+nl)
+!            k = k+nblk
+          enddo
+        enddo
       endif
+    endif
 
-   enddo
+  enddo
 #ifdef WITH_OPENMP
-   !$omp end parallel
+  !$omp end parallel
 #endif
-   deallocate(aux, stat=istat, errmsg=errorMessage)
-   check_deallocate("elpa_transpose_vectors_ss: aux", istat, errorMessage)
+  deallocate(aux, stat=istat, errmsg=errorMessage)
+  check_deallocate("elpa_transpose_vectors_ss: aux", istat, errorMessage)
 
-   call obj%timer%stop("elpa_transpose_vectors_&
-   &MATH_DATATYPE&
-   &" // &
-   &PRECISION_SUFFIX &
-   )
+  call obj%timer%stop("elpa_transpose_vectors_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX &
+  )
 
 end subroutine
 

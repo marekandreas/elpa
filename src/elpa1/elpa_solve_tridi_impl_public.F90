@@ -56,97 +56,97 @@
 
 #include "../general/sanity.F90"
 
-      use elpa1_compute, solve_tridi_&
-                         &PRECISION&
-                         &_private_impl => solve_tridi_&
-                         &PRECISION&
-                         &_impl
-      use precision
-      use elpa_abstract_impl
-      use elpa_omp
+  use elpa1_compute, solve_tridi_&
+                     &PRECISION&
+                     &_private_impl => solve_tridi_&
+                     &PRECISION&
+                     &_impl
+  use precision
+  use elpa_abstract_impl
+  use elpa_omp
 
-      implicit none
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)         :: na, nev, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-      real(kind=REAL_DATATYPE) :: d(obj%na), e(obj%na)
+  implicit none
+  class(elpa_abstract_impl_t), intent(inout) :: obj
+  integer(kind=ik)         :: na, nev, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+  real(kind=REAL_DATATYPE) :: d(obj%na), e(obj%na)
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE) :: q(obj%local_nrows,*)
+  real(kind=REAL_DATATYPE) :: q(obj%local_nrows,*)
 #else
-      real(kind=REAL_DATATYPE) :: q(obj%local_nrows, obj%local_ncols)
+  real(kind=REAL_DATATYPE) :: q(obj%local_nrows, obj%local_ncols)
 #endif
 
-      logical                  :: wantDebug
-      logical                  :: success
+  logical                  :: wantDebug
+  logical                  :: success
 
-      integer                  :: debug, error
-      integer                  :: nrThreads
+  integer                  :: debug, error
+  integer                  :: nrThreads
 
-      call obj%timer%start("elpa_solve_tridi_public_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      &")
-      na         = obj%na
-      nev        = obj%nev
-      nblk       = obj%nblk
-      matrixRows = obj%local_nrows
-      matrixCols = obj%local_ncols
+  call obj%timer%start("elpa_solve_tridi_public_&
+  &MATH_DATATYPE&
+  &_&
+  &PRECISION&
+  &")
+  na         = obj%na
+  nev        = obj%nev
+  nblk       = obj%nblk
+  matrixRows = obj%local_nrows
+  matrixCols = obj%local_ncols
 
 #ifdef WITH_OPENMP
-      ! store the number of OpenMP threads used in the calling function
-      ! restore this at the end of ELPA 2 
-      omp_threads_caller = omp_get_max_threads()
+  ! store the number of OpenMP threads used in the calling function
+  ! restore this at the end of ELPA 2 
+  omp_threads_caller = omp_get_max_threads()
 
-      ! check the number of threads that ELPA should use internally
+  ! check the number of threads that ELPA should use internally
 
-      call obj%get("omp_threads",nrThreads,error)
+  call obj%get("omp_threads",nrThreads,error)
 #else
-      nrThreads=1
+  nrThreads=1
 #endif
 
-      call obj%get("mpi_comm_rows", mpi_comm_rows,error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for mpi_comm_rows. Aborting..."
-        stop
-      endif
-      call obj%get("mpi_comm_cols", mpi_comm_cols,error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for mpi_comm_cols. Aborting..."
-        stop
-      endif
+  call obj%get("mpi_comm_rows", mpi_comm_rows,error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem getting option for mpi_comm_rows. Aborting..."
+    stop
+  endif
+  call obj%get("mpi_comm_cols", mpi_comm_cols,error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem getting option for mpi_comm_cols. Aborting..."
+    stop
+  endif
 
-      call obj%get("debug",debug,error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for debug. Aborting..."
-        stop
-      endif
-      if (debug == 1) then
-        wantDebug = .true.
-      else
-        wantDebug = .false.
-      endif
-      success = .false.
+  call obj%get("debug",debug,error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem getting option for debug. Aborting..."
+    stop
+  endif
+  if (debug == 1) then
+    wantDebug = .true.
+  else
+    wantDebug = .false.
+  endif
+  success = .false.
 
-      call solve_tridi_&
-      &PRECISION&
-      &_private_impl(obj, na, nev, d, e, q, matrixRows, nblk, matrixCols, &
-               mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success, &
-               nrThreads)
+  call solve_tridi_&
+  &PRECISION&
+  &_private_impl(obj, na, nev, d, e, q, matrixRows, nblk, matrixCols, &
+           mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success, &
+           nrThreads)
 
 
-      ! restore original OpenMP settings
+  ! restore original OpenMP settings
 #ifdef WITH_OPENMP
-      ! store the number of OpenMP threads used in the calling function
-      ! restore this at the end of ELPA 2
-      call omp_set_num_threads(omp_threads_caller)
+  ! store the number of OpenMP threads used in the calling function
+  ! restore this at the end of ELPA 2
+  call omp_set_num_threads(omp_threads_caller)
 #endif
 
 
-      call obj%timer%stop("elpa_solve_tridi_public_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      &")
+  call obj%timer%stop("elpa_solve_tridi_public_&
+  &MATH_DATATYPE&
+  &_&
+  &PRECISION&
+  &")
 
 
 #undef REALCASE

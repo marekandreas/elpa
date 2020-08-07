@@ -51,7 +51,7 @@ subroutine elpa_reduce_add_vectors_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-            (obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvr, nvc, nblk, nrThreads)
+(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvr, nvc, nblk, nrThreads)
 
 !-------------------------------------------------------------------------------
 ! This routine does a reduce of all vectors in vmat_s over the communicator comm_t.
@@ -74,151 +74,151 @@ subroutine elpa_reduce_add_vectors_&
 !
 !-------------------------------------------------------------------------------
 
-   use precision
+  use precision
 #ifdef WITH_OPENMP
-   use omp_lib
+  use omp_lib
 #endif
-   use elpa_mpi
-   use elpa_abstract_impl
-   implicit none
+  use elpa_mpi
+  use elpa_abstract_impl
+  implicit none
 
-   class(elpa_abstract_impl_t), intent(inout)         :: obj
-   integer(kind=ik), intent(in)                       :: ld_s, comm_s, ld_t, comm_t, nvr, nvc, nblk
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)    :: vmat_s(ld_s,nvc)
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: vmat_t(ld_t,nvc)
+  class(elpa_abstract_impl_t), intent(inout)         :: obj
+  integer(kind=ik), intent(in)                       :: ld_s, comm_s, ld_t, comm_t, nvr, nvc, nblk
+  MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)    :: vmat_s(ld_s,nvc)
+  MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout) :: vmat_t(ld_t,nvc)
 
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable   :: aux1(:), aux2(:)
-   integer(kind=ik)                                   :: myps, mypt, nps, npt
-   integer(kind=MPI_KIND)                             :: mypsMPI, npsMPI, myptMPI, nptMPI
-   integer(kind=ik)                                   :: n, lc, k, i, ips, ipt, ns, nl
-   integer(kind=MPI_KIND)                             :: mpierr
-   integer(kind=ik)                                   :: lcm_s_t, nblks_tot
-   integer(kind=ik)                                   :: auxstride
-   integer(kind=ik), intent(in)                       :: nrThreads
-   integer(kind=ik)                                   :: istat
-   character(200)                                     :: errorMessage
+  MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable   :: aux1(:), aux2(:)
+  integer(kind=ik)                                   :: myps, mypt, nps, npt
+  integer(kind=MPI_KIND)                             :: mypsMPI, npsMPI, myptMPI, nptMPI
+  integer(kind=ik)                                   :: n, lc, k, i, ips, ipt, ns, nl
+  integer(kind=MPI_KIND)                             :: mpierr
+  integer(kind=ik)                                   :: lcm_s_t, nblks_tot
+  integer(kind=ik)                                   :: auxstride
+  integer(kind=ik), intent(in)                       :: nrThreads
+  integer(kind=ik)                                   :: istat
+  character(200)                                     :: errorMessage
 
-   call obj%timer%start("elpa_reduce_add_vectors_&
-   &MATH_DATATYPE&
-   &" // &
-   &PRECISION_SUFFIX &
-   )
+  call obj%timer%start("elpa_reduce_add_vectors_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX &
+  )
 
-   call obj%timer%start("mpi_communication")
-   call mpi_comm_rank(int(comm_s,kind=MPI_KIND), mypsMPI, mpierr)
-   call mpi_comm_size(int(comm_s,kind=MPI_KIND), npsMPI,  mpierr)
-   call mpi_comm_rank(int(comm_t,kind=MPI_KIND), myptMPI, mpierr)
-   call mpi_comm_size(int(comm_t,kind=MPI_KIND), nptMPI ,mpierr)
-   myps = int(mypsMPI,kind=c_int)
-   nps = int(npsMPI,kind=c_int)
-   mypt = int(myptMPI,kind=c_int)
-   npt = int(nptMPI,kind=c_int)
+  call obj%timer%start("mpi_communication")
+  call mpi_comm_rank(int(comm_s,kind=MPI_KIND), mypsMPI, mpierr)
+  call mpi_comm_size(int(comm_s,kind=MPI_KIND), npsMPI,  mpierr)
+  call mpi_comm_rank(int(comm_t,kind=MPI_KIND), myptMPI, mpierr)
+  call mpi_comm_size(int(comm_t,kind=MPI_KIND), nptMPI ,mpierr)
+  myps = int(mypsMPI,kind=c_int)
+  nps = int(npsMPI,kind=c_int)
+  mypt = int(myptMPI,kind=c_int)
+  npt = int(nptMPI,kind=c_int)
 
-   call obj%timer%stop("mpi_communication")
+  call obj%timer%stop("mpi_communication")
 
-   ! Look to elpa_transpose_vectors for the basic idea!
+  ! Look to elpa_transpose_vectors for the basic idea!
 
-   ! The communictation pattern repeats in the global matrix after
-   ! the least common multiple of (nps,npt) blocks
+  ! The communictation pattern repeats in the global matrix after
+  ! the least common multiple of (nps,npt) blocks
 
-   lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
+  lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
 
-   nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
+  nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
 
-   allocate(aux1( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
-   check_allocate("elpa_reduce_add: aux1", istat, errorMessage)
+  allocate(aux1( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
+  check_allocate("elpa_reduce_add: aux1", istat, errorMessage)
 
-   allocate(aux2( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
-   check_allocate("elpa_reduce_add: aux2", istat, errorMessage)
-   aux1(:) = 0
-   aux2(:) = 0
+  allocate(aux2( ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
+  check_allocate("elpa_reduce_add: aux2", istat, errorMessage)
+  aux1(:) = 0
+  aux2(:) = 0
 #ifdef WITH_OPENMP
-   !call omp_set_num_threads(nrThreads)
+  !call omp_set_num_threads(nrThreads)
 
-   !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl) num_threads(nrThreads)
+  !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl) num_threads(nrThreads)
 #endif
-   do n = 0, lcm_s_t-1
+  do n = 0, lcm_s_t-1
 
-      ips = mod(n,nps)
-      ipt = mod(n,npt)
+    ips = mod(n,nps)
+    ipt = mod(n,npt)
 
-      auxstride = nblk * ((nblks_tot - n + lcm_s_t - 1)/lcm_s_t)
+    auxstride = nblk * ((nblks_tot - n + lcm_s_t - 1)/lcm_s_t)
 
-      if(myps == ips) then
+    if (myps == ips) then
 
-!         k = 0
+!      k = 0
 #ifdef WITH_OPENMP
-         !$omp do
+      !$omp do
 #endif
-         do lc=1,nvc
-            do i = n, nblks_tot-1, lcm_s_t
-               k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
-               ns = (i/nps)*nblk ! local start of block i
-               nl = min(nvr-i*nblk,nblk) ! length
-               aux1(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-!               k = k+nblk
-            enddo
-         enddo
+      do lc=1,nvc
+        do i = n, nblks_tot-1, lcm_s_t
+          k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+          ns = (i/nps)*nblk ! local start of block i
+          nl = min(nvr-i*nblk,nblk) ! length
+          aux1(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
+!          k = k+nblk
+        enddo
+      enddo
 
-         k = nvc * auxstride
+      k = nvc * auxstride
 #ifdef WITH_OPENMP
-         !$omp barrier
-         !$omp master
+      !$omp barrier
+      !$omp master
 #endif
 
 #ifdef WITH_MPI
-         call obj%timer%start("mpi_communication")
+      call obj%timer%start("mpi_communication")
 
-         if (k>0) call mpi_reduce(aux1, aux2, k, &
+      if (k>0) call mpi_reduce(aux1, aux2, k, &
 #if REALCASE == 1
-                                  MPI_REAL_PRECISION,  &
+                    MPI_REAL_PRECISION,  &
 #endif
 #if COMPLEXCASE == 1
-                                  MPI_COMPLEX_PRECISION, &
+                    MPI_COMPLEX_PRECISION, &
 #endif
-                                  MPI_SUM, int(ipt,kind=MPI_KIND), int(comm_t,kind=MPI_KIND), mpierr)
+                    MPI_SUM, int(ipt,kind=MPI_KIND), int(comm_t,kind=MPI_KIND), mpierr)
 
-          call obj%timer%stop("mpi_communication")
+      call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
-         if(k>0) aux2 = aux1
+      if (k>0) aux2 = aux1
 #endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP
-         !$omp end master
-         !$omp barrier
+      !$omp end master
+      !$omp barrier
 #endif
-         if (mypt == ipt) then
-!            k = 0
+      if (mypt == ipt) then
+!        k = 0
 #ifdef WITH_OPENMP
-         !$omp do
+        !$omp do
 #endif
-            do lc=1,nvc
-               do i = n, nblks_tot-1, lcm_s_t
-                  k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
-                  ns = (i/npt)*nblk ! local start of block i
-                  nl = min(nvr-i*nblk,nblk) ! length
-                  vmat_t(ns+1:ns+nl,lc) = vmat_t(ns+1:ns+nl,lc) + aux2(k+1:k+nl)
-!                  k = k+nblk
-               enddo
-            enddo
-         endif
-
+        do lc=1,nvc
+          do  i = n, nblks_tot-1, lcm_s_t
+            k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+            ns = (i/npt)*nblk ! local start of block i
+            nl = min(nvr-i*nblk,nblk) ! length
+            vmat_t(ns+1:ns+nl,lc) = vmat_t(ns+1:ns+nl,lc) + aux2(k+1:k+nl)
+!            k = k+nblk
+          enddo
+        enddo
       endif
 
-   enddo
+    endif
+
+  enddo
 #ifdef WITH_OPENMP
-   !$omp end parallel
+  !$omp end parallel
 #endif
 
-   deallocate(aux1, aux2, stat=istat, errmsg=errorMessage)
-   check_deallocate("elpa_reduce_add: aux1, aux2", istat, errorMessage)
+  deallocate(aux1, aux2, stat=istat, errmsg=errorMessage)
+  check_deallocate("elpa_reduce_add: aux1, aux2", istat, errorMessage)
 
-   call obj%timer%stop("elpa_reduce_add_vectors_&
-   &MATH_DATATYPE&
-   &" // &
-   &PRECISION_SUFFIX &
-   )
+  call obj%timer%stop("elpa_reduce_add_vectors_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX &
+  )
 end subroutine
 
 
