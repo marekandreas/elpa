@@ -93,9 +93,9 @@ AC_ARG_ENABLE([openmp],
 	       ],
               [enable_openmp=no])
 AC_MSG_RESULT([${enable_openmp}])
-AM_CONDITIONAL([WITH_OPENMP],[test x"$enable_openmp" = x"yes"])
+AM_CONDITIONAL([WITH_OPENMP_TRADITIONAL],[test x"$enable_openmp" = x"yes"])
 if test x"${enable_openmp}" = x"yes"; then
-        AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
+        AC_DEFINE([WITH_OPENMP_TRADITIONAL], [1], [use OpenMP threading])
 fi
 
 

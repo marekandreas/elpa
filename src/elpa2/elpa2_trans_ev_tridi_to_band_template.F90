@@ -94,7 +94,7 @@
       use cuda_functions
       use precision
       use iso_c_binding
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       ! use omp_lib
 #endif
       implicit none
@@ -120,7 +120,7 @@
       integer(kind=ik)                           :: next_n, next_local_n, next_n_start, next_n_end
       integer(kind=ik)                           :: bottom_msg_length, top_msg_length, next_top_msg_length
       integer(kind=ik)                           :: stripe_width, last_stripe_width, stripe_count
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       integer(kind=ik)                           :: thread_width, csw, b_off, b_len
 #endif
       integer(kind=ik)                           :: num_result_blocks, num_result_buffers, num_bufs_recvd
@@ -129,7 +129,7 @@
       integer(kind=MPI_KIND)                     :: mpierr
 
       logical                                    :: flag
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       MATH_DATATYPE(kind=rck), pointer           :: aIntern(:,:,:,:)
 #else
       MATH_DATATYPE(kind=rck), pointer           :: aIntern(:,:,:)
@@ -141,7 +141,7 @@
       MATH_DATATYPE(kind=rck), allocatable       :: row(:)
       MATH_DATATYPE(kind=rck), pointer           :: row_group(:,:)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:)
       MATH_DATATYPE(kind=rck), allocatable       :: top_border_recv_buffer(:,:)
       MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:)
@@ -184,7 +184,7 @@
 
       integer(kind=ik), intent(in)               :: max_threads
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       integer(kind=ik)                           :: my_thread
 #endif
 
@@ -266,7 +266,7 @@
       l_nev = local_index(nev, my_pcol, np_cols, nblk, -1)
 
       if (l_nev==0) then
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
         thread_width = 0
 #endif
         stripe_width = 0
@@ -275,7 +275,7 @@
 
       else ! l_nev
 
-#if WITH_OPENMP
+#if WITH_OPENMP_TRADITIONAL
         ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
         ! every primary cache
         ! Suggested stripe width is 48 - should this be reduced for the complex case ???
@@ -382,7 +382,7 @@
 
         endif ! useGPU
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
         ! Suggested stripe width is 48 since 48*64 real*8 numbers should fit into
         ! every primary cache
@@ -481,7 +481,7 @@
 
         last_stripe_width = l_nev - (stripe_count-1)*stripe_width
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
       endif ! l_nev
 
       ! Determine the matrix distribution at the beginning
@@ -522,7 +522,7 @@
 !DEC$ ATTRIBUTES ALIGN: 64:: aIntern
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
         if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*max_threads*     &
                C_SIZEOF(a_var)) /= 0) then
           print *,"trans_ev_tridi_to_band_&
@@ -536,7 +536,7 @@
 
         ! aIntern(:,:,:,:) should be set to 0 in a parallel region, not here!
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
         if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*  &
             C_SIZEOF(a_var)) /= 0) then
@@ -548,7 +548,7 @@
         !allocate(aIntern(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
 
         aIntern(:,:,:) = 0.0_rck
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
       endif !useGPU
 
       allocate(row(l_nev), stat=istat, errmsg=errorMessage)
@@ -562,7 +562,7 @@
       ! The peculiar way it is done below is due to the fact that the last row should be
       ! ready first since it is the first one to start below
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       ! Please note about the OMP usage below:
       ! This is not for speed, but because we want the matrix a in the memory and
       ! in the cache of the correct thread (if possible)
@@ -575,7 +575,7 @@
       !$omp end parallel do
 
       call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
       do ip = np_rows-1, 0, -1
         if (my_prow == ip) then
@@ -585,7 +585,7 @@
             src = mod((i-1)/nblk, np_rows)
 
             if (src < my_prow) then
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
@@ -615,7 +615,7 @@
 
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
                 call unpack_and_prepare_row_group_&
@@ -656,14 +656,14 @@
                      &PRECISION &
                                 (obj,aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
               endif ! useGPU
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
             elseif (src == my_prow) then
 
               src_offset = src_offset+1
 
               if (useGPU) then
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_TRADITIONAL
 
                  ! An unpacking of the current row group may occur before queuing the next row
                  call unpack_and_prepare_row_group_&
@@ -677,7 +677,7 @@
                                i - limits(ip), .false.)
 
                 row_group(:, row_group_size) = q(src_offset, 1:l_nev)
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 !#if COMPLEXCASE == 1
 !! why is an cuda call in the openmp region?
@@ -694,7 +694,7 @@
                 row(:) = q(src_offset, 1:l_nev)
               endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
 !$omp parallel do private(my_thread), schedule(static, 1)
@@ -710,7 +710,7 @@
 
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
               if (useGPU) then
 
@@ -722,7 +722,7 @@
                                 (obj,aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
               endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
             endif
           enddo
@@ -767,7 +767,7 @@
           do i=limits(my_prow)+1,limits(my_prow+1)
             src = mod((i-1)/nblk, np_rows)
             if (src == ip) then
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
@@ -792,7 +792,7 @@
 !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
               if (useGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
                 call unpack_and_prepare_row_group_&
@@ -833,7 +833,7 @@
                                 (obj,aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
               endif ! useGPU
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
             endif
           enddo
@@ -915,7 +915,7 @@
       bottom_recv_request(:) = MPI_REQUEST_NULL
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
 
@@ -957,7 +957,7 @@
 
       ! Initialize broadcast buffer
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
       allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
@@ -997,7 +997,7 @@
                       cudaHostRegisterDefault)
         check_host_register_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer", successCUDA)
       endif
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
       ! Initialize broadcast buffer
 
@@ -1069,7 +1069,7 @@
 #endif
           do i = 1, stripe_count
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
             if (useGPU) then
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
@@ -1089,7 +1089,7 @@
 !            bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
 #endif /* WITH_MPI */
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), int(nbw*stripe_width,kind=MPI_KIND), &
@@ -1101,7 +1101,7 @@
 !            bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
 #endif /* WITH_MPI */
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
           enddo
 #if WITH_MPI
@@ -1162,7 +1162,7 @@
         if (current_local_n > 0) then
 
           do i = 1, stripe_count
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
             if (useGPU) then
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
               stop 1
@@ -1174,13 +1174,13 @@
             ! csw: current_stripe_width
 
             csw = min(stripe_width, thread_width-(i-1)*stripe_width)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
             !wait_b
             if (current_n_end < current_n) then
 
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
               if (useGPU) then
                 print *,"trans_ev_tridi_to_band_real: not yet implemented"
                 stop 1
@@ -1203,7 +1203,7 @@
               enddo
 !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1225,11 +1225,11 @@
                 aIntern(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
               endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
            if (next_n_end < next_n) then
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
              if (useGPU) then
                print *,"trans_ev_tridi_to_band_real: not yet implemented"
@@ -1249,7 +1249,7 @@
 
 #endif /* WITH_MPI */
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1266,7 +1266,7 @@
 
 #endif /* WITH_MPI */
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
            endif
          endif
 
@@ -1275,7 +1275,7 @@
            !wait_t
            if (top_msg_length>0) then
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
              if (useGPU) then
                print *,"trans_ev_tridi_to_band_&
                        &MATH_DATATYPE&
@@ -1289,7 +1289,7 @@
              if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1307,11 +1307,11 @@
              else ! useGPU
                aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
              endif ! useGPU
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
            endif ! top_msg_length
 
            !compute
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
            call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
@@ -1336,7 +1336,7 @@
 !$omp end parallel do
            call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
            call compute_hh_trafo_&
                 &MATH_DATATYPE&
@@ -1346,7 +1346,7 @@
                 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
                 last_stripe_width, kernel)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
            !send_b        1
 #ifdef WITH_MPI
@@ -1357,7 +1357,7 @@
 
            if (bottom_msg_length>0) then
              n_off = current_local_n+nbw-bottom_msg_length+a_off
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
              b_len = csw*bottom_msg_length*max_threads
              bottom_border_send_buffer(1:b_len,i) = &
                  reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
@@ -1379,7 +1379,7 @@
            endif ! this endif is not here in complex -case is for bottom_msg_length
 !#endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
              if (useGPU) then
                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
@@ -1405,12 +1405,12 @@
 
 #endif /* WITH_MPI */
            endif
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
          else ! current_local_n <= bottom_msg_length + top_msg_length
 
          !compute
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
          if (useGPU) then
            print *,"trans_ev_tridi_to_band_real: not yet implemented"
            stop 1
@@ -1459,7 +1459,7 @@
 #endif /* WITH_MPI */
         endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
         call compute_hh_trafo_&
              &MATH_DATATYPE&
@@ -1509,15 +1509,15 @@
         endif
 #endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_TRADITIONAL
 #if COMPLEXCASE == 1
         endif
 #endif
 #endif
         !compute
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
         call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
@@ -1536,7 +1536,7 @@
 !$omp end parallel do
         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
         call compute_hh_trafo_&
              &MATH_DATATYPE&
@@ -1548,11 +1548,11 @@
              current_local_n-top_msg_length-bottom_msg_length, i, &
              last_stripe_width, kernel)
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
         !wait_t
         if (top_msg_length>0) then
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1560,7 +1560,7 @@
           if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1576,11 +1576,11 @@
           else
             aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
           endif
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
         endif
 
         !compute
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
         call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
@@ -1604,7 +1604,7 @@
 !$omp end parallel do
         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
         call compute_hh_trafo_&
              &MATH_DATATYPE&
@@ -1615,12 +1615,12 @@
              hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
              last_stripe_width, kernel)
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
       endif
 
       if (next_top_msg_length > 0) then
         !request top_border data
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
         b_len = csw*next_top_msg_length*max_threads
 #ifdef WITH_MPI
@@ -1635,7 +1635,7 @@
 !                                     bottom_border_send_buffer(1:csw*next_top_msg_length*max_threads,i)
 #endif /* WITH_MPI */
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1649,13 +1649,13 @@
 !               bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
 #endif /* WITH_MPI */
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
       endif
 
       !send_t
       if (my_prow > 0) then
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1680,7 +1680,7 @@
               endif
 #endif /* WITH_MPI */
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1711,7 +1711,7 @@
              endif
 #endif /* WITH_MPI */
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
       endif
 
       ! Care that there are not too many outstanding top_recv_request's
@@ -1786,20 +1786,20 @@
           else ! useGPU
 
             do i = 1, min(na - num_blk*nblk, nblk)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
               call pack_row_&
                    &MATH_DATATYPE&
                    &_cpu_openmp_&
                    &PRECISION&
                    &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
               call pack_row_&
                    &MATH_DATATYPE&
                    &_cpu_&
                    &PRECISION&
                    &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
               q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
             enddo
           endif ! useGPU
@@ -1817,20 +1817,20 @@
 
           else  ! useGPU
             do i = 1, nblk
-#if WITH_OPENMP
+#if WITH_OPENMP_TRADITIONAL
               call pack_row_&
                    &MATH_DATATYPE&
                    &_cpu_openmp_&
                    &PRECISION&
                    &(obj,aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
                    max_threads, thread_width, l_nev)
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
               call pack_row_&
                    &MATH_DATATYPE&
                    &_cpu_&
                    &PRECISION&
                    &(obj, aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
             enddo
           endif ! useGPU
 #ifdef WITH_MPI
@@ -1928,7 +1928,7 @@
 
     a_off = a_off + offset
     if (a_off + next_local_n + nbw >= a_dim2) then
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       if (useGPU) then
         print *,"trans_ev_tridi_to_band_real: not yet implemented"
         stop 1
@@ -1947,7 +1947,7 @@
 !$omp end parallel do
       call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
          do i = 1, stripe_count
            if (useGPU) then
              chunk = min(next_local_n,a_off)
@@ -1969,7 +1969,7 @@
              end do
            end if
          end do ! stripe_count
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
          a_off = 0
        end if

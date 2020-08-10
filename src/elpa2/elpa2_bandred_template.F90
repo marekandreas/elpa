@@ -103,7 +103,7 @@
   use cuda_functions
   use iso_c_binding
   use elpa1_compute
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   use omp_lib
 #endif
   use precision
@@ -140,7 +140,7 @@
 #if REALCASE == 1
   integer(kind=ik)                            :: vmrCols
 #endif
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   integer(kind=ik)                            :: mynlc, lrs, transformChunkSize
 #endif
   integer(kind=ik)                            :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
@@ -628,7 +628,7 @@
 
         aux1 = 0.0_rck
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 #if 0
  ! original complex implementation without openmp. check performance
         nlc = 0 ! number of local columns
@@ -750,7 +750,7 @@
         enddo
         !$omp end parallel
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
         nlc = 0 ! number of local columns
         do j=1,lc-1
@@ -785,7 +785,7 @@
 #endif
           endif
         enddo
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
       enddo ! lc
 
       if (useGPU_reduction_lower_block_to_tridiagonal) then
@@ -939,7 +939,7 @@
 
     ! n_way is actually a branch for the number of OpenMP threads
     n_way = 1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #if REALCASE == 1
     n_way = max_threads
@@ -1022,7 +1022,7 @@
       endif ! l_cols>0 .and. l_rows>0
 
     else ! n_way > 1
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
       if (.not. useGPU) then
         umcCPU(1:l_cols,1:n_cols) = 0.0_rck
@@ -1137,7 +1137,7 @@
         endif ! useGPU
       endif ! l_cols>0 .and. l_rows>0
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
     endif ! n_way > 1
 #if REALCASE == 1
     !$omp end parallel
@@ -1394,7 +1394,7 @@
 
        ! A = A - V*U**T - U*V**T
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
        !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
        n_threads = omp_get_num_threads()
 
@@ -1433,7 +1433,7 @@
        enddo
        !$omp end parallel
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
        do i=0,(istep*nbw-1)/tile_size
          lcs = i*l_cols_tile+1
@@ -1464,7 +1464,7 @@
            call obj%timer%stop("blas")
          endif ! useGPU
        enddo ! i=0,(istep*nbw-1)/tile_size
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
        if (.not.(useGPU)) then
          if (allocated(vr)) then

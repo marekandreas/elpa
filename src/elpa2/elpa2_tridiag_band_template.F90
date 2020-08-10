@@ -89,7 +89,7 @@ subroutine tridiag_band_&
   use precision
   use iso_c_binding
   use redist
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   use omp_lib
 #endif
   use elpa_blas_interfaces
@@ -121,14 +121,14 @@ subroutine tridiag_band_&
   integer(kind=MPI_KIND)                       :: ireq_ab, ireq_hv
   integer(kind=ik)                             :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
   integer(kind=ik), intent(in)                 :: nrThreads
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   integer(kind=ik)                             :: max_threads, my_thread, my_block_s, my_block_e, iter
 #ifdef WITH_MPI
 #endif
   integer(kind=ik), allocatable                :: global_id_tmp(:,:)
   integer(kind=ik), allocatable                :: omp_block_limits(:)
   MATH_DATATYPE(kind=rck), allocatable         :: hv_t(:,:), tau_t(:)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
   integer(kind=ik), allocatable                :: global_id(:,:), hh_cnt(:), hh_dst(:)
   integer(kind=MPI_KIND), allocatable          :: ireq_hhr(:), ireq_hhs(:)
   integer(kind=ik), allocatable                :: limits(:), snd_limits(:,:)
@@ -187,14 +187,14 @@ subroutine tridiag_band_&
   global_id(:,:) = 0
   global_id(my_prow, my_pcol) = my_pe
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   allocate(global_id_tmp(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
   check_allocate("tridiag_band: global_id_tmp", istat, errorMessage)
 #endif
 
 #ifdef WITH_MPI
   if (wantDebug) call obj%timer%start("mpi_communication")
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_TRADITIONAL
   call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
                          mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
 #else
@@ -203,7 +203,7 @@ subroutine tridiag_band_&
                      mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
   deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag_band: global_id_tmp", istat, errorMessage)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
   if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -340,7 +340,7 @@ subroutine tridiag_band_&
     call determine_workload(obj, na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
   enddo
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   ! OpenMP work distribution:
   max_threads = nrThreads
   ! For OpenMP we need at least 2 blocks for every thread
@@ -358,7 +358,7 @@ subroutine tridiag_band_&
 
   hv_t = 0.0_rck
   tau_t = 0.0_rck
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
   ! ---------------------------------------------------------------------------
   ! Start of calculations
@@ -381,7 +381,7 @@ subroutine tridiag_band_&
   startAddr = ubound(hh_trans,dim=2)
 #endif /* WITH_MPI */
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    do istep=1,na-nblockEnd-block_limits(my_pe)*nb
 #else
    do istep=1,na-nblockEnd
@@ -460,7 +460,7 @@ subroutine tridiag_band_&
        if (na>na_s) then
          ! Receive Householder Vector from previous task, from PE owning subdiagonal
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #ifdef WITH_MPI
          if (wantDebug) call obj%timer%start("mpi_communication")
@@ -475,7 +475,7 @@ subroutine tridiag_band_&
 
 #endif /* WITH_MPI */
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
          if (wantDebug) call obj%timer%start("mpi_communication")
@@ -489,7 +489,7 @@ subroutine tridiag_band_&
          hv(1:nb) = hv_s(1:nb)
 #endif /* WITH_MPI */
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
          tau = hv(1)
          hv(1) = 1.0_rck
        endif
@@ -502,7 +502,7 @@ subroutine tridiag_band_&
         n_off = n_off + nb
       endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       if (max_threads > 1) then
 
         ! Codepath for OpenMP
@@ -768,7 +768,7 @@ subroutine tridiag_band_&
         ! and sends the Householder Vector and the first column as early
         ! as possible.
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
         do iblk=1,nblocks
           ns = na_s + (iblk-1)*nb - n_off ! first column in block
@@ -783,7 +783,7 @@ subroutine tridiag_band_&
           hh_gath(1   ,hh_cnt(iblk),iblk) = tau
           hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
 
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_TRADITIONAL
           if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
             ! Wait for last transfer to finish
 #ifdef WITH_MPI
@@ -818,7 +818,7 @@ subroutine tridiag_band_&
           ! For this reason, it requests the last column as late as possible
           ! and sends the Householder Vector and the first column as early
           ! as possible.
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
           nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
           nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
                                         ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
@@ -856,15 +856,15 @@ subroutine tridiag_band_&
             ! ... then request last column ...
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
             call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
                           int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
                           MPI_STATUS_IGNORE, mpierr)
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
             call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
                           int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
                           MPI_STATUS_IGNORE, mpierr)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
             if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -936,7 +936,7 @@ subroutine tridiag_band_&
               if (iblk==nblocks) then
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #else
                 call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
@@ -1083,11 +1083,11 @@ subroutine tridiag_band_&
 
           enddo
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
         endif
 #endif
 
-#if WITH_OPENMP
+#if WITH_OPENMP_TRADITIONAL
         do iblk = 1, nblocks
 
           if (hh_dst(iblk) >= np_rows) exit
@@ -1123,12 +1123,12 @@ subroutine tridiag_band_&
           endif
 
         enddo
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
       enddo ! istep
 
       ! Finish the last outstanding requests
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1151,7 +1151,7 @@ subroutine tridiag_band_&
       if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
@@ -1163,7 +1163,7 @@ subroutine tridiag_band_&
       if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef  WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")

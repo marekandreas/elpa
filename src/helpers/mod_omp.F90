@@ -45,7 +45,7 @@
 
 !> \brief Fortran module which exports the MPI functions to ELPA
 module elpa_omp
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    use omp_lib
 #endif
    use iso_c_binding

@@ -78,7 +78,7 @@ subroutine elpa_transpose_vectors_ss_&
 !-------------------------------------------------------------------------------
   use precision
   use elpa_abstract_impl
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   use omp_lib
 #endif
   use elpa_mpi
@@ -130,7 +130,7 @@ subroutine elpa_transpose_vectors_ss_&
 
   allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ))
   check_allocate("elpa_transpose_vectors_ss: aux", istat, errorMessage)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   !$omp parallel private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n)
 #endif
   do n = 0, lcm_s_t-1
@@ -146,7 +146,7 @@ subroutine elpa_transpose_vectors_ss_&
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
 !          k = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
           !$omp do
 #endif
           do lc=1,nvc
@@ -160,7 +160,7 @@ subroutine elpa_transpose_vectors_ss_&
           enddo
         endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
         !$omp barrier
         !$omp master
 #endif
@@ -181,7 +181,7 @@ subroutine elpa_transpose_vectors_ss_&
         call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
         !$omp end master
         !$omp barrier
 
@@ -201,7 +201,7 @@ subroutine elpa_transpose_vectors_ss_&
     endif
 
   enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   !$omp end parallel
 #endif
   deallocate(aux, stat=istat, errmsg=errorMessage)

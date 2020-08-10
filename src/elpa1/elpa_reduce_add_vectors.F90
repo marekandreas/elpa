@@ -75,7 +75,7 @@ subroutine elpa_reduce_add_vectors_&
 !-------------------------------------------------------------------------------
 
   use precision
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   use omp_lib
 #endif
   use elpa_mpi
@@ -132,7 +132,7 @@ subroutine elpa_reduce_add_vectors_&
   check_allocate("elpa_reduce_add: aux2", istat, errorMessage)
   aux1(:) = 0
   aux2(:) = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   !call omp_set_num_threads(nrThreads)
 
   !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl) num_threads(nrThreads)
@@ -147,7 +147,7 @@ subroutine elpa_reduce_add_vectors_&
     if (myps == ips) then
 
 !      k = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       !$omp do
 #endif
       do lc=1,nvc
@@ -161,7 +161,7 @@ subroutine elpa_reduce_add_vectors_&
       enddo
 
       k = nvc * auxstride
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       !$omp barrier
       !$omp master
 #endif
@@ -184,13 +184,13 @@ subroutine elpa_reduce_add_vectors_&
       if (k>0) aux2 = aux1
 #endif /* WITH_MPI */
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       !$omp end master
       !$omp barrier
 #endif
       if (mypt == ipt) then
 !        k = 0
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
         !$omp do
 #endif
         do lc=1,nvc
@@ -207,7 +207,7 @@ subroutine elpa_reduce_add_vectors_&
     endif
 
   enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   !$omp end parallel
 #endif
 

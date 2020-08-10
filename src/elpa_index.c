@@ -51,7 +51,7 @@
 
 #include "config.h"
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 #include <omp.h>
 #endif
 
@@ -250,7 +250,7 @@ static const elpa_index_int_entry_t int_entries[] = {
 
         INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL, PRINT_YES),
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
         INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         omp_threads_cardinality, omp_threads_enumerate, omp_threads_is_valid, NULL, PRINT_YES),
 #else
@@ -951,7 +951,7 @@ static int stripewidth_complex_is_valid(elpa_index_t index, int n, int new_value
 
 static int omp_threads_cardinality(elpa_index_t index) {
 	int max_threads;
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 	if (set_max_threads_glob == 0) {
 		max_threads_glob = omp_get_max_threads();
 		set_max_threads_glob = 1;
@@ -970,7 +970,7 @@ static int omp_threads_enumerate(elpa_index_t index, int i) {
 
 static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
         int max_threads;
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 	if (set_max_threads_glob == 0) {
 		max_threads_glob = omp_get_max_threads();
 		set_max_threads_glob = 1;

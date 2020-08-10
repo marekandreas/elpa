@@ -46,13 +46,13 @@ module compute_hh_trafo
   use elpa_mpi
   implicit none
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   public compute_hh_trafo_real_openmp_double
 #else
   public compute_hh_trafo_real_double
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   public compute_hh_trafo_complex_openmp_double
 #else
   public compute_hh_trafo_complex_double
@@ -60,7 +60,7 @@ module compute_hh_trafo
 
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   public compute_hh_trafo_real_openmp_single
 #else
   public compute_hh_trafo_real_single
@@ -68,7 +68,7 @@ module compute_hh_trafo
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   public compute_hh_trafo_complex_openmp_single
 #else
   public compute_hh_trafo_complex_single

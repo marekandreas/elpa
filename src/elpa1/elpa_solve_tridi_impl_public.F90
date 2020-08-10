@@ -92,7 +92,7 @@
   matrixRows = obj%local_nrows
   matrixCols = obj%local_ncols
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   ! store the number of OpenMP threads used in the calling function
   ! restore this at the end of ELPA 2 
   omp_threads_caller = omp_get_max_threads()
@@ -135,7 +135,7 @@
 
 
   ! restore original OpenMP settings
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   ! store the number of OpenMP threads used in the calling function
   ! restore this at the end of ELPA 2
   call omp_set_num_threads(omp_threads_caller)

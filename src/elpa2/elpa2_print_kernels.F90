@@ -88,7 +88,7 @@ program print_available_elpa2_kernels
    print *, "information if (and how) the kernels can be choosen at "
    print *, "runtime"
    print *
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    print *, " ELPA supports threads: yes"
 #else
    print *, " ELPA supports threads: no"

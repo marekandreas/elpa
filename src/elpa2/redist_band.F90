@@ -118,7 +118,7 @@ subroutine redist_band_&
    
    allocate(global_id(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
    check_allocate("redist_band: global_id", istat, errorMessage)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    allocate(global_id_tmp(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
    check_allocate("redist_band: global_id_tmp", istat, errorMessage)
 #endif
@@ -126,7 +126,7 @@ subroutine redist_band_&
    global_id(my_prow, my_pcol) = my_pe
 #ifdef WITH_MPI
    call obj%timer%start("mpi_communication")
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    global_id_tmp(:,:) = global_id(:,:)
    call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
                       int(communicator,kind=MPI_KIND), mpierr)

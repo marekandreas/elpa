@@ -145,7 +145,7 @@ subroutine tridiag_&
   integer(kind=c_intptr_t)                      :: a_offset
 
   integer(kind=ik), intent(in)                  :: max_threads
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   integer(kind=ik)                              :: my_thread, n_threads, n_iter
 #endif
 
@@ -170,7 +170,7 @@ subroutine tridiag_&
   ! pattern: u1,v1,u2,v2,u3,v3,....
   MATH_DATATYPE(kind=rck), allocatable         :: uv_stored_cols(:,:)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   MATH_DATATYPE(kind=rck), allocatable         :: ur_p(:,:), uc_p(:,:)
 #endif
 
@@ -355,7 +355,7 @@ subroutine tridiag_&
       
   endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
   call check_alloc("tridiag_&
   &MATH_DATATYPE ", "ur_p", istat, errorMessage)
@@ -363,7 +363,7 @@ subroutine tridiag_&
   allocate(uc_p(max_local_cols,0:max_threads-1), stat=istat, errmsg=errorMessage)
   call check_alloc("tridiag_&
   &MATH_DATATYPE ", "uc_p", istat, errorMessage)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
   tmp = 0
   v_row = 0
@@ -579,7 +579,7 @@ subroutine tridiag_&
        check_memcpy_cuda("tridiag: v_row_dev", successCUDA)
      endif ! useGU
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
      call obj%timer%start("OpenMP parallel")
 !$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end)
 
@@ -592,7 +592,7 @@ subroutine tridiag_&
      ! first calculate A*v part of (A + VU**T + UV**T)*v
      uc_p(1:l_cols,my_thread) = 0.
      ur_p(1:l_rows,my_thread) = 0.
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
      do i= 0, (istep-2)/tile_size
        l_col_beg = i*l_cols_per_tile+1
        l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
@@ -601,7 +601,7 @@ subroutine tridiag_&
          l_row_beg = j*l_rows_per_tile+1
          l_row_end = min(l_rows,(j+1)*l_rows_per_tile)
          if (l_row_end < l_row_beg) cycle
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
          if (mod(n_iter,n_threads) == my_thread) then
            if (wantDebug) call obj%timer%start("blas")
            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
@@ -628,7 +628,7 @@ subroutine tridiag_&
            if (wantDebug) call obj%timer%stop("blas")
          endif
          n_iter = n_iter+1
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
          ! multiplication by blocks is efficient only for CPU
          ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
@@ -658,7 +658,7 @@ subroutine tridiag_&
            if (wantDebug) call obj%timer%stop("blas")
          endif ! not useGPU
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
             enddo  ! j=0,i
           enddo  ! i=0,(istep-2)/tile_size
 
@@ -738,7 +738,7 @@ subroutine tridiag_&
             check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
           endif ! useGPU
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 !$OMP END PARALLEL
           call obj%timer%stop("OpenMP parallel")
 
@@ -746,7 +746,7 @@ subroutine tridiag_&
             u_col(1:l_cols) = u_col(1:l_cols) + uc_p(1:l_cols,i)
             u_row(1:l_rows) = u_row(1:l_rows) + ur_p(1:l_rows,i)
          enddo
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
          ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
          if (n_stored_vecs > 0) then
