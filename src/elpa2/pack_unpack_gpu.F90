@@ -42,63 +42,63 @@
 ! This file was written by A. Marek, MPCDF
 #endif
 
-    ! Pack a filled row group (i.e. an array of consecutive rows)
+! Pack a filled row group (i.e. an array of consecutive rows)
 
-    subroutine pack_row_group_&
-    &MATH_DATATYPE&
-    &_gpu_&
-    &PRECISION &
-    (row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
+subroutine pack_row_group_&
+&MATH_DATATYPE&
+&_gpu_&
+&PRECISION &
+(row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
                                        rows, n_offset, row_count)
-      use cuda_c_kernel
-      use cuda_functions
-      use precision
-      use iso_c_binding
-      implicit none
-      integer(kind=c_intptr_t)     :: row_group_dev, a_dev
+  use cuda_c_kernel
+  use cuda_functions
+  use precision
+  use iso_c_binding
+  implicit none
+  integer(kind=c_intptr_t)     :: row_group_dev, a_dev
 
-      integer(kind=ik), intent(in) :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev
-      integer(kind=ik), intent(in) :: n_offset, row_count
+  integer(kind=ik), intent(in) :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev
+  integer(kind=ik), intent(in) :: n_offset, row_count
 #if REALCASE == 1
-      real(kind=C_DATATYPE_KIND)   :: rows(:,:)
+  real(kind=C_DATATYPE_KIND)   :: rows(:,:)
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=C_DATATYPE_KIND) :: rows(:,:)
+  complex(kind=C_DATATYPE_KIND) :: rows(:,:)
 #endif
-      integer(kind=ik)             :: max_idx
-      logical                      :: successCUDA
+  integer(kind=ik)             :: max_idx
+  logical                      :: successCUDA
 
-      ! Use many blocks for higher GPU occupancy
-      max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
+  ! Use many blocks for higher GPU occupancy
+  max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
 
-      ! Use one kernel call to pack the entire row group
+  ! Use one kernel call to pack the entire row group
 
-!      call my_pack_kernel<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, a_dev, row_group_dev)
+!  call my_pack_kernel<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, a_dev, row_group_dev)
 
-      call launch_my_pack_gpu_kernel_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION &
-      (row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev)
+  call launch_my_pack_gpu_kernel_&
+  &MATH_DATATYPE&
+  &_&
+  &PRECISION &
+  (row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev)
 
-      ! Issue one single transfer call for all rows (device to host)
-!        rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
+  ! Issue one single transfer call for all rows (device to host)
+!    rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
 
-      successCUDA =  cuda_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
-      &PRECISION&
-      &_&
-      &MATH_DATATYPE&
-      & , cudaMemcpyDeviceToHost)
-      if (.not.(successCUDA)) then
-        print *,"pack_row_group_&
-        &MATH_DATATYPE&
-        &_gpu_&
-        &PRECISION&
-        &: error in cudaMemcpy"
-        stop 1
-      endif
+  successCUDA =  cuda_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
+  &PRECISION&
+  &_&
+  &MATH_DATATYPE&
+  & , cudaMemcpyDeviceToHost)
+  if (.not.(successCUDA)) then
+    print *,"pack_row_group_&
+    &MATH_DATATYPE&
+    &_gpu_&
+    &PRECISION&
+    &: error in cudaMemcpy"
+    stop 1
+  endif
 
-    end subroutine
+end subroutine
 
 
     ! Unpack a filled row group (i.e. an array of consecutive rows)
