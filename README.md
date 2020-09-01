@@ -15,7 +15,7 @@ With the release ELPA 2019.11.001 the legacy API has been deprecated and support
 status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)
 
 [![Code 
-coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](http://elpa.pages.mpcdf.de/elpa/coverage_summary)
+coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](https://elpa.pages.mpcdf.de/elpa/coverage_summary)
 
 ![License LGPL v3][license-badge]
 
