@@ -134,7 +134,7 @@ program test
 #ifdef HAVE_REDIRECT
    use test_redirect
 #endif
-#ifdef WITH_OPENMP_TRADITIONAL
+#ifdef WITH_OPENMP
    use omp_lib
 #endif
    use precision_for_tests
@@ -195,8 +195,8 @@ program test
                          do_test_frank_eigenvalues,  &
                          do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                          do_test_hermitian_multiply
-
-#ifdef WITH_OPENMP_TRADITIONAL
+   logical            :: ignoreError
+#ifdef WITH_OPENMP
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
 
@@ -204,6 +204,8 @@ program test
    TEST_INT_MPI_TYPE  :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
    character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
 #endif
+
+   ignoreError = .false.
 
    call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
    call setup_mpi(myid, nprocs)
@@ -301,6 +303,15 @@ program test
    call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, &
                          np_cols, layout, my_blacs_ctxt, my_prow, &
                          my_pcol)
+
+
+#if defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_ALL_LAYOUTS)
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                 np_rows, np_cols, &
@@ -553,7 +564,7 @@ program test
    endif
 
 
-#ifdef WITH_OPENMP_TRADITIONAL
+#ifdef WITH_OPENMP
    threads_caller = omp_get_max_threads()
    if (myid == 0) then
      print *,"The calling program uses ",threads_caller," threads"
@@ -635,7 +646,7 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
-#ifdef WITH_OPENMP_TRADITIONAL
+#ifdef WITH_OPENMP
    max_threads=omp_get_max_threads()
    call e%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
@@ -844,7 +855,7 @@ program test
 #endif
 
 
-#ifdef WITH_OPENMP_TRADITIONAL
+#ifdef WITH_OPENMP
      if (threads_caller .ne. omp_get_max_threads()) then
        if (myid .eq. 0) then
          print *, " ERROR! the number of OpenMP threads has not been restored correctly"

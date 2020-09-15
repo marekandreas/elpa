@@ -82,7 +82,7 @@ function elpa_solve_evp_&
 #ifdef REDISTRIBUTE_MATRIX
    use elpa_scalapack_interfaces
 #endif
-
+   use solve_tridi
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
@@ -158,6 +158,7 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: na, nev, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols,        &
                                                       mpi_comm_all, check_pd, i, error, matrixRows
+   real(kind=C_DATATYPE_KIND)                      :: thres_pd
 
 #ifdef REDISTRIBUTE_MATRIX
    integer(kind=ik)                                :: nblkInternal, matrixOrder
@@ -180,7 +181,7 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: global_index
 
    logical                                         :: reDistributeMatrix, doRedistributeMatrix
-   
+
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
@@ -191,7 +192,7 @@ function elpa_solve_evp_&
 
    matrixRows = obj%local_nrows
    matrixCols = obj%local_ncols
-   
+
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
    if (error .ne. ELPA_OK) then
      print *,"Problem getting option. Aborting..."
@@ -291,15 +292,15 @@ function elpa_solve_evp_&
    else
      useGPU = .false.
    endif
-   
+
    call obj%get("is_skewsymmetric",skewsymmetric,error)
    if (error .ne. ELPA_OK) then
      print *,"Problem getting option for skewsymmetric. Aborting..."
      stop
    endif
-    
+
    isSkewsymmetric = (skewsymmetric == 1)
-   
+
    call obj%timer%start("mpi_communication")
 
    call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
@@ -324,7 +325,7 @@ function elpa_solve_evp_&
    wantDebug = debug == 1
    do_useGPU = .false.
 
-   
+
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
 
@@ -375,7 +376,7 @@ function elpa_solve_evp_&
      do_useGPU_trans_ev = (gpu == 1)
    endif
    ! for elpa1 the easy thing is, that the individual phases of the algorithm
-   ! do not share any data on the GPU. 
+   ! do not share any data on the GPU.
 
 
    ! allocate a dummy q_intern, if eigenvectors should not be commputed and thus q is NOT present
@@ -446,7 +447,8 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
         q_real, l_rows,  &
 #endif
-        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+        nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, &
+                success, nrThreads)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -467,9 +469,19 @@ function elpa_solve_evp_&
        stop
      endif
      if (check_pd .eq. 1) then
+       call obj%get("thres_pd_&
+       &PRECISION&
+       &",thres_pd,error)
+       if (error .ne. ELPA_OK) then
+          print *,"Problem getting option for thres_pd_&
+          &PRECISION&
+          &. Aborting..."
+          stop
+       endif
+
        check_pd = 0
        do i = 1, na
-         if (ev(i) .gt. THRESHOLD) then
+         if (ev(i) .gt. thres_pd) then
            check_pd = check_pd + 1
          endif
        enddo
@@ -489,7 +501,7 @@ function elpa_solve_evp_&
 #endif
      if (isSkewsymmetric) then
      ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
-     ! This makes the eigenvectors complex. 
+     ! This makes the eigenvectors complex.
      ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
        q(1:matrixRows, matrixCols+1:2*matrixCols) = 0.0
        do i = 1, matrixRows
@@ -509,7 +521,7 @@ function elpa_solve_evp_&
             q(i,matrixCols+1:2*matrixCols) = -q(i,1:matrixCols)
             q(i,1:matrixCols) = 0
          end if
-       end do       
+       end do
      endif
 
      call obj%timer%start("back")
