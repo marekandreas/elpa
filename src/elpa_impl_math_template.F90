@@ -1340,6 +1340,8 @@
     subroutine elpa_solve_tridiagonal_&
                    &ELPA_IMPL_SUFFIX&
                    & (self, d, e, q, error)
+      use solve_tridi
+      implicit none
       class(elpa_impl_t)              :: self
       real(kind=C_REAL_DATATYPE)                  :: d(self%na), e(self%na)
 #ifdef USE_ASSUMED_SIZE

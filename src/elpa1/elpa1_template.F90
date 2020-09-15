@@ -82,7 +82,7 @@ function elpa_solve_evp_&
 #ifdef REDISTRIBUTE_MATRIX
    use elpa_scalapack_interfaces
 #endif
-
+   use solve_tridi
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
@@ -447,7 +447,8 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
         q_real, l_rows,  &
 #endif
-        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+        nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, &
+                success, nrThreads)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()

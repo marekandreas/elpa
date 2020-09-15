@@ -54,8 +54,10 @@
 
 #include "../general/sanity.F90"
 
+
 #if REALCASE == 1
 
+#if 0
     subroutine v_add_s_&
     &PRECISION&
     &(obj, v,n,s)
@@ -70,7 +72,9 @@
       v(:) = v(:) + s
     end subroutine v_add_s_&
     &PRECISION
+#endif
 
+#if 0
     subroutine distribute_global_column_&
     &PRECISION&
     &(obj, g_col, l_col, noff, nlen, my_prow, np_rows, nblk)
@@ -103,7 +107,9 @@
       enddo
     end subroutine distribute_global_column_&
     &PRECISION
+#endif
 
+#if 0
     subroutine solve_secular_equation_&
     &PRECISION&
     &(obj, n, i, d, z, delta, rho, dlam)
@@ -241,6 +247,7 @@
     end subroutine solve_secular_equation_&
     &PRECISION
     !-------------------------------------------------------------------------------
+#endif
 #endif
 
 #if REALCASE == 1
