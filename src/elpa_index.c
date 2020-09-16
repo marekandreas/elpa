@@ -110,9 +110,9 @@ static int min_tile_size_cardinality(elpa_index_t index);
 static int min_tile_size_enumerate(elpa_index_t index, int i);
 static int min_tile_size_is_valid(elpa_index_t index, int n, int new_value);
 
-static int valid_with_gpu(elpa_index_t index, int n, int new_value);
-static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value);
-static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value);
+static int valid_with_nvidia_gpu(elpa_index_t index, int n, int new_value);
+static int valid_with_nvidia_gpu_elpa1(elpa_index_t index, int n, int new_value);
+static int valid_with_nvidia_gpu_elpa2(elpa_index_t index, int n, int new_value);
 
 static int intermediate_bandwidth_cardinality(elpa_index_t index);
 static int intermediate_bandwidth_enumerate(elpa_index_t index, int i);
@@ -126,7 +126,7 @@ static int na_is_valid(elpa_index_t index, int n, int new_value);
 static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
 static int output_build_config_is_valid(elpa_index_t index, int n, int new_value);
-static int gpu_is_valid(elpa_index_t index, int n, int new_value);
+static int nvidia_gpu_is_valid(elpa_index_t index, int n, int new_value);
 static int skewsymmetric_is_valid(elpa_index_t index, int n, int new_value);
 
 static int is_positive(elpa_index_t index, int n, int new_value);
@@ -210,27 +210,27 @@ static const elpa_index_int_entry_t int_entries[] = {
                          number_of_matrix_layouts, matrix_layout_enumerate, matrix_layout_is_valid, elpa_matrix_layout_name, PRINT_YES), \
         INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
-        INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nvidia-gpu", "Use NVIDIA GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nvidia_gpu_is_valid, NULL, PRINT_YES),
         INT_ENTRY("is_skewsymmetric", "Matrix is skewsymmetic", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0,
                         cardinality_bool, enumerate_identity, skewsymmetric_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
-        INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
-        INT_ENTRY("gpu_solve_tridi", "Use GPU acceleration for ELPA solve tridi", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
-        INT_ENTRY("gpu_trans_ev", "Use GPU acceleration for ELPA1 trans ev", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
-        INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
+        INT_ENTRY("nvidia-gpu_tridiag", "Use NVIDIA GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa1, NULL, PRINT_YES),
+        INT_ENTRY("nvidia-gpu_solve_tridi", "Use NVIDIA GPU acceleration for ELPA solve tridi", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_nvidia_gpu, NULL, PRINT_YES),
+        INT_ENTRY("nvidia-gpu_trans_ev", "Use NVIDIA GPU acceleration for ELPA1 trans ev", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa1, NULL, PRINT_YES),
+        INT_ENTRY("nvidia-gpu_bandred", "Use NVIDIA GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa2, NULL, PRINT_YES),
 	//not yet ported to GPU
-        //INT_ENTRY("gpu_tridiag_band", "Use GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-        //                cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        INT_ENTRY("gpu_trans_ev_tridi_to_band", "Use GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
-        INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
+        //INT_ENTRY("nvidia-gpu_tridiag_band", "Use NVIDIA GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+        //                cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa2, NULL, PRINT_YES),
+        INT_ENTRY("nvidia-gpu_trans_ev_tridi_to_band", "Use NVIDIA GPU acceleration for ELPA2 trans_ev_tridi_to_band", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa2, NULL, PRINT_YES),
+        INT_ENTRY("nvidia-gpu_trans_ev_band_to_full", "Use NVIDIA GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
                         number_of_real_kernels, real_kernel_enumerate, real_kernel_is_valid, real_kernel_name, PRINT_YES),
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
@@ -704,17 +704,17 @@ static const char *real_kernel_name(int kernel) {
         }
 }
 
-#define REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
+#define REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_REAL_NVIDIA_GPU ? nvidia_gpu_is_active : 1
 
 static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
         if (solver == ELPA_SOLVER_1STAGE) {
                 return new_value == ELPA_2STAGE_REAL_DEFAULT;
         }
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        int nvidia_gpu_is_active = elpa_index_get_int_value(index, "nvidia-gpu", NULL);
         switch(new_value) {
-                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
                 default:
                         return 0;
         }
@@ -743,17 +743,17 @@ static const char *complex_kernel_name(int kernel) {
         }
 }
 
-#define COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
+#define COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_COMPLEX_NVIDIA_GPU ? nvidia_gpu_is_active : 1
 
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
         if (solver == ELPA_SOLVER_1STAGE) {
                 return new_value == ELPA_2STAGE_COMPLEX_DEFAULT;
         }
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        int nvidia_gpu_is_active = elpa_index_get_int_value(index, "nvidia-gpu", NULL);
         switch(new_value) {
-                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
                 default:
                         return 0;
         }
@@ -804,7 +804,7 @@ static int output_build_config_is_valid(elpa_index_t index, int n, int new_value
         return new_value == 0 || new_value == 1;
 }
 
-static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
+static int nvidia_gpu_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value == 0 || new_value == 1;
 }
 
@@ -984,9 +984,9 @@ static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 
-static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
-        if (gpu_is_active == 1) {
+static int valid_with_nvidia_gpu(elpa_index_t index, int n, int new_value) {
+        int nvidia_gpu_is_active = elpa_index_get_int_value(index, "nvidia-gpu", NULL);
+        if (nvidia_gpu_is_active == 1) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
         else {
@@ -994,10 +994,10 @@ static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
         }
 }
 
-static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
+static int valid_with_nvidia_gpu_elpa1(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
-        if ((solver == ELPA_SOLVER_1STAGE) && (gpu_is_active == 1)) {
+        int nvidia_gpu_is_active = elpa_index_get_int_value(index, "nvidia-gpu", NULL);
+        if ((solver == ELPA_SOLVER_1STAGE) && (nvidia_gpu_is_active == 1)) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
         else {
@@ -1005,10 +1005,10 @@ static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
         }
 }
 
-static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value) {
+static int valid_with_nvidia_gpu_elpa2(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
-        if ((solver == ELPA_SOLVER_2STAGE) && (gpu_is_active == 1)) {
+        int nvidia_gpu_is_active = elpa_index_get_int_value(index, "nvidia-gpu", NULL);
+        if ((solver == ELPA_SOLVER_2STAGE) && (nvidia_gpu_is_active == 1)) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
         else {

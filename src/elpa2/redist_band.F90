@@ -52,7 +52,7 @@ subroutine redist_band_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-           (obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+           (obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useNVIDIAGPU)
 
    use elpa_abstract_impl
    use elpa2_workload
@@ -64,7 +64,7 @@ subroutine redist_band_&
    implicit none
 
    class(elpa_abstract_impl_t), intent(inout)       :: obj
-   logical, intent(in)                              :: useGPU
+   logical, intent(in)                              :: useNVIDIAGPU
    integer(kind=ik), intent(in)                     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)  :: a_mat(lda, matrixCols)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(out) :: ab(:,:)

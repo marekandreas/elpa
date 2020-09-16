@@ -140,20 +140,20 @@ function elpa_solve_evp_&
    integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
    integer(kind=MPI_KIND)                          :: np_rowsMPI, np_colsMPI
 
-   logical                                         :: useGPU
+   logical                                         :: useNVIDIAGPU
    integer(kind=c_int)                             :: skewsymmetric
    logical                                         :: isSkewsymmetric
    logical                                         :: success
 
-   logical                                         :: do_useGPU, do_useGPU_tridiag, &
-                                                      do_useGPU_solve_tridi, do_useGPU_trans_ev
+   logical                                         :: do_useNVIDIAGPU, do_useNVIDIAGPU_tridiag, &
+                                                      do_useNVIDIAGPU_solve_tridi, do_useNVIDIAGPU_trans_ev
    integer(kind=ik)                                :: numberOfGPUDevices
 
    integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol
    integer(kind=MPI_KIND)                          :: mpierr, my_peMPI, n_pesMPI, my_prowMPI, my_pcolMPI
    real(kind=C_DATATYPE_KIND), allocatable         :: e(:)
    logical                                         :: wantDebug
-   integer(kind=c_int)                             :: istat, debug, gpu
+   integer(kind=c_int)                             :: istat, debug, NVIDIAgpu
    character(200)                                  :: errorMessage
    integer(kind=ik)                                :: na, nev, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols,        &
@@ -281,15 +281,15 @@ function elpa_solve_evp_&
      obj%eigenvalues_only = .true.
    endif
 
-   call obj%get("gpu",gpu,error)
+   call obj%get("nvidia-gpu",NVIDIAgpu,error)
    if (error .ne. ELPA_OK) then
      print *,"Problem getting option for gpu. Aborting..."
      stop
    endif
-   if (gpu .eq. 1) then
-     useGPU =.true.
+   if (NVIDIAgpu .eq. 1) then
+     useNVIDIAGPU =.true.
    else
-     useGPU = .false.
+     useNVIDIAGPU = .false.
    endif
    
    call obj%get("is_skewsymmetric",skewsymmetric,error)
@@ -322,14 +322,14 @@ function elpa_solve_evp_&
      stop
    endif
    wantDebug = debug == 1
-   do_useGPU = .false.
+   do_useNVIDIAGPU = .false.
 
    
-   if (useGPU) then
+   if (useNVIDIAGPU) then
      call obj%timer%start("check_for_gpu")
 
      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-       do_useGPU = .true.
+       do_useNVIDIAGPU = .true.
        ! set the neccessary parameters
        cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
        cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
@@ -345,34 +345,34 @@ function elpa_solve_evp_&
    endif
 
 
-   do_useGPU_tridiag = do_useGPU
-   do_useGPU_solve_tridi = do_useGPU
-   do_useGPU_trans_ev = do_useGPU
+   do_useNVIDIAGPU_tridiag = do_useNVIDIAGPU
+   do_useNVIDIAGPU_solve_tridi = do_useNVIDIAGPU
+   do_useNVIDIAGPU_trans_ev = do_useNVIDIAGPU
    ! only if we want (and can) use GPU in general, look what are the
    ! requirements for individual routines. Implicitly they are all set to 1, so
    ! unles specified otherwise by the user, GPU versions of all individual
    ! routines should be used
-   if(do_useGPU) then
-     call obj%get("gpu_tridiag", gpu, error)
+   if(do_useNVIDIAGPU) then
+     call obj%get("nvidia-gpu_tridiag", NVIDIAgpu, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option for gpu_tridiag. Aborting..."
        stop
      endif
-     do_useGPU_tridiag = (gpu == 1)
+     do_useNVIDIAGPU_tridiag = (NVIDIAgpu == 1)
 
-     call obj%get("gpu_solve_tridi", gpu, error)
+     call obj%get("nvidia-gpu_solve_tridi", NVIDIAgpu, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option for gpu_solve_tridi. Aborting..."
        stop
      endif
-     do_useGPU_solve_tridi = (gpu == 1)
+     do_useNVIDIAGPU_solve_tridi = (NVIDIAgpu == 1)
 
-     call obj%get("gpu_trans_ev", gpu, error)
+     call obj%get("nvidia-gpu_trans_ev", NVIDIAgpu, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option for gpu_trans_ev. Aborting..."
        stop
      endif
-     do_useGPU_trans_ev = (gpu == 1)
+     do_useNVIDIAGPU_trans_ev = (NVIDIAgpu == 1)
    endif
    ! for elpa1 the easy thing is, that the individual phases of the algorithm
    ! do not share any data on the GPU. 
@@ -418,7 +418,8 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads)
+     & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useNVIDIAGPU_tridiag, &
+     wantDebug, nrThreads)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -446,7 +447,7 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
         q_real, l_rows,  &
 #endif
-        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_solve_tridi, wantDebug, success, nrThreads)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -524,7 +525,7 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_trans_ev)
      if (isSkewsymmetric) then
        ! Transform imaginary part
        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
@@ -533,7 +534,7 @@ function elpa_solve_evp_&
              &_&
              &PRECISION&
              & (obj, na, nev, a, matrixRows, tau, q(1:matrixRows, matrixCols+1:2*matrixCols), matrixRows, nblk, matrixCols, &
-                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+                mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_trans_ev)
        endif
 
 #ifdef WITH_NVTX

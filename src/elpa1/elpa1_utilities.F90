@@ -80,7 +80,7 @@ module elpa1_utilities
 
      useGPU = .false.
 #if defined(HAVE_ENVIRONMENT_CHECKING)
-     call get_environment_variable("ELPA_USE_GPU",ELPA_USE_GPU_ENVIRONMENT)
+     call get_environment_variable("ELPA_USE_NVIDIA_GPU",ELPA_USE_GPU_ENVIRONMENT)
 #endif
      if (trim(ELPA_USE_GPU_ENVIRONMENT) .eq. "YES" .or. trim(ELPA_USE_GPU_ENVIRONMENT) .eq. "yes") then
        useGPU = .true.

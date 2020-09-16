@@ -273,7 +273,7 @@ int main(int argc, char** argv) {
 #endif
    assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "gpu", TEST_GPU, &error_elpa);
+   elpa_set(handle, "nvidia-gpu", TEST_GPU, &error_elpa);
    assert_elpa_ok(error_elpa);
 
 #if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)

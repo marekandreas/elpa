@@ -94,15 +94,15 @@ def set_scalapack_flags(instr, fc, g, m, o):
                     scalapackldflags="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "
                     scalapackfcflags="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP "
 
-        if (g == "with-gpu"):
+        if (g == "with-nvidia-gpu"):
             scalapackldflags += " -L\\$CUDA_HOME/lib64 -lcublas -I\\$CUDA_HOME/include"
             scalapackfcflags += " -I\\$CUDA_HOME/include"
 
-        if (instr == "sse" or (instr == "avx" and g != "with-gpu")):
+        if (instr == "sse" or (instr == "avx" and g != "with-nvidia-gpu")):
             scalapackldflags = " SCALAPACK_LDFLAGS=\\\""+scalapackldflags+"\\\""
             scalapackfcflags = " SCALAPACK_FCFLAGS=\\\""+scalapackfcflags+"\\\""
 
-        if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
+        if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-nvidia-gpu"):
             scalapackldflags = " SCALAPACK_LDFLAGS=\\\""+"\\"+scalapackldflags+"\\\""
             scalapackfcflags = " SCALAPACK_FCFLAGS=\\\""+"\\"+scalapackfcflags+"\\\""
 
@@ -346,7 +346,7 @@ ilp64_no_omp_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_NOOMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_NOOMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=no --disable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -364,7 +364,7 @@ ilp64_no_omp_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_OMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_OMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=no --enable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -388,7 +388,7 @@ ilp64_no_omp_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NOOMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NOOMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=yes --disable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -406,7 +406,7 @@ ilp64_no_omp_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -430,7 +430,7 @@ matrix_redistribute_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --disable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -448,7 +448,7 @@ matrix_redistribute_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -472,7 +472,7 @@ python_ci_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -486,7 +486,7 @@ python_ci_tests = [
     'SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP\\\" '
     'SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP\\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m 150 -n 50 -b 16 '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -496,13 +496,13 @@ python_ci_tests = [
     'SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\\" '
     'SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --enable-python --enable-python-tests "'
+    '--disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests "'
     '-d " CC=\\\\\\\"mpiicc\\\\\\\" CFLAGS=\\\\\\\"-O3 -xAVX\\\\\\\" '
     'FC=\\\\\\\"mpiifort\\\\\\\" FCFLAGS=\\\\\\\"-O3 -xAVX\\\\\\\" '
     'SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\\" '
     'SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --enable-python --enable-python-tests'
+    '--disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests'
     '" -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM  || { chmod u+rwX -R . ; exit 1 ; }',
     "\n",
 ]
@@ -597,8 +597,8 @@ band_to_full_blocking = {
 }
 
 gpu = {
-        "no-gpu" : "--disable-gpu",
-        "with-gpu" : "--enable-gpu --with-cuda-path=\\$CUDA_HOME/",
+        "no-nvidia-gpu" : "--disable-nvidia-gpu",
+        "with-nvidia-gpu" : "--enable-nvidia-gpu --with-cuda-path=\\$CUDA_HOME/",
 }
 
 
@@ -670,14 +670,14 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         continue
     if ( cc == "intel" and fc == "gnu"):
         continue
-    if (fc == "pgi" and g !="with-gpu"):
+    if (fc == "pgi" and g !="with-nvidia-gpu"):
         continue
     mpi_configure_flag = mpi[m]
     if (fc == "gnu" and  m == "mpi"):
         mpi_configure_flag += " --disable-mpi-module"
 
     # on power8 only test with mpi and gpu
-    if (instr == "power8" and (m == "nompi" or g == "no-gpu")):
+    if (instr == "power8" and (m == "nompi" or g == "no-nvidia-gpu")):
         continue
 
     # set C and FCFLAGS according to instruction set
@@ -693,7 +693,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         continue
     if (cov == "coverage" and instr == "knl"):
         continue
-    if (cov == "coverage" and g == "with-gpu"):
+    if (cov == "coverage" and g == "with-nvidia-gpu"):
         continue
     if (cov == "coverage"):
         CFLAGS +=" --coverage -O0"
@@ -711,7 +711,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         continue
     if (instr == "power8" and addr == "address-sanitize"):
         continue
-    if (g == "with-gpu" and addr == "address-sanitize"):
+    if (g == "with-nvidia-gpu" and addr == "address-sanitize"):
         continue
     if (instr == "knl" and addr == "address-sanitize"):
         continue
@@ -731,15 +731,15 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         continue
 
     #no gpu testing with openmp
-    if (g == "with-gpu" and o == "openmp"):
+    if (g == "with-nvidia-gpu" and o == "openmp"):
         continue
 
     #no gpu testing with intel C compiler (gcc needed)
-    if (g == "with-gpu" and cc == "intel"):
+    if (g == "with-nvidia-gpu" and cc == "intel"):
         continue
 
     #at the moment gpu testing only on AVX machines or minskys
-    if (g == "with-gpu" and (instr !="avx" and instr !="power8")):
+    if (g == "with-nvidia-gpu" and (instr !="avx" and instr !="power8")):
         continue
 
 #    #on KNL do only intel tests
@@ -766,7 +766,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
     # make non-master tests even faster
     # kicking out gpu is not good, but at the momemt we have a real problem with gpu runners
     # should be returned when solved
-    if (g == "with-gpu"):
+    if (g == "with-nvidia-gpu"):
         MasterOnly=True
     if (a == "no-assumed-size"):
         MasterOnly=True
@@ -786,12 +786,12 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
             print("    - coverage")
         if (instr == "avx2"):
             print("    - avx2-coverage")
-        if (g == "with-gpu"):
+        if (g == "with-nvidia-gpu"):
             print("    - gpu-coverage")
         if (instr == "avx512"):
             print("    - avx512-coverage")
     else:
-        if (g == "with-gpu"):
+        if (g == "with-nvidia-gpu"):
             if (instr == "power8"):
                print("    - minsky")
             else:
@@ -809,13 +809,13 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     memory = set_requested_memory(matrix_size[na])
 
-    if (g != "with-gpu"):
+    if (g != "with-nvidia-gpu"):
         gpuJob="no"
     else:
         gpuJob="yes"
 
     # do the configure
-    if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
+    if ( instr == "sse" or (instr == "avx" and g != "with-nvidia-gpu")):
         if ( instr == "sse"):
             print("   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
         print("   - ./ci_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
@@ -824,7 +824,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
 + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM -g " +gpuJob)
 
-    if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
+    if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-nvidia-gpu"):
         print("    - export REQUESTED_MEMORY="+memory)    
         print("\n")
 
@@ -845,7 +845,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     # do the test
 
-    if ( instr == "avx2" or instr == "avx512" or instr == "knl"  or g == "with-gpu"):
+    if ( instr == "avx2" or instr == "avx512" or instr == "knl"  or g == "with-nvidia-gpu"):
         if (o == "openmp"):
             if (cov == "no-coverage"):
                 openmp_threads=" 2 "

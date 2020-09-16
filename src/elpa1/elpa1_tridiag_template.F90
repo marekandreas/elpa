@@ -57,7 +57,7 @@
 #undef SAVE_MATR
 #ifdef DOUBLE_PRECISION_REAL
 #define SAVE_MATR(name, iteration) \
-call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_pcol, np_rows, np_cols, name, iteration)
+call prmat(na, useNVIDGPU, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_pcol, np_rows, np_cols, name, iteration)
 #else
 #define SAVE_MATR(name, iteration)
 #endif
@@ -96,7 +96,8 @@ subroutine tridiag_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
-  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, max_threads)
+  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useNVIDIAGPU, &
+   wantDebug, max_threads)
   use cuda_functions
   use iso_c_binding
   use precision
@@ -109,7 +110,7 @@ subroutine tridiag_&
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)    :: obj
   integer(kind=ik), intent(in)                  :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-  logical, intent(in)                           :: useGPU, wantDebug
+  logical, intent(in)                           :: useNVIDIAGPU, wantDebug
   integer(kind=c_int)                           :: skewsymmetric
   logical                                       :: isSkewsymmetric
 
@@ -194,7 +195,7 @@ subroutine tridiag_&
   endif
   isSkewsymmetric = (skewsymmetric == 1)
 
-  if(useGPU) then
+  if(useNVIDIAGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
@@ -287,7 +288,7 @@ subroutine tridiag_&
   call check_alloc("tridiag_&
        &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
 
-  if (useGPU) then
+  if (useNVIDIAGPU) then
     num = (max_local_rows+1) * size_of_datatype
     successCUDA = cuda_malloc_host(v_row_host,num)
     check_host_alloc_cuda("tridiag: v_row_host", successCUDA)
@@ -371,7 +372,7 @@ subroutine tridiag_&
   v_col = 0
   u_col = 0
 
-  if (useGPU) then
+  if (useNVIDIAGPU) then
      successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_datatype)
      check_alloc_cuda("tridiag: v_row_dev", successCUDA)
 
@@ -390,7 +391,7 @@ subroutine tridiag_&
 
      successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
      check_alloc_cuda("tridiag: vu_stored_rows_dev", successCUDA)
-  endif !useGPU
+  endif !useNVIDIAGPU
 
 
   d_vec(:) = 0
@@ -410,7 +411,7 @@ subroutine tridiag_&
   d_vec(na) = a_mat(l_rows,l_cols)
 #endif
 
-  if (useGPU) then
+  if (useNVIDIAGPU) then
     ! allocate memmory for matrix A on the device and than copy the matrix
 
     num = matrixRows * matrixCols * size_of_datatype
@@ -445,7 +446,7 @@ subroutine tridiag_&
       ! remaining elements to all procs in current column
 
       ! copy l_cols + 1 column of A to v_row
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         a_offset = l_cols * matrixRows * size_of_datatype
         ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, 
         ! (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
@@ -562,7 +563,7 @@ subroutine tridiag_&
     u_col(1:l_cols) = 0
     u_row(1:l_rows) = 0
     if (l_rows > 0 .and. l_cols> 0 ) then
-     if (useGPU) then
+     if (useNVIDIAGPU) then
        successCUDA = cuda_memset(u_col_dev, 0, l_cols * size_of_datatype)
        check_memcpy_cuda("tridiag: u_col_dev", successCUDA)
 
@@ -633,7 +634,7 @@ subroutine tridiag_&
          ! multiplication by blocks is efficient only for CPU
          ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
          ! CPU implementation) or by one large matrix Vector multiply
-         if (.not. useGPU) then
+         if (.not. useNVIDIAGPU) then
            if (wantDebug) call obj%timer%start("blas")
            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                        int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
@@ -656,13 +657,13 @@ subroutine tridiag_&
              endif
            endif
            if (wantDebug) call obj%timer%stop("blas")
-         endif ! not useGPU
+         endif ! not useNVIDIAGPU
 
 #endif /* WITH_OPENMP */
             enddo  ! j=0,i
           enddo  ! i=0,(istep-2)/tile_size
 
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             if (mat_vec_as_one_block) then
               ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
               ! this requires altering of the algorithm when later explicitly updating the matrix
@@ -736,7 +737,7 @@ subroutine tridiag_&
             successCUDA = cuda_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
                           u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
-          endif ! useGPU
+          endif ! useNVIDIAGPU
 
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
@@ -859,7 +860,7 @@ subroutine tridiag_&
         ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
         if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             successCUDA = cuda_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
                                       max_local_rows * 2 * max_stored_uv *          &
                                       size_of_datatype, cudaMemcpyHostToDevice)
@@ -881,7 +882,7 @@ subroutine tridiag_&
               cycle
 
 
-            if (useGPU) then
+            if (useNVIDIAGPU) then
               if(.not. mat_vec_as_one_block) then
                 ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                 ! we than use the same calls as for CPU version
@@ -896,7 +897,7 @@ subroutine tridiag_&
                                           size_of_datatype , matrixRows)
                 if (wantDebug) call obj%timer%stop("cublas")
               endif
-            else !useGPU
+            else !useNVIDIAGPU
               if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
                                    int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
@@ -907,10 +908,10 @@ subroutine tridiag_&
                                    int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
                                    ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
               if (wantDebug) call obj%timer%stop("blas")
-            endif !useGPU
+            endif !useNVIDIAGPU
           enddo
 
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             if(mat_vec_as_one_block) then
               !update whole (remaining) part of matrix, including tiles below diagonal
               !we can do that in one large cublas call
@@ -927,7 +928,7 @@ subroutine tridiag_&
         endif
 
         if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
              a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 
@@ -951,7 +952,7 @@ subroutine tridiag_&
           d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
 #endif
 
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
             !successCUDA = cuda_threadsynchronize()
             !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
@@ -970,14 +971,14 @@ subroutine tridiag_&
       if (my_pcol==pcol(2, nblk, np_cols)) then
         if (my_prow==prow(1, nblk, np_rows)) then
           ! We use last l_cols value of loop above
-          if(useGPU) then
+          if(useNVIDIAGPU) then
             successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
             vrl = aux3(1)
-          else !useGPU
+          else !useNVIDIAGPU
             vrl = a_mat(1,l_cols)
-          endif !useGPU
+          endif !useNVIDIAGPU
           call hh_transform_complex_&
                                     &PRECISION &
                                     (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
@@ -1008,14 +1009,14 @@ subroutine tridiag_&
 
 #endif /* WITH_MPI */
       if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
-        if(useGPU) then
+        if(useNVIDIAGPU) then
           successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 6", successCUDA)
           d_vec(1) = PRECISION_REAL(aux3(1))
-        else !useGPU
+        else !useNVIDIAGPU
           d_vec(1) = PRECISION_REAL(a_mat(1,1))
-        endif !useGPU
+        endif !useNVIDIAGPU
       endif
 
 #endif /* COMPLEXCASE == 1 */
@@ -1024,34 +1025,34 @@ subroutine tridiag_&
       ! Store e_vec(1)
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
-        if(useGPU) then
+        if(useNVIDIAGPU) then
           successCUDA = cuda_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
-        else !useGPU
+        else !useNVIDIAGPU
           e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
-        endif !useGPU
+        endif !useNVIDIAGPU
       endif
 
      ! Store d_vec(1)
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
-        if(useGPU) then
+        if(useNVIDIAGPU) then
           successCUDA = cuda_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
-        else !useGPU
+        else !useNVIDIAGPU
           if (isSkewsymmetric) then
             d_vec(1) = 0.0_rk
           else
             d_vec(1) = a_mat(1,1)
           endif
-        endif !useGPU
+        endif !useNVIDIAGPU
       endif
 #endif
 
       deallocate(tmp, stat=istat, errmsg=errorMessage)
       check_deallocate("tridiag: tmp", istat, errorMessage)
 
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         ! todo: should we leave a_mat on the device for further use?
         successCUDA = cuda_free(a_dev)
         check_dealloc_cuda("tridiag: a_dev 9", successCUDA)
@@ -1100,7 +1101,7 @@ subroutine tridiag_&
       deallocate(tmp_real, stat=istat, errmsg=errorMessage)
       check_deallocate("tridiag: tmp_real", istat, errorMessage)
 
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
         check_host_unregister_cuda("tridiag: a_mat", successCUDA)
 

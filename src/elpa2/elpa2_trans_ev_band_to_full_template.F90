@@ -56,7 +56,7 @@
     &_&
     &PRECISION &
     (obj, na, nqc, nblk, nbw, a_mat, lda, tmat, q_mat, &
-     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
+     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useNVIDIAGPU &
 #if REALCASE == 1
      ,useQr)
 #endif
@@ -106,7 +106,7 @@
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      logical, intent(in)                    :: useGPU
+      logical, intent(in)                    :: useNVIDIAGPU
 #if REALCASE == 1
      logical, intent(in)                     :: useQR
 #endif
@@ -151,7 +151,7 @@
                                                                    &MATH_DATATYPE
       integer(kind=ik)                       :: blocking_factor, error
 
-      if(useGPU) then
+      if(useNVIDIAGPU) then
         gpuString = "_gpu"
       else
         gpuString = ""
@@ -194,7 +194,7 @@
 
       cwy_blocking = blocking_factor * nbw
 
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         ! copy q_mat to q_dev
         successCUDA = cuda_malloc(q_dev,ldq*matrixCols*size_of_datatype)
         check_alloc_cuda("trans_ev_band_to_full: q_dev", successCUDA)
@@ -219,7 +219,7 @@
         check_host_alloc_cuda("trans_ev_band_to_full: hvm_host", successCUDA)
         call c_f_pointer(hvm_host, hvm, (/max_local_rows,cwy_blocking/))
 
-      else ! useGPU
+      else ! useNVIDIAGPU
         allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
         check_allocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
 
@@ -228,7 +228,7 @@
 
         allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
         check_allocate("trans_ev_band_to_full: hvm", istat, errorMessage)
-      endif !useGPU
+      endif !useNVIDIAGPU
 
       allocate(hvb(max_local_rows*cwy_blocking), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_band_to_full: hvb", istat, errorMessage)
@@ -236,7 +236,7 @@
       allocate(tmat_complete(cwy_blocking,cwy_blocking), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_band_to_full: tmat_complete", istat, errorMessage)
 
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         successCUDA = cuda_host_register(int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking * cwy_blocking * size_of_datatype,&
                       cudaHostRegisterDefault)
@@ -251,7 +251,7 @@
         check_allocate("trans_ev_band_to_full: t_tmp2", istat, errorMessage)
       endif
 
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         successCUDA = cuda_malloc(hvm_dev,max_local_rows*cwy_blocking*size_of_datatype)
         check_alloc_cuda("trans_ev_band_to_full: hvm_dev", successCUDA)
 
@@ -381,7 +381,7 @@
         ! Q = Q - V * T**T * V**T * Q
 
         if (l_rows>0) then
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             successCUDA = cuda_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
                           max_local_rows*cwy_blocking*size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev_band_to_full: hvm -> hvm_dev", successCUDA)
@@ -406,7 +406,7 @@
                                 hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, &
                                 int(n_cols,kind=BLAS_KIND))
             call obj%timer%stop("blas")
-          endif ! useGPU
+          endif ! useNVIDIAGPU
         else ! l_rows>0
           tmp1(1:l_cols*n_cols) = 0.0_rck
         endif ! l_rows>0
@@ -418,7 +418,7 @@
         call obj%timer%stop("mpi_communication")
 
         if (l_rows>0) then
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             successCUDA = cuda_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                           l_cols*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev_band_to_full: tmp2 -> tmp_dev", successCUDA)
@@ -443,12 +443,12 @@
                                 int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND), ONE, &
                                 q_mat, int(ldq,kind=BLAS_KIND))
             call obj%timer%stop("blas")
-          endif ! useGPU
+          endif ! useNVIDIAGPU
 
         endif
 #else /* WITH_MPI */
         if (l_rows>0) then
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             successCUDA = cuda_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                           cwy_blocking*cwy_blocking*size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev_band_to_full: tmat_complete -> tmat_dev", successCUDA)
@@ -470,7 +470,7 @@
                                 -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, &
                                 int(ldq,kind=BLAS_KIND))
             call obj%timer%stop("blas")
-          endif ! useGPU
+          endif ! useNVIDIAGPU
         endif
 #endif /* WITH_MPI */
 
@@ -479,7 +479,7 @@
       deallocate(hvb, stat=istat, errmsg=errorMessage)
       check_deallocate("trans_ev_band_to_full: hvb", istat, errorMessage)
 
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         successCUDA = cuda_free(hvm_dev)
         check_dealloc_cuda("trans_ev_band_to_full: hvm_dev", successCUDA)
 
@@ -514,7 +514,7 @@
 
         successCUDA = cuda_host_unregister(int(loc(tmat_complete),kind=c_intptr_t))
         check_host_unregister_cuda("trans_ev_band_to_full: tmat_complete", successCUDA)
-      else ! useGPU
+      else ! useNVIDIAGPU
         deallocate(tmp1, stat=istat, errmsg=errorMessage)
         check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
 
@@ -523,7 +523,7 @@
 
         deallocate(hvm, stat=istat, errmsg=errorMessage)
         check_deallocate("trans_ev_band_to_full: hvm", istat, errorMessage)
-      endif ! useGPU
+      endif ! useNVIDIAGPU
 
       deallocate(tmat_complete, stat=istat, errmsg=errorMessage)
       check_deallocate("trans_ev_band_to_full: tmat_complete", istat, errorMessage)

@@ -147,7 +147,7 @@ for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
             endifs += 1
 
         if (g == 1):
-            print("if WITH_GPU_VERSION")
+            print("if WITH_NVIDIA_GPU_VERSION")
             endifs += 1
 
         if (lay == "all_layouts"):

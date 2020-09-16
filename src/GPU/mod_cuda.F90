@@ -564,7 +564,7 @@ module cuda_functions
 
      integer(kind=C_intptr_t)                  :: handle
      logical                                   :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
      success = cublas_create_c(handle) /= 0
 #else
      success = .true.
@@ -577,7 +577,7 @@ module cuda_functions
 
      integer(kind=C_intptr_t)                  :: handle
      logical                                   :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
      success = cublas_destroy_c(handle) /= 0
 #else
      success = .true.
@@ -591,7 +591,7 @@ module cuda_functions
 
       integer(kind=ik), intent(in)  :: n
       logical                       :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_setdevice_c(int(n,kind=c_int)) /= 0
 #else
       success = .true.
@@ -605,7 +605,7 @@ module cuda_functions
       integer(kind=ik)     :: n
       integer(kind=c_int)  :: nCasted
       logical              :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_getdevicecount_c(nCasted) /=0
       n = int(nCasted)
 #else
@@ -620,7 +620,7 @@ module cuda_functions
 
       implicit none
       logical :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_devicesynchronize_c() /=0
 #else
       success = .true.
@@ -636,7 +636,7 @@ module cuda_functions
      integer(kind=C_intptr_t)                  :: a
      integer(kind=c_intptr_t), intent(in)        :: width_height
      logical                                   :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
      success = cuda_malloc_c(a, width_height) /= 0
 #else
      success = .true.
@@ -650,7 +650,7 @@ module cuda_functions
      implicit none
      integer(kind=C_intptr_T) :: a
      logical                  :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
      success = cuda_free_c(a) /= 0
 #else
      success = .true.
@@ -665,7 +665,7 @@ module cuda_functions
       type(c_ptr)                    :: a
      integer(kind=c_intptr_t), intent(in)        :: width_height
      logical                                   :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
      success = cuda_malloc_host_c(a, width_height) /= 0
 #else
      success = .true.
@@ -679,7 +679,7 @@ module cuda_functions
      implicit none
       type(c_ptr), value                    :: a
      logical                  :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
      success = cuda_free_host_c(a) /= 0
 #else
      success = .true.
@@ -698,7 +698,7 @@ module cuda_functions
    integer(kind=C_INT)                     :: istat
 
    logical :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
    success= cuda_memset_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t)) /=0
 #else
    success = .true.
@@ -711,7 +711,7 @@ module cuda_functions
    use iso_c_binding
    implicit none
    integer(kind=ik) :: flag
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
    flag = int(cuda_memcpyDeviceToDevice_c())
 #else
    flag = 0
@@ -723,7 +723,7 @@ module cuda_functions
    use precision
    implicit none
    integer(kind=ik) :: flag
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
    flag = int(cuda_memcpyHostToDevice_c())
 #else
    flag = 0
@@ -735,7 +735,7 @@ module cuda_functions
    use precision
    implicit none
    integer(kind=ik) :: flag
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
    flag = int( cuda_memcpyDeviceToHost_c())
 #else
    flag = 0
@@ -747,7 +747,7 @@ module cuda_functions
    use precision
    implicit none
    integer(kind=ik) :: flag
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
    flag = int(cuda_hostRegisterDefault_c())
 #else
    flag = 0
@@ -759,7 +759,7 @@ module cuda_functions
    use precision
    implicit none
    integer(kind=ik) :: flag
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
    flag = int(cuda_hostRegisterPortable_c())
 #else
    flag = 0
@@ -771,7 +771,7 @@ module cuda_functions
    use precision
    implicit none
    integer(kind=ik) :: flag
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
    flag = int(cuda_hostRegisterMapped_c())
 #else
    flag = 0
@@ -789,7 +789,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
 
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_memcpy_c(dst, src, size, dir) /= 0
 #else
         success = .true.
@@ -810,7 +810,7 @@ module cuda_functions
       integer(kind=c_intptr_t), intent(in) :: height
       integer(kind=C_INT), intent(in)    :: dir
       logical                            :: success
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_memcpy2d_c(dst, dpitch, src, spitch, width, height , dir) /= 0
 #else
       success = .true.
@@ -827,7 +827,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in)       :: flag
       logical :: success
 
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_host_register_c(a, size, flag) /= 0
 #else
         success = .true.
@@ -842,7 +842,7 @@ module cuda_functions
       integer(kind=C_intptr_t)              :: a
       logical :: success
 
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_host_unregister_c(a) /= 0
 #else
         success = .true.
@@ -859,7 +859,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dgemm_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine cublas_dgemm
@@ -873,7 +873,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_sgemm_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine cublas_sgemm
@@ -888,7 +888,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dtrmm_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_dtrmm
@@ -903,7 +903,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_strmm_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_strmm
@@ -918,7 +918,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX)          :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_zgemm_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine cublas_zgemm
@@ -933,7 +933,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)           :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_cgemm_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine cublas_cgemm
@@ -948,7 +948,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)          :: alpha
       integer(kind=C_intptr_T)        :: a, b
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ztrmm_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ztrmm
@@ -963,7 +963,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)           :: alpha
       integer(kind=C_intptr_T)        :: a, b
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ctrmm_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ctrmm
@@ -977,7 +977,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine cublas_dgemv
@@ -991,7 +991,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_sgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine cublas_sgemv
@@ -1005,7 +1005,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_zgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine cublas_zgemv
@@ -1019,7 +1019,7 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_cgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine cublas_cgemv
@@ -1034,7 +1034,7 @@ module cuda_functions
 !       integer(kind=C_INT), intent(in) :: lda,incx,incy
 !       real(kind=C_DOUBLE)             :: alpha,beta
 !       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_GPU_VERSION
+! #ifdef WITH_NVIDIA_GPU_VERSION
 !       call cublas_dsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine cublas_dsymv
@@ -1048,7 +1048,7 @@ module cuda_functions
 !       integer(kind=C_INT), intent(in) :: lda,incx,incy
 !       real(kind=C_FLOAT)              :: alpha,beta
 !       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_GPU_VERSION
+! #ifdef WITH_NVIDIA_GPU_VERSION
 !       call cublas_ssymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine cublas_ssymv
@@ -1062,7 +1062,7 @@ module cuda_functions
 !       integer(kind=C_INT), intent(in) :: lda,incx,incy
 !       complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
 !       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_GPU_VERSION
+! #ifdef WITH_NVIDIA_GPU_VERSION
 ! !       call cublas_zsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine cublas_zsymv
@@ -1076,7 +1076,7 @@ module cuda_functions
 !       integer(kind=C_INT), intent(in) :: lda,incx,incy
 !       complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
 !       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_GPU_VERSION
+! #ifdef WITH_NVIDIA_GPU_VERSION
 ! !       call cublas_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine cublas_csymv

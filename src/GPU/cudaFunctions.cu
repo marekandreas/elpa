@@ -69,7 +69,7 @@
 #define debugmessage(x, ...)
 #endif
 
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
 extern "C" {
 
     int cublasCreateFromC(intptr_t *cublas_handle) {
@@ -476,4 +476,4 @@ extern "C" {
 
 
 }
-#endif /* WITH_GPU_VERSION */
+#endif /* WITH_NVIDIA_GPU_VERSION */

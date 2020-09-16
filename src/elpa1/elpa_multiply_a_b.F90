@@ -95,8 +95,8 @@
       character(20)                 :: gpuString
       logical                       :: success
       logical                       :: successCUDA
-      logical                       :: useGPU
-      integer(kind=c_int)           :: gpu, numGPU
+      logical                       :: useNVIDIAGPU
+      integer(kind=c_int)           :: NVIDIAgpu, numGPU
       integer(kind=ik)              :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
       integer(kind=ik)              :: nblk, matrixRows, matrixCols, error
       integer(kind=c_intptr_t)      :: aux_dev, b_dev, tmp1_dev
@@ -111,15 +111,15 @@
       success = .true.
 
       ! GPU settings
-      call obj%get("gpu", gpu,error)
+      call obj%get("nvidia-gpu", NVIDIAgpu,error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu. Aborting..."
         stop
       endif
 
-      useGPU = (gpu == 1)
+      useNVIDIAGPU = (NVIDIAgpu == 1)
 
-      if(useGPU) then
+      if(useNVIDIAGPU) then
         gpuString = "_gpu"
       else
         gpuString = ""
@@ -176,7 +176,7 @@
          nblk_mult = (63/nblk+1)*nblk
       endif
 
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         call obj%timer%start("check_for_gpu")
         if (check_for_gpu(myid,numGPU)) then
           ! set the neccessary parameters
@@ -223,10 +223,10 @@
 
         successCUDA = cuda_malloc(tmp1_dev,num)
         check_alloc_cuda("elpa_mult_at_b: tmp1_dev", successCUDA)
-      else ! useGPU
+      else ! useNVIDIAGPU
         allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
         check_allocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
-      endif ! useGPU
+      endif ! useNVIDIAGPU
 
       allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_mult_at_b: aux_bc", istat, errorMessage)
@@ -346,7 +346,7 @@
         &MATH_DATATYPE ", "tmp1", istat, errorMessage)
 
               if (lrs<=lre) then
-                if (useGPU) then
+                if (useNVIDIAGPU) then
                   num = l_rows*nblk_mult*size_of_datatype
                   successCUDA = cuda_memcpy(aux_dev, int(loc(aux_mat),kind=c_intptr_t), &
                                 num, cudaMemcpyHostToDevice)
@@ -365,7 +365,7 @@
                   successCUDA = cuda_memcpy(int(loc(tmp1),kind=c_intptr_t), &
                                 tmp1_dev, num, cudaMemcpyDeviceToHost)
                   check_memcpy_cuda("elpa_mult_at_b: tmp1_dev to tmp1", successCUDA)
-                else ! useGPU
+                else ! useNVIDIAGPU
                   call obj%timer%start("blas")
                   call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
                                     int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), &
@@ -373,7 +373,7 @@
                                     b(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, tmp1, &
                                     int(nstor,kind=BLAS_KIND))
                   call obj%timer%stop("blas")
-                endif ! useGPU
+                endif ! useNVIDIAGPU
               else
                 tmp1 = 0
               endif
@@ -405,7 +405,7 @@
         enddo
       enddo
 
-      if (useGPU) then
+      if (useNVIDIAGPU) then
         successCUDA = cuda_free(b_dev)
         check_dealloc_cuda("elpa_multiply_a_b: b_dev", successCUDA)
 
@@ -426,10 +426,10 @@
 
         successCUDA = cuda_free(tmp1_dev)
         check_dealloc_cuda("elpa_multiply_a_b: tmp1_dev", successCUDA)
-      else ! useGPU
+      else ! useNVIDIAGPU
         deallocate(aux_mat, stat=istat, errmsg=errorMessage)
         check_deallocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
-      endif ! useGPU
+      endif ! useNVIDIAGPU
 
       deallocate(aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
       check_deallocate("elpa_mult_at_b: aux_bc, lrs_save, lre_save", istat, errorMessage)

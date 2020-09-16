@@ -56,7 +56,7 @@ subroutine tridiag_band_&
   &_&
   &PRECISION &
   (obj, na, nb, nblk, a_mat, lda, d, e, matrixCols, &
-  hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug, nrThreads)
+  hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useNVIDIAGPU, wantDebug, nrThreads)
   !-------------------------------------------------------------------------------
   ! tridiag_band_real/complex:
   ! Reduces a real symmetric band matrix to tridiagonal form
@@ -97,7 +97,7 @@ subroutine tridiag_band_&
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)   :: obj
-  logical, intent(in)                          :: useGPU, wantDebug
+  logical, intent(in)                          :: useNVIDIAGPU, wantDebug
   integer(kind=c_int)                          :: skewsymmetric
   logical                                      :: isSkewsymmetric
   integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
@@ -150,7 +150,7 @@ subroutine tridiag_band_&
   endif
   isSkewsymmetric = (skewsymmetric == 1)
   
-  if(useGPU) then
+  if(useNVIDIAGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
@@ -236,7 +236,7 @@ subroutine tridiag_band_&
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useNVIDIAGPU)
 
   ! Calculate the workload for each sweep in the back transformation
   ! and the space requirements to hold the HH vectors

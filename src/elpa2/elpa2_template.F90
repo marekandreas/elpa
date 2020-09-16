@@ -92,7 +92,7 @@
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
-   logical                                                            :: useGPU
+   logical                                                            :: useNVIDIAGPU
    logical                                                            :: isSkewsymmetric
 #if REALCASE == 1
    logical                                                            :: useQR
@@ -156,13 +156,14 @@
    integer(kind=c_int)                                                :: i
    logical                                                            :: success, successCUDA
    logical                                                            :: wantDebug
-   integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
+   integer(kind=c_int)                                                :: istat, NVIDIAgpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage
-   logical                                                            :: do_useGPU, do_useGPU_bandred, &
-                                                                         do_useGPU_tridiag_band, do_useGPU_solve_tridi, &
-                                                                         do_useGPU_trans_ev_tridi_to_band, &
-                                                                         do_useGPU_trans_ev_band_to_full
-   integer(kind=c_int)                                                :: numberOfGPUDevices
+   logical                                                            :: do_useNVIDIAGPU, do_useNVIDIAGPU_bandred, &
+                                                                         do_useNVIDIAGPU_tridiag_band, &
+                                                                         do_useNVIDIAGPU_solve_tridi, &
+                                                                         do_useNVIDIAGPU_trans_ev_tridi_to_band, &
+                                                                         do_useNVIDIAGPU_trans_ev_band_to_full
+   integer(kind=c_int)                                                :: numberOfNVIDIAGPUDevices
    integer(kind=c_intptr_t), parameter                                :: size_of_datatype = size_of_&
                                                                                             &PRECISION&
                                                                                             &_&
@@ -189,7 +190,7 @@
 
     logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
-    logical                                                           :: good_nblk_gpu
+    logical                                                           :: good_nblk_nvidia_gpu
 
     integer(kind=ik)                                                  :: nrThreads
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
@@ -199,18 +200,18 @@
    logical                                                            :: reDistributeMatrix, doRedistributeMatrix
 
 #if REALCASE == 1
-#undef GPU_KERNEL
+#undef NVIDIA_GPU_KERNEL
 #undef GENERIC_KERNEL
 #undef KERNEL_STRING
-#define GPU_KERNEL ELPA_2STAGE_REAL_GPU
+#define NVIDIA_GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
 #define GENERIC_KERNEL ELPA_2STAGE_REAL_GENERIC
 #define KERNEL_STRING "real_kernel"
 #endif
 #if COMPLEXCASE == 1
-#undef GPU_KERNEL
+#undef NVIDIA_GPU_KERNEL
 #undef GENERIC_KERNEL
 #undef KERNEL_STRING
-#define GPU_KERNEL ELPA_2STAGE_COMPLEX_GPU
+#define NVIDIA_GPU_KERNEL ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #define GENERIC_KERNEL ELPA_2STAGE_COMPLEX_GENERIC
 #define KERNEL_STRING "complex_kernel"
 #endif
@@ -346,20 +347,20 @@
     wantDebug = debug == 1
 
     ! GPU settings
-    call obj%get("gpu", gpu,error)
+    call obj%get("nvidia-gpu", NVIDIAgpu,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option gpu settings. Aborting..."
       stop
     endif
 
-    useGPU = (gpu == 1)
+    useNVIDIAGPU = (NVIDIAgpu == 1)
 
-    do_useGPU = .false.
-    if (useGPU) then
+    do_useNVIDIAGPU = .false.
+    if (useNVIDIAGPU) then
       call obj%timer%start("check_for_gpu")
-      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+      if (check_for_gpu(my_pe,numberOfNVIDIAGPUDevices, wantDebug=wantDebug)) then
 
-         do_useGPU = .true.
+         do_useNVIDIAGPU = .true.
 
          ! set the neccessary parameters
          cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
@@ -379,30 +380,30 @@
       write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
       write(error_unit,*) "Choose a smaller block size if possible."
 
-      do_useGPU = .false.
+      do_useNVIDIAGPU = .false.
 
-      if (kernel == GPU_KERNEL) then
+      if (kernel == NVIDIA_GPU_KERNEL) then
         kernel = GENERIC_KERNEL
       endif
     endif
 
-    do_useGPU_bandred = do_useGPU
-    do_useGPU_tridiag_band = .false.  ! not yet ported
-    do_useGPU_solve_tridi = do_useGPU
-    do_useGPU_trans_ev_tridi_to_band = do_useGPU
-    do_useGPU_trans_ev_band_to_full = do_useGPU
+    do_useNVIDIAGPU_bandred = do_useNVIDIAGPU
+    do_useNVIDIAGPU_tridiag_band = .false.  ! not yet ported
+    do_useNVIDIAGPU_solve_tridi = do_useNVIDIAGPU
+    do_useNVIDIAGPU_trans_ev_tridi_to_band = do_useNVIDIAGPU
+    do_useNVIDIAGPU_trans_ev_band_to_full = do_useNVIDIAGPU
 
     ! only if we want (and can) use GPU in general, look what are the
     ! requirements for individual routines. Implicitly they are all set to 1, so
     ! unles specified otherwise by the user, GPU versions of all individual
     ! routines should be used
-    if(do_useGPU) then
-      call obj%get("gpu_bandred", gpu, error)
+    if(do_useNVIDIAGPU) then
+      call obj%get("nvidia-gpu_bandred", NVIDIAgpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option gpu_bandred settings. Aborting..."
         stop
       endif
-      do_useGPU_bandred = (gpu == 1)
+      do_useNVIDIAGPU_bandred = (NVIDIAgpu == 1)
 
       ! not yet ported
       !call obj%get("gpu_tridiag_band", gpu, error)
@@ -412,49 +413,49 @@
       !endif
       !do_useGPU_tridiag_band = (gpu == 1)
 
-      call obj%get("gpu_solve_tridi", gpu, error)
+      call obj%get("nvidia-gpu_solve_tridi", NVIDIAgpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_solve_tridi settings. Aborting..."
         stop
       endif
-      do_useGPU_solve_tridi = (gpu == 1)
+      do_useNVIDIAGPU_solve_tridi = (NVIDIAgpu == 1)
 
-      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
+      call obj%get("nvidia-gpu_trans_ev_tridi_to_band", NVIDIAgpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_trans_ev_tridi_to_band settings. Aborting..."
         stop
       endif
-      do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
+      do_useNVIDIAGPU_trans_ev_tridi_to_band = (NVIDIAgpu == 1)
  
-      call obj%get("gpu_trans_ev_band_to_full", gpu, error)
+      call obj%get("nvidia-gpu_trans_ev_band_to_full", NVIDIAgpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
         stop
       endif
-      do_useGPU_trans_ev_band_to_full = (gpu == 1)
+      do_useNVIDIAGPU_trans_ev_band_to_full = (NVIDIAgpu == 1)
     endif
 
     ! check consistency between request for GPUs and defined kernel
-    if (do_useGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. GPU_KERNEL) then
+    if (do_useNVIDIAGPU_trans_ev_tridi_to_band) then
+      if (kernel .ne. NVIDIA_GPU_KERNEL) then
         write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
         write(error_unit,*) "The compute kernel will be executed on CPUs!"
-        do_useGPU_trans_ev_tridi_to_band = .false.
+        do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
       else
-        good_nblk_gpu = .false.
+        good_nblk_nvidia_gpu = .false.
 
         ! Accepted values are 2,4,8,16,...,512
         do i = 1,10
            if (nblk == 2**i) then
-              good_nblk_gpu = .true.
+              good_nblk_nvidia_gpu = .true.
               exit
            endif
         enddo
 
-        if (.not. good_nblk_gpu) then
+        if (.not. good_nblk_nvidia_gpu) then
            write(error_unit,*) "ELPA: Warning, CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
            write(error_unit,*) "The compute kernel will be executed on CPUs!"
-           do_useGPU_trans_ev_tridi_to_band = .false.
+           do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
            kernel = GENERIC_KERNEL
         endif
       endif
@@ -462,14 +463,14 @@
 
     ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band sould be
     ! finally consistent
-    if (do_useGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. GPU_KERNEL) then
+    if (do_useNVIDIAGPU_trans_ev_tridi_to_band) then
+      if (kernel .ne. NVIDIA_GPU_KERNEL) then
         ! this should never happen, checking as an assert
         write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
         stop
       endif
     else
-      if (kernel .eq. GPU_KERNEL) then
+      if (kernel .eq. NVIDIA_GPU_KERNEL) then
         ! combination not allowed
         write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
                             &is defined as the GPU kernel!  Aborting..."
@@ -730,7 +731,7 @@
       &PRECISION &
       (obj, na, a, &
       matrixRows, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-      wantDebug, do_useGPU_bandred, success, &
+      wantDebug, do_useNVIDIAGPU_bandred, success, &
 #if REALCASE == 1
       useQRActual, &
 #endif
@@ -757,7 +758,7 @@
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-       do_useGPU_tridiag_band, wantDebug, nrThreads)
+       do_useNVIDIAGPU_tridiag_band, wantDebug, nrThreads)
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
@@ -796,7 +797,7 @@
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
 #endif
-       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_solve_tridi, wantDebug, success, nrThreads)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("solve")
 #endif
@@ -883,7 +884,7 @@
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
-       matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+       matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useNVIDIAGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_band")
@@ -911,7 +912,7 @@
        &PRECISION &
        (obj, na, nev, nblk, nbw, a, &
        matrixRows, tmat, q,  &
-       matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
+       matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_trans_ev_band_to_full &
 #if REALCASE == 1
        , useQRActual  &
 #endif
@@ -931,7 +932,7 @@
            &_&
            &PRECISION &
            (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
-           matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+           matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useNVIDIAGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
          endif
               ! We can now deallocate the stored householder vectors
@@ -951,7 +952,7 @@
          &PRECISION &
          (obj, na, nev, nblk, nbw, a, &
          matrixRows, tmat, q(1:matrixRows, matrixCols+1:2*matrixCols),  &
-         matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
+         matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_trans_ev_band_to_full &
 #if REALCASE == 1
          , useQRActual  &
 #endif
@@ -1035,4 +1036,4 @@
    &PRECISION&
    &_impl
 
-! vim: syntax=fortran
+ ! vim: syntax=fortran

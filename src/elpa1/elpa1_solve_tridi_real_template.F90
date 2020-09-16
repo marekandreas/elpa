@@ -57,7 +57,7 @@
 subroutine solve_tridi_&
 &PRECISION_AND_SUFFIX &
     ( obj, na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
-                                           mpi_comm_cols, useGPU, wantDebug, success, max_threads )
+                                           mpi_comm_cols, useNVIDIAGPU, wantDebug, success, max_threads )
 
       use precision
       use elpa_abstract_impl
@@ -71,7 +71,7 @@ subroutine solve_tridi_&
 #else
       real(kind=REAL_DATATYPE), intent(inout)    :: q(ldq,matrixCols)
 #endif
-      logical, intent(in)                        :: useGPU, wantDebug
+      logical, intent(in)                        :: useNVIDIAGPU, wantDebug
       logical, intent(out)                       :: success
 
       integer(kind=ik)                           :: i, j, n, np, nc, nev1, l_cols, l_rows
@@ -84,7 +84,7 @@ subroutine solve_tridi_&
       character(20)                              :: gpuString
       integer(kind=ik), intent(in)               :: max_threads
 
-      if(useGPU) then
+      if(useNVIDIAGPU) then
         gpuString = "_gpu"
       else
         gpuString = ""
@@ -156,7 +156,7 @@ subroutine solve_tridi_&
       call solve_tridi_col_&
            &PRECISION_AND_SUFFIX &
              (obj, l_cols, nev1, nc, d(nc+1), e(nc+1), q, ldq, nblk,  &
-                        matrixCols, mpi_comm_rows, useGPU, wantDebug, success, max_threads)
+                        matrixCols, mpi_comm_rows, useNVIDIAGPU, wantDebug, success, max_threads)
       if (.not.(success)) then
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
         return
@@ -216,7 +216,7 @@ subroutine solve_tridi_&
       ! Recursively merge sub problems
       call merge_recursive_&
            &PRECISION &
-           (obj, 0, np_cols, useGPU, wantDebug, success)
+           (obj, 0, np_cols, useNVIDIAGPU, wantDebug, success)
       if (.not.(success)) then
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
         return
@@ -231,7 +231,7 @@ subroutine solve_tridi_&
       contains
         recursive subroutine merge_recursive_&
                   &PRECISION &
-           (obj, np_off, nprocs, useGPU, wantDebug, success)
+           (obj, np_off, nprocs, useNVIDIAGPU, wantDebug, success)
            use precision
            use elpa_abstract_impl
            implicit none
@@ -242,7 +242,7 @@ subroutine solve_tridi_&
            class(elpa_abstract_impl_t), intent(inout) :: obj
            integer(kind=ik)     :: np_off, nprocs
            integer(kind=ik)     :: np1, np2, noff, nlen, nmid, n
-           logical, intent(in)  :: useGPU, wantDebug
+           logical, intent(in)  :: useNVIDIAGPU, wantDebug
            logical, intent(out) :: success
 
            success = .true.
@@ -260,11 +260,11 @@ subroutine solve_tridi_&
 
            if (np1 > 1) call merge_recursive_&
                         &PRECISION &
-           (obj, np_off, np1, useGPU, wantDebug, success)
+           (obj, np_off, np1, useNVIDIAGPU, wantDebug, success)
            if (.not.(success)) return
            if (np2 > 1) call merge_recursive_&
                         &PRECISION &
-           (obj, np_off+np1, np2, useGPU, wantDebug, success)
+           (obj, np_off+np1, np2, useNVIDIAGPU, wantDebug, success)
            if (.not.(success)) return
 
            noff = limits(np_off)
@@ -323,7 +323,7 @@ subroutine solve_tridi_&
                                  (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
                                  l_col, p_col, &
-                                 l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success, max_threads )
+                                 l_col_bc, p_col_bc, np_off, nprocs, useNVIDIAGPU, wantDebug, success, max_threads )
              if (.not.(success)) return
            else
              ! Not last merge, leave dense column distribution
@@ -332,7 +332,7 @@ subroutine solve_tridi_&
                                 (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                                  nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
                                  l_col(noff+1), p_col(noff+1), &
-                                 l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success, max_threads )
+                                 l_col(noff+1), p_col(noff+1), np_off, nprocs, useNVIDIAGPU, wantDebug, success, max_threads )
              if (.not.(success)) return
            endif
        end subroutine merge_recursive_&
@@ -343,7 +343,7 @@ subroutine solve_tridi_&
 
     subroutine solve_tridi_col_&
     &PRECISION_AND_SUFFIX &
-      ( obj, na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, useGPU, wantDebug, success, max_threads )
+      ( obj, na, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, useNVIDIAGPU, wantDebug, success, max_threads )
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
    ! with the divide and conquer method.
@@ -370,7 +370,7 @@ subroutine solve_tridi_&
       integer(kind=MPI_KIND)        :: mpierr, my_prowMPI, np_rowsMPI
 
       integer(kind=ik), allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
-      logical, intent(in)           :: useGPU, wantDebug
+      logical, intent(in)           :: useNVIDIAGPU, wantDebug
       logical, intent(out)          :: success
       integer(kind=ik)              :: istat
       character(200)                :: errorMessage
@@ -540,7 +540,7 @@ subroutine solve_tridi_&
                               (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, nqoff+noff, nblk, &
                                matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_self,kind=ik), &
                                l_col(noff+1), p_col_i(noff+1), &
-                               l_col(noff+1), p_col_o(noff+1), 0, 1, useGPU, wantDebug, success, max_threads)
+                               l_col(noff+1), p_col_o(noff+1), 0, 1, useNVIDIAGPU, wantDebug, success, max_threads)
           if (.not.(success)) return
 
         enddo

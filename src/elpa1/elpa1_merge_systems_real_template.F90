@@ -57,7 +57,7 @@
     subroutine merge_systems_&
     &PRECISION &
                          (obj, na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
+                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useNVIDIAGPU, wantDebug, success, max_threads)
       use cuda_functions
       use iso_c_binding
       use precision
@@ -79,7 +79,7 @@
 #else
       real(kind=REAL_DATATYPE), intent(inout)     :: q(ldq,matrixCols)
 #endif
-      logical, intent(in)                         :: useGPU, wantDebug
+      logical, intent(in)                         :: useNVIDIAGPU, wantDebug
       logical, intent(out)                        :: success
 
       ! TODO: play with max_strip. If it was larger, matrices being multiplied
@@ -617,7 +617,7 @@
         qtmp1 = 0 ! May contain empty (unset) parts
         qtmp2 = 0 ! Not really needed
 
-        if (useGPU) then
+        if (useNVIDIAGPU) then
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
           successCUDA = cuda_host_register(int(loc(qtmp1),kind=c_intptr_t),num,&
                         cudaHostRegisterDefault)
@@ -703,7 +703,7 @@
 #endif /* WITH_MPI */
           endif
 
-          if (useGPU) then
+          if (useNVIDIAGPU) then
             successCUDA = cuda_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("merge_systems: qtmp1_dev", successCUDA)
@@ -767,7 +767,7 @@
               ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
             enddo
 
-            if(useGPU) then
+            if(useNVIDIAGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
               successCUDA = cuda_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
@@ -783,7 +783,7 @@
             ! Multiply old Q with eigenvectors (upper half)
 
             if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
-              if (useGPU) then
+              if (useNVIDIAGPU) then
                 call obj%timer%start("cublas")
                 call cublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
                                     1.0_rk, qtmp1_dev, ubound(qtmp1,dim=1),    &
@@ -800,7 +800,7 @@
                                     1.0_rk, qtmp2(1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
                 call obj%timer%stop("gemm")
                 call obj%timer%stop("blas")
-              endif ! useGPU
+              endif ! useNVIDIAGPU
             endif
 
             ! Compute eigenvectors of the rank-1 modified matrix.
@@ -817,7 +817,7 @@
               ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
             enddo
 
-            if(useGPU) then
+            if(useNVIDIAGPU) then
               !TODO the previous loop could be possible to do on device and thus
               !copy less
               successCUDA = cuda_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
@@ -828,7 +828,7 @@
             ! Multiply old Q with eigenvectors (lower half)
 
             if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) then
-              if (useGPU) then
+              if (useNVIDIAGPU) then
                 call obj%timer%start("cublas")
                 call cublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
                                     1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
@@ -845,10 +845,10 @@
                                      1.0_rk, qtmp2(l_rnm+1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
                 call obj%timer%stop("gemm")
                 call obj%timer%stop("blas")
-              endif ! useGPU
+              endif ! useNVIDIAGPU
             endif
 
-            if(useGPU) then
+            if(useNVIDIAGPU) then
               !TODO either copy only half of the matrix here, and get rid of the
               !previous copy or copy whole array here
               successCUDA = cuda_memcpy(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
@@ -865,7 +865,7 @@
           enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
         enddo    !do np = 1, npc_n
 
-        if(useGPU) then
+        if(useNVIDIAGPU) then
           successCUDA = cuda_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
           check_host_unregister_cuda("merge_systems: qtmp1", successCUDA)
 

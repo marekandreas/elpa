@@ -51,7 +51,7 @@
        &_&
 #endif
        &PRECISION &
-       (obj, useGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+       (obj, useNVIDIAGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
 #ifdef WITH_OPENMP
        l_nev, &
 #endif
@@ -114,7 +114,7 @@
 
          implicit none
          class(elpa_abstract_impl_t), intent(inout) :: obj
-         logical, intent(in)                        :: useGPU, wantDebug
+         logical, intent(in)                        :: useNVIDIAGPU, wantDebug
          real(kind=c_double), intent(inout)         :: kernel_time  ! MPI_WTIME always needs double
          integer(kind=lik)                          :: kernel_flops
          integer(kind=ik), intent(in)               :: nbw, max_blk_size
@@ -184,12 +184,12 @@
          j = -99
 
          if (wantDebug) then
-           if (useGPU .and. &
+           if (useNVIDIAGPU .and. &
 #if REALCASE == 1
-             ( kernel .ne. ELPA_2STAGE_REAL_GPU)) then
+             ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU)) then
 #endif
 #if COMPLEXCASE == 1
-             ( kernel .ne. ELPA_2STAGE_COMPLEX_GPU)) then
+             ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
 #endif
              print *,"ERROR: useGPU is set in conpute_hh_trafo but not GPU kernel!"
              stop
@@ -197,10 +197,10 @@
          endif
 
 #if REALCASE == 1
-         if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+         if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) then
 #endif
 #if COMPLEXCASE == 1
-         if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+         if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU) then
 #endif
            ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
            if (ncols < 1) then
@@ -233,7 +233,7 @@
 #ifdef WITH_OPENMP
 
 #if REALCASE == 1
-         if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+         if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) then
            print *,"compute_hh_trafo_&
                    &MATH_DATATYPE&
                    &_GPU OPENMP: not yet implemented"
@@ -241,7 +241,7 @@
          endif
 #endif
 #if COMPLEXCASE == 1
-         if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+         if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU) then
            print *,"compute_hh_trafo_&
                    &MATH_DATATYPE&
                    &_GPU OPENMP: not yet implemented"
@@ -277,11 +277,11 @@
 
 #if REALCASE == 1
 ! GPU kernel real
-         if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+         if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) then
 #endif
 #if COMPLEXCASE == 1
 ! GPU kernel complex
-         if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+         if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU) then
 #endif
            if (wantDebug) then
              call obj%timer%start("compute_hh_trafo: GPU")

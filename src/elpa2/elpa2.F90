@@ -116,7 +116,7 @@ module elpa2_impl
 !>  \param kernel                               specify ELPA2 kernel to use
 !>
 !>  \param useQR (optional)                     use QR decomposition
-!>  \param useGPU (optional)                    decide whether to use GPUs or not
+!>  \param useNVIDIAGPU (optional)              decide whether to use NVIDIA GPUs or not
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ module elpa2_impl
 !>  \param kernel                               specify ELPA2 kernel to use
 !>
 !>  \param useQR (optional)                     use QR decomposition
-!>  \param useGPU (optional)                    decide whether GPUs should be used or not
+!>  \param useNVIDIAGPU (optional)              decide whether NVIDIA GPUs should be used or not
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
@@ -210,7 +210,7 @@ module elpa2_impl
 !>  \param mpi_comm_all                         MPI communicator for the total processor set
 !>
 !>  \param kernel                               specify ELPA2 kernel to use
-!>  \param useGPU (optional)                    decide whether GPUs should be used or not
+!>  \param useNVIDIAGPU (optional)              decide whether NVIDIA GPUs should be used or not
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ module elpa2_impl
 !>  \param mpi_comm_all                         MPI communicator for the total processor set
 !>
 !>  \param kernel                               specify ELPA2 kernel to use
-!>  \param useGPU (optional)                    decide whether GPUs should be used or not
+!>  \param useNVIDIAGPU (optional)              decide whether NVIDIA GPUs should be used or not
 !>
 !>  \result success                             logical, false if error occured
 !-------------------------------------------------------------------------------
