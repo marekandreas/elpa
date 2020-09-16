@@ -47,7 +47,7 @@ module pack_unpack_cpu
 
   private
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   public pack_row_real_cpu_openmp_double, unpack_row_real_cpu_openmp_double
   public pack_row_complex_cpu_openmp_double, unpack_row_complex_cpu_openmp_double
 #else
@@ -57,7 +57,7 @@ module pack_unpack_cpu
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   public pack_row_real_cpu_openmp_single, unpack_row_real_cpu_openmp_single
   public pack_row_complex_cpu_openmp_single,  unpack_row_complex_cpu_openmp_single
 #else

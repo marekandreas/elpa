@@ -202,7 +202,7 @@ function elpa_solve_evp_&
    call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
    my_pe = int(my_peMPI,kind=c_int)
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    ! store the number of OpenMP threads used in the calling function
    ! restore this at the end of ELPA 2
    omp_threads_caller = omp_get_max_threads()
@@ -264,7 +264,7 @@ function elpa_solve_evp_&
      endif
 
      ! restore original OpenMP settings
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
      ! store the number of OpenMP threads used in the calling function
      ! restore this at the end of ELPA 2
      call omp_set_num_threads(omp_threads_caller)
@@ -574,7 +574,7 @@ function elpa_solve_evp_&
    call nvtxRangePop()
 #endif
    ! restore original OpenMP settings
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    ! store the number of OpenMP threads used in the calling function
    ! restore this at the end of ELPA 2
    call omp_set_num_threads(omp_threads_caller)

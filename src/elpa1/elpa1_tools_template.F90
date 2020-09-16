@@ -83,26 +83,26 @@
       implicit none
 #include "../general/precision_kinds.F90"
 
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)             :: noff, nlen, my_prow, np_rows, nblk
-      real(kind=rk)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
+  class(elpa_abstract_impl_t), intent(inout) :: obj
+  integer(kind=ik)             :: noff, nlen, my_prow, np_rows, nblk
+  real(kind=rk)     :: g_col(nlen), l_col(*) ! chnage this to proper 2d 1d matching ! remove assumed size
 
-      integer(kind=ik)  :: nbs, nbe, jb, g_off, l_off, js, je
+  integer(kind=ik)  :: nbs, nbe, jb, g_off, l_off, js, je
 
-      nbs = noff/(nblk*np_rows)
-      nbe = (noff+nlen-1)/(nblk*np_rows)
+  nbs = noff/(nblk*np_rows)
+  nbe = (noff+nlen-1)/(nblk*np_rows)
 
-      do jb = nbs, nbe
+  do jb = nbs, nbe
 
-        g_off = jb*nblk*np_rows + nblk*my_prow
-        l_off = jb*nblk
+    g_off = jb*nblk*np_rows + nblk*my_prow
+    l_off = jb*nblk
 
-        js = MAX(noff+1-g_off,1)
-        je = MIN(noff+nlen-g_off,nblk)
+    js = MAX(noff+1-g_off,1)
+    je = MIN(noff+nlen-g_off,nblk)
 
-        if (je<js) cycle
+    if (je<js) cycle
 
-        l_col(l_off+js:l_off+je) = g_col(g_off+js-noff:g_off+je-noff)
+    l_col(l_off+js:l_off+je) = g_col(g_off+js-noff:g_off+je-noff)
 
       enddo
     end subroutine distribute_global_column_&
@@ -166,201 +166,201 @@
       use elpa_abstract_impl
       implicit none
 #include "../../src/general/precision_kinds.F90"
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)           :: n, i
-      real(kind=rk)   :: d(n), z(n), delta(n), rho, dlam
+  class(elpa_abstract_impl_t), intent(inout) :: obj
+  integer(kind=ik)           :: n, i
+  real(kind=rk)   :: d(n), z(n), delta(n), rho, dlam
 
-      integer(kind=ik)           :: iter
-      real(kind=rk)   :: a, b, x, y, dshift
+  integer(kind=ik)           :: iter
+  real(kind=rk)   :: a, b, x, y, dshift
 
-      ! In order to obtain sufficient numerical accuracy we have to shift the problem
-      ! either by d(i) or d(i+1), whichever is closer to the solution
+  ! In order to obtain sufficient numerical accuracy we have to shift the problem
+  ! either by d(i) or d(i+1), whichever is closer to the solution
 
-      ! Upper and lower bound of the shifted solution interval are a and b
+  ! Upper and lower bound of the shifted solution interval are a and b
 
-      call obj%timer%start("solve_secular_equation" // PRECISION_SUFFIX)
-      if (i==n) then
+  call obj%timer%start("solve_secular_equation" // PRECISION_SUFFIX)
+  if (i==n) then
 
-       ! Special case: Last eigenvalue
-       ! We shift always by d(n), lower bound is d(n),
-       ! upper bound is determined by a guess:
+   ! Special case: Last eigenvalue
+   ! We shift always by d(n), lower bound is d(n),
+   ! upper bound is determined by a guess:
 
-       dshift = d(n)
-       delta(:) = d(:) - dshift
+   dshift = d(n)
+   delta(:) = d(:) - dshift
 
-       a = 0.0_rk ! delta(n)
-       b = rho*SUM(z(:)**2) + 1.0_rk ! rho*SUM(z(:)**2) is the lower bound for the guess
-      else
+   a = 0.0_rk ! delta(n)
+   b = rho*SUM(z(:)**2) + 1.0_rk ! rho*SUM(z(:)**2) is the lower bound for the guess
+  else
 
-        ! Other eigenvalues: lower bound is d(i), upper bound is d(i+1)
-        ! We check the sign of the function in the midpoint of the interval
-        ! in order to determine if eigenvalue is more close to d(i) or d(i+1)
-        x = 0.5_rk*(d(i)+d(i+1))
-        y = 1.0_rk + rho*SUM(z(:)**2/(d(:)-x))
-        if (y>0) then
-          ! solution is next to d(i)
-          dshift = d(i)
-        else
-          ! solution is next to d(i+1)
-          dshift = d(i+1)
-        endif
+    ! Other eigenvalues: lower bound is d(i), upper bound is d(i+1)
+    ! We check the sign of the function in the midpoint of the interval
+    ! in order to determine if eigenvalue is more close to d(i) or d(i+1)
+    x = 0.5_rk*(d(i)+d(i+1))
+    y = 1.0_rk + rho*SUM(z(:)**2/(d(:)-x))
+    if (y>0) then
+      ! solution is next to d(i)
+      dshift = d(i)
+    else
+      ! solution is next to d(i+1)
+      dshift = d(i+1)
+    endif
 
-        delta(:) = d(:) - dshift
-        a = delta(i)
-        b = delta(i+1)
+    delta(:) = d(:) - dshift
+    a = delta(i)
+    b = delta(i+1)
 
-      endif
+  endif
 
-      ! Bisection:
+  ! Bisection:
 
-      do iter=1,200
+  do iter=1,200
 
-        ! Interval subdivision
-        x = 0.5_rk*(a+b)
-        if (x==a .or. x==b) exit   ! No further interval subdivisions possible
+    ! Interval subdivision
+    x = 0.5_rk*(a+b)
+    if (x==a .or. x==b) exit   ! No further interval subdivisions possible
 #ifdef DOUBLE_PRECISION_REAL
-        if (abs(x) < 1.e-200_rk8) exit ! x next to pole
+    if (abs(x) < 1.e-200_rk8) exit ! x next to pole
 #else
-        if (abs(x) < 1.e-20_rk4) exit ! x next to pole
+    if (abs(x) < 1.e-20_rk4) exit ! x next to pole
 #endif
-        ! evaluate value at x
+    ! evaluate value at x
 
-        y = 1. + rho*SUM(z(:)**2/(delta(:)-x))
+    y = 1. + rho*SUM(z(:)**2/(delta(:)-x))
 
-        if (y==0) then
-          ! found exact solution
-          exit
-        elseif (y>0) then
-          b = x
-        else
-          a = x
-        endif
+    if (y==0) then
+      ! found exact solution
+      exit
+    elseif (y>0) then
+      b = x
+    else
+      a = x
+    endif
 
-      enddo
+  enddo
 
-      ! Solution:
+  ! Solution:
 
-      dlam = x + dshift
-      delta(:) = delta(:) - x
-      call  obj%timer%stop("solve_secular_equation" // PRECISION_SUFFIX)
+  dlam = x + dshift
+  delta(:) = delta(:) - x
+  call  obj%timer%stop("solve_secular_equation" // PRECISION_SUFFIX)
 
-    end subroutine solve_secular_equation_&
-    &PRECISION
-    !-------------------------------------------------------------------------------
+end subroutine solve_secular_equation_&
+&PRECISION
+!-------------------------------------------------------------------------------
 #endif
 #endif
 
 #if REALCASE == 1
-    subroutine hh_transform_real_&
+subroutine hh_transform_real_&
 #endif
 #if COMPLEXCASE == 1
-    subroutine hh_transform_complex_&
+subroutine hh_transform_complex_&
 #endif
-    &PRECISION &
-                   (obj, alpha, xnorm_sq, xf, tau, wantDebug)
+&PRECISION &
+(obj, alpha, xnorm_sq, xf, tau, wantDebug)
 #if REALCASE  == 1
-      ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
+  ! Similar to LAPACK routine DLARFP, but uses ||x||**2 instead of x(:)
 #endif
 #if COMPLEXCASE == 1
-      ! Similar to LAPACK routine ZLARFP, but uses ||x||**2 instead of x(:)
+  ! Similar to LAPACK routine ZLARFP, but uses ||x||**2 instead of x(:)
 #endif
-      ! and returns the factor xf by which x has to be scaled.
-      ! It also hasn't the special handling for numbers < 1.d-300 or > 1.d150
-      ! since this would be expensive for the parallel implementation.
-      use precision
-      use elpa_abstract_impl
-      implicit none
+  ! and returns the factor xf by which x has to be scaled.
+  ! It also hasn't the special handling for numbers < 1.d-300 or > 1.d150
+  ! since this would be expensive for the parallel implementation.
+  use precision
+  use elpa_abstract_impl
+  implicit none
 #include "../general/precision_kinds.F90"
-      class(elpa_abstract_impl_t), intent(inout)    :: obj
-      logical, intent(in)                           :: wantDebug
+  class(elpa_abstract_impl_t), intent(inout)    :: obj
+  logical, intent(in)                           :: wantDebug
 #if REALCASE == 1
-      real(kind=rk), intent(inout)       :: alpha
+  real(kind=rk), intent(inout)       :: alpha
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=ck), intent(inout) :: alpha
+  complex(kind=ck), intent(inout) :: alpha
 #endif
-      real(kind=rk), intent(in)          :: xnorm_sq
+  real(kind=rk), intent(in)          :: xnorm_sq
 #if REALCASE == 1
-      real(kind=rk), intent(out)         :: xf, tau
+  real(kind=rk), intent(out)         :: xf, tau
 #endif
 #if COMPLEXCASE == 1
-      complex(kind=ck), intent(out)   :: xf, tau
-      real(kind=rk)                      :: ALPHR, ALPHI
+  complex(kind=ck), intent(out)   :: xf, tau
+  real(kind=rk)                      :: ALPHR, ALPHI
 #endif
 
-      real(kind=rk)                      :: BETA
+  real(kind=rk)                      :: BETA
 
-     if (wantDebug) call obj%timer%start("hh_transform_&
-                      &MATH_DATATYPE&
-		      &" // &
-                      &PRECISION_SUFFIX )
+  if (wantDebug) call obj%timer%start("hh_transform_&
+                   &MATH_DATATYPE&
+     	      &" // &
+                   &PRECISION_SUFFIX )
 
 #if COMPLEXCASE == 1
-      ALPHR = real( ALPHA, kind=rk )
-      ALPHI = PRECISION_IMAG( ALPHA )
-#endif
-
-#if REALCASE == 1
-      if ( XNORM_SQ==0.0_rk ) then
-#endif
-#if COMPLEXCASE == 1
-      if ( XNORM_SQ==0.0_rk .AND. ALPHI==0.0_rk ) then
+  ALPHR = real( ALPHA, kind=rk )
+  ALPHI = PRECISION_IMAG( ALPHA )
 #endif
 
 #if REALCASE == 1
-        if ( ALPHA>=0.0_rk ) then
+  if ( XNORM_SQ==0.0_rk ) then
 #endif
 #if COMPLEXCASE == 1
-        if ( ALPHR>=0.0_rk ) then
-#endif
-          TAU = 0.0_rk
-        else
-          TAU = 2.0_rk
-          ALPHA = -ALPHA
-        endif
-        XF = 0.0_rk
-
-      else
-
-#if REALCASE == 1
-        BETA = SIGN( SQRT( ALPHA**2 + XNORM_SQ ), ALPHA )
-#endif
-#if COMPLEXCASE == 1
-        BETA = SIGN( SQRT( ALPHR**2 + ALPHI**2 + XNORM_SQ ), ALPHR )
-#endif
-        ALPHA = ALPHA + BETA
-        IF ( BETA<0 ) THEN
-          BETA = -BETA
-          TAU  = -ALPHA / BETA
-        ELSE
-#if REALCASE == 1
-          ALPHA = XNORM_SQ / ALPHA
-#endif
-#if COMPLEXCASE == 1
-          ALPHR = ALPHI * (ALPHI/real( ALPHA , kind=rk))
-          ALPHR = ALPHR + XNORM_SQ/real( ALPHA, kind=rk )
+  if ( XNORM_SQ==0.0_rk .AND. ALPHI==0.0_rk ) then
 #endif
 
 #if REALCASE == 1
-          TAU = ALPHA / BETA
-          ALPHA = -ALPHA
+    if ( ALPHA>=0.0_rk ) then
 #endif
 #if COMPLEXCASE == 1
-          TAU = PRECISION_CMPLX( ALPHR/BETA, -ALPHI/BETA )
-          ALPHA = PRECISION_CMPLX( -ALPHR, ALPHI )
+    if ( ALPHR>=0.0_rk ) then
 #endif
-       END IF
-       XF = 1.0_rk/ALPHA
-       ALPHA = BETA
-     endif
+      TAU = 0.0_rk
+    else
+      TAU = 2.0_rk
+      ALPHA = -ALPHA
+    endif
+    XF = 0.0_rk
 
-      if (wantDebug) call obj%timer%stop("hh_transform_&
-      &MATH_DATATYPE&
-      &" // &
-      &PRECISION_SUFFIX )
+  else
 
 #if REALCASE == 1
-    end subroutine hh_transform_real_&
+    BETA = SIGN( SQRT( ALPHA**2 + XNORM_SQ ), ALPHA )
+#endif
+#if COMPLEXCASE == 1
+    BETA = SIGN( SQRT( ALPHR**2 + ALPHI**2 + XNORM_SQ ), ALPHR )
+#endif
+    ALPHA = ALPHA + BETA
+    IF ( BETA<0 ) THEN
+      BETA = -BETA
+      TAU  = -ALPHA / BETA
+    ELSE
+#if REALCASE == 1
+      ALPHA = XNORM_SQ / ALPHA
+#endif
+#if COMPLEXCASE == 1
+      ALPHR = ALPHI * (ALPHI/real( ALPHA , kind=rk))
+      ALPHR = ALPHR + XNORM_SQ/real( ALPHA, kind=rk )
+#endif
+
+#if REALCASE == 1
+      TAU = ALPHA / BETA
+      ALPHA = -ALPHA
+#endif
+#if COMPLEXCASE == 1
+      TAU = PRECISION_CMPLX( ALPHR/BETA, -ALPHI/BETA )
+      ALPHA = PRECISION_CMPLX( -ALPHR, ALPHI )
+#endif
+    END IF
+    XF = 1.0_rk/ALPHA
+    ALPHA = BETA
+  endif
+
+  if (wantDebug) call obj%timer%stop("hh_transform_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX )
+
+#if REALCASE == 1
+end subroutine hh_transform_real_&
 #endif
 #if COMPLEXCASE == 1
     end subroutine hh_transform_complex_&

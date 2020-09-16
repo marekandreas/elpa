@@ -89,7 +89,7 @@ subroutine tridiag_band_&
   use precision
   use iso_c_binding
   use redist
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   use omp_lib
 #endif
   use elpa_blas_interfaces
@@ -121,14 +121,14 @@ subroutine tridiag_band_&
   integer(kind=MPI_KIND)                       :: ireq_ab, ireq_hv
   integer(kind=ik)                             :: na_s, nx, num_hh_vecs, num_chunks, local_size, max_blk_size, n_off
   integer(kind=ik), intent(in)                 :: nrThreads
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   integer(kind=ik)                             :: max_threads, my_thread, my_block_s, my_block_e, iter
 #ifdef WITH_MPI
 #endif
   integer(kind=ik), allocatable                :: global_id_tmp(:,:)
   integer(kind=ik), allocatable                :: omp_block_limits(:)
   MATH_DATATYPE(kind=rck), allocatable         :: hv_t(:,:), tau_t(:)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
   integer(kind=ik), allocatable                :: global_id(:,:), hh_cnt(:), hh_dst(:)
   integer(kind=MPI_KIND), allocatable          :: ireq_hhr(:), ireq_hhs(:)
   integer(kind=ik), allocatable                :: limits(:), snd_limits(:,:)
@@ -187,14 +187,14 @@ subroutine tridiag_band_&
   global_id(:,:) = 0
   global_id(my_prow, my_pcol) = my_pe
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   allocate(global_id_tmp(0:np_rows-1,0:np_cols-1), stat=istat, errmsg=errorMessage)
   check_allocate("tridiag_band: global_id_tmp", istat, errorMessage)
 #endif
 
 #ifdef WITH_MPI
   if (wantDebug) call obj%timer%start("mpi_communication")
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_TRADITIONAL
   call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
                          mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
 #else
@@ -203,7 +203,7 @@ subroutine tridiag_band_&
                      mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
   deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag_band: global_id_tmp", istat, errorMessage)
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
   if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -340,7 +340,7 @@ subroutine tridiag_band_&
     call determine_workload(obj, na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
   enddo
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   ! OpenMP work distribution:
   max_threads = nrThreads
   ! For OpenMP we need at least 2 blocks for every thread
@@ -358,7 +358,7 @@ subroutine tridiag_band_&
 
   hv_t = 0.0_rck
   tau_t = 0.0_rck
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
   ! ---------------------------------------------------------------------------
   ! Start of calculations
@@ -381,7 +381,7 @@ subroutine tridiag_band_&
   startAddr = ubound(hh_trans,dim=2)
 #endif /* WITH_MPI */
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    do istep=1,na-nblockEnd-block_limits(my_pe)*nb
 #else
    do istep=1,na-nblockEnd
@@ -460,7 +460,7 @@ subroutine tridiag_band_&
        if (na>na_s) then
          ! Receive Householder Vector from previous task, from PE owning subdiagonal
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #ifdef WITH_MPI
          if (wantDebug) call obj%timer%start("mpi_communication")
@@ -475,7 +475,7 @@ subroutine tridiag_band_&
 
 #endif /* WITH_MPI */
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
          if (wantDebug) call obj%timer%start("mpi_communication")
@@ -489,7 +489,7 @@ subroutine tridiag_band_&
          hv(1:nb) = hv_s(1:nb)
 #endif /* WITH_MPI */
 
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
          tau = hv(1)
          hv(1) = 1.0_rck
        endif
@@ -502,7 +502,7 @@ subroutine tridiag_band_&
         n_off = n_off + nb
       endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       if (max_threads > 1) then
 
         ! Codepath for OpenMP
@@ -615,594 +615,594 @@ subroutine tridiag_band_&
               if (wantDebug) call obj%timer%stop("blas")
               if (nr>1) then
 
-                ! complete (old) Householder transformation for first column
+              ! complete (old) Householder transformation for first column
 
-                ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+              ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
 
-                ! calculate new Householder transformation for first column
-                ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
+              ! calculate new Householder transformation for first column
+              ! (stored in hv_t(:,my_thread) and tau_t(my_thread))
 
 #if REALCASE == 1
-                vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
+              vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
 #endif
 #if COMPLEXCASE == 1
 #ifdef  DOUBLE_PRECISION_COMPLEX
-                vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
+              vnorm2 = sum(dble(ab(nb+2:nb+nr,ns))**2+dimag(ab(nb+2:nb+nr,ns))**2)
 #else
-                vnorm2 = sum(real(ab(nb+2:nb+nr,ns))**2+aimag(ab(nb+2:nb+nr,ns))**2)
+              vnorm2 = sum(real(ab(nb+2:nb+nr,ns))**2+aimag(ab(nb+2:nb+nr,ns))**2)
 #endif
 #endif /* COMPLEXCASE */
 
-                call hh_transform_&
-                  &MATH_DATATYPE&
-                  &_&
-                  &PRECISION &
-                       (obj, ab(nb+1,ns), vnorm2, hf, tau_t(my_thread), wantDebug)
+              call hh_transform_&
+              &MATH_DATATYPE&
+              &_&
+              &PRECISION &
+              (obj, ab(nb+1,ns), vnorm2, hf, tau_t(my_thread), wantDebug)
 
-                hv_t(1   ,my_thread) = 1.0_rck
-                hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
-                ab(nb+2:,ns) = 0.0_rck
-                ! update subdiagonal block for old and new Householder transformation
-                ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-                if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
-                                    int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
-                                    tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
-                                    hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
-                if (wantDebug) call obj%timer%stop("blas")
+              hv_t(1   ,my_thread) = 1.0_rck
+              hv_t(2:nr,my_thread) = ab(nb+2:nb+nr,ns)*hf
+              ab(nb+2:,ns) = 0.0_rck
+              ! update subdiagonal block for old and new Householder transformation
+              ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
+              if (wantDebug) call obj%timer%start("blas")
+              call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
+                                  int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                  tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
+              if (wantDebug) call obj%timer%stop("blas")
 
-                x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
-                h(2:nb) = h(2:nb) - x*hv(2:nb)
-                ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
-                do i=2,nb
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*  &
+              x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
+              h(2:nb) = h(2:nb) - x*hv(2:nb)
+              ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update ("DGER2")
+              do i=2,nb
+                ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_t(1:nr,my_thread)*  &
 #if REALCASE == 1
-                                    h(i) - hs(1:nr)*hv(i)
+                h(i) - hs(1:nr)*hv(i)
 #endif
 #if COMPLEXCASE == 1
-                                    conjg(h(i)) - hs(1:nr)*conjg(hv(i))
+                conjg(h(i)) - hs(1:nr)*conjg(hv(i))
 #endif
-                enddo
+              enddo
 
-              else
+            else
 
-                ! No new Householder transformation for nr=1, just complete the old one
-                ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
-                do i=2,nb
+              ! No new Householder transformation for nr=1, just complete the old one
+              ab(nb+1,ns) = ab(nb+1,ns) - hs(1) ! Note: hv(1) == 1
+              do i=2,nb
 #if REALCASE == 1
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
+                ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
 #endif
 #if COMPLEXCASE == 1
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
+                ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
 #endif
-                enddo
-                ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
-                hv_t(1,my_thread) = 1.0_rck
-              endif
-
-            enddo
-
-          enddo ! my_thread
-!$omp end parallel do
-
-          call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-
-          if (iter==1) then
-            ! We are at the end of the first block
-
-            ! Send our first column to previous PE
-            if (my_pe>0 .and. na_s <= na) then
-#ifdef WITH_MPI
-              if (wantDebug) call obj%timer%start("mpi_communication")
-              call mpi_wait(ireq_ab, MPI_STATUS_IGNORE, mpierr)
-              if (wantDebug) call obj%timer%stop("mpi_communication")
-
-#endif
-              ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
-#ifdef WITH_MPI
-              if (wantDebug) call obj%timer%start("mpi_communication")
-              call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                               int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, &
-                               int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
-              if (wantDebug) call obj%timer%stop("mpi_communication")
-
-#endif /* WITH_MPI */
+              enddo
+              ! For safety: there is one remaining dummy transformation (but tau is 0 anyways)
+              hv_t(1,my_thread) = 1.0_rck
             endif
 
-            ! Request last column from next PE
-            ne = na_s + nblocks*nb - (max_threads-1) - 1
+          enddo
+
+        enddo ! my_thread
+        !$omp end parallel do
+
+        call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+
+        if (iter==1) then
+          ! We are at the end of the first block
+
+          ! Send our first column to previous PE
+          if (my_pe>0 .and. na_s <= na) then
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
-
-            if (istep>=max_threads .and. ne <= na) then
-              call mpi_recv(ab(1,ne-n_off), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-                            int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
-                            MPI_STATUS_IGNORE, mpierr)
-            endif
+            call mpi_wait(ireq_ab, MPI_STATUS_IGNORE, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
-#else /* WITH_MPI */
-            if (istep>=max_threads .and. ne <= na) then
-              ab(1:nb+1,ne-n_off) = ab_s(1:nb+1)
-            endif
-#endif /* WITH_MPI */
-          else
-            ! We are at the end of all blocks
 
-            ! Send last HH Vector and TAU to next PE if it has been calculated above
-            ne = na_s + nblocks*nb - (max_threads-1) - 1
-            if (istep>=max_threads .and. ne < na) then
-#ifdef WITH_MPI
-              if (wantDebug) call obj%timer%start("mpi_communication")
-              call mpi_wait(ireq_hv, MPI_STATUS_IGNORE, mpierr)
-              if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
-              hv_s(1) = tau_t(max_threads)
-              hv_s(2:) = hv_t(2:,max_threads)
-
+            ab_s(1:nb+1) = ab(1:nb+1,na_s-n_off)
 #ifdef WITH_MPI
-              if (wantDebug) call obj%timer%start("mpi_communication")
-              call mpi_isend(hv_s, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                               int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
-                               ireq_hv, mpierr)
-              if (wantDebug) call obj%timer%stop("mpi_communication")
+            if (wantDebug) call obj%timer%start("mpi_communication")
+            call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                           int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, &
+                           int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
+            if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
-            endif
-
-            ! "Send" HH Vector and TAU to next OpenMP thread
-            do my_thread = max_threads, 2, -1
-              hv_t(:,my_thread) = hv_t(:,my_thread-1)
-              tau_t(my_thread)  = tau_t(my_thread-1)
-            enddo
-
           endif
-        enddo ! iter
 
-      else
+          ! Request last column from next PE
+          ne = na_s + nblocks*nb - (max_threads-1) - 1
+#ifdef WITH_MPI
+          if (wantDebug) call obj%timer%start("mpi_communication")
 
-        ! Codepath for 1 thread without OpenMP
+          if (istep>=max_threads .and. ne <= na) then
+            call mpi_recv(ab(1,ne-n_off), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
+                          int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                          MPI_STATUS_IGNORE, mpierr)
+          endif
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+#else /* WITH_MPI */
+          if (istep>=max_threads .and. ne <= na) then
+            ab(1:nb+1,ne-n_off) = ab_s(1:nb+1)
+          endif
+#endif /* WITH_MPI */
+        else
+          ! We are at the end of all blocks
+
+          ! Send last HH Vector and TAU to next PE if it has been calculated above
+          ne = na_s + nblocks*nb - (max_threads-1) - 1
+          if (istep>=max_threads .and. ne < na) then
+#ifdef WITH_MPI
+            if (wantDebug) call obj%timer%start("mpi_communication")
+            call mpi_wait(ireq_hv, MPI_STATUS_IGNORE, mpierr)
+            if (wantDebug) call obj%timer%stop("mpi_communication")
+#endif
+            hv_s(1) = tau_t(max_threads)
+            hv_s(2:) = hv_t(2:,max_threads)
+
+#ifdef WITH_MPI
+            if (wantDebug) call obj%timer%start("mpi_communication")
+            call mpi_isend(hv_s, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                           int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                           ireq_hv, mpierr)
+            if (wantDebug) call obj%timer%stop("mpi_communication")
+
+#endif /* WITH_MPI */
+          endif
+
+          ! "Send" HH Vector and TAU to next OpenMP thread
+          do my_thread = max_threads, 2, -1
+            hv_t(:,my_thread) = hv_t(:,my_thread-1)
+            tau_t(my_thread)  = tau_t(my_thread-1)
+          enddo
+
+        endif
+      enddo ! iter
+
+    else
+
+      ! Codepath for 1 thread without OpenMP
+
+      ! The following code is structured in a way to keep waiting times for
+      ! other PEs at a minimum, especially if there is only one block.
+      ! For this reason, it requests the last column as late as possible
+      ! and sends the Householder Vector and the first column as early
+      ! as possible.
+
+#endif /* WITH_OPENMP_TRADITIONAL */
+
+      do iblk=1,nblocks
+        ns = na_s + (iblk-1)*nb - n_off ! first column in block
+        ne = ns+nb-1                    ! last column in block
+
+        if (ns+n_off>na) exit
+
+        ! Store Householder Vector for back transformation
+
+        hh_cnt(iblk) = hh_cnt(iblk) + 1
+
+        hh_gath(1   ,hh_cnt(iblk),iblk) = tau
+        hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
+
+#ifndef WITH_OPENMP_TRADITIONAL
+        if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+          ! Wait for last transfer to finish
+#ifdef WITH_MPI
+          if (wantDebug) call obj%timer%start("mpi_communication")
+
+          call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+#endif
+          ! Copy vectors into send buffer
+          hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+          ! Send to destination
+
+#ifdef WITH_MPI
+          if (wantDebug) call obj%timer%start("mpi_communication")
+          call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                         global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
+                         int(10+iblk,kind=MPI_KIND), int(communicator,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+#else /* WITH_MPI */
+          ! do the post-poned irecv here
+          startAddr = startAddr - hh_cnt(iblk)
+          hh_trans(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
+#endif /* WITH_MPI */
+
+          ! Reset counter and increase destination row
+          hh_cnt(iblk) = 0
+          hh_dst(iblk) = hh_dst(iblk)+1
+        endif
 
         ! The following code is structured in a way to keep waiting times for
         ! other PEs at a minimum, especially if there is only one block.
         ! For this reason, it requests the last column as late as possible
         ! and sends the Householder Vector and the first column as early
         ! as possible.
+#endif /* WITH_OPENMP_TRADITIONAL */
+        nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
+        nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
+                                      ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
-#endif /* WITH_OPENMP */
+        ! Multiply diagonal block and subdiagonal block with Householder Vector
 
-        do iblk=1,nblocks
-          ns = na_s + (iblk-1)*nb - n_off ! first column in block
-          ne = ns+nb-1                    ! last column in block
+        if (iblk==nblocks .and. nc==nb) then
 
-          if (ns+n_off>na) exit
+          ! We need the last column from the next PE.
+          ! First do the matrix multiplications without last column ...
 
-          ! Store Householder Vector for back transformation
-
-          hh_cnt(iblk) = hh_cnt(iblk) + 1
-
-          hh_gath(1   ,hh_cnt(iblk),iblk) = tau
-          hh_gath(2:nb,hh_cnt(iblk),iblk) = hv(2:nb)
-
-#ifndef WITH_OPENMP
-          if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-            ! Wait for last transfer to finish
-#ifdef WITH_MPI
-            if (wantDebug) call obj%timer%start("mpi_communication")
-
-            call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
-            if (wantDebug) call obj%timer%stop("mpi_communication")
-#endif
-            ! Copy vectors into send buffer
-            hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-            ! Send to destination
-
-#ifdef WITH_MPI
-            if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                           global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                           int(10+iblk,kind=MPI_KIND), int(communicator,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
-            if (wantDebug) call obj%timer%stop("mpi_communication")
-#else /* WITH_MPI */
-            ! do the post-poned irecv here
-            startAddr = startAddr - hh_cnt(iblk)
-            hh_trans(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
-#endif /* WITH_MPI */
-
-            ! Reset counter and increase destination row
-            hh_cnt(iblk) = 0
-            hh_dst(iblk) = hh_dst(iblk)+1
-          endif
-
-          ! The following code is structured in a way to keep waiting times for
-          ! other PEs at a minimum, especially if there is only one block.
-          ! For this reason, it requests the last column as late as possible
-          ! and sends the Householder Vector and the first column as early
-          ! as possible.
-#endif /* WITH_OPENMP */
-          nc = MIN(na-ns-n_off+1,nb) ! number of columns in diagonal block
-          nr = MIN(na-nb-ns-n_off+1,nb) ! rows in subdiagonal block (may be < 0!!!)
-                                        ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
-
-          ! Multiply diagonal block and subdiagonal block with Householder Vector
-
-          if (iblk==nblocks .and. nc==nb) then
-
-            ! We need the last column from the next PE.
-            ! First do the matrix multiplications without last column ...
-
-            ! Diagonal block, the contribution of the last element is added below!
-            ab(1,ne) = 0.0_rck
-            if (wantDebug) call obj%timer%start("blas")
+          ! Diagonal block, the contribution of the last element is added below!
+          ab(1,ne) = 0.0_rck
+          if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
-            if (isSkewsymmetric) then
-              hd(:) = 0.0_rk
-              call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
-            else
-              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
-                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
-            endif
-#endif
-#if COMPLEXCASE == 1
-            call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
-                                hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
-#endif
-            ! Subdiagonal block
-            if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
-                                          tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
-                                          ZERO, hs, 1_BLAS_KIND)
-            if (wantDebug) call obj%timer%stop("blas")
-
-            ! ... then request last column ...
-#ifdef WITH_MPI
-            if (wantDebug) call obj%timer%start("mpi_communication")
-#ifdef WITH_OPENMP
-            call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-                          int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
-                          MPI_STATUS_IGNORE, mpierr)
-#else /* WITH_OPENMP */
-            call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-                          int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
-                          MPI_STATUS_IGNORE, mpierr)
-#endif /* WITH_OPENMP */
-            if (wantDebug) call obj%timer%stop("mpi_communication")
-#else /* WITH_MPI */
-
-            ab(1:nb+1,ne) = ab_s(1:nb+1)
-
-#endif /* WITH_MPI */
-
-            ! ... and complete the result
-            hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
-            hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
-
+          if (isSkewsymmetric) then
+            hd(:) = 0.0_rk
+            call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
           else
-
-              ! Normal matrix multiply
-              if (wantDebug) call obj%timer%start("blas")
-#if REALCASE == 1
-              if (isSkewsymmetric) then
-                hd(:) = 0.0_rk
-                call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
-              else
-                call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
-                                    hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
-              endif
+            call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                               hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+          endif
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
-                                  hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+          call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                             hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
-              if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, ab(nb+1,ns), &
-                                            int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
-              if (wantDebug) call obj%timer%stop("blas")
-            endif
+          ! Subdiagonal block
+          if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                        tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                        ZERO, hs, 1_BLAS_KIND)
+          if (wantDebug) call obj%timer%stop("blas")
 
-            ! Calculate first column of subdiagonal block and calculate new
-            ! Householder transformation for this column
-            hv_new(:) = 0.0_rck ! Needed, last rows must be 0 for nr < nb
-            tau_new = 0.0_rck
-            if (nr>0) then
+          ! ... then request last column ...
+#ifdef WITH_MPI
+          if (wantDebug) call obj%timer%start("mpi_communication")
+#ifdef WITH_OPENMP_TRADITIONAL
+          call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
+                       int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                       MPI_STATUS_IGNORE, mpierr)
+#else /* WITH_OPENMP_TRADITIONAL */
+          call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
+                       int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                       MPI_STATUS_IGNORE, mpierr)
+#endif /* WITH_OPENMP_TRADITIONAL */
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+#else /* WITH_MPI */
 
-              ! complete (old) Householder transformation for first column
+          ab(1:nb+1,ne) = ab_s(1:nb+1)
 
-              ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+#endif /* WITH_MPI */
 
-              ! calculate new Householder transformation ...
-              if (nr>1) then
+          ! ... and complete the result
+          hs(1:nr) = hs(1:nr) + ab(2:nr+1,ne)*tau*hv(nb)
+          hd(nb) = hd(nb) + ab(1,ne)*hv(nb)*tau
+
+        else
+
+          ! Normal matrix multiply
+          if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+          if (isSkewsymmetric) then
+            hd(:) = 0.0_rk
+            call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+          else
+            call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+          endif
+#endif
+#if COMPLEXCASE == 1
+          call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                              hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+#endif
+          if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, ab(nb+1,ns), &
+                                        int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
+          if (wantDebug) call obj%timer%stop("blas")
+        endif
+
+        ! Calculate first column of subdiagonal block and calculate new
+        ! Householder transformation for this column
+        hv_new(:) = 0.0_rck ! Needed, last rows must be 0 for nr < nb
+        tau_new = 0.0_rck
+        if (nr>0) then
+
+          ! complete (old) Householder transformation for first column
+
+          ab(nb+1:nb+nr,ns) = ab(nb+1:nb+nr,ns) - hs(1:nr) ! Note: hv(1) == 1
+
+          ! calculate new Householder transformation ...
+          if (nr>1) then
 #if  REALCASE == 1
-                vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
+            vnorm2 = sum(ab(nb+2:nb+nr,ns)**2)
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-                vnorm2 = sum(real(ab(nb+2:nb+nr,ns),kind=rk8)**2+dimag(ab(nb+2:nb+nr,ns))**2)
+            vnorm2 = sum(real(ab(nb+2:nb+nr,ns),kind=rk8)**2+dimag(ab(nb+2:nb+nr,ns))**2)
 #else
-                vnorm2 = sum(real(ab(nb+2:nb+nr,ns),kind=rk4)**2+aimag(ab(nb+2:nb+nr,ns))**2)
+            vnorm2 = sum(real(ab(nb+2:nb+nr,ns),kind=rk4)**2+aimag(ab(nb+2:nb+nr,ns))**2)
 #endif
 #endif /* COMPLEXCASE */
 
-                call hh_transform_&
+            call hh_transform_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION &
-                             (obj, ab(nb+1,ns), vnorm2, hf, tau_new, wantDebug)
-                hv_new(1) = 1.0_rck
-                hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
-                ab(nb+2:,ns) = 0.0_rck
-              endif ! nr > 1
+               (obj, ab(nb+1,ns), vnorm2, hf, tau_new, wantDebug)
+            hv_new(1) = 1.0_rck
+            hv_new(2:nr) = ab(nb+2:nb+nr,ns)*hf
+            ab(nb+2:,ns) = 0.0_rck
+          endif ! nr > 1
 
-              ! ... and send it away immediatly if this is the last block
+          ! ... and send it away immediatly if this is the last block
 
-              if (iblk==nblocks) then
+          if (iblk==nblocks) then
 #ifdef WITH_MPI
-                if (wantDebug) call obj%timer%start("mpi_communication")
-#ifdef WITH_OPENMP
-                call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+            if (wantDebug) call obj%timer%start("mpi_communication")
+#ifdef WITH_OPENMP_TRADITIONAL
+            call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #else
-                call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+            call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
 #endif
-                if (wantDebug) call obj%timer%stop("mpi_communication")
-
-#endif /* WITH_MPI */
-                hv_s(1) = tau_new
-                hv_s(2:) = hv_new(2:)
-
-#ifdef WITH_MPI
-                if (wantDebug) call obj%timer%start("mpi_communication")
-                call mpi_isend(hv_s, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                               int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
-                               ireq_hv, mpierr)
-                if (wantDebug) call obj%timer%stop("mpi_communication")
-
-#endif /* WITH_MPI */
-              endif
-
-            endif
-
-            ! Transform diagonal block
-#if REALCASE == 1
-            if (.NOT. isSkewsymmetric) then
-              x = dot_product(hv(1:nc),hd(1:nc))*tau
-            endif
-#endif
-#if COMPLEXCASE == 1
-            x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
-#endif
-
-#if REALCASE == 1
-            if (.NOT. isSkewsymmetric) then
-#endif
-              hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
-#if REALCASE == 1
-            endif
-#endif
-            if (my_pe>0 .and. iblk==1) then
-
-              ! The first column of the diagonal block has to be send to the previous PE
-              ! Calculate first column only ...
-#if REALCASE == 1
-              if (isSkewsymmetric) then
-                ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) + hv(1:nc)*hd(1)
-              else
-                ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
-              endif
-#endif
-#if COMPLEXCASE == 1
-              ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*conjg(hv(1)) - hv(1:nc)*conjg(hd(1))
-#endif
-              ! ... send it away ...
-#ifdef WITH_MPI
-              if (wantDebug) call obj%timer%start("mpi_communication")
-              call mpi_wait(ireq_ab, MPI_STATUS_IGNORE, mpierr)
-              if (wantDebug) call obj%timer%stop("mpi_communication")
-
-#endif /* WITH_MPI */
-              ab_s(1:nb+1) = ab(1:nb+1,ns)
-
-#ifdef WITH_MPI
-              if (wantDebug) call obj%timer%start("mpi_communication")
-
-              call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                             int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
-                             ireq_ab, mpierr)
-              if (wantDebug) call obj%timer%stop("mpi_communication")
-
-#endif /* WITH_MPI */
-              ! ... and calculate remaining columns with rank-2 update
-              if (wantDebug) call obj%timer%start("blas")
-#if REALCASE == 1
-              if (isSkewsymmetric) then 
-                if (nc>1) call ELPA_PRECISION_SSR2(int(nc-1,kind=BLAS_KIND), hd(2), hv(2), ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
-              else
-                if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
-                                              hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
-              endif
-#endif
-#if COMPLEXCASE == 1
-              if (nc>1) call PRECISION_HER2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
-                                            hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
-#endif
-              if (wantDebug) call obj%timer%stop("blas")
-
-            else
-              ! No need to  send, just a rank-2 update
-              if (wantDebug) call obj%timer%start("blas")
-#if REALCASE == 1
-              if (isSkewsymmetric) then 
-                call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd, hv, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
-              else
-                call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
-                                    hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
-              endif
-#endif
-#if COMPLEXCASE == 1
-              call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, hv, 1_BLAS_KIND, &
-                                  ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
-#endif
-              if (wantDebug) call obj%timer%stop("blas")
-
-            endif
-
-            ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
-
-            if (nr>0) then
-              if (nr>1) then
-                if (wantDebug) call obj%timer%start("blas")
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
-                                    tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
-                                    hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
-                if (wantDebug) call obj%timer%stop("blas")
-
-                x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
-                h(2:nb) = h(2:nb) - x*hv(2:nb)
-                ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
-                do i=2,nb
-#if REALCASE == 1
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*h(i) - hs(1:nr)*hv(i)
-#endif
-#if COMPLEXCASE == 1
-                  ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
-#endif
-                enddo
-              else
-                ! No double Householder transformation for nr=1, just complete the row
-                do i=2,nb
-#if REALCASE == 1
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
-#endif
-#if COMPLEXCASE == 1
-                  ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
-#endif
-                enddo
-              endif
-            endif
-
-            ! Use new HH Vector for the next block
-            hv(:) = hv_new(:)
-            tau = tau_new
-
-          enddo
-
-#ifdef WITH_OPENMP
-        endif
-#endif
-
-#if WITH_OPENMP
-        do iblk = 1, nblocks
-
-          if (hh_dst(iblk) >= np_rows) exit
-          if (snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
-
-          if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
-            ! Wait for last transfer to finish
-#ifdef WITH_MPI
-            if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
-#endif
-            ! Copy vectors into send buffer
-            hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
-            ! Send to destination
+
+#endif /* WITH_MPI */
+            hv_s(1) = tau_new
+            hv_s(2:) = hv_new(2:)
 
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), &
-                           MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                           global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
-                           int(10+iblk,kind=MPI_KIND), int(communicator,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+            call mpi_isend(hv_s, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                           int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                           ireq_hv, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
-#else /* WITH_MPI */
-            ! do the post-poned irecv here
-            startAddr = startAddr - hh_cnt(iblk)
-            hh_trans(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
-#endif /* WITH_MPI */
 
-            ! Reset counter and increase destination row
-            hh_cnt(iblk) = 0
-            hh_dst(iblk) = hh_dst(iblk)+1
+#endif /* WITH_MPI */
           endif
 
-        enddo
-#endif /* WITH_OPENMP */
-      enddo ! istep
+        endif
 
-      ! Finish the last outstanding requests
-
-#ifdef WITH_OPENMP
-
-#ifdef WITH_MPI
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-      call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
-
-!      allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)), stat=istat, errmsg=errorMessage)
-!      if (istat .ne. 0) then
-!        print *,"tridiag_band_real: error when allocating mpi_statuses"//errorMessage
-!        stop 1
-!      endif
-
-      call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
-      call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
-!      deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
-!      if (istat .ne. 0) then
-!        print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
-!        stop 1
-!      endif
-      if (wantDebug) call obj%timer%stop("mpi_communication")
-#endif /* WITH_MPI */
-
-#else /* WITH_OPENMP */
-
-#ifdef WITH_MPI
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
-      call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
-
-      call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
-      call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
-#endif
-
-#endif /* WITH_OPENMP */
-
-#ifdef  WITH_MPI
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_barrier(int(communicator,kind=MPI_KIND),mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
-#endif
-      deallocate(ab, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag_band: ab", istat, errorMessage)
-
-      deallocate(ireq_hhr, ireq_hhs, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag_band: ireq_hhr", istat, errorMessage)
-
-      deallocate(hh_cnt, hh_dst, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag_band: hh_dst", istat, errorMessage)
-
-      deallocate(hh_gath, hh_send, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag_band: hh_gath", istat, errorMessage)
-
-      deallocate(limits, snd_limits, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag_band: limits", istat, errorMessage)
-
-      deallocate(block_limits, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag_band: block_limits", istat, errorMessage)
-
-      deallocate(global_id, stat=istat, errmsg=errorMessage)
-      check_deallocate("tridiag_band: global_id", istat, errorMessage)
-
-      call obj%timer%stop("tridiag_band_&
-      &MATH_DATATYPE&
-      &" // &
-      &PRECISION_SUFFIX //&
-      gpuString)
-
-! intel compiler bug makes these ifdefs necessary
+        ! Transform diagonal block
 #if REALCASE == 1
-    end subroutine tridiag_band_real_&
+        if (.NOT. isSkewsymmetric) then
+          x = dot_product(hv(1:nc),hd(1:nc))*tau
+        endif
 #endif
 #if COMPLEXCASE == 1
-    end subroutine tridiag_band_complex_&
+        x = dot_product(hv(1:nc),hd(1:nc))*conjg(tau)
 #endif
-    &PRECISION
+
+#if REALCASE == 1
+        if (.NOT. isSkewsymmetric) then
+#endif
+          hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
+#if REALCASE == 1
+        endif
+#endif
+        if (my_pe>0 .and. iblk==1) then
+
+          ! The first column of the diagonal block has to be send to the previous PE
+          ! Calculate first column only ...
+#if REALCASE == 1
+          if (isSkewsymmetric) then
+            ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) + hv(1:nc)*hd(1)
+          else
+            ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*hv(1) - hv(1:nc)*hd(1)
+          endif
+#endif
+#if COMPLEXCASE == 1
+          ab(1:nc,ns) = ab(1:nc,ns) - hd(1:nc)*conjg(hv(1)) - hv(1:nc)*conjg(hd(1))
+#endif
+          ! ... send it away ...
+#ifdef WITH_MPI
+          if (wantDebug) call obj%timer%start("mpi_communication")
+          call mpi_wait(ireq_ab, MPI_STATUS_IGNORE, mpierr)
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+
+#endif /* WITH_MPI */
+          ab_s(1:nb+1) = ab(1:nb+1,ns)
+
+#ifdef WITH_MPI
+          if (wantDebug) call obj%timer%start("mpi_communication")
+
+          call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                         int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                         ireq_ab, mpierr)
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+
+#endif /* WITH_MPI */
+          ! ... and calculate remaining columns with rank-2 update
+          if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+          if (isSkewsymmetric) then 
+            if (nc>1) call ELPA_PRECISION_SSR2(int(nc-1,kind=BLAS_KIND), hd(2), hv(2), ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+          else
+            if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                         hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+          endif
+#endif
+#if COMPLEXCASE == 1
+          if (nc>1) call PRECISION_HER2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                       hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+#endif
+          if (wantDebug) call obj%timer%stop("blas")
+
+        else
+          ! No need to  send, just a rank-2 update
+          if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+          if (isSkewsymmetric) then 
+            call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd, hv, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+          else
+            call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
+                                hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
+          endif
+#endif
+#if COMPLEXCASE == 1
+          call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, hv, 1_BLAS_KIND, &
+                              ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+#endif
+          if (wantDebug) call obj%timer%stop("blas")
+
+        endif
+
+        ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
+
+        if (nr>0) then
+          if (nr>1) then
+            if (wantDebug) call obj%timer%start("blas")
+            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
+            if (wantDebug) call obj%timer%stop("blas")
+
+            x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
+            h(2:nb) = h(2:nb) - x*hv(2:nb)
+            ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
+            do i=2,nb
+#if REALCASE == 1
+              ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*h(i) - hs(1:nr)*hv(i)
+#endif
+#if COMPLEXCASE == 1
+              ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
+#endif
+            enddo
+          else
+            ! No double Householder transformation for nr=1, just complete the row
+            do i=2,nb
+#if REALCASE == 1
+              ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*hv(i)
+#endif
+#if COMPLEXCASE == 1
+              ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
+#endif
+            enddo
+          endif
+        endif
+
+        ! Use new HH Vector for the next block
+        hv(:) = hv_new(:)
+        tau = tau_new
+
+      enddo
+
+#ifdef WITH_OPENMP_TRADITIONAL
+    endif
+#endif
+
+#if WITH_OPENMP_TRADITIONAL
+    do iblk = 1, nblocks
+
+      if (hh_dst(iblk) >= np_rows) exit
+      if (snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
+
+      if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
+        ! Wait for last transfer to finish
+#ifdef WITH_MPI
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_wait(ireq_hhs(iblk), MPI_STATUS_IGNORE, mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+#endif
+        ! Copy vectors into send buffer
+        hh_send(:,1:hh_cnt(iblk),iblk) = hh_gath(:,1:hh_cnt(iblk),iblk)
+        ! Send to destination
+
+#ifdef WITH_MPI
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), &
+                       MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
+                       int(10+iblk,kind=MPI_KIND), int(communicator,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+#else /* WITH_MPI */
+        ! do the post-poned irecv here
+        startAddr = startAddr - hh_cnt(iblk)
+        hh_trans(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
+#endif /* WITH_MPI */
+
+        ! Reset counter and increase destination row
+        hh_cnt(iblk) = 0
+        hh_dst(iblk) = hh_dst(iblk)+1
+      endif
+
+    enddo
+#endif /* WITH_OPENMP_TRADITIONAL */
+  enddo ! istep
+
+  ! Finish the last outstanding requests
+
+#ifdef WITH_OPENMP_TRADITIONAL
+
+#ifdef WITH_MPI
+  if (wantDebug) call obj%timer%start("mpi_communication")
+  call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+  call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+
+!  allocate(mpi_statuses(MPI_STATUS_SIZE,max(nblocks,num_chunks)), stat=istat, errmsg=errorMessage)
+!  if (istat .ne. 0) then
+!    print *,"tridiag_band_real: error when allocating mpi_statuses"//errorMessage
+!    stop 1
+!  endif
+
+  call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
+  call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+! deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
+! if (istat .ne. 0) then
+!   print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
+!   stop 1
+! endif
+  if (wantDebug) call obj%timer%stop("mpi_communication")
+#endif /* WITH_MPI */
+
+#else /* WITH_OPENMP_TRADITIONAL */
+
+#ifdef WITH_MPI
+  if (wantDebug) call obj%timer%start("mpi_communication")
+  call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
+  call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
+
+  call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
+  call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+  if (wantDebug) call obj%timer%stop("mpi_communication")
+#endif
+
+#endif /* WITH_OPENMP_TRADITIONAL */
+
+#ifdef  WITH_MPI
+  if (wantDebug) call obj%timer%start("mpi_communication")
+  call mpi_barrier(int(communicator,kind=MPI_KIND),mpierr)
+  if (wantDebug) call obj%timer%stop("mpi_communication")
+#endif
+  deallocate(ab, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag_band: ab", istat, errorMessage)
+
+  deallocate(ireq_hhr, ireq_hhs, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag_band: ireq_hhr", istat, errorMessage)
+
+  deallocate(hh_cnt, hh_dst, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag_band: hh_dst", istat, errorMessage)
+
+  deallocate(hh_gath, hh_send, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag_band: hh_gath", istat, errorMessage)
+
+  deallocate(limits, snd_limits, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag_band: limits", istat, errorMessage)
+
+  deallocate(block_limits, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag_band: block_limits", istat, errorMessage)
+
+  deallocate(global_id, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag_band: global_id", istat, errorMessage)
+
+  call obj%timer%stop("tridiag_band_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX //&
+  gpuString)
+
+  ! intel compiler bug makes these ifdefs necessary
+#if REALCASE == 1
+end subroutine tridiag_band_real_&
+#endif
+#if COMPLEXCASE == 1
+end subroutine tridiag_band_complex_&
+#endif
+&PRECISION
 

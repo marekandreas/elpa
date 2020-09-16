@@ -52,68 +52,68 @@
 
 #include "../general/sanity.F90"
 
-    subroutine ssymm_matrix_allreduce_&
+subroutine ssymm_matrix_allreduce_&
 &PRECISION &
                     (obj, n, a, lda, ldb, comm)
-    !-------------------------------------------------------------------------------
-    !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
-    !  On entry, only the upper half of A needs to be set
-    !  On exit, the complete matrix is set
-    !-------------------------------------------------------------------------------
-      use elpa_abstract_impl
-      use precision
-      implicit none
-      class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik)             :: n, lda, ldb, comm
+!-------------------------------------------------------------------------------
+!  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
+!  On entry, only the upper half of A needs to be set
+!  On exit, the complete matrix is set
+!-------------------------------------------------------------------------------
+  use elpa_abstract_impl
+  use precision
+  implicit none
+  class(elpa_abstract_impl_t), intent(inout) :: obj
+  integer(kind=ik)             :: n, lda, ldb, comm
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE)     :: a(lda,*)
+  real(kind=REAL_DATATYPE)     :: a(lda,*)
 #else
-      real(kind=REAL_DATATYPE)     :: a(lda,ldb)
+  real(kind=REAL_DATATYPE)     :: a(lda,ldb)
 #endif
-      integer(kind=ik)             :: i, nc, mpierr
-      real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
+  integer(kind=ik)             :: i, nc, mpierr
+  real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
 
-      call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
+  call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
-      nc = 0
-      do i=1,n
-        h1(nc+1:nc+i) = a(1:i,i)
-        nc = nc+i
-      enddo
+  nc = 0
+  do i=1,n
+    h1(nc+1:nc+i) = a(1:i,i)
+    nc = nc+i
+  enddo
 
 #ifdef WITH_MPI
-      call obj%timer%start("mpi_communication")
-      call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
-      call obj%timer%stop("mpi_communication")
-      nc = 0
-      do i=1,n
-        a(1:i,i) = h2(nc+1:nc+i)
-        a(i,1:i-1) = - a(1:i-1,i)
-        nc = nc+i
-      enddo
+  call obj%timer%start("mpi_communication")
+  call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
+  call obj%timer%stop("mpi_communication")
+  nc = 0
+  do i=1,n
+    a(1:i,i) = h2(nc+1:nc+i)
+    a(i,1:i-1) = - a(1:i-1,i)
+    nc = nc+i
+  enddo
 
 #else /* WITH_MPI */
 !      h2=h1
 
-      nc = 0
-      do i=1,n
-        a(1:i,i) = h1(nc+1:nc+i)
-        a(i,1:i-1) = - a(1:i-1,i)
-        nc = nc+i
-      enddo
+  nc = 0
+  do i=1,n
+    a(1:i,i) = h1(nc+1:nc+i)
+    a(i,1:i-1) = - a(1:i-1,i)
+    nc = nc+i
+  enddo
 
 #endif /* WITH_MPI */
-!      nc = 0
-!      do i=1,n
-!        a(1:i,i) = h2(nc+1:nc+i)
-!        a(i,1:i-1) = a(1:i-1,i)
-!        nc = nc+i
-!      enddo
+! nc = 0
+! do i=1,n
+!   a(1:i,i) = h2(nc+1:nc+i)
+!   a(i,1:i-1) = a(1:i-1,i)
+!   nc = nc+i
+! enddo
 
-      call obj%timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
+  call obj%timer%stop("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
-    end subroutine ssymm_matrix_allreduce_&
-    &PRECISION
+end subroutine ssymm_matrix_allreduce_&
+&PRECISION
 
 
 

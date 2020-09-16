@@ -129,7 +129,7 @@ program test_real2_single_banded
    real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
    TEST_INT_TYPE           :: STATUS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    integer(kind=c_int)     :: error_elpa
