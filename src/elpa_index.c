@@ -229,7 +229,7 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, skewsymmetric_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
-        INT_ENTRY("nvidia-gpu_tridiag", "Use NVIDIA GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+        INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa1, NULL, PRINT_YES),
         INT_ENTRY("nvidia-gpu_solve_tridi", "Use NVIDIA GPU acceleration for ELPA solve tridi", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_nvidia_gpu, NULL, PRINT_YES),

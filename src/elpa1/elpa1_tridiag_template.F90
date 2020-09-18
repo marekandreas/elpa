@@ -89,14 +89,14 @@ call prmat(na, useNVIDGPU, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, 
 !>
 !> \param tau(na)     Factors for the Householder vectors (returned), needed for back transformation
 !>
-!> \param useGPU      If true,  GPU version of the subroutine will be used
+!> \param useGPU      Specifies whether NO , Nvidia, or Intel GPUs  should be used
 !> \param wantDebug   if true more debug information
 !>
 subroutine tridiag_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
-  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useNVIDIAGPU, &
+  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, &
    wantDebug, max_threads)
   use cuda_functions
   use iso_c_binding
@@ -105,12 +105,15 @@ subroutine tridiag_&
   use matrix_plot
   use elpa_omp
   use elpa_blas_interfaces
+  use gpu_infrastructure
 
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)    :: obj
   integer(kind=ik), intent(in)                  :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-  logical, intent(in)                           :: useNVIDIAGPU, wantDebug
+  logical, intent(in)                           :: wantDebug
+  !integer(kind=ik), intent(in)                  :: useGPU
+  integer(kind=ik)                  :: useGPU
   integer(kind=c_int)                           :: skewsymmetric
   logical                                       :: isSkewsymmetric
 
@@ -123,7 +126,8 @@ subroutine tridiag_&
   real(kind=rk), intent(out)                    :: d_vec(na)
   real(kind=rk), intent(out)                    :: e_vec(na)
   integer(kind=ik), parameter                   :: max_stored_uv = 32
-  logical,          parameter                   :: mat_vec_as_one_block = .true.
+  !logical,          parameter                   :: mat_vec_as_one_block = .true.
+  logical                                       :: mat_vec_as_one_block
 
   ! id in processor row and column and total numbers of processor rows and columns
   integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols
@@ -184,6 +188,7 @@ subroutine tridiag_&
   character(200)                                :: errorMessage
   character(20)                                 :: gpuString
   integer(kind=ik)                              :: nblockEnd
+  logical                                       :: useNvidiaGPU, useIntelGPU, useNoGPU
   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
                                                                       &PRECISION&
                                                                       &_&
@@ -195,11 +200,31 @@ subroutine tridiag_&
   endif
   isSkewsymmetric = (skewsymmetric == 1)
 
-  if(useNVIDIAGPU) then
+  useNvidiaGPU = .false.
+  useIntelGPU  = .false.
+  useNoGPU     = .true.
+
+  if(useGPU .ne. USE_NO_GPU) then
     gpuString = "_gpu"
+    if (useGPU .eq. USE_NVIDIA_GPU) useNvidiaGPU = .true.
+    if (useGPU .eq. USE_INTEL_GPU) useIntelGPU = .true.
+    useNoGPU = .false.
   else
     gpuString = ""
   endif
+
+  if (useNvidiaGPU) then
+    mat_vec_as_one_block = .true.
+  endif
+
+  if (useIntelGPU) then
+    mat_vec_as_one_block = .false.
+  endif
+
+   !useGPU = USE_NO_GPU
+   !useNoGPU = .true.
+   ! useIntelGPU = .false.
+   print *,"GPUGPU=",useGPU
 
   call obj%timer%start("tridiag_&
   &MATH_DATATYPE&
@@ -288,7 +313,7 @@ subroutine tridiag_&
   call check_alloc("tridiag_&
        &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
 
-  if (useNVIDIAGPU) then
+  if (useNvidiaGPU) then
     num = (max_local_rows+1) * size_of_datatype
     successCUDA = cuda_malloc_host(v_row_host,num)
     check_host_alloc_cuda("tridiag: v_row_host", successCUDA)
@@ -337,7 +362,27 @@ subroutine tridiag_&
                       cudaHostRegisterDefault)
     check_host_register_cuda("tridiag: d_vec", successCUDA)
 
-  else
+   endif
+
+   if (useIntelGPU) then
+    allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
+    call check_alloc("tridiag_&
+    &MATH_DATATYPE ", "v_row", istat, errorMessage)
+
+    allocate(v_col(max_local_cols), stat=istat, errmsg=errorMessage)
+    call check_alloc("tridiag_&
+     &MATH_DATATYPE ", "v_col", istat, errorMessage)
+
+    allocate(u_col(max_local_cols), stat=istat, errmsg=errorMessage)
+    call check_alloc("tridiag_&
+    &MATH_DATATYPE ", "u_col", istat, errorMessage)
+
+    allocate(u_row(max_local_rows), stat=istat, errmsg=errorMessage)
+    call check_alloc("tridiag_&
+    &MATH_DATATYPE ", "u_row", istat, errorMessage)
+   endif
+
+   if (useNoGPU) then
     allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
     call check_alloc("tridiag_&
     &MATH_DATATYPE ", "v_row", istat, errorMessage)
@@ -372,7 +417,7 @@ subroutine tridiag_&
   v_col = 0
   u_col = 0
 
-  if (useNVIDIAGPU) then
+  if (useNvidiaGPU) then
      successCUDA = cuda_malloc(v_row_dev, max_local_rows * size_of_datatype)
      check_alloc_cuda("tridiag: v_row_dev", successCUDA)
 
@@ -391,8 +436,11 @@ subroutine tridiag_&
 
      successCUDA = cuda_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
      check_alloc_cuda("tridiag: vu_stored_rows_dev", successCUDA)
-  endif !useNVIDIAGPU
+  endif !useNvidiaGPU
 
+  !if (useIntelGPU) then
+  !  ! needed later
+  !endif
 
   d_vec(:) = 0
   e_vec(:) = 0
@@ -411,7 +459,7 @@ subroutine tridiag_&
   d_vec(na) = a_mat(l_rows,l_cols)
 #endif
 
-  if (useNVIDIAGPU) then
+  if (useNvidiaGPU) then
     ! allocate memmory for matrix A on the device and than copy the matrix
 
     num = matrixRows * matrixCols * size_of_datatype
@@ -427,6 +475,10 @@ subroutine tridiag_&
                               num, cudaMemcpyHostToDevice)
     check_memcpy_cuda("tridiag: a_dev", successCUDA)
   endif
+
+  !if (useIntelGPU) then
+  !  ! needed later
+  !endif
 
   ! main cycle of tridiagonalization
   ! in each step, 1 Householder Vector is calculated
@@ -446,7 +498,7 @@ subroutine tridiag_&
       ! remaining elements to all procs in current column
 
       ! copy l_cols + 1 column of A to v_row
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         a_offset = l_cols * matrixRows * size_of_datatype
         ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, 
         ! (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
@@ -454,28 +506,52 @@ subroutine tridiag_&
         successCUDA = cuda_memcpy(int(loc(v_row),kind=c_intptr_t), &
                                   a_dev + a_offset, (l_rows)* size_of_datatype, cudaMemcpyDeviceToHost)
         check_memcpy_cuda("tridiag a_dev 1", successCUDA)
-      else
+      endif
+
+      if (useIntelGPU) then
+        v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
+      endif
+
+      if (useNoGPU) then
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
       endif
 
       if (n_stored_vecs > 0 .and. l_rows > 0) then
-        if (wantDebug) call obj%timer%start("blas")
 #if COMPLEXCASE == 1
         aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
-        call PRECISION_GEMV('N',   &
-                            int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
-                            ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
+        if (useIntelGPU) then
+          if (wantDebug) call obj%timer%start("mkl_offload")
+          ! maybe this could also be offloaded to Intel GPUs
+          call PRECISION_GEMV('N',   &
+                              int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
+                              ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
 #if REALCASE == 1
-                            uv_stored_cols(l_cols+1,1), &
-                            int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND), &
+                              uv_stored_cols(l_cols+1,1), &
+                              int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND), &
 #endif
 #if COMPLEXCASE == 1
-                            aux, 1_BLAS_KIND,  &
+                              aux, 1_BLAS_KIND,  &
 #endif
-                            ONE, v_row, 1_BLAS_KIND)
-        if (wantDebug) call obj%timer%stop("blas")
+                              ONE, v_row, 1_BLAS_KIND)
+          if (wantDebug) call obj%timer%stop("mkl_offload")
+        endif
 
+        if (useNoGPU .or. useNvidiaGPU) then
+          if (wantDebug) call obj%timer%start("blas")
+          call PRECISION_GEMV('N',   &
+                              int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
+                              ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
+#if REALCASE == 1
+                              uv_stored_cols(l_cols+1,1), &
+                              int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND), &
+#endif
+#if COMPLEXCASE == 1
+                              aux, 1_BLAS_KIND,  &
+#endif
+                              ONE, v_row, 1_BLAS_KIND)
+          if (wantDebug) call obj%timer%stop("blas")
+        endif
       endif
 
       if (my_prow == prow(istep-1, nblk, np_rows)) then
@@ -562,8 +638,9 @@ subroutine tridiag_&
 
     u_col(1:l_cols) = 0
     u_row(1:l_rows) = 0
+
     if (l_rows > 0 .and. l_cols> 0 ) then
-     if (useNVIDIAGPU) then
+     if (useNvidiaGPU) then
        successCUDA = cuda_memset(u_col_dev, 0, l_cols * size_of_datatype)
        check_memcpy_cuda("tridiag: u_col_dev", successCUDA)
 
@@ -578,7 +655,11 @@ subroutine tridiag_&
        successCUDA = cuda_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
                                  l_rows * size_of_datatype, cudaMemcpyHostToDevice)
        check_memcpy_cuda("tridiag: v_row_dev", successCUDA)
-     endif ! useGU
+     endif ! useNvidiaGPU
+
+     !if (useIntelGPU) then
+     !  ! needed later when we can do explicit memcopy
+     !endif
 
 #ifdef WITH_OPENMP
      call obj%timer%start("OpenMP parallel")
@@ -604,37 +685,76 @@ subroutine tridiag_&
          if (l_row_end < l_row_beg) cycle
 #ifdef WITH_OPENMP
          if (mod(n_iter,n_threads) == my_thread) then
-           if (wantDebug) call obj%timer%start("blas")
-           call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
-                int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
-                v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
-
-           if (i/=j) then
-             if (isSkewsymmetric) then
-               call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
-                                   int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                   -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
-                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
-                                   ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
-
-             else
-               call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
-                                   int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
-                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
-                                   ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+           if (useIntelGPU) then
+             if (n_threads .gt. 1) then
+               print *,"At the moment MKL offload works with only one thread!"
+               stop
              endif
+             if (wantDebug) call obj%timer%start("mkl_offload")
+             call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                  int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                  ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
+                  v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
+
+             if (i/=j) then
+               if (isSkewsymmetric) then
+                 call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                     int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                     -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                     v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
+                                     ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+
+               else
+                 call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                     int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                     ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                     v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
+                                     ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+               endif
+             endif
+             if (wantDebug) call obj%timer%stop("mkl_offload")
+           endif !useIntelGPU
+
+           if (useNoGPU) then
+             if (wantDebug) call obj%timer%start("blas")
+             call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                  int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                  ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
+                  v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
+
+             if (i/=j) then
+               if (isSkewsymmetric) then
+                 call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                     int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                     -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                     v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
+                                     ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+
+               else
+                 call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                     int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                     ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                     v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
+                                     ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+               endif
+             endif
+             if (wantDebug) call obj%timer%stop("blas")
            endif
-           if (wantDebug) call obj%timer%stop("blas")
+
+           !if (useNvidiaGPU) then
+           ! stop "nvida + openmp not yet ported"
+           !endif
          endif
+
          n_iter = n_iter+1
 #else /* WITH_OPENMP */
 
          ! multiplication by blocks is efficient only for CPU
          ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
          ! CPU implementation) or by one large matrix Vector multiply
-         if (.not. useNVIDIAGPU) then
+         !if (useNoGPU) then
+         if (useNoGPU .or. useIntelGPU) then
+           ! this should only be run on the CPU if large matrix works for INTEL
            if (wantDebug) call obj%timer%start("blas")
            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                        int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
@@ -657,22 +777,24 @@ subroutine tridiag_&
              endif
            endif
            if (wantDebug) call obj%timer%stop("blas")
-         endif ! not useNVIDIAGPU
+         endif ! useNoGPU
 
 #endif /* WITH_OPENMP */
             enddo  ! j=0,i
           enddo  ! i=0,(istep-2)/tile_size
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
+          !if (useNvidiaGPU .or. useIntelGPU) then
             if (mat_vec_as_one_block) then
               ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
               ! this requires altering of the algorithm when later explicitly updating the matrix
               ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
-              if (wantDebug) call obj%timer%start("cublas")
-              call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
-                                        ONE, a_dev, matrixRows,                   &
-                                        v_row_dev , 1,                          &
-                                        ONE, u_col_dev, 1)
+              if (useNvidiaGPU) then
+                if (wantDebug) call obj%timer%start("cublas")
+                call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
+                                          ONE, a_dev, matrixRows,                   &
+                                          v_row_dev , 1,                          &
+                                          ONE, u_col_dev, 1)
 
        ! todo: try with non transposed!!!
 !                 if(i/=j) then
@@ -683,19 +805,30 @@ subroutine tridiag_&
 !                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
 !                                             size_of_datatype, 1)
 !                 endif
-              if (wantDebug) call obj%timer%stop("cublas")
+                if (wantDebug) call obj%timer%stop("cublas")
+              endif
+              if (useIntelGPU) then
+                if (wantDebug) call obj%timer%start("mkl_offload")
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(l_rows,kind=BLAS_KIND),int(l_cols,kind=BLAS_KIND),  &
+                                          ONE, a_mat, int(matrixRows,kind=BLAS_KIND),       &
+                                          v_row , 1_BLAS_KIND,          &
+                                          ONE, u_col, 1_BLAS_KIND)
+
+                if (wantDebug) call obj%timer%stop("mkl_offload")
+              endif
 
             else  ! mat_vec_as_one_block
               !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
               !larger matrices. In general, however, this algorithm is very simmilar to the one with CPU
               do i=0,(istep-2)/tile_size
-                  l_col_beg = i*l_cols_per_tile+1
-                  l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-                  if(l_col_end<l_col_beg) cycle
+                l_col_beg = i*l_cols_per_tile+1
+                l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+                if (l_col_end<l_col_beg) cycle
 
-                  l_row_beg = 1
-                  l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
-
+                l_row_beg = 1
+                l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
+                if (useNvidiaGPU) then
+                  if (wantDebug) call obj%timer%start("cublas")
                   a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                           size_of_datatype
 
@@ -704,16 +837,29 @@ subroutine tridiag_&
                               ONE, a_dev + a_offset, matrixRows,  &
                               v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
                               ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
+                  if (wantDebug) call obj%timer%stop("cublas")
+                endif
+                if (useIntelGPU) then
+                  if (wantDebug) call obj%timer%start("mkl_offload")
+                  call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                              int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                              ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),  &
+                              v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,  &
+                              ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
+                  if (wantDebug) call obj%timer%stop("mkl_offload")
+                endif
               enddo
 
               do i=0,(istep-2)/tile_size
-                  l_col_beg = i*l_cols_per_tile+1
-                  l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-                  if(l_col_end<l_col_beg) cycle
+                l_col_beg = i*l_cols_per_tile+1
+                l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+                if (l_col_end<l_col_beg) cycle
 
-                  l_row_beg = 1
-                  l_row_end = min(l_rows,i*l_rows_per_tile)
+                l_row_beg = 1
+                l_row_end = min(l_rows,i*l_rows_per_tile)
 
+                if (useNvidiaGPU) then
+                  if (wantDebug) call obj%timer%start("cublas")
                   a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                           size_of_datatype
                   if (isSkewsymmetric) then
@@ -727,17 +873,43 @@ subroutine tridiag_&
                                  v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                                  ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
                   endif
+                  if (wantDebug) call obj%timer%stop("cublas")
+                endif
+                if (useIntelGPU) then
+                  ! offfload
+                  if (wantDebug) call obj%timer%start("mkl_offload")
+                  if (isSkewsymmetric) then
+                     call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                 -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                 v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
+                                 ONE, u_row(l_row_beg:max_local_rows), 1_BLAS_KIND)
+                  else
+                     call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                 ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                 v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
+                                 ONE, u_row(l_row_beg:max_local_rows), 1_BLAS_KIND)
+                  endif
+                  if (wantDebug) call obj%timer%stop("mkl_offload")
+                  ! for test implement a normal gemv first
+                endif
               enddo
             end if !multiplication as one block / per stripes
 
-            successCUDA = cuda_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
-                          u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
+            if (useNvidiaGPU) then
+              successCUDA = cuda_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
+                            u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
+              check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
 
-            successCUDA = cuda_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
-                          u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
-          endif ! useNVIDIAGPU
+              successCUDA = cuda_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
+                            u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
+              check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
+            endif
+            !if (useIntelGPU) then
+            !  
+            !endif
+          endif ! useNvidiaGPU .or. useIntelGPU
 
 #ifdef WITH_OPENMP
 !$OMP END PARALLEL
@@ -751,21 +923,43 @@ subroutine tridiag_&
 
           ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
           if (n_stored_vecs > 0) then
-            if (wantDebug) call obj%timer%start("blas")
+
+            if (useIntelGPU) then
+              if (wantDebug) call obj%timer%start("mkl_offload")
+              ! maybe this could also be offloaded
 #if REALCASE == 1
-            call PRECISION_GEMV('T',     &
+              call PRECISION_GEMV('T',     &
 #endif
 #if COMPLEXCASE == 1
-            call PRECISION_GEMV('C',     &
+              call PRECISION_GEMV('C',     &
 #endif
-                                int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
-                                ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
-                                v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
+                                  int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                                  ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                  v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
 
-            call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
-                                ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
-                                aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
-            if (wantDebug) call obj%timer%stop("blas")
+              call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                                  ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
+                                  aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
+              if (wantDebug) call obj%timer%stop("blas")
+            endif
+
+            if (useNoGPU .or. useNvidiaGPU) then
+              if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+              call PRECISION_GEMV('T',     &
+#endif
+#if COMPLEXCASE == 1
+              call PRECISION_GEMV('C',     &
+#endif
+                                  int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                                  ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                  v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
+
+              call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                                  ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
+                                  aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
+              if (wantDebug) call obj%timer%stop("blas")
+            endif
           endif
 
         endif  ! (l_rows>0 .and. l_cols>0)
@@ -860,7 +1054,7 @@ subroutine tridiag_&
         ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
         if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             successCUDA = cuda_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
                                       max_local_rows * 2 * max_stored_uv *          &
                                       size_of_datatype, cudaMemcpyHostToDevice)
@@ -871,6 +1065,9 @@ subroutine tridiag_&
                                       size_of_datatype, cudaMemcpyHostToDevice)
             check_memcpy_cuda("tridiag: uv_stored_cols_dev", successCUDA)
           endif
+          !if (useIntelGPU) then
+          !  ! needed later when we can do explicit offloads
+          !endif
 
           do i = 0, (istep-2)/tile_size
             ! go over tiles above (or on) the diagonal
@@ -882,22 +1079,41 @@ subroutine tridiag_&
               cycle
 
 
-            if (useNVIDIAGPU) then
-              if(.not. mat_vec_as_one_block) then
+            if (useNvidiaGPU ) then
+            !if (useNvidiaGPU .or. useIntelGPU) then
+              if (.not. mat_vec_as_one_block) then
                 ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                 ! we than use the same calls as for CPU version
-                if (wantDebug) call obj%timer%start("cublas")
-                call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
-                                          l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
-                                          ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
-                                          size_of_datatype,  &
-                                          max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
-                                          size_of_datatype,  &
-                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
-                                          size_of_datatype , matrixRows)
-                if (wantDebug) call obj%timer%stop("cublas")
+                if (useNvidiaGPU) then
+                  if (wantDebug) call obj%timer%start("cublas")
+                  call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+                                            l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
+                                            ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
+                                            size_of_datatype,  &
+                                            max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
+                                            size_of_datatype,  &
+                                            max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
+                                            size_of_datatype , matrixRows)
+                  if (wantDebug) call obj%timer%stop("cublas")
+                endif
+                if (useIntelGPU) then
+                  if (wantDebug) call obj%timer%start("mkl_offload")
+                  call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+                                       int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                       int(l_col_end-l_col_beg+1,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),     &
+                                       ONE, vu_stored_rows(l_row_beg:max_local_rows,1:2*max_stored_uv),                    &
+                                       int(max_local_rows,kind=BLAS_KIND), uv_stored_cols(l_col_beg,1),                    &
+                                       int(max_local_cols,kind=BLAS_KIND), ONE, a_mat(l_row_beg,l_col_beg),                &
+                                       int(matrixRows,kind=BLAS_KIND))
+                  if (wantDebug) call obj%timer%stop("mkl_offload")
+                endif
+
               endif
-            else !useNVIDIAGPU
+            endif ! this block is exclusive
+
+            if (useNoGPU .or. useIntelGPU) then
+              ! should only be run on CPU if large matrix works for intel gpu
+            !if (useNoGPU) then
               if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
                                    int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
@@ -908,19 +1124,32 @@ subroutine tridiag_&
                                    int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
                                    ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
               if (wantDebug) call obj%timer%stop("blas")
-            endif !useNVIDIAGPU
+            endif !useNoGPU
           enddo
 
-          if (useNVIDIAGPU) then
-            if(mat_vec_as_one_block) then
+          if (useNvidiaGPU ) then
+          !if (useNvidiaGPU .or. useIntelGPU) then
+            if (mat_vec_as_one_block) then
               !update whole (remaining) part of matrix, including tiles below diagonal
               !we can do that in one large cublas call
-              if (wantDebug) call obj%timer%start("cublas")
-              call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
-                                        ONE, vu_stored_rows_dev, max_local_rows, &
-                                        uv_stored_cols_dev, max_local_cols,  &
-                                        ONE, a_dev, matrixRows)
-              if (wantDebug) call obj%timer%stop("cublas")
+              if (useNvidiaGPU) then
+                if (wantDebug) call obj%timer%start("cublas")
+                call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
+                                          ONE, vu_stored_rows_dev, max_local_rows, &
+                                          uv_stored_cols_dev, max_local_cols,  &
+                                          ONE, a_dev, matrixRows)
+                if (wantDebug) call obj%timer%stop("cublas")
+              endif
+              if (useIntelGPU) then
+                ! is this correct ???
+                if (wantDebug) call obj%timer%start("mkl_offload")
+                call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                    int(2*n_stored_vecs, kind=BLAS_KIND), ONE,  &
+                                    vu_stored_rows, int(max_local_rows,kind=BLAS_KIND), &
+                                    uv_stored_cols, int(max_local_cols,kind=BLAS_KIND),  &
+                                    ONE, a_mat, int(matrixRows,kind=BLAS_KIND))
+                if (wantDebug) call obj%timer%stop("mkl_offload")
+              endif
             endif
           endif
 
@@ -928,7 +1157,7 @@ subroutine tridiag_&
         endif
 
         if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
              a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 
@@ -937,6 +1166,10 @@ subroutine tridiag_&
              check_memcpy_cuda("tridiag: a_dev 3", successCUDA)
 
           endif
+          ! if (useIntelGPU) then
+          ! needed at a later time when we can do explcit mem copys
+          ! endif
+
           if (n_stored_vecs > 0) then
             a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
                         + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
@@ -952,7 +1185,7 @@ subroutine tridiag_&
           d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
 #endif
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
             !successCUDA = cuda_threadsynchronize()
             !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
@@ -961,6 +1194,10 @@ subroutine tridiag_&
                                        int(1 * size_of_datatype, kind=c_intptr_t), cudaMemcpyHostToDevice)
              check_memcpy_cuda("tridiag: a_dev 4", successCUDA)
           endif
+
+          ! if (useIntelGPU) then
+          ! needed at a later time when we can expicit mem copy
+          ! endif
         endif
 
       enddo ! main cycle over istep=na,3,-1
@@ -971,14 +1208,20 @@ subroutine tridiag_&
       if (my_pcol==pcol(2, nblk, np_cols)) then
         if (my_prow==prow(1, nblk, np_rows)) then
           ! We use last l_cols value of loop above
-          if(useNVIDIAGPU) then
+          if(useNvidiaGPU) then
             successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
             vrl = aux3(1)
-          else !useNVIDIAGPU
+          endif
+
+          if (useIntelGPU) then
             vrl = a_mat(1,l_cols)
-          endif !useNVIDIAGPU
+          endif
+
+          if (useNoGPU) then
+            vrl = a_mat(1,l_cols)
+          endif 
           call hh_transform_complex_&
                                     &PRECISION &
                                     (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
@@ -1009,14 +1252,20 @@ subroutine tridiag_&
 
 #endif /* WITH_MPI */
       if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
-        if(useNVIDIAGPU) then
+        if(useNvidiaGPU) then
           successCUDA = cuda_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 6", successCUDA)
           d_vec(1) = PRECISION_REAL(aux3(1))
-        else !useNVIDIAGPU
+        endif
+
+        if (useIntelGPU) then
           d_vec(1) = PRECISION_REAL(a_mat(1,1))
-        endif !useNVIDIAGPU
+        endif
+
+        if (useNoGPU) then 
+          d_vec(1) = PRECISION_REAL(a_mat(1,1))
+        endif 
       endif
 
 #endif /* COMPLEXCASE == 1 */
@@ -1025,34 +1274,50 @@ subroutine tridiag_&
       ! Store e_vec(1)
 
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
-        if(useNVIDIAGPU) then
+        if(useNvidiaGPU) then
           successCUDA = cuda_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                     1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
-        else !useNVIDIAGPU
+        endif
+
+        if (useIntelGPU) then
           e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
-        endif !useNVIDIAGPU
+        endif
+
+        if (useNoGPU) then
+          e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
+        endif
       endif
 
      ! Store d_vec(1)
       if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
-        if(useNVIDIAGPU) then
+        if(useNvidiaGPU) then
           successCUDA = cuda_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
-        else !useNVIDIAGPU
+        endif
+
+        if (useIntelGPU) then
           if (isSkewsymmetric) then
             d_vec(1) = 0.0_rk
           else
             d_vec(1) = a_mat(1,1)
           endif
-        endif !useNVIDIAGPU
+        endif
+
+        if (useNoGPU) then
+          if (isSkewsymmetric) then
+            d_vec(1) = 0.0_rk
+          else
+            d_vec(1) = a_mat(1,1)
+          endif
+        endif
       endif
 #endif
 
       deallocate(tmp, stat=istat, errmsg=errorMessage)
       check_deallocate("tridiag: tmp", istat, errorMessage)
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         ! todo: should we leave a_mat on the device for further use?
         successCUDA = cuda_free(a_dev)
         check_dealloc_cuda("tridiag: a_dev 9", successCUDA)
@@ -1075,6 +1340,10 @@ subroutine tridiag_&
         successCUDA = cuda_free(uv_stored_cols_dev)
         check_dealloc_cuda("tridiag:uv_stored_cols_dev ", successCUDA)
       endif
+
+      ! if (useIntelGPU) then
+      ! needed at a later time when we can do explicit frees
+      ! endif
 
       ! distribute the arrays d_vec and e_vec to all processors
 
@@ -1101,7 +1370,7 @@ subroutine tridiag_&
       deallocate(tmp_real, stat=istat, errmsg=errorMessage)
       check_deallocate("tridiag: tmp_real", istat, errorMessage)
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
         check_host_unregister_cuda("tridiag: a_mat", successCUDA)
 
@@ -1132,7 +1401,17 @@ subroutine tridiag_&
 
         successCUDA = cuda_host_unregister(int(loc(d_vec),kind=c_intptr_t))
         check_host_unregister_cuda("tridiag: d_vec", successCUDA)
-      else
+      endif ! this block is exclusive
+      ! if (useIntelGPUs) then
+      ! needed at a later time when we can do explicit frees
+      ! endif
+
+      if (useIntelGPU) then
+        deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
+        check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)
+      endif
+
+      if (useNoGPU) then
         deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
         check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)
       endif

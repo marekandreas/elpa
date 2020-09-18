@@ -281,6 +281,7 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
 #endif
 #if defined(TEST_INTEL_GPU)
+   printf("Setting INTEL GPU\n");
    elpa_set(handle, "intel-gpu", TEST_INTEL_GPU, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else

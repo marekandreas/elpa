@@ -45,6 +45,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
   src/GPU/check_for_gpu.F90 \
+  src/GPU/mod_gpu_infrastructure.F90 \
   src/GPU/mod_cuda.F90 \
   src/elpa2/GPU/interface_c_kernel.F90 \
   src/elpa2/mod_pack_unpack_gpu.F90 \

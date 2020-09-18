@@ -79,6 +79,7 @@ function elpa_solve_evp_&
    use elpa_mpi
    use elpa1_compute
    use elpa_omp
+   use gpu_infrastructure
 #ifdef REDISTRIBUTE_MATRIX
    use elpa_scalapack_interfaces
 #endif
@@ -140,12 +141,13 @@ function elpa_solve_evp_&
    integer(kind=c_int)                             :: l_cols, l_rows, l_cols_nev, np_rows, np_cols
    integer(kind=MPI_KIND)                          :: np_rowsMPI, np_colsMPI
 
-   logical                                         :: useNVIDIAGPU
+   integer(kind=ik)                                :: useGPU
    integer(kind=c_int)                             :: skewsymmetric
    logical                                         :: isSkewsymmetric
    logical                                         :: success
 
-   logical                                         :: do_useNVIDIAGPU, do_useNVIDIAGPU_tridiag, &
+   integer(kind=ik)                                :: do_useGPU, do_useGPU_tridiag
+   logical                                         :: &
                                                       do_useNVIDIAGPU_solve_tridi, do_useNVIDIAGPU_trans_ev
    integer(kind=ik)                                :: numberOfGPUDevices
 
@@ -153,7 +155,7 @@ function elpa_solve_evp_&
    integer(kind=MPI_KIND)                          :: mpierr, my_peMPI, n_pesMPI, my_prowMPI, my_pcolMPI
    real(kind=C_DATATYPE_KIND), allocatable         :: e(:)
    logical                                         :: wantDebug
-   integer(kind=c_int)                             :: istat, debug, NVIDIAgpu
+   integer(kind=c_int)                             :: istat, debug, gpu
    character(200)                                  :: errorMessage
    integer(kind=ik)                                :: na, nev, nblk, matrixCols, &
                                                       mpi_comm_rows, mpi_comm_cols,        &
@@ -180,7 +182,7 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: global_index
 
    logical                                         :: reDistributeMatrix, doRedistributeMatrix
-   
+   integer :: dummyInt
    call obj%timer%start("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
@@ -281,15 +283,31 @@ function elpa_solve_evp_&
      obj%eigenvalues_only = .true.
    endif
 
-   call obj%get("nvidia-gpu",NVIDIAgpu,error)
+   call obj%get("nvidia-gpu", gpu, error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem getting option for gpu. Aborting..."
+     print *,"Problem getting option for NVIDIA gpu. Aborting..."
      stop
    endif
-   if (NVIDIAgpu .eq. 1) then
-     useNVIDIAGPU =.true.
+   if (gpu .eq. 1) then
+     useGPU = USE_NVIDIA_GPU
    else
-     useNVIDIAGPU = .false.
+     useGPU = USE_NO_GPU
+   endif
+
+   call obj%get("intel-gpu", gpu, error)
+   print *,"intel-gpu: ",gpu
+   if (error .ne. ELPA_OK) then
+     print *,"Problem getting option for INTEL gpu. Aborting..."
+     stop
+   endif
+   if (gpu .eq. 1) then
+     if (useGPU .eq. USE_NVIDIA_GPU) then
+       print *,"You cannot use INTEL and NVIDIA GPUs at the same time. Aborting..."
+       stop
+     endif
+     useGPU = USE_INTEL_GPU
+   else
+     useGPU = USE_NO_GPU
    endif
    
    call obj%get("is_skewsymmetric",skewsymmetric,error)
@@ -322,14 +340,14 @@ function elpa_solve_evp_&
      stop
    endif
    wantDebug = debug == 1
-   do_useNVIDIAGPU = .false.
+   do_useGPU = USE_NO_GPU
 
    
-   if (useNVIDIAGPU) then
+   if (useGPU .eq. USE_NVIDIA_GPU) then
      call obj%timer%start("check_for_gpu")
 
      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
-       do_useNVIDIAGPU = .true.
+       do_useGPU = USE_NVIDIA_GPU
        ! set the neccessary parameters
        cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
        cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
@@ -344,35 +362,56 @@ function elpa_solve_evp_&
      call obj%timer%stop("check_for_gpu")
    endif
 
+   if (useGPU .eq. USE_INTEL_GPU) then
+     do_useGPU = USE_INTEL_GPU
+   endif
 
-   do_useNVIDIAGPU_tridiag = do_useNVIDIAGPU
-   do_useNVIDIAGPU_solve_tridi = do_useNVIDIAGPU
-   do_useNVIDIAGPU_trans_ev = do_useNVIDIAGPU
+   do_useGPU_tridiag = USE_NO_GPU
+   do_useNVIDIAGPU_solve_tridi = .false.
+   do_useNVIDIAGPU_trans_ev = .false.
+
+   if (do_useGPU .eq. USE_NVIDIA_GPU) then
+     do_useGPU_tridiag = do_useGPU
+     do_useNVIDIAGPU_solve_tridi = .true.
+     do_useNVIDIAGPU_trans_ev = .true.
+   endif
+   if (do_useGPU .eq. USE_INTEL_GPU) then
+     do_useGPU_tridiag = do_useGPU
+     do_useNVIDIAGPU_solve_tridi = .false.
+     do_useNVIDIAGPU_trans_ev = .false.
+   endif
+
    ! only if we want (and can) use GPU in general, look what are the
    ! requirements for individual routines. Implicitly they are all set to 1, so
    ! unles specified otherwise by the user, GPU versions of all individual
    ! routines should be used
-   if(do_useNVIDIAGPU) then
-     call obj%get("nvidia-gpu_tridiag", NVIDIAgpu, error)
+   if (do_useGPU .eq. USE_NVIDIA_GPU .or. do_useGPU .eq. USE_INTEL_GPU) then
+     call obj%get("gpu_tridiag", gpu, error)
+     print *,"gpu_tridiag", gpu
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option for gpu_tridiag. Aborting..."
        stop
      endif
-     do_useNVIDIAGPU_tridiag = (NVIDIAgpu == 1)
+     if (gpu .eq. 1) then
+       if (do_useGPU .eq. USE_NVIDIA_GPU) do_useGPU_tridiag = USE_NVIDIA_GPU
+       if (do_useGPU .eq. USE_INTEL_GPU)  do_useGPU_tridiag = USE_INTEL_GPU
+     endif
+   endif
 
-     call obj%get("nvidia-gpu_solve_tridi", NVIDIAgpu, error)
+   if (do_useGPU .eq. USE_NVIDIA_GPU) then
+     call obj%get("nvidia-gpu_solve_tridi", gpu, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option for gpu_solve_tridi. Aborting..."
        stop
      endif
-     do_useNVIDIAGPU_solve_tridi = (NVIDIAgpu == 1)
+     do_useNVIDIAGPU_solve_tridi = (gpu == 1)
 
-     call obj%get("nvidia-gpu_trans_ev", NVIDIAgpu, error)
+     call obj%get("nvidia-gpu_trans_ev", gpu, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option for gpu_trans_ev. Aborting..."
        stop
      endif
-     do_useNVIDIAGPU_trans_ev = (NVIDIAgpu == 1)
+     do_useNVIDIAGPU_trans_ev = (gpu == 1)
    endif
    ! for elpa1 the easy thing is, that the individual phases of the algorithm
    ! do not share any data on the GPU. 
@@ -418,7 +457,8 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useNVIDIAGPU_tridiag, &
+     & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, &
+     do_useGPU_tridiag, &
      wantDebug, nrThreads)
 
 #ifdef WITH_NVTX
