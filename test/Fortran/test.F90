@@ -45,7 +45,8 @@
 ! Define one of TEST_REAL or TEST_COMPLEX
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
-! Define TEST_GPU \in [0, 1]
+! Define TEST_NVIDIA_GPU \in [0, 1]
+! Define TEST_INTEL_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
@@ -276,12 +277,12 @@ program test
 
 #if TEST_QR_DECOMPOSITION == 1
 
-#if TEST_GPU == 1
+#if (TEST_NVIDIA_GPU == 1)  || (TEST_INTEL_GPU == 1)
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
      stop 77
-#endif /* TEST_GPU */
+#endif /* TEST_NVIDIA_GPU || TEST_INTEL_GPU */
    if (nblk .lt. 64) then
      if (myid .eq. 0) then
        print *,"At the moment QR decomposition need blocksize of at least 64"
@@ -627,7 +628,17 @@ program test
 #endif
    assert_elpa_ok(error_elpa)
 
-   call e%set("nvidia-gpu", TEST_GPU, error_elpa)
+#if defined(TEST_NVIDIA_GPU)
+   call e%set("nvidia-gpu", TEST_NVIDIA_GPU, error_elpa)
+#else
+   call e%set("nvidia-gpu", 0, error_elpa)
+#endif
+   assert_elpa_ok(error_elpa)
+#if defined(TEST_INTEL_GPU)
+   call e%set("intel-gpu", TEST_INTEL_GPU, error_elpa)
+#else
+   call e%set("intel-gpu", 0 , error_elpa)
+#endif
    assert_elpa_ok(error_elpa)
 
 #if TEST_QR_DECOMPOSITION == 1
@@ -645,18 +656,23 @@ program test
 
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
-     if (TEST_GPU .eq. 0) then
+#if !(defined(TEST_NVIDIA_GPU)) && !(defined(TEST_INTEL_GPU))
+     !if (TEST_NVIDIA_GPU .eq. 0 .and. TEST_INTEL_GPU .eq. 0) then
        kernel = elpa_option_enumerate(KERNEL_KEY, int(i,kind=c_int))
        if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) continue
        if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU) continue
-     endif
+       !if (kernel .eq. ELPA_2STAGE_REAL_INTEL_GPU) continue
+       !if (kernel .eq. ELPA_2STAGE_COMPLEX_INTEL_GPU) continue
+     !endif
+#endif
+
 #endif
 #ifdef TEST_KERNEL
      kernel = TEST_KERNEL
 #endif
 
 #ifdef TEST_SOLVER_2STAGE
-#if TEST_GPU == 1
+#if TEST_NVIDIA_GPU == 1
 #if defined TEST_REAL
      kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
 #endif
@@ -664,6 +680,15 @@ program test
      kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #endif
 #endif
+#if TEST_INTEL_GPU == 1
+#if defined TEST_REAL
+     !kernel = ELPA_2STAGE_REAL_INTEL_GPU
+#endif
+#if defined TEST_COMPLEX
+     !kernel = ELPA_2STAGE_COMPLEX_INTEL_GPU
+#endif
+#endif
+
      call e%set(KERNEL_KEY, kernel, error_elpa)
 #ifdef TEST_KERNEL
      assert_elpa_ok(error_elpa)

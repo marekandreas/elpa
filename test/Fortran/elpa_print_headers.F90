@@ -166,7 +166,10 @@
       print *," "
       print *,"This ELPA2 is build with"
 #ifdef WITH_NVIDIA_GPU_KERNEL
-        print *,"GPU support"
+        print *,"NVIDIA GPU support"
+#endif
+#ifdef WITH_INTEL_GPU_KERNEL
+        print *,"INTEL GPU support"
 #endif
       print *," "
 #ifdef REALCASE

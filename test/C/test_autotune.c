@@ -226,7 +226,10 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
 
-   elpa_set(handle, "gpu", 0, &error_elpa);
+   elpa_set(handle, "nvidia-gpu", 0, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   elpa_set(handle, "intel-gpu", 0, &error_elpa);
    assert_elpa_ok(error_elpa);
  
    autotune_handle = elpa_autotune_setup(handle, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error_elpa);

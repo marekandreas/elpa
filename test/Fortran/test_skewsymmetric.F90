@@ -45,7 +45,8 @@
 ! Define one of TEST_REAL or TEST_COMPLEX
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
-! Define TEST_GPU \in [0, 1]
+! Define TEST_NVIDIA_GPU \in [0, 1]
+! Define TEST_INTEL_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
@@ -234,6 +235,7 @@ program test
 
    call e_complex%set("debug",1,error_elpa)
    call e_complex%set("nvidia-gpu", 0,error_elpa)
+   call e_complex%set("intel-gpu", 0,error_elpa)
    call e_complex%set("omp_threads", 8, error_elpa)
 
    assert_elpa_ok(e_complex%setup())
@@ -272,6 +274,7 @@ program test
 
    call e_skewsymmetric%set("debug",1,error_elpa)
    call e_skewsymmetric%set("nvidia-gpu", 0,error_elpa)
+   call e_skewsymmetric%set("intel-gpu", 0,error_elpa)
    call e_skewsymmetric%set("omp_threads",8, error_elpa)
 
    assert_elpa_ok(e_skewsymmetric%setup())

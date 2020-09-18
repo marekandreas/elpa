@@ -1065,7 +1065,7 @@ int main(int argc, char **argv) {
    [can_link_without_=no]
  )
 AC_MSG_RESULT([${can_link_without_}])
-if test x"$can_link_with_" = x"yes"; then
+if test x"$can_link_without_" = x"yes"; then
   AC_DEFINE([NEED_NO_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need not to append an underscore])
 fi
 
@@ -1371,6 +1371,23 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   use_complex_nvidia_gpu=yes
 fi
 
+AC_MSG_CHECKING(whether INTEL GPU version should be used)
+AC_ARG_ENABLE([intel-gpu],
+                AS_HELP_STRING([--enable-intel-gpu],
+                               [do use INTEL GPU version]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_intel_gpu=yes
+                                else
+                                  use_intel_gpu=no
+                                fi],
+              [use_intel_gpu=no])
+AC_MSG_RESULT([${use_intel_gpu}])
+if test x"${use_intel_gpu}" = x"yes" ; then
+  need_intel_gpu=yes
+  use_real_intel_gpu=yes
+  use_complex_intel_gpu=yes
+fi
+
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
   CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
@@ -1461,6 +1478,22 @@ else
 fi
 AC_SUBST([ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED])
+
+
+AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
+if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
+  AC_DEFINE([WITH_INTEL_GPU_VERSION],[1],[enable INTEL GPU support])
+  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  #ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
+  #ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
+else
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
+  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
+fi
+AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
+
+
 
 LT_INIT
 
