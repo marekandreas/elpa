@@ -85,19 +85,20 @@
 !>
 !> \param mpi_comm_cols        MPI-Communicator for columns
 !>
-!> \param useGPU      If true,  GPU version of the subroutine will be used
+!> \param useGPU      Specifies whether NO, Nvidia, or Intel GPU should be used
 !>
 
   subroutine trans_ev_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
-  (obj, na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useNVIDIAGPU)
+  (obj, na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
     use cuda_functions
     use iso_c_binding
     use precision
     use elpa_abstract_impl
     use elpa_blas_interfaces
+    use gpu_infrastructure
 
     implicit none
 #include "../general/precision_kinds.F90"
@@ -112,7 +113,7 @@
     MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(lda,matrixCols)
     MATH_DATATYPE(kind=rck), intent(inout)        :: q_mat(ldq,matrixCols)
 #endif
-    logical, intent(in)                           :: useNVIDIAGPU
+    integer(kind=ik), intent(in)                  :: useGPU
     integer(kind=ik)                              :: max_stored_rows, max_stored_rows_fac
 
     integer(kind=ik)                              :: my_prow, my_pcol, np_rows, np_cols
@@ -143,10 +144,19 @@
                                                                         &_&
                                                                         &MATH_DATATYPE
     integer(kind=ik)                              :: error
-    if(useNVIDIAGPU) then
+    logical                                       :: useNoGPU, useNvidiaGPU, useIntelGPU
+
+    useNvidiaGPU = .false.
+    useIntelGPU  = .false.
+
+    if(useGPU .ne. USE_NO_GPU) then
       gpuString = "_gpu"
+      if (useGPU .eq. USE_NVIDIA_GPU) useNvidiaGPU = .true.
+      if (useGPU .eq. USE_INTEL_GPU)  useIntelGPU  = .true.
+      useNoGPU = .false.
     else
       gpuString = ""
+      useNoGPU = .true.
     endif
 
     call obj%timer%start("trans_ev_&
@@ -178,7 +188,24 @@
 
     max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
 
-    if (.not.(useNVIDIAGPU)) then
+    if (useIntelGPU) then
+      allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
+      call check_alloc("trans_ev_&
+      &MATH_DATATYPE&
+      &", "tmat", istat, errorMessage)
+
+      allocate(tmp1(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
+      call check_alloc("trans_ev_&
+      &MATH_DATATYPE&
+      &", "tmp1", istat, errorMessage)
+
+      allocate(tmp2(max_local_cols*max_stored_rows), stat=istat, errmsg=errorMessage)
+      call check_alloc("trans_ev_&
+      &MATH_DATATYPE&
+      &", "tmp2", istat, errorMessage)
+    endif
+
+    if (useNoGPU) then
       allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
       call check_alloc("trans_ev_&
       &MATH_DATATYPE&
@@ -222,7 +249,12 @@
     l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q_mat
 
     nstor = 0
-    if (useNVIDIAGPU) then
+
+    if (useNvidiaGPU) then
+      hvn_ubnd = 0
+    endif
+
+    if (useIntelGPU) then
       hvn_ubnd = 0
     endif
 
@@ -233,7 +265,7 @@
     endif
 #endif
 
-    if (useNVIDIAGPU) then
+    if (useNvidiaGPU) then
       ! todo: this is used only for copying hmv to device.. it should be possible to go without it
       !allocate(hvm1(max_local_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
       !call check_alloc("trans_ev_&
@@ -279,7 +311,11 @@
       successCUDA = cuda_memcpy(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
                     num, cudaMemcpyHostToDevice)
       check_memcpy_cuda("trans_ev", successCUDA)
-    endif  ! useNVIDIAGPU
+    endif  ! useNvidiaGPU
+
+    !if (useIntelGPU) then
+    !  ! needed at a later time when we can do explicit copys
+    !endif
 
     do istep = 1, na, blockStep
       ics = MAX(istep,3)
@@ -317,7 +353,10 @@
       do ic = ics, ice
         l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
         hvm(1:l_rows,nstor+1) = hvb(nb+1:nb+l_rows)
-        if (useNVIDIAGPU) then
+        if (useNvidiaGPU) then
+          hvm_ubnd = l_rows
+        endif
+        if (useIntelGPU) then
           hvm_ubnd = l_rows
         endif
         nstor = nstor+1
@@ -380,7 +419,7 @@
           nc = nc+n
         enddo
 
-        if (useNVIDIAGPU) then
+        if (useNvidiaGPU) then
           ! todo: is this reshape really neccessary?
           hvm1(1:hvm_ubnd*nstor) = reshape(hvm(1:hvm_ubnd,1:nstor), (/ hvm_ubnd*nstor /))
 
@@ -396,6 +435,10 @@
           check_memcpy_cuda("trans_ev", successCUDA)
         endif
 
+        !if (useIntelGPU) then
+        !  ! needed later when we can do explicit copys
+        !endif
+
         ! Q = Q - V * T * V**T * Q
 
         if (l_rows>0) then
@@ -406,7 +449,19 @@
                                        q_dev, ldq, ZERO, tmp_dev, nstor)
             call obj%timer%stop("cublas")
 
-          else ! useNVIDIAGPU
+          endif 
+
+          if (useIntelGPU) then
+            call obj%timer%start("mkl_offload")
+            call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',  &
+                                int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                int(l_rows,kind=BLAS_KIND), ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, int(nstor,kind=BLAS_KIND))
+            call obj%timer%stop("mkl_offload")
+
+          endif
+          
+          if (useNoGPU) then
 
             call obj%timer%start("blas")
             call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',  &
@@ -414,14 +469,16 @@
                                 int(l_rows,kind=BLAS_KIND), ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
                                 q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, int(nstor,kind=BLAS_KIND))
             call obj%timer%stop("blas")
-          endif ! useNVIDIAGPU
+          endif ! useNoGPU
 
         else !l_rows>0
 
           if (useNVIDIAGPU) then
             successCUDA = cuda_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
             check_memcpy_cuda("trans_ev", successCUDA)
-          else
+          endif
+
+          if (useNoGPU .or. useIntelGPU) then
             tmp1(1:l_cols*nstor) = 0
           endif
         endif  !l_rows>0
@@ -434,17 +491,26 @@
                         max_local_cols * max_stored_rows * size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("trans_ev", successCUDA)
         endif
+
+        !if (useIntelGPU) then
+        !   ! needed later
+        !endif
+
         call obj%timer%start("mpi_communication")
         call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                            int(mpi_comm_rows,kind=MPI_KIND), mpierr)
         call obj%timer%stop("mpi_communication")
-        ! copy back tmp2 - after reduction...
+
         if (useNVIDIAGPU) then
+        ! copy back tmp2 - after reduction...
           successCUDA = cuda_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
                         max_local_cols * max_stored_rows * size_of_datatype, cudaMemcpyHostToDevice)
           check_memcpy_cuda("trans_ev", successCUDA)
         endif ! useNVIDIAGPU
 
+        !if (useIntelGPU) then
+        !   ! needed later
+        !endif
 
 #else /* WITH_MPI */
 !        tmp2 = tmp1
@@ -461,7 +527,32 @@
                                        -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
                                        ONE, q_dev, ldq)
             call obj%timer%stop("cublas")
-          else !useNVIDIAGPU
+          endif
+
+          if (useIntelGPU) then
+#ifdef WITH_MPI
+            ! tmp2 = tmat * tmp2
+            call obj%timer%start("mkl_offload")
+            call PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
+                               ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND))
+            !q_mat = q_mat - hvm*tmp2
+            call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(nstor,kind=BLAS_KIND),   &
+                                -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND), &
+                                ONE, q_mat, int(ldq,kind=BLAS_KIND))
+            call obj%timer%stop("mkl_offload")
+#else /* WITH_MPI */
+            call obj%timer%start("mkl_offload")
+
+            call PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
+                                  ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp1, int(nstor,kind=BLAS_KIND))
+            call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                  int(nstor,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                  tmp1, int(nstor,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
+            call obj%timer%stop("mkl_offload")
+#endif /* WITH_MPI */
+          endif
+
+          if (useNoGPU) then
 #ifdef WITH_MPI
             ! tmp2 = tmat * tmp2
             call obj%timer%start("blas")
@@ -482,7 +573,7 @@
                                   tmp1, int(nstor,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
             call obj%timer%stop("blas")
 #endif /* WITH_MPI */
-          endif ! useNVIDIAGPU
+          endif ! useNoGPU
         endif  ! l_rows>0
         nstor = 0
       endif  ! (nstor+nblk>max_stored_rows .or. istep+nblk>na .or. (na/np_rows<=256 .and. nstor>=32))
@@ -539,7 +630,16 @@
 
       successCUDA = cuda_free(tmat_dev)
       check_dealloc_cuda("trans_ev", successCUDA)
-    else
+    endif ! useNvidiaGPU
+
+    if (useIntelGPU) then
+      deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
+      check_deallocate("trans_ev_&
+      &MATH_DATATYPE&
+      &: tmat, tmp1, tmp2", istat, errorMessage)
+    endif
+
+    if (useNoGPU) then
       deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
       check_deallocate("trans_ev_&
       &MATH_DATATYPE&

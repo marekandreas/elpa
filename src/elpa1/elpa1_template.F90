@@ -146,9 +146,9 @@ function elpa_solve_evp_&
    logical                                         :: isSkewsymmetric
    logical                                         :: success
 
-   integer(kind=ik)                                :: do_useGPU, do_useGPU_tridiag
+   integer(kind=ik)                                :: do_useGPU, do_useGPU_tridiag, do_useGPU_trans_ev
    logical                                         :: &
-                                                      do_useNVIDIAGPU_solve_tridi, do_useNVIDIAGPU_trans_ev
+                                                      do_useNVIDIAGPU_solve_tridi
    integer(kind=ik)                                :: numberOfGPUDevices
 
    integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol
@@ -366,19 +366,19 @@ function elpa_solve_evp_&
      do_useGPU = USE_INTEL_GPU
    endif
 
-   do_useGPU_tridiag = USE_NO_GPU
+   do_useGPU_tridiag  = USE_NO_GPU
    do_useNVIDIAGPU_solve_tridi = .false.
-   do_useNVIDIAGPU_trans_ev = .false.
+   do_useGPU_trans_ev = USE_NO_GPU
 
    if (do_useGPU .eq. USE_NVIDIA_GPU) then
-     do_useGPU_tridiag = do_useGPU
+     do_useGPU_tridiag  = do_useGPU
      do_useNVIDIAGPU_solve_tridi = .true.
-     do_useNVIDIAGPU_trans_ev = .true.
+     do_useGPU_trans_ev = do_useGPU
    endif
    if (do_useGPU .eq. USE_INTEL_GPU) then
-     do_useGPU_tridiag = do_useGPU
+     do_useGPU_tridiag  = do_useGPU
      do_useNVIDIAGPU_solve_tridi = .false.
-     do_useNVIDIAGPU_trans_ev = .false.
+     do_useGPU_trans_ev = do_useGPU
    endif
 
    ! only if we want (and can) use GPU in general, look what are the
@@ -406,12 +406,15 @@ function elpa_solve_evp_&
      endif
      do_useNVIDIAGPU_solve_tridi = (gpu == 1)
 
-     call obj%get("nvidia-gpu_trans_ev", gpu, error)
+     call obj%get("gpu_trans_ev", gpu, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option for gpu_trans_ev. Aborting..."
        stop
      endif
-     do_useNVIDIAGPU_trans_ev = (gpu == 1)
+     if (gpu .eq. 1) then
+       if (do_useGPU .eq. USE_NVIDIA_GPU) do_useGPU_trans_ev = USE_NVIDIA_GPU
+       if (do_useGPU .eq. USE_INTEL_GPU)  do_useGPU_trans_ev = USE_INTEL_GPU
+     endif
    endif
    ! for elpa1 the easy thing is, that the individual phases of the algorithm
    ! do not share any data on the GPU. 
@@ -565,7 +568,7 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_trans_ev)
+     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
      if (isSkewsymmetric) then
        ! Transform imaginary part
        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
@@ -574,7 +577,7 @@ function elpa_solve_evp_&
              &_&
              &PRECISION&
              & (obj, na, nev, a, matrixRows, tau, q(1:matrixRows, matrixCols+1:2*matrixCols), matrixRows, nblk, matrixCols, &
-                mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_trans_ev)
+                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
        endif
 
 #ifdef WITH_NVTX
