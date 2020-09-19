@@ -208,8 +208,8 @@ __global__ void compute_hh_trafo_kernel_real(T * __restrict__ q, const T * __res
     unsigned int bid = blockIdx.x;
 
     j = ncols;
-    q_off = bid + (j + tid) * ldq;
-    h_off = tid + j * nb;
+    q_off = bid + (j + tid - 1) * ldq;
+    h_off = tid + (j - 1) * nb;
     q_s[tid] = q[q_off];
 
     while (j >= 1)
@@ -228,7 +228,7 @@ __global__ void compute_hh_trafo_kernel_real(T * __restrict__ q, const T * __res
 
         __syncthreads();
 
-        q_v2 -= dotp_s[0] * hh_tau[j] * hh[h_off];
+        q_v2 -= dotp_s[0] * hh_tau[j - 1] * hh[h_off];
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))

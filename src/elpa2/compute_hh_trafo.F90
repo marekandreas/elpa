@@ -285,11 +285,11 @@ kernel)
       call obj%timer%start("compute_hh_trafo: GPU")
     endif
 
-    dev_offset = ((a_off+off-1)*stripe_width+(istripe-1)*stripe_width*a_dim2)*size_of_datatype
+    dev_offset = ((a_off+off)*stripe_width+(istripe-1)*stripe_width*a_dim2)*size_of_datatype
 
-    dev_offset_1 = (off-1)*nbw*size_of_datatype
+    dev_offset_1 = off*nbw*size_of_datatype
 
-    dev_offset_2 = (off-1)*size_of_datatype
+    dev_offset_2 = off*size_of_datatype
 
     call launch_compute_hh_trafo_gpu_kernel_&
          &MATH_DATATYPE&
