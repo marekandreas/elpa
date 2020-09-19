@@ -88,6 +88,7 @@
 #ifdef REDISTRIBUTE_MATRIX
    use elpa_scalapack_interfaces
 #endif
+   use gpu_infrastructure
    use iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
@@ -158,9 +159,9 @@
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, NVIDIAgpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage
+   integer(kind=ik)                                                   :: do_useGPU_solve_tridi
    logical                                                            :: do_useNVIDIAGPU, do_useNVIDIAGPU_bandred, &
                                                                          do_useNVIDIAGPU_tridiag_band, &
-                                                                         do_useNVIDIAGPU_solve_tridi, &
                                                                          do_useNVIDIAGPU_trans_ev_tridi_to_band, &
                                                                          do_useNVIDIAGPU_trans_ev_band_to_full
    integer(kind=c_int)                                                :: numberOfNVIDIAGPUDevices
@@ -389,7 +390,11 @@
 
     do_useNVIDIAGPU_bandred = do_useNVIDIAGPU
     do_useNVIDIAGPU_tridiag_band = .false.  ! not yet ported
-    do_useNVIDIAGPU_solve_tridi = do_useNVIDIAGPU
+    if (do_useNVIDIAGPU) then
+      do_useGPU_solve_tridi = USE_NVIDIA_GPU
+    else
+      do_useGPU_solve_tridi = USE_NO_GPU
+    endif
     do_useNVIDIAGPU_trans_ev_tridi_to_band = do_useNVIDIAGPU
     do_useNVIDIAGPU_trans_ev_band_to_full = do_useNVIDIAGPU
 
@@ -413,12 +418,16 @@
       !endif
       !do_useGPU_tridiag_band = (gpu == 1)
 
-      call obj%get("nvidia-gpu_solve_tridi", NVIDIAgpu, error)
+      call obj%get("gpu_solve_tridi", NVIDIAgpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_solve_tridi settings. Aborting..."
         stop
       endif
-      do_useNVIDIAGPU_solve_tridi = (NVIDIAgpu == 1)
+      if (NVIDIAgpu .eq. 1) then
+        do_useGPU_solve_tridi = USE_NVIDIA_GPU
+      else
+        do_useGPU_solve_tridi = USE_NO_GPU
+      endif
 
       call obj%get("nvidia-gpu_trans_ev_tridi_to_band", NVIDIAgpu, error)
       if (error .ne. ELPA_OK) then
@@ -797,7 +806,7 @@
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
 #endif
-       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_solve_tridi, wantDebug, success, nrThreads)
+       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("solve")
 #endif

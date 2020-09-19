@@ -146,9 +146,8 @@ function elpa_solve_evp_&
    logical                                         :: isSkewsymmetric
    logical                                         :: success
 
-   integer(kind=ik)                                :: do_useGPU, do_useGPU_tridiag, do_useGPU_trans_ev
-   logical                                         :: &
-                                                      do_useNVIDIAGPU_solve_tridi
+   integer(kind=ik)                                :: do_useGPU, do_useGPU_tridiag, do_useGPU_trans_ev, &
+                                                      do_useGPU_solve_tridi
    integer(kind=ik)                                :: numberOfGPUDevices
 
    integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol
@@ -340,8 +339,8 @@ function elpa_solve_evp_&
      stop
    endif
    wantDebug = debug == 1
-   do_useGPU = USE_NO_GPU
 
+   do_useGPU = USE_NO_GPU
    
    if (useGPU .eq. USE_NVIDIA_GPU) then
      call obj%timer%start("check_for_gpu")
@@ -366,20 +365,9 @@ function elpa_solve_evp_&
      do_useGPU = USE_INTEL_GPU
    endif
 
-   do_useGPU_tridiag  = USE_NO_GPU
-   do_useNVIDIAGPU_solve_tridi = .false.
-   do_useGPU_trans_ev = USE_NO_GPU
-
-   if (do_useGPU .eq. USE_NVIDIA_GPU) then
-     do_useGPU_tridiag  = do_useGPU
-     do_useNVIDIAGPU_solve_tridi = .true.
-     do_useGPU_trans_ev = do_useGPU
-   endif
-   if (do_useGPU .eq. USE_INTEL_GPU) then
-     do_useGPU_tridiag  = do_useGPU
-     do_useNVIDIAGPU_solve_tridi = .false.
-     do_useGPU_trans_ev = do_useGPU
-   endif
+   do_useGPU_tridiag     = do_useGPU
+   do_useGPU_solve_tridi = do_useGPU 
+   do_useGPU_trans_ev    = do_useGPU 
 
    ! only if we want (and can) use GPU in general, look what are the
    ! requirements for individual routines. Implicitly they are all set to 1, so
@@ -396,15 +384,16 @@ function elpa_solve_evp_&
        if (do_useGPU .eq. USE_NVIDIA_GPU) do_useGPU_tridiag = USE_NVIDIA_GPU
        if (do_useGPU .eq. USE_INTEL_GPU)  do_useGPU_tridiag = USE_INTEL_GPU
      endif
-   endif
 
-   if (do_useGPU .eq. USE_NVIDIA_GPU) then
-     call obj%get("nvidia-gpu_solve_tridi", gpu, error)
+     call obj%get("gpu_solve_tridi", gpu, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option for gpu_solve_tridi. Aborting..."
        stop
      endif
-     do_useNVIDIAGPU_solve_tridi = (gpu == 1)
+     if (gpu .eq. 1) then
+       if (do_useGPU .eq. USE_NVIDIA_GPU) do_useGPU_solve_tridi = USE_NVIDIA_GPU
+       if (do_useGPU .eq. USE_INTEL_GPU)  do_useGPU_solve_tridi = USE_INTEL_GPU
+     endif
 
      call obj%get("gpu_trans_ev", gpu, error)
      if (error .ne. ELPA_OK) then
@@ -490,7 +479,7 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
         q_real, l_rows,  &
 #endif
-        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_solve_tridi, wantDebug, success, nrThreads)
+        nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()

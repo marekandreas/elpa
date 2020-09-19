@@ -130,7 +130,7 @@
       call solve_tridi_&
       &PRECISION&
       &_private_impl(obj, na, nev, d, e, q, matrixRows, nblk, matrixCols, &
-               mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success, &
+               mpi_comm_rows, mpi_comm_cols, 0, wantDebug, success, &
                nrThreads)
 
 
