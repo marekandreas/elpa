@@ -46,7 +46,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
   src/GPU/check_for_gpu.F90 \
   src/GPU/mod_gpu_infrastructure.F90 \
-  src/GPU/mod_cuda.F90 \
+  src/GPU/NVIDIA/mod_cuda.F90 \
+  src/GPU/INTEL/mod_mkl_offload.F90 \
   src/elpa2/GPU/interface_c_kernel.F90 \
   src/elpa2/mod_pack_unpack_gpu.F90 \
   src/elpa2/qr/qr_utils.F90 \
@@ -125,8 +126,13 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_NVIDIA_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_real.cu src/elpa2/GPU/ev_tridi_band_gpu_complex.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/NVIDIA/cudaFunctions.cu src/GPU/NVIDIA/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_real.cu src/elpa2/GPU/ev_tridi_band_gpu_complex.cu
 endif
+
+if WITH_NVIDIA_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mod_mkl_offload.cpp
+endif
+
 
 if !WITH_MPI
   libelpa@SUFFIX@_private_la_SOURCES += src/helpers/mod_time_c.F90
@@ -675,7 +681,7 @@ EXTRA_DIST = \
   remove_xcompiler \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
-  src/GPU/cuUtils_template.cu \
+  src/GPU/NVIDIA/cuUtils_template.cu \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \

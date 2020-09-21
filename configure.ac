@@ -1386,6 +1386,7 @@ if test x"${use_intel_gpu}" = x"yes" ; then
   need_intel_gpu=yes
   use_real_intel_gpu=yes
   use_complex_intel_gpu=yes
+  AC_PROG_CXX
 fi
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
