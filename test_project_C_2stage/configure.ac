@@ -64,9 +64,9 @@ AC_ARG_WITH([openmp],
      AC_MSG_CHECKING(whether --enable-openmp is specified)
      AC_MSG_RESULT([${enable_openmp}])
   fi
-  AM_CONDITIONAL([WITH_OPENMP],[test x"$with_openmp" = x"yes"])
+  AM_CONDITIONAL([WITH_OPENMP_TRADITIONAL],[test x"$with_openmp" = x"yes"])
   if test x"${with_openmp}" = x"yes"; then
-	AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
+	AC_DEFINE([WITH_OPENMP_TRADITIONAL], [1], [use OpenMP threading])
         AX_ELPA_OPENMP
 	elpa="elpa_openmp-$elpaversion"
   else

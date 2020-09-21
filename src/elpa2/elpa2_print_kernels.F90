@@ -67,88 +67,88 @@
 !> \author A. Marek (MPCDF)
 
 program print_available_elpa2_kernels
-   use elpa
-   use, intrinsic :: iso_c_binding
+  use elpa
+  use, intrinsic :: iso_c_binding
 
-   implicit none
+  implicit none
 
-   integer(kind=c_int) :: i
-   class(elpa_t), pointer :: e
-   integer :: option, error
+  integer(kind=c_int) :: i
+  class(elpa_t), pointer :: e
+  integer :: option, error
 
-   if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
-     print *, "Unsupported ELPA API Version"
-     stop 1
-   endif
+  if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
+    print *, "Unsupported ELPA API Version"
+    stop 1
+  endif
 
-   e => elpa_allocate(error)
+  e => elpa_allocate(error)
 
-   print *, "This program will give information on the ELPA2 kernels, "
-   print *, "which are available with this library and it will give "
-   print *, "information if (and how) the kernels can be choosen at "
-   print *, "runtime"
-   print *
-#ifdef WITH_OPENMP
-   print *, " ELPA supports threads: yes"
+  print *, "This program will give information on the ELPA2 kernels, "
+  print *, "which are available with this library and it will give "
+  print *, "information if (and how) the kernels can be choosen at "
+  print *, "runtime"
+  print *
+#ifdef WITH_OPENMP_TRADITIONAL
+  print *, " ELPA supports threads: yes"
 #else
-   print *, " ELPA supports threads: no"
+  print *, " ELPA supports threads: no"
 #endif
-   print *
+  print *
 
-   print *, "Information on ELPA2 real case: "
-   print *, "=============================== "
+  print *, "Information on ELPA2 real case: "
+  print *, "=============================== "
 #ifdef HAVE_ENVIRONMENT_CHECKING
-   print *, " choice via environment variable: yes"
-   print *, " environment variable name      : ELPA_DEFAULT_real_kernel"
+  print *, " choice via environment variable: yes"
+  print *, " environment variable name      : ELPA_DEFAULT_real_kernel"
 #else
-   print *, " choice via environment variable: no"
+  print *, " choice via environment variable: no"
 #endif
-   print *
-   print *, " Available real kernels are: "
-   print *
-   call print_options(e, "real_kernel")
-   print *
-   print *
+  print *
+  print *, " Available real kernels are: "
+  print *
+  call print_options(e, "real_kernel")
+  print *
+  print *
 
-   print *, "Information on ELPA2 complex case: "
-   print *, "=============================== "
+  print *, "Information on ELPA2 complex case: "
+  print *, "=============================== "
 #ifdef HAVE_ENVIRONMENT_CHECKING
-   print *, " choice via environment variable: yes"
-   print *, " environment variable name      : ELPA_DEFAULT_complex_kernel"
+  print *, " choice via environment variable: yes"
+  print *, " environment variable name      : ELPA_DEFAULT_complex_kernel"
 #else
-   print *,  " choice via environment variable: no"
+  print *,  " choice via environment variable: no"
 #endif
-   print *
-   print *, " Available complex kernels are: "
-   print *
-   call print_options(e, "complex_kernel")
-   print *
-   print *
+  print *
+  print *, " Available complex kernels are: "
+  print *
+  call print_options(e, "complex_kernel")
+  print *
+  print *
 
-   call elpa_deallocate(e, error)
+  call elpa_deallocate(e, error)
 
-   contains
+  contains
 
-     subroutine print_options(e, KERNEL_KEY)
-       class(elpa_t), intent(inout) :: e
-       character(len=*), intent(in) :: KERNEL_KEY
-       integer                      :: i, kernel,error
+    subroutine print_options(e, KERNEL_KEY)
+      class(elpa_t), intent(inout) :: e
+      character(len=*), intent(in) :: KERNEL_KEY
+      integer                      :: i, kernel,error
 
-       call e%set("solver",ELPA_SOLVER_2STAGE,error)
+      call e%set("solver",ELPA_SOLVER_2STAGE,error)
 
-       do i = 0, elpa_option_cardinality(KERNEL_KEY)
-         kernel = elpa_option_enumerate(KERNEL_KEY, i)
-         if (elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_COMPLEX_NVIDIA_GPU" .or. &
-             elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_REAL_NVIDIA_GPU") then
-           if (e%can_set("nvidia-gpu",1) == ELPA_OK) then
-             call e%set("nvidia-gpu",1, error)
-           endif
-         endif 
+      do i = 0, elpa_option_cardinality(KERNEL_KEY)
+        kernel = elpa_option_enumerate(KERNEL_KEY, i)
+        if (elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_COMPLEX_NVIDIA_GPU" .or. &
+            elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_REAL_NVIDIA_GPU") then
+          if (e%can_set("nvidia-gpu",1) == ELPA_OK) then
+            call e%set("nvidia-gpu",1, error)
+          endif
+        endif 
 
-         if (e%can_set(KERNEL_KEY, kernel) == ELPA_OK) then
-           print *, "  ", elpa_int_value_to_string(KERNEL_KEY, kernel)
-         endif
-       end do
-     end subroutine
+        if (e%can_set(KERNEL_KEY, kernel) == ELPA_OK) then
+          print *, "  ", elpa_int_value_to_string(KERNEL_KEY, kernel)
+        endif
+      end do
+    end subroutine
 
 end program print_available_elpa2_kernels

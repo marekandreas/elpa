@@ -59,6 +59,18 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_generalized/cannon.c \
   src/helpers/matrix_plot.F90 \
   src/general/mod_elpa_skewsymmetric_blas.F90 \
+  src/solve_tridi/mod_global_product.F90 \
+  src/solve_tridi/mod_global_gather.F90 \
+  src/solve_tridi/mod_resort_ev.F90 \
+  src/solve_tridi/mod_transform_columns.F90 \
+  src/solve_tridi/mod_check_monotony.F90 \
+  src/solve_tridi/mod_add_tmp.F90 \
+  src/solve_tridi/mod_merge_systems.F90 \
+  src/solve_tridi/mod_merge_recursive.F90 \
+  src/solve_tridi/mod_solve_tridi.F90 \
+  src/elpa1/mod_distribute_global_column.F90 \
+  src/elpa1/mod_v_add_s.F90 \
+  src/elpa1/mod_solve_secular_equation.F90 \
   src/elpa_index.c
 
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c
@@ -687,8 +699,18 @@ EXTRA_DIST = \
   src/helpers/elpa_redistribute_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
-  src/elpa1/elpa1_merge_systems_real_template.F90 \
-  src/elpa1/elpa1_solve_tridi_real_template.F90 \
+  src/solve_tridi/global_product_template.F90 \
+  src/solve_tridi/global_gather_template.F90 \
+  src/solve_tridi/resort_ev_template.F90 \
+  src/solve_tridi/transform_columns_template.F90 \
+  src/solve_tridi/check_monotony_template.F90 \
+  src/solve_tridi/add_tmp_template.F90 \
+  src/elpa1/v_add_s_template.F90 \
+  src/elpa1/solve_secular_equation_template.F90 \
+  src/elpa1/distribute_global_column_template.F90 \
+  src/solve_tridi/merge_systems_template.F90 \
+  src/solve_tridi/merge_recursive_template.F90 \
+  src/solve_tridi/solve_tridi_template.F90 \
   src/elpa1/elpa1_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
   src/elpa1/elpa1_trans_ev_template.F90 \

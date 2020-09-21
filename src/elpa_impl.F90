@@ -126,13 +126,13 @@ module elpa_impl
      procedure, public :: elpa_skew_eigenvalues_f
 
 
-     procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized 
+     procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized
                                                                !< eigenproblem and real/complex double/single matrices
      procedure, public :: elpa_generalized_eigenvectors_f
      procedure, public :: elpa_generalized_eigenvectors_dc
      procedure, public :: elpa_generalized_eigenvectors_fc
 
-     procedure, public :: elpa_generalized_eigenvalues_d      !< public methods to implement the solve step for generalized 
+     procedure, public :: elpa_generalized_eigenvalues_d      !< public methods to implement the solve step for generalized
                                                               !< eigenproblem and real/complex double/single matrices
      procedure, public :: elpa_generalized_eigenvalues_f
      procedure, public :: elpa_generalized_eigenvalues_dc
@@ -439,7 +439,7 @@ module elpa_impl
     subroutine elpa_print_settings_c(handle, error) bind(C, name="elpa_print_settings")
       type(c_ptr), value         :: handle
       type(elpa_impl_t), pointer :: self
- 
+
       integer(kind=c_int)        :: error
 
       call c_f_pointer(handle, self)
@@ -875,7 +875,7 @@ module elpa_impl
       character(len=elpa_strlen_c(name_p)), pointer :: name
       integer(kind=c_int)                           :: value
       integer(kind=c_int), intent(inout)            :: error
- 
+
       call c_f_pointer(handle, self)
       call c_f_pointer(name_p, name)
       call elpa_get_integer(self, name, value, error)
@@ -916,7 +916,7 @@ module elpa_impl
     !> \param   self        class(elpa_impl_t) the allocated ELPA object
     !> \param   option_name string: the name of the options, whose value should be converted
     !> \param   error       integer: errpr code
-    !> \result  string      string: the humanreadable string   
+    !> \result  string      string: the humanreadable string
     function elpa_value_to_string(self, option_name, error) result(string)
       class(elpa_impl_t), intent(in) :: self
       character(kind=c_char, len=*), intent(in) :: option_name
@@ -957,6 +957,54 @@ module elpa_impl
         error = actual_error
 #endif
     end function
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_set_float method
+    !c> *  This method is available to the user as C generic elpa_set method
+    !c> *
+    !c> *  \param  handle  handle of the ELPA object for which a key/value pair should be set
+    !c> *  \param  name    the name of the key
+    !c> *  \param  value   the value to be set for the key
+    !c> *  \param  error   on return the error code, which can be queried with elpa_strerr()
+    !c> *  \result void
+    !c> */
+    !c> void elpa_set_float(elpa_t handle, const char *name, float value, int *error);
+    subroutine elpa_set_float_c(handle, name_p, value, error) bind(C, name="elpa_set_float")
+      type(c_ptr), intent(in), value                :: handle
+      type(elpa_impl_t), pointer                    :: self
+      type(c_ptr), intent(in), value                :: name_p
+      character(len=elpa_strlen_c(name_p)), pointer :: name
+      real(kind=c_float), intent(in), value        :: value
+      integer(kind=c_int), intent(in)               :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name_p, name)
+      call elpa_set_float(self, name, value, error)
+    end subroutine
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_get_float method
+    !c> *  This method is available to the user as C generic elpa_get method
+    !c> *
+    !c> *  \param  handle  handle of the ELPA object for which a key/value pair should be queried
+    !c> *  \param  name    the name of the key
+    !c> *  \param  value   the value to be obtain for the key
+    !c> *  \param  error   on return the error code, which can be queried with elpa_strerr()
+    !c> *  \result void
+    !c> */
+    !c> void elpa_get_float(elpa_t handle, const char *name, float *value, int *error);
+    subroutine elpa_get_float_c(handle, name_p, value, error) bind(C, name="elpa_get_float")
+      type(c_ptr), intent(in), value                :: handle
+      type(elpa_impl_t), pointer                    :: self
+      type(c_ptr), intent(in), value                :: name_p
+      character(len=elpa_strlen_c(name_p)), pointer :: name
+      real(kind=c_float)                           :: value
+      integer(kind=c_int), intent(inout)            :: error
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name_p, name)
+      call elpa_get_float(self, name, value, error)
+    end subroutine
 
 
     !c> /*! \brief C interface for the implementation of the elpa_set_double method
@@ -1005,7 +1053,7 @@ module elpa_impl
       call c_f_pointer(name_p, name)
       call elpa_get_double(self, name, value, error)
     end subroutine
- 
+
 
     !> \brief function to associate a pointer with an integer value
     !> Parameters
@@ -1370,7 +1418,7 @@ module elpa_impl
       type(c_ptr), intent(in), value         :: handle
       type(elpa_impl_t), pointer             :: self
       class(elpa_autotune_t), pointer        :: tune_state
-      type(elpa_autotune_impl_t), pointer    :: obj        
+      type(elpa_autotune_impl_t), pointer    :: obj
       integer(kind=c_int), intent(in), value :: level
       integer(kind=c_int), intent(in), value :: domain
       type(c_ptr)                            :: ptr
@@ -1385,7 +1433,7 @@ module elpa_impl
         class default
           print *, "This should not happen"
           stop
-      end select                
+      end select
       ptr = c_loc(obj)
 
     end function
@@ -1694,7 +1742,7 @@ module elpa_impl
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \param  error            int *
-    !c> *  \result none 
+    !c> *  \result none
     !c> */
     !c> void elpa_autotune_print_state(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
     subroutine elpa_autotune_print_state_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_print_state")
@@ -1772,7 +1820,7 @@ module elpa_impl
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \param  error            int *
-    !c> *  \result none 
+    !c> *  \result none
     !c> */
     !c> void elpa_autotune_save_state(elpa_t handle, elpa_autotune_t autotune_handle, const char *filename, int *error);
     subroutine elpa_autotune_save_state_c(handle, autotune_handle, filename_p, error) bind(C, name="elpa_autotune_save_state")
@@ -1854,7 +1902,7 @@ module elpa_impl
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \param  error            int *
-    !c> *  \result none 
+    !c> *  \result none
     !c> */
     !c> void elpa_autotune_load_state(elpa_t handle, elpa_autotune_t autotune_handle, const char *filename, int *error);
     subroutine elpa_autotune_load_state_c(handle, autotune_handle, filename_p, error) bind(C, name="elpa_autotune_load_state")
@@ -1880,7 +1928,7 @@ module elpa_impl
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \param  error            int *
-    !c> *  \result none 
+    !c> *  \result none
     !c> */
     !c> void elpa_autotune_set_best(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
     subroutine elpa_autotune_set_best_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_set_best")
@@ -1903,7 +1951,7 @@ module elpa_impl
     !c> *  \param  elpa_t           handle: of the ELPA object which should be tuned
     !c> *  \param  elpa_autotune_t  autotune_handle: the autotuning object
     !c> *  \param  error            int *
-    !c> *  \result none 
+    !c> *  \result none
     !c> */
     !c> void elpa_autotune_print_best(elpa_t handle, elpa_autotune_t autotune_handle, int *error);
     subroutine elpa_autotune_print_best_c(handle, autotune_handle, error) bind(C, name="elpa_autotune_print_best")

@@ -64,10 +64,11 @@
       use precision
       use elpa_abstract_impl
       use elpa_omp
-
+      use solve_tridi
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=ik)         :: na, nev, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)         :: mpi_comm_all
       real(kind=REAL_DATATYPE) :: d(obj%na), e(obj%na)
 #ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE) :: q(obj%local_nrows,*)
@@ -114,6 +115,11 @@
         print *,"Problem getting option for mpi_comm_cols. Aborting..."
         stop
       endif
+      call obj%get("mpi_comm_parent", mpi_comm_all,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for mpi_comm_all. Aborting..."
+        stop
+      endif
 
       call obj%get("debug",debug,error)
       if (error .ne. ELPA_OK) then
@@ -130,7 +136,7 @@
       call solve_tridi_&
       &PRECISION&
       &_private_impl(obj, na, nev, d, e, q, matrixRows, nblk, matrixCols, &
-               mpi_comm_rows, mpi_comm_cols, 0, wantDebug, success, &
+               mpi_comm_all, mpi_comm_rows, mpi_comm_cols, 0, wantDebug, success, &
                nrThreads)
 
 

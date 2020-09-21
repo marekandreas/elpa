@@ -75,16 +75,16 @@
 #else
 #define PRECISION_AND_SUFFIX single
 #endif
-#include "elpa1_solve_tridi_real_template.F90"
+!#include "elpa1_solve_tridi_real_template.F90"
 #undef PRECISION_AND_SUFFIX
 #ifdef DOUBLE_PRECISION_REAL
 #define PRECISION_AND_SUFFIX  double_impl
 #else
 #define PRECISION_AND_SUFFIX  single_impl
 #endif
-#include "elpa1_solve_tridi_real_template.F90"
+#include "../solve_tridi/solve_tridi_template.F90"
 #undef PRECISION_AND_SUFFIX
-#include "elpa1_merge_systems_real_template.F90"
+!#include "elpa1_merge_systems_real_template.F90"
 #include "elpa1_tools_template.F90"
 
 #endif

@@ -88,12 +88,14 @@ module elpa_api
       procedure(elpa_destroy_i), deferred, public :: destroy        !< method to destroy an ELPA object
 
       ! key/value store
-      generic, public :: set => &                                   !< export a method to set integer/double key/values
+      generic, public :: set => &                                   !< export a method to set integer/double/float key/values
           elpa_set_integer, &
+          elpa_set_float, &
           elpa_set_double
 
-      generic, public :: get => &                                   !< export a method to get integer/double key/values
+      generic, public :: get => &                                   !< export a method to get integer/double/float key/values
           elpa_get_integer, &
+          elpa_get_float, &
           elpa_get_double
 
       procedure(elpa_is_set_i),  deferred, public :: is_set         !< method to check whether key/value is set
@@ -182,9 +184,11 @@ module elpa_api
 
       !> \brief These method have to be public, in order to be overrideable in the extension types
       procedure(elpa_set_integer_i), deferred, public :: elpa_set_integer
+      procedure(elpa_set_float_i),  deferred, public :: elpa_set_float
       procedure(elpa_set_double_i),  deferred, public :: elpa_set_double
 
       procedure(elpa_get_integer_i), deferred, public :: elpa_get_integer
+      procedure(elpa_get_float_i),  deferred, public :: elpa_get_float
       procedure(elpa_get_double_i),  deferred, public :: elpa_get_double
 
       procedure(elpa_eigenvectors_d_i),    deferred, public :: elpa_eigenvectors_d
@@ -379,7 +383,7 @@ module elpa_api
     end function
   end interface
 
-  
+
   !> \brief abstract definition of the autotune set_best method
   !> Parameters
   !> \details
@@ -402,7 +406,7 @@ module elpa_api
     end subroutine
   end interface
 
-  
+
   !> \brief abstract definition of the autotune print best method
   !> Parameters
   !> \details
@@ -576,6 +580,54 @@ module elpa_api
       integer(kind=c_int), intent(in) :: value
       integer                         :: state
     end function
+  end interface
+
+
+  !> \brief abstract definition of set method for float values
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !? \param   value       float: the value to associate with the key
+  !> \param   error       integer. optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_set_float_i(self, name, value, error)
+      use iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)                   :: self
+      character(*), intent(in)        :: name
+      real(kind=c_float), intent(in) :: value
+#ifdef USE_FORTRAN2008
+      integer, optional               :: error
+#else
+      integer                         :: error
+#endif
+    end subroutine
+  end interface
+
+
+  !> \brief abstract definition of get method for float values
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   name        string: the name of the key
+  !> \param   value       float: the value associated with the key
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_get_float_i(self, name, value, error)
+      use iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)                  :: self
+      character(*), intent(in)       :: name
+      real(kind=c_float)            :: value
+#ifdef USE_FORTRAN2008
+      integer, intent(out), optional :: error
+#else
+      integer, intent(out)           :: error
+#endif
+    end subroutine
   end interface
 
 
@@ -775,7 +827,7 @@ module elpa_api
     end subroutine
   end interface
 
- 
+
   !> \brief abstract definition of interface to destroy the autotuning state
   !> Parameters
   !> \param   self        class(elpa_autotune_t): the ELPA autotune object

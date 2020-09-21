@@ -1,6 +1,7 @@
 Changelog for next release
 
 - not yet decided
+- fix determination whether a _ is needed to link Fortran to C
 
 Changelog for ELPA 2020.05.001
 

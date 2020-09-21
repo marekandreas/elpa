@@ -177,8 +177,8 @@ __global__ void compute_hh_trafo_kernel_complex_double(cuDoubleComplex * __restr
     unsigned int bid = blockIdx.x;
 
     j = ncols;
-    q_off = bid + (j + tid) * ldq;
-    h_off = tid + j * nb;
+    q_off = bid + (j + tid - 1) * ldq;
+    h_off = tid + (j - 1) * nb;
     q_s[tid] = q[q_off];
 
     while (j >= 1)
@@ -197,7 +197,7 @@ __global__ void compute_hh_trafo_kernel_complex_double(cuDoubleComplex * __restr
 
         __syncthreads();
 
-        q_v2 = cuCsub(q_v2, cuCmul(cuCmul(dotp_s[0], hh_tau[j]), hh[h_off]));
+        q_v2 = cuCsub(q_v2, cuCmul(cuCmul(dotp_s[0], hh_tau[j - 1]), hh[h_off]));
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))
@@ -275,8 +275,8 @@ __global__ void compute_hh_trafo_kernel_complex_single(cuFloatComplex * __restri
     unsigned int bid = blockIdx.x;
 
     j = ncols;
-    q_off = bid + (j + tid) * ldq;
-    h_off = tid + j * nb;
+    q_off = bid + (j + tid - 1) * ldq;
+    h_off = tid + (j - 1) * nb;
     q_s[tid] = q[q_off];
 
     while (j >= 1)
@@ -295,7 +295,7 @@ __global__ void compute_hh_trafo_kernel_complex_single(cuFloatComplex * __restri
 
         __syncthreads();
 
-        q_v2 = cuCsubf(q_v2, cuCmulf(cuCmulf(dotp_s[0], hh_tau[j]), hh[h_off]));
+        q_v2 = cuCsubf(q_v2, cuCmulf(cuCmulf(dotp_s[0], hh_tau[j - 1]), hh[h_off]));
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))

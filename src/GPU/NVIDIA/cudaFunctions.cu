@@ -72,7 +72,7 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
 extern "C" {
 
-    int cublasCreateFromC(intptr_t *cublas_handle) {
+  int cublasCreateFromC(intptr_t *cublas_handle) {
 //     printf("in c: %p\n", *cublas_handle);
     *cublas_handle = (intptr_t) malloc(sizeof(cublasHandle_t));
 //     printf("in c: %p\n", *cublas_handle);
@@ -107,7 +107,7 @@ extern "C" {
       return 0;
     }
     else{
-      errormessage("Error in cublasCreate: %s\n", "unknown error");
+      errormessage("Error in cublasDestroy: %s\n", "unknown error");
       return 0;
     }
   }
@@ -136,12 +136,11 @@ extern "C" {
 
     cudaError_t cuerr = cudaDeviceSynchronize();
     if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaGetDeviceCount: %s\n",cudaGetErrorString(cuerr));
+      errormessage("Error in cudaDeviceSynchronize: %s\n",cudaGetErrorString(cuerr));
       return 0;
     }
     return 1;
   }
-
 
   int cudaMallocFromC(intptr_t *a, size_t width_height) {
 
@@ -155,6 +154,7 @@ extern "C" {
     }
     return 1;
   }
+
   int cudaFreeFromC(intptr_t *a) {
 #ifdef DEBUG_CUDA
     printf("CUDA Free, pointer address: %p \n", a);
@@ -180,6 +180,7 @@ extern "C" {
     }
     return 1;
   }
+
   int cudaFreeHostFromC(intptr_t *a) {
 #ifdef DEBUG_CUDA
     printf("FreeHost pointer address: %p \n", a);
@@ -327,7 +328,6 @@ extern "C" {
       return CUBLAS_DIAG_NON_UNIT;
     }
   }
-
 
 
   void cublasDgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, double alpha,

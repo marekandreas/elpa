@@ -11,7 +11,6 @@ AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_SILENT_RULES([yes])
-
 # ABI version
 #
 # Set the libtool library version, see LIBRARY_INTERFACE
@@ -36,6 +35,8 @@ AC_DEFINE([$1], [$2], [$3])
 AC_SUBST([$1], ['$2'])
 ])
 
+AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
+
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 
@@ -44,6 +45,8 @@ AC_DEFINE_SUBST(CURRENT_API_VERSION, 20200417, "Current ELPA API version")
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
 AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20200417, "Current ELPA autotune version")
+AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1604905771],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -51,7 +54,6 @@ if test x$_cv_gnu_make_command = x ; then
 fi
 
 enable_legacy=no
-
 AC_MSG_CHECKING(whether in C interface the error argument should be optional)
 AC_ARG_ENABLE([optional-argument-in-C-API],
               AS_HELP_STRING([--enable-optional-argument-in-C-API],
@@ -91,9 +93,9 @@ AC_ARG_ENABLE([openmp],
 	       ],
               [enable_openmp=no])
 AC_MSG_RESULT([${enable_openmp}])
-AM_CONDITIONAL([WITH_OPENMP],[test x"$enable_openmp" = x"yes"])
+AM_CONDITIONAL([WITH_OPENMP_TRADITIONAL],[test x"$enable_openmp" = x"yes"])
 if test x"${enable_openmp}" = x"yes"; then
-        AC_DEFINE([WITH_OPENMP], [1], [use OpenMP threading])
+        AC_DEFINE([WITH_OPENMP_TRADITIONAL], [1], [use OpenMP threading])
 fi
 
 
@@ -1051,7 +1053,7 @@ if test x"$can_link_with_" = x"yes"; then
   AC_DEFINE([NEED_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need to append an underscore])
 fi
   
-AC_MSG_CHECKING(whether we do not need _ in C programs to link against a Fortran library)
+AC_MSG_CHECKING(whether we can link C programs against Fortran without _ )
 AC_LINK_IFELSE([AC_LANG_SOURCE([
 int main(int argc, char **argv) {
 
@@ -1068,7 +1070,6 @@ AC_MSG_RESULT([${can_link_without_}])
 if test x"$can_link_without_" = x"yes"; then
   AC_DEFINE([NEED_NO_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need not to append an underscore])
 fi
-
 
 if test x"${need_vsx}" = x"yes"; then
   AC_MSG_CHECKING(whether we can compile Altivec VSX with intrinsics in C)
@@ -1808,6 +1809,9 @@ else
 	echo "build config should be compiled into the library: no"
 fi
 
+if test x"$have_loop_blocking" = x"yes"; then
+  AC_DEFINE([LOOP_BLOCKING],[1],[use blocking in loops])
+fi
 
 AC_SUBST([SUFFIX])
 AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
@@ -2018,4 +2022,10 @@ else
 
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi
-
+if test x"$old_elpa_version" = x"yes"; then
+  echo " "
+  echo " It is possible that your current version of ELPA is not the latest one."
+  echo " You might want to have a look at https://elpa.mpcdf.mpg.de, whether a more recent"
+  echo " version has been released already"
+  echo " "
+fi

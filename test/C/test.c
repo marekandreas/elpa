@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
 
    int  value;
 #ifdef WITH_MPI
-#ifndef WITH_OPENMP
+#ifndef WITH_OPENMP_TRADITIONAL
    MPI_Init(&argc, &argv);
 #else
    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided_mpi_thread_level);
