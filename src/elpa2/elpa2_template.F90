@@ -88,6 +88,7 @@
 #ifdef REDISTRIBUTE_MATRIX
    use elpa_scalapack_interfaces
 #endif
+   use solve_tridi
    use iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
@@ -99,7 +100,7 @@
    logical                                                            :: useQRActual
 #endif
    integer(kind=c_int)                                                :: kernel, kernelByUser
-#ifdef REDISTRIBUTE_MATRIX 
+#ifdef REDISTRIBUTE_MATRIX
 
 #ifdef USE_ASSUMED_SIZE
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout), target         :: aExtern(obj%local_nrows,*)
@@ -113,7 +114,7 @@
 #endif
 #endif
 
-#else /* REDISTRIBUTE_MATRIX */ 
+#else /* REDISTRIBUTE_MATRIX */
 
 #ifdef USE_ASSUMED_SIZE
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,*)
@@ -127,7 +128,7 @@
 #endif
 #endif
 
-#endif /* REDISTRIBUTE_MATRIX */ 
+#endif /* REDISTRIBUTE_MATRIX */
 
 #ifdef REDISTRIBUTE_MATRIX
     MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
@@ -167,9 +168,11 @@
                                                                                             &PRECISION&
                                                                                             &_&
                                                                                             &MATH_DATATYPE
-    integer(kind=ik)                                                  :: na, nev, nblk, matrixCols, &
+   integer(kind=ik)                                                   :: na, nev, nblk, matrixCols, &
                                                                          mpi_comm_rows, mpi_comm_cols,        &
                                                                          mpi_comm_all, check_pd, error, matrixRows
+   real(kind=C_DATATYPE_KIND)                                         :: thres_pd
+
 #ifdef REDISTRIBUTE_MATRIX
    integer(kind=ik)                                                   :: nblkInternal, matrixOrder
    character(len=1)                                                   :: layoutInternal, layoutExternal
@@ -187,15 +190,15 @@
 #endif
 
 
-    logical                                                           :: do_bandred, do_tridiag, do_solve_tridi,  &
+   logical                                                            :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
-    logical                                                           :: good_nblk_gpu
+   logical                                                            :: good_nblk_gpu
 
-    integer(kind=ik)                                                  :: nrThreads
+   integer(kind=ik)                                                   :: nrThreads
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
-    integer(kind=c_int)                                               :: simdSetAvailable(NUMBER_OF_INSTR)
+   integer(kind=c_int)                                                :: simdSetAvailable(NUMBER_OF_INSTR)
 #endif
-    integer(kind=ik)                                                  :: global_index
+   integer(kind=ik)                                                   :: global_index
    logical                                                            :: reDistributeMatrix, doRedistributeMatrix
 
 #if REALCASE == 1
@@ -329,7 +332,7 @@
       print *,"Problem getting option for kernel settings. Aborting..."
       stop
     endif
- 
+
     call obj%get("is_skewsymmetric",skewsymmetric,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option for skewsymmetric settings. Aborting..."
@@ -425,7 +428,7 @@
         stop
       endif
       do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
- 
+
       call obj%get("gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
@@ -575,7 +578,7 @@
                 stop
               endif
               if (my_pe == 0 ) write(error_unit,*) "ELPA decided to use ",elpa_int_value_to_string(KERNEL_STRING, kernel)
-              exit 
+              exit
             endif
           endif
         enddo
@@ -796,7 +799,8 @@
 #if COMPLEXCASE == 1
        q_real, ubound(q_real,dim=1), &
 #endif
-       nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, success, nrThreads)
+       nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, &
+               success, nrThreads)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("solve")
 #endif
@@ -811,16 +815,25 @@
        do_trans_to_band = .false.
        do_trans_to_full = .false.
      else
-
        call obj%get("check_pd",check_pd,error)
        if (error .ne. ELPA_OK) then
          print *,"Problem getting option for check_pd. Aborting..."
          stop
        endif
        if (check_pd .eq. 1) then
+         call obj%get("thres_pd_&
+         &PRECISION&
+         &",thres_pd,error)
+         if (error .ne. ELPA_OK) then
+            print *,"Problem getting option for thres_pd_&
+            &PRECISION&
+            &. Aborting..."
+            stop
+         endif
+
          check_pd = 0
          do i = 1, na
-           if (ev(i) .gt. THRESHOLD) then
+           if (ev(i) .gt. thres_pd) then
              check_pd = check_pd + 1
            endif
          enddo
@@ -835,17 +848,20 @@
        endif
      endif ! eigenvalues only
 
-     if (do_trans_to_band) then
 #if COMPLEXCASE == 1
+     if (do_trans_to_band) then
        ! q must be given thats why from here on we can use q and not q_actual
 
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
+     endif
 
+     ! make sure q_real is deallocated when using check_pd
+     if (allocated(q_real)) then
        deallocate(q_real, stat=istat, errmsg=errorMessage)
        check_deallocate("elpa2_template: q_real", istat, errorMessage)
-#endif
      endif
- 
+#endif
+
        if (isSkewsymmetric) then
        ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
        ! This makes the eigenvectors complex.
@@ -891,7 +907,7 @@
        call obj%timer%stop("trans_ev_to_band")
 
        if (.not.(success)) return
- 
+
      endif ! do_trans_to_band
 
      ! the array q (currently) always resides on host even when using GPU
@@ -904,7 +920,7 @@
 
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
-       
+
        call trans_ev_band_to_full_&
        &MATH_DATATYPE&
        &_&
@@ -938,9 +954,9 @@
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
        check_deallocate("elpa2_template: hh_trans", istat, errorMessage)
      endif
-     
+
      if (do_trans_to_full) then
-       call obj%timer%start("trans_ev_to_full")  
+       call obj%timer%start("trans_ev_to_full")
        if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
@@ -958,13 +974,17 @@
          )
        endif
 
-       deallocate(tmat, stat=istat, errmsg=errorMessage)
-       check_deallocate("elpa2_template: tmat", istat, errorMessage)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_full")
 #endif
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
+
+     ! make sure tmat is deallocated when using check_pd
+     if (allocated(tmat)) then
+       deallocate(tmat, stat=istat, errmsg=errorMessage)
+       check_deallocate("elpa2_template: tmat", istat, errorMessage)
+     endif
 
      if (obj%eigenvalues_only) then
        deallocate(q_dummy, stat=istat, errmsg=errorMessage)
@@ -1025,8 +1045,8 @@
      call obj%timer%stop("elpa_solve_evp_&
      &MATH_DATATYPE&
      &_2stage_&
-    &PRECISION&
-    &")
+     &PRECISION&
+     &")
 1    format(a,f10.3)
 
    end function elpa_solve_evp_&

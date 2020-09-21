@@ -60,50 +60,50 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 #endif
-  subroutine bandred_&
-    &MATH_DATATYPE&
-    &_&
-    &PRECISION &
-    (obj, na, a_mat, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-     wantDebug, useGPU, success, &
+subroutine bandred_&
+&MATH_DATATYPE&
+&_&
+&PRECISION &
+(obj, na, a_mat, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
+wantDebug, useGPU, success, &
 #if REALCASE == 1
-     useQR, &
+useQR, &
 #endif
-     max_threads)
+max_threads)
 
-  !-------------------------------------------------------------------------------
-  !  bandred_real/complex: Reduces a distributed symmetric matrix to band form
-  !
-  !  Parameters
-  !
-  !  na          Order of matrix
-  !
-  !  a_mat(lda,matrixCols)    Distributed matrix which should be reduced.
-  !              Distribution is like in Scalapack.
-  !              Opposed to Scalapack, a_mat(:,:) must be set completely (upper and lower half)
-  !              a_mat(:,:) is overwritten on exit with the band and the Householder vectors
-  !              in the upper half.
-  !
-  !  lda         Leading dimension of a_mat
-  !  matrixCols  local columns of matrix a_mat
-  !
-  !  nblk        blocksize of cyclic distribution, must be the same in both directions!
-  !
-  !  nbw         semi bandwith of output matrix
-  !
-  !  mpi_comm_rows
-  !  mpi_comm_cols
-  !              MPI-Communicators for rows/columns
-  !
-  !  tmat(nbw,nbw,numBlocks)    where numBlocks = (na-1)/nbw + 1
-  !              Factors for the Householder vectors (returned), needed for back transformation
-  !
-  !-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!  bandred_real/complex: Reduces a distributed symmetric matrix to band form
+!
+!  Parameters
+!
+!  na          Order of matrix
+!
+!  a_mat(lda,matrixCols)    Distributed matrix which should be reduced.
+!              Distribution is like in Scalapack.
+!              Opposed to Scalapack, a_mat(:,:) must be set completely (upper and lower half)
+!              a_mat(:,:) is overwritten on exit with the band and the Householder vectors
+!              in the upper half.
+!
+!  lda         Leading dimension of a_mat
+!  matrixCols  local columns of matrix a_mat
+!
+!  nblk        blocksize of cyclic distribution, must be the same in both directions!
+!
+!  nbw         semi bandwith of output matrix
+!
+!  mpi_comm_rows
+!  mpi_comm_cols
+!              MPI-Communicators for rows/columns
+!
+!  tmat(nbw,nbw,numBlocks)    where numBlocks = (na-1)/nbw + 1
+!              Factors for the Householder vectors (returned), needed for back transformation
+!
+!-------------------------------------------------------------------------------
 
   use cuda_functions
   use iso_c_binding
   use elpa1_compute
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   use omp_lib
 #endif
   use precision
@@ -140,7 +140,7 @@
 #if REALCASE == 1
   integer(kind=ik)                            :: vmrCols
 #endif
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   integer(kind=ik)                            :: mynlc, lrs, transformChunkSize
 #endif
   integer(kind=ik)                            :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
@@ -628,7 +628,7 @@
 
         aux1 = 0.0_rck
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 #if 0
  ! original complex implementation without openmp. check performance
         nlc = 0 ! number of local columns
@@ -750,7 +750,7 @@
         enddo
         !$omp end parallel
 
-#else /* WITH_OPENMP */
+#else /* WITH_OPENMP_TRADITIONAL */
 
         nlc = 0 ! number of local columns
         do j=1,lc-1
@@ -785,7 +785,7 @@
 #endif
           endif
         enddo
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
       enddo ! lc
 
       if (useGPU_reduction_lower_block_to_tridiagonal) then
@@ -939,7 +939,7 @@
 
     ! n_way is actually a branch for the number of OpenMP threads
     n_way = 1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
 #if REALCASE == 1
     n_way = max_threads
@@ -1022,7 +1022,7 @@
       endif ! l_cols>0 .and. l_rows>0
 
     else ! n_way > 1
-#endif /* WITH_OPENMP */
+#endif /* WITH_OPENMP_TRADITIONAL */
 
       if (.not. useGPU) then
         umcCPU(1:l_cols,1:n_cols) = 0.0_rck
@@ -1137,7 +1137,7 @@
         endif ! useGPU
       endif ! l_cols>0 .and. l_rows>0
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
     endif ! n_way > 1
 #if REALCASE == 1
     !$omp end parallel
@@ -1188,386 +1188,386 @@
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
-           if (allocated(tmpCUDA)) then
-             deallocate(tmpCUDA, stat=istat, errmsg=errorMessage)
-             check_deallocate("bandred: tmpCUDA", istat, errorMessage)
-           endif
+        if (allocated(tmpCUDA)) then
+          deallocate(tmpCUDA, stat=istat, errmsg=errorMessage)
+          check_deallocate("bandred: tmpCUDA", istat, errorMessage)
+        endif
 
-         else ! useGPU
+      else ! useGPU
 
-           allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-           check_allocate("bandred: tmpCPU", istat, errorMessage)
+        allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+        check_allocate("bandred: tmpCPU", istat, errorMessage)
 
 #ifdef WITH_MPI
-           if (wantDebug) call obj%timer%start("mpi_communication")
-           call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                              MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-           umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-           if (wantDebug) call obj%timer%stop("mpi_communication")
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+        if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
-           deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
-           check_deallocate("bandred: tmpCPU", istat, errorMessage)
-         endif ! useGPU
-       endif ! l_cols > 0
+        deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
+        check_deallocate("bandred: tmpCPU", istat, errorMessage)
+      endif ! useGPU
+    endif ! l_cols > 0
 
-       ! U = U * Tmat**T
+    ! U = U * Tmat**T
 
-       if (useGPU) then
-         successCUDA = cuda_memcpy(umc_dev, int(loc(umcCUDA(1)),kind=c_intptr_t), &
-                       l_cols*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
-         check_memcpy_cuda("bandred: umcCUDA -> umc_dev ", successCUDA)
+    if (useGPU) then
+      successCUDA = cuda_memcpy(umc_dev, int(loc(umcCUDA(1)),kind=c_intptr_t), &
+                    l_cols*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
+      check_memcpy_cuda("bandred: umcCUDA -> umc_dev ", successCUDA)
 
-         successCUDA = cuda_memcpy(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
-                       nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
-         check_memcpy_cuda("bandred: tmat -> tmat_dev ", successCUDA)
+      successCUDA = cuda_memcpy(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
+                    nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+      check_memcpy_cuda("bandred: tmat -> tmat_dev ", successCUDA)
 
-         call obj%timer%start("cublas")
-         call cublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
-                               l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
-         call obj%timer%stop("cublas")
+      call obj%timer%start("cublas")
+      call cublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
+                            l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
+      call obj%timer%stop("cublas")
 
-         ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-         call obj%timer%start("cublas")
-         call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',             &
-                                    n_cols, n_cols, l_cols, ONE, umc_dev, cur_l_cols, &
-                                    (umc_dev+(cur_l_cols * n_cols )*size_of_datatype),cur_l_cols, &
-                                    ZERO, vav_dev, nbw)
+      ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+      call obj%timer%start("cublas")
+      call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',             &
+                                 n_cols, n_cols, l_cols, ONE, umc_dev, cur_l_cols, &
+                                 (umc_dev+(cur_l_cols * n_cols )*size_of_datatype),cur_l_cols, &
+                                 ZERO, vav_dev, nbw)
 
-         call cublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
-                            n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
-         call obj%timer%stop("cublas")
+      call cublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
+           n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
+      call obj%timer%stop("cublas")
 
-         successCUDA = cuda_memcpy(int(loc(vav),kind=c_intptr_t), &
-                       vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
-         check_memcpy_cuda("bandred: vav_dev -> vav ", successCUDA)
-       else ! useGPU
+      successCUDA = cuda_memcpy(int(loc(vav),kind=c_intptr_t), &
+                    vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
+      check_memcpy_cuda("bandred: vav_dev -> vav ", successCUDA)
+    else ! useGPU
 
-         call obj%timer%start("blas")
+      call obj%timer%start("blas")
 
-         call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
-                             int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
-                             int(ubound(tmat,dim=1),kind=BLAS_KIND), &
-                              umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
+      call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
+                          int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
+                          int(ubound(tmat,dim=1),kind=BLAS_KIND), &
+                          umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
 
-         ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+      ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
 
-         call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',              &
-                             int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
-                             ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND), umcCPU(1,n_cols+1), &
-                             int(ubound(umcCPU,dim=1),kind=BLAs_KIND), ZERO, vav, int(ubound(vav,dim=1),kind=BLAS_KIND))
+      call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',              &
+                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                          ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND), umcCPU(1,n_cols+1), &
+                          int(ubound(umcCPU,dim=1),kind=BLAs_KIND), ZERO, vav, int(ubound(vav,dim=1),kind=BLAS_KIND))
 
-         call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
-                             int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep),    &
-                             int(ubound(tmat,dim=1),kind=BLAS_KIND), vav, int(ubound(vav,dim=1),kind=BLAS_KIND) )
-         call obj%timer%stop("blas")
+      call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
+                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep),    &
+                          int(ubound(tmat,dim=1),kind=BLAS_KIND), vav, int(ubound(vav,dim=1),kind=BLAS_KIND) )
+      call obj%timer%stop("blas")
 
-       endif ! useGPU
+    endif ! useGPU
 
 #if REALCASE == 1
 #ifdef HAVE_SKEWSYMMETRIC
-       if (isSkewsymmetric) then
-         call ssymm_matrix_allreduce_&
-         &PRECISION &
-                              (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
-       else
+    if (isSkewsymmetric) then
+      call ssymm_matrix_allreduce_&
+      &PRECISION &
+      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+    else
 #endif
-         call symm_matrix_allreduce_&
-         &PRECISION &
-                              (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+      call symm_matrix_allreduce_&
+      &PRECISION &
+      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
 #ifdef HAVE_SKEWSYMMETRIC
-       endif
+    endif
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
-       call herm_matrix_allreduce_&
-            &PRECISION &
-                              (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+    call herm_matrix_allreduce_&
+         &PRECISION &
+         (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
 #endif
 
-       if (useGPU) then
-         successCUDA = cuda_memcpy(vav_dev, int(loc(vav),kind=c_intptr_t), &
+    if (useGPU) then
+      successCUDA = cuda_memcpy(vav_dev, int(loc(vav),kind=c_intptr_t), &
                        nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
-         check_memcpy_cuda("bandred: vav -> vav_dev ", successCUDA)
-       endif
+      check_memcpy_cuda("bandred: vav -> vav_dev ", successCUDA)
+    endif
 
-       ! U = U - 0.5 * V * VAV
+    ! U = U - 0.5 * V * VAV
 
-       if (useGPU) then
-         call obj%timer%start("cublas")
-         if (isSkewsymmetric) then
-           call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
+    if (useGPU) then
+        call obj%timer%start("cublas")
+      if (isSkewsymmetric) then
+        call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
-                                      0.5_rk,                      &
+                                    0.5_rk,                      &
 #endif
 #if COMPLEXCASE == 1
-                                      (0.5_rk, 0.0_rk), &
+                                    (0.5_rk, 0.0_rk), &
 #endif
-                                      (umc_dev+(cur_l_cols * n_cols )* &
-                                      size_of_datatype),   &
-                                      cur_l_cols, vav_dev,nbw,        &
-                                      ONE, umc_dev, cur_l_cols)
-         else
-           call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
+                                    (umc_dev+(cur_l_cols * n_cols )* &
+                                    size_of_datatype),   &
+                                    cur_l_cols, vav_dev,nbw,        &
+                                    ONE, umc_dev, cur_l_cols)
+      else
+        call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
-                                      -0.5_rk,                      &
+                                   -0.5_rk,                      &
 #endif
 #if COMPLEXCASE == 1
-                                      (-0.5_rk, 0.0_rk), &
+                                   (-0.5_rk, 0.0_rk), &
 #endif
-                                      (umc_dev+(cur_l_cols * n_cols )* &
-                                      size_of_datatype),   &
-                                      cur_l_cols, vav_dev,nbw,        &
-                                      ONE, umc_dev, cur_l_cols)
-         endif
-         call obj%timer%stop("cublas")
+                                   (umc_dev+(cur_l_cols * n_cols )* &
+                                   size_of_datatype),   &
+                                   cur_l_cols, vav_dev,nbw,        &
+                                   ONE, umc_dev, cur_l_cols)
+      endif
+      call obj%timer%stop("cublas")
 
-         successCUDA = cuda_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
-                       umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
-         check_memcpy_cuda("bandred: umc_dev -> umcCUDA ", successCUDA)
+      successCUDA = cuda_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
+                    umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
+      check_memcpy_cuda("bandred: umc_dev -> umcCUDA ", successCUDA)
 
-         ! Transpose umc -> umr (stored in vmr, second half)
-         if (isSkewsymmetric) then
-           call elpa_transpose_vectors_ss_&
-                &MATH_DATATYPE&
-                &_&
-                &PRECISION &
-                            (obj, umcCUDA(:), cur_l_cols, mpi_comm_cols, &
-                             vmrCUDA(cur_l_rows * n_cols + 1:), cur_l_rows, mpi_comm_rows, &
-                             1, istep*nbw, n_cols, nblk, max_threads)
-         else
-           call elpa_transpose_vectors_&
-                &MATH_DATATYPE&
-                &_&
-                &PRECISION &
-                            (obj, umcCUDA, cur_l_cols, mpi_comm_cols, &
-                             vmrCUDA(cur_l_rows * n_cols + 1:), cur_l_rows, mpi_comm_rows, &
-                             1, istep*nbw, n_cols, nblk, max_threads)
-         endif
-
-         successCUDA = cuda_memcpy(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
-                       int(loc(vmrCUDA(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
-                       (vmr_size-cur_l_rows*n_cols)*size_of_datatype, cudaMemcpyHostToDevice)
-         check_memcpy_cuda("bandred: vmr -> vmrCUDA ", successCUDA)
-
-       else ! useGPU
-         call obj%timer%start("blas")
-#if REALCASE == 1
-         if (isSkewsymmetric) then
-           call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
-                               0.5_rk, umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav,                        &
-                               int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
-         else
-           call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
-                               -0.5_rk, umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav,                       &
-                               int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
-         endif
-#endif
-#if COMPLEXCASE == 1
-         call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
-                              (-0.5_rk, 0.0_rk),     &
-                              umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav, &
-                              int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
-#endif
-
-         call obj%timer%stop("blas")
-
-         ! Transpose umc -> umr (stored in vmr, second half)
-         if (isSkewsymmetric) then
-           call elpa_transpose_vectors_ss_&
+      ! Transpose umc -> umr (stored in vmr, second half)
+      if (isSkewsymmetric) then
+        call elpa_transpose_vectors_ss_&
              &MATH_DATATYPE&
-           &_&
-           &PRECISION &
-                                    (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                           vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                           1, istep*nbw, n_cols, nblk, max_threads)
-         else
-          call elpa_transpose_vectors_&
-          &MATH_DATATYPE&
-          &_&
-          &PRECISION &
-                                   (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                             vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                             1, istep*nbw, n_cols, nblk, max_threads)
-         endif
-       endif  ! useGPU
+             &_&
+             &PRECISION &
+                         (obj, umcCUDA(:), cur_l_cols, mpi_comm_cols, &
+                          vmrCUDA(cur_l_rows * n_cols + 1:), cur_l_rows, mpi_comm_rows, &
+                          1, istep*nbw, n_cols, nblk, max_threads)
+      else
+        call elpa_transpose_vectors_&
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION &
+                         (obj, umcCUDA, cur_l_cols, mpi_comm_cols, &
+                          vmrCUDA(cur_l_rows * n_cols + 1:), cur_l_rows, mpi_comm_rows, &
+                          1, istep*nbw, n_cols, nblk, max_threads)
+      endif
 
-       ! A = A - V*U**T - U*V**T
+      successCUDA = cuda_memcpy(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
+                    int(loc(vmrCUDA(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
+                    (vmr_size-cur_l_rows*n_cols)*size_of_datatype, cudaMemcpyHostToDevice)
+      check_memcpy_cuda("bandred: vmr -> vmrCUDA ", successCUDA)
 
-#ifdef WITH_OPENMP
-       !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
-       n_threads = omp_get_num_threads()
-
-       if (mod(n_threads, 2) == 0) then
-         n_way = 2
-       else
-         n_way = 1
-       endif
-
-       m_way = n_threads / n_way
-
-       m_id = mod(omp_get_thread_num(),  m_way)
-       n_id = omp_get_thread_num() / m_way
-
-       do ii=n_id*tile_size,(istep*nbw-1),tile_size*n_way
-         i = ii / tile_size
-         lcs = i*l_cols_tile+1
-         lce = min(l_cols,(i+1)*l_cols_tile)
-         lre = min(l_rows,(i+1)*l_rows_tile)
-         if (lce<lcs .or. lre<1) cycle
-
-         !Figure out this thread's range
-         work_per_thread = lre / m_way
-         if (work_per_thread * m_way < lre) work_per_thread = work_per_thread + 1
-         mystart = m_id * work_per_thread + 1
-         myend   = mystart + work_per_thread - 1
-         if ( myend > lre ) myend = lre
-         if ( myend-mystart+1 < 1) cycle
-         call obj%timer%start("blas")
-         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
-                             int(lce-lcs+1,kind=BLAS_KIND), int(2*n_cols,kind=BLAS_KIND), -ONE, &
-                             vmrCPU(mystart, 1), int(ubound(vmrCPU,1),kind=BLAS_KIND), &
-                             umcCPU(lcs,1), int(ubound(umcCPU,1),kind=BLAS_KIND), &
-                             ONE, a_mat(mystart,lcs), int(ubound(a_mat,1),kind=BLAS_KIND) )
-          call obj%timer%stop("blas")
-       enddo
-       !$omp end parallel
-
-#else /* WITH_OPENMP */
-
-       do i=0,(istep*nbw-1)/tile_size
-         lcs = i*l_cols_tile+1
-         lce = min(l_cols,(i+1)*l_cols_tile)
-         lre = min(l_rows,(i+1)*l_rows_tile)
-         if (lce<lcs .or. lre<1) cycle
-
-         if (useGPU) then
-           call obj%timer%start("cublas")
-
-           call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
-                                      lre, lce-lcs+1, 2*n_cols, -ONE, &
-                                      vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
-                                      size_of_datatype), &
-                                      cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
-                                      size_of_datatype), lda)
-           call obj%timer%stop("cublas")
-
-         else ! useGPU
-
-           call obj%timer%start("blas")
-           call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre,kind=BLAS_KIND),int(lce-lcs+1,kind=BLAS_KIND), &
-                               int(2*n_cols,kind=BLAS_KIND), &
-                               -ONE, &
-                               vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), umcCPU(lcs,1), &
-                               int(ubound(umcCPU,dim=1),kind=BLAS_KIND), &
-                               ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND))
-           call obj%timer%stop("blas")
-         endif ! useGPU
-       enddo ! i=0,(istep*nbw-1)/tile_size
-#endif /* WITH_OPENMP */
-
-       if (.not.(useGPU)) then
-         if (allocated(vr)) then
-           deallocate(vr, stat=istat, errmsg=errorMessage)
-           check_deallocate("bandred: vr", istat, errorMessage)
-         endif
-
-         if (allocated(umcCPU)) then
-           deallocate(umcCPU, stat=istat, errmsg=errorMessage)
-           check_deallocate("bandred: umcCPU", istat, errorMessage)
-         endif
-
-         if (allocated(vmrCPU)) then
-           deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
-           check_deallocate("bandred: vmrCPU", istat, errorMessage)
-         endif
-       endif !useGPU
-
-     enddo ! istep - loop
-
-     if (useGPU) then
-       ! copy a_dev to a_mat
-       ! we do it here, since a is needed on the host in the following routine
-       ! (band to tridi). Previously, a has been kept on the device and then
-       ! copied in redist_band (called from tridiag_band). However, it seems to
-       ! be easier to do it here.
-       successCUDA = cuda_memcpy(int(loc(a_mat),kind=c_intptr_t), &
-                     int(a_dev,kind=c_intptr_t), &
-                     int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
-                     cudaMemcpyDeviceToHost)
-       check_memcpy_cuda("bandred: a_dev -> a_mat ", successCUDA)
-
-       successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
-       check_host_unregister_cuda("bandred: a_mat ", successCUDA)
-
-       successCUDA = cuda_free(a_dev)
-       check_dealloc_cuda("bandred: a_dev ", successCUDA)
-
-       successCUDA = cuda_free(vav_dev)
-       check_dealloc_cuda("bandred: vav_dev ", successCUDA)
-
-       successCUDA = cuda_free(tmat_dev)
-       check_dealloc_cuda("bandred: tmat_dev ", successCUDA)
-
-       successCUDA = cuda_host_unregister(int(loc(vav),kind=c_intptr_t))
-       check_host_unregister_cuda("bandred: vav", successCUDA)
-
-       if (associated(umcCUDA)) then
-         nullify(umcCUDA)
-
-         successCUDA = cuda_free_host(umc_host)
-         check_host_dealloc_cuda("bandred: umc_host ", successCUDA)
-
-         successCUDA = cuda_free(umc_dev)
-         check_dealloc_cuda("bandred: umc_dev ", successCUDA)
-       endif
-
-       if (associated(vmrCUDA)) then
-         nullify(vmrCUDA)
-
-         successCUDA = cuda_free_host(vmr_host)
-         check_host_dealloc_cuda("bandred: vmr_host ", successCUDA)
-
-         successCUDA = cuda_free(vmr_dev)
-         check_dealloc_cuda("bandred: vmr_dev ", successCUDA)
-       endif
-     endif ! useGPU
-
-     if (allocated(vr)) then
-       deallocate(vr, stat=istat, errmsg=errorMessage)
-       check_deallocate("bandred: vr", istat, errorMessage)
-     endif
-
-     if (allocated(umcCPU)) then
-       deallocate(umcCPU, stat=istat, errmsg=errorMessage)
-       check_deallocate("bandred: umcCPU", istat, errorMessage)
-     endif
-
-     if (allocated(vmrCPU)) then
-       deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
-       check_deallocate("bandred: vmrCPU", istat, errorMessage)
-     endif
-
+    else ! useGPU
+      call obj%timer%start("blas")
 #if REALCASE == 1
-     if (useQR) then
-       if (which_qr_decomposition == 1) then
-         deallocate(work_blocked, stat=istat, errmsg=errorMessage)
-         check_deallocate("bandred: work_blocked", istat, errorMessage)
-
-         deallocate(tauvector, stat=istat, errmsg=errorMessage)
-         check_deallocate("bandred: tauvector", istat, errorMessage)
-       endif
-     endif
+      if (isSkewsymmetric) then
+        call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+                            0.5_rk, umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav,                        &
+                            int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
+      else
+        call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+                            -0.5_rk, umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav,                       &
+                            int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
+      endif
+#endif
+#if COMPLEXCASE == 1
+      call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+                         (-0.5_rk, 0.0_rk),     &
+                         umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav, &
+                         int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
 #endif
 
-     call obj%timer%stop("bandred_&
-     &MATH_DATATYPE&
-     &" // &
-     &PRECISION_SUFFIX //&
-     gpuString)
+      call obj%timer%stop("blas")
 
-   end subroutine bandred_&
-   &MATH_DATATYPE&
-   &_&
-   &PRECISION
+      ! Transpose umc -> umr (stored in vmr, second half)
+      if (isSkewsymmetric) then
+        call elpa_transpose_vectors_ss_&
+          &MATH_DATATYPE&
+        &_&
+        &PRECISION &
+                                 (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                        vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                        1, istep*nbw, n_cols, nblk, max_threads)
+      else
+       call elpa_transpose_vectors_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION &
+                                (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                          1, istep*nbw, n_cols, nblk, max_threads)
+      endif
+    endif  ! useGPU
+
+    ! A = A - V*U**T - U*V**T
+
+#ifdef WITH_OPENMP_TRADITIONAL
+    !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
+    n_threads = omp_get_num_threads()
+
+    if (mod(n_threads, 2) == 0) then
+      n_way = 2
+    else
+      n_way = 1
+    endif
+
+    m_way = n_threads / n_way
+
+    m_id = mod(omp_get_thread_num(),  m_way)
+    n_id = omp_get_thread_num() / m_way
+
+    do ii=n_id*tile_size,(istep*nbw-1),tile_size*n_way
+      i = ii / tile_size
+      lcs = i*l_cols_tile+1
+      lce = min(l_cols,(i+1)*l_cols_tile)
+      lre = min(l_rows,(i+1)*l_rows_tile)
+      if (lce<lcs .or. lre<1) cycle
+
+      !Figure out this thread's range
+      work_per_thread = lre / m_way
+      if (work_per_thread * m_way < lre) work_per_thread = work_per_thread + 1
+      mystart = m_id * work_per_thread + 1
+      myend   = mystart + work_per_thread - 1
+      if ( myend > lre ) myend = lre
+      if ( myend-mystart+1 < 1) cycle
+      call obj%timer%start("blas")
+      call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
+                          int(lce-lcs+1,kind=BLAS_KIND), int(2*n_cols,kind=BLAS_KIND), -ONE, &
+                          vmrCPU(mystart, 1), int(ubound(vmrCPU,1),kind=BLAS_KIND), &
+                          umcCPU(lcs,1), int(ubound(umcCPU,1),kind=BLAS_KIND), &
+                          ONE, a_mat(mystart,lcs), int(ubound(a_mat,1),kind=BLAS_KIND) )
+       call obj%timer%stop("blas")
+    enddo
+    !$omp end parallel
+
+#else /* WITH_OPENMP_TRADITIONAL */
+
+    do i=0,(istep*nbw-1)/tile_size
+      lcs = i*l_cols_tile+1
+      lce = min(l_cols,(i+1)*l_cols_tile)
+      lre = min(l_rows,(i+1)*l_rows_tile)
+      if (lce<lcs .or. lre<1) cycle
+
+      if (useGPU) then
+        call obj%timer%start("cublas")
+
+        call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+                                   lre, lce-lcs+1, 2*n_cols, -ONE, &
+                                   vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
+                                   size_of_datatype), &
+                                   cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
+                                   size_of_datatype), lda)
+        call obj%timer%stop("cublas")
+
+      else ! useGPU
+
+        call obj%timer%start("blas")
+        call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre,kind=BLAS_KIND),int(lce-lcs+1,kind=BLAS_KIND), &
+                            int(2*n_cols,kind=BLAS_KIND), &
+                            -ONE, &
+                            vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), umcCPU(lcs,1), &
+                            int(ubound(umcCPU,dim=1),kind=BLAS_KIND), &
+                            ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND))
+        call obj%timer%stop("blas")
+      endif ! useGPU
+    enddo ! i=0,(istep*nbw-1)/tile_size
+#endif /* WITH_OPENMP_TRADITIONAL */
+
+    if (.not.(useGPU)) then
+      if (allocated(vr)) then
+        deallocate(vr, stat=istat, errmsg=errorMessage)
+        check_deallocate("bandred: vr", istat, errorMessage)
+      endif
+
+      if (allocated(umcCPU)) then
+        deallocate(umcCPU, stat=istat, errmsg=errorMessage)
+        check_deallocate("bandred: umcCPU", istat, errorMessage)
+      endif
+
+      if (allocated(vmrCPU)) then
+        deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
+        check_deallocate("bandred: vmrCPU", istat, errorMessage)
+      endif
+    endif !useGPU
+
+  enddo ! istep - loop
+
+  if (useGPU) then
+    ! copy a_dev to a_mat
+    ! we do it here, since a is needed on the host in the following routine
+    ! (band to tridi). Previously, a has been kept on the device and then
+    ! copied in redist_band (called from tridiag_band). However, it seems to
+    ! be easier to do it here.
+    successCUDA = cuda_memcpy(int(loc(a_mat),kind=c_intptr_t), &
+                  int(a_dev,kind=c_intptr_t), &
+                  int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
+                  cudaMemcpyDeviceToHost)
+    check_memcpy_cuda("bandred: a_dev -> a_mat ", successCUDA)
+
+    successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
+    check_host_unregister_cuda("bandred: a_mat ", successCUDA)
+
+    successCUDA = cuda_free(a_dev)
+    check_dealloc_cuda("bandred: a_dev ", successCUDA)
+
+    successCUDA = cuda_free(vav_dev)
+    check_dealloc_cuda("bandred: vav_dev ", successCUDA)
+
+    successCUDA = cuda_free(tmat_dev)
+    check_dealloc_cuda("bandred: tmat_dev ", successCUDA)
+
+    successCUDA = cuda_host_unregister(int(loc(vav),kind=c_intptr_t))
+    check_host_unregister_cuda("bandred: vav", successCUDA)
+
+    if (associated(umcCUDA)) then
+      nullify(umcCUDA)
+
+      successCUDA = cuda_free_host(umc_host)
+      check_host_dealloc_cuda("bandred: umc_host ", successCUDA)
+
+      successCUDA = cuda_free(umc_dev)
+      check_dealloc_cuda("bandred: umc_dev ", successCUDA)
+    endif
+
+    if (associated(vmrCUDA)) then
+      nullify(vmrCUDA)
+
+      successCUDA = cuda_free_host(vmr_host)
+      check_host_dealloc_cuda("bandred: vmr_host ", successCUDA)
+
+      successCUDA = cuda_free(vmr_dev)
+      check_dealloc_cuda("bandred: vmr_dev ", successCUDA)
+    endif
+  endif ! useGPU
+
+  if (allocated(vr)) then
+    deallocate(vr, stat=istat, errmsg=errorMessage)
+    check_deallocate("bandred: vr", istat, errorMessage)
+  endif
+
+  if (allocated(umcCPU)) then
+    deallocate(umcCPU, stat=istat, errmsg=errorMessage)
+    check_deallocate("bandred: umcCPU", istat, errorMessage)
+  endif
+
+  if (allocated(vmrCPU)) then
+    deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
+    check_deallocate("bandred: vmrCPU", istat, errorMessage)
+  endif
+
+#if REALCASE == 1
+  if (useQR) then
+    if (which_qr_decomposition == 1) then
+      deallocate(work_blocked, stat=istat, errmsg=errorMessage)
+      check_deallocate("bandred: work_blocked", istat, errorMessage)
+
+      deallocate(tauvector, stat=istat, errmsg=errorMessage)
+      check_deallocate("bandred: tauvector", istat, errorMessage)
+    endif
+  endif
+#endif
+
+  call obj%timer%stop("bandred_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX //&
+  gpuString)
+
+end subroutine bandred_&
+&MATH_DATATYPE&
+&_&
+&PRECISION
 

@@ -53,18 +53,26 @@
 #endif
 
 #include "../general/sanity.F90"
+#include "../general/error_checking.inc"
 
 subroutine solve_tridi_&
 &PRECISION_AND_SUFFIX &
-    ( obj, na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, &
+    ( obj, na, nev, d, e, q, ldq, nblk, matrixCols, mpi_comm_all, mpi_comm_rows, &
                                            mpi_comm_cols, useGPU, wantDebug, success, max_threads )
 
       use precision
       use elpa_abstract_impl
+      use merge_recursive
+      use merge_systems
+      use elpa_mpi
+      use ELPA_utilities
+      use distribute_global_column
+      use elpa_mpi
       implicit none
 #include "../../src/general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=ik), intent(in)               :: na, nev, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik), intent(in)               :: na, nev, ldq, nblk, matrixCols, &
+                                                    mpi_comm_all, mpi_comm_rows, mpi_comm_cols
       real(kind=REAL_DATATYPE), intent(inout)    :: d(na), e(na)
 #ifdef USE_ASSUMED_SIZE
       real(kind=REAL_DATATYPE), intent(inout)    :: q(ldq,*)
@@ -216,7 +224,12 @@ subroutine solve_tridi_&
       ! Recursively merge sub problems
       call merge_recursive_&
            &PRECISION &
-           (obj, 0, np_cols, useGPU, wantDebug, success)
+           (obj, 0, np_cols, ldq, matrixCols, nblk, &
+           l_col, p_col, l_col_bc, p_col_bc, limits, &
+           np_cols, na, q, d, e, &
+           mpi_comm_all, mpi_comm_rows, mpi_comm_cols,&
+           useGPU, wantDebug, success, max_threads)
+
       if (.not.(success)) then
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
         return
@@ -228,12 +241,14 @@ subroutine solve_tridi_&
       call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
       return
 
+#if 0
       contains
         recursive subroutine merge_recursive_&
-                  &PRECISION &
+                  &PRECISION_AND_SUFFIX &
            (obj, np_off, nprocs, useGPU, wantDebug, success)
            use precision
            use elpa_abstract_impl
+           use merge_systems
            implicit none
 
            ! noff is always a multiple of nblk_ev
@@ -259,11 +274,11 @@ subroutine solve_tridi_&
            np2 = nprocs-np1
 
            if (np1 > 1) call merge_recursive_&
-                        &PRECISION &
+                        &PRECISION_AND_SUFFIX &
            (obj, np_off, np1, useGPU, wantDebug, success)
            if (.not.(success)) return
            if (np2 > 1) call merge_recursive_&
-                        &PRECISION &
+                        &PRECISION_AND_SUFFIX &
            (obj, np_off+np1, np2, useGPU, wantDebug, success)
            if (.not.(success)) return
 
@@ -336,8 +351,8 @@ subroutine solve_tridi_&
              if (.not.(success)) return
            endif
        end subroutine merge_recursive_&
-           &PRECISION
-
+           &PRECISION_AND_SUFFIX
+#endif
     end subroutine solve_tridi_&
         &PRECISION_AND_SUFFIX
 
@@ -350,6 +365,10 @@ subroutine solve_tridi_&
    ! Works best if the number of processor rows is a power of 2!
       use precision
       use elpa_abstract_impl
+      use elpa_mpi
+      use merge_systems
+      use ELPA_utilities
+      use distribute_global_column
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
 
@@ -566,7 +585,7 @@ subroutine solve_tridi_&
      use precision
      use elpa_abstract_impl
      use elpa_blas_interfaces
-
+     use ELPA_utilities
      implicit none
      class(elpa_abstract_impl_t), intent(inout) :: obj
      integer(kind=ik)                         :: nlen, ldq

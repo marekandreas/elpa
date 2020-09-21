@@ -134,7 +134,7 @@ program test_complex2_double_banded
    complex(kind=ck8), allocatable :: a(:,:), z(:,:), as(:,:)
 
    TEST_INT_TYPE              :: STATUS
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE              :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
    type(output_t)                :: write_to_file

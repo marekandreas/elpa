@@ -53,6 +53,7 @@
 #endif
 
 #include "../general/sanity.F90"
+#include "../general/error_checking.inc"
 
     subroutine merge_systems_&
     &PRECISION &
@@ -63,7 +64,16 @@
       use precision
       use elpa_abstract_impl
       use elpa_blas_interfaces
-
+      use global_product
+      use global_gather
+      use resort_ev
+      use transform_columns
+      use check_monotony
+      use add_tmp
+      use v_add_s
+      use ELPA_utilities
+      use elpa_mpi
+      use solve_secular_equation
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
@@ -231,7 +241,7 @@
 
       call global_gather_&
       &PRECISION&
-      &(obj, z, na)
+      &(obj, z, na, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
       ! Normalize z so that norm(z) = 1.  Since z is the concatenation of
       ! two normalized vectors, norm2(z) = sqrt(2).
       z = z/sqrt(2.0_rk)
@@ -265,7 +275,8 @@
         ! Rearrange eigenvectors
         call resort_ev_&
         &PRECISION &
-                       (obj, idx, na)
+                       (obj, idx, na, na, p_col_out, q, ldq, matrixCols, l_rows, l_rqe, &
+                        l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
 
         call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
 
@@ -359,7 +370,9 @@
             qtrans(2,1) = S; qtrans(2,2) = C
             call transform_columns_&
             &PRECISION &
-                        (obj, idx(i), idx1(na1))
+                        (obj, idx(i), idx1(na1), na, tmp, l_rqs, l_rqe, &
+                         q, ldq, matrixCols, l_rows, mpi_comm_cols, &
+                          p_col, l_col, qtrans)
             if (coltyp(idx(i))==1 .and. coltyp(idx1(na1))/=1) coltyp(idx1(na1)) = 2
             if (coltyp(idx(i))==3 .and. coltyp(idx1(na1))/=3) coltyp(idx1(na1)) = 2
 
@@ -406,7 +419,10 @@
           call obj%timer%stop("blas")
           call transform_columns_&
           &PRECISION&
-          &(obj, idx1(1), idx1(2))
+          &(obj, idx1(1), idx1(2), na, tmp, l_rqs, l_rqe, q, &
+            ldq, matrixCols, l_rows, mpi_comm_cols, &
+             p_col, l_col, qtrans)
+
         endif
 
         ! Add the deflated eigenvalues
@@ -436,7 +452,9 @@
         enddo
         call resort_ev_&
         &PRECISION&
-        &(obj, idxq1, na)
+        &(obj, idxq1, na, na, p_col_out, q, ldq, matrixCols, l_rows, l_rqe, &
+          l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
+
       else if (na1>2) then
 
         ! Solve secular equation
@@ -512,15 +530,15 @@
 
         call global_product_&
         &PRECISION&
-        (obj, z, na1)
+        (obj, z, na1, mpi_comm_rows, mpi_comm_cols, npc_0, npc_n)
         z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
 
         call global_gather_&
         &PRECISION&
-        &(obj, dbase, na1)
+        &(obj, dbase, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
         call global_gather_&
         &PRECISION&
-        &(obj, ddiff, na1)
+        &(obj, ddiff, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
         ! Calculate scale factors for eigenvectors
@@ -557,7 +575,7 @@
 
         call global_gather_&
         &PRECISION&
-        &(obj, ev_scale, na1)
+        &(obj, ev_scale, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
@@ -897,6 +915,7 @@
 
       return
 
+#if 0
       contains
         subroutine add_tmp_&
         &PRECISION&
@@ -926,7 +945,9 @@
 
         end subroutine add_tmp_&
         &PRECISION
+#endif
 
+#if 0
         subroutine resort_ev_&
         &PRECISION&
         &(obj, idx_ev, nLength)
@@ -1005,7 +1026,9 @@
           check_deallocate("resort_ev: qtmp",istat, errorMessage)
         end subroutine resort_ev_&
         &PRECISION
+#endif
 
+#if 0
         subroutine transform_columns_&
         &PRECISION&
         &(obj, col1, col2)
@@ -1057,7 +1080,8 @@
           endif
         end subroutine transform_columns_&
         &PRECISION
-
+#endif
+#if 0
         subroutine global_gather_&
         &PRECISION&
         &(obj, z, n)
@@ -1116,7 +1140,8 @@
           enddo
         end subroutine global_gather_&
         &PRECISION
-
+#endif
+#if 0
         subroutine global_product_&
         &PRECISION&
         &(obj, z, n)
@@ -1199,7 +1224,8 @@
           endif
         end subroutine global_product_&
         &PRECISION
-
+#endif
+#if 0
         subroutine check_monotony_&
         &PRECISION&
         &(obj, n,d,text, wantDebug, success)
@@ -1228,6 +1254,6 @@
           enddo
         end subroutine check_monotony_&
         &PRECISION
-
+#endif
     end subroutine merge_systems_&
     &PRECISION

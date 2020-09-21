@@ -2,7 +2,7 @@ module single_hh_trafo_real
   implicit none
 #include "config-f90.h"
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   public single_hh_trafo_real_cpu_openmp_double
 #else
   public single_hh_trafo_real_cpu_double
@@ -10,7 +10,7 @@ module single_hh_trafo_real
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   public single_hh_trafo_real_cpu_openmp_single
 #else
   public single_hh_trafo_real_cpu_single
@@ -20,7 +20,7 @@ module single_hh_trafo_real
 
   contains
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
     subroutine single_hh_trafo_real_cpu_openmp_double(q, hh, nb, nq, ldq)
 #else
     subroutine single_hh_trafo_real_cpu_double(q, hh, nb, nq, ldq)
@@ -42,7 +42,7 @@ module single_hh_trafo_real
       integer(kind=ik)               :: i
       real(kind=rk8)                  :: v(nq)
 
-!#ifdef WITH_OPENMP
+!#ifdef WITH_OPENMP_TRADITIONAL
 !      call obj%timer%start("single_hh_trafo_real_cpu_openmp_double")
 !#else
 !      call obj%timer%start("single_hh_trafo_real_cpu_double")
@@ -63,7 +63,7 @@ module single_hh_trafo_real
         q(1:nq,i) = q(1:nq,i) - v(:) * hh(i)
       enddo
 
-!#ifdef WITH_OPENMP
+!#ifdef WITH_OPENMP_TRADITIONAL
 !      call obj%timer%stop("single_hh_trafo_real_cpu_openmp_double")
 !#else
 !      call obj%timer%stop("single_hh_trafo_real_cpu_double")
@@ -73,7 +73,7 @@ module single_hh_trafo_real
 #ifdef WANT_SINGLE_PRECISION_REAL
 ! single precision implementation at the moment duplicated !!!
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
     subroutine single_hh_trafo_real_cpu_openmp_single(q, hh, nb, nq, ldq)
 #else
     subroutine single_hh_trafo_real_cpu_single(q, hh, nb, nq, ldq)
@@ -95,7 +95,7 @@ module single_hh_trafo_real
       integer(kind=ik)               :: i
       real(kind=rk4)                  :: v(nq)
 
-!#ifdef WITH_OPENMP
+!#ifdef WITH_OPENMP_TRADITIONAL
 !      call obj%timer%start("single_hh_trafo_real_cpu_openmp_single")
 !#else
 !      call obj%timer%start("single_hh_trafo_real_cpu_single")
@@ -116,7 +116,7 @@ module single_hh_trafo_real
         q(1:nq,i) = q(1:nq,i) - v(:) * hh(i)
       enddo
 
-!#ifdef WITH_OPENMP
+!#ifdef WITH_OPENMP_TRADITIONAL
 !      call obj%timer%stop("single_hh_trafo_real_cpu_openmp_single")
 !#else
 !      call obj%timer%stop("single_hh_trafo_real_cpu_single")
