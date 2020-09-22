@@ -465,7 +465,7 @@ subroutine trans_ev_&
                               int(l_rows,kind=BLAS_KIND), ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
                               q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, int(nstor,kind=BLAS_KIND))
 #endif
-#ifdef WITH_INTEL_GPU
+#ifdef WITH_INTEL_GPU_VERSION
           call mkl_offload_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',  &
                               int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
                               int(l_rows,kind=BLAS_KIND), ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
