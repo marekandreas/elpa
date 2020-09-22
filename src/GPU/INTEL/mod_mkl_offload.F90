@@ -39,11 +39,14 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! This file was written by A. Marek, MPCDF
+
+#include "config-f90.h"
+
 module mkl_offload
 
   interface
     subroutine mkl_offload_dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-    bind(C, name="mkl_offload_dgemm")
+    bind(C, name="mkl_offload_dgemm_c")
       use iso_c_binding
       implicit none
       character(1,C_CHAR), value :: transa, transb
@@ -58,7 +61,7 @@ module mkl_offload
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine mkl_offload_sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-    bind(C, name="mkl_offload_sgemm")
+    bind(C, name="mkl_offload_sgemm_c")
       use iso_c_binding
       implicit none
       character(1,C_CHAR), value :: transa, transb
@@ -73,7 +76,7 @@ module mkl_offload
 
   interface
     subroutine mkl_offload_zgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-    bind(C, name="mkl_offload_zgemm")
+    bind(C, name="mkl_offload_zgemm_c")
       use iso_c_binding
       implicit none
       character(1,C_CHAR), value            :: transa, transb
@@ -88,7 +91,7 @@ module mkl_offload
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
     subroutine mkl_offload_cgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-    bind(C, name="mkl_offload_cgemm")
+    bind(C, name="mkl_offload_cgemm_c")
       use iso_c_binding
       implicit none
       character(1,C_CHAR), value           :: transa, transb

@@ -11,7 +11,7 @@
 #endif
 
 extern "C" {
-void mkl_offload_dgemm(char transa, char transbm int m, int n, int k, double alpha, double *a, int lda, double *b, int ldb, double beta, double *c, int ldc) {
+void mkl_offload_dgemm_c(char transa, char transb, int m, int n, int k, double alpha, double *a, int lda, double *b, int ldb, double beta, double *c, int ldc) {
 
 #ifdef WITH_INTEL_GPU_VERSION
   std::cout << "In mkl_offload_dgemm" << std::endl;
@@ -27,8 +27,8 @@ void mkl_offload_dgemm(char transa, char transbm int m, int n, int k, double alp
   std::cout << "beta=" << beta << std::endl;
 
 
-  std::cout << "Transa=",transa << std::endl;
-  std::cout << "Transb=",transb << std::endl;
+  std::cout << "Transa=" << transa << std::endl;
+  std::cout << "Transb=" << transb << std::endl;
 
   sizea = lda * k;
   sizeb = ldb * n;
@@ -48,7 +48,7 @@ void mkl_offload_dgemm(char transa, char transbm int m, int n, int k, double alp
 }
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-void mkl_offload_sgemm(char transa, char transbm int m, int n, int k, float alpha, float *a, int lda, float *b, int ldb, float beta, float *c, int ldc) {
+void mkl_offload_sgemm_c(char transa, char transb, int m, int n, int k, float alpha, float *a, int lda, float *b, int ldb, float beta, float *c, int ldc) {
 
 #ifdef WITH_INTEL_GPU_VERSION
   std::cout << "In mkl_offload_sgemm" << std::endl;
@@ -63,8 +63,8 @@ void mkl_offload_sgemm(char transa, char transbm int m, int n, int k, float alph
   std::cout << "alpha=" << alpha << std::endl;
   std::cout << "beta=" << beta << std::endl;
 
-  std::cout << "Transa=",transa << std::endl;
-  std::cout << "Transb=",transb << std::endl;
+  std::cout << "Transa=" << transa << std::endl;
+  std::cout << "Transb=" << transb << std::endl;
 
   sizea = lda * k;
   sizeb = ldb * n;
@@ -84,7 +84,7 @@ void mkl_offload_sgemm(char transa, char transbm int m, int n, int k, float alph
 }
 #endif
 
-void mkl_offload_zgemm(char transa, char transbm int m, int n, int k, double alpha, double *a, int lda, double *b, int ldb, double beta, double *c, int ldc) {
+void mkl_offload_zgemm_c(char transa, char transb, int m, int n, int k, double alpha, double *a, int lda, double *b, int ldb, double beta, double *c, int ldc) {
 
 #ifdef WITH_INTEL_GPU_VERSION
   std::cout << "In mkl_offload_zgemm" << std::endl;
@@ -99,19 +99,19 @@ void mkl_offload_zgemm(char transa, char transbm int m, int n, int k, double alp
   std::cout << "alpha=" << alpha << std::endl;
   std::cout << "beta=" << beta << std::endl;
 
-  std::cout << "Transa=",transa << std::endl;
-  std::cout << "Transb=",transb << std::endl;
+  std::cout << "Transa=" << transa << std::endl;
+  std::cout << "Transb=" << transb << std::endl;
 
   sizea = lda * k;
   sizeb = ldb * n;
   sizec = ldc * n;
 
 
-  #pragma omp target data map(to : a [0:sizea], b [0:sizeb]) map(tofrom : c [0:sizec]) device(dnum)
-  {
-  #pragma omp target variant dispatch device(dnum) use_device_ptr(a, b, c)
-  zgemm(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
-  }
+  //#pragma omp target data map(to : a [0:sizea], b [0:sizeb]) map(tofrom : c [0:sizec]) device(dnum)
+  //{
+  //#pragma omp target variant dispatch device(dnum) use_device_ptr(a, b, c)
+  //zgemm(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
+  //}
   std::cout << "leaving mkl_offload_dgemm" << std::endl;
 #else
   std::cout << "ERROR: calling mkl_offload_zgemm without build for Intel GPU support!" << std::endl;
@@ -120,7 +120,7 @@ void mkl_offload_zgemm(char transa, char transbm int m, int n, int k, double alp
 }
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-void mkl_offload_cgemm(char transa, char transbm int m, int n, int k, double alpha, double *a, int lda, double *b, int ldb, double beta, double *c, int ldc) {
+void mkl_offload_cgemm_c(char transa, char transb, int m, int n, int k, double alpha, double *a, int lda, double *b, int ldb, double beta, double *c, int ldc) {
 
 #ifdef WITH_INTEL_GPU_VERSION
   std::cout << "In mkl_offload_cgemm" << std::endl;
@@ -135,19 +135,19 @@ void mkl_offload_cgemm(char transa, char transbm int m, int n, int k, double alp
   std::cout << "alpha=" << alpha << std::endl;
   std::cout << "beta=" << beta << std::endl;
 
-  std::cout << "Transa=",transa << std::endl;
-  std::cout << "Transb=",transb << std::endl;
+  std::cout << "Transa=" << transa << std::endl;
+  std::cout << "Transb=" << transb << std::endl;
 
   sizea = lda * k;
   sizeb = ldb * n;
   sizec = ldc * n;
 
 
-  #pragma omp target data map(to : a [0:sizea], b [0:sizeb]) map(tofrom : c [0:sizec]) device(dnum)
-  {
-  #pragma omp target variant dispatch device(dnum) use_device_ptr(a, b, c)
-  cgemm(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
-  }
+  //#pragma omp target data map(to : a [0:sizea], b [0:sizeb]) map(tofrom : c [0:sizec]) device(dnum)
+  //{
+  //#pragma omp target variant dispatch device(dnum) use_device_ptr(a, b, c)
+  //cgemm(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
+  //}
   std::cout << "leaving mkl_offload_cgemm" << std::endl;
 #else
   std::cout << "ERROR: calling mkl_offload_cgemm without build for Intel GPU support!" << std::endl;

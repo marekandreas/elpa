@@ -141,8 +141,8 @@ if WITH_NVIDIA_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/NVIDIA/cudaFunctions.cu src/GPU/NVIDIA/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_real.cu src/elpa2/GPU/ev_tridi_band_gpu_complex.cu
 endif
 
-if WITH_NVIDIA_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mod_mkl_offload.cpp
+if WITH_INTEL_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mkl_offload.cpp
 endif
 
 

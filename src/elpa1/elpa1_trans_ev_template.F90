@@ -99,6 +99,7 @@ subroutine trans_ev_&
   use elpa_abstract_impl
   use elpa_blas_interfaces
   use gpu_infrastructure
+  use mkl_offload
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -458,10 +459,18 @@ subroutine trans_ev_&
 
         if (useIntelGPU) then
           call obj%timer%start("mkl_offload")
+#if 0          
           call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',  &
                               int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
                               int(l_rows,kind=BLAS_KIND), ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
                               q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, int(nstor,kind=BLAS_KIND))
+#endif
+#ifdef WITH_INTEL_GPU
+          call mkl_offload_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',  &
+                              int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                              int(l_rows,kind=BLAS_KIND), ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                              q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, int(nstor,kind=BLAS_KIND))
+#endif
           call obj%timer%stop("mkl_offload")
 
         endif
@@ -493,8 +502,6 @@ subroutine trans_ev_&
         successCUDA = cuda_memcpy(int(loc(tmp1(1)),kind=c_intptr_t), tmp_dev,  &
                       max_local_cols * max_stored_rows * size_of_datatype, cudaMemcpyDeviceToHost)
         check_memcpy_cuda("trans_ev", successCUDA)
-      else
-        tmp1(1:l_cols*nstor) = 0
       endif
 
       !if (useIntelGPU) then
@@ -589,48 +596,6 @@ subroutine trans_ev_&
   check_deallocate("trans_ev_&
     &MATH_DATATYPE&
     &: h1, h2, hvb, hvm", istat, errorMessage)
-
-  if (useNvidiaGPU) then
-    !q_mat = q_dev
-    successCUDA = cuda_memcpy(int(loc(q_mat(1,1)),kind=c_intptr_t), &
-                  q_dev, ldq * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
-    check_memcpy_cuda("trans_ev", successCUDA)
-
-    successCUDA = cuda_host_unregister(int(loc(q_mat),kind=c_intptr_t))
-    check_host_unregister_cuda("trans_ev: q_mat", successCUDA)
-
-    successCUDA = cuda_free_host(hvm1_host)
-    check_host_dealloc_cuda("trans_ev: hvm1_host", successCUDA)
-    nullify(hvm1)
-
-    successCUDA = cuda_free_host(tmat_host)
-    check_host_dealloc_cuda("trans_ev: tmat_host", successCUDA)
-    nullify(tmat)
-
-    successCUDA = cuda_free_host(tmp1_host)
-    check_host_dealloc_cuda("trans_ev: tmp1_host", successCUDA)
-    nullify(tmp1)
-
-    successCUDA = cuda_free_host(tmp2_host)
-    check_host_dealloc_cuda("trans_ev: tmp2_host", successCUDA)
-    nullify(tmp2)
-
-    !deallocate(hvm1, stat=istat, errmsg=errorMessage)
-    !if (istat .ne. 0) then
-    !  print *,"trans_ev_&
-    !  &MATH_DATATYPE&
-    !  &: error when deallocating hvm1 "//errorMessage
-    !  stop 1
-    !endif
-
-    !deallocate(q_dev, tmp_dev, hvm_dev, tmat_dev)
-    successCUDA = cuda_free(q_dev)
-    check_dealloc_cuda("trans_ev", successCUDA)
-
-    successCUDA = cuda_free(tmp_dev)
-    check_dealloc_cuda("trans_ev", successCUDA)
-
-  endif
 
   if (useNVIDIAGPU) then
     !q_mat = q_dev
