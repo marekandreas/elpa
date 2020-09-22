@@ -757,6 +757,7 @@ EXTRA_DIST = \
   test/shared/test_check_correctness_template.F90 \
   test/shared/test_prepare_matrix_template.F90 \
   test/shared/test_analytic_template.F90 \
+  test/shared/test_scalapack_template.F90 \
   test_project_1stage/Makefile.am \
   test_project_1stage/autogen.sh \
   test_project_1stage/configure.ac \
