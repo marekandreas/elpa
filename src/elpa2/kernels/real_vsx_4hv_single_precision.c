@@ -51,9 +51,8 @@
 #define BLOCK4 1
 #define SIMD_SET VSX_SSE
 #include "../../general/precision_macros.h"
-#include "real_vsx_4hv_template.c"
+#include "real_128bit_256bit_512bit_BLOCK_template.c"
 #undef BLOCK4
 #undef SIMD_SET
 #undef REALCASE
 #undef SINGLE_PRECISION
-
