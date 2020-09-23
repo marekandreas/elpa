@@ -184,7 +184,7 @@
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 2
 #define __SIMD_DATATYPE __vector double
-#define __SIMD_LOAD (__vector double) vec_ld
+#define _SIMD_LOAD (__vector double) vec_ld
 #endif
 
 #ifdef SINGLE_PRECISION_REAL
@@ -197,9 +197,10 @@
 #define _SIMD_STORE vec_st
 #define _SIMD_ADD vec_add
 #define _SIMD_MUL vec_mul
+#define _SIMD_SUB vec_sub
 #define _SIMD_SET1 vec_splats
 
-#endif /*  VEC_SET == SPARC64_SSE */
+#endif /*  VEC_SET == VSX_SSE */
 
 #if VEC_SET == NEON_ARCH64_128
 #define __ELPA_USE_FMA__
@@ -1629,7 +1630,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 6
 #define STEP_SIZE 6
@@ -1680,7 +1681,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
@@ -1715,7 +1716,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
     }
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 2
 #endif
@@ -1772,7 +1773,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #ifdef BLOCK6
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #define STEP_SIZE 4
@@ -1822,7 +1823,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
       }
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 2
 #endif
