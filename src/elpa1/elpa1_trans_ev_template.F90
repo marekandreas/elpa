@@ -545,21 +545,41 @@ subroutine trans_ev_&
 #ifdef WITH_MPI
             ! tmp2 = tmat * tmp2
             call obj%timer%start("mkl_offload")
+#if 0
             call PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
                                ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND))
             !q_mat = q_mat - hvm*tmp2
             call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(nstor,kind=BLAS_KIND),   &
                                 -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND), &
                                 ONE, q_mat, int(ldq,kind=BLAS_KIND))
+#endif
+
+#ifdef WITH_INTEL_GPU_VERSION
+            call mkl_offload_PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
+                               ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND))
+            !q_mat = q_mat - hvm*tmp2
+            call mkl_offload_PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(nstor,kind=BLAS_KIND),   &
+                                -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(nstor,kind=BLAS_KIND), &
+                                ONE, q_mat, int(ldq,kind=BLAS_KIND))
+#endif
             call obj%timer%stop("mkl_offload")
 #else /* WITH_MPI */
             call obj%timer%start("mkl_offload")
-
+#if 0
             call PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
                                   ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp1, int(nstor,kind=BLAS_KIND))
             call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
                                   int(nstor,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
                                   tmp1, int(nstor,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
+#endif
+
+#ifdef WITH_INTEL_GPU_VERSION
+            call mkl_offload_PRECISION_TRMM('L', 'L', 'N', 'N', int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND),   &
+                                  ONE, tmat, int(max_stored_rows,kind=BLAS_KIND), tmp1, int(nstor,kind=BLAS_KIND))
+            call mkl_offload_PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                                  int(nstor,kind=BLAS_KIND), -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), &
+                                  tmp1, int(nstor,kind=BLAS_KIND), ONE, q_mat, int(ldq,kind=BLAS_KIND))
+#endif
             call obj%timer%stop("mkl_offload")
 #endif /* WITH_MPI */
           endif

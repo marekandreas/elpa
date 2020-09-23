@@ -78,6 +78,7 @@
 #ifdef WITH_OPENMP
       use omp_lib
 #endif
+      use mkl_offload
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)  :: obj
@@ -837,11 +838,13 @@
               endif
               if (useIntelGPU) then
                 call obj%timer%start("mkl_offload")
-                call PRECISION_GEMM('N', 'N', int(l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND), &
+#ifdef WITH_INTEL_GPU_VERSION
+                call mkl_offload_PRECISION_GEMM('N', 'N', int(l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND), &
                                     int(nnzu,kind=BLAS_KIND),   &
                                     1.0_rk, qtmp1, int(ubound(qtmp1,dim=1),kind=BLAS_KIND),    &
                                     ev, int(ubound(ev,dim=1),kind=BLAS_KIND), &
                                     1.0_rk, qtmp2(1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
+#endif
                 call obj%timer%stop("mkl_offload")
               endif
 
@@ -898,11 +901,13 @@
 
               if (useIntelGPU) then
                 call obj%timer%start("mkl_offload")
-                call PRECISION_GEMM('N', 'N', int(l_rows-l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND),  &
+#ifdef WITH_INTEL_GPU_VERSION
+                call mkl_offload_PRECISION_GEMM('N', 'N', int(l_rows-l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND),  &
                                      int(nnzl,kind=BLAS_KIND),   &
                                      1.0_rk, qtmp1(l_rnm+1,1), int(ubound(qtmp1,dim=1),kind=BLAS_KIND),    &
                                      ev,  int(ubound(ev,dim=1),kind=BLAS_KIND),   &
                                      1.0_rk, qtmp2(l_rnm+1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
+#endif
                 call obj%timer%stop("mkl_offload")
               endif
 

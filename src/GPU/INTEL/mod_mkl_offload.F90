@@ -58,6 +58,41 @@ module mkl_offload
     end subroutine
   end interface
 
+  interface
+    subroutine mkl_offload_dgemv(trans, m, n, alpha, a, lda,  x, incx, beta, y, incy) &
+    bind(C, name="mkl_offload_dgemv_c")
+      use iso_c_binding
+      implicit none
+      character(1,C_CHAR), value :: trans
+      integer(kind=c_int), value :: m, n, lda, incx, incy
+      real(kind=c_double), value :: alpha, beta
+
+      !real(kind=c_double)        :: a(lda,n)
+      !real(kind=c_double)        :: x(sizeX)
+      !real(kind=c_double)        :: y(sizeY)
+      real(kind=c_double)        :: a(lda,*)
+      real(kind=c_double)        :: x(*)
+      real(kind=c_double)        :: y(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_offload_dtrmm(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb) &
+    bind(C, name="mkl_offload_dtrmm_c")
+      use iso_c_binding
+      implicit none
+      character(1,C_CHAR), value :: side, uplo, transa, diag
+      integer(kind=c_int), value :: m, n, lda, ldb
+      real(kind=c_double), value :: alpha
+
+      !real(kind=c_double)        :: a(lda,n)
+      !real(kind=c_double)        :: x(sizeX)
+      !real(kind=c_double)        :: y(sizeY)
+      real(kind=c_double)        :: a(lda,*)
+      real(kind=c_double)        :: b(ldb,*)
+    end subroutine
+  end interface
+
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine mkl_offload_sgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
@@ -72,7 +107,42 @@ module mkl_offload
       real(kind=c_float)         :: c(ldc, n)
     end subroutine
   end interface
-#endif
+
+  interface
+    subroutine mkl_offload_sgemv(trans, m, n, alpha, a, lda,  x, incx, beta, y, incy) &
+    bind(C, name="mkl_offload_sgemv_c")
+      use iso_c_binding
+      implicit none
+      character(1,C_CHAR), value :: trans
+      integer(kind=c_int), value :: m, n, lda, incx, incy
+      real(kind=c_float),  value :: alpha, beta
+
+      real(kind=c_float)         :: a(lda,n)
+      real(kind=c_float)         :: x(n)
+      real(kind=c_float)         :: y(m)
+      !real(kind=c_float)         :: a(lda,*)
+      !real(kind=c_float)         :: x(*)
+      !real(kind=c_float)         :: y(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_offload_strmm(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb) &
+    bind(C, name="mkl_offload_strmm_c")
+      use iso_c_binding
+      implicit none
+      character(1,C_CHAR), value :: side, uplo, transa, diag
+      integer(kind=c_int), value :: m, n, lda, ldb
+      real(kind=c_float), value  :: alpha
+
+      !real(kind=c_double)        :: a(lda,n)
+      !real(kind=c_double)        :: x(sizeX)
+      !real(kind=c_double)        :: y(sizeY)
+      real(kind=c_float)          :: a(lda,*)
+      real(kind=c_float)          :: b(ldb,*)
+    end subroutine
+  end interface
+#endif /*WANT_SINGLE_PRECISION_REAL */
 
   interface
     subroutine mkl_offload_zgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
@@ -85,6 +155,41 @@ module mkl_offload
       complex(kind=c_double_complex)        :: a(lda, k)
       complex(kind=c_double_complex)        :: b(ldb, n)
       complex(kind=c_double_complex)        :: c(ldc, n)
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_offload_zgemv(trans, m, n, alpha, a, lda,  x, incx, beta, y, incy) &
+    bind(C, name="mkl_offload_zgemv_c")
+      use iso_c_binding
+      implicit none
+      character(1,C_CHAR), value             :: trans
+      integer(kind=c_int), value             :: m, n, lda, incx, incy
+      complex(kind=c_double_complex),  value :: alpha, beta
+
+      !complex(kind=c_double_complex)         :: a(lda,n)
+      !complex(kind=c_double_complex)         :: x(sizeX)
+      !complex(kind=c_double_complex)         :: y(sizeY)
+      complex(kind=c_double_complex)         :: a(lda,*)
+      complex(kind=c_double_complex)         :: x(*)
+      complex(kind=c_double_complex)         :: y(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_offload_ztrmm(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb) &
+    bind(C, name="mkl_offload_ztrmm_c")
+      use iso_c_binding
+      implicit none
+      character(1,C_CHAR), value            :: side, uplo, transa, diag
+      integer(kind=c_int), value            :: m, n, lda, ldb
+      complex(kind=c_double_complex), value :: alpha
+
+      !real(kind=c_double)        :: a(lda,n)
+      !real(kind=c_double)        :: x(sizeX)
+      !real(kind=c_double)        :: y(sizeY)
+      complex(kind=c_double_complex)        :: a(lda,*)
+      complex(kind=c_double_complex)        :: b(ldb,*)
     end subroutine
   end interface
 
@@ -102,6 +207,41 @@ module mkl_offload
       complex(kind=c_float_complex)        :: c(ldc, n)
     end subroutine
   end interface
-#endif
+
+  interface
+    subroutine mkl_offload_cgemv(trans, m, n, alpha, a, lda,  x, incx, beta, y, incy) &
+    bind(C, name="mkl_offload_cgemv_c")
+      use iso_c_binding
+      implicit none
+      character(1,C_CHAR), value            :: trans
+      integer(kind=c_int), value            :: m, n, lda, incx, incy
+      complex(kind=c_float_complex),  value :: alpha, beta
+
+      !complex(kind=c_float_complex)         :: a(lda,n)
+      !complex(kind=c_float_complex)         :: x(sizeX)
+      !complex(kind=c_float_complex)         :: y(sizeY)
+      complex(kind=c_float_complex)         :: a(lda,*)
+      complex(kind=c_float_complex)         :: x(*)
+      complex(kind=c_float_complex)         :: y(*)
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_offload_ctrmm(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb) &
+    bind(C, name="mkl_offload_ctrmm_c")
+      use iso_c_binding
+      implicit none
+      character(1,C_CHAR), value            :: side, uplo, transa, diag
+      integer(kind=c_int), value            :: m, n, lda, ldb
+      complex(kind=c_float_complex), value  :: alpha
+
+      !real(kind=c_double)        :: a(lda,n)
+      !real(kind=c_double)        :: x(sizeX)
+      !real(kind=c_double)        :: y(sizeY)
+      complex(kind=c_float_complex)         :: a(lda,*)
+      complex(kind=c_float_complex)         :: b(ldb,*)
+    end subroutine
+  end interface
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 end module
