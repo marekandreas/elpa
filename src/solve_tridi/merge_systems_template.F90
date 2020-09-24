@@ -858,7 +858,7 @@
                                     1.0_rk, qtmp2(1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
                 !call obj%timer%stop("gemm")
                 call obj%timer%stop("blas")
-              endif ! useNVIDIAGPU
+              endif ! useNoGPU
             endif
 
             ! Compute eigenvectors of the rank-1 modified matrix.

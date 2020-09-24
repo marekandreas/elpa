@@ -531,6 +531,8 @@ subroutine trans_ev_&
       if (l_rows>0) then
         if (useNVIDIAGPU) then
           call obj%timer%start("cublas")
+          ! here the different cases for MPI and NO-MPI are missing
+          ! needed when NVIDIA GPU should work together with OPENMP
           call cublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
                                      nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
                                      tmp_dev, nstor)
