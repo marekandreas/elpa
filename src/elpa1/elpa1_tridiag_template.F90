@@ -1287,12 +1287,21 @@ subroutine tridiag_&
 #endif /* WITH_OPENMP_TRADITIONAL */
             
 #ifdef WITH_OPENMP_TRADITIONAL
-            if (useNoGPU .or. useIntelGPU) then
-#else
-            if (useNoGPU) then
-#endif
+            if (useIntelGPU .and. .not.(useGPUAlgorithm)) then
               ! should only be run on CPU if large matrix works for intel gpu
-            !if (useNoGPU) then
+              if (wantDebug) call obj%timer%start("mkl_offload")
+              call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
+                                   int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                   int(2*n_stored_vecs,kind=BLAS_KIND),    &
+                                   ONE, vu_stored_rows(l_row_beg:max_local_rows,1:2*max_stored_uv), &
+                                   int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                   uv_stored_cols(l_col_beg,1), &
+                                   int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
+                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
+              if (wantDebug) call obj%timer%stop("mkl_offload")
+            endif !useIntelGPU
+#endif
+            if (useNoGPU) then
               if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
                                    int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
