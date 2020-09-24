@@ -134,6 +134,7 @@ module test_blacs_infrastructure
 #ifdef WITH_MPI
       TEST_INT_MPI_TYPE            :: mpierr
 
+      info       = -10
       sc_desc(:) = 0
       ! determine the neccessary size of the distributed matrices,
       ! we use the scalapack tools routine NUMROC
@@ -160,6 +161,7 @@ module test_blacs_infrastructure
         call MPI_ABORT(int(mpi_comm_world,kind=MPI_KIND), 1_MPI_KIND, mpierr)
       endif
 #else /* WITH_MPI */
+      info    = 0
       na_rows = na
       na_cols = na
 #endif /* WITH_MPI */

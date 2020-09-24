@@ -363,7 +363,15 @@ function elpa_solve_evp_&
    endif
 
    if (useGPU .eq. USE_INTEL_GPU) then
-     do_useGPU = USE_INTEL_GPU
+     call obj%timer%start("check_for_gpu")
+     if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
+       do_useGPU = USE_INTEL_GPU
+     else
+       print *,"GPUs are requested but not detected! Aborting..."
+       success = .false.
+       return
+     endif
+     call obj%timer%stop("check_for_gpu")
    endif
 
    do_useGPU_tridiag     = do_useGPU

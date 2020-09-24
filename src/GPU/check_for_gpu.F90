@@ -50,6 +50,7 @@ module mod_check_for_gpu
       use cuda_functions
       use precision
       use elpa_mpi
+      !use omp_lib
       implicit none
 
       integer(kind=ik), intent(in)  :: myid
@@ -72,6 +73,7 @@ module mod_check_for_gpu
 
       gpuAvailable = .false.
 
+#ifdef WITH_NVIDIA_GPU_VERSION
       if (cublasHandle .ne. -1) then
         gpuAvailable = .true.
         numberOfDevices = -1
@@ -92,6 +94,20 @@ module mod_check_for_gpu
         print *,"error in cuda_getdevicecount"
         stop 1
       endif
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
+#ifdef  WITH_INTEL_GPU_VERSION
+      gpuAvailable = .false.
+      numberOfDevices = -1
+
+      ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
+      !numberOfDevices = omp_get_num_devices()
+      numberOfDevices = 1
+      print *,"Manually setting",numberOfDevices," of GPUs"
+      if (numberOfDevices .ge. 1) then
+        gpuAvailable = .true.
+      endif
+#endif
 
       ! make sure that all nodes have the same number of GPU's, otherwise
       ! we run into loadbalancing trouble
@@ -117,6 +133,7 @@ module mod_check_for_gpu
         endif
 
         deviceNumber = mod(myid, numberOfDevices)
+#ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_setdevice(deviceNumber)
 
         if (.not.(success)) then
@@ -132,7 +149,8 @@ module mod_check_for_gpu
           print *,"Cannot create cublas handle"
           stop 1
         endif
-        
+#endif
+
       endif
 
     end function
