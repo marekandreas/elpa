@@ -819,58 +819,58 @@ subroutine tridiag_&
          ! 
          ! endif
 
-         if (useIntelGPU) then
-           ! this should only be run on the CPU if large matrix works for INTEL
-           if (wantDebug) call obj%timer%start("mkl_offload")
-           call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
-                       int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                       ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
-                       v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,  &
-                       ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
-
-           if (i/=j) then
-             if (isSkewsymmetric) then
-               call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                   -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
-                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
-                                   ONE, u_row(l_row_beg:max_local_rows),  &
-                                   1_BLAS_KIND)
-
-             else
-               call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
-                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
-                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
-                                   ONE, u_row(l_row_beg:max_local_rows),  &
-                                   1_BLAS_KIND)
-             endif
-           endif
-#if 0
-!           call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+!         if (useIntelGPU) then
+!           ! this should only be run on the CPU if large matrix works for INTEL
+!           if (wantDebug) call obj%timer%start("mkl_offload")
+!           call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
 !                       int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
 !                       ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
-!                       v_row(l_row_beg:max_local_rows+1), int((max_local_rows+1-l_row_beg+1), kind=BLAS_KIND), 1_BLAS_KIND,  &
-!                       ONE, u_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1), kind=BLAS_KIND), 1_BLAS_KIND)
+!                       v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,  &
+!                       ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
 !
 !           if (i/=j) then
 !             if (isSkewsymmetric) then
-!               call mkl_offload_PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+!               call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
 !                                   -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
-!                                   v_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND, &
-!                                   ONE, u_row(l_row_beg:max_local_rows), int((max_local_rows-l_row_beg+1),kind=BLAS_KIND), &
+!                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
+!                                   ONE, u_row(l_row_beg:max_local_rows),  &
 !                                   1_BLAS_KIND)
 !
 !             else
-!               call mkl_offload_PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+!               call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
 !                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
-!                                   v_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND, &
-!                                   ONE, u_row(l_row_beg:max_local_rows), int((max_local_rows-l_row_beg+1),kind=BLAS_KIND), &
+!                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
+!                                   ONE, u_row(l_row_beg:max_local_rows),  &
 !                                   1_BLAS_KIND)
 !             endif
 !           endif
-#endif
-           if (wantDebug) call obj%timer%stop("mkl_offload")
-
-         endif
+!#if 0
+!!           call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+!!                       int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+!!                       ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
+!!                       v_row(l_row_beg:max_local_rows+1), int((max_local_rows+1-l_row_beg+1), kind=BLAS_KIND), 1_BLAS_KIND,  &
+!!                       ONE, u_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1), kind=BLAS_KIND), 1_BLAS_KIND)
+!!
+!!           if (i/=j) then
+!!             if (isSkewsymmetric) then
+!!               call mkl_offload_PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+!!                                   -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
+!!                                   v_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND, &
+!!                                   ONE, u_row(l_row_beg:max_local_rows), int((max_local_rows-l_row_beg+1),kind=BLAS_KIND), &
+!!                                   1_BLAS_KIND)
+!!
+!!             else
+!!               call mkl_offload_PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+!!                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
+!!                                   v_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND, &
+!!                                   ONE, u_row(l_row_beg:max_local_rows), int((max_local_rows-l_row_beg+1),kind=BLAS_KIND), &
+!!                                   1_BLAS_KIND)
+!!             endif
+!!           endif
+!#endif
+!           if (wantDebug) call obj%timer%stop("mkl_offload")
+!
+!         endif
 
          if (useNoGPU) then
            if (wantDebug) call obj%timer%start("blas")
@@ -903,8 +903,8 @@ subroutine tridiag_&
 
 #ifndef WITH_OPENMP_TRADITIONAL
 
-          if (useNvidiaGPU) then
-          !if (useNvidiaGPU .or. useIntelGPU) then
+          !if (useNvidiaGPU) then
+          if (useNvidiaGPU .or. useIntelGPU) then
             if (mat_vec_as_one_block) then
               ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
               ! this requires altering of the algorithm when later explicitly updating the matrix
@@ -927,21 +927,21 @@ subroutine tridiag_&
 !                 endif
                 if (wantDebug) call obj%timer%stop("cublas")
               endif
-!              if (useIntelGPU) then
-!                if (wantDebug) call obj%timer%start("mkl_offload")
-!#if 0
-!                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(l_rows,kind=BLAS_KIND),int(l_cols,kind=BLAS_KIND),  &
-!                                          ONE, a_mat, int(matrixRows,kind=BLAS_KIND),       &
-!                                          v_row , 1_BLAS_KIND,          &
-!                                          ONE, u_col, 1_BLAS_KIND)
-!#endif
-!                call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(l_rows,kind=BLAS_KIND),int(l_cols,kind=BLAS_KIND),  &
-!                                          ONE, a_mat, int(matrixRows,kind=BLAS_KIND),       &
-!                                          v_row , int((max_local_rows+1),kind=BLAS_KIND), 1_BLAS_KIND,          &
-!                                          ONE, u_col, int((max_local_cols),kind=BLAS_KIND),  1_BLAS_KIND)
-!
-!                if (wantDebug) call obj%timer%stop("mkl_offload")
-!              endif
+              if (useIntelGPU) then
+                if (wantDebug) call obj%timer%start("mkl_offload")
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(l_rows,kind=BLAS_KIND),int(l_cols,kind=BLAS_KIND),  &
+                                          ONE, a_mat, int(matrixRows,kind=BLAS_KIND),       &
+                                          v_row , 1_BLAS_KIND,          &
+                                          ONE, u_col, 1_BLAS_KIND)
+#if 0
+                call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(l_rows,kind=BLAS_KIND),int(l_cols,kind=BLAS_KIND),  &
+                                          ONE, a_mat, int(matrixRows,kind=BLAS_KIND),       &
+                                          v_row , int((max_local_rows+1),kind=BLAS_KIND), 1_BLAS_KIND,          &
+                                          ONE, u_col, int((max_local_cols),kind=BLAS_KIND),  1_BLAS_KIND)
+#endif
+
+                if (wantDebug) call obj%timer%stop("mkl_offload")
+              endif
 
             else  ! mat_vec_as_one_block
               !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
@@ -967,20 +967,20 @@ subroutine tridiag_&
                 endif
 
                 if (useIntelGPU) then
-!                  if (wantDebug) call obj%timer%start("mkl_offload")
-!#if 0
-!                  call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
-!                              int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-!                              ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),  &
-!                              v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,  &
-!                              ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
-!#endif
-!                  call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
-!                              int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-!                              ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),  &
-!                              v_row(l_row_beg:max_local_rows+1), int((max_local_rows+1-l_row_beg+1),kind=BLAS_KIND), 1_BLAS_KIND,  &
-!                              ONE, u_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND)
-!                  if (wantDebug) call obj%timer%stop("mkl_offload")
+                  if (wantDebug) call obj%timer%start("mkl_offload")
+                  call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                              int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                              ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),  &
+                              v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,  &
+                              ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
+#if 0
+                  call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                              int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                              ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),  &
+                              v_row(l_row_beg:max_local_rows+1), int((max_local_rows+1-l_row_beg+1),kind=BLAS_KIND), 1_BLAS_KIND,  &
+                              ONE, u_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND)
+#endif
+                  if (wantDebug) call obj%timer%stop("mkl_offload")
                 endif
               enddo
 
@@ -1009,42 +1009,43 @@ subroutine tridiag_&
                   endif
                   if (wantDebug) call obj%timer%stop("cublas")
                 endif
-!                if (useIntelGPU) then
-!                  ! offfload
-!                  if (wantDebug) call obj%timer%start("mkl_offload")
-!#if 0
-!                  if (isSkewsymmetric) then
-!                     call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
-!                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-!                                 -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
-!                                 v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
-!                                 ONE, u_row(l_row_beg:max_local_rows), 1_BLAS_KIND)
-!                  else
-!                     call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
-!                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-!                                 ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
-!                                 v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
-!                                 ONE, u_row(l_row_beg:max_local_rows), 1_BLAS_KIND)
-!                  endif
-!#endif
-!                  if (isSkewsymmetric) then
-!                     call mkl_offload_PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
-!                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-!                                 -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
-!                                 v_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND, &
-!                                 ONE, u_row(l_row_beg:max_local_rows), int((max_local_rows-l_row_beg+1),kind=BLAS_KIND), &
-!                                 1_BLAS_KIND)
-!                  else
-!                     call mkl_offload_PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
-!                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-!                                 ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
-!                                 v_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND, &
-!                                 ONE, u_row(l_row_beg:max_local_rows), int((max_local_rows-l_row_beg+1),kind=BLAS_KIND), &
-!                                 1_BLAS_KIND)
-!                  endif
-!                  if (wantDebug) call obj%timer%stop("mkl_offload")
-!                  ! for test implement a normal gemv first
-!                endif
+                if (useIntelGPU) then
+                  ! offfload
+                  if (wantDebug) call obj%timer%start("mkl_offload")
+                  if (isSkewsymmetric) then
+                     call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                 -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                 v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
+                                 ONE, u_row(l_row_beg:max_local_rows), 1_BLAS_KIND)
+                  else
+                     call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                 ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                 v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
+                                 ONE, u_row(l_row_beg:max_local_rows), 1_BLAS_KIND)
+                  endif
+#if 0
+                  if (isSkewsymmetric) then
+                     call mkl_offload_PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                 -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                 v_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND, &
+                                 ONE, u_row(l_row_beg:max_local_rows), int((max_local_rows-l_row_beg+1),kind=BLAS_KIND), &
+                                 1_BLAS_KIND)
+                  else
+                     call mkl_offload_PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                              int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                 ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                 v_col(l_col_beg:max_local_cols), int((max_local_cols-l_col_beg+1),kind=BLAS_KIND), 1_BLAS_KIND, &
+                                 ONE, u_row(l_row_beg:max_local_rows), int((max_local_rows-l_row_beg+1),kind=BLAS_KIND), &
+                                 1_BLAS_KIND)
+                  endif
+#endif
+                  if (wantDebug) call obj%timer%stop("mkl_offload")
+
+                  ! for test implement a normal gemv first
+                endif
               enddo
             end if !multiplication as one block / per stripes
 
@@ -1247,8 +1248,9 @@ subroutine tridiag_&
             if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) &
               cycle
 
-            if (useNvidiaGPU ) then
-            !if (useNvidiaGPU .or. useIntelGPU) then
+#ifndef WITH_OPENMP_TRADITIONAL
+            !if (useNvidiaGPU ) then
+            if (useNvidiaGPU .or. useIntelGPU) then
               if (.not. mat_vec_as_one_block) then
                 ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                 ! we than use the same calls as for CPU version
@@ -1278,8 +1280,13 @@ subroutine tridiag_&
 
               endif
             endif ! this block is exclusive
-
+#endif /* WITH_OPENMP_TRADITIONAL */
+            
+#ifdef WITH_OPENMP_TRADITIONAL
             if (useNoGPU .or. useIntelGPU) then
+#else
+            if (useNoGPU) then
+#endif
               ! should only be run on CPU if large matrix works for intel gpu
             !if (useNoGPU) then
               if (wantDebug) call obj%timer%start("blas")
@@ -1295,8 +1302,9 @@ subroutine tridiag_&
             endif !useNoGPU
           enddo
 
-          if (useNvidiaGPU ) then
-          !if (useNvidiaGPU .or. useIntelGPU) then
+#ifndef WITH_OPENMP_TRADITIONAL
+          !if (useNvidiaGPU ) then
+          if (useNvidiaGPU .or. useIntelGPU) then
             if (mat_vec_as_one_block) then
               !update whole (remaining) part of matrix, including tiles below diagonal
               !we can do that in one large cublas call
@@ -1320,7 +1328,7 @@ subroutine tridiag_&
               endif
             endif
           endif
-
+#endif
          n_stored_vecs = 0
        endif
 
