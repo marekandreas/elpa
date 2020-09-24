@@ -526,8 +526,8 @@ subroutine tridiag_&
 #if REALCASE == 1
         aux(1:2*n_stored_vecs) = uv_stored_cols(l_cols+1,1:2*n_stored_vecs)
 #endif
+
 #if 0
-          ! maybe this could also be offloaded to Intel GPUs
           call PRECISION_GEMV('N',   &
                               int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
                               ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
@@ -539,9 +539,10 @@ subroutine tridiag_&
                               aux, 1_BLAS_KIND,  &
 #endif
                               ONE, v_row, 1_BLAS_KIND)
-#endif
+#endif /* 0 */
 
 #ifdef WITH_INTEL_GPU_VERSION
+          ! check why the copy to aux is necessary
           call mkl_offload_PRECISION_GEMV('N',   &
                               int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
                               ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
@@ -558,7 +559,7 @@ subroutine tridiag_&
 #endif
                               !ONE, v_row, int(max_local_rows+1,kind=BLAS_KIND), 1_BLAS_KIND)
                               ONE, v_row, 1_BLAS_KIND)
-#endif
+#endif /* WITH_INTEL_GPU_VERSION */
 
           if (wantDebug) call obj%timer%stop("mkl_offload")
         endif
@@ -701,6 +702,7 @@ subroutine tridiag_&
      uc_p(1:l_cols,my_thread) = 0.
      ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP_TRADITIONAL */
+
      do i= 0, (istep-2)/tile_size
        l_col_beg = i*l_cols_per_tile+1
        l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
@@ -709,14 +711,21 @@ subroutine tridiag_&
          l_row_beg = j*l_rows_per_tile+1
          l_row_end = min(l_rows,(j+1)*l_rows_per_tile)
          if (l_row_end < l_row_beg) cycle
+
 #ifdef WITH_OPENMP_TRADITIONAL
          if (mod(n_iter,n_threads) == my_thread) then
+
+           if (useNvidiaGPU) then
+            stop "nvida + openmp not yet ported"
+           endif
+
            if (useIntelGPU) then
              if (n_threads .gt. 1) then
                print *,"At the moment MKL offload works with only one thread!"
                stop
              endif
              if (wantDebug) call obj%timer%start("mkl_offload")
+             ! offload needed here
              call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                   int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
@@ -795,20 +804,47 @@ subroutine tridiag_&
              if (wantDebug) call obj%timer%stop("blas")
            endif
 
-           !if (useNvidiaGPU) then
-           ! stop "nvida + openmp not yet ported"
-           !endif
          endif
 
          n_iter = n_iter+1
-#else /* WITH_OPENMP_TRADITIONAL */
+
+#else /* WITH_OPENMP_TRADITIONAL  not used*/
 
          ! multiplication by blocks is efficient only for CPU
          ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
          ! CPU implementation) or by one large matrix Vector multiply
+
+         ! where is the NVIDIA case?
+         ! if (useNvidiaGPU) then
+         ! 
+         ! endif
+
          if (useIntelGPU) then
            ! this should only be run on the CPU if large matrix works for INTEL
            if (wantDebug) call obj%timer%start("mkl_offload")
+           call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+                       int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                       ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
+                       v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,  &
+                       ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
+
+           if (i/=j) then
+             if (isSkewsymmetric) then
+               call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                   -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
+                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
+                                   ONE, u_row(l_row_beg:max_local_rows),  &
+                                   1_BLAS_KIND)
+
+             else
+               call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
+                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, &
+                                   ONE, u_row(l_row_beg:max_local_rows),  &
+                                   1_BLAS_KIND)
+             endif
+           endif
+#if 0
 !           call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
 !                       int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
 !                       ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
@@ -831,9 +867,11 @@ subroutine tridiag_&
 !                                   1_BLAS_KIND)
 !             endif
 !           endif
+#endif
            if (wantDebug) call obj%timer%stop("mkl_offload")
 
          endif
+
          if (useNoGPU) then
            if (wantDebug) call obj%timer%start("blas")
            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
@@ -862,6 +900,8 @@ subroutine tridiag_&
 #endif /* WITH_OPENMP_TRADITIONAL */
             enddo  ! j=0,i
           enddo  ! i=0,(istep-2)/tile_size
+
+#ifndef WITH_OPENMP_TRADITIONAL
 
           if (useNvidiaGPU) then
           !if (useNvidiaGPU .or. useIntelGPU) then
@@ -1021,6 +1061,8 @@ subroutine tridiag_&
             !  
             !endif
           endif ! useNvidiaGPU .or. useIntelGPU
+#endif /* WITH_OPENMP_TRADITIONAL */
+
 
 #ifdef WITH_OPENMP_TRADITIONAL
 !$OMP END PARALLEL
@@ -1119,6 +1161,7 @@ subroutine tridiag_&
          u_col = tmp
 #endif /* WITH_MPI */
        endif
+
        if (isSkewsymmetric) then
           call elpa_transpose_vectors_ss_&
           &MATH_DATATYPE&
@@ -1203,7 +1246,6 @@ subroutine tridiag_&
             l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
             if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) &
               cycle
-
 
             if (useNvidiaGPU ) then
             !if (useNvidiaGPU .or. useIntelGPU) then
