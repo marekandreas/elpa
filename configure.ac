@@ -570,7 +570,7 @@ if test x"${have_mkl}" = x"yes" ; then
 else
 
   dnl first check blas
-  AC_SEARCH_LIBS([dgemm],[openblas satlas blas],[have_blas=yes],[have_blas=no])
+  AC_SEARCH_LIBS([dgemm],[flexiblas openblas satlas blas],[have_blas=yes],[have_blas=no])
   AC_MSG_CHECKING([whether we can link a program with a blas lib])
   AC_MSG_RESULT([${have_blas}])
 
