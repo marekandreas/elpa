@@ -89,7 +89,7 @@
    use elpa_scalapack_interfaces
 #endif
    use solve_tridi
-   use iso_c_binding
+   use, intrinsic :: iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj

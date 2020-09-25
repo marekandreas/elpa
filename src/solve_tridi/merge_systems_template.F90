@@ -60,7 +60,7 @@
                          (obj, na, nm, d, e, q, ldq, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
       use cuda_functions
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use precision
       use elpa_abstract_impl
       use elpa_blas_interfaces

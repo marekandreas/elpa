@@ -1,7 +1,7 @@
 
  function map_global_array_index_to_local_index(iGLobal, jGlobal, iLocal, jLocal , nblk, np_rows, np_cols, my_prow, my_pcol) &
    result(possible)
-   use iso_c_binding, only : c_int
+   use, intrinsic :: iso_c_binding, only : c_int
    implicit none
 
    integer(kind=c_int)              :: pi, pj, li, lj, xi, xj

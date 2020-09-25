@@ -637,7 +637,7 @@
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       class(elpa_impl_t)  :: self
 
 #ifdef USE_ASSUMED_SIZE
@@ -813,7 +813,7 @@
       use elpa2_impl
       use elpa1_impl
       use elpa_utilities, only : error_unit
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       class(elpa_impl_t)  :: self
 
 #ifdef USE_ASSUMED_SIZE

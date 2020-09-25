@@ -36,7 +36,7 @@
     subroutine elpa_eigenvectors_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)       :: self
@@ -83,7 +83,7 @@
     subroutine elpa_skew_eigenvectors_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)       :: self
@@ -136,7 +136,7 @@
     subroutine elpa_eigenvalues_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)       :: self
@@ -181,7 +181,7 @@
     subroutine elpa_skew_eigenvalues_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)       :: self
@@ -244,7 +244,7 @@
     subroutine elpa_generalized_eigenvectors_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, b, ev, q, is_already_decomposed, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use elpa_constants
       import elpa_t
       implicit none
@@ -301,7 +301,7 @@
     subroutine elpa_generalized_eigenvalues_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, b, ev, is_already_decomposed, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use elpa_constants
       import elpa_t
       implicit none
@@ -359,7 +359,7 @@
         &ELPA_IMPL_SUFFIX&
         &_i (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
@@ -405,7 +405,7 @@
     subroutine elpa_cholesky_&
           &ELPA_IMPL_SUFFIX&
           &_i (self, a, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
@@ -451,7 +451,7 @@
     subroutine elpa_invert_trm_&
         &ELPA_IMPL_SUFFIX&
         &_i (self, a, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
@@ -496,7 +496,7 @@
     subroutine elpa_solve_tridiagonal_&
           &ELPA_IMPL_SUFFIX&
           &_i (self, d, e, q, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self

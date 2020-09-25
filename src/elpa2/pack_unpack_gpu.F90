@@ -53,7 +53,7 @@ subroutine pack_row_group_&
   use cuda_c_kernel
   use cuda_functions
   use precision
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
   integer(kind=c_intptr_t)     :: row_group_dev, a_dev
 
@@ -110,7 +110,7 @@ end subroutine
                                          a_dim2, l_nev, rows, n_offset, row_count)
       use cuda_c_kernel
       use precision
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use cuda_functions
       implicit none
       integer(kind=c_intptr_t)                     :: row_group_dev, a_dev
@@ -170,7 +170,7 @@ end subroutine
                                                      last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
                                                      unpack_idx, next_unpack_idx, force)
 
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use precision
       implicit none
 #if REALCASE == 1
@@ -217,7 +217,7 @@ end subroutine
     & (bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero)
       use cuda_c_kernel
       use precision
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: bcast_buffer_dev, hh_tau_dev
       integer(kind=ik), value  :: nbw, n
