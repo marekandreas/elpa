@@ -62,6 +62,7 @@
   use cuda_functions
   use mod_check_for_gpu
   use elpa_blas_interfaces
+  use gpu_infrastructure
   implicit none
 
 #include "../../src/general/precision_kinds.F90"
@@ -93,8 +94,9 @@
   character(20)                 :: gpuString
   logical                       :: success
   logical                       :: successCUDA
-  logical                       :: useNvidiaGPU
-  integer(kind=c_int)           :: Nvidiagpu, numGPU
+  logical                       :: useNvidiaGPU, useNoGPU, useIntelGPU
+  integer(kind=ik)              :: useGPU
+  integer(kind=c_int)           :: gpu, numGPU
   integer(kind=ik)              :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=ik)              :: nblk, matrixRows, matrixCols, error
   integer(kind=c_intptr_t)      :: aux_dev, b_dev, tmp1_dev
@@ -109,20 +111,40 @@
   success = .true.
 
   ! GPU settings
-  call obj%get("nvidia-gpu", Nvidiagpu,error)
+  useGPU       = USE_NO_GPU
+  useNvidiaGPU = .false.
+  useIntelGPU  = .false.
+  useNoGPU     = .true.
+
+  call obj%get("nvidia-gpu", gpu, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem getting option for gpu. Aborting..."
+    print *,"Problem getting option for Nvidia gpu. Aborting..."
     stop
   endif
+  if (gpu .eq. 1) then
+    useGPU = USE_NVIDIA_GPU
+    useNoGPU     = .false.
+    useNvidiaGPU = .true.
+  endif
 
-  useNvidiaGPU = (Nvidiagpu == 1)
+  call obj%get("intel-gpu", gpu, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem getting option for Intel gpu. Aborting..."
+    stop
+  endif
+  if (gpu .eq. 1) then
+    useGPU = USE_INTEL_GPU
+    useNoGPU     = .false.
+    useIntelGPU  = .true.
+  endif
 
-  if(useNvidiaGPU) then
+  if (useGPU .ne. USE_NO_GPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
   endif
 
+  print *,"Multiply GPU=",useGPU
   call obj%timer%start("elpa_mult_at_b_&
   &MATH_DATATYPE&
   &_&
@@ -184,12 +206,25 @@
       cudaHostRegisterPortable = cuda_hostRegisterPortable()
       cudaHostRegisterMapped   = cuda_hostRegisterMapped()
     else
-      print *,"GPUs are requested but not detected! Aborting..."
+      print *,"Nvidia GPUs are requested but not detected! Aborting..."
       success = .false.
       return
     endif
     call obj%timer%stop("check_for_gpu")
+  endif
 
+  if (useIntelGPU) then
+     call obj%timer%start("check_for_gpu")
+     if (check_for_gpu(myid,numGPU)) then
+     else
+       print *,"Intel GPUs are requested but not detected! Aborting..."
+       success = .false.
+       return
+     endif
+     call obj%timer%stop("check_for_gpu")          
+  endif
+
+  if (useNvidiaGPU) then
     ! copy b to b_dev
     num = ldb*ldbCols*size_of_datatype
     successCUDA = cuda_malloc(b_dev,num)
@@ -221,10 +256,17 @@
 
     successCUDA = cuda_malloc(tmp1_dev,num)
     check_alloc_cuda("elpa_mult_at_b: tmp1_dev", successCUDA)
-  else ! useNvidiaGPU
+  endif ! useNvidiaGPU
+
+  if (useIntelGPU) then
     allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
-  endif ! useNvidiaGPU
+  endif ! useIntelGPU
+
+  if (useNoGPU) then
+    allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
+  endif ! useNoGPU
 
   allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_mult_at_b: aux_bc", istat, errorMessage)
@@ -363,7 +405,19 @@
               successCUDA = cuda_memcpy(int(loc(tmp1),kind=c_intptr_t), &
                             tmp1_dev, num, cudaMemcpyDeviceToHost)
               check_memcpy_cuda("elpa_mult_at_b: tmp1_dev to tmp1", successCUDA)
-            else ! useNvidiaGPU
+            endif  ! useNvidiaGPU
+
+            if (useIntelGPU) then ! useIntelGPU
+              call obj%timer%start("mkl_blas")
+              call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
+                                int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), &
+                                ONE, aux_mat(lrs:lre,1:nstor), int(lre-lrs+1,kind=BLAS_KIND), &
+                                b(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, tmp1, &
+                                int(nstor,kind=BLAS_KIND))
+              call obj%timer%stop("mkl_blas")
+            endif ! useIntelGPU
+
+            if (useNoGPU) then ! useNoGPU
               call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
                                 int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), &
@@ -403,7 +457,7 @@
     enddo
   enddo
 
-  if (useNVIDIAGPU) then
+  if (useNvidiaGPU) then
     successCUDA = cuda_free(b_dev)
     check_dealloc_cuda("elpa_multiply_a_b: b_dev", successCUDA)
 
@@ -424,10 +478,12 @@
 
     successCUDA = cuda_free(tmp1_dev)
     check_dealloc_cuda("elpa_multiply_a_b: tmp1_dev", successCUDA)
-  else ! useNVIDIAGPU
+  endif ! useNvidiaGPU
+
+  if (useNoGPU .or. useIntelGPU) then
     deallocate(aux_mat, stat=istat, errmsg=errorMessage)
     check_deallocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
-  endif ! useNVIDIAGPU
+  endif ! useNoGPU .or. useIntelGPU
 
   deallocate(aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
   check_deallocate("elpa_mult_at_b: aux_bc, lrs_save, lre_save", istat, errorMessage)
