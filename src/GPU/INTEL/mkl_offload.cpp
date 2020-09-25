@@ -406,7 +406,7 @@ void mkl_offload_cgemv_c(char trans, int m, int n, MKL_Complex8 alpha, MKL_Compl
   #pragma omp target variant dispatch device(dnum) use_device_ptr(a, x, y)
   cgemv(&trans, &m, &n, &alpha, a, &lda, x, &incx, &beta, y, &incy);
   }
-  std::cout << "leaving mkl_offload_zgemv" << std::endl;
+  std::cout << "leaving mkl_offload_cgemv" << std::endl;
 #else
   std::cout << "ERROR: calling mkl_offload_cgemv without build for Intel GPU support!" << std::endl;
   std::cout << "ERROR: You should never see this message" << std::endl;
