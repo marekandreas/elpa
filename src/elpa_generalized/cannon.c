@@ -135,6 +135,8 @@
 !f>   subroutine cannons_reduction_d(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_reduction_c_d")
 !f>     use precision
+!f>     use, intrinsic :: iso_c_binding
+!f>     implicit none
 !f>     real(c_double)                :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
 !f>     real(c_double)                :: Res(local_rowsCast, local_colsCast)
 !f>     integer(kind=BLAS_KIND)       :: a_desc(9)
@@ -152,6 +154,8 @@ void cannons_reduction_c_d(double* A, double* U, int local_rowsCast, int local_c
 !f>   subroutine cannons_triang_rectangular_d(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_triang_rectangular_c_d")
 !f>     use precision
+!f>     use, intrinsic :: iso_c_binding
+!f>     implicit none
 !f>     real(c_double)                :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
 !f>     real(c_double)                :: Res(local_rowsCast, local_colsCast)
 !f>     integer(kind=BLAS_KIND)       :: u_desc(9), b_desc(9)
@@ -178,6 +182,8 @@ void cannons_triang_rectangular_c_d(double* U, double* B, int local_rowsCast, in
 !f>   subroutine cannons_reduction_f(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_reduction_c_f")
 !f>     use precision
+!f>     use, intrinsic :: iso_c_binding
+!f>     implicit none
 !f>     real(c_float)                 :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
 !f>     real(c_float)                 :: Res(local_rowsCast, local_colsCast)
 !f>     !type(c_ptr), value           :: A, U, Res
@@ -195,6 +201,8 @@ void cannons_reduction_c_f(float* A, float* U, int local_rowsCast, int local_col
 !f>   subroutine cannons_triang_rectangular_f(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_triang_rectangular_c_f")
 !f>     use precision
+!f>     use, intrinsic :: iso_c_binding
+!f>     implicit none
 !f>     real(c_float)                        :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
 !f>     real(c_float)                        :: Res(local_rowsCast, local_colsCast)
 !f>     integer(kind=BLAS_KIND)              :: u_desc(9), b_desc(9)
@@ -221,6 +229,8 @@ void cannons_triang_rectangular_c_f(float* U, float* B, int local_rowsCast, int 
 !f>   subroutine cannons_reduction_dc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_reduction_c_dc")
 !f>     use precision
+!f>     use, intrinsic :: iso_c_binding
+!f>     implicit none
 !f>     complex(c_double)             :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
 !f>     complex(c_double)             :: Res(local_rowsCast, local_colsCast)
 !f>     integer(kind=BLAS_KIND)       :: a_desc(9)
@@ -237,6 +247,8 @@ void cannons_reduction_c_dc(double complex* A, double complex* U, int local_rows
 !f>   subroutine cannons_triang_rectangular_dc(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_triang_rectangular_c_dc")
 !f>     use precision
+!f>     use, intrinsic :: iso_c_binding
+!f>     implicit none
 !f>     complex(c_double)             :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
 !f>     complex(c_double)             :: Res(local_rowsCast, local_colsCast)
 !f>     integer(kind=BLAS_KIND)       :: u_desc(9), b_desc(9)
@@ -262,6 +274,8 @@ void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int l
 !f>   subroutine cannons_reduction_fc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_reduction_c_fc")
 !f>     use precision
+!f>     use, intrinsic :: iso_c_binding
+!f>     implicit none
 !f>     complex(c_float)              :: A(local_rowsCast, local_colsCast), U(local_rowsCast, local_colsCast)
 !f>     complex(c_float)              :: Res(local_rowsCast, local_colsCast)
 !f>     !type(c_ptr), value           :: A, U, Res
@@ -280,6 +294,8 @@ void cannons_reduction_c_fc(float complex* A, float complex* U, int local_rowsCa
 !f>   subroutine cannons_triang_rectangular_fc(U, B, local_rowsCast, local_colsCast, u_desc, b_desc, Res, row_comm, col_comm) &
 !f>                             bind(C, name="cannons_triang_rectangular_c_fc")
 !f>     use precision
+!f>     use, intrinsic :: iso_c_binding
+!f>     implicit none
 !f>     complex(c_float)              :: U(local_rowsCast, local_colsCast), B(local_rowsCast, local_colsCast)
 !f>     complex(c_float)              :: Res(local_rowsCast, local_colsCast)
 !f>     integer(kind=BLAS_KIND)       :: u_desc(9), b_desc(9)
