@@ -46,7 +46,7 @@
       integer(kind=c_int) :: solver
       logical             :: success_l
 
-
+      success_l = .false.
       call self%get("solver", solver,error2)
       if (error2 .ne. ELPA_OK) then
         print *,"Problem setting solver. Aborting..."
@@ -210,7 +210,7 @@
       integer(kind=c_int)                 :: solver
       logical                             :: success_l
 
-
+      success_l = .false.
       call self%get("solver", solver,error2)
       call self%set("is_skewsymmetric",1,error2)
       if (error2 .ne. ELPA_OK) then
@@ -351,7 +351,7 @@
       integer(kind=c_int) :: solver
       logical             :: success_l
 
-
+      success_l = .false.
       call self%get("solver", solver,error2)
       if (error2 .ne. ELPA_OK) then
          print *,"Problem getting solver option. Aborting..."
@@ -502,6 +502,7 @@
       integer(kind=c_int)                 :: solver
       logical                             :: success_l
 
+      success_l = .false.
       call self%get("solver", solver,error2)
       call self%set("is_skewsymmetric",1,error2)
       if (error2 .ne. ELPA_OK) then
@@ -654,6 +655,8 @@
       integer(kind=c_int) :: solver
       logical             :: success_l
 
+      error_l   = -10
+      success_l = .false.
 #if defined(INCLUDE_ROUTINES)
       call self%elpa_transform_generalized_&
               &ELPA_IMPL_SUFFIX&
@@ -829,6 +832,8 @@
       integer(kind=c_int) :: solver
       logical             :: success_l
 
+      error_l = -10
+      success_l = .false.
 #if defined(INCLUDE_ROUTINES)
       call self%elpa_transform_generalized_&
               &ELPA_IMPL_SUFFIX&
@@ -995,7 +1000,8 @@
       integer                         :: error
 #endif
       logical                         :: success_l
-
+     
+      success_l = .false.
 #if defined(INCLUDE_ROUTINES)
 #ifdef REALCASE
       success_l = elpa_mult_at_b_&
@@ -1124,6 +1130,7 @@
 #endif
       logical                         :: success_l
 
+      success_l = .false.
 #if defined(INCLUDE_ROUTINES)
       success_l = elpa_cholesky_&
               &MATH_DATATYPE&
@@ -1238,6 +1245,7 @@
 #endif
       logical                         :: success_l
 
+      success_l = .false.
 #if defined(INCLUDE_ROUTINES)
       success_l = elpa_invert_trm_&
               &MATH_DATATYPE&
