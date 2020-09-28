@@ -1029,6 +1029,7 @@ subroutine tridiag_&
                                  ONE, u_row(l_row_beg:max_local_rows), 1_BLAS_KIND)
                   endif
 #endif
+
 #ifdef WITH_INTEL_GPU_VERSION
                   if (isSkewsymmetric) then
                      call mkl_offload_PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
@@ -1298,7 +1299,6 @@ subroutine tridiag_&
             endif 
 #endif /* WITH_OPENMP_TRADITIONAL */
             
-#ifdef WITH_OPENMP_TRADITIONAL
             if (useIntelGPU .and. .not.(useGPUAlgorithm)) then
               ! should only be run on CPU if large matrix works for intel gpu
               if (wantDebug) call obj%timer%start("mkl_offload")
@@ -1325,7 +1325,7 @@ subroutine tridiag_&
 #endif
               if (wantDebug) call obj%timer%stop("mkl_offload")
             endif !useIntelGPU
-#endif
+
             if (useNoGPU) then
               if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
