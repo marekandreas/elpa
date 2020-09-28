@@ -355,7 +355,7 @@ function elpa_solve_evp_&
        cudaHostRegisterPortable = cuda_hostRegisterPortable()
        cudaHostRegisterMapped   = cuda_hostRegisterMapped()
      else
-       print *,"GPUs are requested but not detected! Aborting..."
+       print *,"Nvidia GPUs are requested but not detected! Aborting..."
        success = .false.
        return
      endif
@@ -367,7 +367,7 @@ function elpa_solve_evp_&
      if (check_for_gpu(my_pe,numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = USE_INTEL_GPU
      else
-       print *,"GPUs are requested but not detected! Aborting..."
+       print *,"Intel GPUs are requested but not detected! Aborting..."
        success = .false.
        return
      endif
