@@ -158,10 +158,11 @@
    integer(kind=c_int)                                                :: i
    logical                                                            :: success, successCUDA
    logical                                                            :: wantDebug
-   integer(kind=c_int)                                                :: istat, NVIDIAgpu, skewsymmetric, debug, qr
+   integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage
-   integer(kind=ik)                                                   :: do_useGPU_solve_tridi
-   logical                                                            :: do_useNVIDIAGPU, do_useNVIDIAGPU_bandred, &
+   integer(kind=ik)                                                   :: do_useGPU_solve_tridi, do_useGPU_bandred, &
+                                                                         do_useGPU
+   logical                                                            :: &
                                                                          do_useNVIDIAGPU_tridiag_band, &
                                                                          do_useNVIDIAGPU_trans_ev_tridi_to_band, &
                                                                          do_useNVIDIAGPU_trans_ev_band_to_full
@@ -195,6 +196,7 @@
    logical                                                            :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
    logical                                                           :: good_nblk_nvidia_gpu
+   integer(kind=ik)                                                   :: useGPU
 
    integer(kind=ik)                                                   :: nrThreads
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
@@ -351,20 +353,35 @@
     wantDebug = debug == 1
 
     ! GPU settings
-    call obj%get("nvidia-gpu", NVIDIAgpu,error)
+    useGPU = USE_NO_GPU
+
+    call obj%get("nvidia-gpu", gpu, error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option gpu settings. Aborting..."
+      print *,"Problem getting option NVIDIA gpu settings. Aborting..."
       stop
     endif
 
-    useNVIDIAGPU = (NVIDIAgpu == 1)
+    if (gpu .eq. 1) then
+      useGPU = USE_NVIDIA_GPU
+    endif
 
-    do_useNVIDIAGPU = .false.
-    if (useNVIDIAGPU) then
+    call obj%get("intel-gpu", gpu, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option Intel gpu settings. Aborting..."
+      stop
+    endif
+
+    if (gpu .eq. 1) then
+      useGPU = USE_INTEL_GPU
+    endif
+
+
+    do_useGPU = USE_NO_GPU
+    if (useGPU .eq. USE_NVIDIA_GPU) then
       call obj%timer%start("check_for_gpu")
-      if (check_for_gpu(my_pe,numberOfNVIDIAGPUDevices, wantDebug=wantDebug)) then
+      if (check_for_gpu(my_pe, numberOfNVIDIAGPUDevices, wantDebug=wantDebug)) then
 
-         do_useNVIDIAGPU = .true.
+         do_useGPU = USE_NVIDIA_GPU
 
          ! set the neccessary parameters
          cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
@@ -380,38 +397,66 @@
       call obj%timer%stop("check_for_gpu")
     endif
 
-    if (nblk*(max(np_rows,np_cols)-1) >= na) then
-      write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
-      write(error_unit,*) "Choose a smaller block size if possible."
+    if (useGPU .eq. USE_INTEL_GPU) then
+      call obj%timer%start("check_for_gpu")
+      if (do_useGPU .eq. USE_NVIDIA_GPU) then
+        print *,"Both Nvidia and Intel GPUs have been set. This is not supported! Aborting..."
+        success = .false.
+        return
+      endif
+      if (check_for_gpu(my_pe, numberOfNVIDIAGPUDevices, wantDebug=wantDebug)) then
 
-      do_useNVIDIAGPU = .false.
+         do_useGPU = USE_INTEL_GPU
+      else
+        print *,"GPUs are requested but not detected! Aborting..."
+        success = .false.
+        return
+      endif
+      call obj%timer%stop("check_for_gpu")
+    endif
 
-      if (kernel == NVIDIA_GPU_KERNEL) then
-        kernel = GENERIC_KERNEL
+    if (do_useGPU .eq. USE_NVIDIA_GPU) then
+      if (nblk*(max(np_rows,np_cols)-1) >= na) then
+        write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
+        write(error_unit,*) "Choose a smaller block size if possible."
+
+        do_useGPU = USE_NO_GPU
+
+        if (kernel == NVIDIA_GPU_KERNEL) then
+          kernel = GENERIC_KERNEL
+        endif
       endif
     endif
-
-    do_useNVIDIAGPU_bandred = do_useNVIDIAGPU
-    do_useNVIDIAGPU_tridiag_band = .false.  ! not yet ported
-    if (do_useNVIDIAGPU) then
-      do_useGPU_solve_tridi = USE_NVIDIA_GPU
-    else
-      do_useGPU_solve_tridi = USE_NO_GPU
+    if (do_useGPU .eq. USE_INTEL_GPU) then
+      ! test which block size works
     endif
-    do_useNVIDIAGPU_trans_ev_tridi_to_band = do_useNVIDIAGPU
-    do_useNVIDIAGPU_trans_ev_band_to_full = do_useNVIDIAGPU
+
+    do_useGPU_bandred     = do_useGPU
+    do_useGPU_solve_tridi = do_useGPU
+
+    if (do_useGPU .eq. USE_NVIDIA_GPU) then
+    do_useNVIDIAGPU_trans_ev_tridi_to_band = .true.
+    do_useNVIDIAGPU_trans_ev_band_to_full = .true.
+    do_useNVIDIAGPU_tridiag_band = .true.  ! not yet ported
+    else
+    do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
+    do_useNVIDIAGPU_trans_ev_band_to_full = .false.
+    do_useNVIDIAGPU_tridiag_band = .false.  ! not yet ported
+    endif
 
     ! only if we want (and can) use GPU in general, look what are the
     ! requirements for individual routines. Implicitly they are all set to 1, so
     ! unles specified otherwise by the user, GPU versions of all individual
     ! routines should be used
-    if(do_useNVIDIAGPU) then
-      call obj%get("nvidia-gpu_bandred", NVIDIAgpu, error)
+    if (do_useGPU .eq. USE_NVIDIA_GPU .or. do_useGPU .eq. USE_INTEL_GPU) then
+      call obj%get("gpu_bandred", gpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option gpu_bandred settings. Aborting..."
         stop
       endif
-      do_useNVIDIAGPU_bandred = (NVIDIAgpu == 1)
+      if (gpu .eq. 1) then
+        do_useGPU_bandred = do_useGPU
+      endif
 
       ! not yet ported
       !call obj%get("gpu_tridiag_band", gpu, error)
@@ -421,30 +466,41 @@
       !endif
       !do_useGPU_tridiag_band = (gpu == 1)
 
-      call obj%get("gpu_solve_tridi", NVIDIAgpu, error)
+      call obj%get("gpu_solve_tridi", gpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_solve_tridi settings. Aborting..."
         stop
       endif
-      if (NVIDIAgpu .eq. 1) then
-        do_useGPU_solve_tridi = USE_NVIDIA_GPU
-      else
-        do_useGPU_solve_tridi = USE_NO_GPU
+      if (gpu .eq. 1) then
+        do_useGPU_solve_tridi = do_useGPU
       endif
 
-      call obj%get("nvidia-gpu_trans_ev_tridi_to_band", NVIDIAgpu, error)
+      call obj%get("nvidia-gpu_trans_ev_tridi_to_band", gpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_trans_ev_tridi_to_band settings. Aborting..."
         stop
       endif
-      do_useNVIDIAGPU_trans_ev_tridi_to_band = (NVIDIAgpu == 1)
+
+      if (gpu .eq. 1) then
+        if (do_useGPU .eq. USE_NVIDIA_GPU) then
+          do_useNVIDIAGPU_trans_ev_tridi_to_band = .true.
+        else
+          do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
+        endif
+      endif
  
-      call obj%get("nvidia-gpu_trans_ev_band_to_full", NVIDIAgpu, error)
+      call obj%get("nvidia-gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
         stop
       endif
-      do_useNVIDIAGPU_trans_ev_band_to_full = (NVIDIAgpu == 1)
+      if (gpu .eq. 1) then
+        if (do_useGPU .eq. USE_NVIDIA_GPU) then
+          do_useNVIDIAGPU_trans_ev_band_to_full = .true.
+        else
+          do_useNVIDIAGPU_trans_ev_band_to_full = .false.
+        endif
+      endif
     endif
 
     ! check consistency between request for GPUs and defined kernel
@@ -743,7 +799,7 @@
       &PRECISION &
       (obj, na, a, &
       matrixRows, nblk, nbw, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-      wantDebug, do_useNVIDIAGPU_bandred, success, &
+      wantDebug, do_useGPU_bandred, success, &
 #if REALCASE == 1
       useQRActual, &
 #endif
@@ -770,7 +826,7 @@
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-       do_useNVIDIAGPU_tridiag_band, wantDebug, nrThreads)
+       do_useNvidiaGPU_tridiag_band, wantDebug, nrThreads)
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")

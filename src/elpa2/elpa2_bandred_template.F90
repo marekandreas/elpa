@@ -65,7 +65,7 @@ subroutine bandred_&
 &_&
 &PRECISION &
 (obj, na, a_mat, lda, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, tmat, &
-wantDebug, useNvidiaGPU, success, &
+wantDebug, useGPU, success, &
 #if REALCASE == 1
 useQR, &
 #endif
@@ -112,7 +112,7 @@ max_threads)
   use elpa_scalapack_interfaces
 #endif
   use elpa_abstract_impl
-
+  use gpu_infrastructure
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -129,7 +129,7 @@ max_threads)
 #if REALCASE == 1
   real(kind=rk)                               :: eps
 #endif
-  logical, intent(in)                         :: useNVIDIAGPU
+  integer(kind=ik), intent(in)                :: useGPU
   integer(kind=c_int)                         :: skewsymmetric
   logical                                     :: isSkewsymmetric
   character(20)                               :: gpuString
@@ -177,10 +177,6 @@ max_threads)
   integer(kind=ik)                            :: lr_end
   integer(kind=ik)                            :: na_cols
   integer(kind=BLAS_KIND)                     :: na_colsBLAS
-#if COMPLEXCASE == 1
-  integer(kind=ik)                            :: na_rows
-  integer(kind=BLAS_KIND)                     :: na_rowsBLAS
-#endif
 
   logical, intent(in)                         :: wantDebug
   logical, intent(out)                        :: success
@@ -199,7 +195,8 @@ max_threads)
                                                                     &_&
                                                                     &MATH_DATATYPE
 
-  logical                                     :: useNVIDIAGPU_reduction_lower_block_to_tridiagonal
+  logical                                     :: useGPU_reduction_lower_block_to_tridiagonal
+  logical                                     :: useNvidiaGPU, useIntelGPU, useNoGPU
   integer(kind=ik), intent(in)                :: max_threads
   logical                                     :: do_memcpy
   integer(kind=ik)                            :: i_blk,blk_off, blk_end
@@ -211,10 +208,17 @@ max_threads)
   endif
   isSkewsymmetric = (skewsymmetric == 1)
 
-  if(useNVIDIAGPU) then
+  useNvidiaGPU = .false.
+  useIntelGPU  = .false.
+  useNoGPU     = .true.
+  if (useGPU .ne. USE_NO_GPU) then
     gpuString = "_gpu"
+    if (useGPU .eq. USE_NVIDIA_GPU) useNvidiaGPU = .true.
+    if (useGPU .eq. USE_INTEL_GPU)  useIntelGPU  = .true.
+    useNoGPU = .false.
   else
     gpuString = ""
+    useNoGPU = .true.
   endif
 
   call obj%timer%start("bandred_&
@@ -223,18 +227,30 @@ max_threads)
   PRECISION_SUFFIX // &
   gpuString )
 
-  useNVIDIAGPU_reduction_lower_block_to_tridiagonal = .false.
+  useGPU_reduction_lower_block_to_tridiagonal = .false.
 
-  if (useNVIDIAGPU) then
-    useNVIDIAGPU_reduction_lower_block_to_tridiagonal = .true.
+  if (useNvidiaGPU) then
+    useGPU_reduction_lower_block_to_tridiagonal = .true.
 #if REALCASE == 1
     if (useQR) then
       !in this case switch off GPU usage for step "reduce current block to lower triangular form"
       ! since this is done by QR decomposition
-      useNVIDIAGPU_reduction_lower_block_to_tridiagonal = .false.
+      useGPU_reduction_lower_block_to_tridiagonal = .false.
     endif
 #endif
   endif
+
+  if (useIntelGPU) then
+    useGPU_reduction_lower_block_to_tridiagonal = .true.
+#if REALCASE == 1
+    if (useQR) then
+      !in this case switch off GPU usage for step "reduce current block to lower triangular form"
+      ! since this is done by QR decomposition
+      useGPU_reduction_lower_block_to_tridiagonal = .false.
+    endif
+#endif
+  endif
+
 
   if (wantDebug) call obj%timer%start("mpi_communication")
 
@@ -268,21 +284,12 @@ max_threads)
     endif
   endif
 
-  ! na_rows in used nowhere; only na_cols
-  if (useNVIDIAGPU) then
+  if (useNvidiaGPU) then
 #ifdef WITH_MPI
-#if COMPLEXCASE == 1
-    na_rowsBLAS = numroc(int(na,kind=BLAS_KIND), int(nblk,kind=BLAS_KIND), &
-                         int(my_prow,kind=BLAS_KIND), 0_BLAS_KIND, int(np_rows,kind=BLAS_KIND))
-    na_rows = int(na_rowsBLAS,kind=c_int)
-#endif
     na_colsBLAS = numroc(int(na,kind=BLAS_KIND), int(nblk,kind=BLAS_KIND), &
                          int(my_pcol,kind=BLAS_KIND), 0_BLAS_KIND, int(np_cols,kind=BLAS_KIND))
     na_cols = int(na_colsBLAS,kind=c_int)
 #else
-#if COMPLEXCASE == 1
-    na_rows = na
-#endif
     na_cols = na
 #endif /* WITH_MPI */
 
@@ -298,6 +305,11 @@ max_threads)
     successCUDA = cuda_malloc(vav_dev, nbw*nbw* size_of_datatype)
     check_alloc_cuda("bandred: vav_dev", successCUDA)
   endif ! useNVIDIAGPU
+
+  !if (useIntelGPU) then
+  !  ! needed later when explicit copy
+  !endif ! useIntelGPU
+
 
   ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
@@ -367,7 +379,8 @@ max_threads)
 #endif /* REALCASE */
 
   blk_end = (na-1)/nbw
-  if (useNVIDIAGPU) then
+
+  if (useNvidiaGPU) then
 
     successCUDA = cuda_host_register(int(loc(a_mat),kind=c_intptr_t), &
                   lda*na_cols*size_of_datatype, cudaHostRegisterDefault)
@@ -428,7 +441,12 @@ max_threads)
     successCUDA = cuda_malloc(umc_dev, umc_size*size_of_datatype)
     check_alloc_cuda("bandred: umc_dev", successCUDA)
 
-  endif ! useNVIDIAGPU
+  endif ! useNvidiaGPU
+
+  !if (useIntelGPU) then
+     ! needed later when explict mem copy
+  !endif ! useIntelGPU
+
 
   do istep = blk_end, 1, -1
 
@@ -440,13 +458,14 @@ max_threads)
 
     ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
 
-    if (useNVIDIAGPU) then
+    if (useNvidiaGPU) then
       cur_l_rows = max(l_rows, 1)
       cur_l_cols = max(l_cols, 1)
       vmr_size = cur_l_rows * 2 * n_cols
       umc_size = cur_l_cols * 2 * n_cols
+    endif
 
-    else ! NVIDIA GPU not used
+    if (useIntelGPU) then
 
       ! unify the the name vmr and vmrCPU, as well as vmrGPU
       ! the same for umcCPU and umcGPU
@@ -461,18 +480,42 @@ max_threads)
       allocate(vr(l_rows+1), stat=istat, errmsg=errorMessage)
       check_allocate("bandred: vr", istat, errorMessage)
 
-    endif ! use NVIDIA GPU
+    endif ! useIntelGPU
 
-    if (useNVIDIAGPU) then
+    if (useNoGPU) then
+
+      ! unify the the name vmr and vmrCPU, as well as vmrGPU
+      ! the same for umcCPU and umcGPU
+      ! Allocate vmr and umcCPU to their exact sizes so that they can be used in bcasts and reduces
+
+      allocate(vmrCPU(max(l_rows,1),2*n_cols), stat=istat, errmsg=errorMessage)
+      check_allocate("bandred: vmrCPU", istat, errorMessage)
+
+      allocate(umcCPU(max(l_cols,1),2*n_cols), stat=istat, errmsg=errorMessage)
+      check_allocate("bandred: umcCPU", istat, errorMessage)
+
+      allocate(vr(l_rows+1), stat=istat, errmsg=errorMessage)
+      check_allocate("bandred: vr", istat, errorMessage)
+
+    endif ! useNoGPU
+
+    if (useNvidiaGPU) then
       vmrCUDA(1 : cur_l_rows * n_cols) = 0.0_rck
       umcCUDA(1 : umc_size) = 0.0_rck
-    else
+    endif
+
+    if (useIntelGPU) then
       vmrCPU(1:l_rows,1:n_cols) = 0.0_rck
-    endif ! useNVIDIAGPU
+    endif ! useIntelGPU
+
+    if (useNoGPU) then
+      vmrCPU(1:l_rows,1:n_cols) = 0.0_rck
+    endif ! useNoGPU
 
     vr(:) = 0.0_rck
     tmat(:,:,istep) = 0.0_rck
-    if (useNVIDIAGPU) then
+
+    if (useNvidiaGPU) then
       lc_start = local_index(istep*nbw+1, my_pcol, np_cols, nblk, -1)
       lc_end   = local_index(istep*nbw+n_cols, my_pcol, np_cols, nblk, -1)
       lr_end   = local_index((istep-1)*nbw + n_cols, my_prow, np_rows, nblk, -1)
@@ -501,7 +544,11 @@ max_threads)
 
         check_memcpy_cuda("bandred: a_dev -> a_mat", successCUDA)
       endif
-    endif ! useNVIDIAGPU
+    endif ! useNvidiaGPU
+
+    !if (useIntelGPU) then
+       ! needed later when explict mem copy
+    !endif ! useIntelGPU
 
     ! Reduce current block to lower triangular form
 #if REALCASE == 1
@@ -610,9 +657,10 @@ max_threads)
 
 #endif /* WITH_MPI */
 
-        if (useNVIDIAGPU_reduction_lower_block_to_tridiagonal) then
+        if (useGPU_reduction_lower_block_to_tridiagonal .and. useNvidiaGPU) then
           vmrCUDA(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
         else
+          ! maybe we need this also for IntelGPus
           vmrCPU(1:lr,lc) = vr(1:lr)
         endif
         tau = vr(lr+1)
@@ -788,7 +836,7 @@ max_threads)
 #endif /* WITH_OPENMP_TRADITIONAL */
       enddo ! lc
 
-      if (useNVIDIAGPU_reduction_lower_block_to_tridiagonal) then
+      if (useGPU_reduction_lower_block_to_tridiagonal .and. useNvidiaGPU) then
         ! store column tiles back to GPU
         if (do_memcpy) then
           successCUDA = cuda_memcpy2d((a_dev+ &
@@ -802,12 +850,16 @@ max_threads)
         endif
       endif
 
+      if (useGPU_reduction_lower_block_to_tridiagonal .and. useIntelGPU) then
+        ! store column tiles back to GPU
+      endif
+
       ! Calculate scalar products of stored Householder vectors.
       ! This can be done in different ways, we use dsyrk
 
       vav = 0
       call obj%timer%start("blas")
-      if (useNVIDIAGPU_reduction_lower_block_to_tridiagonal) then
+      if (useGPU_reduction_lower_block_to_tridiagonal .and. useNvidiaGPU) then
         if (l_rows>0) &
 #if REALCASE == 1
         call PRECISION_SYRK('U', 'T',            &
@@ -819,7 +871,7 @@ max_threads)
                            vmrCUDA, int(cur_l_rows,kind=BLAS_KIND), &
                            ZERO, vav, int(ubound(vav,dim=1),kind=BLAS_KIND))
 
-      else ! useNVIDIAGPU_reduction_to_tridiagonal
+      else ! useGPU_reduction_to_tridiagonal
         if (l_rows>0) &
 #if REALCASE == 1
         call PRECISION_SYRK('U', 'T',           &
@@ -862,7 +914,7 @@ max_threads)
 #endif
 
 #if REALCASE == 1
-    if (useNVIDIAGPU .and. useQR) then
+    if (useNvidiaGPU .and. useQR) then
       ! copy the data for furhter usage
       ! qr worked on *CPU arrarys
       !vmrCUDA(1:cur_l_rows * n_cols) = vmrCPU(1:cur_l_rows,1:n_cols)
@@ -878,10 +930,15 @@ max_threads)
       endif
 
     endif
+    if (useIntelGPU .and. useQR) then
+      ! copy the data for furhter usage
+      ! qr worked on *CPU arrarys
+      !vmrCUDA(1:cur_l_rows * n_cols) = vmrCPU(1:cur_l_rows,1:n_cols)
+    endif
 #endif
 
     ! Transpose vmr -> vmc (stored in umc, second half)
-    if (useNVIDIAGPU) then
+    if (useNvidiaGPU) then
       call elpa_transpose_vectors_&
            &MATH_DATATYPE&
            &_&
@@ -889,7 +946,19 @@ max_threads)
                         (obj, vmrCUDA(:), cur_l_rows, mpi_comm_rows, &
                          umcCUDA(cur_l_cols * n_cols + 1:), cur_l_cols, &
                          mpi_comm_cols, 1, istep*nbw, n_cols, nblk, max_threads)
-    else ! useNVIDIAGPU
+    endif ! useNvidiaGPU
+
+    if (useIntelGPU) then
+      call elpa_transpose_vectors_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+                                        (obj, vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                         umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                         1, istep*nbw, n_cols, nblk, max_threads)
+    endif
+
+    if (useNoGPU) then
       call elpa_transpose_vectors_&
            &MATH_DATATYPE&
            &_&
@@ -1024,14 +1093,14 @@ max_threads)
     else ! n_way > 1
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-      if (.not. useNVIDIAGPU) then
+      if (useNoGPU .or. useIntelGPU) then
         umcCPU(1:l_cols,1:n_cols) = 0.0_rck
         vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0.0_rck
-      endif ! useNVIDIAGPU
+      endif ! useNoGPU .or. useIntelGPU
 
       if (l_cols>0 .and. l_rows>0) then
 
-        if (useNVIDIAGPU) then
+        if (useNvidiaGPU) then
           successCUDA = cuda_memset(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
                         0, cur_l_rows*n_cols*size_of_datatype)
           check_memset_cuda("bandred: vmr_dev", successCUDA)
@@ -1048,7 +1117,7 @@ max_threads)
                         (umc_size-l_cols*n_cols)*size_of_datatype, &
                         cudaMemcpyHostToDevice)
           check_memcpy_cuda("bandred: umcCUDA -> umc_dev", successCUDA)
-        endif ! useNVIDIAGPU
+        endif ! useNvidiaGPU
 
         do i=0,(istep*nbw-1)/tile_size
 
@@ -1057,7 +1126,7 @@ max_threads)
           if (lce<lcs) cycle
           lre = min(l_rows,(i+1)*l_rows_tile)
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             call obj%timer%start("cublas")
             call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
                                        lce-lcs+1, n_cols, lre,     &
@@ -1094,7 +1163,37 @@ max_threads)
                                             cur_l_rows)
             endif
             call obj%timer%stop("cublas")
-          else ! useNVIDIAGPU
+          endif ! useNvidiaGPU
+
+          if (useIntelGPU) then
+
+            call obj%timer%start("mkl_offload")
+            call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',       &
+                                int(lce-lcs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lre,kind=BLAS_KIND), &
+                                ONE, a_mat(1,lcs), int(ubound(a_mat,dim=1),kind=BLAS_KIND), &
+                                vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), ONE, umcCPU(lcs,1), &
+                                int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
+            call obj%timer%stop("mkl_offload")
+            if (i==0) cycle
+            lre = min(l_rows,i*l_rows_tile)
+            call obj%timer%start("mkl_offload")
+
+            if (isSkewsymmetric) then
+              call PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
+                                  -ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND),                                                   &
+                                  umcCPU(lcs,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), ONE,                          &
+                                  vmrCPU(1,n_cols+1), int(ubound(vmrCPU,dim=1), kind=BLAS_KIND) )
+
+            else
+              call PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
+                                  ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND),                                                   &
+                                  umcCPU(lcs,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), ONE,                          &
+                                  vmrCPU(1,n_cols+1), int(ubound(vmrCPU,dim=1), kind=BLAS_KIND) )
+            endif
+            call obj%timer%stop("mkl_offload")
+          endif ! useIntelGPU
+
+          if (useNoGPU) then 
 
             call obj%timer%start("blas")
             call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',       &
@@ -1120,10 +1219,10 @@ max_threads)
                                   vmrCPU(1,n_cols+1), int(ubound(vmrCPU,dim=1), kind=BLAS_KIND) )
             endif
             call obj%timer%stop("blas")
-          endif ! useNVIDIAGPU
+          endif ! useNoPU
         enddo ! i=0,(istep*nbw-1)/tile_size
 
-        if (useNVIDIAGPU) then
+        if (useNvidiaGPU) then
           if (tile_size < istep*nbw .or. n_way > 1) then
             successCUDA = cuda_memcpy(int(loc(vmrCUDA(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
                           vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
@@ -1134,7 +1233,7 @@ max_threads)
           successCUDA = cuda_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
                         umc_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
           check_memcpy_cuda("bandred: umc_dev -> umcCUDA", successCUDA)
-        endif ! useNVIDIAGPU
+        endif ! useNvidiaGPU
       endif ! l_cols>0 .and. l_rows>0
 
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -1151,7 +1250,7 @@ max_threads)
     ! Or if we used the Algorithm 4
     if (tile_size < istep*nbw .or. n_way > 1) then
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
 
         call elpa_reduce_add_vectors_&
              &MATH_DATATYPE&
@@ -1160,7 +1259,9 @@ max_threads)
                              (obj, vmrCUDA(cur_l_rows * n_cols + 1:),cur_l_rows,  &
                               mpi_comm_rows, umcCUDA,                            &
                               cur_l_cols, mpi_comm_cols, istep*nbw, n_cols, nblk, max_threads)
-      else ! useNVIDIAGPU
+      endif ! useNvidiaGPU
+
+      if (useIntelGPU) then
 
         call elpa_reduce_add_vectors_&
         &MATH_DATATYPE&
@@ -1169,12 +1270,23 @@ max_threads)
                                          (obj, vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
                                           umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                           istep*nbw, n_cols, nblk, max_threads)
-      endif ! useNVIDIAGPU
+      endif ! useIntelGPU
+
+      if (useNoGPU) then
+
+        call elpa_reduce_add_vectors_&
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION &
+                                         (obj, vmrCPU(1,n_cols+1),ubound(vmrCPU,dim=1),mpi_comm_rows, &
+                                          umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                          istep*nbw, n_cols, nblk, max_threads)
+      endif ! useNvidiaGPU
     endif ! tile_size < istep*nbw .or. n_way > 1
 
     if (l_cols>0) then
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
 #ifdef WITH_MPI
         allocate(tmpCUDA(l_cols * n_cols), stat=istat, errmsg=errorMessage)
         check_allocate("bandred: tmpCUDA", istat, errorMessage)
@@ -1193,7 +1305,9 @@ max_threads)
           check_deallocate("bandred: tmpCUDA", istat, errorMessage)
         endif
 
-      else ! useNVIDIAGPU
+      endif ! useNvidiaGPU
+
+      if (useIntelGPU) then
 
         allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
         check_allocate("bandred: tmpCPU", istat, errorMessage)
@@ -1208,7 +1322,24 @@ max_threads)
 
         deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
         check_deallocate("bandred: tmpCPU", istat, errorMessage)
-      endif ! useGPU
+      endif ! useIntelGPU
+
+      if (useNoGPU) then
+
+        allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+        check_allocate("bandred: tmpCPU", istat, errorMessage)
+
+#ifdef WITH_MPI
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+#endif /* WITH_MPI */
+
+        deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
+        check_deallocate("bandred: tmpCPU", istat, errorMessage)
+      endif ! useNoGPU
     endif ! l_cols > 0
 
     ! U = U * Tmat**T
@@ -1241,7 +1372,33 @@ max_threads)
       successCUDA = cuda_memcpy(int(loc(vav),kind=c_intptr_t), &
                     vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
       check_memcpy_cuda("bandred: vav_dev -> vav ", successCUDA)
-    else ! useNvidiaGPU
+
+    endif ! useNvidiaGPU
+    
+    if (useIntelGPU) then
+
+      call obj%timer%start("mkl_offload")
+
+      call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
+                          int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
+                          int(ubound(tmat,dim=1),kind=BLAS_KIND), &
+                          umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
+
+      ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+
+      call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',              &
+                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                          ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND), umcCPU(1,n_cols+1), &
+                          int(ubound(umcCPU,dim=1),kind=BLAs_KIND), ZERO, vav, int(ubound(vav,dim=1),kind=BLAS_KIND))
+
+      call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
+                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep),    &
+                          int(ubound(tmat,dim=1),kind=BLAS_KIND), vav, int(ubound(vav,dim=1),kind=BLAS_KIND) )
+      call obj%timer%stop("mkl_offload")
+
+    endif ! useIntelGPU
+    
+    if (useNoGPU) then
 
       call obj%timer%start("blas")
 
@@ -1262,7 +1419,7 @@ max_threads)
                           int(ubound(tmat,dim=1),kind=BLAS_KIND), vav, int(ubound(vav,dim=1),kind=BLAS_KIND) )
       call obj%timer%stop("blas")
 
-    endif ! useNVIDIAGPU
+    endif ! useNoGPU
 
 #if REALCASE == 1
 #ifdef HAVE_SKEWSYMMETRIC
@@ -1285,15 +1442,19 @@ max_threads)
          (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
 #endif
 
-    if (useNVIDIAGPU) then
+    if (useNvidiaGPU) then
       successCUDA = cuda_memcpy(vav_dev, int(loc(vav),kind=c_intptr_t), &
                        nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
       check_memcpy_cuda("bandred: vav -> vav_dev ", successCUDA)
     endif
 
+    !if (useIntelGPU) then
+      ! needed later
+    !endif
+
     ! U = U - 0.5 * V * VAV
 
-    if (useNVIDIAGPU) then
+    if (useNvidiaGPU) then
       call obj%timer%start("cublas")
       if (isSkewsymmetric) then
         call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
@@ -1350,7 +1511,51 @@ max_threads)
                     (vmr_size-cur_l_rows*n_cols)*size_of_datatype, cudaMemcpyHostToDevice)
       check_memcpy_cuda("bandred: vmr -> vmrCUDA ", successCUDA)
 
-    else ! useNvidiaGPU
+    endif ! useNvidiaGPU
+
+    if (useIntelGPU) then
+      call obj%timer%start("mkl_offload")
+#if REALCASE == 1
+      if (isSkewsymmetric) then
+        call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+                            0.5_rk, umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav,                        &
+                            int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
+      else
+        call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+                            -0.5_rk, umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav,                       &
+                            int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
+      endif
+#endif
+#if COMPLEXCASE == 1
+      call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+                         (-0.5_rk, 0.0_rk),     &
+                         umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav, &
+                         int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
+#endif
+
+      call obj%timer%stop("mkl_offload")
+
+      ! Transpose umc -> umr (stored in vmr, second half)
+      if (isSkewsymmetric) then
+        call elpa_transpose_vectors_ss_&
+          &MATH_DATATYPE&
+        &_&
+        &PRECISION &
+                                 (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                        vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                        1, istep*nbw, n_cols, nblk, max_threads)
+      else
+       call elpa_transpose_vectors_&
+       &MATH_DATATYPE&
+       &_&
+       &PRECISION &
+                                (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
+                                          vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
+                                          1, istep*nbw, n_cols, nblk, max_threads)
+      endif
+    endif  ! useIntelGPU
+
+    if (useNoGPU) then
       call obj%timer%start("blas")
 #if REALCASE == 1
       if (isSkewsymmetric) then
@@ -1390,7 +1595,7 @@ max_threads)
                                           vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                           1, istep*nbw, n_cols, nblk, max_threads)
       endif
-    endif  ! useNvidiaGPU
+    endif  ! useNoGPU
 
     ! A = A - V*U**T - U*V**T
 
@@ -1452,7 +1657,21 @@ max_threads)
                                    size_of_datatype), lda)
         call obj%timer%stop("cublas")
 
-      else ! useNvidiaGPU
+      endif ! useNvidiaGPU
+
+      if (useIntelGPU) then
+
+        call obj%timer%start("mkl_offload")
+        call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre,kind=BLAS_KIND),int(lce-lcs+1,kind=BLAS_KIND), &
+                            int(2*n_cols,kind=BLAS_KIND), &
+                            -ONE, &
+                            vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), umcCPU(lcs,1), &
+                            int(ubound(umcCPU,dim=1),kind=BLAS_KIND), &
+                            ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND))
+        call obj%timer%stop("mkl_offload")
+      endif ! useIntelGPU
+
+      if (useNoGPU) then
 
         call obj%timer%start("blas")
         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre,kind=BLAS_KIND),int(lce-lcs+1,kind=BLAS_KIND), &
@@ -1462,11 +1681,11 @@ max_threads)
                             int(ubound(umcCPU,dim=1),kind=BLAS_KIND), &
                             ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND))
         call obj%timer%stop("blas")
-      endif ! useGPU
+      endif ! useNoGPU
     enddo ! i=0,(istep*nbw-1)/tile_size
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-    if (.not.(useNvidiaGPU)) then
+    if (useNoGPU .or. useIntelGPU) then
       if (allocated(vr)) then
         deallocate(vr, stat=istat, errmsg=errorMessage)
         check_deallocate("bandred: vr", istat, errorMessage)
@@ -1481,7 +1700,7 @@ max_threads)
         deallocate(vmrCPU, stat=istat, errmsg=errorMessage)
         check_deallocate("bandred: vmrCPU", istat, errorMessage)
       endif
-    endif !useNvidiaGPU
+    endif !useNoGPU .or. useIntelGPU
 
   enddo ! istep - loop
 
@@ -1532,6 +1751,10 @@ max_threads)
       check_dealloc_cuda("bandred: vmr_dev ", successCUDA)
     endif
   endif ! useNvidiaGPU
+
+  !if (useIntelGPU) then
+  !   ! needed later
+  !endif
 
   if (allocated(vr)) then
     deallocate(vr, stat=istat, errmsg=errorMessage)

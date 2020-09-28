@@ -238,7 +238,7 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, valid_with_nvidia_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_trans_ev", "Use GPU acceleration for ELPA1 trans ev", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa1, NULL, PRINT_YES),
-        INT_ENTRY("nvidia-gpu_bandred", "Use NVIDIA GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+        INT_ENTRY("gpu_bandred", "Use GPU acceleration for ELPA2 band reduction", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_nvidia_gpu_elpa2, NULL, PRINT_YES),
 	//not yet ported to GPU
         //INT_ENTRY("nvidia-gpu_tridiag_band", "Use NVIDIA GPU acceleration for ELPA2 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
