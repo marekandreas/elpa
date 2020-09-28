@@ -161,9 +161,8 @@
    integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage
    integer(kind=ik)                                                   :: do_useGPU_solve_tridi, do_useGPU_bandred, &
-                                                                         do_useGPU
+                                                                         do_useGPU, do_useGPU_tridiag_band
    logical                                                            :: &
-                                                                         do_useNVIDIAGPU_tridiag_band, &
                                                                          do_useNVIDIAGPU_trans_ev_tridi_to_band, &
                                                                          do_useNVIDIAGPU_trans_ev_band_to_full
    integer(kind=c_int)                                                :: numberOfNVIDIAGPUDevices
@@ -431,17 +430,16 @@
       ! test which block size works
     endif
 
-    do_useGPU_bandred     = do_useGPU
-    do_useGPU_solve_tridi = do_useGPU
+    do_useGPU_bandred      = do_useGPU
+    do_useGPU_solve_tridi  = do_useGPU
+    do_useGPU_tridiag_band = do_useGPU
 
     if (do_useGPU .eq. USE_NVIDIA_GPU) then
     do_useNVIDIAGPU_trans_ev_tridi_to_band = .true.
     do_useNVIDIAGPU_trans_ev_band_to_full = .true.
-    do_useNVIDIAGPU_tridiag_band = .true.  ! not yet ported
     else
     do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
     do_useNVIDIAGPU_trans_ev_band_to_full = .false.
-    do_useNVIDIAGPU_tridiag_band = .false.  ! not yet ported
     endif
 
     ! only if we want (and can) use GPU in general, look what are the
@@ -826,7 +824,7 @@
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-       do_useNvidiaGPU_tridiag_band, wantDebug, nrThreads)
+       do_useGPU_tridiag_band, wantDebug, nrThreads)
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
