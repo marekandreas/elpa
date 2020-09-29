@@ -127,7 +127,7 @@ subroutine tridiag_&
   real(kind=rk), intent(out)                    :: d_vec(na)
   real(kind=rk), intent(out)                    :: e_vec(na)
   integer(kind=ik), parameter                   :: max_stored_uv = 32
-  logical,          parameter                   :: mat_vec_as_one_block = .false.  ! test what is better on Intel GPUs
+  logical,          parameter                   :: mat_vec_as_one_block = .true.  ! test what is better on Intel GPUs
 #ifdef WITH_OPENMP_TRADITIONAL
   logical,          parameter                   :: useGPUAlgorithm = .false. ! TODO: make this work with OPENMP
 #else
@@ -1298,7 +1298,7 @@ subroutine tridiag_&
               endif
             endif 
 #endif /* WITH_OPENMP_TRADITIONAL */
-            
+
             if (useIntelGPU .and. .not.(useGPUAlgorithm)) then
               ! should only be run on CPU if large matrix works for intel gpu
               if (wantDebug) call obj%timer%start("mkl_offload")
