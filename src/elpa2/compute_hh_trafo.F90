@@ -51,7 +51,7 @@ subroutine compute_hh_trafo_&
 &_&
 #endif
 &PRECISION &
-(obj, useNvidiaGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+(obj, useGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
 #ifdef WITH_OPENMP_TRADITIONAL
 l_nev, &
 #endif
@@ -110,10 +110,11 @@ kernel)
   use cuda_functions
 
   use elpa_generated_fortran_interfaces
-
+  use gpu_infrastructure
   implicit none
   class(elpa_abstract_impl_t), intent(inout) :: obj
-  logical, intent(in)                        :: useNvidiaGPU, wantDebug
+  logical, intent(in)                        :: wantDebug
+  integer(kind=ik), intent(in)               :: useGPU
   real(kind=c_double), intent(inout)         :: kernel_time  ! MPI_WTIME always needs double
   integer(kind=lik)                          :: kernel_flops
   integer(kind=ik), intent(in)               :: nbw, max_blk_size
@@ -177,7 +178,18 @@ kernel)
                                                                  &PRECISION&
                                                                  &_&
                                                                  &MATH_DATATYPE
+  logical                                    :: useNoGPU, useNvidiaGPU, useIntelGPU
 
+
+  useNoGPU     = .true.
+  useNvidiaGPU = .false.
+  useIntelGPU  = .false.
+
+  if (useGPU .ne. USE_NO_GPU) then
+    if (useGPU .eq. USE_NVIDIA_GPU) useNvidiaGPU = .true.
+    !if (useGPU .eq. USE_INTEL_GPU) useIntelGPU = .true. ! at the moment no Intel GPU kernel
+    useNoGPU = .false.
+  endif
 
   j = -99
 
@@ -189,7 +201,17 @@ kernel)
 #if COMPLEXCASE == 1
       ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
 #endif
-      print *,"ERROR: useGPU is set in conpute_hh_trafo but not GPU kernel!"
+      print *,"ERROR: useGPU is set in conpute_hh_trafo but not Nvidia GPU kernel!"
+      stop
+    endif
+    if (useIntelGPU .and. &
+#if REALCASE == 1
+      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU)) then
+#endif
+#if COMPLEXCASE == 1
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
+#endif
+      print *,"ERROR: useGPU is set in conpute_hh_trafo but not Intel GPU kernel!"
       stop
     endif
   endif

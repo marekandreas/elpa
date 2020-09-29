@@ -162,10 +162,9 @@
    character(200)                                                     :: errorMessage
    integer(kind=ik)                                                   :: do_useGPU_solve_tridi, do_useGPU_bandred, &
                                                                          do_useGPU, do_useGPU_tridiag_band, &
+                                                                         do_useGPU_trans_ev_tridi_to_band, &
                                                                          do_useGPU_trans_ev_band_to_full
 
-   logical                                                            :: &
-                                                                         do_useNVIDIAGPU_trans_ev_tridi_to_band
    integer(kind=c_int)                                                :: numberOfNVIDIAGPUDevices
    integer(kind=c_intptr_t), parameter                                :: size_of_datatype = size_of_&
                                                                                             &PRECISION&
@@ -195,7 +194,7 @@
 
    logical                                                            :: do_bandred, do_tridiag, do_solve_tridi,  &
                                                                          do_trans_to_band, do_trans_to_full
-   logical                                                           :: good_nblk_nvidia_gpu
+   logical                                                           :: good_nblk_nvidia_gpu, good_nblk_intel_gpu
    integer(kind=ik)                                                   :: useGPU
 
    integer(kind=ik)                                                   :: nrThreads
@@ -431,16 +430,11 @@
       ! test which block size works
     endif
 
-    do_useGPU_bandred               = do_useGPU
-    do_useGPU_solve_tridi           = do_useGPU
-    do_useGPU_tridiag_band          = do_useGPU
-    do_useGPU_trans_ev_band_to_full = do_useGPU
-
-    if (do_useGPU .eq. USE_NVIDIA_GPU) then
-    do_useNVIDIAGPU_trans_ev_tridi_to_band = .true.
-    else
-    do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
-    endif
+    do_useGPU_bandred                = do_useGPU
+    do_useGPU_solve_tridi            = do_useGPU
+    do_useGPU_tridiag_band           = do_useGPU
+    do_useGPU_trans_ev_tridi_to_band = do_useGPU
+    do_useGPU_trans_ev_band_to_full  = do_useGPU
 
     ! only if we want (and can) use GPU in general, look what are the
     ! requirements for individual routines. Implicitly they are all set to 1, so
@@ -473,18 +467,14 @@
         do_useGPU_solve_tridi = do_useGPU
       endif
 
-      call obj%get("nvidia-gpu_trans_ev_tridi_to_band", gpu, error)
+      call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_trans_ev_tridi_to_band settings. Aborting..."
         stop
       endif
 
       if (gpu .eq. 1) then
-        if (do_useGPU .eq. USE_NVIDIA_GPU) then
-          do_useNVIDIAGPU_trans_ev_tridi_to_band = .true.
-        else
-          do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
-        endif
+        do_useGPU_trans_ev_tridi_to_band = do_useGPU
       endif
  
       call obj%get("gpu_trans_ev_band_to_full", gpu, error)
@@ -497,48 +487,101 @@
       endif
     endif
 
+    if (do_useGPU .eq. USE_INTEL_GPU) then
+      kernel = GENERIC_KERNEL
+    endif
+
     ! check consistency between request for GPUs and defined kernel
-    if (do_useNVIDIAGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. NVIDIA_GPU_KERNEL) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-        do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
-      else
-        good_nblk_nvidia_gpu = .false.
+    if (do_useGPU_trans_ev_tridi_to_band .ne. USE_NO_GPU) then
+      if (do_useGPU .eq. USE_NVIDIA_GPU) then
+        if (kernel .ne. NVIDIA_GPU_KERNEL) then
+          write(error_unit,*) "ELPA: Warning, Nvidia GPU usage has been requested but compute kernel is defined as non-GPU!"
+          write(error_unit,*) "The compute kernel will be executed on CPUs!"
+          do_useGPU_trans_ev_tridi_to_band = USE_NO_GPU
+        else
+          good_nblk_nvidia_gpu = .false.
 
-        ! Accepted values are 2,4,8,16,...,512
-        do i = 1,10
-           if (nblk == 2**i) then
-              good_nblk_nvidia_gpu = .true.
-              exit
-           endif
-        enddo
+          ! Accepted values are 2,4,8,16,...,512
+          do i = 1,10
+             if (nblk == 2**i) then
+                good_nblk_nvidia_gpu = .true.
+                exit
+             endif
+          enddo
 
-        if (.not. good_nblk_nvidia_gpu) then
-           write(error_unit,*) "ELPA: Warning, CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
-           write(error_unit,*) "The compute kernel will be executed on CPUs!"
-           do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
-           kernel = GENERIC_KERNEL
+          if (.not. good_nblk_nvidia_gpu) then
+             write(error_unit,*) "ELPA: Warning, NVIDIA CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
+             write(error_unit,*) "The compute kernel will be executed on CPUs!"
+             do_useGPU_trans_ev_tridi_to_band = USE_NO_GPU
+             kernel = GENERIC_KERNEL
+          endif
         endif
       endif
+      !if (do_useGPU .eq. USE_INTEL_GPU) then
+      !  if (kernel .ne. NVIDIA_GPU_KERNEL) then
+      !          ! must be INTEL_GPU_KERNEL
+      !    write(error_unit,*) "ELPA: Warning, Intel GPU usage has been requested but compute kernel is defined as non-GPU!"
+      !    write(error_unit,*) "The compute kernel will be executed on CPUs!"
+      !    do_useGPU_trans_ev_tridi_to_band = USE_NO_GPU
+      !  else
+      !    good_nblk_intel_gpu = .false.
+
+      !    ! Accepted values are 2,4,8,16,...,512
+      !    do i = 1,10
+      !       if (nblk == 2**i) then
+      !          good_nblk_intel_gpu = .true.
+      !          exit
+      !       endif
+      !    enddo
+
+      !    if (.not. good_nblk_intel_gpu) then
+      !       write(error_unit,*) "ELPA: Warning, INTEL GPU kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
+      !       write(error_unit,*) "The compute kernel will be executed on CPUs!"
+      !       do_useGPU_trans_ev_tridi_to_band = USE_NO_GPU
+      !       kernel = GENERIC_KERNEL
+      !    endif
+      !  endif
+      !endif
     endif
 
     ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band sould be
     ! finally consistent
-    if (do_useNVIDIAGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. NVIDIA_GPU_KERNEL) then
-        ! this should never happen, checking as an assert
-        write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
-        stop
+    if (do_useGPU_trans_ev_tridi_to_band .ne. USE_NO_GPU) then
+      if (do_useGPU .eq. USE_NVIDIA_GPU) then
+        if (kernel .ne. NVIDIA_GPU_KERNEL) then
+          ! this should never happen, checking as an assert
+          write(error_unit,*) "ELPA: INTERNAL ERROR setting Nvidia GPU kernel!  Aborting..."
+          stop
+        endif
       endif
+      !if (do_useGPU .eq. USE_INTEL_GPU) then
+      !  if (kernel .ne. NVIDIA_GPU_KERNEL) then
+      !          ! must be INTEL_GPU_KERNEL
+      !    ! this should never happen, checking as an assert
+      !    write(error_unit,*) "ELPA: INTERNAL ERROR setting Intel GPU kernel!  Aborting..."
+      !    stop
+      !  endif
+      !endif
     else
-      if (kernel .eq. NVIDIA_GPU_KERNEL) then
-        ! combination not allowed
-        write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
-                            &is defined as the GPU kernel!  Aborting..."
-        stop
-        !TODO do error handling properly
+      if (do_useGPU .eq. USE_NVIDIA_GPU) then
+        if (kernel .eq. NVIDIA_GPU_KERNEL) then
+          ! combination not allowed
+          write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
+                              &is defined as the NVIDIA GPU kernel!  Aborting..."
+          stop
+          !TODO do error handling properly
+        endif
       endif
+      !if (do_useGPU .eq. USE_INTEL_GPU) then
+      !  if (kernel .eq. NVIDIA_GPU_KERNEL) then
+      !          ! must be INTEL_GPU_KERNEL
+      !    ! combination not allowed
+      !    write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
+      !                        &is defined as the INTEL GPU kernel!  Aborting..."
+      !    stop
+      !    !TODO do error handling properly
+      !  endif
+      !endif
     endif
 
 
@@ -959,7 +1002,7 @@
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
-       matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useNVIDIAGPU_trans_ev_tridi_to_band, &
+       matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_band")
@@ -1007,7 +1050,7 @@
            &_&
            &PRECISION &
            (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
-           matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useNVIDIAGPU_trans_ev_tridi_to_band, &
+           matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
          endif
               ! We can now deallocate the stored householder vectors

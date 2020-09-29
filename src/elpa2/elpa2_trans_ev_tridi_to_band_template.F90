@@ -57,7 +57,7 @@ subroutine trans_ev_tridi_to_band_&
 &_&
 &PRECISION &
 (obj, na, nev, nblk, nbw, q, ldq, matrixCols,         &
- hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useNvidiaGPU, max_threads, success, &
+ hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, max_threads, success, &
  kernel)
 
 !-------------------------------------------------------------------------------
@@ -97,10 +97,11 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_OPENMP_TRADITIONAL
   ! use omp_lib
 #endif
+  use gpu_infrastructure
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
-  logical, intent(in)                        :: useNVIDIAGPU
+  integer(kind=ik), intent(in)               :: useGPU
 
   integer(kind=ik), intent(in)               :: kernel
   integer(kind=ik), intent(in)               :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
@@ -208,11 +209,19 @@ subroutine trans_ev_tridi_to_band_&
                                                                  &PRECISION&
                                                                  &_&
                                                                  &MATH_DATATYPE
+  logical                                    :: useNoGPU, useNvidiaGPU, useIntelGPU
 
-  if(useNvidiaGPU) then
+  useNoGPU     = .true.
+  useNvidiaGPU = .false.
+  useIntelGPU  = .false.
+  if(useGPU .ne. USE_NO_GPU) then
     gpuString = "_gpu"
+    if (useGPU .eq. USE_NVIDIA_GPU) useNvidiaGPU = .true.
+    if (useGPU .eq. USE_INTEL_GPU)  useIntelGPU  = .true.
+    useNoGPU = .false.
   else
     gpuString = ""
+    useNoGPU = .true.
   endif
 
   call obj%timer%start("trans_ev_tridi_to_band_&
@@ -223,6 +232,10 @@ subroutine trans_ev_tridi_to_band_&
 
   n_times = 0
   if (useNvidiaGPU) then
+    unpack_idx = 0
+    row_group_size = 0
+  endif
+  if (useIntelGPU) then
     unpack_idx = 0
     row_group_size = 0
   endif
@@ -280,10 +293,111 @@ subroutine trans_ev_tridi_to_band_&
     ! every primary cache
     ! Suggested stripe width is 48 - should this be reduced for the complex case ???
 
-    if (useNVIDIAGPU) then
+    if (useNvidiaGPU) then
       stripe_width = 256 ! Must be a multiple of 4
       stripe_count = (l_nev - 1) / stripe_width + 1
-    else ! useNVIDIAGPU
+    endif ! useNvidiaGPU
+
+    if (useIntelGPU) then
+      ! these settings must be tuned for IntelGPUs
+      thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
+
+#if REALCASE == 1
+      call obj%get("stripewidth_real",stripe_width, error)
+
+#ifdef DOUBLE_PRECISION_REAL
+      !stripe_width = 48 ! Must be a multiple of 4
+#else
+      stripe_width = stripe_width * 2
+      !stripe_width = 96 ! Must be a multiple of 8
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+      call obj%get("stripewidth_complex",stripe_width, error)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+      !stripe_width = 48 ! Must be a multiple of 2
+#else
+      stripe_width = stripe_width * 2
+      !stripe_width = 48 ! Must be a multiple of 4
+#endif
+#endif /* COMPLEXCASE */
+
+      stripe_count = (thread_width-1)/stripe_width + 1
+
+      ! Adapt stripe width so that last one doesn't get too small
+
+      stripe_width = (thread_width-1)/stripe_count + 1
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+      if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+
+        stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
+                                              ! (8 * sizeof(double) == 64)
+
+      else
+        stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
+                                              ! (4 * sizeof(double) == 32)
+      endif
+#else
+      if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+
+
+        stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
+                                           ! (16 * sizeof(float) == 64)
+
+      else
+        stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX/SSE memory alignment of 32 bytes
+                                         ! (8 * sizeof(float) == 32)
+      endif
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+      if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+          kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+
+        stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
+                                        ! (4 * sizeof(double complex) == 64)
+
+      else
+
+        stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 2 because of AVX/SSE memory alignment of 32 bytes
+                                        ! (2 * sizeof(double complex) == 32)
+      endif
+#else
+
+      if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+          kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+
+        stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
+                                        ! (8 * sizeof(float complex) == 64)
+
+      else
+        stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
+                                        ! (4 * sizeof(float complex) == 32)
+      endif
+#endif
+#endif /* COMPLEXCASE */
+
+#if REALCASE == 1
+      last_stripe_width = l_nev - (stripe_count-1)*stripe_width
+#endif
+#if COMPLEXCASE == 1
+      ! only needed in no OMP case check thsis
+      ! last_stripe_width = l_nev - (stripe_count-1)*stripe_width
+#endif
+
+    endif ! useIntelGPU
+
+    if (useNoGPU) then
       ! openmp only in non-GPU case
       thread_width = (l_nev-1)/max_threads + 1 ! number of eigenvectors per OMP thread
 
@@ -380,7 +494,7 @@ subroutine trans_ev_tridi_to_band_&
       ! last_stripe_width = l_nev - (stripe_count-1)*stripe_width
 #endif
 
-    endif ! useNVIDIAGPU
+    endif ! useNoGPU
 
 #else /* WITH_OPENMP_TRADITIONAL */
 
@@ -388,11 +502,13 @@ subroutine trans_ev_tridi_to_band_&
     ! every primary cache
     ! Suggested stripe width is 48 - should this be reduced for the complex case ???
 
-    if (useNVIDIAGPU) then
+    if (useNvidiaGPU) then
       stripe_width = 1024 ! Must be a multiple of 4
       stripe_count = (l_nev - 1) / stripe_width + 1
+    endif ! useNvidiaGPU
 
-    else ! useNVIDIAGPU
+    if (useIntelGPU) then
+      ! these settings must be tuned for Intel GPUS
 #if REALCASE == 1
       call obj%get("stripewidth_real",stripe_width, error)
 
@@ -477,7 +593,94 @@ subroutine trans_ev_tridi_to_band_&
      endif
 #endif
 #endif /* COMPLEXCASE */
-   endif ! useNVIDIAGPU
+   endif ! useIntelGPU
+
+    if (useNoGPU) then
+#if REALCASE == 1
+      call obj%get("stripewidth_real",stripe_width, error)
+
+#ifdef DOUBLE_PRECISION_REAL
+      !stripe_width = 48 ! Must be a multiple of 4
+#else
+      !stripe_width = 96 ! Must be a multiple of 8
+      stripe_width = 2 * stripe_width
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+      call obj%get("stripewidth_complex",stripe_width, error)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+      !stripe_width = 48 ! Must be a multiple of 2
+#else
+      !stripe_width = 48 ! Must be a multiple of 4
+#endif
+#endif /* COMPLEXCASE */
+
+      stripe_count = (l_nev-1)/stripe_width + 1
+
+      ! Adapt stripe width so that last one doesn't get too small
+
+      stripe_width = (l_nev-1)/stripe_count + 1
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+      if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+
+        stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
+                                              ! (8 * sizeof(double) == 64)
+
+      else
+        stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
+                                            ! (4 * sizeof(double) == 32)
+      endif
+#else
+      if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+
+
+       stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
+                                               ! (16 * sizeof(float) == 64)
+
+     else
+       stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX/SSE memory alignment of 32 bytes
+                                            ! (8 * sizeof(float) == 32)
+     endif
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+
+     if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+
+       stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
+                                       ! (4 * sizeof(double complex) == 64)
+
+     else
+
+       stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 2 because of AVX/SSE memory alignment of 32 bytes
+                                       ! (2 * sizeof(double complex) == 32)
+     endif
+#else
+
+     if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
+         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+
+       stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
+                                       ! (8 * sizeof(float complex) == 64)
+
+     else
+       stripe_width = ((stripe_width+3)/4)*4 ! Must be a multiple of 4 because of AVX/SSE memory alignment of 32 bytes
+                                       ! (4 * sizeof(float complex) == 32)
+     endif
+#endif
+#endif /* COMPLEXCASE */
+   endif ! useNoGPU
 
    last_stripe_width = l_nev - (stripe_count-1)*stripe_width
 
@@ -494,7 +697,7 @@ subroutine trans_ev_tridi_to_band_&
 
   a_dim2 = max_blk_size + nbw
 
-  if (useNVIDIAGPU) then
+  if (useNvidiaGPU) then
     num =  (stripe_width*a_dim2*stripe_count)* size_of_datatype
     successCUDA = cuda_malloc(aIntern_dev, stripe_width*a_dim2*stripe_count* size_of_datatype)
     check_alloc_cuda("trans_ev_tridi_to_band: aIntern_dev", successCUDA)
@@ -515,7 +718,9 @@ subroutine trans_ev_tridi_to_band_&
     successCUDA = cuda_memset(row_group_dev , 0, num)
     check_memset_cuda("trans_ev_tridi_to_band: row_group_dev", successCUDA)
 
-  else ! NVIDIA GPUs are not used
+  endif ! useNvidiaGPU
+
+  if (useIntelGPU) then
 
 #if 0
 ! realcase or complexcase
@@ -549,7 +754,43 @@ subroutine trans_ev_tridi_to_band_&
 
         aIntern(:,:,:) = 0.0_rck
 #endif /* WITH_OPENMP_TRADITIONAL */
-  endif !useNVIDIAGPU
+  endif !useIntelGPU
+
+  if (useNoGPU) then
+
+#if 0
+! realcase or complexcase
+!DEC$ ATTRIBUTES ALIGN: 64:: aIntern
+#endif
+
+#ifdef WITH_OPENMP_TRADITIONAL
+    if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*max_threads*     &
+           C_SIZEOF(a_var)) /= 0) then
+      print *,"trans_ev_tridi_to_band_&
+      &MATH_DATATYPE&
+      &: error when allocating aIntern"//errorMessage
+      stop 1
+    endif
+
+    call c_f_pointer(aIntern_ptr, aIntern, [stripe_width,a_dim2,stripe_count,max_threads])
+    ! allocate(aIntern(stripe_width,a_dim2,stripe_count,max_threads), stat=istat, errmsg=errorMessage)
+
+    ! aIntern(:,:,:,:) should be set to 0 in a parallel region, not here!
+
+#else /* WITH_OPENMP_TRADITIONAL */
+
+    if (posix_memalign(aIntern_ptr, 64_c_intptr_t, stripe_width*a_dim2*stripe_count*  &
+        C_SIZEOF(a_var)) /= 0) then
+      print *,"trans_ev_tridi_to_band_real: error when allocating aIntern"//errorMessage
+      stop 1
+    endif
+
+    call c_f_pointer(aIntern_ptr, aIntern,[stripe_width,a_dim2,stripe_count] )
+    !allocate(aIntern(stripe_width,a_dim2,stripe_count), stat=istat, errmsg=errorMessage)
+
+        aIntern(:,:,:) = 0.0_rck
+#endif /* WITH_OPENMP_TRADITIONAL */
+  endif !useNoGPU
 
   allocate(row(l_nev), stat=istat, errmsg=errorMessage)
   check_allocate("trans_ev_tridi_to_band: row", istat, errorMessage)
@@ -616,7 +857,7 @@ subroutine trans_ev_tridi_to_band_&
           call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP_TRADITIONAL */
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             ! An unpacking of the current row group may occur before queuing the next row
             call unpack_and_prepare_row_group_&
             &MATH_DATATYPE&
@@ -636,8 +877,9 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_MPI */
             row_group(1:l_nev, row_group_size) = row(1:l_nev) ! is this correct?
 #endif /* WITH_MPI */
+          endif ! useNvidiaGPU
 
-          else ! useNVIDIAGPU
+          if (useIntelGPU) then
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
             call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
@@ -655,14 +897,34 @@ subroutine trans_ev_tridi_to_band_&
                  &_cpu_&
                  &PRECISION &
                              (obj,aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
-          endif ! useNVIDIAGPU
+          endif ! useIntelGPU
+
+          if (useNoGPU) then
+#ifdef WITH_MPI
+            if (wantDebug) call obj%timer%start("mpi_communication")
+            call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                         int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+            if (wantDebug) call obj%timer%stop("mpi_communication")
+
+#else /* WITH_MPI */
+
+!           row(1:l_nev) = row(1:l_nev)
+
+#endif /* WITH_MPI */
+
+            call unpack_row_&
+                 &MATH_DATATYPE&
+                 &_cpu_&
+                 &PRECISION &
+                             (obj,aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
+          endif ! useNoGPU
 #endif /* WITH_OPENMP_TRADITIONAL */
 
         elseif (src == my_prow) then
 
           src_offset = src_offset+1
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
 #ifndef WITH_OPENMP_TRADITIONAL
 
             ! An unpacking of the current row group may occur before queuing the next row
@@ -690,7 +952,13 @@ subroutine trans_ev_tridi_to_band_&
 !#endif
 
 #endif /* not OpenMP */
-          else
+          endif ! useNividiaGPU
+
+          if (useIntelGPU) then
+            row(:) = q(src_offset, 1:l_nev)
+          endif
+
+          if (useNoGPU) then
             row(:) = q(src_offset, 1:l_nev)
           endif
 
@@ -712,9 +980,19 @@ subroutine trans_ev_tridi_to_band_&
 
 #else /* WITH_OPENMP_TRADITIONAL */
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
 
-          else
+          endif
+
+          if (useIntelGPU) then
+            call unpack_row_&
+                 &MATH_DATATYPE&
+                 &_cpu_&
+                 &PRECISION &
+                            (obj,aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
+          endif
+
+          if (useNoGPU) then
             call unpack_row_&
                  &MATH_DATATYPE&
                  &_cpu_&
@@ -793,7 +1071,7 @@ subroutine trans_ev_tridi_to_band_&
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 
 #else /* WITH_OPENMP_TRADITIONAL */
-              if (useNVIDIAGPU) then
+              if (useNvidiaGPU) then
                 ! An unpacking of the current row group may occur before queuing the next row
                 call unpack_and_prepare_row_group_&
                      &MATH_DATATYPE&
@@ -814,8 +1092,9 @@ subroutine trans_ev_tridi_to_band_&
 
                row_group(1:l_nev,row_group_size) = row(1:l_nev) ! is this correct ?
 #endif /* WITH_MPI */
+              endif ! useNvidiaGPU
 
-              else ! useNVIDIAGPU
+              if (useIntelGPU) then
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
                 call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
@@ -831,7 +1110,25 @@ subroutine trans_ev_tridi_to_band_&
                      &_cpu_&
                      &PRECISION &
                                 (obj,aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
-              endif ! useNVIDIAGPU
+              endif ! useIntelGPU
+
+              if (useNoGPU) then
+#ifdef WITH_MPI
+                if (wantDebug) call obj%timer%start("mpi_communication")
+                call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                              int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+                if (wantDebug) call obj%timer%stop("mpi_communication")
+#else /* WITH_MPI */
+
+!                row(1:l_nev) = row(1:l_nev)
+
+#endif
+                call unpack_row_&
+                     &MATH_DATATYPE&
+                     &_cpu_&
+                     &PRECISION &
+                                (obj,aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
+              endif ! useNoGPU
 
 #endif /* WITH_OPENMP_TRADITIONAL */
 
@@ -840,7 +1137,7 @@ subroutine trans_ev_tridi_to_band_&
         endif
       enddo
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         ! Force an unpacking of all remaining rows that haven't been unpacked yet
         call unpack_and_prepare_row_group_&
              &MATH_DATATYPE&
@@ -853,6 +1150,9 @@ subroutine trans_ev_tridi_to_band_&
           -1, .true.)
 
       endif
+      !if (useIntelGPU) then
+      !  ! needed later
+      !endif
 
       ! Set up result buffer queue
 
@@ -933,7 +1233,7 @@ subroutine trans_ev_tridi_to_band_&
       bottom_border_send_buffer(:,:) = 0.0_rck
       bottom_border_recv_buffer(:,:) = 0.0_rck
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         successCUDA = cuda_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
                       stripe_width*nbw*max_threads * stripe_count * size_of_datatype,&
                       cudaHostRegisterDefault)
@@ -954,6 +1254,10 @@ subroutine trans_ev_tridi_to_band_&
                       cudaHostRegisterDefault)
         check_host_register_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer", successCUDA)
       endif
+
+      !if (useIntelGPU) then
+      !  ! needed later
+      !endif
 
       ! Initialize broadcast buffer
 
@@ -976,7 +1280,7 @@ subroutine trans_ev_tridi_to_band_&
       bottom_border_send_buffer(:,:,:) = 0.0_rck
       bottom_border_recv_buffer(:,:,:) = 0.0_rck
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         successCUDA = cuda_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
                       stripe_width*nbw* stripe_count * size_of_datatype,&
                       cudaHostRegisterDefault)
@@ -997,22 +1301,31 @@ subroutine trans_ev_tridi_to_band_&
                       cudaHostRegisterDefault)
         check_host_register_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer", successCUDA)
       endif
+
+      !if (useIntelGPU) then
+      !  ! needed later
+      !endif
 #endif /* WITH_OPENMP_TRADITIONAL */
 
       ! Initialize broadcast buffer
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         successCUDA = cuda_malloc_host(bcast_buffer_host,nbw*max_blk_size*size_of_datatype)
         check_host_alloc_cuda("trans_ev_tridi_to_band: bcast_buffer_host", successCUDA)
         call c_f_pointer(bcast_buffer_host, bcast_buffer, (/nbw,max_blk_size/))
-      else
+      endif
+      if (useIntelGPU) then
+        allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
+        check_allocate("trans_ev_tridi_to_band: bcast_buffer", istat, errorMessage)
+      endif
+      if (useNoGPU) then
         allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
         check_allocate("trans_ev_tridi_to_band: bcast_buffer", istat, errorMessage)
       endif
 
       bcast_buffer = 0.0_rck
 
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         num =  ( nbw * max_blk_size) * size_of_datatype
         successCUDA = cuda_malloc(bcast_buffer_dev, num)
         check_alloc_cuda("trans_ev_tridi_to_band: bcast_buffer_dev", successCUDA)
@@ -1027,6 +1340,9 @@ subroutine trans_ev_tridi_to_band_&
         successCUDA = cuda_memset( hh_tau_dev, 0, num)
         check_memset_cuda("trans_ev_tridi_to_band: hh_tau_dev", successCUDA)
       endif ! useNVIDIAGPU
+      !if (useIntelGPU) then
+      !   ! needed later
+      !endif
 
       current_tv_off = 0 ! Offset of next row to be broadcast
 
@@ -1071,7 +1387,7 @@ subroutine trans_ev_tridi_to_band_&
 
 #ifdef WITH_OPENMP_TRADITIONAL
 
-            if (useNVIDIAGPU) then
+            if (useNvidiaGPU) then
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
               stop 1
             endif
@@ -1124,7 +1440,7 @@ subroutine trans_ev_tridi_to_band_&
 
 #endif /* WITH_MPI */
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             successCUDA =  cuda_memcpy(bcast_buffer_dev, int(loc(bcast_buffer(1,1)),kind=c_intptr_t),  &
                                        nbw * current_local_n *    &
                                        size_of_datatype, &
@@ -1138,12 +1454,13 @@ subroutine trans_ev_tridi_to_band_&
                  (bcast_buffer_dev, hh_tau_dev, nbw, &
                  current_local_n, .false.)
           endif ! useNVIDIAGPU
-
+          !if (useIntelGPU) then
+          !endif
         else ! (current_local_n > 1) then
 
           ! for current_local_n == 1 the one and only HH Vector is 0 and not stored in hh_trans_real/complex
           bcast_buffer(:,1) = 0.0_rck
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             successCUDA = cuda_memset(bcast_buffer_dev, 0, nbw * size_of_datatype)
             check_memset_cuda("trans_ev_tridi_to_band: bcast_buffer_dev", successCUDA)
 
@@ -1155,6 +1472,8 @@ subroutine trans_ev_tridi_to_band_&
         bcast_buffer_dev, hh_tau_dev, &
         nbw, 1, .true.)
           endif ! useNVIDIAGPU
+          !if (useIntelGPU) then
+          !endif
         endif ! (current_local_n > 1) then
 
         if (l_nev == 0) cycle
@@ -1163,7 +1482,7 @@ subroutine trans_ev_tridi_to_band_&
 
           do i = 1, stripe_count
 #ifdef WITH_OPENMP_TRADITIONAL
-            if (useNVIDIAGPU) then
+            if (useNvidiaGPU) then
               print *,"trans_ev_tridi_to_band_real: not yet implemented"
               stop 1
             endif
@@ -1181,7 +1500,7 @@ subroutine trans_ev_tridi_to_band_&
 
 
 #ifdef WITH_OPENMP_TRADITIONAL
-              if (useNVIDIAGPU) then
+              if (useNvidiaGPU) then
                 print *,"trans_ev_tridi_to_band_real: not yet implemented"
                 stop 1
               endif
@@ -1213,7 +1532,7 @@ subroutine trans_ev_tridi_to_band_&
 #endif
               n_off = current_local_n+a_off
 
-              if (useNVIDIAGPU) then
+              if (useNvidiaGPU) then
                 dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * size_of_datatype
                 successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , &
                                            int(loc(bottom_border_recv_buffer(1,1,i)),kind=c_intptr_t), &
@@ -1221,7 +1540,12 @@ subroutine trans_ev_tridi_to_band_&
                                            cudaMemcpyHostToDevice)
                 check_memcpy_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successCUDA)
 
-              else
+              endif ! useNividaGPU
+              if (useIntelGPU) then
+                aIntern(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
+              endif
+
+              if (useNoGPU) then
                 aIntern(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
               endif
 
@@ -1231,7 +1555,7 @@ subroutine trans_ev_tridi_to_band_&
 
 #ifdef WITH_OPENMP_TRADITIONAL
 
-             if (useNVIDIAGPU) then
+             if (useNvidiaGPU) then
                print *,"trans_ev_tridi_to_band_real: not yet implemented"
                stop 1
              endif
@@ -1276,7 +1600,7 @@ subroutine trans_ev_tridi_to_band_&
            if (top_msg_length>0) then
 
 #ifdef WITH_OPENMP_TRADITIONAL
-             if (useNVIDIAGPU) then
+             if (useNvidiaGPU) then
                print *,"trans_ev_tridi_to_band_&
                        &MATH_DATATYPE&
                        &: not yet implemented"
@@ -1297,16 +1621,22 @@ subroutine trans_ev_tridi_to_band_&
              if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
 
-             if (useNVIDIAGPU) then
+             if (useNvidiaGPU) then
                dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
                !             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
                successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , int(loc(top_border_recv_buffer(1,1,i)),kind=c_intptr_t),  &
                                            stripe_width*top_msg_length* size_of_datatype,      &
                                            cudaMemcpyHostToDevice)
                 check_memcpy_cuda("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successCUDA)
-             else ! useNVIDIAGPU
-               aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
              endif ! useNVIDIAGPU
+
+             if (useIntelGPU) then
+               aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+             endif ! useIntelGPU
+
+             if (useNoGPU) then
+               aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+             endif ! useNoGPU
 #endif /* WITH_OPENMP_TRADITIONAL */
            endif ! top_msg_length
 
@@ -1328,7 +1658,7 @@ subroutine trans_ev_tridi_to_band_&
             &MATH_DATATYPE&
             &_openmp_&
             &PRECISION&
-            (obj, useNVIDIAGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+            (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
             l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
             hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, &
             i, my_thread, thread_width, kernel)
@@ -1342,7 +1672,7 @@ subroutine trans_ev_tridi_to_band_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION&
-                &(obj, useNVIDIAGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
                 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
                 last_stripe_width, kernel)
@@ -1381,13 +1711,19 @@ subroutine trans_ev_tridi_to_band_&
 
 #else /* WITH_OPENMP_TRADITIONAL */
 
-             if (useNVIDIAGPU) then
+             if (useNvidiaGPU) then
                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
                successCUDA =  cuda_memcpy( int(loc(bottom_border_send_buffer(1,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                           stripe_width * bottom_msg_length * size_of_datatype,      &
                                           cudaMemcpyDeviceToHost)
                 check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successCUDA)
-             else
+             endif ! useNividiaGPU
+
+             if (useIntelGPU) then
+               bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
+             endif
+
+             if (useNoGPU) then
                bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
              endif
 #ifdef WITH_MPI
@@ -1411,7 +1747,7 @@ subroutine trans_ev_tridi_to_band_&
 
          !compute
 #ifdef WITH_OPENMP_TRADITIONAL
-         if (useNVIDIAGPU) then
+         if (useNvidiaGPU) then
            print *,"trans_ev_tridi_to_band_real: not yet implemented"
            stop 1
          endif
@@ -1424,7 +1760,7 @@ subroutine trans_ev_tridi_to_band_&
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-               &(obj, useNVIDIAGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+               &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
                l_nev, a_off, &
                nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
@@ -1466,7 +1802,7 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useNVIDIAGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, &
              current_local_n - bottom_msg_length, bottom_msg_length, i, &
@@ -1482,13 +1818,19 @@ subroutine trans_ev_tridi_to_band_&
         if (bottom_msg_length > 0) then
           n_off = current_local_n+nbw-bottom_msg_length+a_off
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
             successCUDA =  cuda_memcpy(int(loc(bottom_border_send_buffer(1,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
                                          stripe_width*bottom_msg_length* size_of_datatype,  &
                                          cudaMemcpyDeviceToHost)
                 check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successCUDA)
-          else
+          endif
+
+          if (useIntelGPU) then
+            bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
+          endif
+
+          if (useNoGPU) then
             bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
           endif
 
@@ -1499,10 +1841,10 @@ subroutine trans_ev_tridi_to_band_&
                          int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
-                if (next_top_msg_length > 0) then
-                  top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
-                  bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
-                endif
+          if (next_top_msg_length > 0) then
+            top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
+            bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+          endif
 
 #endif /* WITH_MPI */
 
@@ -1528,7 +1870,7 @@ subroutine trans_ev_tridi_to_band_&
           &MATH_DATATYPE&
           &_openmp_&
           &PRECISION&
-          (obj, useNVIDIAGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
+          (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
           nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
           hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
           current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
@@ -1543,7 +1885,7 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useNVIDIAGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
              current_local_n-top_msg_length-bottom_msg_length, i, &
@@ -1568,13 +1910,18 @@ subroutine trans_ev_tridi_to_band_&
           call MPI_Wait(top_recv_request(i), MPI_STATUS_IGNORE, mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
             successCUDA =  cuda_memcpy( aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,1,i)),kind=c_intptr_t),  &
                                        stripe_width * top_msg_length * size_of_datatype,   &
                cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successCUDA)
-          else
+          endif
+
+          if (useIntelGPU) then
+            aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+          endif
+          if (useNoGPU) then
             aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
           endif
 #endif /* WITH_OPENMP_TRADITIONAL */
@@ -1597,7 +1944,7 @@ subroutine trans_ev_tridi_to_band_&
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-               (obj, useNVIDIAGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+               (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
                l_nev, a_off, &
                nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, my_thread, &
@@ -1612,7 +1959,7 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useNVIDIAGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
              last_stripe_width, kernel)
@@ -1674,12 +2021,12 @@ subroutine trans_ev_tridi_to_band_&
                        top_send_request(i), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
-              if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
-                bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
-              endif
-              if (next_n_end < next_n) then
-                bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
-              endif
+        if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+          bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+        endif
+        if (next_n_end < next_n) then
+          bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+        endif
 #endif /* WITH_MPI */
 
 #else /* WITH_OPENMP_TRADITIONAL */
@@ -1689,13 +2036,19 @@ subroutine trans_ev_tridi_to_band_&
         call MPI_Wait(top_send_request(i), MPI_STATUS_IGNORE, mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
-        if (useNVIDIAGPU) then
+        if (useNvidiaGPU) then
           dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
           successCUDA =  cuda_memcpy( int(loc(top_border_send_buffer(:,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                      stripe_width*nbw * size_of_datatype, &
                                      cudaMemcpyDeviceToHost)
           check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> top_border_send_buffer", successCUDA)
-        else
+        endif
+
+        if (useIntelGPU) then
+          top_border_send_buffer(:,1:nbw,i) = aIntern(:,a_off+1:a_off+nbw,i)
+        endif
+
+        if (useNoGPU) then
           top_border_send_buffer(:,1:nbw,i) = aIntern(:,a_off+1:a_off+nbw,i)
         endif
 #ifdef WITH_MPI
@@ -1705,12 +2058,12 @@ subroutine trans_ev_tridi_to_band_&
                        top_send_request(i), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
-            if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
-               bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
-             endif
-             if (next_n_end < next_n) then
-               bottom_border_recv_buffer(1:stripe_width,1:nbw,i) =  top_border_send_buffer(1:stripe_width,1:nbw,i)
-             endif
+        if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
+           bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
+        endif
+        if (next_n_end < next_n) then
+           bottom_border_recv_buffer(1:stripe_width,1:nbw,i) =  top_border_send_buffer(1:stripe_width,1:nbw,i)
+        endif
 #endif /* WITH_MPI */
 
 #endif /* WITH_OPENMP_TRADITIONAL */
@@ -1773,7 +2126,7 @@ subroutine trans_ev_tridi_to_band_&
         dst = mod(num_blk, np_rows)
 
         if (dst == 0) then
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             row_group_size = min(na - num_blk*nblk, nblk)
             call pack_row_group_&
                  &MATH_DATATYPE&
@@ -1785,7 +2138,9 @@ subroutine trans_ev_tridi_to_band_&
             do i = 1, row_group_size
               q((num_blk / np_rows) * nblk + i, 1 : l_nev) = row_group(:, i)
             enddo
-          else ! useNVIDIAGPU
+          endif ! useNvidiaGPU
+
+          if (useIntelGPU) then
 
             do i = 1, min(na - num_blk*nblk, nblk)
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -1804,11 +2159,32 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* WITH_OPENMP_TRADITIONAL */
               q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
             enddo
-          endif ! useNVIDIAGPU
+          endif ! useIntelGPU
+
+          if (useNoGPU) then
+
+            do i = 1, min(na - num_blk*nblk, nblk)
+#ifdef WITH_OPENMP_TRADITIONAL
+              call pack_row_&
+                   &MATH_DATATYPE&
+                   &_cpu_openmp_&
+                   &PRECISION&
+                   &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
+#else /* WITH_OPENMP_TRADITIONAL */
+
+              call pack_row_&
+                   &MATH_DATATYPE&
+                   &_cpu_&
+                   &PRECISION&
+                   &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+#endif /* WITH_OPENMP_TRADITIONAL */
+              q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
+            enddo
+          endif ! useNoGPU
 
         else ! (dst == 0)
 
-          if (useNVIDIAGPU) then
+          if (useNvidiaGPU) then
             call pack_row_group_&
                  &MATH_DATATYPE&
                  &_gpu_&
@@ -1817,7 +2193,9 @@ subroutine trans_ev_tridi_to_band_&
                    last_stripe_width, a_dim2, l_nev, &
                    result_buffer(:, :, nbuf), j * nblk + a_off, nblk)
 
-          else  ! useNVIDIAGPU
+          endif  ! useNvidiaGPU
+
+          if (useIntelGPU) then
             do i = 1, nblk
 #if WITH_OPENMP_TRADITIONAL
               call pack_row_&
@@ -1834,7 +2212,26 @@ subroutine trans_ev_tridi_to_band_&
                    &(obj, aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif /* WITH_OPENMP_TRADITIONAL */
             enddo
-          endif ! useNVIDIAGPU
+          endif ! useIntelPU
+
+          if (useNoGPU) then
+            do i = 1, nblk
+#if WITH_OPENMP_TRADITIONAL
+              call pack_row_&
+                   &MATH_DATATYPE&
+                   &_cpu_openmp_&
+                   &PRECISION&
+                   &(obj,aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
+                   max_threads, thread_width, l_nev)
+#else /* WITH_OPENMP_TRADITIONAL */
+              call pack_row_&
+                   &MATH_DATATYPE&
+                   &_cpu_&
+                   &PRECISION&
+                   &(obj, aIntern, result_buffer(:,i,nbuf),j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+#endif /* WITH_OPENMP_TRADITIONAL */
+            enddo
+          endif ! useNoPU
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
           call MPI_Isend(result_buffer(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
@@ -1931,7 +2328,7 @@ subroutine trans_ev_tridi_to_band_&
     a_off = a_off + offset
     if (a_off + next_local_n + nbw >= a_dim2) then
 #ifdef WITH_OPENMP_TRADITIONAL
-      if (useNVIDIAGPU) then
+      if (useNvidiaGPU) then
         print *,"trans_ev_tridi_to_band_real: not yet implemented"
         stop 1
       endif
@@ -1965,7 +2362,14 @@ subroutine trans_ev_tridi_to_band_&
 
             check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> aIntern_dev", successCUDA)
           end do
-        else ! not useGPU
+        endif ! useNvidiaGPU
+
+        if (useIntelGPU) then
+          do j = top_msg_length+1, top_msg_length+next_local_n
+            aIntern(:,j,i) = aIntern(:,j+a_off,i)
+          end do
+        end if
+        if (useNoGPU) then
           do j = top_msg_length+1, top_msg_length+next_local_n
             aIntern(:,j,i) = aIntern(:,j+a_off,i)
           end do
@@ -2022,7 +2426,12 @@ subroutine trans_ev_tridi_to_band_&
 
   ! deallocate all working space
 
-   if (.not.(useNVIDIAGPU)) then
+   if (useIntelGPU) then
+     nullify(aIntern)
+     call free(aIntern_ptr)
+   endif
+
+   if (useNoGPU) then
      nullify(aIntern)
      call free(aIntern_ptr)
    endif
@@ -2042,18 +2451,25 @@ subroutine trans_ev_tridi_to_band_&
   deallocate(result_buffer, stat=istat, errmsg=errorMessage)
   check_deallocate("trans_ev_tridi_to_band: result_buffer", istat, errorMessage)
 
-  if (useNVIDIAGPU) then
+  if (useNvidiaGPU) then
     nullify(bcast_buffer)
 
     successCUDA = cuda_free_host(bcast_buffer_host)
     check_host_dealloc_cuda("trans_ev_tridi_to_band: bcast_buffer_host", successCUDA)
-  else
+  endif
+
+  if (useIntelGPU) then
+    deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
+    check_deallocate("trans_ev_tridi_to_band: bcast_buffer", istat, errorMessage)
+  endif
+
+  if (useNoGPU) then
     deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_tridi_to_band: bcast_buffer", istat, errorMessage)
   endif
 
 
-  if (useNVIDIAGPU) then
+  if (useNvidiaGPU) then
     successCUDA = cuda_free(aIntern_dev)
     check_dealloc_cuda("trans_ev_tridi_to_band: aIntern_dev", successCUDA)
 
@@ -2082,7 +2498,10 @@ subroutine trans_ev_tridi_to_band_&
 
     successCUDA = cuda_host_unregister(int(loc(bottom_border_recv_buffer),kind=c_intptr_t))
     check_host_unregister_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer", successCUDA)
-  endif ! useNVIDIAGPU
+  endif ! useNvidiaGPU
+  !if (useIntelGPU) then
+  !  ! needed later
+  !endif
 
   deallocate(top_border_send_buffer, stat=istat, errmsg=errorMessage)
   check_deallocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
