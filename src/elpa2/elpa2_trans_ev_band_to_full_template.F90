@@ -56,7 +56,7 @@ subroutine trans_ev_band_to_full_&
     &_&
     &PRECISION &
     (obj, na, nqc, nblk, nbw, a_mat, lda, tmat, q_mat, &
-     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useNVIDIAGPU &
+     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
 #if REALCASE == 1
      ,useQr)
 #endif
@@ -102,59 +102,68 @@ subroutine trans_ev_band_to_full_&
   use iso_c_binding
   use elpa_abstract_impl
   use elpa_blas_interfaces
+  use gpu_infrastructure
 
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
-  logical, intent(in)                    :: useNVIDIAGPU
+  integer(kind=ik), intent(in)               :: useGPU
 #if REALCASE == 1
-  logical, intent(in)                     :: useQR
+  logical, intent(in)                        :: useQR
 #endif
-  integer(kind=ik)                       :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
+  integer(kind=ik)                           :: na, nqc, lda, ldq, nblk, nbw, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols
 #ifdef USE_ASSUMED_SIZE
-  MATH_DATATYPE(kind=rck)                :: a_mat(lda,*)
-  MATH_DATATYPE(kind=rck)                :: q_mat(ldq,*), tmat(nbw,nbw,*)
+  MATH_DATATYPE(kind=rck)                    :: a_mat(lda,*)
+  MATH_DATATYPE(kind=rck)                    :: q_mat(ldq,*), tmat(nbw,nbw,*)
 #else
-  MATH_DATATYPE(kind=rck)                :: a_mat(lda,matrixCols)
-  MATH_DATATYPE(kind=rck)                :: q_mat(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
+  MATH_DATATYPE(kind=rck)                    :: a_mat(lda,matrixCols)
+  MATH_DATATYPE(kind=rck)                    :: q_mat(ldq,matrixCols), tmat(nbw, nbw, numBlocks)
 #endif
 
-  integer(kind=ik)                       :: my_prow, my_pcol, np_rows, np_cols
-  integer(kind=MPI_KIND)                 :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
-  integer(kind=ik)                       :: max_blocks_row, max_blocks_col, max_local_rows, &
-                                            max_local_cols
-  integer(kind=ik)                       :: l_cols, l_rows, l_colh, n_cols
-  integer(kind=ik)                       :: istep, lc, ncol, nrow, nb, ns
+  integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols
+  integer(kind=MPI_KIND)                     :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
+  integer(kind=ik)                           :: max_blocks_row, max_blocks_col, max_local_rows, &
+                                                max_local_cols
+  integer(kind=ik)                           :: l_cols, l_rows, l_colh, n_cols
+  integer(kind=ik)                           :: istep, lc, ncol, nrow, nb, ns
 
-  MATH_DATATYPE(kind=rck), allocatable   :: hvb(:)
-  MATH_DATATYPE(kind=rck), pointer       :: hvm(:,:), tmp1(:), tmp2(:)
+  MATH_DATATYPE(kind=rck), allocatable       :: hvb(:)
+  MATH_DATATYPE(kind=rck), pointer           :: hvm(:,:), tmp1(:), tmp2(:)
   ! hvm_dev is fist used and set in this routine
   ! q_mat is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
   ! tmp_dev is first used in this routine
   ! tmat_dev is not passed along from bandred_real
-  integer(kind=C_intptr_T)               :: hvm_dev, q_dev, tmp_dev, tmat_dev
-  type(c_ptr)                            :: hvm_host, tmp1_host, tmp2_host
+  integer(kind=C_intptr_T)                   :: hvm_dev, q_dev, tmp_dev, tmat_dev
+  type(c_ptr)                                :: hvm_host, tmp1_host, tmp2_host
 
-  integer(kind=ik)                       :: i
+  integer(kind=ik)                           :: i
 
-  MATH_DATATYPE(kind=rck), allocatable   :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
-  integer(kind=ik)                       :: t_cols, t_rows
-  integer(kind=ik)                       :: cwy_blocking
+  MATH_DATATYPE(kind=rck), allocatable       :: tmat_complete(:,:), t_tmp(:,:), t_tmp2(:,:)
+  integer(kind=ik)                           :: t_cols, t_rows
+  integer(kind=ik)                           :: cwy_blocking
 
-  integer(kind=ik)                       :: istat
-  character(200)                         :: errorMessage
-  character(20)                          :: gpuString
-  logical                                :: successCUDA
-  integer(kind=c_intptr_t), parameter    :: size_of_datatype = size_of_&
-                                                               &PRECISION&
-                                                               &_&
-                                                               &MATH_DATATYPE
-  integer(kind=ik)                       :: blocking_factor, error, blk_end
+  integer(kind=ik)                           :: istat
+  character(200)                             :: errorMessage
+  character(20)                              :: gpuString
+  logical                                    :: successCUDA
+  integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
+                                                                   &PRECISION&
+                                                                   &_&
+                                                                   &MATH_DATATYPE
+  integer(kind=ik)                           :: blocking_factor, error, blk_end
+  logical                                    :: useNoGPU, useIntelGPU, useNvidiaGPU
 
-  if(useNvidiaGPU) then
+  useNoGPU     = .true.
+  useIntelGPU  = .false.
+  useNvidiaGPU = .false.
+  if(useGPU .ne. USE_NO_GPU) then
     gpuString = "_gpu"
+    if (useGPU .eq. USE_NVIDIA_GPU) useNvidiaGPU = .true.
+    if (useGPU .eq. USE_INTEL_GPU)  useIntelGPU  = .true.
+    useNoGPU = .false.
   else
     gpuString = ""
+    useNoGPU = .true.
   endif
 
   call obj%timer%start("trans_ev_band_to_full_&
@@ -219,7 +228,9 @@ subroutine trans_ev_band_to_full_&
     check_host_alloc_cuda("trans_ev_band_to_full: hvm_host", successCUDA)
     call c_f_pointer(hvm_host, hvm, (/max_local_rows,cwy_blocking/))
 
-  else ! useNvidiaGPU
+  endif ! useNvidiaGPU
+
+  if (useIntelGPU) then
     allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
     check_allocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
 
@@ -228,7 +239,18 @@ subroutine trans_ev_band_to_full_&
 
     allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
     check_allocate("trans_ev_band_to_full: hvm", istat, errorMessage)
-  endif !useNvidiaGPU
+  endif !useNoGPU
+
+  if (useNoGPU) then
+    allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
+    check_allocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
+
+    allocate(tmp2(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
+    check_allocate("trans_ev_band_to_full: tmp2", istat, errorMessage)
+
+    allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
+    check_allocate("trans_ev_band_to_full: hvm", istat, errorMessage)
+  endif !useNoGPU
 
   allocate(hvb(max_local_rows*cwy_blocking), stat=istat, errmsg=errorMessage)
   check_allocate("trans_ev_band_to_full: hvb", istat, errorMessage)
@@ -242,6 +264,9 @@ subroutine trans_ev_band_to_full_&
                   cudaHostRegisterDefault)
     check_host_register_cuda("trans_ev_band_to_full: tmat_complete", successCUDA)
   endif
+  !if (useIntelGPU) then
+  !  ! needed later
+  !endif
 
   if (blocking_factor > 1) then
     allocate(t_tmp(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
@@ -261,6 +286,10 @@ subroutine trans_ev_band_to_full_&
     successCUDA = cuda_malloc(tmat_dev,cwy_blocking*cwy_blocking*size_of_datatype)
     check_alloc_cuda("trans_ev_band_to_full: tmat_dev", successCUDA)
   endif
+
+  !if (useIntelGPU) then
+  !  ! needed later
+  !endif
 
   hvm = 0.0_rck ! Must be set to 0 !!!
   hvb = 0.0_rck ! Safety only
@@ -400,14 +429,25 @@ subroutine trans_ev_band_to_full_&
         check_memcpy_cuda("trans_ev_band_to_full: tmp_dev -> tmp1", successCUDA)
 #endif /* WITH_MPI */
 
-      else
+      endif ! useNividaGPU
+
+      if (useIntelGPU) then
+        call obj%timer%start("mkl_offload")
+        call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
+                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
+                            hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, &
+                            int(n_cols,kind=BLAS_KIND))
+        call obj%timer%stop("mkl_offload")
+      endif ! useNoGPU
+
+      if (useNoGPU) then
         call obj%timer%start("blas")
         call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
                             int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
                             hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, &
                             int(n_cols,kind=BLAS_KIND))
         call obj%timer%stop("blas")
-      endif ! useNVIDIAGPU
+      endif ! useNoGPU
     else ! l_rows>0
       tmp1(1:l_cols*n_cols) = 0.0_rck
     endif ! l_rows>0
@@ -434,7 +474,21 @@ subroutine trans_ev_band_to_full_&
         call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, tmp_dev, &
                                    n_cols, ONE, q_dev, ldq)
         call obj%timer%stop("cublas")
-      else
+      endif ! useNvidiaGPU
+
+      if (useIntelGPU) then
+        call obj%timer%start("mkl_offload")
+        call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                            int(cwy_blocking,kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND))
+        call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                            int(n_cols,kind=BLAS_KIND), -ONE, hvm, &
+                            int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND), ONE, &
+                            q_mat, int(ldq,kind=BLAS_KIND))
+        call obj%timer%stop("mkl_offload")
+      endif ! useIntelGPU
+
+      if (useNoGPU) then
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                             int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
@@ -444,7 +498,7 @@ subroutine trans_ev_band_to_full_&
                             int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND), ONE, &
                             q_mat, int(ldq,kind=BLAS_KIND))
         call obj%timer%stop("blas")
-      endif ! useNvidiaGPU
+      endif ! useNoGPU
     endif
 #else /* WITH_MPI */
     if (l_rows>0) then
@@ -460,7 +514,21 @@ subroutine trans_ev_band_to_full_&
         call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
                                    -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq)
         call obj%timer%stop("cublas")
-      else
+      endif ! useNvidiaGPU
+
+      if (useIntelGPU) then
+        call obj%timer%start("mkl_offload")
+        call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                            int(cwy_blocking,kind=BLAS_KIND), &
+                            tmp1, int(n_cols,kind=BLAS_KIND))
+        call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
+                            -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, &
+                            int(ldq,kind=BLAS_KIND))
+        call obj%timer%stop("mkl_offload")
+      endif ! useIntelGPU
+
+      if (useNoGPU) then
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                             int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
@@ -470,7 +538,7 @@ subroutine trans_ev_band_to_full_&
                             -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, &
                             int(ldq,kind=BLAS_KIND))
         call obj%timer%stop("blas")
-      endif ! useNVIDIAGPU
+      endif ! useNoGPU
     endif
 #endif /* WITH_MPI */
 
@@ -514,7 +582,9 @@ subroutine trans_ev_band_to_full_&
 
     successCUDA = cuda_host_unregister(int(loc(tmat_complete),kind=c_intptr_t))
     check_host_unregister_cuda("trans_ev_band_to_full: tmat_complete", successCUDA)
-  else ! useNVIDIAGPU
+  endif ! useNvidiaGPU
+
+  if (useIntelGPU) then
     deallocate(tmp1, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
 
@@ -523,7 +593,18 @@ subroutine trans_ev_band_to_full_&
 
     deallocate(hvm, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_band_to_full: hvm", istat, errorMessage)
-  endif ! useNVIDIAGPU
+  endif ! useIntelGPU
+
+  if (useNoGPU) then
+    deallocate(tmp1, stat=istat, errmsg=errorMessage)
+    check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
+
+    deallocate(tmp2, stat=istat, errmsg=errorMessage)
+    check_deallocate("trans_ev_band_to_full: tmp2", istat, errorMessage)
+
+    deallocate(hvm, stat=istat, errmsg=errorMessage)
+    check_deallocate("trans_ev_band_to_full: hvm", istat, errorMessage)
+  endif ! useNoGPU
 
   deallocate(tmat_complete, stat=istat, errmsg=errorMessage)
   check_deallocate("trans_ev_band_to_full: tmat_complete", istat, errorMessage)

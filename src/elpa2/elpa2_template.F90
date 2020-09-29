@@ -161,10 +161,11 @@
    integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage
    integer(kind=ik)                                                   :: do_useGPU_solve_tridi, do_useGPU_bandred, &
-                                                                         do_useGPU, do_useGPU_tridiag_band
+                                                                         do_useGPU, do_useGPU_tridiag_band, &
+                                                                         do_useGPU_trans_ev_band_to_full
+
    logical                                                            :: &
-                                                                         do_useNVIDIAGPU_trans_ev_tridi_to_band, &
-                                                                         do_useNVIDIAGPU_trans_ev_band_to_full
+                                                                         do_useNVIDIAGPU_trans_ev_tridi_to_band
    integer(kind=c_int)                                                :: numberOfNVIDIAGPUDevices
    integer(kind=c_intptr_t), parameter                                :: size_of_datatype = size_of_&
                                                                                             &PRECISION&
@@ -430,16 +431,15 @@
       ! test which block size works
     endif
 
-    do_useGPU_bandred      = do_useGPU
-    do_useGPU_solve_tridi  = do_useGPU
-    do_useGPU_tridiag_band = do_useGPU
+    do_useGPU_bandred               = do_useGPU
+    do_useGPU_solve_tridi           = do_useGPU
+    do_useGPU_tridiag_band          = do_useGPU
+    do_useGPU_trans_ev_band_to_full = do_useGPU
 
     if (do_useGPU .eq. USE_NVIDIA_GPU) then
     do_useNVIDIAGPU_trans_ev_tridi_to_band = .true.
-    do_useNVIDIAGPU_trans_ev_band_to_full = .true.
     else
     do_useNVIDIAGPU_trans_ev_tridi_to_band = .false.
-    do_useNVIDIAGPU_trans_ev_band_to_full = .false.
     endif
 
     ! only if we want (and can) use GPU in general, look what are the
@@ -487,17 +487,13 @@
         endif
       endif
  
-      call obj%get("nvidia-gpu_trans_ev_band_to_full", gpu, error)
+      call obj%get("gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
         stop
       endif
       if (gpu .eq. 1) then
-        if (do_useGPU .eq. USE_NVIDIA_GPU) then
-          do_useNVIDIAGPU_trans_ev_band_to_full = .true.
-        else
-          do_useNVIDIAGPU_trans_ev_band_to_full = .false.
-        endif
+        do_useGPU_trans_ev_band_to_full = do_useGPU
       endif
     endif
 
@@ -991,7 +987,7 @@
        &PRECISION &
        (obj, na, nev, nblk, nbw, a, &
        matrixRows, tmat, q,  &
-       matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_trans_ev_band_to_full &
+       matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
        , useQRActual  &
 #endif
@@ -1031,7 +1027,7 @@
          &PRECISION &
          (obj, na, nev, nblk, nbw, a, &
          matrixRows, tmat, q(1:matrixRows, matrixCols+1:2*matrixCols),  &
-         matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useNVIDIAGPU_trans_ev_band_to_full &
+         matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
 #if REALCASE == 1
          , useQRActual  &
 #endif
