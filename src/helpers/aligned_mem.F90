@@ -1,3 +1,5 @@
+!    Copyright 2014, L. Huedepohl
+!   
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,

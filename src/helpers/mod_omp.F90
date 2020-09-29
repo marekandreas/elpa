@@ -1,3 +1,5 @@
+!    Copyright 2013, A. Marek
+!
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,

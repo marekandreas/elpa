@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <math.h>
-#include <stdio.h>
+//
+//    Copyright 2014, A. Marek
+//
 //    This file is part of ELPA.
 //
 //    The ELPA library was originally created by the ELPA consortium,
@@ -50,6 +50,9 @@
 //
 // This file was written by A. Marek, MPCDF
 
+#include <stdio.h>
+#include <math.h>
+#include <stdio.h>
 
 #include <stdlib.h>
 #include <string.h>
