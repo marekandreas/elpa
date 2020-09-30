@@ -113,6 +113,7 @@ max_threads)
 #endif
   use elpa_abstract_impl
   use gpu_infrastructure
+  use mkl_offload
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -1168,27 +1169,54 @@ max_threads)
           if (useIntelGPU) then
 
             call obj%timer%start("mkl_offload")
+#if 0
             call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',       &
                                 int(lce-lcs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lre,kind=BLAS_KIND), &
                                 ONE, a_mat(1,lcs), int(ubound(a_mat,dim=1),kind=BLAS_KIND), &
                                 vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), ONE, umcCPU(lcs,1), &
                                 int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+            call mkl_offload_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',       &
+                                int(lce-lcs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lre,kind=BLAS_KIND), &
+                                ONE, a_mat(1,lcs), int(ubound(a_mat,dim=1),kind=BLAS_KIND), &
+                                vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), ONE, umcCPU(lcs,1), &
+                                int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
+#endif
             call obj%timer%stop("mkl_offload")
             if (i==0) cycle
             lre = min(l_rows,i*l_rows_tile)
             call obj%timer%start("mkl_offload")
 
             if (isSkewsymmetric) then
+#if 0
               call PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
                                   -ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND),                                                   &
                                   umcCPU(lcs,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), ONE,                          &
                                   vmrCPU(1,n_cols+1), int(ubound(vmrCPU,dim=1), kind=BLAS_KIND) )
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+              call mkl_offload_PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
+                      int(lce-lcs+1,kind=BLAS_KIND), &
+                                  -ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND),                                                   &
+                                  umcCPU(lcs,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), ONE,                          &
+                                  vmrCPU(1,n_cols+1), int(ubound(vmrCPU,dim=1), kind=BLAS_KIND) )
+#endif
 
             else
+#if 0
               call PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
                                   ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND),                                                   &
                                   umcCPU(lcs,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), ONE,                          &
                                   vmrCPU(1,n_cols+1), int(ubound(vmrCPU,dim=1), kind=BLAS_KIND) )
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+              call mkl_offload_PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
+                      int(lce-lcs+1,kind=BLAS_KIND), &
+                                  ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND),                                                   &
+                                  umcCPU(lcs,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), ONE,                          &
+                                  vmrCPU(1,n_cols+1), int(ubound(vmrCPU,dim=1), kind=BLAS_KIND) )
+#endif
             endif
             call obj%timer%stop("mkl_offload")
           endif ! useIntelGPU
@@ -1376,7 +1404,6 @@ max_threads)
     endif ! useNvidiaGPU
     
     if (useIntelGPU) then
-
       call obj%timer%start("mkl_offload")
 
       call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
@@ -1395,11 +1422,31 @@ max_threads)
                           int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep),    &
                           int(ubound(tmat,dim=1),kind=BLAS_KIND), vav, int(ubound(vav,dim=1),kind=BLAS_KIND) )
       call obj%timer%stop("mkl_offload")
+#ifdef WITH_INTEL_GPU_VERSION
+#if 0
+      call obj%timer%start("mkl_offload")
 
+      call mkl_offload_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
+                          int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
+                          int(ubound(tmat,dim=1),kind=BLAS_KIND), &
+                          umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
+
+      ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+
+      call mkl_offload_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',              &
+                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                          ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND), umcCPU(1,n_cols+1), &
+                          int(ubound(umcCPU,dim=1),kind=BLAs_KIND), ZERO, vav, int(ubound(vav,dim=1),kind=BLAS_KIND))
+
+      call mkl_offload_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
+                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep),    &
+                          int(ubound(tmat,dim=1),kind=BLAS_KIND), vav, int(ubound(vav,dim=1),kind=BLAS_KIND) )
+      call obj%timer%stop("mkl_offload")
+#endif
+#endif
     endif ! useIntelGPU
     
     if (useNoGPU) then
-
       call obj%timer%start("blas")
 
       call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
