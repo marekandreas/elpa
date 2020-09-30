@@ -65,7 +65,7 @@
   & (q, hh, nb, nq, ldq, ldh)
 
     use precision
-    use iso_c_binding
+    use, intrinsic :: iso_c_binding
     use elpa_abstract_impl
     implicit none
 

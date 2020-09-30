@@ -90,7 +90,7 @@
 #endif
    use gpu_infrastructure
    use solve_tridi
-   use iso_c_binding
+   use, intrinsic :: iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
@@ -229,7 +229,7 @@
 
    reDistributeMatrix = .false.
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
     ! store the number of OpenMP threads used in the calling function
     ! restore this at the end of ELPA 2
     omp_threads_caller = omp_get_max_threads()
@@ -311,7 +311,7 @@
      endif
 
      ! restore original OpenMP settings
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
      ! store the number of OpenMP threads used in the calling function
      ! restore this at the end of ELPA 2
      call omp_set_num_threads(omp_threads_caller)
@@ -1095,7 +1095,7 @@
      endif
 
      ! restore original OpenMP settings
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
     ! store the number of OpenMP threads used in the calling function
     ! restore this at the end of ELPA 2
     call omp_set_num_threads(omp_threads_caller)

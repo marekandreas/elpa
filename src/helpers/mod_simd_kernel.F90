@@ -45,7 +45,7 @@
 
 module simd_kernel
   use elpa_constants
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
 
   integer(kind=c_int) :: realKernels_to_simdTable(ELPA_2STAGE_NUMBER_OF_REAL_KERNELS)
   integer(kind=c_int) :: simdTable_to_realKernels(NUMBER_OF_INSTR)
@@ -56,7 +56,7 @@ module simd_kernel
 
   function map_real_kernel_to_simd_instruction(kernel) result(simd_set_index)
     
-    use iso_c_binding
+    use, intrinsic :: iso_c_binding
     implicit none
 
     integer(kind=c_int), intent(in) :: kernel
@@ -99,7 +99,7 @@ module simd_kernel
 
   function map_simd_instruction_to_real_kernel(simd_set_index) result(kernel)
     
-    use iso_c_binding
+    use, intrinsic :: iso_c_binding
     implicit none
 
 
@@ -123,7 +123,7 @@ module simd_kernel
 
   function map_complex_kernel_to_simd_instruction(kernel) result(simd_set_index)
     
-    use iso_c_binding
+    use, intrinsic :: iso_c_binding
     implicit none
     integer(kind=c_int), intent(in)  :: kernel
     integer(kind=c_int)              :: simd_set_index
@@ -150,7 +150,7 @@ module simd_kernel
 
   function map_simd_instruction_to_complex_kernel(simd_set_index) result(kernel)
     
-    use iso_c_binding
+    use, intrinsic :: iso_c_binding
     implicit none
     integer(kind=c_int)              :: kernel
     integer(kind=c_int), intent(in)  :: simd_set_index

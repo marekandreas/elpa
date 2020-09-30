@@ -66,7 +66,7 @@ kernel)
 
   use precision
   use elpa_abstract_impl
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
 #if REALCASE == 1
   use single_hh_trafo_real
 #if defined(WITH_REAL_GENERIC_SIMPLE_KERNEL) && !(defined(USE_ASSUMED_SIZE))

@@ -93,7 +93,7 @@ subroutine trans_ev_tridi_to_band_&
   use compute_hh_trafo
   use cuda_functions
   use precision
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
 #ifdef WITH_OPENMP_TRADITIONAL
   ! use omp_lib
 #endif

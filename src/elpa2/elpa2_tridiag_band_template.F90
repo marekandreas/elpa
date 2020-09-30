@@ -87,7 +87,7 @@ subroutine tridiag_band_&
   use elpa_abstract_impl
   use elpa2_workload
   use precision
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use redist
 #ifdef WITH_OPENMP_TRADITIONAL
   use omp_lib

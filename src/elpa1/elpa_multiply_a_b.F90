@@ -58,7 +58,7 @@
   use elpa_mpi
   use precision
   use elpa_abstract_impl
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use cuda_functions
   use mod_check_for_gpu
   use elpa_blas_interfaces

@@ -78,15 +78,16 @@ module test_blacs_infrastructure
 
       use precision_for_tests
       use test_util
+      use iso_c_binding
 
       implicit none
-      TEST_INT_TYPE, intent(in), value    :: mpi_comm_parent, np_rows, np_cols
+      TEST_INT_TYPE, intent(in), value          :: mpi_comm_parent, np_rows, np_cols
 #ifdef SXAURORA
-      character(len=1), intent(in)        :: layout
+      character(len=1), intent(in)              :: layout
 #else
-      character(len=1), intent(in), value :: layout
+      character(kind=c_char), intent(in), value :: layout
 #endif
-      TEST_INT_TYPE, intent(out)          :: my_blacs_ctxt, my_prow, my_pcol
+      TEST_INT_TYPE, intent(out)                :: my_blacs_ctxt, my_prow, my_pcol
 
 #ifdef WITH_MPI
       TEST_INT_TYPE :: np_rows_, np_cols_

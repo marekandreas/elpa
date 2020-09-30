@@ -99,7 +99,7 @@ subroutine tridiag_&
   (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, &
    wantDebug, max_threads)
   use cuda_functions
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
   use matrix_plot

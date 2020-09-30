@@ -74,7 +74,7 @@ function elpa_solve_evp_&
    use precision
    use cuda_functions
    use mod_check_for_gpu
-   use iso_c_binding
+   use, intrinsic :: iso_c_binding
    use elpa_abstract_impl
    use elpa_mpi
    use elpa1_compute

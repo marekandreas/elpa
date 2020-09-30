@@ -57,7 +57,7 @@
 #define FORTRAN_INT_TYPE c_int64_t
 
 module elpa_generated_fortran_interfaces
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   implicit none
 
 #include "src/elpa_generated_fortran_interfaces.h"
