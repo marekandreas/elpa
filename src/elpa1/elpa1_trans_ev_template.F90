@@ -94,7 +94,7 @@ subroutine trans_ev_&
 &PRECISION &
 (obj, na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
   use cuda_functions
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
   use elpa_blas_interfaces

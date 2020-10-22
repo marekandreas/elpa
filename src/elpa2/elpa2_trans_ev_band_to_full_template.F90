@@ -99,7 +99,7 @@ subroutine trans_ev_band_to_full_&
 !-------------------------------------------------------------------------------
   use precision
   use cuda_functions
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use elpa_abstract_impl
   use elpa_blas_interfaces
 

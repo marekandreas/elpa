@@ -46,7 +46,7 @@
 #define PRECISION_MODULE precision
 
 module elpa_blas_interfaces
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   use precision
 
   implicit none

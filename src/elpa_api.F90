@@ -506,7 +506,7 @@ module elpa_api
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr()
   abstract interface
     subroutine elpa_set_integer_i(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
@@ -530,7 +530,7 @@ module elpa_api
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr()
   abstract interface
     subroutine elpa_get_integer_i(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                  :: self
@@ -592,7 +592,7 @@ module elpa_api
   !> \param   error       integer. optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_set_float_i(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
@@ -616,7 +616,7 @@ module elpa_api
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_get_float_i(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                  :: self
@@ -640,7 +640,7 @@ module elpa_api
   !> \param   error       integer. optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_set_double_i(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
@@ -664,7 +664,7 @@ module elpa_api
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
     subroutine elpa_get_double_i(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                  :: self
@@ -687,7 +687,7 @@ module elpa_api
   !> \result  value       integer, pointer: the value associated with the key
   abstract interface
     function elpa_associate_int_i(self, name) result(value)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                  :: self
@@ -864,7 +864,7 @@ module elpa_api
     !c> int elpa_init(int api_version);
     function elpa_init(api_version) result(error) bind(C, name="elpa_init")
       use elpa_utilities, only : error_unit
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       integer(kind=c_int), intent(in), value :: api_version
       integer(kind=c_int)                    :: error
 

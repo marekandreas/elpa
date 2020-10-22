@@ -55,7 +55,7 @@
 
 module elpa_skewsymmetric_blas
   use precision
-  use iso_c_binding
+  use, intrinsic :: iso_c_binding
   contains
 
 #define REALCASE 1

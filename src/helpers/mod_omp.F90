@@ -48,7 +48,7 @@ module elpa_omp
 #ifdef WITH_OPENMP_TRADITIONAL
    use omp_lib
 #endif
-   use iso_c_binding
+   use, intrinsic :: iso_c_binding
    use precision
    implicit none
    public

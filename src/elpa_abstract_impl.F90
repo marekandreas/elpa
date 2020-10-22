@@ -98,7 +98,7 @@ module elpa_abstract_impl
     !> \param   value      integer, the value to be set
     !> \result  error      integer, the error code
     subroutine elpa_set_integer(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
@@ -132,7 +132,7 @@ module elpa_abstract_impl
     !> \param   value      integer, the value of the key/vaue pair
     !> \param   error      integer, optional, to store an error code
     subroutine elpa_get_integer(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
@@ -165,7 +165,7 @@ module elpa_abstract_impl
     !> \param   value      float, the value to be set
     !> \result  error      integer, the error code
     subroutine elpa_set_float(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
@@ -198,7 +198,7 @@ module elpa_abstract_impl
     !> \param   value      float, the value of the key/vaue pair
     !> \param   error      integer, optional, to store an error code
     subroutine elpa_get_float(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name
@@ -230,7 +230,7 @@ module elpa_abstract_impl
     !> \param   value      double, the value to be set
     !> \result  error      integer, the error code
     subroutine elpa_set_double(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)     :: self
       character(*), intent(in)        :: name
@@ -263,7 +263,7 @@ module elpa_abstract_impl
     !> \param   value      double, the value of the key/vaue pair
     !> \param   error      integer, optional, to store an error code
     subroutine elpa_get_double(self, name, value, error)
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use elpa_utilities, only : error_unit
       class(elpa_abstract_impl_t)    :: self
       character(*), intent(in)       :: name

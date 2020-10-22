@@ -23,7 +23,7 @@ module matrix_plot
 
     subroutine prmat(na, useGpu, a_mat, a_dev, lda, matrixCols, nblk, my_prow, my_pcol, np_rows, np_cols, name, iteration)
       use cuda_functions
-      use iso_c_binding
+      use, intrinsic :: iso_c_binding
       use precision
       implicit none
       integer, parameter :: out_unit=20
