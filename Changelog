@@ -3,6 +3,7 @@ Changelog for next release
 - not yet decided
 
 Changelog for ELPA 2020.11.001.rc1
+
 - this release containts mostly bugfixes:
 - fix determination whether a _ is needed to link Fortran to C
 - add missing test_scalapack_template.F90 to EXTRA_DIST list
