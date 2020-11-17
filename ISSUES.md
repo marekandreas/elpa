@@ -3,6 +3,11 @@
 For more details and recent updates please visit the online [issue system](https://gitlab.mpcdf.mpg.de/elpa/elpa/issues)
 Issues which are not mentioned in a newer release are (considered as) solved.
 
+### ELPA 2020.11.001.rc1 release ###
+- fixes a problem with GPU kernels
+- fixes a problem with VSX kernels
+- add missing test_scalapack_template.F90 to EXTRA_DIST list
+
 ### ELPA 2020.05.001 release ###
 - fixes a problem with configuring the GPU kernels
 
