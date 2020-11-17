@@ -8,8 +8,9 @@ For recommendations and suggestions, a simple email to us (*elpa-libray at mpcdf
 
 If you would like to share with us your improvements, we suggest the following ways:
 
-1. If you use a public accessible git repository, please send us a merge request. This is the preferred way.
-2. An email with a patch, will also be ok. Please use *elpa-library at mpcdf.mpg.de*
+1. You can use https://github.com/marekandreas/elpa to contribute with merge requests and issues.
+2. Alternatively, if you use a public accessible git repository, please send us a merge request.
+3. Last but not least, an email with a patch will also be ok. Please use *elpa-library at mpcdf.mpg.de*
 
 Thank you for supporting *ELPA*!
 
