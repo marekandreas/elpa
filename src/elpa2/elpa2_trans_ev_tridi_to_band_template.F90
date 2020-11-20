@@ -319,7 +319,11 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef DOUBLE_PRECISION_REAL
       if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
           kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
-          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK4 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK6 &
+          ) then
 
         stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                               ! (8 * sizeof(double) == 64)
@@ -331,7 +335,11 @@ subroutine trans_ev_tridi_to_band_&
 #else
       if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
           kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
-          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK4 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK6 &
+          ) then
 
 
         stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
@@ -347,7 +355,10 @@ subroutine trans_ev_tridi_to_band_&
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
       if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-          kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+          kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_COMPLEX_SVE512_BLOCK1 .or. &
+          kernel .eq. ELPA_2STAGE_COMPLEX_SVE512_BLOCK2 &
+          ) then
 
         stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
                                         ! (4 * sizeof(double complex) == 64)
@@ -360,7 +371,10 @@ subroutine trans_ev_tridi_to_band_&
 #else
 
       if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-          kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+          kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_COMPLEX_SVE512_BLOCK1 .or. &
+          kernel .eq. ELPA_2STAGE_COMPLEX_SVE512_BLOCK2  &
+          ) then
 
         stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                         ! (8 * sizeof(float complex) == 64)
@@ -424,7 +438,11 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef DOUBLE_PRECISION_REAL
       if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
           kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
-          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK4 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK6  &
+          ) then
 
         stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                               ! (8 * sizeof(double) == 64)
@@ -436,7 +454,11 @@ subroutine trans_ev_tridi_to_band_&
 #else
       if (kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK2 .or. &
           kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK4 .or. &
-          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6) then
+          kernel .eq. ELPA_2STAGE_REAL_AVX512_BLOCK6 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK2 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK4 .or. &
+          kernel .eq. ELPA_2STAGE_REAL_SVE512_BLOCK6  &
+          ) then
 
 
        stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 16 because of AVX-512 memory alignment of 64 bytes
@@ -453,7 +475,10 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef DOUBLE_PRECISION_COMPLEX
 
      if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2 .or. &
+         kernel .eq. ELPA_2STAGE_COMPLEX_SVE512_BLOCK1 .or. &
+         kernel .eq. ELPA_2STAGE_COMPLEX_SVE512_BLOCK2  &
+     ) then
 
        stripe_width = ((stripe_width+7)/8)*8 ! Must be a multiple of 4 because of AVX-512 memory alignment of 64 bytes
                                        ! (4 * sizeof(double complex) == 64)
@@ -466,7 +491,10 @@ subroutine trans_ev_tridi_to_band_&
 #else
 
      if (kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK1 .or. &
-         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2) then
+         kernel .eq. ELPA_2STAGE_COMPLEX_AVX512_BLOCK2 .or. &
+         kernel .eq. ELPA_2STAGE_COMPLEX_SVE512_BLOCK1 .or. &
+         kernel .eq. ELPA_2STAGE_COMPLEX_SVE512_BLOCK2  &
+         ) then
 
        stripe_width = ((stripe_width+15)/16)*16 ! Must be a multiple of 8 because of AVX-512 memory alignment of 64 bytes
                                        ! (8 * sizeof(float complex) == 64)

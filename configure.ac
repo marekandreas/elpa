@@ -825,12 +825,12 @@ m4_define(elpa_m4_avx512_kernels, [
         complex_avx512_block2
 ])
 
-m4_define(elpa_m4_vse512_kernels, [
-        real_vse512_block2
-        real_vse512_block4
-        real_vse512_block6
-        complex_vse512_block1
-        complex_vse512_block2
+m4_define(elpa_m4_sve512_kernels, [
+        real_sve512_block2
+        real_sve512_block4
+        real_sve512_block6
+        complex_sve512_block1
+        complex_sve512_block2
 ])
 
 m4_define(elpa_m4_bgp_kernels, [
@@ -848,7 +848,7 @@ m4_define(elpa_m4_gpu_kernels, [
         complex_gpu
 ])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 vse512 bgp bgq gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 sve512 bgp bgq gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -889,7 +889,7 @@ ELPA_SELECT_KERNELS([sse_assembly],[enable])
 ELPA_SELECT_KERNELS([avx],[enable])
 ELPA_SELECT_KERNELS([avx2],[enable])
 ELPA_SELECT_KERNELS([avx512],[enable])
-ELPA_SELECT_KERNELS([vse512],[disable])
+ELPA_SELECT_KERNELS([sve512],[disable])
 ELPA_SELECT_KERNELS([gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
@@ -899,7 +899,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 ])
 
 if test x"${enable_bgp}" = x"yes" -o x"$enable_bgq" = x"yes"; then
-        m4_foreach_w([elpa_m4_kernel], elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels elpa_m4_vse512_kernels, [
+        m4_foreach_w([elpa_m4_kernel], elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels elpa_m4_sve512_kernels, [
                 if x"$use_[]elpa_m4_kernel[]" = x"yes" ; then
                         echo "Disabling elpa_m4_kernel due to BGP/BGQ option"
                 fi
@@ -959,7 +959,7 @@ AC_DEFUN([ELPA_KERNEL_DEPENDS],[
                   ])
           fi
 ])
-m4_foreach_w([elpa_m4_arch],[sparc64 neon_arch64 vsx sse avx avx2 avx512 vse512],[
+m4_foreach_w([elpa_m4_arch],[sparc64 neon_arch64 vsx sse avx avx2 avx512 sve512],[
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block6], [real_]elpa_m4_arch[_block4 real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block4], [real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([complex_]elpa_m4_arch[_block2], [complex_]elpa_m4_arch[_block1])
@@ -1017,7 +1017,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_vse512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_gpu_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_gpu_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -1279,6 +1279,8 @@ if test x"${need_avx512}" = x"yes"; then
      [can_compile_avx512_xeon=no]
     )
     AC_MSG_RESULT([${can_compile_avx512_xeon}])
+
+     can_compile_sve512_xeon = "no"
 
     AC_MSG_CHECKING([whether we compile for Xeon PHI])
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([

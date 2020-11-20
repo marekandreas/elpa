@@ -904,10 +904,36 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 !f>#endif
 */
 /*
+!f>#if defined(HAVE_SVE512)
+!f> interface
+!f>   subroutine double_hh_trafo_real_SVE512_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="double_hh_trafo_real_SVE512_2hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+/*
 !f>#if defined(HAVE_AVX512)
 !f> interface
 !f>   subroutine double_hh_trafo_real_AVX512_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
 !f>                             bind(C, name="double_hh_trafo_real_AVX512_2hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_float)      :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+/*
+!f>#if defined(HAVE_SVE512)
+!f> interface
+!f>   subroutine double_hh_trafo_real_SVE512_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="double_hh_trafo_real_SVE512_2hv_single")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
 !f>     type(c_ptr), value      :: q
@@ -1097,6 +1123,19 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 !f> end interface
 !f>#endif
 */
+/*
+!f>#if defined(HAVE_SVE512)
+!f> interface
+!f>   subroutine quad_hh_trafo_real_SVE512_4hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="quad_hh_trafo_real_SVE512_4hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
 
 /*
 !f>#if defined(HAVE_AVX512)
@@ -1111,6 +1150,20 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 !f> end interface
 !f>#endif
 */
+/*
+!f>#if defined(HAVE_SVE512)
+!f> interface
+!f>   subroutine quad_hh_trafo_real_SVE512_4hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="quad_hh_trafo_real_SVE512_4hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_float)      :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
 /*
 !f>#ifdef HAVE_SSE_INTRINSICS
 !f> interface
@@ -1287,12 +1340,38 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 !f> end interface
 !f>#endif
 */
+/*
+!f>#if defined(HAVE_SVE512)
+!f> interface
+!f>   subroutine hexa_hh_trafo_real_SVE512_6hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="hexa_hh_trafo_real_SVE512_6hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_double)     :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
 
 /*
 !f>#if defined(HAVE_AVX512)
 !f> interface
 !f>   subroutine hexa_hh_trafo_real_AVX512_6hv_single(q, hh, pnb, pnq, pldq, pldh) &
 !f>                             bind(C, name="hexa_hh_trafo_real_AVX512_6hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     type(c_ptr), value      :: q
+!f>     real(kind=c_float)      :: hh(pnb,6)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+/*
+!f>#if defined(HAVE_SVE512)
+!f> interface
+!f>   subroutine hexa_hh_trafo_real_SVE512_6hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="hexa_hh_trafo_real_SVE512_6hv_single")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
 !f>     type(c_ptr), value      :: q
