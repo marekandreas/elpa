@@ -73,6 +73,7 @@
 #define AVX_256 256
 #define AVX2_256 2562
 #define AVX_512 512
+#define SVE_512 5121
 
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512
@@ -90,6 +91,10 @@
 
 #if VEC_SET == NEON_ARCH64_128
 #include <arm_neon.h>
+#endif
+
+#if VEC_SET == VSE_512
+#include <arm_sve.h>
 #endif
 
 #include <stdio.h>
@@ -138,9 +143,16 @@
 #define SIMD_SET AVX512
 #endif
 
+#if VEC_SET == SVE_512
+#define SIMD_SET SVE512
+#endif
+
+
+
 #define __forceinline __attribute__((always_inline)) static
 
 #if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE
+#define ADDITIONAL_ARGUMENT
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 2
 #define __SIMD_DATATYPE __m128d
@@ -180,6 +192,7 @@
 #endif /* VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE */
 
 #if VEC_SET == VSX_SSE
+#define ADDITIONAL_ARGUMENT
 
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 2
@@ -234,9 +247,10 @@
 //#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_SET1 vdupq_n_f32
 #endif /* SINGLE_PRECISION_REAL */
-#endif /* VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE */
+#endif /* NEON_ARCH64_128 */
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#define ADDITIONAL_ARGUMENT
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 4
 #define __SIMD_DATATYPE __m256d
@@ -314,6 +328,7 @@
 #endif /* VEC_SET == AVX_256 */
 
 #if VEC_SET == AVX_512
+#define ADDITIONAL_ARGUMENT
 #ifdef DOUBLE_PRECISION_REAL
 #define offset 8
 #define __SIMD_DATATYPE __m512d
@@ -369,6 +384,45 @@
 #endif /* SINGLE_PRECISION_REAL */
 #endif /* VEC_SET == AVX_512 */
 
+
+
+#if VEC_SET == SVE_512
+#define ADDITIONAL_ARGUMENT svptrue_b64(),
+#define __ELPA_USE_FMA__
+#ifdef DOUBLE_PRECISION_REAL
+#define offset 8
+#define __SIMD_DATATYPE svfloat64_t
+#define _SIMD_LOAD svld1_f64
+#define _SIMD_STORE svst1_f64
+#define _SIMD_ADD svadd_f64_z
+#define _SIMD_MUL svmul_f64_z
+#define _SIMD_SUB svsub_f64_z
+#define _SIMD_NEG svneg_f64_z
+#define _SIMD_FMA(a, b, c) svmad_f64_z(svptrue_b64(), a, b, c)
+#define _SIMD_NFMA(a, b, c) svneg_f64_z(ssvptrue_b64(), vmad_f64_z(svptrue_b64(), a, b, c))
+#define _SIMD_FMSUB(a, b, c) svneg_f64_z(ssvptrue_b64(), vmsb_f64_z(svptrue_b64(), a, b, c))
+//#define _SIMD_XOR _mm_xor_pd
+#define _SIMD_SET1 svdup_f64
+#endif /* DOUBLE_PRECISION_REAL */
+#ifdef SINGLE_PRECISION_REAL
+#define offset 16
+#define __SIMD_DATATYPE svfloat32_t
+#define _SIMD_LOAD svld1_f32
+#define _SIMD_STORE svst1_f32
+#define _SIMD_ADD svadd_f32_z
+#define _SIMD_MUL svmul_f32_z
+#define _SIMD_SUB svsub_f32_z
+#define _SIMD_NEG svneg_f32_z
+#define _SIMD_FMA(a, b, c) svmad_f32_z(svptrue_b64(), a, b, c)
+#define _SIMD_NFMA(a, b, c) svneg_f32_z(svptrue_b64(), svmad_f32_z(svptrue_b64(), a, b, c))
+#define _SIMD_FMSUB(a, b, c) svneg_f32_z(svptrue_b64(), svmsb_f32_z(svptrue_b64(), a, b, c))
+//#define _SIMD_XOR _mm_xor_ps
+#define _SIMD_SET1 svdup_f32
+#endif /* SINGLE_PRECISION_REAL */
+#endif /* SVE_512 */
+
+
+
 #ifdef DOUBLE_PRECISION_REAL
 #define WORD_LENGTH double
 #define DATA_TYPE double
@@ -384,7 +438,7 @@
 #undef __AVX__
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512
+#if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512 || VEC_SET == SVE_512
 #undef _LOAD
 #undef _STORE
 #undef _XOR
@@ -426,7 +480,7 @@
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 8
@@ -435,7 +489,7 @@
 #undef ROW_LENGTH
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || SVE_512 */
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
 #ifdef BLOCK2
 	DATA_TYPE s);
@@ -469,7 +523,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 16
@@ -478,7 +532,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 32
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
 #ifdef BLOCK2
 	DATA_TYPE s);
@@ -512,7 +566,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 24
@@ -521,7 +575,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 48
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
 #ifdef BLOCK2
@@ -556,7 +610,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 32
@@ -565,7 +619,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 64
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
 #ifdef BLOCK2
@@ -600,7 +654,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /*  VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 40
@@ -609,7 +663,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 80
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh, 
 #ifdef BLOCK2
@@ -644,7 +698,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /*  VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #undef ROW_LENGTH
 #define ROW_LENGTH 48
@@ -653,7 +707,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #undef ROW_LENGTH
 #define ROW_LENGTH 96
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq, int ldh,
 #ifdef BLOCK2
@@ -1442,7 +1496,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /*  VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define STEP_SIZE 32
 #define ROW_LENGTH 32
@@ -1453,7 +1507,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define ROW_LENGTH 64
 #define UPPER_BOUND 48
 #endif
-#endif /*  VEC_SET == AVX_512 */
+#endif /*  VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 
   for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE )
@@ -1486,14 +1540,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 24
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 48
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
   if (nq-i == ROW_LENGTH)
     {
@@ -1520,14 +1574,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 
   if (nq-i == ROW_LENGTH)
@@ -1555,14 +1609,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
   if (nq-i == ROW_LENGTH)
     {
       CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_2hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s);
@@ -1656,7 +1710,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #define STEP_SIZE 32
@@ -1667,7 +1721,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define STEP_SIZE 64
 #define UPPER_BOUND 48
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
   for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE )
     {
       CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_4hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, s_1_2, s_1_3, s_2_3, s_1_4, s_2_4, s_3_4);
@@ -1699,14 +1753,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 24
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 48
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 
   if (nq-i == ROW_LENGTH )
@@ -1734,14 +1788,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
    if (nq-i == ROW_LENGTH )
      {
@@ -1749,16 +1803,16 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
        worked_on += ROW_LENGTH;
      }
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
    if (nq-i == ROW_LENGTH )
      {
@@ -1766,7 +1820,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
        worked_on += ROW_LENGTH;
      }
 
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 #endif /* BLOCK4 */
 
@@ -1799,7 +1853,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #define STEP_SIZE 32
@@ -1810,7 +1864,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define STEP_SIZE 64
 #define UPPER_BOUND 48
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
   for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE)
     { 
@@ -1841,14 +1895,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 24
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 48
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 
     if (nq -i == ROW_LENGTH )
@@ -1856,16 +1910,16 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
         CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_6hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, scalarprods);
         worked_on += ROW_LENGTH;
       }
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 
     if (nq -i == ROW_LENGTH )
@@ -1874,14 +1928,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
         worked_on += ROW_LENGTH;
       }
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 
     if (nq -i == ROW_LENGTH )
@@ -1889,7 +1943,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
         CONCAT_6ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_6hv_,WORD_LENGTH) (&q[i], hh, nb, ldq, ldh, scalarprods);
         worked_on += ROW_LENGTH;
       }
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 #endif /* BLOCK6 */
 
@@ -1921,14 +1975,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 48
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 96
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 /*
  * Unrolled kernel that computes
@@ -1995,14 +2049,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
     __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
@@ -2011,7 +2065,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE x5 = _LOAD(&q[ldq+4*offset]);
     __SIMD_DATATYPE x6 = _LOAD(&q[ldq+5*offset]);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE  || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE  || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -2037,17 +2091,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE y6 = _SIMD_FMA(x6, h1, q6);
 #else
     __SIMD_DATATYPE q1 = _LOAD(q);
-    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
     __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
-    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+    __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
     __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
-    __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+    __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
     __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
-    __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+    __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
     __SIMD_DATATYPE q5 = _LOAD(&q[4*offset]);
-    __SIMD_DATATYPE y5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
+    __SIMD_DATATYPE y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
     __SIMD_DATATYPE q6 = _LOAD(&q[5*offset]);
-    __SIMD_DATATYPE y6 = _SIMD_ADD(q6, _SIMD_MUL(x6, h1));
+    __SIMD_DATATYPE y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT x6, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -2057,7 +2111,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -2093,12 +2147,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
     register __SIMD_DATATYPE x1 = a1_1;
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));                          
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1));
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -2116,12 +2170,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
     register __SIMD_DATATYPE x2 = a1_2;
 #else
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -2139,12 +2193,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y3 = _SIMD_FMA(a1_3, h_2_1, a2_3);
     register __SIMD_DATATYPE x3 = a1_3;
 #else
-    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
-    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
-    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_4_3));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_4_2));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_3_2));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_2_1));
     register __SIMD_DATATYPE x3 = a1_3;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -2162,12 +2216,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y4 = _SIMD_FMA(a1_4, h_2_1, a2_4);
     register __SIMD_DATATYPE x4 = a1_4;
 #else
-    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
-    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
-    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_4_3));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_4_2));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_3_2));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_2_1));
     register __SIMD_DATATYPE x4 = a1_4;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -2185,12 +2239,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y5 = _SIMD_FMA(a1_5, h_2_1, a2_5);
     register __SIMD_DATATYPE x5 = a1_5;
 #else
-    register __SIMD_DATATYPE w5 = _SIMD_ADD(a4_5, _SIMD_MUL(a3_5, h_4_3));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(a2_5, h_4_2));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(a1_5, h_4_1));
-    register __SIMD_DATATYPE z5 = _SIMD_ADD(a3_5, _SIMD_MUL(a2_5, h_3_2));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(a1_5, h_3_1));
-    register __SIMD_DATATYPE y5 = _SIMD_ADD(a2_5, _SIMD_MUL(a1_5, h_2_1));
+    register __SIMD_DATATYPE w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_5, h_4_3));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_4_2));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_4_1));
+    register __SIMD_DATATYPE z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_3_2));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_3_1));
+    register __SIMD_DATATYPE y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_2_1));
     register __SIMD_DATATYPE x5 = a1_5;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -2208,12 +2262,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y6 = _SIMD_FMA(a1_6, h_2_1, a2_6);
     register __SIMD_DATATYPE x6 = a1_6;
 #else
-    register __SIMD_DATATYPE w6 = _SIMD_ADD(a4_6, _SIMD_MUL(a3_6, h_4_3));
-    w6 = _SIMD_ADD(w6, _SIMD_MUL(a2_6, h_4_2));
-    w6 = _SIMD_ADD(w6, _SIMD_MUL(a1_6, h_4_1));
-    register __SIMD_DATATYPE z6 = _SIMD_ADD(a3_6, _SIMD_MUL(a2_6, h_3_2));
-    z6 = _SIMD_ADD(z6, _SIMD_MUL(a1_6, h_3_1));
-    register __SIMD_DATATYPE y6 = _SIMD_ADD(a2_6, _SIMD_MUL(a1_6, h_2_1));
+    register __SIMD_DATATYPE w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_6, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_6, h_4_3));
+    w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT w6, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_6, h_4_2));
+    w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT w6, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_6, h_4_1));
+    register __SIMD_DATATYPE z6 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_6, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_6, h_3_2));
+    z6 = _SIMD_ADD( ADDITIONAL_ARGUMENT z6, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_6, h_3_1));
+    register __SIMD_DATATYPE y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_6, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_6, h_2_1));
     register __SIMD_DATATYPE x6 = a1_6;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -2239,7 +2293,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -2270,14 +2324,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_FMA(a2_1, h_6_2, t1);
     t1 = _SIMD_FMA(a1_1, h_6_1, t1);
 #else
-    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_1, h_6_5)); 
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_6_4));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_6_3));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_6_2));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -2304,13 +2358,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_FMA(a2_1, h_5_2, v1);
     v1 = _SIMD_FMA(a1_1, h_5_1, v1);
 #else
-    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_5_4)); 
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_5_3));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_5_2));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -2333,12 +2387,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_FMA(a2_1, h_4_2, w1);
     w1 = _SIMD_FMA(a1_1, h_4_1, w1);
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3)); 
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -2361,9 +2415,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(a1_1, h_3_1, z1);
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
 #else
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1)); 
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x1 = a1_1;
@@ -2392,21 +2446,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_FMA(a1_2, h_3_1, z2);
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
 #else
-    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
-    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_2, h_6_5));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_6_4));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_6_3));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_6_2));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_5_4));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_5_3));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_5_2));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x2 = a1_2;
@@ -2435,21 +2489,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_FMA(a1_3, h_3_1, z3);
     register __SIMD_DATATYPE y3 = _SIMD_FMA(a1_3, h_2_1, a2_3);
 #else
-    register __SIMD_DATATYPE t3 = _SIMD_ADD(a6_3, _SIMD_MUL(a5_3, h_6_5));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a4_3, h_6_4));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a3_3, h_6_3));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a2_3, h_6_2));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a1_3, h_6_1));
-    register __SIMD_DATATYPE v3 = _SIMD_ADD(a5_3, _SIMD_MUL(a4_3, h_5_4));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a3_3, h_5_3));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a2_3, h_5_2));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a1_3, h_5_1));
-    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
-    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
-    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_3, h_6_5));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_3, h_6_4));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_6_3));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_6_2));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_6_1));
+    register __SIMD_DATATYPE v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_3, h_5_4));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_5_3));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_5_2));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_5_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_4_3));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_4_2));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_3_2));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x3 = a1_3;
@@ -2478,21 +2532,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z4 = _SIMD_FMA(a1_4, h_3_1, z4);
     register __SIMD_DATATYPE y4 = _SIMD_FMA(a1_4, h_2_1, a2_4);
 #else
-    register __SIMD_DATATYPE t4 = _SIMD_ADD(a6_4, _SIMD_MUL(a5_4, h_6_5));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a4_4, h_6_4));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a3_4, h_6_3));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a2_4, h_6_2));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a1_4, h_6_1));
-    register __SIMD_DATATYPE v4 = _SIMD_ADD(a5_4, _SIMD_MUL(a4_4, h_5_4));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a3_4, h_5_3));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a2_4, h_5_2));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a1_4, h_5_1));
-    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
-    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
-    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_4, h_6_5));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_4, h_6_4));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_6_3));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_6_2));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_6_1));
+    register __SIMD_DATATYPE v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_4, h_5_4));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_5_3));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_5_2));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_5_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_4_3));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_4_2));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_3_2));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x4 = a1_4;
@@ -2521,21 +2575,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z5 = _SIMD_FMA(a1_5, h_3_1, z5);
     register __SIMD_DATATYPE y5 = _SIMD_FMA(a1_5, h_2_1, a2_5);
 #else
-    register __SIMD_DATATYPE t5 = _SIMD_ADD(a6_5, _SIMD_MUL(a5_5, h_6_5));
-    t5 = _SIMD_ADD(t5, _SIMD_MUL(a4_5, h_6_4));
-    t5 = _SIMD_ADD(t5, _SIMD_MUL(a3_5, h_6_3));
-    t5 = _SIMD_ADD(t5, _SIMD_MUL(a2_5, h_6_2));
-    t5 = _SIMD_ADD(t5, _SIMD_MUL(a1_5, h_6_1));
-    register __SIMD_DATATYPE v5 = _SIMD_ADD(a5_5, _SIMD_MUL(a4_5, h_5_4));
-    v5 = _SIMD_ADD(v5, _SIMD_MUL(a3_5, h_5_3));
-    v5 = _SIMD_ADD(v5, _SIMD_MUL(a2_5, h_5_2));
-    v5 = _SIMD_ADD(v5, _SIMD_MUL(a1_5, h_5_1));
-    register __SIMD_DATATYPE w5 = _SIMD_ADD(a4_5, _SIMD_MUL(a3_5, h_4_3));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(a2_5, h_4_2));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(a1_5, h_4_1));
-    register __SIMD_DATATYPE z5 = _SIMD_ADD(a3_5, _SIMD_MUL(a2_5, h_3_2));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(a1_5, h_3_1));
-    register __SIMD_DATATYPE y5 = _SIMD_ADD(a2_5, _SIMD_MUL(a1_5, h_2_1));
+    register __SIMD_DATATYPE t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_5, h_6_5));
+    t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_5, h_6_4));
+    t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_5, h_6_3));
+    t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_6_2));
+    t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_6_1));
+    register __SIMD_DATATYPE v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_5, h_5_4));
+    v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_5, h_5_3));
+    v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_5_2));
+    v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_5_1));
+    register __SIMD_DATATYPE w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_5, h_4_3));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_4_2));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_4_1));
+    register __SIMD_DATATYPE z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_3_2));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_3_1));
+    register __SIMD_DATATYPE y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x5 = a1_5;
@@ -2564,21 +2618,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z6 = _SIMD_FMA(a1_6, h_3_1, z6);
     register __SIMD_DATATYPE y6 = _SIMD_FMA(a1_6, h_2_1, a2_6);
 #else
-    register __SIMD_DATATYPE t6 = _SIMD_ADD(a6_6, _SIMD_MUL(a5_6, h_6_5));
-    t6 = _SIMD_ADD(t6, _SIMD_MUL(a4_6, h_6_4));
-    t6 = _SIMD_ADD(t6, _SIMD_MUL(a3_6, h_6_3));
-    t6 = _SIMD_ADD(t6, _SIMD_MUL(a2_6, h_6_2));
-    t6 = _SIMD_ADD(t6, _SIMD_MUL(a1_6, h_6_1));
-    register __SIMD_DATATYPE v6 = _SIMD_ADD(a5_6, _SIMD_MUL(a4_6, h_5_4));
-    v6 = _SIMD_ADD(v6, _SIMD_MUL(a3_6, h_5_3));
-    v6 = _SIMD_ADD(v6, _SIMD_MUL(a2_6, h_5_2));
-    v6 = _SIMD_ADD(v6, _SIMD_MUL(a1_6, h_5_1));
-    register __SIMD_DATATYPE w6 = _SIMD_ADD(a4_6, _SIMD_MUL(a3_6, h_4_3));
-    w6 = _SIMD_ADD(w6, _SIMD_MUL(a2_6, h_4_2));
-    w6 = _SIMD_ADD(w6, _SIMD_MUL(a1_6, h_4_1));
-    register __SIMD_DATATYPE z6 = _SIMD_ADD(a3_6, _SIMD_MUL(a2_6, h_3_2));
-    z6 = _SIMD_ADD(z6, _SIMD_MUL(a1_6, h_3_1));
-    register __SIMD_DATATYPE y6 = _SIMD_ADD(a2_6, _SIMD_MUL(a1_6, h_2_1));
+    register __SIMD_DATATYPE t6 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_6, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_6, h_6_5));
+    t6 = _SIMD_ADD( ADDITIONAL_ARGUMENT t6, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_6, h_6_4));
+    t6 = _SIMD_ADD( ADDITIONAL_ARGUMENT t6, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_6, h_6_3));
+    t6 = _SIMD_ADD( ADDITIONAL_ARGUMENT t6, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_6, h_6_2));
+    t6 = _SIMD_ADD( ADDITIONAL_ARGUMENT t6, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_6, h_6_1));
+    register __SIMD_DATATYPE v6 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_6, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_6, h_5_4));
+    v6 = _SIMD_ADD( ADDITIONAL_ARGUMENT v6, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_6, h_5_3));
+    v6 = _SIMD_ADD( ADDITIONAL_ARGUMENT v6, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_6, h_5_2));
+    v6 = _SIMD_ADD( ADDITIONAL_ARGUMENT v6, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_6, h_5_1));
+    register __SIMD_DATATYPE w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_6, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_6, h_4_3));
+    w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT w6, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_6, h_4_2));
+    w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT w6, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_6, h_4_1));
+    register __SIMD_DATATYPE z6 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_6, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_6, h_3_2));
+    z6 = _SIMD_ADD( ADDITIONAL_ARGUMENT z6, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_6, h_3_1));
+    register __SIMD_DATATYPE y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_6, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_6, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
  
     register __SIMD_DATATYPE x6 = a1_6;
@@ -2603,7 +2657,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     for(i = BLOCK; i < nb; i++)
       {
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -2637,22 +2691,22 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         x6 = _SIMD_FMA(q6, h1, x6);
         y6 = _SIMD_FMA(q6, h2, y6);
 #else
-        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-        x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-        y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-        x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-        y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-        x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-        y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
-        x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
-        y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+        y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+        y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+        x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+        y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+        x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+        y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+        x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+        y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
+        x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h1));
+        y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -2672,15 +2726,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z5 = _SIMD_FMA(q5, h3, z5);
         z6 = _SIMD_FMA(q6, h3, z6);
 #else
-        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-        z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-        z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
-        z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
-        z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
+        z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+        z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+        z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+        z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
+        z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h3));
+        z6 = _SIMD_ADD( ADDITIONAL_ARGUMENT z6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -2700,19 +2754,19 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         w5 = _SIMD_FMA(q5, h4, w5);
         w6 = _SIMD_FMA(q6, h4, w6);
 #else
-        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-        w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-        w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
-        w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
-        w6 = _SIMD_ADD(w6, _SIMD_MUL(q6,h4));
+        w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+        w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+        w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+        w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
+        w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h4));
+        w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT w6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h4));
 #endif /* __ELPA_USE_FMA__ */
 				
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -2730,15 +2784,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v5 = _SIMD_FMA(q5, h5, v5);
         v6 = _SIMD_FMA(q6, h5, v6);
 #else
-        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
-        v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
-        v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
-        v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
-        v6 = _SIMD_ADD(v6, _SIMD_MUL(q6,h5));
+        v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+        v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
+        v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h5));
+        v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h5));
+        v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h5));
+        v6 = _SIMD_ADD( ADDITIONAL_ARGUMENT v6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 
@@ -2759,17 +2813,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         t5 = _SIMD_FMA(q5, h6, t5);
         t6 = _SIMD_FMA(q6, h6, t6);
 #else
-        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
-        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
-        t3 = _SIMD_ADD(t3, _SIMD_MUL(q3,h6));
-        t4 = _SIMD_ADD(t4, _SIMD_MUL(q4,h6));
-        t5 = _SIMD_ADD(t5, _SIMD_MUL(q5,h6));
-        t6 = _SIMD_ADD(t6, _SIMD_MUL(q6,h6));
+        t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h6));
+        t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h6));
+        t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h6));
+        t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h6));
+        t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h6));
+        t6 = _SIMD_ADD( ADDITIONAL_ARGUMENT t6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -2793,17 +2847,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_FMA(q5, h1, x5);
     x6 = _SIMD_FMA(q6, h1, x6);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+    x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -2823,15 +2877,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_FMA(q5, h2, y5);
     y6 = _SIMD_FMA(q6, h2, y6);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
-    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
+    y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -2851,16 +2905,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z5 = _SIMD_FMA(q5, h3, z5);
     z6 = _SIMD_FMA(q6, h3, z6);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
-    z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h3));
+    z6 = _SIMD_ADD( ADDITIONAL_ARGUMENT z6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h3));
 #endif
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -2887,15 +2941,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_FMA(q5, h1, x5);
     x6 = _SIMD_FMA(q6, h1, x6);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+    x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -2915,15 +2969,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_FMA(q5, h2, y5);
     y6 = _SIMD_FMA(q6, h2, y6);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
-    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
+    y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -2950,12 +3004,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_FMA(q5, h1, x5);
     x6 = _SIMD_FMA(q6, h1, x6);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+    x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 */
@@ -2963,7 +3017,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
@@ -2983,15 +3037,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w5 = _SIMD_FMA(q5, h4, w5);
     w6 = _SIMD_FMA(q6, h4, w6);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
-    w6 = _SIMD_ADD(w6, _SIMD_MUL(q6,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4)); 
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h4));
+    w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT w6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
@@ -3011,15 +3065,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v5 = _SIMD_FMA(q5, h5, v5);
     v6 = _SIMD_FMA(q6, h5, v6);
 #else
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
-    v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
-    v6 = _SIMD_ADD(v6, _SIMD_MUL(q6,h5));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h5));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h5));
+    v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h5));
+    v6 = _SIMD_ADD( ADDITIONAL_ARGUMENT v6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -3044,15 +3098,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_FMA(q5, h1, x5);
     x6 = _SIMD_FMA(q6, h1, x6);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+    x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -3070,15 +3124,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_FMA(q5, h2, y5);
     y6 = _SIMD_FMA(q6, h2, y6);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
-    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
+    y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -3096,15 +3150,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z5 = _SIMD_FMA(q5, h3, z5);
     z6 = _SIMD_FMA(q6, h3, z6);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
-    z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h3));
+    z6 = _SIMD_ADD( ADDITIONAL_ARGUMENT z6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -3122,15 +3176,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w5 = _SIMD_FMA(q5, h4, w5);
     w6 = _SIMD_FMA(q6, h4, w6);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
-    w6 = _SIMD_ADD(w6, _SIMD_MUL(q6,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h4));
+    w6 = _SIMD_ADD( ADDITIONAL_ARGUMENT w6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -3155,15 +3209,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_FMA(q5, h1, x5);
     x6 = _SIMD_FMA(q6, h1, x6);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+    x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 
@@ -3183,15 +3237,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_FMA(q5, h2, y5);
     y6 = _SIMD_FMA(q6, h2, y6);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
-    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
+    y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h2));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
@@ -3211,15 +3265,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z5 = _SIMD_FMA(q5, h3, z5);
     z6 = _SIMD_FMA(q6, h3, z6);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
-    z6 = _SIMD_ADD(z6, _SIMD_MUL(q6,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h3));
+    z6 = _SIMD_ADD( ADDITIONAL_ARGUMENT z6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -3245,15 +3299,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_FMA(q5, h1, x5);
     x6 = _SIMD_FMA(q6, h1, x6);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+    x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 
@@ -3273,15 +3327,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y5 = _SIMD_FMA(q5, h2, y5);
     y6 = _SIMD_FMA(q6, h2, y6);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
-    y6 = _SIMD_ADD(y6, _SIMD_MUL(q6,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
+    y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -3308,12 +3362,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x5 = _SIMD_FMA(q5, h1, x5);
     x6 = _SIMD_FMA(q6, h1, x6);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-    x6 = _SIMD_ADD(x6, _SIMD_MUL(q6,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+    x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT q6,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -3334,7 +3388,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
 
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
@@ -3375,7 +3429,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512  */
+#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512  */
 
 #if VEC_SET == SPARC64_SSE
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -3470,10 +3524,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-    h1 = _SIMD_NEG(tau1);
+    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
@@ -3486,19 +3540,19 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau1, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau1;
 #endif
 
-   x1 = _SIMD_MUL(x1, h1);
-   x2 = _SIMD_MUL(x2, h1);
-   x3 = _SIMD_MUL(x3, h1);
-   x4 = _SIMD_MUL(x4, h1);
-   x5 = _SIMD_MUL(x5, h1);
-   x6 = _SIMD_MUL(x6, h1);
+   x1 = _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1);
+   x2 = _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1);
+   x3 = _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1);
+   x4 = _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1);
+   x5 = _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1);
+   x6 = _SIMD_MUL( ADDITIONAL_ARGUMENT x6, h1);
 
 #ifdef BLOCK2
 #if VEC_SET == SSE_128 || VEC_SET == VSX_SSE || VEC_SET == AVX_256 || VEC_SET == AVX2_256
@@ -3506,10 +3560,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-   h1 = _SIMD_NEG(tau2);
+   h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
@@ -3522,137 +3576,137 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau2, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
-   h2 = _SIMD_MUL(h1, vs);
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SIMD_MUL(h1, vs_1_2);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_2);
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK2
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
-   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL(x3,h2));
-   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL(x4,h2));
-   y5 = _SIMD_FMA(y5, h1, _SIMD_MUL(x5,h2));
-   y6 = _SIMD_FMA(y6, h1, _SIMD_MUL(x6,h2));
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
+   y5 = _SIMD_FMA(y5, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2));
+   y6 = _SIMD_FMA(y6, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2));
 #else
-   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
-   y3 = _SIMD_ADD(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
-   y4 = _SIMD_ADD(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
-   y5 = _SIMD_ADD(_SIMD_MUL(y5,h1), _SIMD_MUL(x5,h2));
-   y6 = _SIMD_ADD(_SIMD_MUL(y6,h1), _SIMD_MUL(x6,h2));
+   y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
+   y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2));
+   y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y6,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2));
 #endif
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL(x2,h2));
-   y3 = _SIMD_FMSUB(y3, h1, _SIMD_MUL(x3,h2));
-   y4 = _SIMD_FMSUB(y4, h1, _SIMD_MUL(x4,h2));
-   y5 = _SIMD_FMSUB(y5, h1, _SIMD_MUL(x5,h2));
-   y6 = _SIMD_FMSUB(y6, h1, _SIMD_MUL(x6,h2));
+   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_FMSUB(y3, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_FMSUB(y4, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
+   y5 = _SIMD_FMSUB(y5, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2));
+   y6 = _SIMD_FMSUB(y6, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2));
 #else   
-   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
-   y3 = _SIMD_SUB(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
-   y4 = _SIMD_SUB(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
-   y5 = _SIMD_SUB(_SIMD_MUL(y5,h1), _SIMD_MUL(x5,h2));
-   y6 = _SIMD_SUB(_SIMD_MUL(y6,h1), _SIMD_MUL(x6,h2));
+   y1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
+   y5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2));
+   y6 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y6,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau3;
-   h2 = _SIMD_MUL(h1, vs_1_3);
-   h3 = _SIMD_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_3);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_3);
 
 #ifdef __ELPA_USE_FMA__
-   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)));
-   z3 = _SIMD_FMSUB(z3, h1, _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2)));
-   z4 = _SIMD_FMSUB(z4, h1, _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2)));
-   z5 = _SIMD_FMSUB(z5, h1, _SIMD_FMA(y5, h3, _SIMD_MUL(x5,h2)));
-   z6 = _SIMD_FMSUB(z6, h1, _SIMD_FMA(y6, h3, _SIMD_MUL(x6,h2)));
+   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
+   z3 = _SIMD_FMSUB(z3, h1, _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)));
+   z4 = _SIMD_FMSUB(z4, h1, _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)));
+   z5 = _SIMD_FMSUB(z5, h1, _SIMD_FMA(y5, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2)));
+   z6 = _SIMD_FMSUB(z6, h1, _SIMD_FMA(y6, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2)));
 #else
-   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
-   z3 = _SIMD_SUB(_SIMD_MUL(z3,h1), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)));
-   z4 = _SIMD_SUB(_SIMD_MUL(z4,h1), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)));
-   z5 = _SIMD_SUB(_SIMD_MUL(z5,h1), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2)));
-   z6 = _SIMD_SUB(_SIMD_MUL(z6,h1), _SIMD_ADD(_SIMD_MUL(y6,h3), _SIMD_MUL(x6,h2)));
+   z1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
+   z3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)));
+   z4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)));
+   z5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2)));
+   z6 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z6,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y6,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2)));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau4;
-   h2 = _SIMD_MUL(h1, vs_1_4);
-   h3 = _SIMD_MUL(h1, vs_2_4);
-   h4 = _SIMD_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_4);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_4);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_3_4);
 
 #ifdef __ELPA_USE_FMA__
-   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
-   w3 = _SIMD_FMSUB(w3, h1, _SIMD_FMA(z3, h4, _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2))));
-   w4 = _SIMD_FMSUB(w4, h1, _SIMD_FMA(z4, h4, _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2))));
-   w5 = _SIMD_FMSUB(w5, h1, _SIMD_FMA(z5, h4, _SIMD_FMA(y5, h3, _SIMD_MUL(x5,h2))));
-   w6 = _SIMD_FMSUB(w6, h1, _SIMD_FMA(z6, h4, _SIMD_FMA(y6, h3, _SIMD_MUL(x6,h2))));
+   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   w3 = _SIMD_FMSUB(w3, h1, _SIMD_FMA(z3, h4, _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   w4 = _SIMD_FMSUB(w4, h1, _SIMD_FMA(z4, h4, _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
+   w5 = _SIMD_FMSUB(w5, h1, _SIMD_FMA(z5, h4, _SIMD_FMA(y5, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2))));
+   w6 = _SIMD_FMSUB(w6, h1, _SIMD_FMA(z6, h4, _SIMD_FMA(y6, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2))));
 #else
-   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
-   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
-   w3 = _SIMD_SUB(_SIMD_MUL(w3,h1), _SIMD_ADD(_SIMD_MUL(z3,h4), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
-   w4 = _SIMD_SUB(_SIMD_MUL(w4,h1), _SIMD_ADD(_SIMD_MUL(z4,h4), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
-   w5 = _SIMD_SUB(_SIMD_MUL(w5,h1), _SIMD_ADD(_SIMD_MUL(z5,h4), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2))));
-   w6 = _SIMD_SUB(_SIMD_MUL(w6,h1), _SIMD_ADD(_SIMD_MUL(z6,h4), _SIMD_ADD(_SIMD_MUL(y6,h3), _SIMD_MUL(x6,h2))));
+   w1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   w2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   w3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   w4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
+   w5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w5,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2))));
+   w6 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w6,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z6,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y6,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SIMD_MUL(tau5, vs_1_5); 
-   h3 = _SIMD_MUL(tau5, vs_2_5);
-   h4 = _SIMD_MUL(tau5, vs_3_5);
-   h5 = _SIMD_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_1_5); 
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_2_5);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_3_5);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_4_5);
 
 #ifdef __ELPA_USE_FMA__
-   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
-   v3 = _SIMD_FMSUB(v3, tau5, _SIMD_ADD(_SIMD_FMA(w3, h5, _SIMD_MUL(z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2))));
-   v4 = _SIMD_FMSUB(v4, tau5, _SIMD_ADD(_SIMD_FMA(w4, h5, _SIMD_MUL(z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2))));
-   v5 = _SIMD_FMSUB(v5, tau5, _SIMD_ADD(_SIMD_FMA(w5, h5, _SIMD_MUL(z5,h4)), _SIMD_FMA(y5, h3, _SIMD_MUL(x5,h2))));
-   v6 = _SIMD_FMSUB(v6, tau5, _SIMD_ADD(_SIMD_FMA(w6, h5, _SIMD_MUL(z6,h4)), _SIMD_FMA(y6, h3, _SIMD_MUL(x6,h2))));
+   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   v3 = _SIMD_FMSUB(v3, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w3, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   v4 = _SIMD_FMSUB(v4, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w4, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
+   v5 = _SIMD_FMSUB(v5, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w5, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4)), _SIMD_FMA(y5, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2))));
+   v6 = _SIMD_FMSUB(v6, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w6, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z6,h4)), _SIMD_FMA(y6, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2))));
 #else
-   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
-   v3 = _SIMD_SUB(_SIMD_MUL(v3,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
-   v4 = _SIMD_SUB(_SIMD_MUL(v4,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
-   v5 = _SIMD_SUB(_SIMD_MUL(v5,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w5,h5), _SIMD_MUL(z5,h4)), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2))));
-   v6 = _SIMD_SUB(_SIMD_MUL(v6,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w6,h5), _SIMD_MUL(z6,h4)), _SIMD_ADD(_SIMD_MUL(y6,h3), _SIMD_MUL(x6,h2))));
+   v1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v1,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v2,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   v3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v3,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   v4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v4,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
+   v5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v5,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w5,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2))));
+   v6 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v6,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w6,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z6,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y6,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
-   h2 = _SIMD_MUL(tau6, vs_1_6);
-   h3 = _SIMD_MUL(tau6, vs_2_6);
-   h4 = _SIMD_MUL(tau6, vs_3_6);
-   h5 = _SIMD_MUL(tau6, vs_4_6);
-   h6 = _SIMD_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_1_6);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_2_6);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_3_6);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_4_6);
+   h6 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_5_6);
 
 #ifdef __ELPA_USE_FMA__
-   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)))));
-   t3 = _SIMD_FMSUB(t3, tau6, _SIMD_FMA(v3, h6, _SIMD_ADD(_SIMD_FMA(w3, h5, _SIMD_MUL(z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2)))));
-   t4 = _SIMD_FMSUB(t4, tau6, _SIMD_FMA(v4, h6, _SIMD_ADD(_SIMD_FMA(w4, h5, _SIMD_MUL(z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2)))));
-   t5 = _SIMD_FMSUB(t5, tau6, _SIMD_FMA(v5, h6, _SIMD_ADD(_SIMD_FMA(w5, h5, _SIMD_MUL(z5,h4)), _SIMD_FMA(y5, h3, _SIMD_MUL(x5,h2)))));
-   t6 = _SIMD_FMSUB(t6, tau6, _SIMD_FMA(v6, h6, _SIMD_ADD(_SIMD_FMA(w6, h5, _SIMD_MUL(z6,h4)), _SIMD_FMA(y6, h3, _SIMD_MUL(x6,h2)))));
+   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
+   t3 = _SIMD_FMSUB(t3, tau6, _SIMD_FMA(v3, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w3, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)))));
+   t4 = _SIMD_FMSUB(t4, tau6, _SIMD_FMA(v4, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w4, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)))));
+   t5 = _SIMD_FMSUB(t5, tau6, _SIMD_FMA(v5, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w5, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4)), _SIMD_FMA(y5, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2)))));
+   t6 = _SIMD_FMSUB(t6, tau6, _SIMD_FMA(v6, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w6, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z6,h4)), _SIMD_FMA(y6, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2)))));
 #else
-   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
-   t3 = _SIMD_SUB(_SIMD_MUL(t3,tau6), _SIMD_ADD( _SIMD_MUL(v3,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)))));
-   t4 = _SIMD_SUB(_SIMD_MUL(t4,tau6), _SIMD_ADD( _SIMD_MUL(v4,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)))));
-   t5 = _SIMD_SUB(_SIMD_MUL(t5,tau6), _SIMD_ADD( _SIMD_MUL(v5,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w5,h5), _SIMD_MUL(z5,h4)), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2)))));
-   t6 = _SIMD_SUB(_SIMD_MUL(t6,tau6), _SIMD_ADD( _SIMD_MUL(v6,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w6,h5), _SIMD_MUL(z6,h4)), _SIMD_ADD(_SIMD_MUL(y6,h3), _SIMD_MUL(x6,h2)))));
+   t1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t1,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v1,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t2,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v2,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
+   t3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t3,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v3,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)))));
+   t4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t4,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v4,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)))));
+   t5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t5,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v5,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w5,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2)))));
+   t6 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t6,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v6,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w6,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z6,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y6,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h2)))));
 #endif /* __ELPA_USE_FMA__ */
 
    /////////////////////////////////////////////////////
@@ -3662,73 +3716,73 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SIMD_ADD(q1, y1);
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SIMD_SUB(q1, w1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SIMD_SUB(q1, t1); 
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, t1); 
 #endif
    _STORE(&q[0],q1);
    q2 = _LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SIMD_ADD(q2, y2);
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SIMD_SUB(q2, w2);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SIMD_SUB(q2, t2);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, t2);
 #endif
    _STORE(&q[offset],q2);
    q3 = _LOAD(&q[2*offset]);
 #ifdef BLOCK2
-   q3 = _SIMD_ADD(q3, y3);
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, y3);
 #endif
 #ifdef BLOCK4
-   q3 = _SIMD_SUB(q3, w3);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, w3);
 #endif
 #ifdef BLOCK6
-   q3 = _SIMD_SUB(q3, t3);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, t3);
 #endif
    _STORE(&q[2*offset],q3);
    q4 = _LOAD(&q[3*offset]);
 #ifdef BLOCK2
-   q4 = _SIMD_ADD(q4, y4);
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, y4);
 #endif
 #ifdef BLOCK4
-   q4 = _SIMD_SUB(q4, w4);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, w4);
 #endif
 #ifdef BLOCK6
-   q4 = _SIMD_SUB(q4, t4);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, t4);
 #endif
    _STORE(&q[3*offset],q4);
    q5 = _LOAD(&q[4*offset]);
 #ifdef BLOCK2
-   q5 = _SIMD_ADD(q5, y5);
+   q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, y5);
 #endif
 #ifdef BLOCK4
-   q5 = _SIMD_SUB(q5, w5);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, w5);
 #endif
 #ifdef BLOCK6
-   q5 = _SIMD_SUB(q5, t5);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, t5);
 #endif
    _STORE(&q[4*offset],q5);
    q6 = _LOAD(&q[5*offset]);
 #ifdef BLOCK2
-   q6 = _SIMD_ADD(q6, y6);
+   q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, y6);
 #endif
 #ifdef BLOCK4
-   q6 = _SIMD_SUB(q6, w6);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, w6);
 #endif
 #ifdef BLOCK6
-   q6 = _SIMD_SUB(q6, t6);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, t6);
 #endif
    _STORE(&q[5*offset],q6);
 
 #ifdef BLOCK2
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -3745,19 +3799,19 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _LOAD(&q[ldq+4*offset]);
    q6 = _LOAD(&q[ldq+5*offset]);
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
-   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
-   q3 = _SIMD_ADD(q3, _SIMD_FMA(y3, h2, x3));
-   q4 = _SIMD_ADD(q4, _SIMD_FMA(y4, h2, x4));
-   q5 = _SIMD_ADD(q5, _SIMD_FMA(y5, h2, x5));
-   q6 = _SIMD_ADD(q6, _SIMD_FMA(y6, h2, x6));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(y1, h2, x1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(y2, h2, x2));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMA(y3, h2, x3));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMA(y4, h2, x4));
+   q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMA(y5, h2, x5));
+   q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMA(y6, h2, x6));
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
-   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
-   q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
-   q4 = _SIMD_ADD(q4, _SIMD_ADD(x4, _SIMD_MUL(y4, h2)));
-   q5 = _SIMD_ADD(q5, _SIMD_ADD(x5, _SIMD_MUL(y5, h2)));
-   q6 = _SIMD_ADD(q6, _SIMD_ADD(x6, _SIMD_MUL(y6, h2)));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2)));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2)));
+   q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2)));
+   q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_MUL( ADDITIONAL_ARGUMENT y6, h2)));
 #endif /* __ELPA_USE_FMA__ */
    _STORE(&q[ldq],q1);
    _STORE(&q[ldq+offset],q2);
@@ -3768,7 +3822,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -3788,19 +3842,19 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q6 = _LOAD(&q[ldq+5*offset]);
 
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
-   q2 = _SIMD_SUB(q2, _SIMD_FMA(w2, h4, z2));
-   q3 = _SIMD_SUB(q3, _SIMD_FMA(w3, h4, z3));
-   q4 = _SIMD_SUB(q4, _SIMD_FMA(w4, h4, z4));
-   q5 = _SIMD_SUB(q5, _SIMD_FMA(w5, h4, z5));
-   q6 = _SIMD_SUB(q6, _SIMD_FMA(w6, h4, z6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(w1, h4, z1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(w2, h4, z2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_FMA(w3, h4, z3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_FMA(w4, h4, z4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_FMA(w5, h4, z5));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_FMA(w6, h4, z6));
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
-   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
-   q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
-   q4 = _SIMD_SUB(q4, _SIMD_ADD(z4, _SIMD_MUL(w4, h4)));
-   q5 = _SIMD_SUB(q5, _SIMD_ADD(z5, _SIMD_MUL(w5, h4)));
-   q6 = _SIMD_SUB(q6, _SIMD_ADD(z6, _SIMD_MUL(w6, h4)));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4)));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4)));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4)));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4)));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4)));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_ADD( ADDITIONAL_ARGUMENT z6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq],q1);
@@ -3810,7 +3864,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[ldq+4*offset],q5);
    _STORE(&q[ldq+5*offset],q6);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -3827,12 +3881,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[(ldq*2)+3*offset]);
    q5 = _LOAD(&q[(ldq*2)+4*offset]);
    q6 = _LOAD(&q[(ldq*2)+5*offset]);
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
-   q3 = _SIMD_SUB(q3, y3);
-   q4 = _SIMD_SUB(q4, y4);
-   q5 = _SIMD_SUB(q5, y5);
-   q6 = _SIMD_SUB(q6, y6);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, y3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, y4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, y5);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, y6);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -3842,15 +3896,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(w5, h4, q5);
    q6 = _SIMD_NFMA(w6, h4, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -3870,12 +3924,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(z5, h3, q5);
    q6 = _SIMD_NFMA(z6, h3, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT z6, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
@@ -3885,7 +3939,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*2)+4*offset],q5);
    _STORE(&q[(ldq*2)+5*offset],q6);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -3904,12 +3958,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _LOAD(&q[(ldq*3)+4*offset]);
    q6 = _LOAD(&q[(ldq*3)+5*offset]);
 
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
-   q3 = _SIMD_SUB(q3, x3);
-   q4 = _SIMD_SUB(q4, x4);
-   q5 = _SIMD_SUB(q5, x5);
-   q6 = _SIMD_SUB(q6, x6);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, x3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, x4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, x5);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, x6);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -3919,15 +3973,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(w5, h4, q5);
    q6 = _SIMD_NFMA(w6, h4, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -3947,15 +4001,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(y5, h2, q5);
    q6 = _SIMD_NFMA(y6, h2, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT y6, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -3975,12 +4029,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(z5, h3, q5);
    q6 = _SIMD_NFMA(z6, h3, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT z6, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*3], q1);
@@ -3994,7 +4048,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4010,12 +4064,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[(ldq+3*offset)]);
    q5 = _LOAD(&q[(ldq+4*offset)]);
    q6 = _LOAD(&q[(ldq+5*offset)]);
-   q1 = _SIMD_SUB(q1, v1);
-   q2 = _SIMD_SUB(q2, v2);
-   q3 = _SIMD_SUB(q3, v3);
-   q4 = _SIMD_SUB(q4, v4);
-   q5 = _SIMD_SUB(q5, v5);
-   q6 = _SIMD_SUB(q6, v6);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, v1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, v2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, v3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, v4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, v5);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, v6);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
@@ -4025,12 +4079,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(t5, h6, q5);
    q6 = _SIMD_NFMA(t6, h6, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT t6, h6));
 #endif
 
    _STORE(&q[ldq],q1);
@@ -4040,7 +4094,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq+4*offset)],q5);
    _STORE(&q[(ldq+5*offset)],q6);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4056,12 +4110,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[(ldq*2)+3*offset]);
    q5 = _LOAD(&q[(ldq*2)+4*offset]);
    q6 = _LOAD(&q[(ldq*2)+5*offset]);
-   q1 = _SIMD_SUB(q1, w1); 
-   q2 = _SIMD_SUB(q2, w2);
-   q3 = _SIMD_SUB(q3, w3);
-   q4 = _SIMD_SUB(q4, w4);
-   q5 = _SIMD_SUB(q5, w5);
-   q6 = _SIMD_SUB(q6, w6);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, w3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, w4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, w5);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, w6);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
@@ -4071,15 +4125,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(v5, h5, q5);
    q6 = _SIMD_NFMA(v6, h5, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));  
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));  
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));  
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5)); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));  
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));  
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));  
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));  
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4097,12 +4151,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(t5, h6, q5);
    q6 = _SIMD_NFMA(t6, h6, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT t6, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
@@ -4112,7 +4166,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*2)+4*offset],q5);
    _STORE(&q[(ldq*2)+5*offset],q6);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -4130,12 +4184,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[(ldq*3)+3*offset]);
    q5 = _LOAD(&q[(ldq*3)+4*offset]);
    q6 = _LOAD(&q[(ldq*3)+5*offset]);
-   q1 = _SIMD_SUB(q1, z1);
-   q2 = _SIMD_SUB(q2, z2);
-   q3 = _SIMD_SUB(q3, z3);
-   q4 = _SIMD_SUB(q4, z4);
-   q5 = _SIMD_SUB(q5, z5);
-   q6 = _SIMD_SUB(q6, z6);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, z1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, z2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, z3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, z4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, z5);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, z6);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -4145,15 +4199,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(w5, h4, q5);
    q6 = _SIMD_NFMA(w6, h4, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4171,15 +4225,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(v5, h5, q5);
    q6 = _SIMD_NFMA(v6, h5, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4197,12 +4251,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(t5, h6, q5);
    q6 = _SIMD_NFMA(t6, h6, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT t6, h6));
 #endif
 
    _STORE(&q[ldq*3],q1);
@@ -4212,7 +4266,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*3)+4*offset],q5);
    _STORE(&q[(ldq*3)+5*offset],q6);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4227,12 +4281,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[(ldq*4)+3*offset]);
    q5 = _LOAD(&q[(ldq*4)+4*offset]);
    q6 = _LOAD(&q[(ldq*4)+5*offset]);
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
-   q3 = _SIMD_SUB(q3, y3);
-   q4 = _SIMD_SUB(q4, y4);
-   q5 = _SIMD_SUB(q5, y5);
-   q6 = _SIMD_SUB(q6, y6);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, y3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, y4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, y5);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, y6);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
@@ -4242,15 +4296,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(z5, h3, q5);
    q6 = _SIMD_NFMA(z6, h3, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT z6, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4268,15 +4322,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(w5, h4, q5);
    q6 = _SIMD_NFMA(w6, h4, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4294,15 +4348,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(v5, h5, q5);
    q6 = _SIMD_NFMA(v6, h5, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4320,12 +4374,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(t5, h6, q5);
    q6 = _SIMD_NFMA(t6, h6, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT t6, h6));
 #endif
 
    _STORE(&q[ldq*4],q1);
@@ -4335,7 +4389,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*4)+4*offset],q5);
    _STORE(&q[(ldq*4)+5*offset],q6);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4350,12 +4404,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[(ldq*5)+3*offset]);
    q5 = _LOAD(&q[(ldq*5)+4*offset]);
    q6 = _LOAD(&q[(ldq*5)+5*offset]);
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
-   q3 = _SIMD_SUB(q3, x3);
-   q4 = _SIMD_SUB(q4, x4);
-   q5 = _SIMD_SUB(q5, x5);
-   q6 = _SIMD_SUB(q6, x6);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, x3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, x4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, x5);
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, x6);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
@@ -4365,15 +4419,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(y5, h2, q5);
    q6 = _SIMD_NFMA(y6, h2, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT y6, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4391,15 +4445,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(z5, h3, q5);
    q6 = _SIMD_NFMA(z6, h3, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT z6, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4417,15 +4471,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(w5, h4, q5);
    q6 = _SIMD_NFMA(w6, h4, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4443,15 +4497,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(v5, h5, q5);
    q6 = _SIMD_NFMA(v6, h5, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4469,12 +4523,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(t5, h6, q5);
    q6 = _SIMD_NFMA(t6, h6, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT t6, h6));
 #endif
 
    _STORE(&q[ldq*5],q1);
@@ -4488,7 +4542,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -4523,12 +4577,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q6 = _SIMD_FMA(x6, h1, q6);
      q6 = _SIMD_FMA(y6, h2, q6);
 #else
-     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
-     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
-     q3 = _SIMD_ADD(q3, _SIMD_ADD(_SIMD_MUL(x3,h1), _SIMD_MUL(y3, h2)));
-     q4 = _SIMD_ADD(q4, _SIMD_ADD(_SIMD_MUL(x4,h1), _SIMD_MUL(y4, h2)));
-     q5 = _SIMD_ADD(q5, _SIMD_ADD(_SIMD_MUL(x5,h1), _SIMD_MUL(y5, h2)));
-     q6 = _SIMD_ADD(q6, _SIMD_ADD(_SIMD_MUL(x6,h1), _SIMD_MUL(y6, h2)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2)));
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2)));
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2)));
+     q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y6, h2)));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
@@ -4542,12 +4596,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_NFMA(x5, h1, q5);
      q6 = _SIMD_NFMA(x6, h1, q6);
 #else  
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(x3,h1));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(x4,h1));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(x5,h1));
-     q6 = _SIMD_SUB(q6, _SIMD_MUL(x6,h1));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h1));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h1));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h1));
+     q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT x6,h1));
 #endif
 
 #ifdef __ELPA_USE_FMA__
@@ -4558,15 +4612,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_NFMA(y5, h2, q5);
      q6 = _SIMD_NFMA(y6, h2, q6);
 #else   
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(y4,h2));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(y5,h2));
-     q6 = _SIMD_SUB(q6, _SIMD_MUL(y6,h2));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h2));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h2));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h2));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h2));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h2));
+     q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT y6,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -4586,15 +4640,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_NFMA(z5, h3, q5);
      q6 = _SIMD_NFMA(z6, h3, q6);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(z4,h3));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(z5,h3));
-     q6 = _SIMD_SUB(q6, _SIMD_MUL(z6,h3));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h3));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h3));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h3));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h3));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h3));
+     q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT z6,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -4614,18 +4668,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_NFMA(w5, h4, q5);
      q6 = _SIMD_NFMA(w6, h4, q6);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(w3,h4));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(w4,h4));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(w5,h4));
-     q6 = _SIMD_SUB(q6, _SIMD_MUL(w6,h4));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h4));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h4));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h4));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h4));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5,h4));
+     q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6,h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4644,15 +4698,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_NFMA(v5, h5, q5);
      q6 = _SIMD_NFMA(v6, h5, q6);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
-     q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
+     q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4670,12 +4724,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_NFMA(t5, h6, q5);
      q6 = _SIMD_NFMA(t6, h6, q6);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
-     q6 = _SIMD_SUB(q6, _SIMD_MUL(t6, h6));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
+     q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT t6, h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -4688,7 +4742,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      _STORE(&q[(i*ldq)+5*offset],q6);
 
    }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4715,12 +4769,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_FMA(x5, h1, q5);
    q6 = _SIMD_FMA(x6, h1, q6);
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
-   q6 = _SIMD_ADD(q6, _SIMD_MUL(x6, h1));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
+   q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT x6, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -4734,15 +4788,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(x5, h1, q5);
    q6 = _SIMD_NFMA(x6, h1, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT x6, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -4762,14 +4816,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(y5, h2, q5);
    q6 = _SIMD_NFMA(y6, h2, q6);
 #else   
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -4789,18 +4843,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(z5, h3, q5);
    q6 = _SIMD_NFMA(z6, h3, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT z6, h3));
 #endif
 
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4818,15 +4872,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(w5, h4, q5);
    q6 = _SIMD_NFMA(w6, h4, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4844,12 +4898,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(v5, h5, q5);
    q6 = _SIMD_NFMA(v6, h5, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(v6, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT v6, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -4863,7 +4917,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -4890,15 +4944,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(x5, h1, q5);
    q6 = _SIMD_NFMA(x6, h1, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT x6, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -4918,16 +4972,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(y5, h2, q5);
    q6 = _SIMD_NFMA(y6, h2, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT y6, h2));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4945,15 +4999,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(z5, h3, q5);
    q6 = _SIMD_NFMA(z6, h3, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT z6, h3));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -4971,12 +5025,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(w5, h4, q5);
    q6 = _SIMD_NFMA(w6, h4, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(w6, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT w6, h4));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
@@ -4987,7 +5041,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[((nb+1)*ldq)+4*offset],q5);
    _STORE(&q[((nb+1)*ldq)+5*offset],q6);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -5014,16 +5068,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(x5, h1, q5);
    q6 = _SIMD_NFMA(x6, h1, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT x6, h1));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -5042,15 +5096,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(y5, h2, q5);
    q6 = _SIMD_NFMA(y6, h2, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT y6, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -5068,12 +5122,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(z5, h3, q5);
    q6 = _SIMD_NFMA(z6, h3, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(z6, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT z6, h3));
 #endif /* __ELPA_USE_FMA__ */
  
 #endif /* BLOCK6 */
@@ -5088,7 +5142,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6  */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -5113,15 +5167,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(x5, h1, q5);
    q6 = _SIMD_NFMA(x6, h1, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT x6, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -5139,12 +5193,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(y5, h2, q5);
    q6 = _SIMD_NFMA(y6, h2, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(y6, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT y6, h2));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+3)*ldq],q1);
@@ -5154,7 +5208,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[((nb+3)*ldq)+4*offset],q5);
    _STORE(&q[((nb+3)*ldq)+5*offset],q6);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -5179,12 +5233,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _SIMD_NFMA(x5, h1, q5);
    q6 = _SIMD_NFMA(x6, h1, q6);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
-   q6 = _SIMD_SUB(q6, _SIMD_MUL(x6, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
+   q6 = _SIMD_SUB( ADDITIONAL_ARGUMENT q6, _SIMD_MUL( ADDITIONAL_ARGUMENT x6, h1));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+4)*ldq],q1);
@@ -5216,14 +5270,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 40
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 80
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 /*
  * Unrolled kernel that computes
@@ -5289,7 +5343,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
@@ -5304,7 +5358,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE x4 = _LOAD(&q[ldq+3*offset]);
     __SIMD_DATATYPE x5 = _LOAD(&q[ldq+4*offset]);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -5328,15 +5382,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE y5 = _SIMD_FMA(x5, h1, q5);
 #else
     __SIMD_DATATYPE q1 = _LOAD(q);
-    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
     __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
-    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+    __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
     __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
-    __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+    __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
     __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
-    __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+    __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
     __SIMD_DATATYPE q5 = _LOAD(&q[4*offset]);
-    __SIMD_DATATYPE y5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
+    __SIMD_DATATYPE y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -5346,7 +5400,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -5382,12 +5436,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
     register __SIMD_DATATYPE x1 = a1_1;
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));                          
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1));
     register __SIMD_DATATYPE x1 = a1_1; 
 #endif /* __ELPA_USE_FMA__ */
 
@@ -5405,12 +5459,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
     register __SIMD_DATATYPE x2 = a1_2;
 #else
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -5428,12 +5482,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y3 = _SIMD_FMA(a1_3, h_2_1, a2_3);
     register __SIMD_DATATYPE x3 = a1_3;
 #else
-    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
-    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
-    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_4_3));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_4_2));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_3_2));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_2_1));
     register __SIMD_DATATYPE x3 = a1_3;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -5451,12 +5505,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y4 = _SIMD_FMA(a1_4, h_2_1, a2_4);
     register __SIMD_DATATYPE x4 = a1_4;
 #else
-    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
-    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
-    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_4_3));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_4_2));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_3_2));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_2_1));
     register __SIMD_DATATYPE x4 = a1_4;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -5474,12 +5528,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y5 = _SIMD_FMA(a1_5, h_2_1, a2_5);
     register __SIMD_DATATYPE x5 = a1_5;
 #else
-    register __SIMD_DATATYPE w5 = _SIMD_ADD(a4_5, _SIMD_MUL(a3_5, h_4_3));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(a2_5, h_4_2));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(a1_5, h_4_1));
-    register __SIMD_DATATYPE z5 = _SIMD_ADD(a3_5, _SIMD_MUL(a2_5, h_3_2));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(a1_5, h_3_1));
-    register __SIMD_DATATYPE y5 = _SIMD_ADD(a2_5, _SIMD_MUL(a1_5, h_2_1));
+    register __SIMD_DATATYPE w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_5, h_4_3));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_4_2));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_4_1));
+    register __SIMD_DATATYPE z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_3_2));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_3_1));
+    register __SIMD_DATATYPE y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_2_1));
     register __SIMD_DATATYPE x5 = a1_5;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -5504,7 +5558,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -5535,14 +5589,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_FMA(a2_1, h_6_2, t1);
     t1 = _SIMD_FMA(a1_1, h_6_1, t1);
 #else
-    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_1, h_6_5)); 
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_6_4));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_6_3));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_6_2));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -5570,13 +5624,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_FMA(a2_1, h_5_2, v1);
     v1 = _SIMD_FMA(a1_1, h_5_1, v1);
 #else
-    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_5_4)); 
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_5_3));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_5_2));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -5599,12 +5653,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_FMA(a2_1, h_4_2, w1);
     w1 = _SIMD_FMA(a1_1, h_4_1, w1);
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3)); 
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -5627,9 +5681,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(a1_1, h_3_1, z1);
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
 #else
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1)); 
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x1 = a1_1;
@@ -5658,21 +5712,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_FMA(a1_2, h_3_1, z2);
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
 #else
-    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
-    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_2, h_6_5));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_6_4));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_6_3));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_6_2));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_5_4));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_5_3));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_5_2));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x2 = a1_2;
@@ -5701,21 +5755,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_FMA(a1_3, h_3_1, z3);
     register __SIMD_DATATYPE y3 = _SIMD_FMA(a1_3, h_2_1, a2_3);
 #else
-    register __SIMD_DATATYPE t3 = _SIMD_ADD(a6_3, _SIMD_MUL(a5_3, h_6_5));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a4_3, h_6_4));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a3_3, h_6_3));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a2_3, h_6_2));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a1_3, h_6_1));
-    register __SIMD_DATATYPE v3 = _SIMD_ADD(a5_3, _SIMD_MUL(a4_3, h_5_4));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a3_3, h_5_3));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a2_3, h_5_2));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a1_3, h_5_1));
-    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
-    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
-    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_3, h_6_5));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_3, h_6_4));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_6_3));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_6_2));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_6_1));
+    register __SIMD_DATATYPE v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_3, h_5_4));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_5_3));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_5_2));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_5_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_4_3));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_4_2));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_3_2));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x3 = a1_3;
@@ -5744,21 +5798,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z4 = _SIMD_FMA(a1_4, h_3_1, z4);
     register __SIMD_DATATYPE y4 = _SIMD_FMA(a1_4, h_2_1, a2_4);
 #else
-    register __SIMD_DATATYPE t4 = _SIMD_ADD(a6_4, _SIMD_MUL(a5_4, h_6_5));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a4_4, h_6_4));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a3_4, h_6_3));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a2_4, h_6_2));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a1_4, h_6_1));
-    register __SIMD_DATATYPE v4 = _SIMD_ADD(a5_4, _SIMD_MUL(a4_4, h_5_4));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a3_4, h_5_3));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a2_4, h_5_2));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a1_4, h_5_1));
-    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
-    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
-    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_4, h_6_5));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_4, h_6_4));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_6_3));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_6_2));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_6_1));
+    register __SIMD_DATATYPE v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_4, h_5_4));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_5_3));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_5_2));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_5_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_4_3));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_4_2));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_3_2));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x4 = a1_4;
@@ -5787,21 +5841,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z5 = _SIMD_FMA(a1_5, h_3_1, z5);
     register __SIMD_DATATYPE y5 = _SIMD_FMA(a1_5, h_2_1, a2_5);
 #else
-    register __SIMD_DATATYPE t5 = _SIMD_ADD(a6_5, _SIMD_MUL(a5_5, h_6_5));
-    t5 = _SIMD_ADD(t5, _SIMD_MUL(a4_5, h_6_4));
-    t5 = _SIMD_ADD(t5, _SIMD_MUL(a3_5, h_6_3));
-    t5 = _SIMD_ADD(t5, _SIMD_MUL(a2_5, h_6_2));
-    t5 = _SIMD_ADD(t5, _SIMD_MUL(a1_5, h_6_1));
-    register __SIMD_DATATYPE v5 = _SIMD_ADD(a5_5, _SIMD_MUL(a4_5, h_5_4));
-    v5 = _SIMD_ADD(v5, _SIMD_MUL(a3_5, h_5_3));
-    v5 = _SIMD_ADD(v5, _SIMD_MUL(a2_5, h_5_2));
-    v5 = _SIMD_ADD(v5, _SIMD_MUL(a1_5, h_5_1));
-    register __SIMD_DATATYPE w5 = _SIMD_ADD(a4_5, _SIMD_MUL(a3_5, h_4_3));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(a2_5, h_4_2));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(a1_5, h_4_1));
-    register __SIMD_DATATYPE z5 = _SIMD_ADD(a3_5, _SIMD_MUL(a2_5, h_3_2));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(a1_5, h_3_1));
-    register __SIMD_DATATYPE y5 = _SIMD_ADD(a2_5, _SIMD_MUL(a1_5, h_2_1));
+    register __SIMD_DATATYPE t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_5, h_6_5));
+    t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_5, h_6_4));
+    t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_5, h_6_3));
+    t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_6_2));
+    t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_6_1));
+    register __SIMD_DATATYPE v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_5, h_5_4));
+    v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_5, h_5_3));
+    v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_5_2));
+    v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_5_1));
+    register __SIMD_DATATYPE w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_5, h_4_3));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_4_2));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_4_1));
+    register __SIMD_DATATYPE z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_5, h_3_2));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_3_1));
+    register __SIMD_DATATYPE y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_5, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_5, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x5 = a1_5;
@@ -5825,7 +5879,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -5855,20 +5909,20 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         x5 = _SIMD_FMA(q5, h1, x5);
         y5 = _SIMD_FMA(q5, h2, y5);
 #else
-        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-        x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-        y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-        x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-        y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-        x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
-        y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+        y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+        y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+        x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+        y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+        x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+        y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+        x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
+        y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
 #endif
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -5887,14 +5941,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z4 = _SIMD_FMA(q4, h3, z4);
         z5 = _SIMD_FMA(q5, h3, z5);
 #else
-        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-        z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-        z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
-        z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+        z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+        z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+        z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+        z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
+        z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -5913,18 +5967,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         w4 = _SIMD_FMA(q4, h4, w4);
         w5 = _SIMD_FMA(q5, h4, w5);
 #else
-        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-        w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-        w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
-        w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
+        w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+        w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+        w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+        w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
+        w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h4));
 #endif /* __ELPA_USE_FMA__ */
 			
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -5941,14 +5995,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v4 = _SIMD_FMA(q4, h5, v4);
         v5 = _SIMD_FMA(q5, h5, v5);
 #else
-        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
-        v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
-        v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
-        v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
+        v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+        v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
+        v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h5));
+        v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h5));
+        v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 
@@ -5968,16 +6022,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         t4 = _SIMD_FMA(q4, h6, t4);
         t5 = _SIMD_FMA(q5, h6, t5);
 #else
-        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
-        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
-        t3 = _SIMD_ADD(t3, _SIMD_MUL(q3,h6));
-        t4 = _SIMD_ADD(t4, _SIMD_MUL(q4,h6));
-        t5 = _SIMD_ADD(t5, _SIMD_MUL(q5,h6));
+        t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h6));
+        t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h6));
+        t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h6));
+        t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h6));
+        t5 = _SIMD_ADD( ADDITIONAL_ARGUMENT t5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h6));
 #endif /* __ELPA_USE_FMA__ */	
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -5999,16 +6053,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_FMA(q4, h1, x4);
     x5 = _SIMD_FMA(q5, h1, x5);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -6027,14 +6081,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_FMA(q4, h2, y4);
     y5 = _SIMD_FMA(q5, h2, y5);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -6053,15 +6107,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z4 = _SIMD_FMA(q4, h3, z4);
     z5 = _SIMD_FMA(q5, h3, z5);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h3));
 #endif
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -6086,14 +6140,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_FMA(q4, h1, x4);
     x5 = _SIMD_FMA(q5, h1, x5);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -6112,14 +6166,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_FMA(q4, h2, y4);
     y5 = _SIMD_FMA(q5, h2, y5);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -6144,11 +6198,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_FMA(q4, h1, x4);
     x5 = _SIMD_FMA(q5, h1, x5);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 */
@@ -6156,7 +6210,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
@@ -6175,14 +6229,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w4 = _SIMD_FMA(q4, h4, w4);
     w5 = _SIMD_FMA(q5, h4, w5);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4)); 
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
@@ -6201,14 +6255,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v4 = _SIMD_FMA(q4, h5, v4);
     v5 = _SIMD_FMA(q5, h5, v5);
 #else
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
-    v5 = _SIMD_ADD(v5, _SIMD_MUL(q5,h5));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h5));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h5));
+    v5 = _SIMD_ADD( ADDITIONAL_ARGUMENT v5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -6231,14 +6285,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_FMA(q4, h1, x4);
     x5 = _SIMD_FMA(q5, h1, x5);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -6255,14 +6309,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_FMA(q4, h2, y4);
     y5 = _SIMD_FMA(q5, h2, y5);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -6279,14 +6333,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z4 = _SIMD_FMA(q4, h3, z4);
     z5 = _SIMD_FMA(q5, h3, z5);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -6303,14 +6357,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w4 = _SIMD_FMA(q4, h4, w4);
     w5 = _SIMD_FMA(q5, h4, w5);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
-    w5 = _SIMD_ADD(w5, _SIMD_MUL(q5,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
+    w5 = _SIMD_ADD( ADDITIONAL_ARGUMENT w5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -6333,14 +6387,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_FMA(q4, h1, x4);
     x5 = _SIMD_FMA(q5, h1, x5);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 
@@ -6359,14 +6413,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_FMA(q4, h2, y4);
     y5 = _SIMD_FMA(q5, h2, y5);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
@@ -6385,14 +6439,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z4 = _SIMD_FMA(q4, h3, z4);
     z5 = _SIMD_FMA(q5, h3, z5);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
-    z5 = _SIMD_ADD(z5, _SIMD_MUL(q5,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
+    z5 = _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -6417,14 +6471,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_FMA(q4, h1, x4);
     x5 = _SIMD_FMA(q5, h1, x5);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 
@@ -6443,14 +6497,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y4 = _SIMD_FMA(q4, h2, y4);
     y5 = _SIMD_FMA(q5, h2, y5);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
-    y5 = _SIMD_ADD(y5, _SIMD_MUL(q5,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
+    y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -6475,11 +6529,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x4 = _SIMD_FMA(q4, h1, x4);
     x5 = _SIMD_FMA(q5, h1, x5);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-    x5 = _SIMD_ADD(x5, _SIMD_MUL(q5,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+    x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT q5,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -6500,7 +6554,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
 
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
@@ -6541,7 +6595,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE */
+#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE */
 
 #if VEC_SET == SPARC64_SSE
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -6636,10 +6690,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-    h1 = _SIMD_NEG(tau1);
+    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
@@ -6652,7 +6706,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau1, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -6660,11 +6714,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = tau1;
 #endif
 
-   x1 = _SIMD_MUL(x1, h1);
-   x2 = _SIMD_MUL(x2, h1);
-   x3 = _SIMD_MUL(x3, h1);
-   x4 = _SIMD_MUL(x4, h1);
-   x5 = _SIMD_MUL(x5, h1);
+   x1 = _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1);
+   x2 = _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1);
+   x3 = _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1);
+   x4 = _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1);
+   x5 = _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1);
 
 #ifdef BLOCK2
 #if VEC_SET == SSE_128 || VEC_SET == VSX_SSE || VEC_SET == AVX_256 || VEC_SET == AVX2_256
@@ -6672,10 +6726,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-   h1 = _SIMD_NEG(tau2);
+   h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
@@ -6688,125 +6742,125 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau2, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
-   h2 = _SIMD_MUL(h1, vs);
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SIMD_MUL(h1, vs_1_2);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_2);
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
-   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL(x3,h2));
-   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL(x4,h2));
-   y5 = _SIMD_FMA(y5, h1, _SIMD_MUL(x5,h2));
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
+   y5 = _SIMD_FMA(y5, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2));
 #else
-   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
-   y3 = _SIMD_ADD(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
-   y4 = _SIMD_ADD(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
-   y5 = _SIMD_ADD(_SIMD_MUL(y5,h1), _SIMD_MUL(x5,h2));
+   y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
+   y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2));
 #endif
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL(x2,h2));
-   y3 = _SIMD_FMSUB(y3, h1, _SIMD_MUL(x3,h2));
-   y4 = _SIMD_FMSUB(y4, h1, _SIMD_MUL(x4,h2));
-   y5 = _SIMD_FMSUB(y5, h1, _SIMD_MUL(x5,h2));
+   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_FMSUB(y3, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_FMSUB(y4, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
+   y5 = _SIMD_FMSUB(y5, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2));
 #else   
-   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
-   y3 = _SIMD_SUB(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
-   y4 = _SIMD_SUB(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
-   y5 = _SIMD_SUB(_SIMD_MUL(y5,h1), _SIMD_MUL(x5,h2));
+   y1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
+   y5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau3;
-   h2 = _SIMD_MUL(h1, vs_1_3);
-   h3 = _SIMD_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_3);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_3);
 
 #ifdef __ELPA_USE_FMA__
-   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)));
-   z3 = _SIMD_FMSUB(z3, h1, _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2)));
-   z4 = _SIMD_FMSUB(z4, h1, _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2)));
-   z5 = _SIMD_FMSUB(z5, h1, _SIMD_FMA(y5, h3, _SIMD_MUL(x5,h2)));
+   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
+   z3 = _SIMD_FMSUB(z3, h1, _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)));
+   z4 = _SIMD_FMSUB(z4, h1, _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)));
+   z5 = _SIMD_FMSUB(z5, h1, _SIMD_FMA(y5, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2)));
 #else
-   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
-   z3 = _SIMD_SUB(_SIMD_MUL(z3,h1), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)));
-   z4 = _SIMD_SUB(_SIMD_MUL(z4,h1), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)));
-   z5 = _SIMD_SUB(_SIMD_MUL(z5,h1), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2)));
+   z1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
+   z3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)));
+   z4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)));
+   z5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2)));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau4;
-   h2 = _SIMD_MUL(h1, vs_1_4);
-   h3 = _SIMD_MUL(h1, vs_2_4);
-   h4 = _SIMD_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_4);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_4);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_3_4);
 
 #ifdef __ELPA_USE_FMA__
-   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
-   w3 = _SIMD_FMSUB(w3, h1, _SIMD_FMA(z3, h4, _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2))));
-   w4 = _SIMD_FMSUB(w4, h1, _SIMD_FMA(z4, h4, _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2))));
-   w5 = _SIMD_FMSUB(w5, h1, _SIMD_FMA(z5, h4, _SIMD_FMA(y5, h3, _SIMD_MUL(x5,h2))));
+   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   w3 = _SIMD_FMSUB(w3, h1, _SIMD_FMA(z3, h4, _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   w4 = _SIMD_FMSUB(w4, h1, _SIMD_FMA(z4, h4, _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
+   w5 = _SIMD_FMSUB(w5, h1, _SIMD_FMA(z5, h4, _SIMD_FMA(y5, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2))));
 #else
-   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
-   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
-   w3 = _SIMD_SUB(_SIMD_MUL(w3,h1), _SIMD_ADD(_SIMD_MUL(z3,h4), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
-   w4 = _SIMD_SUB(_SIMD_MUL(w4,h1), _SIMD_ADD(_SIMD_MUL(z4,h4), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
-   w5 = _SIMD_SUB(_SIMD_MUL(w5,h1), _SIMD_ADD(_SIMD_MUL(z5,h4), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2))));
+   w1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   w2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   w3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   w4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
+   w5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w5,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SIMD_MUL(tau5, vs_1_5); 
-   h3 = _SIMD_MUL(tau5, vs_2_5);
-   h4 = _SIMD_MUL(tau5, vs_3_5);
-   h5 = _SIMD_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_1_5); 
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_2_5);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_3_5);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_4_5);
 
 #ifdef __ELPA_USE_FMA__
-   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
-   v3 = _SIMD_FMSUB(v3, tau5, _SIMD_ADD(_SIMD_FMA(w3, h5, _SIMD_MUL(z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2))));
-   v4 = _SIMD_FMSUB(v4, tau5, _SIMD_ADD(_SIMD_FMA(w4, h5, _SIMD_MUL(z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2))));
-   v5 = _SIMD_FMSUB(v5, tau5, _SIMD_ADD(_SIMD_FMA(w5, h5, _SIMD_MUL(z5,h4)), _SIMD_FMA(y5, h3, _SIMD_MUL(x5,h2))));
+   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   v3 = _SIMD_FMSUB(v3, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w3, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   v4 = _SIMD_FMSUB(v4, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w4, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
+   v5 = _SIMD_FMSUB(v5, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w5, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4)), _SIMD_FMA(y5, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2))));
 #else
-   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
-   v3 = _SIMD_SUB(_SIMD_MUL(v3,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
-   v4 = _SIMD_SUB(_SIMD_MUL(v4,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
-   v5 = _SIMD_SUB(_SIMD_MUL(v5,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w5,h5), _SIMD_MUL(z5,h4)), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2))));
+   v1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v1,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v2,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   v3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v3,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   v4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v4,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
+   v5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v5,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w5,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
-   h2 = _SIMD_MUL(tau6, vs_1_6);
-   h3 = _SIMD_MUL(tau6, vs_2_6);
-   h4 = _SIMD_MUL(tau6, vs_3_6);
-   h5 = _SIMD_MUL(tau6, vs_4_6);
-   h6 = _SIMD_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_1_6);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_2_6);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_3_6);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_4_6);
+   h6 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_5_6);
 
 #ifdef __ELPA_USE_FMA__
-   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)))));
-   t3 = _SIMD_FMSUB(t3, tau6, _SIMD_FMA(v3, h6, _SIMD_ADD(_SIMD_FMA(w3, h5, _SIMD_MUL(z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2)))));
-   t4 = _SIMD_FMSUB(t4, tau6, _SIMD_FMA(v4, h6, _SIMD_ADD(_SIMD_FMA(w4, h5, _SIMD_MUL(z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2)))));
-   t5 = _SIMD_FMSUB(t5, tau6, _SIMD_FMA(v5, h6, _SIMD_ADD(_SIMD_FMA(w5, h5, _SIMD_MUL(z5,h4)), _SIMD_FMA(y5, h3, _SIMD_MUL(x5,h2)))));
+   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
+   t3 = _SIMD_FMSUB(t3, tau6, _SIMD_FMA(v3, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w3, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)))));
+   t4 = _SIMD_FMSUB(t4, tau6, _SIMD_FMA(v4, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w4, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)))));
+   t5 = _SIMD_FMSUB(t5, tau6, _SIMD_FMA(v5, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w5, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4)), _SIMD_FMA(y5, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2)))));
 #else
-   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
-   t3 = _SIMD_SUB(_SIMD_MUL(t3,tau6), _SIMD_ADD( _SIMD_MUL(v3,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)))));
-   t4 = _SIMD_SUB(_SIMD_MUL(t4,tau6), _SIMD_ADD( _SIMD_MUL(v4,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)))));
-   t5 = _SIMD_SUB(_SIMD_MUL(t5,tau6), _SIMD_ADD( _SIMD_MUL(v5,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w5,h5), _SIMD_MUL(z5,h4)), _SIMD_ADD(_SIMD_MUL(y5,h3), _SIMD_MUL(x5,h2)))));
+   t1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t1,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v1,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t2,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v2,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
+   t3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t3,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v3,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)))));
+   t4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t4,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v4,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)))));
+   t5 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t5,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v5,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w5,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h2)))));
 #endif /* __ELPA_USE_FMA__ */
 
    /////////////////////////////////////////////////////
@@ -6816,62 +6870,62 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SIMD_ADD(q1, y1);
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SIMD_SUB(q1, w1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SIMD_SUB(q1, t1); 
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, t1); 
 #endif
    _STORE(&q[0],q1);
    q2 = _LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SIMD_ADD(q2, y2);
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SIMD_SUB(q2, w2);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SIMD_SUB(q2, t2);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, t2);
 #endif
    _STORE(&q[offset],q2);
    q3 = _LOAD(&q[2*offset]);
 #ifdef BLOCK2
-   q3 = _SIMD_ADD(q3, y3);
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, y3);
 #endif
 #ifdef BLOCK4
-   q3 = _SIMD_SUB(q3, w3);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, w3);
 #endif
 #ifdef BLOCK6
-   q3 = _SIMD_SUB(q3, t3);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, t3);
 #endif
    _STORE(&q[2*offset],q3);
    q4 = _LOAD(&q[3*offset]);
 #ifdef BLOCK2
-   q4 = _SIMD_ADD(q4, y4);
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, y4);
 #endif
 #ifdef BLOCK4
-   q4 = _SIMD_SUB(q4, w4);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, w4);
 #endif
 #ifdef BLOCK6
-   q4 = _SIMD_SUB(q4, t4);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, t4);
 #endif
    _STORE(&q[3*offset],q4);
    q5 = _LOAD(&q[4*offset]);
 #ifdef BLOCK2
-   q5 = _SIMD_ADD(q5, y5);
+   q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, y5);
 #endif
 #ifdef BLOCK4
-   q5 = _SIMD_SUB(q5, w5);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, w5);
 #endif
 #ifdef BLOCK6
-   q5 = _SIMD_SUB(q5, t5);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, t5);
 #endif
    _STORE(&q[4*offset],q5);
 
 #ifdef BLOCK2
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -6887,17 +6941,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[ldq+3*offset]);
    q5 = _LOAD(&q[ldq+4*offset]);
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
-   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
-   q3 = _SIMD_ADD(q3, _SIMD_FMA(y3, h2, x3));
-   q4 = _SIMD_ADD(q4, _SIMD_FMA(y4, h2, x4));
-   q5 = _SIMD_ADD(q5, _SIMD_FMA(y5, h2, x5));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(y1, h2, x1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(y2, h2, x2));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMA(y3, h2, x3));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMA(y4, h2, x4));
+   q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMA(y5, h2, x5));
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
-   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
-   q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
-   q4 = _SIMD_ADD(q4, _SIMD_ADD(x4, _SIMD_MUL(y4, h2)));
-   q5 = _SIMD_ADD(q5, _SIMD_ADD(x5, _SIMD_MUL(y5, h2)));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2)));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2)));
+   q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2)));
 #endif /* __ELPA_USE_FMA__ */
    _STORE(&q[ldq],q1);
    _STORE(&q[ldq+offset],q2);
@@ -6907,7 +6961,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -6925,17 +6979,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q5 = _LOAD(&q[ldq+4*offset]);
 
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
-   q2 = _SIMD_SUB(q2, _SIMD_FMA(w2, h4, z2));
-   q3 = _SIMD_SUB(q3, _SIMD_FMA(w3, h4, z3));
-   q4 = _SIMD_SUB(q4, _SIMD_FMA(w4, h4, z4));
-   q5 = _SIMD_SUB(q5, _SIMD_FMA(w5, h4, z5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(w1, h4, z1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(w2, h4, z2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_FMA(w3, h4, z3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_FMA(w4, h4, z4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_FMA(w5, h4, z5));
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
-   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
-   q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
-   q4 = _SIMD_SUB(q4, _SIMD_ADD(z4, _SIMD_MUL(w4, h4)));
-   q5 = _SIMD_SUB(q5, _SIMD_ADD(z5, _SIMD_MUL(w5, h4)));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4)));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4)));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4)));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4)));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_ADD( ADDITIONAL_ARGUMENT z5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq],q1);
@@ -6944,7 +6998,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[ldq+3*offset],q4);
    _STORE(&q[ldq+4*offset],q5);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -6960,11 +7014,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*2)+2*offset]);
    q4 = _LOAD(&q[(ldq*2)+3*offset]);
    q5 = _LOAD(&q[(ldq*2)+4*offset]);
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
-   q3 = _SIMD_SUB(q3, y3);
-   q4 = _SIMD_SUB(q4, y4);
-   q5 = _SIMD_SUB(q5, y5);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, y3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, y4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, y5);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -6973,14 +7027,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(w4, h4, q4);
    q5 = _SIMD_NFMA(w5, h4, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -6999,11 +7053,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(z4, h3, q4);
    q5 = _SIMD_NFMA(z5, h3, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
@@ -7012,7 +7066,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*2)+3*offset],q4);
    _STORE(&q[(ldq*2)+4*offset],q5);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -7030,11 +7084,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[(ldq*3)+3*offset]);
    q5 = _LOAD(&q[(ldq*3)+4*offset]);
 
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
-   q3 = _SIMD_SUB(q3, x3);
-   q4 = _SIMD_SUB(q4, x4);
-   q5 = _SIMD_SUB(q5, x5);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, x3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, x4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, x5);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -7043,14 +7097,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(w4, h4, q4);
    q5 = _SIMD_NFMA(w5, h4, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -7069,14 +7123,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(y4, h2, q4);
    q5 = _SIMD_NFMA(y5, h2, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -7095,11 +7149,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(z4, h3, q4);
    q5 = _SIMD_NFMA(z5, h3, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*3], q1);
@@ -7112,7 +7166,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7127,11 +7181,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq+2*offset)]);
    q4 = _LOAD(&q[(ldq+3*offset)]);
    q5 = _LOAD(&q[(ldq+4*offset)]);
-   q1 = _SIMD_SUB(q1, v1);
-   q2 = _SIMD_SUB(q2, v2);
-   q3 = _SIMD_SUB(q3, v3);
-   q4 = _SIMD_SUB(q4, v4);
-   q5 = _SIMD_SUB(q5, v5);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, v1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, v2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, v3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, v4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, v5);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
@@ -7140,11 +7194,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(t4, h6, q4);
    q5 = _SIMD_NFMA(t5, h6, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
 #endif
 
    _STORE(&q[ldq],q1);
@@ -7153,7 +7207,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq+3*offset)],q4);
    _STORE(&q[(ldq+4*offset)],q5);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7167,11 +7221,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*2)+2*offset]);
    q4 = _LOAD(&q[(ldq*2)+3*offset]);
    q5 = _LOAD(&q[(ldq*2)+4*offset]);
-   q1 = _SIMD_SUB(q1, w1); 
-   q2 = _SIMD_SUB(q2, w2);
-   q3 = _SIMD_SUB(q3, w3);
-   q4 = _SIMD_SUB(q4, w4);
-   q5 = _SIMD_SUB(q5, w5);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, w3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, w4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, w5);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
@@ -7181,14 +7235,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(v4, h5, q4);
    q5 = _SIMD_NFMA(v5, h5, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));  
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));  
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5)); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));  
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));  
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));  
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7205,11 +7259,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(t4, h6, q4);
    q5 = _SIMD_NFMA(t5, h6, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
@@ -7218,7 +7272,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*2)+3*offset],q4);
    _STORE(&q[(ldq*2)+4*offset],q5);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -7235,11 +7289,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*3)+2*offset]);
    q4 = _LOAD(&q[(ldq*3)+3*offset]);
    q5 = _LOAD(&q[(ldq*3)+4*offset]);
-   q1 = _SIMD_SUB(q1, z1);
-   q2 = _SIMD_SUB(q2, z2);
-   q3 = _SIMD_SUB(q3, z3);
-   q4 = _SIMD_SUB(q4, z4);
-   q5 = _SIMD_SUB(q5, z5);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, z1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, z2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, z3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, z4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, z5);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -7248,14 +7302,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(w4, h4, q4);
    q5 = _SIMD_NFMA(w5, h4, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7272,14 +7326,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(v4, h5, q4);
    q5 = _SIMD_NFMA(v5, h5, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7296,11 +7350,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(t4, h6, q4);
    q5 = _SIMD_NFMA(t5, h6, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
 #endif
 
    _STORE(&q[ldq*3],q1);
@@ -7309,7 +7363,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*3)+3*offset],q4);
    _STORE(&q[(ldq*3)+4*offset],q5);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7324,11 +7378,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*4)+2*offset]);
    q4 = _LOAD(&q[(ldq*4)+3*offset]);
    q5 = _LOAD(&q[(ldq*4)+4*offset]);
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
-   q3 = _SIMD_SUB(q3, y3);
-   q4 = _SIMD_SUB(q4, y4);
-   q5 = _SIMD_SUB(q5, y5);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, y3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, y4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, y5);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
@@ -7337,14 +7391,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(z4, h3, q4);
    q5 = _SIMD_NFMA(z5, h3, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7361,14 +7415,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(w4, h4, q4);
    q5 = _SIMD_NFMA(w5, h4, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7385,14 +7439,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(v4, h5, q4);
    q5 = _SIMD_NFMA(v5, h5, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7409,11 +7463,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(t4, h6, q4);
    q5 = _SIMD_NFMA(t5, h6, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
 #endif
 
    _STORE(&q[ldq*4],q1);
@@ -7422,7 +7476,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*4)+3*offset],q4);
    _STORE(&q[(ldq*4)+4*offset],q5);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7436,11 +7490,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*5)+2*offset]);
    q4 = _LOAD(&q[(ldq*5)+3*offset]);
    q5 = _LOAD(&q[(ldq*5)+4*offset]);
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
-   q3 = _SIMD_SUB(q3, x3);
-   q4 = _SIMD_SUB(q4, x4);
-   q5 = _SIMD_SUB(q5, x5);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, x3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, x4);
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, x5);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
@@ -7449,14 +7503,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(y4, h2, q4);
    q5 = _SIMD_NFMA(y5, h2, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7473,14 +7527,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(z4, h3, q4);
    q5 = _SIMD_NFMA(z5, h3, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7497,14 +7551,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(w4, h4, q4);
    q5 = _SIMD_NFMA(w5, h4, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7521,14 +7575,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(v4, h5, q4);
    q5 = _SIMD_NFMA(v5, h5, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7545,11 +7599,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(t4, h6, q4);
    q5 = _SIMD_NFMA(t5, h6, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
 #endif
 
    _STORE(&q[ldq*5],q1);
@@ -7562,7 +7616,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -7594,11 +7648,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q5 = _SIMD_FMA(x5, h1, q5);
      q5 = _SIMD_FMA(y5, h2, q5);
 #else
-     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
-     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
-     q3 = _SIMD_ADD(q3, _SIMD_ADD(_SIMD_MUL(x3,h1), _SIMD_MUL(y3, h2)));
-     q4 = _SIMD_ADD(q4, _SIMD_ADD(_SIMD_MUL(x4,h1), _SIMD_MUL(y4, h2)));
-     q5 = _SIMD_ADD(q5, _SIMD_ADD(_SIMD_MUL(x5,h1), _SIMD_MUL(y5, h2)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2)));
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2)));
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2)));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
@@ -7611,11 +7665,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_NFMA(x4, h1, q4);
      q5 = _SIMD_NFMA(x5, h1, q5);
 #else  
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(x3,h1));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(x4,h1));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(x5,h1));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h1));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h1));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5,h1));
 #endif
 
 #ifdef __ELPA_USE_FMA__
@@ -7625,14 +7679,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_NFMA(y4, h2, q4);
      q5 = _SIMD_NFMA(y5, h2, q5);
 #else   
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(y4,h2));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(y5,h2));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h2));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h2));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h2));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h2));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -7651,14 +7705,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_NFMA(z4, h3, q4);
      q5 = _SIMD_NFMA(z5, h3, q5);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(z4,h3));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(z5,h3));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h3));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h3));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h3));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h3));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -7677,17 +7731,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_NFMA(w4, h4, q4);
      q5 = _SIMD_NFMA(w5, h4, q5);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(w3,h4));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(w4,h4));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(w5,h4));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h4));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h4));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h4));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h4));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5,h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7705,14 +7759,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_NFMA(v4, h5, q4);
      q5 = _SIMD_NFMA(v5, h5, q5);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7730,11 +7784,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_NFMA(t4, h6, q4);
      q5 = _SIMD_NFMA(t5, h6, q5);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
-     q5 = _SIMD_SUB(q5, _SIMD_MUL(t5, h6));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
+     q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT t5, h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -7746,7 +7800,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      _STORE(&q[(i*ldq)+4*offset],q5);
 
    }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7771,11 +7825,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_FMA(x4, h1, q4);
    q5 = _SIMD_FMA(x5, h1, q5);
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_ADD(q5, _SIMD_MUL(x5, h1));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -7788,14 +7842,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(x4, h1, q4);
    q5 = _SIMD_NFMA(x5, h1, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -7814,14 +7868,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(y4, h2, q4);
    q5 = _SIMD_NFMA(y5, h2, q5);
 #else   
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -7840,17 +7894,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(z4, h3, q4);
    q5 = _SIMD_NFMA(z5, h3, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
 #endif
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7867,14 +7921,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(w4, h4, q4);
    q5 = _SIMD_NFMA(w5, h4, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7891,11 +7945,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(v4, h5, q4);
    q5 = _SIMD_NFMA(v5, h5, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(v5, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT v5, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -7908,7 +7962,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -7933,14 +7987,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(x4, h1, q4);
    q5 = _SIMD_NFMA(x5, h1, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -7959,15 +8013,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(y4, h2, q4);
    q5 = _SIMD_NFMA(y5, h2, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -7984,14 +8038,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(z4, h3, q4);
    q5 = _SIMD_NFMA(z5, h3, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8008,11 +8062,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(w4, h4, q4);
    q5 = _SIMD_NFMA(w5, h4, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(w5, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT w5, h4));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
@@ -8022,7 +8076,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[((nb+1)*ldq)+3*offset],q4);
    _STORE(&q[((nb+1)*ldq)+4*offset],q5);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -8047,15 +8101,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(x4, h1, q4);
    q5 = _SIMD_NFMA(x5, h1, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8072,14 +8126,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(y4, h2, q4);
    q5 = _SIMD_NFMA(y5, h2, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8096,11 +8150,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(z4, h3, q4);
    q5 = _SIMD_NFMA(z5, h3, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(z5, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT z5, h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -8114,7 +8168,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8137,14 +8191,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(x4, h1, q4);
    q5 = _SIMD_NFMA(x5, h1, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8161,11 +8215,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(y4, h2, q4);
    q5 = _SIMD_NFMA(y5, h2, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(y5, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT y5, h2));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+3)*ldq],q1);
@@ -8174,7 +8228,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[((nb+3)*ldq)+3*offset],q4);
    _STORE(&q[((nb+3)*ldq)+4*offset],q5);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8197,11 +8251,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _SIMD_NFMA(x4, h1, q4);
    q5 = _SIMD_NFMA(x5, h1, q5);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
-   q5 = _SIMD_SUB(q5, _SIMD_MUL(x5, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
+   q5 = _SIMD_SUB( ADDITIONAL_ARGUMENT q5, _SIMD_MUL( ADDITIONAL_ARGUMENT x5, h1));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+4)*ldq],q1);
@@ -8233,14 +8287,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 64
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 /*
  * Unrolled kernel that computes
  * ROW_LENGTH rows of Q simultaneously, a
@@ -8306,7 +8360,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
@@ -8320,7 +8374,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
     __SIMD_DATATYPE x4 = _LOAD(&q[ldq+3*offset]);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8342,13 +8396,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE y4 = _SIMD_FMA(x4, h1, q4);
 #else
     __SIMD_DATATYPE q1 = _LOAD(q);
-    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
     __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
-    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+    __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
     __SIMD_DATATYPE q3 = _LOAD(&q[2*offset]);
-    __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+    __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
     __SIMD_DATATYPE q4 = _LOAD(&q[3*offset]);
-    __SIMD_DATATYPE y4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+    __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -8358,7 +8412,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -8394,12 +8448,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
     register __SIMD_DATATYPE x1 = a1_1;
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));                          
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1));
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -8417,12 +8471,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
     register __SIMD_DATATYPE x2 = a1_2;
 #else
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -8440,12 +8494,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y3 = _SIMD_FMA(a1_3, h_2_1, a2_3);
     register __SIMD_DATATYPE x3 = a1_3;
 #else
-    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
-    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
-    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_4_3));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_4_2));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_3_2));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_2_1));
     register __SIMD_DATATYPE x3 = a1_3;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -8463,12 +8517,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y4 = _SIMD_FMA(a1_4, h_2_1, a2_4);
     register __SIMD_DATATYPE x4 = a1_4;
 #else
-    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
-    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
-    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_4_3));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_4_2));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_3_2));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_2_1));
     register __SIMD_DATATYPE x4 = a1_4;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -8492,7 +8546,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -8523,14 +8577,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_FMA(a2_1, h_6_2, t1);
     t1 = _SIMD_FMA(a1_1, h_6_1, t1);
 #else
-    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_1, h_6_5)); 
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_6_4));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_6_3));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_6_2));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -8557,13 +8611,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_FMA(a2_1, h_5_2, v1);
     v1 = _SIMD_FMA(a1_1, h_5_1, v1);
 #else
-    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_5_4)); 
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_5_3));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_5_2));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -8586,12 +8640,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_FMA(a2_1, h_4_2, w1);
     w1 = _SIMD_FMA(a1_1, h_4_1, w1);
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3)); 
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -8614,9 +8668,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(a1_1, h_3_1, z1);
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
 #else
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1)); 
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x1 = a1_1;
@@ -8645,21 +8699,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_FMA(a1_2, h_3_1, z2);
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
 #else
-    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
-    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_2, h_6_5));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_6_4));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_6_3));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_6_2));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_5_4));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_5_3));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_5_2));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x2 = a1_2;
@@ -8688,21 +8742,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_FMA(a1_3, h_3_1, z3);
     register __SIMD_DATATYPE y3 = _SIMD_FMA(a1_3, h_2_1, a2_3);
 #else
-    register __SIMD_DATATYPE t3 = _SIMD_ADD(a6_3, _SIMD_MUL(a5_3, h_6_5));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a4_3, h_6_4));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a3_3, h_6_3));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a2_3, h_6_2));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a1_3, h_6_1));
-    register __SIMD_DATATYPE v3 = _SIMD_ADD(a5_3, _SIMD_MUL(a4_3, h_5_4));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a3_3, h_5_3));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a2_3, h_5_2));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a1_3, h_5_1));
-    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
-    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
-    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_3, h_6_5));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_3, h_6_4));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_6_3));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_6_2));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_6_1));
+    register __SIMD_DATATYPE v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_3, h_5_4));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_5_3));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_5_2));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_5_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_4_3));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_4_2));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_3_2));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
  
     register __SIMD_DATATYPE x3 = a1_3;
@@ -8731,21 +8785,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z4 = _SIMD_FMA(a1_4, h_3_1, z4);
     register __SIMD_DATATYPE y4 = _SIMD_FMA(a1_4, h_2_1, a2_4);
 #else
-    register __SIMD_DATATYPE t4 = _SIMD_ADD(a6_4, _SIMD_MUL(a5_4, h_6_5));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a4_4, h_6_4));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a3_4, h_6_3));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a2_4, h_6_2));
-    t4 = _SIMD_ADD(t4, _SIMD_MUL(a1_4, h_6_1));
-    register __SIMD_DATATYPE v4 = _SIMD_ADD(a5_4, _SIMD_MUL(a4_4, h_5_4));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a3_4, h_5_3));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a2_4, h_5_2));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(a1_4, h_5_1));
-    register __SIMD_DATATYPE w4 = _SIMD_ADD(a4_4, _SIMD_MUL(a3_4, h_4_3));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a2_4, h_4_2));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(a1_4, h_4_1));
-    register __SIMD_DATATYPE z4 = _SIMD_ADD(a3_4, _SIMD_MUL(a2_4, h_3_2));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(a1_4, h_3_1));
-    register __SIMD_DATATYPE y4 = _SIMD_ADD(a2_4, _SIMD_MUL(a1_4, h_2_1));
+    register __SIMD_DATATYPE t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_4, h_6_5));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_4, h_6_4));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_6_3));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_6_2));
+    t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_6_1));
+    register __SIMD_DATATYPE v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_4, h_5_4));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_5_3));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_5_2));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_5_1));
+    register __SIMD_DATATYPE w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_4, h_4_3));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_4_2));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_4_1));
+    register __SIMD_DATATYPE z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_4, h_3_2));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_3_1));
+    register __SIMD_DATATYPE y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_4, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_4, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
  
     register __SIMD_DATATYPE x4 = a1_4;
@@ -8767,7 +8821,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -8795,18 +8849,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         x4 = _SIMD_FMA(q4, h1, x4);
         y4 = _SIMD_FMA(q4, h2, y4);
 #else
-        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-        x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-        y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-        x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
-        y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+        y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+        y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+        x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+        y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+        x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
+        y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -8824,13 +8878,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z3 = _SIMD_FMA(q3, h3, z3);
         z4 = _SIMD_FMA(q4, h3, z4);
 #else
-        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-        z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-        z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+        z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+        z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+        z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+        z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -8848,16 +8902,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         w3 = _SIMD_FMA(q3, h4, w3);
         w4 = _SIMD_FMA(q4, h4, w4);
 #else
-        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-        w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-        w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+        w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+        w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+        w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+        w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
 #endif /* __ELPA_USE_FMA__ */
 		
 #endif /* BLOCK4 || BLOCK6 */
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h5 = _SIMD_SET1(hh[(ldh*4)+i-(BLOCK-5)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8873,13 +8927,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v3 = _SIMD_FMA(q3, h5, v3);
         v4 = _SIMD_FMA(q4, h5, v4);
 #else
-        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
-        v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
-        v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
+        v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+        v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
+        v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h5));
+        v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 
@@ -8897,15 +8951,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         t3 = _SIMD_FMA(q3, h6, t3);
         t4 = _SIMD_FMA(q4, h6, t4);
 #else
-        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
-        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
-        t3 = _SIMD_ADD(t3, _SIMD_MUL(q3,h6));
-        t4 = _SIMD_ADD(t4, _SIMD_MUL(q4,h6));
+        t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h6));
+        t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h6));
+        t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h6));
+        t4 = _SIMD_ADD( ADDITIONAL_ARGUMENT t4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -8926,15 +8980,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_FMA(q3, h1, x3);
     x4 = _SIMD_FMA(q4, h1, x4);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -8952,13 +9006,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_FMA(q3, h2, y3);
     y4 = _SIMD_FMA(q4, h2, y4);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -8976,14 +9030,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_FMA(q3, h3, z3);
     z4 = _SIMD_FMA(q4, h3, z4);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
 #endif
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -9006,13 +9060,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_FMA(q3, h1, x3);
     x4 = _SIMD_FMA(q4, h1, x4);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -9030,13 +9084,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_FMA(q3, h2, y3);
     y4 = _SIMD_FMA(q4, h2, y4);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -9059,10 +9113,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_FMA(q3, h1, x3);
     x4 = _SIMD_FMA(q4, h1, x4);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 */
@@ -9070,7 +9124,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-4)]);
 #endif
 
@@ -9088,13 +9142,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w3 = _SIMD_FMA(q3, h4, w3);
     w4 = _SIMD_FMA(q4, h4, w4);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4)); 
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-(BLOCK-5)]);
 #endif
 
@@ -9112,13 +9166,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v3 = _SIMD_FMA(q3, h5, v3);
     v4 = _SIMD_FMA(q4, h5, v4);
 #else
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
-    v4 = _SIMD_ADD(v4, _SIMD_MUL(q4,h5));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h5));
+    v4 = _SIMD_ADD( ADDITIONAL_ARGUMENT v4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -9139,13 +9193,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_FMA(q3, h1, x3);
     x4 = _SIMD_FMA(q4, h1, x4);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -9161,13 +9215,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_FMA(q3, h2, y3);
     y4 = _SIMD_FMA(q4, h2, y4);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -9183,13 +9237,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_FMA(q3, h3, z3);
     z4 = _SIMD_FMA(q4, h3, z4);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -9205,13 +9259,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w3 = _SIMD_FMA(q3, h4, w3);
     w4 = _SIMD_FMA(q4, h4, w4);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
-    w4 = _SIMD_ADD(w4, _SIMD_MUL(q4,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
+    w4 = _SIMD_ADD( ADDITIONAL_ARGUMENT w4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -9232,13 +9286,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_FMA(q3, h1, x3);
     x4 = _SIMD_FMA(q4, h1, x4);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-4)]);
 #endif
 
@@ -9256,13 +9310,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_FMA(q3, h2, y3);
     y4 = _SIMD_FMA(q4, h2, y4);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-5)]);
 #endif
 
@@ -9280,13 +9334,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_FMA(q3, h3, z3);
     z4 = _SIMD_FMA(q4, h3, z4);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
-    z4 = _SIMD_ADD(z4, _SIMD_MUL(q4,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
+    z4 = _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-4)]);
 #endif
 
@@ -9309,13 +9363,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_FMA(q3, h1, x3);
     x4 = _SIMD_FMA(q4, h1, x4);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-5)]);
 #endif
 
@@ -9333,13 +9387,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y3 = _SIMD_FMA(q3, h2, y3);
     y4 = _SIMD_FMA(q4, h2, y4);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
-    y4 = _SIMD_ADD(y4, _SIMD_MUL(q4,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
+    y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-5)]);
 #endif
 
@@ -9362,10 +9416,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x3 = _SIMD_FMA(q3, h1, x3);
     x4 = _SIMD_FMA(q4, h1, x4);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-    x4 = _SIMD_ADD(x4, _SIMD_MUL(q4,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+    x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT q4,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -9386,7 +9440,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
 
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
@@ -9427,7 +9481,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE */
+#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE */
 
 #if VEC_SET == SPARC64_SSE
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -9522,10 +9576,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-    h1 = _SIMD_NEG(tau1);
+    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
@@ -9538,7 +9592,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau1, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -9546,10 +9600,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = tau1;
 #endif
 
-   x1 = _SIMD_MUL(x1, h1);
-   x2 = _SIMD_MUL(x2, h1);
-   x3 = _SIMD_MUL(x3, h1);
-   x4 = _SIMD_MUL(x4, h1);
+   x1 = _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1);
+   x2 = _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1);
+   x3 = _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1);
+   x4 = _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1);
 
 #ifdef BLOCK2
 #if VEC_SET == SSE_128 || VEC_SET == VSX_SSE || VEC_SET == AVX_256 || VEC_SET == AVX2_256
@@ -9557,10 +9611,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-   h1 = _SIMD_NEG(tau2);
+   h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
@@ -9573,114 +9627,114 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau2, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
-   h2 = _SIMD_MUL(h1, vs);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SIMD_MUL(h1, vs_1_2);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_2);
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
-   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL(x3,h2));
-   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL(x4,h2));
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_FMA(y4, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
 #else
-   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
-   y3 = _SIMD_ADD(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
-   y4 = _SIMD_ADD(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
+   y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
 #endif
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL(x2,h2));
-   y3 = _SIMD_FMSUB(y3, h1, _SIMD_MUL(x3,h2));
-   y4 = _SIMD_FMSUB(y4, h1, _SIMD_MUL(x4,h2));
+   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_FMSUB(y3, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_FMSUB(y4, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
 #else   
-   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
-   y3 = _SIMD_SUB(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
-   y4 = _SIMD_SUB(_SIMD_MUL(y4,h1), _SIMD_MUL(x4,h2));
+   y1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
+   y4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau3;
-   h2 = _SIMD_MUL(h1, vs_1_3);
-   h3 = _SIMD_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_3);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_3);
 
 #ifdef __ELPA_USE_FMA__
-   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)));
-   z3 = _SIMD_FMSUB(z3, h1, _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2)));
-   z4 = _SIMD_FMSUB(z4, h1, _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2)));
+   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
+   z3 = _SIMD_FMSUB(z3, h1, _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)));
+   z4 = _SIMD_FMSUB(z4, h1, _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)));
 #else
-   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
-   z3 = _SIMD_SUB(_SIMD_MUL(z3,h1), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)));
-   z4 = _SIMD_SUB(_SIMD_MUL(z4,h1), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)));
+   z1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
+   z3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)));
+   z4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau4;
-   h2 = _SIMD_MUL(h1, vs_1_4);
-   h3 = _SIMD_MUL(h1, vs_2_4);
-   h4 = _SIMD_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_4);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_4);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_3_4);
 
 #ifdef __ELPA_USE_FMA__
-   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
-   w3 = _SIMD_FMSUB(w3, h1, _SIMD_FMA(z3, h4, _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2))));
-   w4 = _SIMD_FMSUB(w4, h1, _SIMD_FMA(z4, h4, _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2))));
+   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   w3 = _SIMD_FMSUB(w3, h1, _SIMD_FMA(z3, h4, _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   w4 = _SIMD_FMSUB(w4, h1, _SIMD_FMA(z4, h4, _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
 #else
-   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
-   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
-   w3 = _SIMD_SUB(_SIMD_MUL(w3,h1), _SIMD_ADD(_SIMD_MUL(z3,h4), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
-   w4 = _SIMD_SUB(_SIMD_MUL(w4,h1), _SIMD_ADD(_SIMD_MUL(z4,h4), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
+   w1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   w2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   w3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   w4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SIMD_MUL(tau5, vs_1_5); 
-   h3 = _SIMD_MUL(tau5, vs_2_5);
-   h4 = _SIMD_MUL(tau5, vs_3_5);
-   h5 = _SIMD_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_1_5); 
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_2_5);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_3_5);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_4_5);
 
 #ifdef __ELPA_USE_FMA__
-   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
-   v3 = _SIMD_FMSUB(v3, tau5, _SIMD_ADD(_SIMD_FMA(w3, h5, _SIMD_MUL(z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2))));
-   v4 = _SIMD_FMSUB(v4, tau5, _SIMD_ADD(_SIMD_FMA(w4, h5, _SIMD_MUL(z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2))));
+   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   v3 = _SIMD_FMSUB(v3, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w3, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   v4 = _SIMD_FMSUB(v4, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w4, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
 #else
-   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
-   v3 = _SIMD_SUB(_SIMD_MUL(v3,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
-   v4 = _SIMD_SUB(_SIMD_MUL(v4,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2))));
+   v1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v1,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v2,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   v3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v3,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
+   v4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v4,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
-   h2 = _SIMD_MUL(tau6, vs_1_6);
-   h3 = _SIMD_MUL(tau6, vs_2_6);
-   h4 = _SIMD_MUL(tau6, vs_3_6);
-   h5 = _SIMD_MUL(tau6, vs_4_6);
-   h6 = _SIMD_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_1_6);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_2_6);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_3_6);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_4_6);
+   h6 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_5_6);
 
 #ifdef __ELPA_USE_FMA__
-   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)))));
-   t3 = _SIMD_FMSUB(t3, tau6, _SIMD_FMA(v3, h6, _SIMD_ADD(_SIMD_FMA(w3, h5, _SIMD_MUL(z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2)))));
-   t4 = _SIMD_FMSUB(t4, tau6, _SIMD_FMA(v4, h6, _SIMD_ADD(_SIMD_FMA(w4, h5, _SIMD_MUL(z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL(x4,h2)))));
+   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
+   t3 = _SIMD_FMSUB(t3, tau6, _SIMD_FMA(v3, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w3, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)))));
+   t4 = _SIMD_FMSUB(t4, tau6, _SIMD_FMA(v4, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w4, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_FMA(y4, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)))));
 #else
-   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
-   t3 = _SIMD_SUB(_SIMD_MUL(t3,tau6), _SIMD_ADD( _SIMD_MUL(v3,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)))));
-   t4 = _SIMD_SUB(_SIMD_MUL(t4,tau6), _SIMD_ADD( _SIMD_MUL(v4,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w4,h5), _SIMD_MUL(z4,h4)), _SIMD_ADD(_SIMD_MUL(y4,h3), _SIMD_MUL(x4,h2)))));
+   t1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t1,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v1,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t2,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v2,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
+   t3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t3,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v3,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)))));
+   t4 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t4,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v4,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h2)))));
 #endif /* __ELPA_USE_FMA__ */
 
     /////////////////////////////////////////////////////
@@ -9694,22 +9748,22 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[3*offset]);
 
 #ifdef BLOCK2
-   q1 = _SIMD_ADD(q1, y1);
-   q2 = _SIMD_ADD(q2, y2);
-   q3 = _SIMD_ADD(q3, y3);
-   q4 = _SIMD_ADD(q4, y4);
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, y3);
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, y4);
 #endif
 #ifdef BLOCK4
-   q1 = _SIMD_SUB(q1, w1);
-   q2 = _SIMD_SUB(q2, w2);
-   q3 = _SIMD_SUB(q3, w3);
-   q4 = _SIMD_SUB(q4, w4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, w3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, w4);
 #endif
 #ifdef BLOCK6
-   q1 = _SIMD_SUB(q1, t1); 
-   q2 = _SIMD_SUB(q2, t2);
-   q3 = _SIMD_SUB(q3, t3);
-   q4 = _SIMD_SUB(q4, t4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, t1); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, t2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, t3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, t4);
 #endif
 
    _STORE(&q[0],q1);
@@ -9718,7 +9772,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[3*offset],q4);
 
 #ifdef BLOCK2
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -9734,15 +9788,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[ldq+3*offset]);
  
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
-   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
-   q3 = _SIMD_ADD(q3, _SIMD_FMA(y3, h2, x3));
-   q4 = _SIMD_ADD(q4, _SIMD_FMA(y4, h2, x4));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(y1, h2, x1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(y2, h2, x2));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMA(y3, h2, x3));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMA(y4, h2, x4));
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
-   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
-   q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
-   q4 = _SIMD_ADD(q4, _SIMD_ADD(x4, _SIMD_MUL(y4, h2)));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2)));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2)));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq],q1);
@@ -9752,7 +9806,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -9769,15 +9823,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q4 = _LOAD(&q[ldq+3*offset]);
 
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
-   q2 = _SIMD_SUB(q2, _SIMD_FMA(w2, h4, z2));
-   q3 = _SIMD_SUB(q3, _SIMD_FMA(w3, h4, z3));
-   q4 = _SIMD_SUB(q4, _SIMD_FMA(w4, h4, z4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(w1, h4, z1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(w2, h4, z2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_FMA(w3, h4, z3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_FMA(w4, h4, z4));
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
-   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
-   q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
-   q4 = _SIMD_SUB(q4, _SIMD_ADD(z4, _SIMD_MUL(w4, h4)));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4)));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4)));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4)));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT z4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq],q1);
@@ -9785,7 +9839,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[ldq+2*offset],q3);
    _STORE(&q[ldq+3*offset],q4);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -9802,10 +9856,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*2)+2*offset]);
    q4 = _LOAD(&q[(ldq*2)+3*offset]);
 
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
-   q3 = _SIMD_SUB(q3, y3);
-   q4 = _SIMD_SUB(q4, y4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, y3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, y4);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -9813,13 +9867,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(w3, h4, q3);
    q4 = _SIMD_NFMA(w4, h4, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -9837,10 +9891,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(z3, h3, q3);
    q4 = _SIMD_NFMA(z4, h3, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
@@ -9848,7 +9902,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*2)+2*offset],q3);
    _STORE(&q[(ldq*2)+3*offset],q4);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -9865,10 +9919,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*3)+2*offset]);
    q4 = _LOAD(&q[(ldq*3)+3*offset]);
 
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
-   q3 = _SIMD_SUB(q3, x3);
-   q4 = _SIMD_SUB(q4, x4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, x3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, x4);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -9876,13 +9930,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(w3, h4, q3);
    q4 = _SIMD_NFMA(w4, h4, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -9900,13 +9954,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(y3, h2, q3);
    q4 = _SIMD_NFMA(y4, h2, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -9924,10 +9978,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(z3, h3, q3);
    q4 = _SIMD_NFMA(z4, h3, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*3], q1);
@@ -9939,7 +9993,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -9954,10 +10008,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq+2*offset)]);
    q4 = _LOAD(&q[(ldq+3*offset)]);
 
-   q1 = _SIMD_SUB(q1, v1);
-   q2 = _SIMD_SUB(q2, v2);
-   q3 = _SIMD_SUB(q3, v3);
-   q4 = _SIMD_SUB(q4, v4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, v1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, v2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, v3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, v4);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
@@ -9965,10 +10019,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(t3, h6, q3);
    q4 = _SIMD_NFMA(t4, h6, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
 #endif
 
    _STORE(&q[ldq],q1);
@@ -9976,7 +10030,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq+2*offset)],q3);
    _STORE(&q[(ldq+3*offset)],q4);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -9990,10 +10044,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*2)+2*offset]);
    q4 = _LOAD(&q[(ldq*2)+3*offset]);
  
-   q1 = _SIMD_SUB(q1, w1); 
-   q2 = _SIMD_SUB(q2, w2);
-   q3 = _SIMD_SUB(q3, w3);
-   q4 = _SIMD_SUB(q4, w4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, w3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, w4);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
@@ -10001,13 +10055,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(v3, h5, q3);
    q4 = _SIMD_NFMA(v4, h5, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));  
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));  
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5)); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));  
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));  
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10023,10 +10077,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(t3, h6, q3);
    q4 = _SIMD_NFMA(t4, h6, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
@@ -10034,7 +10088,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*2)+2*offset],q3);
    _STORE(&q[(ldq*2)+3*offset],q4);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -10051,10 +10105,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*3)+2*offset]);
    q4 = _LOAD(&q[(ldq*3)+3*offset]);
 
-   q1 = _SIMD_SUB(q1, z1);
-   q2 = _SIMD_SUB(q2, z2);
-   q3 = _SIMD_SUB(q3, z3);
-   q4 = _SIMD_SUB(q4, z4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, z1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, z2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, z3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, z4);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
@@ -10062,13 +10116,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(w3, h4, q3);
    q4 = _SIMD_NFMA(w4, h4, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10084,13 +10138,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(v3, h5, q3);
    q4 = _SIMD_NFMA(v4, h5, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10106,10 +10160,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(t3, h6, q3);
    q4 = _SIMD_NFMA(t4, h6, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
 #endif
 
    _STORE(&q[ldq*3],q1);
@@ -10117,7 +10171,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*3)+2*offset],q3);
    _STORE(&q[(ldq*3)+3*offset],q4);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10132,10 +10186,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*4)+2*offset]);
    q4 = _LOAD(&q[(ldq*4)+3*offset]);
 
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
-   q3 = _SIMD_SUB(q3, y3);
-   q4 = _SIMD_SUB(q4, y4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, y3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, y4);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
@@ -10143,13 +10197,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(z3, h3, q3);
    q4 = _SIMD_NFMA(z4, h3, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10165,13 +10219,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(w3, h4, q3);
    q4 = _SIMD_NFMA(w4, h4, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10187,13 +10241,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(v3, h5, q3);
    q4 = _SIMD_NFMA(v4, h5, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10209,10 +10263,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(t3, h6, q3);
    q4 = _SIMD_NFMA(t4, h6, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
 #endif
 
    _STORE(&q[ldq*4],q1);
@@ -10220,7 +10274,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[(ldq*4)+2*offset],q3);
    _STORE(&q[(ldq*4)+3*offset],q4);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10234,10 +10288,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[(ldq*5)+2*offset]);
    q4 = _LOAD(&q[(ldq*5)+3*offset]);
 
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
-   q3 = _SIMD_SUB(q3, x3);
-   q4 = _SIMD_SUB(q4, x4);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, x3);
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, x4);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
@@ -10245,13 +10299,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(y3, h2, q3);
    q4 = _SIMD_NFMA(y4, h2, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10267,13 +10321,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(z3, h3, q3);
    q4 = _SIMD_NFMA(z4, h3, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10289,13 +10343,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(w3, h4, q3);
    q4 = _SIMD_NFMA(w4, h4, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10311,13 +10365,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(v3, h5, q3);
    q4 = _SIMD_NFMA(v4, h5, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10333,10 +10387,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(t3, h6, q3);
    q4 = _SIMD_NFMA(t4, h6, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
 #endif
 
    _STORE(&q[ldq*5],q1);
@@ -10348,7 +10402,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -10377,10 +10431,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q4 = _SIMD_FMA(x4, h1, q4);
      q4 = _SIMD_FMA(y4, h2, q4);
 #else
-     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
-     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
-     q3 = _SIMD_ADD(q3, _SIMD_ADD(_SIMD_MUL(x3,h1), _SIMD_MUL(y3, h2)));
-     q4 = _SIMD_ADD(q4, _SIMD_ADD(_SIMD_MUL(x4,h1), _SIMD_MUL(y4, h2)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2)));
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2)));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
@@ -10392,10 +10446,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_NFMA(x3, h1, q3);
      q4 = _SIMD_NFMA(x4, h1, q4);
 #else   
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(x3,h1));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(x4,h1));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h1));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4,h1));
 #endif
 
 #ifdef __ELPA_USE_FMA__
@@ -10404,13 +10458,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_NFMA(y3, h2, q3);
      q4 = _SIMD_NFMA(y4, h2, q4);
 #else    
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(y4,h2));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h2));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h2));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h2));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -10428,13 +10482,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_NFMA(z3, h3, q3);
      q4 = _SIMD_NFMA(z4, h3, q4);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(z4,h3));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h3));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h3));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h3));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -10452,16 +10506,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_NFMA(w3, h4, q3);
      q4 = _SIMD_NFMA(w4, h4, q4);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(w3,h4));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(w4,h4));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h4));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h4));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h4));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4,h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10477,13 +10531,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_NFMA(v3, h5, q3);
      q4 = _SIMD_NFMA(v4, h5, q4);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10499,10 +10553,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_NFMA(t3, h6, q3);
      q4 = _SIMD_NFMA(t4, h6, q4);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
-     q4 = _SIMD_SUB(q4, _SIMD_MUL(t4, h6));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
+     q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT t4, h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -10513,7 +10567,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      _STORE(&q[(i*ldq)+3*offset],q4);
 
    }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10536,10 +10590,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_FMA(x3, h1, q3);
    q4 = _SIMD_FMA(x4, h1, q4);
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_ADD(q4, _SIMD_MUL(x4, h1));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -10551,13 +10605,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(x3, h1, q3);
    q4 = _SIMD_NFMA(x4, h1, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -10575,13 +10629,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(y3, h2, q3);
    q4 = _SIMD_NFMA(y4, h2, q4);
 #else   
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -10599,16 +10653,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(z3, h3, q3);
    q4 = _SIMD_NFMA(z4, h3, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
 #endif
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10624,13 +10678,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(w3, h4, q3);
    q4 = _SIMD_NFMA(w4, h4, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10646,10 +10700,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(v3, h5, q3);
    q4 = _SIMD_NFMA(v4, h5, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(v4, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT v4, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -10661,7 +10715,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -10684,13 +10738,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(x3, h1, q3);
    q4 = _SIMD_NFMA(x4, h1, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -10708,14 +10762,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(y3, h2, q3);
    q4 = _SIMD_NFMA(y4, h2, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10731,13 +10785,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(z3, h3, q3);
    q4 = _SIMD_NFMA(z4, h3, q4);
 #else 
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10753,10 +10807,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(w3, h4, q3);
    q4 = _SIMD_NFMA(w4, h4, q4);
 #else   
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(w4, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT w4, h4));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
@@ -10765,7 +10819,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[((nb+1)*ldq)+2*offset],q3);
    _STORE(&q[((nb+1)*ldq)+3*offset],q4);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -10788,14 +10842,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(x3, h1, q3);
    q4 = _SIMD_NFMA(x4, h1, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10811,13 +10865,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(y3, h2, q3);
    q4 = _SIMD_NFMA(y4, h2, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10833,10 +10887,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(z3, h3, q3);
    q4 = _SIMD_NFMA(z4, h3, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(z4, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT z4, h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -10849,7 +10903,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10870,13 +10924,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(x3, h1, q3);
    q4 = _SIMD_NFMA(x4, h1, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10892,10 +10946,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(y3, h2, q3);
    q4 = _SIMD_NFMA(y4, h2, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(y4, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT y4, h2));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+3)*ldq],q1);
@@ -10903,7 +10957,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[((nb+3)*ldq)+2*offset],q3);
    _STORE(&q[((nb+3)*ldq)+3*offset],q4);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -10924,10 +10978,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _SIMD_NFMA(x3, h1, q3);
    q4 = _SIMD_NFMA(x4, h1, q4);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
-   q4 = _SIMD_SUB(q4, _SIMD_MUL(x4, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
+   q4 = _SIMD_SUB( ADDITIONAL_ARGUMENT q4, _SIMD_MUL( ADDITIONAL_ARGUMENT x4, h1));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+4)*ldq],q1);
@@ -10957,14 +11011,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 24
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 48
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 /*
  * Unrolled kernel that computes
  * ROW_LENGTH rows of Q simultaneously, a
@@ -11030,20 +11084,20 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
     __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
     __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -11063,9 +11117,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
     __SIMD_DATATYPE y3 = _SIMD_FMA(x3, h1, q3);
 #else
-    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
-    __SIMD_DATATYPE y3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+    __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+    __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+    __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -11075,7 +11129,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -11111,12 +11165,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
     register __SIMD_DATATYPE x1 = a1_1;
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));                          
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1));
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -11134,12 +11188,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
     register __SIMD_DATATYPE x2 = a1_2;
 #else
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -11157,12 +11211,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y3 = _SIMD_FMA(a1_3, h_2_1, a2_3);
     register __SIMD_DATATYPE x3 = a1_3;
 #else
-    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
-    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
-    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_4_3));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_4_2));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_3_2));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_2_1));
     register __SIMD_DATATYPE x3 = a1_3;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -11185,7 +11239,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -11216,14 +11270,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_FMA(a2_1, h_6_2, t1);
     t1 = _SIMD_FMA(a1_1, h_6_1, t1);
 #else
-    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_1, h_6_5)); 
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_6_4));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_6_3));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_6_2));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -11250,13 +11304,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_FMA(a2_1, h_5_2, v1);
     v1 = _SIMD_FMA(a1_1, h_5_1, v1);
 #else
-    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_5_4)); 
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_5_3));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_5_2));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -11279,12 +11333,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_FMA(a2_1, h_4_2, w1);
     w1 = _SIMD_FMA(a1_1, h_4_1, w1);
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3)); 
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -11307,9 +11361,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(a1_1, h_3_1, z1);
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
 #else
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1)); 
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x1 = a1_1;
@@ -11338,21 +11392,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_FMA(a1_2, h_3_1, z2);
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
 #else
-    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
-    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_2, h_6_5));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_6_4));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_6_3));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_6_2));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_5_4));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_5_3));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_5_2));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x2 = a1_2;
@@ -11381,21 +11435,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z3 = _SIMD_FMA(a1_3, h_3_1, z3);
     register __SIMD_DATATYPE y3 = _SIMD_FMA(a1_3, h_2_1, a2_3);
 #else
-    register __SIMD_DATATYPE t3 = _SIMD_ADD(a6_3, _SIMD_MUL(a5_3, h_6_5));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a4_3, h_6_4));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a3_3, h_6_3));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a2_3, h_6_2));
-    t3 = _SIMD_ADD(t3, _SIMD_MUL(a1_3, h_6_1));
-    register __SIMD_DATATYPE v3 = _SIMD_ADD(a5_3, _SIMD_MUL(a4_3, h_5_4));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a3_3, h_5_3));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a2_3, h_5_2));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(a1_3, h_5_1));
-    register __SIMD_DATATYPE w3 = _SIMD_ADD(a4_3, _SIMD_MUL(a3_3, h_4_3));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a2_3, h_4_2));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(a1_3, h_4_1));
-    register __SIMD_DATATYPE z3 = _SIMD_ADD(a3_3, _SIMD_MUL(a2_3, h_3_2));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(a1_3, h_3_1));
-    register __SIMD_DATATYPE y3 = _SIMD_ADD(a2_3, _SIMD_MUL(a1_3, h_2_1));
+    register __SIMD_DATATYPE t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_3, h_6_5));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_3, h_6_4));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_6_3));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_6_2));
+    t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_6_1));
+    register __SIMD_DATATYPE v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_3, h_5_4));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_5_3));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_5_2));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_5_1));
+    register __SIMD_DATATYPE w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_3, h_4_3));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_4_2));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_4_1));
+    register __SIMD_DATATYPE z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_3, h_3_2));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_3_1));
+    register __SIMD_DATATYPE y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_3, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_3, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x3 = a1_3;
@@ -11416,7 +11470,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -11441,16 +11495,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         x3 = _SIMD_FMA(q3, h1, x3);
         y3 = _SIMD_FMA(q3, h2, y3);
 #else
-        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-        x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
-        y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+        y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+        y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+        x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
+        y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -11467,12 +11521,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z2 = _SIMD_FMA(q2, h3, z2);
         z3 = _SIMD_FMA(q3, h3, z3);
 #else	
-        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-        z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+        z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+        z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+        z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -11489,16 +11543,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         w2 = _SIMD_FMA(q2, h4, w2);
         w3 = _SIMD_FMA(q3, h4, w3);
 #else
-        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-        w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+        w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+        w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+        w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
 #endif /* __ELPA_USE_FMA__ */
 	
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -11513,12 +11567,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v2 = _SIMD_FMA(q2, h5, v2);
         v3 = _SIMD_FMA(q3, h5, v3);
 #else
-        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
-        v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+        v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+        v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
+        v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h6 = _SIMD_SET1(hh[(ldh*5)+i-(BLOCK-6)]);
 #endif
 
@@ -11535,14 +11589,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         t2 = _SIMD_FMA(q2, h6, t2);
         t3 = _SIMD_FMA(q3, h6, t3);
 #else
-        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
-        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
-        t3 = _SIMD_ADD(t3, _SIMD_MUL(q3,h6));
+        t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h6));
+        t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h6));
+        t3 = _SIMD_ADD( ADDITIONAL_ARGUMENT t3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -11561,14 +11615,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_FMA(q2, h1, x2);
     x3 = _SIMD_FMA(q3, h1, x3);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -11585,12 +11639,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_FMA(q2, h2, y2);
     y3 = _SIMD_FMA(q3, h2, y3);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -11607,13 +11661,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_FMA(q2, h3, z2);
     z3 = _SIMD_FMA(q3, h3, z3);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -11633,12 +11687,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_FMA(q2, h1, x2);
     x3 = _SIMD_FMA(q3, h1, x3);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -11655,12 +11709,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_FMA(q2, h2, y2);
     y3 = _SIMD_FMA(q3, h2, y3);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -11681,9 +11735,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_FMA(q2, h1, x2);
     x3 = _SIMD_FMA(q3, h1, x3);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 */
@@ -11691,7 +11745,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-4)]);
 #endif
 
@@ -11708,12 +11762,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w2 = _SIMD_FMA(q2, h4, w2);
     w3 = _SIMD_FMA(q3, h4, w3);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4)); 
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-(BLOCK-5)]);
 #endif
 
@@ -11730,12 +11784,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v2 = _SIMD_FMA(q2, h5, v2);
     v3 = _SIMD_FMA(q3, h5, v3);
 #else
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
-    v3 = _SIMD_ADD(v3, _SIMD_MUL(q3,h5));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
+    v3 = _SIMD_ADD( ADDITIONAL_ARGUMENT v3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -11754,12 +11808,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_FMA(q2, h1, x2);
     x3 = _SIMD_FMA(q3, h1, x3);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -11774,12 +11828,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_FMA(q2, h2, y2);
     y3 = _SIMD_FMA(q3, h2, y3);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
 #endif /* __ELPA_USE_FMA__ */
  
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -11794,12 +11848,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_FMA(q2, h3, z2);
     z3 = _SIMD_FMA(q3, h3, z3);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -11814,12 +11868,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w2 = _SIMD_FMA(q2, h4, w2);
     w3 = _SIMD_FMA(q3, h4, w3);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
-    w3 = _SIMD_ADD(w3, _SIMD_MUL(q3,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
+    w3 = _SIMD_ADD( ADDITIONAL_ARGUMENT w3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -11838,12 +11892,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_FMA(q2, h1, x2);
     x3 = _SIMD_FMA(q3, h1, x3);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-4)]);
 #endif
 
@@ -11860,12 +11914,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_FMA(q2, h2, y2);
     y3 = _SIMD_FMA(q3, h2, y3);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-5)]);
 #endif
 
@@ -11882,12 +11936,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_FMA(q2, h3, z2);
     z3 = _SIMD_FMA(q3, h3, z3);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
-    z3 = _SIMD_ADD(z3, _SIMD_MUL(q3,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
+    z3 = _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-4)]);
 #endif
 
@@ -11909,12 +11963,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_FMA(q2, h1, x2);
     x3 = _SIMD_FMA(q3, h1, x3);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-5)]);
 #endif
 
@@ -11931,12 +11985,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y2 = _SIMD_FMA(q2, h2, y2);
     y3 = _SIMD_FMA(q3, h2, y3);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
-    y3 = _SIMD_ADD(y3, _SIMD_MUL(q3,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
+    y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-5)]);
 #endif
 
@@ -11957,9 +12011,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x2 = _SIMD_FMA(q2, h1, x2);
     x3 = _SIMD_FMA(q3, h1, x3);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-    x3 = _SIMD_ADD(x3, _SIMD_MUL(q3,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+    x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT q3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -11980,7 +12034,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
@@ -12020,7 +12074,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE */
+#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE */
 
 #if VEC_SET == SPARC64_SSE
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -12114,10 +12168,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-    h1 = _SIMD_NEG(tau1);
+    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
@@ -12130,7 +12184,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau1, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -12138,9 +12192,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = tau1;
 #endif
 
-   x1 = _SIMD_MUL(x1, h1);
-   x2 = _SIMD_MUL(x2, h1);
-   x3 = _SIMD_MUL(x3, h1);
+   x1 = _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1);
+   x2 = _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1);
+   x3 = _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1);
 
 #ifdef BLOCK2
 #if VEC_SET == SSE_128 || VEC_SET == VSX_SSE || VEC_SET == AVX_256 || VEC_SET == AVX2_256
@@ -12148,10 +12202,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-   h1 = _SIMD_NEG(tau2);
+   h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
@@ -12164,102 +12218,102 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau2, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
-   h2 = _SIMD_MUL(h1, vs);
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs);
 
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SIMD_MUL(h1, vs_1_2);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_2);
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
-   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL(x3,h2));
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_FMA(y3, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
 #else
-   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
-   y3 = _SIMD_ADD(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
+   y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
 #endif
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL(x2,h2));
-   y3 = _SIMD_FMSUB(y3, h1, _SIMD_MUL(x3,h2));
+   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_FMSUB(y3, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
 #else   
-   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
-   y3 = _SIMD_SUB(_SIMD_MUL(y3,h1), _SIMD_MUL(x3,h2));
+   y1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
+   y3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau3;
-   h2 = _SIMD_MUL(h1, vs_1_3);
-   h3 = _SIMD_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_3);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_3);
 
 #ifdef __ELPA_USE_FMA__
-   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)));
-   z3 = _SIMD_FMSUB(z3, h1, _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2)));
+   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
+   z3 = _SIMD_FMSUB(z3, h1, _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)));
 #else
-   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
-   z3 = _SIMD_SUB(_SIMD_MUL(z3,h1), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)));
+   z1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
+   z3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau4;
-   h2 = _SIMD_MUL(h1, vs_1_4);
-   h3 = _SIMD_MUL(h1, vs_2_4);
-   h4 = _SIMD_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_4);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_4);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_3_4);
 
 #ifdef __ELPA_USE_FMA__
-   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
-   w3 = _SIMD_FMSUB(w3, h1, _SIMD_FMA(z3, h4, _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2))));
+   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   w3 = _SIMD_FMSUB(w3, h1, _SIMD_FMA(z3, h4, _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
 #else
-   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))); 
-   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
-   w3 = _SIMD_SUB(_SIMD_MUL(w3,h1), _SIMD_ADD(_SIMD_MUL(z3,h4), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
+   w1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))); 
+   w2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   w3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SIMD_MUL(tau5, vs_1_5); 
-   h3 = _SIMD_MUL(tau5, vs_2_5);
-   h4 = _SIMD_MUL(tau5, vs_3_5);
-   h5 = _SIMD_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_1_5); 
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_2_5);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_3_5);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_4_5);
 
 #ifdef __ELPA_USE_FMA__
-   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
-   v3 = _SIMD_FMSUB(v3, tau5, _SIMD_ADD(_SIMD_FMA(w3, h5, _SIMD_MUL(z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2))));
+   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   v3 = _SIMD_FMSUB(v3, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w3, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
 #else
-   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
-   v3 = _SIMD_SUB(_SIMD_MUL(v3,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2))));
+   v1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v1,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v2,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
+   v3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v3,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
-   h2 = _SIMD_MUL(tau6, vs_1_6);
-   h3 = _SIMD_MUL(tau6, vs_2_6);
-   h4 = _SIMD_MUL(tau6, vs_3_6);
-   h5 = _SIMD_MUL(tau6, vs_4_6);
-   h6 = _SIMD_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_1_6);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_2_6);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_3_6);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_4_6);
+   h6 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_5_6);
 
 #ifdef __ELPA_USE_FMA__
-   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)))));
-   t3 = _SIMD_FMSUB(t3, tau6, _SIMD_FMA(v3, h6, _SIMD_ADD(_SIMD_FMA(w3, h5, _SIMD_MUL(z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL(x3,h2)))));
+   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
+   t3 = _SIMD_FMSUB(t3, tau6, _SIMD_FMA(v3, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w3, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_FMA(y3, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)))));
 #else
-   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
-   t3 = _SIMD_SUB(_SIMD_MUL(t3,tau6), _SIMD_ADD( _SIMD_MUL(v3,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w3,h5), _SIMD_MUL(z3,h4)), _SIMD_ADD(_SIMD_MUL(y3,h3), _SIMD_MUL(x3,h2)))));
+   t1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t1,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v1,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t2,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v2,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
+   t3 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t3,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v3,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h2)))));
 #endif /* __ELPA_USE_FMA__ */
 
    /////////////////////////////////////////////////////
@@ -12269,41 +12323,41 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SIMD_ADD(q1, y1);
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SIMD_SUB(q1, w1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SIMD_SUB(q1, t1); 
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, t1); 
 #endif
    _STORE(&q[0],q1);
    q2 = _LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SIMD_ADD(q2, y2);
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SIMD_SUB(q2, w2);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SIMD_SUB(q2, t2);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, t2);
 #endif
    _STORE(&q[offset],q2);
    q3 = _LOAD(&q[2*offset]);
 #ifdef BLOCK2
-   q3 = _SIMD_ADD(q3, y3);
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, y3);
 #endif
 #ifdef BLOCK4
-   q3 = _SIMD_SUB(q3, w3);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, w3);
 #endif
 #ifdef BLOCK6
-   q3 = _SIMD_SUB(q3, t3);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, t3);
 #endif
 
    _STORE(&q[2*offset],q3);
 
 #ifdef BLOCK2
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12317,13 +12371,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[ldq+offset]);
    q3 = _LOAD(&q[ldq+2*offset]);
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
-   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
-   q3 = _SIMD_ADD(q3, _SIMD_FMA(y3, h2, x3));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(y1, h2, x1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(y2, h2, x2));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMA(y3, h2, x3));
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
-   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
-   q3 = _SIMD_ADD(q3, _SIMD_ADD(x3, _SIMD_MUL(y3, h2)));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2)));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq],q1);
@@ -12333,7 +12387,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -12349,20 +12403,20 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q3 = _LOAD(&q[ldq+2*offset]);
 
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
-   q2 = _SIMD_SUB(q2, _SIMD_FMA(w2, h4, z2));
-   q3 = _SIMD_SUB(q3, _SIMD_FMA(w3, h4, z3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(w1, h4, z1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(w2, h4, z2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_FMA(w3, h4, z3));
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
-   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
-   q3 = _SIMD_SUB(q3, _SIMD_ADD(z3, _SIMD_MUL(w3, h4)));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4)));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4)));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT z3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4)));
 #endif /* __ELPA_USE_FMA__ */
  
    _STORE(&q[ldq],q1);
    _STORE(&q[ldq+offset],q2);
    _STORE(&q[ldq+2*offset],q3);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -12378,21 +12432,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[(ldq*2)+offset]);
    q3 = _LOAD(&q[(ldq*2)+2*offset]);
 
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
-   q3 = _SIMD_SUB(q3, y3);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, y3);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
    q3 = _SIMD_NFMA(w3, h4, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -12409,16 +12463,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(z2, h3, q2);
    q3 = _SIMD_NFMA(z3, h3, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
    _STORE(&q[(ldq*2)+offset],q2);
    _STORE(&q[(ldq*2)+2*offset],q3);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -12433,21 +12487,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[(ldq*3)+offset]);
    q3 = _LOAD(&q[(ldq*3)+2*offset]);
 
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
-   q3 = _SIMD_SUB(q3, x3);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, x3);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
    q3 = _SIMD_NFMA(w3, h4, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -12464,12 +12518,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(y2, h2, q2);
    q3 = _SIMD_NFMA(y3, h2, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -12486,9 +12540,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(z2, h3, q2);
    q3 = _SIMD_NFMA(z3, h3, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*3], q1);
@@ -12499,7 +12553,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12513,25 +12567,25 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[(ldq+offset)]);
    q3 = _LOAD(&q[(ldq+2*offset)]);
 
-   q1 = _SIMD_SUB(q1, v1);
-   q2 = _SIMD_SUB(q2, v2);
-   q3 = _SIMD_SUB(q3, v3);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, v1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, v2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, v3);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
    q2 = _SIMD_NFMA(t2, h6, q2);
    q3 = _SIMD_NFMA(t3, h6, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
 #endif /* __ELPA_USE_FMA__ */
  
    _STORE(&q[ldq],q1);
    _STORE(&q[(ldq+offset)],q2);
    _STORE(&q[(ldq+2*offset)],q3);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12545,21 +12599,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[(ldq*2)+offset]);
    q3 = _LOAD(&q[(ldq*2)+2*offset]);
 
-   q1 = _SIMD_SUB(q1, w1); 
-   q2 = _SIMD_SUB(q2, w2);
-   q3 = _SIMD_SUB(q3, w3);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, w3);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
    q2 = _SIMD_NFMA(v2, h5, q2);
    q3 = _SIMD_NFMA(v3, h5, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5)); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12574,16 +12628,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(t2, h6, q2);
    q3 = _SIMD_NFMA(t3, h6, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
    _STORE(&q[(ldq*2)+offset],q2);
    _STORE(&q[(ldq*2)+2*offset],q3);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -12599,21 +12653,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[(ldq*3)+offset]);
    q3 = _LOAD(&q[(ldq*3)+2*offset]);
 
-   q1 = _SIMD_SUB(q1, z1);
-   q2 = _SIMD_SUB(q2, z2);
-   q3 = _SIMD_SUB(q3, z3);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, z1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, z2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, z3);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
    q3 = _SIMD_NFMA(w3, h4, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12628,12 +12682,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(v2, h5, q2);
    q3 = _SIMD_NFMA(v3, h5, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12648,16 +12702,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(t2, h6, q2);
    q3 = _SIMD_NFMA(t3, h6, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*3],q1);
    _STORE(&q[(ldq*3)+offset],q2);
    _STORE(&q[(ldq*3)+2*offset],q3);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12671,21 +12725,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[(ldq*4)+offset]);
    q3 = _LOAD(&q[(ldq*4)+2*offset]);
 
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
-   q3 = _SIMD_SUB(q3, y3);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, y3);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
    q2 = _SIMD_NFMA(z2, h3, q2);
    q3 = _SIMD_NFMA(z3, h3, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12700,12 +12754,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(w2, h4, q2);
    q3 = _SIMD_NFMA(w3, h4, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12720,12 +12774,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(v2, h5, q2);
    q3 = _SIMD_NFMA(v3, h5, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12740,16 +12794,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(t2, h6, q2);
    q3 = _SIMD_NFMA(t3, h6, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*4],q1);
    _STORE(&q[(ldq*4)+offset],q2);
    _STORE(&q[(ldq*4)+2*offset],q3);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12762,21 +12816,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[(ldq*5)+offset]);
    q3 = _LOAD(&q[(ldq*5)+2*offset]);
 
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
-   q3 = _SIMD_SUB(q3, x3);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, x3);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
    q2 = _SIMD_NFMA(y2, h2, q2);
    q3 = _SIMD_NFMA(y3, h2, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12791,12 +12845,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(z2, h3, q2);
    q3 = _SIMD_NFMA(z3, h3, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12811,12 +12865,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(w2, h4, q2);
    q3 = _SIMD_NFMA(w3, h4, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12831,12 +12885,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(v2, h5, q2);
    q3 = _SIMD_NFMA(v3, h5, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12851,9 +12905,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(t2, h6, q2);
    q3 = _SIMD_NFMA(t3, h6, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*5],q1);
@@ -12864,7 +12918,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -12890,9 +12944,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q3 = _SIMD_FMA(x3, h1, q3);
      q3 = _SIMD_FMA(y3, h2, q3);
 #else
-     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
-     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
-     q3 = _SIMD_ADD(q3, _SIMD_ADD(_SIMD_MUL(x3,h1), _SIMD_MUL(y3, h2)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2)));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
@@ -12903,9 +12957,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_NFMA(x2, h1, q2);
      q3 = _SIMD_NFMA(x3, h1, q3);
 #else     
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(x3,h1));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #ifdef __ELPA_USE_FMA__
@@ -12913,12 +12967,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_NFMA(y2, h2, q2);
      q3 = _SIMD_NFMA(y3, h2, q3);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(y3,h2));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h2));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h2));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -12935,12 +12989,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_NFMA(z2, h3, q2);
      q3 = _SIMD_NFMA(z3, h3, q3);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(z3,h3));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h3));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h3));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -12957,15 +13011,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_NFMA(w2, h4, q2);
      q3 = _SIMD_NFMA(w3, h4, q3);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(w3,h4));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h4));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h4));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3,h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -12980,12 +13034,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_NFMA(v2, h5, q2);
      q3 = _SIMD_NFMA(v3, h5, q3);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13000,9 +13054,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_NFMA(t2, h6, q2);
      q3 = _SIMD_NFMA(t3, h6, q3);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
-     q3 = _SIMD_SUB(q3, _SIMD_MUL(t3, h6));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
+     q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT t3, h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -13011,7 +13065,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      _STORE(&q[(i*ldq)+2*offset],q3);
 
    }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13032,9 +13086,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_FMA(x2, h1, q2);
    q3 = _SIMD_FMA(x3, h1, q3);
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_ADD(q3, _SIMD_MUL(x3, h1));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -13045,12 +13099,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(x2, h1, q2);
    q3 = _SIMD_NFMA(x3, h1, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -13067,12 +13121,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(y2, h2, q2);
    q3 = _SIMD_NFMA(y3, h2, q3);
 #else   
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -13089,15 +13143,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(z2, h3, q2);
    q3 = _SIMD_NFMA(z3, h3, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
 #endif
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13113,12 +13167,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(w2, h4, q2);
    q3 = _SIMD_NFMA(w3, h4, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13133,9 +13187,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(v2, h5, q2);
    q3 = _SIMD_NFMA(v3, h5, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(v3, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT v3, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -13146,7 +13200,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -13167,12 +13221,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(x2, h1, q2);
    q3 = _SIMD_NFMA(x3, h1, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -13189,13 +13243,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(y2, h2, q2);
    q3 = _SIMD_NFMA(y3, h2, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13210,12 +13264,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(z2, h3, q2);
    q3 = _SIMD_NFMA(z3, h3, q3);
 #else 
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13230,9 +13284,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(w2, h4, q2);
    q3 = _SIMD_NFMA(w3, h4, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(w3, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT w3, h4));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
@@ -13240,7 +13294,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    _STORE(&q[((nb+1)*ldq)+offset],q2);
    _STORE(&q[((nb+1)*ldq)+2*offset],q3);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -13261,13 +13315,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(x2, h1, q2);
    q3 = _SIMD_NFMA(x3, h1, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13282,12 +13336,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(y2, h2, q2);
    q3 = _SIMD_NFMA(y3, h2, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13302,9 +13356,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(z2, h3, q2);
    q3 = _SIMD_NFMA(z3, h3, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(z3, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT z3, h3));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
@@ -13315,7 +13369,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13334,12 +13388,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(x2, h1, q2);
    q3 = _SIMD_NFMA(x3, h1, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13354,16 +13408,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(y2, h2, q2);
    q3 = _SIMD_NFMA(y3, h2, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(y3, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT y3, h2));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+3)*ldq],q1);
    _STORE(&q[((nb+3)*ldq)+offset],q2);
    _STORE(&q[((nb+3)*ldq)+2*offset],q3);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13382,9 +13436,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _SIMD_NFMA(x2, h1, q2);
    q3 = _SIMD_NFMA(x3, h1, q3);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
-   q3 = _SIMD_SUB(q3, _SIMD_MUL(x3, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
+   q3 = _SIMD_SUB( ADDITIONAL_ARGUMENT q3, _SIMD_MUL( ADDITIONAL_ARGUMENT x3, h1));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+4)*ldq],q1);
@@ -13416,14 +13470,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 /*
  * Unrolled kernel that computes
  * ROW_LENGTH rows of Q simultaneously, a
@@ -13489,19 +13543,19 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
     __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13519,9 +13573,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE y2 = _SIMD_FMA(x2, h1, q2);
 #else
     __SIMD_DATATYPE q1 = _LOAD(q);
-    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
     __SIMD_DATATYPE q2 = _LOAD(&q[offset]);
-    __SIMD_DATATYPE y2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+    __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -13531,7 +13585,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -13567,12 +13621,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
     register __SIMD_DATATYPE x1 = a1_1;
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));                          
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1));
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -13590,12 +13644,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
     register __SIMD_DATATYPE x2 = a1_2;
 #else
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
     register __SIMD_DATATYPE x2 = a1_2;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -13617,7 +13671,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -13648,14 +13702,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_FMA(a2_1, h_6_2, t1);
     t1 = _SIMD_FMA(a1_1, h_6_1, t1);
 #else
-    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_1, h_6_5)); 
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_6_4));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_6_3));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_6_2));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -13682,13 +13736,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_FMA(a2_1, h_5_2, v1);
     v1 = _SIMD_FMA(a1_1, h_5_1, v1);
 #else
-    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_5_4)); 
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_5_3));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_5_2));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -13711,12 +13765,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_FMA(a2_1, h_4_2, w1);
     w1 = _SIMD_FMA(a1_1, h_4_1, w1);
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3)); 
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -13739,9 +13793,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(a1_1, h_3_1, z1);
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
 #else
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1)); 
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x1 = a1_1;
@@ -13770,21 +13824,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z2 = _SIMD_FMA(a1_2, h_3_1, z2);
     register __SIMD_DATATYPE y2 = _SIMD_FMA(a1_2, h_2_1, a2_2);
 #else
-    register __SIMD_DATATYPE t2 = _SIMD_ADD(a6_2, _SIMD_MUL(a5_2, h_6_5));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a4_2, h_6_4));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a3_2, h_6_3));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a2_2, h_6_2));
-    t2 = _SIMD_ADD(t2, _SIMD_MUL(a1_2, h_6_1));
-    register __SIMD_DATATYPE v2 = _SIMD_ADD(a5_2, _SIMD_MUL(a4_2, h_5_4));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a3_2, h_5_3));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a2_2, h_5_2));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(a1_2, h_5_1));
-    register __SIMD_DATATYPE w2 = _SIMD_ADD(a4_2, _SIMD_MUL(a3_2, h_4_3));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a2_2, h_4_2));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(a1_2, h_4_1));
-    register __SIMD_DATATYPE z2 = _SIMD_ADD(a3_2, _SIMD_MUL(a2_2, h_3_2));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(a1_2, h_3_1));
-    register __SIMD_DATATYPE y2 = _SIMD_ADD(a2_2, _SIMD_MUL(a1_2, h_2_1));
+    register __SIMD_DATATYPE t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_2, h_6_5));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_6_4));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_6_3));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_6_2));
+    t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_6_1));
+    register __SIMD_DATATYPE v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_2, h_5_4));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_5_3));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_5_2));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_5_1));
+    register __SIMD_DATATYPE w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_2, h_4_3));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_4_2));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_4_1));
+    register __SIMD_DATATYPE z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_2, h_3_2));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_3_1));
+    register __SIMD_DATATYPE y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_2, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_2, h_2_1));
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x2 = a1_2;
@@ -13803,7 +13857,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -13824,14 +13878,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         x2 = _SIMD_FMA(q2, h1, x2);
         y2 = _SIMD_FMA(q2, h2, y2);
 #else
-        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-        x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
-        y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+        y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
+        y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -13847,11 +13901,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         z1 = _SIMD_FMA(q1, h3, z1);
         z2 = _SIMD_FMA(q2, h3, z2);
 #else	
-        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-        z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+        z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+        z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -13867,15 +13921,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         w1 = _SIMD_FMA(q1, h4, w1);
         w2 = _SIMD_FMA(q2, h4, w2);
 #else
-        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-        w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+        w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+        w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13889,11 +13943,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         v1 = _SIMD_FMA(q1, h5, v1);
         v2 = _SIMD_FMA(q2, h5, v2);
 #else
-        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-        v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+        v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+        v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h6 = _SIMD_SET1(hh[(ldh*5)+i-(BLOCK-6)]);
 #endif
 
@@ -13909,13 +13963,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         t1 = _SIMD_FMA(q1, h6, t1);
         t2 = _SIMD_FMA(q2, h6, t2);
 #else
-        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
-        t2 = _SIMD_ADD(t2, _SIMD_MUL(q2,h6));
+        t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h6));
+        t2 = _SIMD_ADD( ADDITIONAL_ARGUMENT t2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -13931,13 +13985,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -13953,11 +14007,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_FMA(q1, h2, y1);
     y2 = _SIMD_FMA(q2, h2, y2);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -13973,13 +14027,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(q1, h3, z1);
     z2 = _SIMD_FMA(q2, h3, z2);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #ifdef BLOCK4
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -13998,11 +14052,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -14018,11 +14072,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_FMA(q1, h2, y1);
     y2 = _SIMD_FMA(q2, h2, y2);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -14041,8 +14095,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 */
@@ -14050,7 +14104,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-4)]);
 #endif
 
@@ -14066,11 +14120,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_FMA(q1, h4, w1);
     w2 = _SIMD_FMA(q2, h4, w2);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4)); 
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
@@ -14086,11 +14140,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_FMA(q1, h5, v1);
     v2 = _SIMD_FMA(q2, h5, v2);
 #else
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
-    v2 = _SIMD_ADD(v2, _SIMD_MUL(q2,h5));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
+    v2 = _SIMD_ADD( ADDITIONAL_ARGUMENT v2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14107,11 +14161,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14125,11 +14179,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_FMA(q1, h2, y1);
     y2 = _SIMD_FMA(q2, h2, y2);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14143,11 +14197,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(q1, h3, z1);
     z2 = _SIMD_FMA(q2, h3, z2);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14161,11 +14215,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_FMA(q1, h4, w1);
     w2 = _SIMD_FMA(q2, h4, w2);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
-    w2 = _SIMD_ADD(w2, _SIMD_MUL(q2,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
+    w2 = _SIMD_ADD( ADDITIONAL_ARGUMENT w2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14182,11 +14236,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-4)]);
 #endif
 
@@ -14202,11 +14256,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_FMA(q1, h2, y1);
     y2 = _SIMD_FMA(q2, h2, y2);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-5)]);
 #endif
 
@@ -14222,11 +14276,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(q1, h3, z1);
     z2 = _SIMD_FMA(q2, h3, z2);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
-    z2 = _SIMD_ADD(z2, _SIMD_MUL(q2,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
+    z2 = _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -14245,11 +14299,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 
@@ -14265,11 +14319,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     y1 = _SIMD_FMA(q1, h2, y1);
     y2 = _SIMD_FMA(q2, h2, y2);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
-    y2 = _SIMD_ADD(y2, _SIMD_MUL(q2,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
+    y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -14288,8 +14342,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_FMA(q1, h1, x1);
     x2 = _SIMD_FMA(q2, h1, x2);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-    x2 = _SIMD_ADD(x2, _SIMD_MUL(q2,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+    x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT q2,h1));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
@@ -14309,7 +14363,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     /////////////////////////////////////////////////////
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
@@ -14349,7 +14403,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE */
+#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE */
 
 #if VEC_SET == SPARC64_SSE
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -14443,10 +14497,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-    h1 = _SIMD_NEG(tau1);
+    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
@@ -14459,7 +14513,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau1, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 #endif  /* BLOCK2 */
 
@@ -14467,8 +14521,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = tau1;
 #endif
 
-   x1 = _SIMD_MUL(x1, h1);
-   x2 = _SIMD_MUL(x2, h1);
+   x1 = _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1);
+   x2 = _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1);
 
 #ifdef BLOCK2
 #if VEC_SET == SSE_128 || VEC_SET == VSX_SSE || VEC_SET == AVX_256 || VEC_SET == AVX2_256
@@ -14476,10 +14530,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-   h1 = _SIMD_NEG(tau2);
+   h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
@@ -14492,89 +14546,89 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau2, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
-   h2 = _SIMD_MUL(h1, vs);
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SIMD_MUL(h1, vs_1_2); 
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_2); 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL(x2,h2));
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMA(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
 #else
-   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_ADD(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
 #endif
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL(x1,h2));
-   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL(x2,h2));
+   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_FMSUB(y2, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
 #else   
-   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
-   y2 = _SIMD_SUB(_SIMD_MUL(y2,h1), _SIMD_MUL(x2,h2));
+   y1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
+   y2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau3;
-   h2 = _SIMD_MUL(h1, vs_1_3);
-   h3 = _SIMD_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_3);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_3);
 
 #ifdef __ELPA_USE_FMA__
-   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)));
+   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_FMSUB(z2, h1, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
 #else
-   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
-   z2 = _SIMD_SUB(_SIMD_MUL(z2,h1), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)));
+   z1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
+   z2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau4;
-   h2 = _SIMD_MUL(h1, vs_1_4);
-   h3 = _SIMD_MUL(h1, vs_2_4);
-   h4 = _SIMD_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_4);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_4);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_3_4);
 
 #ifdef __ELPA_USE_FMA__
-   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
+   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   w2 = _SIMD_FMSUB(w2, h1, _SIMD_FMA(z2, h4, _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
 #else
-   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))); 
-   w2 = _SIMD_SUB(_SIMD_MUL(w2,h1), _SIMD_ADD(_SIMD_MUL(z2,h4), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   w1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))); 
+   w2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SIMD_MUL(tau5, vs_1_5); 
-   h3 = _SIMD_MUL(tau5, vs_2_5);
-   h4 = _SIMD_MUL(tau5, vs_3_5);
-   h5 = _SIMD_MUL(tau5, vs_4_5);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_1_5); 
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_2_5);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_3_5);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_4_5);
 
 #ifdef __ELPA_USE_FMA__
-   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2))));
+   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_FMSUB(v2, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
 #else
-   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
-   v2 = _SIMD_SUB(_SIMD_MUL(v2,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2))));
+   v1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v1,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
+   v2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v2,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
-   h2 = _SIMD_MUL(tau6, vs_1_6);
-   h3 = _SIMD_MUL(tau6, vs_2_6);
-   h4 = _SIMD_MUL(tau6, vs_3_6);
-   h5 = _SIMD_MUL(tau6, vs_4_6);
-   h6 = _SIMD_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_1_6);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_2_6);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_3_6);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_4_6);
+   h6 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_5_6);
 
 #ifdef __ELPA_USE_FMA__
-   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD(_SIMD_FMA(w2, h5, _SIMD_MUL(z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL(x2,h2)))));
+   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_FMSUB(t2, tau6, _SIMD_FMA(v2, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w2, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_FMA(y2, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
 #else
-   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
-   t2 = _SIMD_SUB(_SIMD_MUL(t2,tau6), _SIMD_ADD( _SIMD_MUL(v2,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w2,h5), _SIMD_MUL(z2,h4)), _SIMD_ADD(_SIMD_MUL(y2,h3), _SIMD_MUL(x2,h2)))));
+   t1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t1,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v1,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
+   t2 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t2,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v2,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h2)))));
 #endif /* __ELPA_USE_FMA__ */
 
    /////////////////////////////////////////////////////
@@ -14584,29 +14638,29 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SIMD_ADD(q1, y1);
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SIMD_SUB(q1, w1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SIMD_SUB(q1, t1); 
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, t1); 
 #endif
    _STORE(&q[0],q1);
    q2 = _LOAD(&q[offset]);
 #ifdef BLOCK2
-   q2 = _SIMD_ADD(q2, y2);
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, y2);
 #endif
 #ifdef BLOCK4
-   q2 = _SIMD_SUB(q2, w2);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
 #endif
 #ifdef BLOCK6
-   q2 = _SIMD_SUB(q2, t2);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, t2);
 #endif
    _STORE(&q[offset],q2);
 
 #ifdef BLOCK2
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14618,23 +14672,23 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef __ELPA_USE_FMA__
    q1 = _LOAD(&q[ldq]);
-   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(y1, h2, x1));
    _STORE(&q[ldq],q1);
    q2 = _LOAD(&q[ldq+offset]);
-   q2 = _SIMD_ADD(q2, _SIMD_FMA(y2, h2, x2));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(y2, h2, x2));
    _STORE(&q[ldq+offset],q2);
 #else
    q1 = _LOAD(&q[ldq]);
-   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
    _STORE(&q[ldq],q1);
    q2 = _LOAD(&q[ldq+offset]);
-   q2 = _SIMD_ADD(q2, _SIMD_ADD(x2, _SIMD_MUL(y2, h2)));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
    _STORE(&q[ldq+offset],q2);
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -14650,17 +14704,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q2 = _LOAD(&q[ldq+offset]);
 
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
-   q2 = _SIMD_SUB(q2, _SIMD_FMA(w2, h4, z2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(w1, h4, z1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_FMA(w2, h4, z2));
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
-   q2 = _SIMD_SUB(q2, _SIMD_ADD(z2, _SIMD_MUL(w2, h4)));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4)));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT z2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq],q1);
    _STORE(&q[ldq+offset],q2);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -14674,18 +14728,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    q1 = _LOAD(&q[ldq*2]);
    q2 = _LOAD(&q[(ldq*2)+offset]);
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -14701,14 +14755,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(z1, h3, q1);
    q2 = _SIMD_NFMA(z2, h3, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
    _STORE(&q[(ldq*2)+offset],q2);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -14722,18 +14776,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    q1 = _LOAD(&q[ldq*3]);
    q2 = _LOAD(&q[(ldq*3)+offset]);
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -14749,11 +14803,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(y1, h2, q1);
    q2 = _SIMD_NFMA(y2, h2, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -14769,8 +14823,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(z1, h3, q1);
    q2 = _SIMD_NFMA(z2, h3, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*3], q1);
@@ -14780,7 +14834,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14792,21 +14846,21 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    q1 = _LOAD(&q[ldq]);
    q2 = _LOAD(&q[(ldq+offset)]);
-   q1 = _SIMD_SUB(q1, v1);
-   q2 = _SIMD_SUB(q2, v2);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, v1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, v2);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
    q2 = _SIMD_NFMA(t2, h6, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq],q1);
    _STORE(&q[(ldq+offset)],q2);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14817,18 +14871,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
    q1 = _LOAD(&q[ldq*2]);
    q2 = _LOAD(&q[(ldq*2)+offset]);
-   q1 = _SIMD_SUB(q1, w1); 
-   q2 = _SIMD_SUB(q2, w2);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, w2);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
    q2 = _SIMD_NFMA(v2, h5, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5)); 
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14842,14 +14896,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(t1, h6, q1);
    q2 = _SIMD_NFMA(t2, h6, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
    _STORE(&q[(ldq*2)+offset],q2);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -14864,18 +14918,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _LOAD(&q[ldq*3]);
    q2 = _LOAD(&q[(ldq*3)+offset]);
 
-   q1 = _SIMD_SUB(q1, z1);
-   q2 = _SIMD_SUB(q2, z2);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, z1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, z2);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14889,11 +14943,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(v1, h5, q1);
    q2 = _SIMD_NFMA(v2, h5, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14907,14 +14961,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(t1, h6, q1);
    q2 = _SIMD_NFMA(t2, h6, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
 #endif
 
    _STORE(&q[ldq*3],q1);
    _STORE(&q[(ldq*3)+offset],q2);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14926,18 +14980,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _LOAD(&q[ldq*4]);
    q2 = _LOAD(&q[(ldq*4)+offset]);
 
-   q1 = _SIMD_SUB(q1, y1);
-   q2 = _SIMD_SUB(q2, y2);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, y2);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
    q2 = _SIMD_NFMA(z2, h3, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14951,11 +15005,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14969,11 +15023,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(v1, h5, q1);
    q2 = _SIMD_NFMA(v2, h5, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -14987,14 +15041,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(t1, h6, q1);
    q2 = _SIMD_NFMA(t2, h6, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
 #endif
 
    _STORE(&q[ldq*4],q1);
    _STORE(&q[(ldq*4)+offset],q2);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15005,18 +15059,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
    q1 = _LOAD(&q[ldq*5]);
    q2 = _LOAD(&q[(ldq*5)+offset]);
-   q1 = _SIMD_SUB(q1, x1);
-   q2 = _SIMD_SUB(q2, x2);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, x2);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
    q2 = _SIMD_NFMA(y2, h2, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15030,11 +15084,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(z1, h3, q1);
    q2 = _SIMD_NFMA(z2, h3, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15048,11 +15102,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15066,11 +15120,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(v1, h5, q1);
    q2 = _SIMD_NFMA(v2, h5, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15084,8 +15138,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(t1, h6, q1);
    q2 = _SIMD_NFMA(t2, h6, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
 #endif
    _STORE(&q[ldq*5],q1);
    _STORE(&q[(ldq*5)+offset],q2);
@@ -15094,7 +15148,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -15117,8 +15171,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q2 = _SIMD_FMA(x2, h1, q2);
      q2 = _SIMD_FMA(y2, h2, q2);
 #else
-     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
-     q2 = _SIMD_ADD(q2, _SIMD_ADD(_SIMD_MUL(x2,h1), _SIMD_MUL(y2, h2)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2)));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
@@ -15128,19 +15182,19 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_NFMA(x1, h1, q1);
      q2 = _SIMD_NFMA(x2, h1, q2);
 #else  
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(x2,h1));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(y1, h2, q1);
      q2 = _SIMD_NFMA(y2, h2, q2);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(y2,h2));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h2));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -15156,11 +15210,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_NFMA(z1, h3, q1);
      q2 = _SIMD_NFMA(z2, h3, q2);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(z2,h3));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h3));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -15176,14 +15230,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_NFMA(w1, h4, q1);
      q2 = _SIMD_NFMA(w2, h4, q2);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(w2,h4));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h4));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2,h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h5 = _SIMD_SET1(hh[(ldh*4)+i-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15197,11 +15251,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_NFMA(v1, h5, q1);
      q2 = _SIMD_NFMA(v2, h5, q2);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15215,8 +15269,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_NFMA(t1, h6, q1);
      q2 = _SIMD_NFMA(t2, h6, q2);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
-     q2 = _SIMD_SUB(q2, _SIMD_MUL(t2, h6));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+     q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT t2, h6));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
@@ -15224,7 +15278,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      _STORE(&q[(i*ldq)+offset],q2);
 
    }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15243,8 +15297,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_FMA(x1, h1, q1);
    q2 = _SIMD_FMA(x2, h1, q2);
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_ADD(q2, _SIMD_MUL(x2, h1));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -15254,11 +15308,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(x1, h1, q1);
    q2 = _SIMD_NFMA(x2, h1, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -15274,11 +15328,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(y1, h2, q1);
    q2 = _SIMD_NFMA(y2, h2, q2);
 #else   
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -15294,14 +15348,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(z1, h3, q1);
    q2 = _SIMD_NFMA(z2, h3, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
 #endif
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15315,11 +15369,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15333,8 +15387,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(v1, h5, q1);
    q2 = _SIMD_NFMA(v2, h5, q2);
 #else 
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(v2, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT v2, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -15344,7 +15398,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -15363,11 +15417,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(x1, h1, q1);
    q2 = _SIMD_NFMA(x2, h1, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -15383,12 +15437,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(y1, h2, q1);
    q2 = _SIMD_NFMA(y2, h2, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15402,11 +15456,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(z1, h3, q1);
    q2 = _SIMD_NFMA(z2, h3, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15420,15 +15474,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(w1, h4, q1);
    q2 = _SIMD_NFMA(w2, h4, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(w2, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT w2, h4));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK6 */
 
    _STORE(&q[(nb+1)*ldq],q1);
    _STORE(&q[((nb+1)*ldq)+offset],q2);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -15447,12 +15501,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(x1, h1, q1);
    q2 = _SIMD_NFMA(x2, h1, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15466,11 +15520,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(y1, h2, q1);
    q2 = _SIMD_NFMA(y2, h2, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15484,8 +15538,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(z1, h3, q1);
    q2 = _SIMD_NFMA(z2, h3, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(z2, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT z2, h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -15496,7 +15550,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15513,11 +15567,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(x1, h1, q1);
    q2 = _SIMD_NFMA(x2, h1, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15531,14 +15585,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(y1, h2, q1);
    q2 = _SIMD_NFMA(y2, h2, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(y2, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT y2, h2));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+3)*ldq],q1);
    _STORE(&q[((nb+3)*ldq)+offset],q2);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15555,8 +15609,8 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _SIMD_NFMA(x1, h1, q1);
    q2 = _SIMD_NFMA(x2, h1, q2);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
-   q2 = _SIMD_SUB(q2, _SIMD_MUL(x2, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+   q2 = _SIMD_SUB( ADDITIONAL_ARGUMENT q2, _SIMD_MUL( ADDITIONAL_ARGUMENT x2, h1));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+4)*ldq],q1);
@@ -15587,14 +15641,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
 
 /*
@@ -15662,17 +15716,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if  VEC_SET == AVX_512
+#if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi64(0x8000000000000000);
 #endif
 #ifdef SINGLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h1 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15688,7 +15742,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE y1 = _SIMD_FMA(x1, h1, q1);
 #else
     __SIMD_DATATYPE q1 = _LOAD(q);
-    __SIMD_DATATYPE y1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+    __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -15698,7 +15752,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a3_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a4_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -15734,12 +15788,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
     register __SIMD_DATATYPE x1 = a1_1;
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));                          
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));                          
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));                          
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));                          
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));                          
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));                          
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1));
     register __SIMD_DATATYPE x1 = a1_1;
 #endif /* __ELPA_USE_FMA__ */
 
@@ -15760,7 +15814,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE a5_1 = _LOAD(&q[ldq]);  
     __SIMD_DATATYPE a6_1 = _LOAD(&q[0]);    
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_6_5 = _SIMD_SET1(hh[(ldh*5)+1]);
     __SIMD_DATATYPE h_6_4 = _SIMD_SET1(hh[(ldh*5)+2]);
     __SIMD_DATATYPE h_6_3 = _SIMD_SET1(hh[(ldh*5)+3]);
@@ -15791,14 +15845,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     t1 = _SIMD_FMA(a2_1, h_6_2, t1);
     t1 = _SIMD_FMA(a1_1, h_6_1, t1);
 #else
-    register __SIMD_DATATYPE t1 = _SIMD_ADD(a6_1, _SIMD_MUL(a5_1, h_6_5)); 
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a4_1, h_6_4));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a3_1, h_6_3));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a2_1, h_6_2));
-    t1 = _SIMD_ADD(t1, _SIMD_MUL(a1_1, h_6_1));
+    register __SIMD_DATATYPE t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a6_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a5_1, h_6_5)); 
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_6_4));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_6_3));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_6_2));
+    t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_6_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_5_4 = _SIMD_SET1(hh[(ldh*4)+1]);
     __SIMD_DATATYPE h_5_3 = _SIMD_SET1(hh[(ldh*4)+2]);
     __SIMD_DATATYPE h_5_2 = _SIMD_SET1(hh[(ldh*4)+3]);
@@ -15825,13 +15879,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     v1 = _SIMD_FMA(a2_1, h_5_2, v1);
     v1 = _SIMD_FMA(a1_1, h_5_1, v1);
 #else
-    register __SIMD_DATATYPE v1 = _SIMD_ADD(a5_1, _SIMD_MUL(a4_1, h_5_4)); 
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a3_1, h_5_3));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a2_1, h_5_2));
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(a1_1, h_5_1));
+    register __SIMD_DATATYPE v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a5_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a4_1, h_5_4)); 
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_5_3));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_5_2));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_5_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_4_3 = _SIMD_SET1(hh[(ldh*3)+1]);
     __SIMD_DATATYPE h_4_2 = _SIMD_SET1(hh[(ldh*3)+2]);
     __SIMD_DATATYPE h_4_1 = _SIMD_SET1(hh[(ldh*3)+3]);
@@ -15854,12 +15908,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     w1 = _SIMD_FMA(a2_1, h_4_2, w1);
     w1 = _SIMD_FMA(a1_1, h_4_1, w1);
 #else
-    register __SIMD_DATATYPE w1 = _SIMD_ADD(a4_1, _SIMD_MUL(a3_1, h_4_3)); 
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a2_1, h_4_2));
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(a1_1, h_4_1));
+    register __SIMD_DATATYPE w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a4_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a3_1, h_4_3)); 
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_4_2));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_4_1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE h_2_1 = _SIMD_SET1(hh[ldh+1]);    
     __SIMD_DATATYPE h_3_2 = _SIMD_SET1(hh[(ldh*2)+1]);
     __SIMD_DATATYPE h_3_1 = _SIMD_SET1(hh[(ldh*2)+2]);
@@ -15882,9 +15936,9 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     z1 = _SIMD_FMA(a1_1, h_3_1, z1);
     register __SIMD_DATATYPE y1 = _SIMD_FMA(a1_1, h_2_1, a2_1);
 #else
-    register __SIMD_DATATYPE z1 = _SIMD_ADD(a3_1, _SIMD_MUL(a2_1, h_3_2));
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(a1_1, h_3_1));
-    register __SIMD_DATATYPE y1 = _SIMD_ADD(a2_1, _SIMD_MUL(a1_1, h_2_1)); 
+    register __SIMD_DATATYPE z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a3_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a2_1, h_3_2));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_3_1));
+    register __SIMD_DATATYPE y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT a2_1, _SIMD_MUL( ADDITIONAL_ARGUMENT a1_1, h_2_1)); 
 #endif /* __ELPA_USE_FMA__ */
 
     register __SIMD_DATATYPE x1 = a1_1;
@@ -15902,7 +15956,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
     for(i = BLOCK; i < nb; i++)
       {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
         h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -15921,12 +15975,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         y1 = _SIMD_FMA(q1, h2, y1);
 #else
         q1 = _LOAD(&q[i*ldq]);
-        x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
-        y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
+        y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -15941,10 +15995,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
         z1 = _SIMD_FMA(q1, h3, z1);
 #else	
-        z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+        z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]);
 #endif
 
@@ -15959,13 +16013,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
         w1 = _SIMD_FMA(q1, h4, w1);
 #else
-        w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+        w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
 #endif
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h5 = _SIMD_SET1(hh[(ldh*4)+i-(BLOCK-5)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -15978,10 +16032,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
         v1 = _SIMD_FMA(q1, h5, v1);
 #else
-        v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+        v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
         h6 = _SIMD_SET1(hh[(ldh*5)+i]);
 #endif
 
@@ -15996,12 +16050,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
         t1 = _SIMD_FMA(q1, h6, t1);
 #else
-        t1 = _SIMD_ADD(t1, _SIMD_MUL(q1,h6));
+        t1 = _SIMD_ADD( ADDITIONAL_ARGUMENT t1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h6));
 #endif /* __ELPA_USE_FMA__ */	
 
 #endif /* BLOCK6 */
       }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16016,12 +16070,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     x1 = _SIMD_FMA(q1, h1, x1);
 #else
     q1 = _LOAD(&q[nb*ldq]);
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #if defined(BLOCK4) || defined(BLOCK6)
     
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -16036,10 +16090,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     y1 = _SIMD_FMA(q1, h2, y1);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -16054,12 +16108,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     z1 = _SIMD_FMA(q1, h3, z1);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
 #endif
 
 #ifdef BLOCK4
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -16076,10 +16130,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[(ldh*1)+nb-1]);
 #endif
 
@@ -16094,10 +16148,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     y1 = _SIMD_FMA(q1, h2, y1);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -16114,14 +16168,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK4 */
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-2]);
 #endif
 
@@ -16136,10 +16190,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     w1 = _SIMD_FMA(q1, h4, w1);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4)); 
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4)); 
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h5 = _SIMD_SET1(hh[(ldh*4)+nb-1]);
 #endif
 
@@ -16154,10 +16208,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     v1 = _SIMD_FMA(q1, h5, v1);
 #else
-    v1 = _SIMD_ADD(v1, _SIMD_MUL(q1,h5));
+    v1 = _SIMD_ADD( ADDITIONAL_ARGUMENT v1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16172,10 +16226,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16188,10 +16242,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     y1 = _SIMD_FMA(q1, h2, y1);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16204,10 +16258,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     z1 = _SIMD_FMA(q1, h3, z1);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h4 = _SIMD_SET1(hh[(ldh*3)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16220,10 +16274,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     w1 = _SIMD_FMA(q1, h4, w1);
 #else
-    w1 = _SIMD_ADD(w1, _SIMD_MUL(q1,h4));
+    w1 = _SIMD_ADD( ADDITIONAL_ARGUMENT w1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16238,10 +16292,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 
@@ -16256,10 +16310,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     y1 = _SIMD_FMA(q1, h2, y1);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 
@@ -16274,10 +16328,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     z1 = _SIMD_FMA(q1, h3, z1);
 #else
-    z1 = _SIMD_ADD(z1, _SIMD_MUL(q1,h3));
+    z1 = _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 
@@ -16294,10 +16348,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 
@@ -16312,10 +16366,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     y1 = _SIMD_FMA(q1, h2, y1);
 #else
-    y1 = _SIMD_ADD(y1, _SIMD_MUL(q1,h2));
+    y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 
@@ -16332,7 +16386,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
     x1 = _SIMD_FMA(q1, h1, x1);
 #else
-    x1 = _SIMD_ADD(x1, _SIMD_MUL(q1,h1));
+    x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT q1,h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -16354,7 +16408,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
     __SIMD_DATATYPE tau1 = _SIMD_SET1(hh[0]);
     __SIMD_DATATYPE tau2 = _SIMD_SET1(hh[ldh]);
 #if defined(BLOCK4) || defined(BLOCK6)
@@ -16394,7 +16448,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    __SIMD_DATATYPE vs_4_6 = _SIMD_SET1(scalarprods[13]);
    __SIMD_DATATYPE vs_5_6 = _SIMD_SET1(scalarprods[14]);
 #endif
-#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE */
+#endif /* VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE */
 
 #if VEC_SET == SPARC64_SSE
     __SIMD_DATATYPE tau1 = _SIMD_SET(hh[0], hh[0]);
@@ -16488,10 +16542,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-    h1 = _SIMD_NEG(tau1);
+    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau1, (__SIMD_INTEGER) sign);
@@ -16504,14 +16558,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau1, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau1;
 #endif
 
-   x1 = _SIMD_MUL(x1, h1);
+   x1 = _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1);
 
 #ifdef BLOCK2
 #if VEC_SET == SSE_128 || VEC_SET == VSX_SSE || VEC_SET == AVX_256 || VEC_SET == AVX2_256
@@ -16519,10 +16573,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
 #if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
-   h1 = _SIMD_NEG(tau2);
+   h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef HAVE_AVX512_XEON_PHI
 #ifdef DOUBLE_PRECISION_REAL
     h1 = (__SIMD_DATATYPE) _mm512_xor_epi64((__SIMD_INTEGER) tau2, (__SIMD_INTEGER) sign);
@@ -16535,79 +16589,79 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef HAVE_AVX512_XEON
     h1 = _XOR(tau2, sign);
 #endif
-#endif /* VEC_SET == AVX_512 */
-   h2 = _SIMD_MUL(h1, vs);
+#endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs);
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
    h1 = tau2;
-   h2 = _SIMD_MUL(h1, vs_1_2); 
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_2); 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK2
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL(x1,h2));
+   y1 = _SIMD_FMA(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
 #else
-   y1 = _SIMD_ADD(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
 #endif
 #endif /* BLOCK2 */
 
 #if defined(BLOCK4) || defined(BLOCK6)
 
 #ifdef __ELPA_USE_FMA__
-   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL(x1,h2));
+   y1 = _SIMD_FMSUB(y1, h1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
 #else
-   y1 = _SIMD_SUB(_SIMD_MUL(y1,h1), _SIMD_MUL(x1,h2));
+   y1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau3;
-   h2 = _SIMD_MUL(h1, vs_1_3);
-   h3 = _SIMD_MUL(h1, vs_2_3);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_3);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_3);
 
 #ifdef __ELPA_USE_FMA__
-   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)));
+   z1 = _SIMD_FMSUB(z1, h1, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
 #else
-   z1 = _SIMD_SUB(_SIMD_MUL(z1,h1), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)));
+   z1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)));
 #endif /* __ELPA_USE_FMA__ */
 
    h1 = tau4;
-   h2 = _SIMD_MUL(h1, vs_1_4);
-   h3 = _SIMD_MUL(h1, vs_2_4);
-   h4 = _SIMD_MUL(h1, vs_3_4);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_1_4);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_2_4);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1, vs_3_4);
 
 #ifdef __ELPA_USE_FMA__
-   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
+   w1 = _SIMD_FMSUB(w1, h1, _SIMD_FMA(z1, h4, _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
 #else
-   w1 = _SIMD_SUB(_SIMD_MUL(w1,h1), _SIMD_ADD(_SIMD_MUL(z1,h4), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))); 
+   w1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h1), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))); 
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-   h2 = _SIMD_MUL(tau5, vs_1_5); 
-   h3 = _SIMD_MUL(tau5, vs_2_5);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_1_5); 
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_2_5);
 
-   h4 = _SIMD_MUL(tau5, vs_3_5);
-   h5 = _SIMD_MUL(tau5, vs_4_5);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_3_5);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau5, vs_4_5);
 
 
 #ifdef __ELPA_USE_FMA__
-   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2))));
+   v1 = _SIMD_FMSUB(v1, tau5, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
 #else
-   v1 = _SIMD_SUB(_SIMD_MUL(v1,tau5), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2))));
+   v1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT v1,tau5), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2))));
 #endif /* __ELPA_USE_FMA__ */
 
-   h2 = _SIMD_MUL(tau6, vs_1_6);
-   h3 = _SIMD_MUL(tau6, vs_2_6);
-   h4 = _SIMD_MUL(tau6, vs_3_6);
-   h5 = _SIMD_MUL(tau6, vs_4_6);
-   h6 = _SIMD_MUL(tau6, vs_5_6);
+   h2 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_1_6);
+   h3 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_2_6);
+   h4 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_3_6);
+   h5 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_4_6);
+   h6 = _SIMD_MUL( ADDITIONAL_ARGUMENT tau6, vs_5_6);
 
 #ifdef __ELPA_USE_FMA__
-   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD(_SIMD_FMA(w1, h5, _SIMD_MUL(z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL(x1,h2)))));
+   t1 = _SIMD_FMSUB(t1, tau6, _SIMD_FMA(v1, h6, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_FMA(w1, h5, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_FMA(y1, h3, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
 #else
-   t1 = _SIMD_SUB(_SIMD_MUL(t1,tau6), _SIMD_ADD( _SIMD_MUL(v1,h6), _SIMD_ADD(_SIMD_ADD(_SIMD_MUL(w1,h5), _SIMD_MUL(z1,h4)), _SIMD_ADD(_SIMD_MUL(y1,h3), _SIMD_MUL(x1,h2)))));
+   t1 = _SIMD_SUB( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT t1,tau6), _SIMD_ADD( ADDITIONAL_ARGUMENT  _SIMD_MUL( ADDITIONAL_ARGUMENT v1,h6), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h5), _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h4)), _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h3), _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h2)))));
 #endif /* __ELPA_USE_FMA__ */
 
    /////////////////////////////////////////////////////
@@ -16617,18 +16671,18 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    q1 = _LOAD(&q[0]);
 #ifdef BLOCK2
-   q1 = _SIMD_ADD(q1, y1);
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, y1);
 #endif
 #ifdef BLOCK4
-   q1 = _SIMD_SUB(q1, w1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1);
 #endif
 #ifdef BLOCK6
-   q1 = _SIMD_SUB(q1, t1); 
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, t1); 
 #endif
    _STORE(&q[0],q1);
 
 #ifdef BLOCK2
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16640,17 +16694,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef __ELPA_USE_FMA__
    q1 = _LOAD(&q[ldq]);
-   q1 = _SIMD_ADD(q1, _SIMD_FMA(y1, h2, x1));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(y1, h2, x1));
    _STORE(&q[ldq],q1);
 #else
    q1 = _LOAD(&q[ldq]);
-   q1 = _SIMD_ADD(q1, _SIMD_ADD(x1, _SIMD_MUL(y1, h2)));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
    _STORE(&q[ldq],q1);
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
 #ifdef BLOCK4
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -16665,14 +16719,14 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    q1 = _LOAD(&q[ldq]);
 
 #ifdef __ELPA_USE_FMA__
-   q1 = _SIMD_SUB(q1, _SIMD_FMA(w1, h4, z1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_FMA(w1, h4, z1));
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_ADD(z1, _SIMD_MUL(w1, h4)));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT z1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4)));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq],q1);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 
@@ -16685,15 +16739,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
    q1 = _LOAD(&q[ldq*2]);
-   q1 = _SIMD_SUB(q1, y1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 
@@ -16708,12 +16762,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 
@@ -16726,15 +16780,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
    q1 = _LOAD(&q[ldq*3]);
-   q1 = _SIMD_SUB(q1, x1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+1]);
 #endif
 
@@ -16749,10 +16803,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 
@@ -16767,7 +16821,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*3], q1);
@@ -16776,7 +16830,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #ifdef BLOCK6
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16787,17 +16841,17 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
    q1 = _LOAD(&q[ldq]);
-   q1 = _SIMD_SUB(q1, v1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, v1);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif
 
    _STORE(&q[ldq],q1);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16807,15 +16861,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h5 = _SIMD_BROADCAST(&hh[(ldh*4)+1]);
 #endif
    q1 = _LOAD(&q[ldq*2]);
-   q1 = _SIMD_SUB(q1, w1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, w1);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5)); 
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5)); 
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16828,12 +16882,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+1]);
 #endif
 
@@ -16845,15 +16899,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h4 = _SIMD_BROADCAST(&hh[(ldh*3)+1]);
 #endif
    q1 = _LOAD(&q[ldq*3]);
-   q1 = _SIMD_SUB(q1, z1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, z1);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16866,10 +16920,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16882,12 +16936,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif
 
    _STORE(&q[ldq*3],q1);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16898,15 +16952,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 
    q1 = _LOAD(&q[ldq*4]);
-   q1 = _SIMD_SUB(q1, y1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, y1);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16919,10 +16973,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16935,10 +16989,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16951,12 +17005,12 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif
 
    _STORE(&q[ldq*4],q1);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[(ldh)+1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16966,15 +17020,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h2 = _SIMD_BROADCAST(&hh[(ldh)+1]);
 #endif
    q1 = _LOAD(&q[ldq*5]);
-   q1 = _SIMD_SUB(q1, x1);
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, x1);
 
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -16987,10 +17041,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+3]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17003,10 +17057,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+4]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17019,10 +17073,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h6 = _SIMD_SET1(hh[(ldh*5)+5]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17035,7 +17089,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif
 
    _STORE(&q[ldq*5],q1);
@@ -17044,7 +17098,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
    for (i = BLOCK; i < nb; i++)
    {
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h1 = _SIMD_SET1(hh[i-(BLOCK-1)]);
      h2 = _SIMD_SET1(hh[ldh+i-(BLOCK-2)]);
 #endif
@@ -17064,7 +17118,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      q1 = _SIMD_FMA(x1, h1, q1);
      q1 = _SIMD_FMA(y1, h2, q1);
 #else
-     q1 = _SIMD_ADD(q1, _SIMD_ADD(_SIMD_MUL(x1,h1), _SIMD_MUL(y1, h2)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADD( ADDITIONAL_ARGUMENT _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1), _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2)));
 #endif /* __ELPA_USE_FMA__ */
 #endif /* BLOCK2 */
 
@@ -17073,16 +17127,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(x1,h1));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1));
 #endif
 
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(y1,h2));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h3 = _SIMD_SET1(hh[(ldh*2)+i-(BLOCK-3)]);
 #endif
 
@@ -17097,10 +17151,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(z1,h3));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h4 = _SIMD_SET1(hh[(ldh*3)+i-(BLOCK-4)]); 
 #endif
 
@@ -17115,13 +17169,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(w1,h4));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h5 = _SIMD_SET1(hh[(ldh*4)+i-(BLOCK-5)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17135,10 +17189,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
      h6 = _SIMD_SET1(hh[(ldh*5)+i-(BLOCK-6)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17151,7 +17205,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-     q1 = _SIMD_SUB(q1, _SIMD_MUL(t1, h6));
+     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -17159,7 +17213,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
      _STORE(&q[i*ldq],q1);
 
    }
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-1)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17176,7 +17230,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_FMA(x1, h1, q1);
 #else
-   q1 = _SIMD_ADD(q1, _SIMD_MUL(x1, h1));
+   q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif
 #endif /* BLOCK2 */
 
@@ -17185,10 +17239,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-2)]);
 #endif
 
@@ -17203,10 +17257,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-3)]);
 #endif
 
@@ -17221,13 +17275,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif
 
 #endif /* BLOCK4 || BLOCK6 */
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17240,10 +17294,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h5 = _SIMD_SET1(hh[(ldh*4)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17256,7 +17310,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(v1, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -17265,7 +17319,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if defined(BLOCK4) || defined(BLOCK6)
    
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-2)]);
 #endif
 
@@ -17282,10 +17336,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-(BLOCK-3)]);
 #endif
 
@@ -17300,11 +17354,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-(BLOCK-4)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17317,10 +17371,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h4 = _SIMD_SET1(hh[(ldh*3)+nb-(BLOCK-5)]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17333,13 +17387,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(w1, h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
    _STORE(&q[(nb+1)*ldq],q1);
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-(BLOCK-3)]);
 #endif
 
@@ -17356,11 +17410,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17374,10 +17428,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h3 = _SIMD_SET1(hh[(ldh*2)+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17390,7 +17444,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(z1, h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -17400,7 +17454,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* BLOCK4 || BLOCK6*/
 
 #ifdef BLOCK6
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-2]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17415,10 +17469,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif /* __ELPA_USE_FMA__ */
 
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h2 = _SIMD_SET1(hh[ldh+nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17431,11 +17485,11 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(y1, h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+3)*ldq],q1);
-#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
    h1 = _SIMD_SET1(hh[nb-1]);
 #endif
 #if VEC_SET == SPARC64_SSE
@@ -17450,7 +17504,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB(q1, _SIMD_MUL(x1, h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+4)*ldq],q1);
