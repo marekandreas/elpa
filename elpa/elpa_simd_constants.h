@@ -9,5 +9,6 @@
 #define VSX_INSTR 9
 #define ARCH64_INSTR 10
 #define SPARC_INSTR 11
+#define VSE512_INSTR 12
 
-#define NUMBER_OF_INSTR 12
+#define NUMBER_OF_INSTR 13
