@@ -1247,8 +1247,8 @@ if test x"${need_sve512}" = x"yes"; then
   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
    #include <arm_sve.h>
    int main(int argc, char **argv){
-   double* q;
-   svfloat64_t q1 = svld1_f64(q);
+   double *q;
+   svfloat64_t q1 = svld1_f64(svptrue_b64(), q);
    svfloat64_t y1 = svmad_f64_z(svptrue_b64(), q1, q1, q1);
    return 0;
    }

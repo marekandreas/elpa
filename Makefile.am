@@ -247,6 +247,13 @@ if WANT_SINGLE_PRECISION_REAL
 endif
 endif
 
+if WITH_REAL_SVE512_BLOCK2_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sve512_2hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sve512_2hv_single_precision.c
+endif
+endif
+
 if WITH_REAL_SPARC64_BLOCK4_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_4hv_double_precision.c
 #if WANT_SINGLE_PRECISION_REAL
@@ -296,6 +303,13 @@ if WANT_SINGLE_PRECISION_REAL
 endif
 endif
 
+if WITH_REAL_SVE512_BLOCK4_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sve512_4hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sve512_4hv_single_precision.c
+endif
+endif
+
 if WITH_REAL_SPARC64_BLOCK6_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sparc64_6hv_double_precision.c
 #if WANT_SINGLE_PRECISION_REAL
@@ -342,6 +356,13 @@ if WITH_REAL_AVX512_BLOCK6_KERNEL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx512_6hv_double_precision.c
 if WANT_SINGLE_PRECISION_REAL
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_avx512_6hv_single_precision.c
+endif
+endif
+
+if WITH_REAL_SVE512_BLOCK6_KERNEL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sve512_6hv_double_precision.c
+if WANT_SINGLE_PRECISION_REAL
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/kernels/real_sve512_6hv_single_precision.c
 endif
 endif
 
