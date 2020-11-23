@@ -70,6 +70,7 @@
 #define AVX_256 256
 #define AVX2_256 2562
 #define AVX_512 512
+#define SVE_512 5121
 #define NEON_ARCH64_128 1285
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512
@@ -86,6 +87,10 @@
 
 #if VEC_SET == NEON_ARCH64_128
 #include <arm_neon.h>
+#endif
+
+#if VEC_SET == SVE_512
+#include <arm_sve.h>
 #endif
 
 #include <complex.h>
@@ -123,8 +128,13 @@
 #define SIMD_SET AVX512
 #endif
 
+#if VEC_SET == SVE_512
+#define SIMD_SET SVE512
+#endif
+
 
 #if VEC_SET == SSE_128
+#define ADDITIONAL_ARGUMENT
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define offset 2
@@ -168,6 +178,7 @@
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == NEON_128
+#define ADDITIONAL_ARGUMENT
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define offset 2
@@ -211,6 +222,7 @@
 #endif /* VEC_SET == NEON_128 */
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#define ADDITIONAL_ARGUMENT
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define offset 4
@@ -290,6 +302,7 @@
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512
+#define ADDITIONAL_ARGUMENT
 
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define offset 8
@@ -357,6 +370,65 @@
 #endif /* SINGLE_PRECISION_COMPLEX */
 
 #endif /* VEC_SET == AVX_512 */
+
+#if VEC_SET == SVE_512
+#define ADDITIONAL_ARGUMENT svptrue_b64(),
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define offset 8
+#define __SIMD_DATATYPE svfloat64_t
+#define _SIMD_LOAD svld1_f64
+#define _SIMD_LOADU 1
+#define _SIMD_STORE svst1_f64
+#define _SIMD_STOREU 1
+#define _SIMD_MUL svmul_f64_z
+#define _SIMD_ADD svadd_f64_z
+#define _SIMD_BROADCAST 1
+#define _SIMD_SET1 svdup_f64
+#define _SIMD_SET 1
+#define _SIMD_XOR_EPI _mm512_xor_epi64
+#define _SIMD_ADDSUB 1
+#define _SIMD_SHUFFLE _mm512_shuffle_pd
+#define _SIMD_MASK_STOREU _mm512_mask_storeu_pd
+#define _SHUFFLE 0x55
+
+#define __ELPA_USE_FMA__
+#define _mm512_FMADDSUB_pd(a,b,c) _mm512_fmaddsub_pd(a,b,c)
+#define _mm512_FMSUBADD_pd(a,b,c) _mm512_fmsubadd_pd(a,b,c)
+
+#define _SIMD_FMADDSUB _mm512_FMADDSUB_pd
+#define _SIMD_FMSUBADD _mm512_FMSUBADD_pd
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+#ifdef SINGLE_PRECISION_COMPLEX
+#define offset 16
+#define __SIMD_DATATYPE svfloat32_t
+#define _SIMD_LOAD svld1_f32
+#define _SIMD_LOADU 1
+#define _SIMD_STORE svst1_f32
+#define _SIMD_STOREU 1
+#define _SIMD_MUL svmul_f32_z
+#define _SIMD_ADD svadd_f32_z
+#define _SIMD_BROADCAST 1
+#define _SIMD_SET1 svdup_f32
+#define _SIMD_SET 1
+#define _SIMD_ADDSUB 1
+#define _SIMD_SHUFFLE _mm512_shuffle_ps
+#define _SIMD_MASK_STOREU _mm512_mask_storeu_ps
+#define _SIMD_XOR_EPI _mm512_xor_epi32
+#define _SHUFFLE 0xb1
+
+#define __ELPA_USE_FMA__
+#define _mm512_FMADDSUB_ps(a,b,c) _mm512_fmaddsub_ps(a,b,c)
+#define _mm512_FMSUBADD_ps(a,b,c) _mm512_fmsubadd_ps(a,b,c)
+
+#define _SIMD_FMADDSUB _mm512_FMADDSUB_ps
+#define _SIMD_FMSUBADD _mm512_FMSUBADD_ps
+
+#endif /* SINGLE_PRECISION_COMPLEX */
+
+#endif /* VEC_SET == SVE_512 */
 
 
 
