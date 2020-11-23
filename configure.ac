@@ -1242,6 +1242,27 @@ if test x"${need_avx2}" = x"yes"; then
   AC_DEFINE([HAVE_AVX2],[1],[AVX2 is supported on this CPU])
 fi
 
+if test x"${need_sve512}" = x"yes"; then
+  AC_MSG_CHECKING([whether we can compile SVE512 gcc intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <arm_sve.h>
+   int main(int argc, char **argv){
+   double* q;
+   svfloat64_t q1 = svld1_f64(q);
+   svfloat64_t y1 = svmad_f64_z(svptrue_b64(), q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_sve512=yes],
+   [can_compile_sve512=no]
+  )
+  AC_MSG_RESULT([${can_compile_sve512}])
+  if test x"$can_compile_sve512" != x"yes"; then
+    AC_MSG_ERROR([Could not compile a test program with SVE512, adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
+  fi
+  AC_DEFINE([HAVE_SVE512],[1],[SVE512 is supported on this CPU])
+fi
+
 
 if test x"${need_avx512}" = x"yes"; then
   AC_MSG_CHECKING([whether we can compile AVX512 gcc intrinsics in C])
@@ -1279,8 +1300,6 @@ if test x"${need_avx512}" = x"yes"; then
      [can_compile_avx512_xeon=no]
     )
     AC_MSG_RESULT([${can_compile_avx512_xeon}])
-
-     can_compile_sve512_xeon = "no"
 
     AC_MSG_CHECKING([whether we compile for Xeon PHI])
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([
