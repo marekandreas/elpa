@@ -94,7 +94,7 @@
 #include <arm_neon.h>
 #endif
 
-#if VEC_SET == VSE_512
+#if VEC_SET == SVE_512
 #include <arm_sve.h>
 #endif
 
@@ -400,8 +400,8 @@
 #define _SIMD_SUB svsub_f64_z
 #define _SIMD_NEG svneg_f64_z
 #define _SIMD_FMA(a, b, c) svmad_f64_z(svptrue_b64(), a, b, c)
-#define _SIMD_NFMA(a, b, c) svneg_f64_z(ssvptrue_b64(), vmad_f64_z(svptrue_b64(), a, b, c))
-#define _SIMD_FMSUB(a, b, c) svneg_f64_z(ssvptrue_b64(), vmsb_f64_z(svptrue_b64(), a, b, c))
+#define _SIMD_NFMA(a, b, c) svneg_f64_z(svptrue_b64(), svmad_f64_z(svptrue_b64(), a, b, c))
+#define _SIMD_FMSUB(a, b, c) svneg_f64_z(svptrue_b64(), svmsb_f64_z(svptrue_b64(), a, b, c))
 //#define _SIMD_XOR _mm_xor_pd
 #define _SIMD_SET1 svdup_f64
 #endif /* DOUBLE_PRECISION_REAL */
