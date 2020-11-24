@@ -3603,7 +3603,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _XOR(tau1, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
     h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
@@ -3639,7 +3639,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _XOR(tau2, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
@@ -6769,7 +6769,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _XOR(tau1, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
     h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
@@ -6805,7 +6805,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _XOR(tau2, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
@@ -9655,7 +9655,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _XOR(tau1, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
     h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
@@ -9690,7 +9690,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _XOR(tau2, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
@@ -12247,7 +12247,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _XOR(tau1, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
     h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
@@ -12281,7 +12281,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _XOR(tau2, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
@@ -14576,7 +14576,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _XOR(tau1, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
     h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
@@ -14609,7 +14609,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _XOR(tau2, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
@@ -16621,7 +16621,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     h1 = _XOR(tau1, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
     h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau1);
 #endif
 
@@ -16652,7 +16652,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
    h1 = _XOR(tau2, sign);
 #endif
 
-#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128
+#if VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_512
    h1 = _SIMD_NEG( ADDITIONAL_ARGUMENT tau2);
 #endif
 
