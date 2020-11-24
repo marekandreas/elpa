@@ -439,7 +439,7 @@
 #undef __AVX__
 #endif
 
-#if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512 || VEC_SET == SVE_512
+#if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512
 #undef _LOAD
 #undef _STORE
 #undef _XOR
@@ -457,6 +457,14 @@
 #define _XOR(a, b) vec_mul(b, a)
 #endif
 
+#if VEC_SET == SVE_512
+#undef _LOAD
+#undef _STORE
+#undef _XOR
+#define _LOAD(x) _SIMD_LOAD(svptrue_b64(), x)
+#define _STORE(a, b) _SIMD_STORE(svptrue_b64(), a, b)
+//#define _XOR(a, b) _SIMD_XOR(a, b)
+#endif
 
 #if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE ||  VEC_SET == NEON_ARCH64_128
 //Forward declaration
@@ -2120,6 +2128,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
+#if VEC_SET == NEON_ARCH64_128
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+#endif
+#endif
+    
 #if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -5423,6 +5440,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
+#if VEC_SET == NEON_ARCH64_128
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+#endif
+#endif
+
 #if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -8449,6 +8475,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
+#if VEC_SET == NEON_ARCH64_128
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+#endif
+#endif
+
 #if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -11182,6 +11217,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
+#if VEC_SET == NEON_ARCH64_128
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+#endif
+#endif
+
 #if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -13650,6 +13694,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
     __SIMD_DATATYPE sign = vec_splats(-1.0);
 #endif
 
+#if VEC_SET == NEON_ARCH64_128
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+#endif
+#endif
+
 #if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_REAL
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm256_set1_epi64x(0x8000000000000000);
@@ -15830,6 +15883,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if VEC_SET == VSX_SSE
     __SIMD_DATATYPE sign = vec_splats(-1.0);
+#endif
+
+#if VEC_SET == NEON_ARCH64_128
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+#endif
 #endif
 
 #if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
