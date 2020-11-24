@@ -2138,6 +2138,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_512 */
 
+#if VEC_SET == SVE_512
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+#endif
+#endif
+
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
     __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
     __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
@@ -5432,6 +5441,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_512 */
 
+#if VEC_SET == SVE_512
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+#endif
+#endif
+
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
     __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
     __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
@@ -8449,6 +8467,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_512 */
 
+#if VEC_SET == SVE_512
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+#endif
+#endif
+
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
     __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
     __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
@@ -11173,6 +11200,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_512 */
 
+#if VEC_SET == SVE_512
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+#endif
+#endif
+
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
     __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
     __SIMD_DATATYPE x3 = _LOAD(&q[ldq+2*offset]);
@@ -13632,6 +13668,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif
 #endif /* VEC_SET == AVX_512 */
 
+#if VEC_SET == SVE_512
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+#endif
+#endif
+
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
     __SIMD_DATATYPE x2 = _LOAD(&q[ldq+offset]);
 
@@ -15804,6 +15849,16 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
         __SIMD_DATATYPE sign = (__SIMD_DATATYPE)_mm512_set1_epi32(0x80000000);
 #endif
 #endif /* VEC_SET == AVX_512 */
+
+#if VEC_SET == SVE_512
+#ifdef DOUBLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+#endif
+#ifdef SINGLE_PRECISION_REAL
+    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+#endif
+#endif
+
     __SIMD_DATATYPE x1 = _LOAD(&q[ldq]);
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
