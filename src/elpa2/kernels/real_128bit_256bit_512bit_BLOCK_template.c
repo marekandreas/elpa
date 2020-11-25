@@ -148,7 +148,15 @@
 #define SIMD_SET SVE512
 #endif
 
+#ifdef DOUBLE_PRECISION_REAL
+#define ONE 1.0
+#define MONE -1.0
+#endif
 
+#ifdef SINGLE_PRECISION_REAL
+#define ONE 1.0f
+#define MONE -1.0f
+#endif
 
 #define __forceinline __attribute__((always_inline)) static
 
@@ -1404,7 +1412,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #ifdef BLOCK2
   // calculating scalar product to compute
   // 2 householder vectors simultaneously
-  DATA_TYPE s = hh[(ldh)+1]*1.0;
+  DATA_TYPE s = hh[(ldh)+1]*ONE;
 #endif
 
 #ifdef BLOCK4
@@ -2125,15 +2133,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_splats(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(MONE);
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+    __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+    __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
     
@@ -2157,10 +2165,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+    __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+    __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
 
@@ -5437,15 +5445,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_splats(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(MONE);
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+    __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+    __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
 
@@ -5469,10 +5477,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+    __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+    __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
 
@@ -8472,15 +8480,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_splats(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(MONE);
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+    __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+    __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
 
@@ -8504,10 +8512,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+    __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+    __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
 
@@ -11214,15 +11222,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_splats(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(MONE);
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+    __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+    __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
 
@@ -11246,10 +11254,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+    __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+    __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
 
@@ -13691,15 +13699,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_splats(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(MONE);
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+    __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+    __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
 
@@ -13723,10 +13731,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+    __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+    __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
 
@@ -15882,15 +15890,15 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #endif /* VEC_SET == SSE_128 */
 
 #if VEC_SET == VSX_SSE
-    __SIMD_DATATYPE sign = vec_splats(-1.0);
+    __SIMD_DATATYPE sign = vec_splats(MONE);
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f64(-1.0);
+    __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = vdupq_n_f32(-1.0f);
+    __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
 
@@ -15914,10 +15922,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 
 #if VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f64(-1.0);
+    __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    __SIMD_DATATYPE sign = svdup_f32(-1.0f);
+    __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
 
