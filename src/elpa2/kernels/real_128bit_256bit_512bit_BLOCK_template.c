@@ -396,9 +396,9 @@
 
 
 #if VEC_SET == SVE_512
-#define ADDITIONAL_ARGUMENT svptrue_b64(),
 #define __ELPA_USE_FMA__
 #ifdef DOUBLE_PRECISION_REAL
+#define ADDITIONAL_ARGUMENT svptrue_b64(),
 #define offset 8
 #define __SIMD_DATATYPE svfloat64_t
 #define _SIMD_LOAD svld1_f64
@@ -414,6 +414,7 @@
 #define _SIMD_SET1 svdup_f64
 #endif /* DOUBLE_PRECISION_REAL */
 #ifdef SINGLE_PRECISION_REAL
+#define ADDITIONAL_ARGUMENT svptrue_b32(),
 #define offset 16
 #define __SIMD_DATATYPE svfloat32_t
 #define _SIMD_LOAD svld1_f32
@@ -422,9 +423,9 @@
 #define _SIMD_MUL svmul_f32_z
 #define _SIMD_SUB svsub_f32_z
 #define _SIMD_NEG svneg_f32_z
-#define _SIMD_FMA(a, b, c) svmad_f32_z(svptrue_b64(), a, b, c)
-#define _SIMD_NFMA(a, b, c) svneg_f32_z(svptrue_b64(), svmad_f32_z(svptrue_b64(), a, b, c))
-#define _SIMD_FMSUB(a, b, c) svneg_f32_z(svptrue_b64(), svmsb_f32_z(svptrue_b64(), a, b, c))
+#define _SIMD_FMA(a, b, c) svmad_f32_z(svptrue_b32(), a, b, c)
+#define _SIMD_NFMA(a, b, c) svneg_f32_z(svptrue_b32(), svmad_f32_z(svptrue_b32(), a, b, c))
+#define _SIMD_FMSUB(a, b, c) svneg_f32_z(svptrue_b32(), svmsb_f32_z(svptrue_b32(), a, b, c))
 //#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_SET1 svdup_f32
 #endif /* SINGLE_PRECISION_REAL */
@@ -469,8 +470,14 @@
 #undef _LOAD
 #undef _STORE
 #undef _XOR
+#ifdef DOUBLE_PRECISION_REAL
 #define _LOAD(x) _SIMD_LOAD(svptrue_b64(), x)
 #define _STORE(a, b) _SIMD_STORE(svptrue_b64(), a, b)
+#endif
+#ifdef SINGLE_PRECISION_REAL
+#define _LOAD(x) _SIMD_LOAD(svptrue_b32(), x)
+#define _STORE(a, b) _SIMD_STORE(svptrue_b32(), a, b)
+#endif
 //#define _XOR(a, b) _SIMD_XOR(a, b)
 #endif
 
