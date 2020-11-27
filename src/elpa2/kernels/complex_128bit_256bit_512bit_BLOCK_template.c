@@ -395,7 +395,7 @@
 #define _SIMD_BROADCAST 1
 #define _SIMD_SET1 svdup_f64
 #define _SIMD_SET 1
-#define _SIMD_XOR _SIMD_MUL
+#define _SIMD_XOR svmul_f64_z
 #define _SIMD_ADDSUB 1
 #define _SIMD_SHUFFLE 1
 #define _SIMD_MASK_STOREU 1
@@ -423,7 +423,7 @@
 #define _SIMD_ADDSUB 1
 #define _SIMD_SHUFFLE 1
 #define _SIMD_MASK_STOREU 1
-#define _SIMD_XOR _SIMD_MUL
+#define _SIMD_XOR svmul_f32_z
 #define _SHUFFLE_VAL
 
 #define __ELPA_USE_FMA__
@@ -443,7 +443,7 @@
 #define _LOAD(x) _SIMD_LOAD(x)
 #define _STORE(a, b) _SIMD_STORE(a, b)
 #define _XOR(a, b) _SIMD_XOR(a, b)
-#define _SHUFFLE(a, b) _SIMD_SHUFFLE(a, a, b)
+#define _SHUFFLE(a, b, c) _SIMD_SHUFFLE(a, b, c)
 #endif
 
 #if VEC_SET == VSX_SSE
@@ -462,14 +462,17 @@
 #undef _STORE
 #undef _XOR
 #undef _SHUFFLE
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define _SHUFFLE(a) svtrn1_f64(svtrn2_f64(a, a), a)
 #define _LOAD(x) _SIMD_LOAD(svptrue_b64(), x)
 #define _STORE(a, b) _SIMD_STORE(svptrue_b64(), a, b)
-#define _XOR(a, b) _SIMD_XOR(a, b)
-#ifdef DOUBLE_PRECISION_COMPLEX
-#define _SHUFFLE svtrn1_f64(svtrn2_f64(a, a), a, b);
+#define _XOR(a, b) _SIMD_XOR(svptrue_b64(), a, b)
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-#define _SHUFFLE svtrn1_f32(svtrn2_f32(a, a), a, b);
+#define _SHUFFLE(a) svtrn1_f32(svtrn2_f32(a, a), a)
+#define _LOAD(x) _SIMD_LOAD(svptrue_b32(), x)
+#define _STORE(a, b) _SIMD_STORE(svptrue_b32(), a, b)
+#define _XOR(a, b) _SIMD_XOR(svptrue_b32(), a, b)
 #endif
 #endif/*  VEC_SET == SVE_512 */
 
@@ -1139,11 +1142,17 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 
 #if VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128
 #ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH
+#undef STEP_SIZE
+#undef UPPER_BOUND
 #define ROW_LENGTH 6
 #define STEP_SIZE 6
 #define UPPER_BOUND 5
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH
+#undef STEP_SIZE
+#undef UPPER_BOUND
 #define ROW_LENGTH 12
 #define STEP_SIZE 12
 #define UPPER_BOUND 10
@@ -1152,11 +1161,17 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
 #ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH
+#undef STEP_SIZE
+#undef UPPER_BOUND
 #define ROW_LENGTH 12
 #define STEP_SIZE 12
 #define UPPER_BOUND 10
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH
+#undef STEP_SIZE
+#undef UPPER_BOUND
 #define ROW_LENGTH 24
 #define STEP_SIZE 24
 #define UPPER_BOUND 20
@@ -1165,11 +1180,17 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_COMPLEX
+#undef ROW_LENGTH
+#undef STEP_SIZE
+#undef UPPER_BOUND
 #define ROW_LENGTH 24
 #define STEP_SIZE 24
 #define UPPER_BOUND 20
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
+#undef ROW_LENGTH
+#undef STEP_SIZE
+#undef UPPER_BOUND
 #define ROW_LENGTH 48
 #define STEP_SIZE 48
 #define UPPER_BOUND 40
@@ -1546,6 +1567,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 }
 
 #if VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 6
 #endif
@@ -1555,6 +1577,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif /* VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #endif
@@ -1564,6 +1587,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 24
 #endif
@@ -1609,35 +1633,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef DOUBLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[8];
 
-    switch_sign[0] =  1.0;
-    switch_sign[1] = -1.0;
-    switch_sign[2] =  1.0;
-    switch_sign[3] = -1.0;
-    switch_sign[4] =  1.0;
-    switch_sign[5] = -1.0;
-    switch_sign[6] =  1.0;
-    switch_sign[7] = -1.0;
+    switch_sign_dbl[0] =  1.0;
+    switch_sign_dbl[1] = -1.0;
+    switch_sign_dbl[2] =  1.0;
+    switch_sign_dbl[3] = -1.0;
+    switch_sign_dbl[4] =  1.0;
+    switch_sign_dbl[5] = -1.0;
+    switch_sign_dbl[6] =  1.0;
+    switch_sign_dbl[7] = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[16];
-    switch_sign[0]  =  1.0f;
-    switch_sign[1]  = -1.0f;
-    switch_sign[2]  =  1.0f;
-    switch_sign[3]  = -1.0f;
-    switch_sign[4]  =  1.0f;
-    switch_sign[5]  = -1.0f;
-    switch_sign[6]  =  1.0f;
-    switch_sign[7]  = -1.0f;
-    switch_sign[8]  =  1.0f;
-    switch_sign[9]  = -1.0f;
-    switch_sign[10] =  1.0f;
-    switch_sign[11] = -1.0f;
-    switch_sign[12] =  1.0f;
-    switch_sign[13] = -1.0f;
-    switch_sign[14] =  1.0f;
-    switch_sign[15] = -1.0f;
+    switch_sign_dbl[0]  =  1.0f;
+    switch_sign_dbl[1]  = -1.0f;
+    switch_sign_dbl[2]  =  1.0f;
+    switch_sign_dbl[3]  = -1.0f;
+    switch_sign_dbl[4]  =  1.0f;
+    switch_sign_dbl[5]  = -1.0f;
+    switch_sign_dbl[6]  =  1.0f;
+    switch_sign_dbl[7]  = -1.0f;
+    switch_sign_dbl[8]  =  1.0f;
+    switch_sign_dbl[9]  = -1.0f;
+    switch_sign_dbl[10] =  1.0f;
+    switch_sign_dbl[11] = -1.0f;
+    switch_sign_dbl[12] =  1.0f;
+    switch_sign_dbl[13] = -1.0f;
+    switch_sign_dbl[14] =  1.0f;
+    switch_sign_dbl[15] = -1.0f;
 #endif
-    switch_sign = __LOAD(&switch_sign_dbl[0]);
+    switch_sign = _LOAD(&switch_sign_dbl[0]);
 #endif /* VEC_SET == SVE_512 */
 
     __SIMD_DATATYPE x1, x2, x3, x4, x5, x6;
@@ -1664,10 +1688,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
@@ -1691,10 +1715,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET == SVE_512
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif /* VEC_SET == SVE_512 */
@@ -1735,7 +1759,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
      y1 = _LOAD(&q_dbl[0]);
@@ -1746,43 +1770,94 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      y6 = _LOAD(&q_dbl[5*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, x3, _SHUFFLE(tmp3)));
+#else
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, x4, _SHUFFLE(tmp4)));
+#else
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMSUBADD(h2_real, x5, _SHUFFLE(tmp5)));
+#else
+     y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMSUBADD(h2_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_FMSUBADD(h2_real, x6, _SHUFFLE(tmp6)));
+#else
+     y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_FMSUBADD(h2_real, x6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
      y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -1826,7 +1901,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
         // conjugate
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+        h1_imag = _XOR(h1_imag, sign);
 #endif
 
         q1 = _LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -1837,42 +1912,94 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         q6 = _LOAD(&q_dbl[(2*i*ldq)+5*offset]);
 
         tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
         tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
         tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SHUFFLE(tmp3)));
+#else
+        x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
         x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
         tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SHUFFLE(tmp4)));
+#else
+        x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
         x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
         tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_FMSUBADD(h1_real, q5, _SHUFFLE(tmp5)));
+#else
+        x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_FMSUBADD(h1_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
         x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
         tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_FMSUBADD(h1_real, q6, _SHUFFLE(tmp6)));
+#else
+        x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_FMSUBADD(h1_real, q6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
         x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -1905,47 +2032,98 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+          h2_imag = _XOR(h2_imag, sign);
 #endif
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1)));
 #else
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2)));
 #else
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, q3, _SHUFFLE(tmp3)));
+#else
+          y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
           tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, q4, _SHUFFLE(tmp4)));
+#else
+          y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
           y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMSUBADD(h2_real, q5, _SHUFFLE(tmp5)));
+#else
+          y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMSUBADD(h2_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
           y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
           tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_FMSUBADD(h2_real, q6, _SHUFFLE(tmp6)));
+#else
+          y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_FMSUBADD(h2_real, q6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
           y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 	
 #endif /* BLOCK2 */
 
@@ -1981,7 +2159,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif
 
      q1 = _LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -1992,43 +2170,94 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q6 = _LOAD(&q_dbl[(2*nb*ldq)+5*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SHUFFLE(tmp3)));
+#else
+     x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SHUFFLE(tmp4)));
+#else
+     x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_FMSUBADD(h1_real, q5, _SHUFFLE(tmp5)));
+#else
+     x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_FMSUBADD(h1_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_FMSUBADD(h1_real, q6, _SHUFFLE(tmp6)));
+#else
+     x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_FMSUBADD(h1_real, q6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
      x6 = _SIMD_ADD( ADDITIONAL_ARGUMENT x6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -2059,8 +2288,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-    h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-    h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+    h1_real = _XOR(h1_real, sign);
+    h1_imag = _XOR(h1_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -2076,50 +2305,102 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
 #endif
 #endif
 
 #endif /* VEC_SET == AVX_512 */
 
     tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-    x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+    x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1));
 #else
-    x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+    x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+    x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+    x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
     tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-    x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+    x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2));
 #else
-    x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+    x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+    x2 = _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+    x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
     tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+    x3 = _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3));
+#else
+    x3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
     x3 = _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #else
     x3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
     tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+    x4 = _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4));
+#else
+    x4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SHUFFLE(tmp4));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
     x4 = _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #else
     x4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
     tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+    x5 = _SIMD_FMADDSUB(h1_real, x5, _SHUFFLE(tmp5));
+#else
+    x5 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SHUFFLE(tmp5));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
     x5 = _SIMD_FMADDSUB(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL));
 #else
     x5 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
     tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+    x6 = _SIMD_FMADDSUB(h1_real, x6, _SHUFFLE(tmp6));
+#else
+    x6 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x6), _SHUFFLE(tmp6));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
     x6 = _SIMD_FMADDSUB(h1_real, x6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL));
 #else
     x6 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -2165,10 +2446,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-     h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
+     h2_real = _XOR(h2_real, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -2195,10 +2476,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-        h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-        h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
+        h2_real = _XOR(h2_real, sign);
+        h2_imag = _XOR(h2_imag, sign);
 #endif
 #endif     
 #endif /* VEC_SET == AVX_512 */
@@ -2266,11 +2547,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, tmp2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1));
 #else
-     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -2287,8 +2576,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
@@ -2311,90 +2600,192 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
 #endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1));
 #else
-     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2));
 #else
-     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_FMADDSUB(h1_real, y3, _SHUFFLE(tmp3));
+#else
+     y3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y3), _SHUFFLE(tmp3));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_FMADDSUB(h1_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #else
      y3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_FMADDSUB(h1_real, y4, _SHUFFLE(tmp4));
+#else
+     y4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y4), _SHUFFLE(tmp4));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_FMADDSUB(h1_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #else
      y4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y5 = _SIMD_FMADDSUB(h1_real, y5, _SHUFFLE(tmp5));
+#else
+     y5 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y5), _SHUFFLE(tmp5));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y5 = _SIMD_FMADDSUB(h1_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL));
 #else
      y5 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y6 = _SIMD_FMADDSUB(h1_real, y6, _SHUFFLE(tmp6));
+#else
+     y6 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y6), _SHUFFLE(tmp6));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y6 = _SIMD_FMADDSUB(h1_real, y6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL));
 #else
      y6 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMADDSUB(h2_real, x3, _SHUFFLE(tmp3)));
+#else
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMADDSUB(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMADDSUB(h2_real, x4, _SHUFFLE(tmp4)));
+#else
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMADDSUB(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMADDSUB(h2_real, x5, _SHUFFLE(tmp5)));
+#else
+     y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMADDSUB(h2_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_FMADDSUB(h2_real, x6, _SHUFFLE(tmp6)));
+#else
+     y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_FMADDSUB(h2_real, x6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
      y6 = _SIMD_ADD( ADDITIONAL_ARGUMENT y6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -2474,43 +2865,94 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, x6);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SHUFFLE(tmp3)));
+#else
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SHUFFLE(tmp4)));
+#else
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h2_real, y5, _SHUFFLE(tmp5)));
+#else
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h2_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMADDSUB(h2_real, y6, _SHUFFLE(tmp6)));
+#else
+     q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMADDSUB(h2_real, y6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
      q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(ldq*2)+0], q1);
      _STORE(&q_dbl[(ldq*2)+offset], q2);
@@ -2559,42 +3001,94 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         q6 = _LOAD(&q_dbl[(2*i*ldq)+5*offset]);
 
         tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
         tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
         tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3)));
+#else
+        q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
         q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
          tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+         q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4)));
+#else
+         q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
          tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+         q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h1_real, x5, _SHUFFLE(tmp5)));
+#else
+         q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
          q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
          q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
          tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+         q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMADDSUB(h1_real, x6, _SHUFFLE(tmp6)));
+#else
+         q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
          q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMADDSUB(h1_real, x6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
          q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -2625,43 +3119,94 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SHUFFLE(tmp3)));
+#else
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
           tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SHUFFLE(tmp4)));
+#else
+          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
           q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h2_real, y5, _SHUFFLE(tmp5)));
+#else
+          q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h2_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
           q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
           tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMADDSUB(h2_real, y6, _SHUFFLE(tmp6)));
+#else
+          q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMADDSUB(h2_real, y6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
           q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -2709,43 +3254,94 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q6 = _LOAD(&q_dbl[(2*nb*ldq)+5*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3)));
+#else
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4)));
+#else
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4),_SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h1_real, x5, _SHUFFLE(tmp5)));
+#else
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
      tmp6 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x6);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMADDSUB(h1_real, x6, _SHUFFLE(tmp6)));
+#else
+     q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x6), _SHUFFLE(tmp6)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_FMADDSUB(h1_real, x6, _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #else
      q6 = _SIMD_ADD( ADDITIONAL_ARGUMENT q6, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x6), _SIMD_SHUFFLE(tmp6, tmp6, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(2*nb*ldq)+0], q1);
      _STORE(&q_dbl[(2*nb*ldq)+offset], q2);
@@ -2760,6 +3356,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 
 #if VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 5
 #endif
@@ -2769,6 +3366,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 10
 #endif
@@ -2777,7 +3375,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 20
 #endif
@@ -2822,35 +3421,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef DOUBLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[8];
 
-    switch_sign[0] =  1.0;
-    switch_sign[1] = -1.0;
-    switch_sign[2] =  1.0;
-    switch_sign[3] = -1.0;
-    switch_sign[4] =  1.0;
-    switch_sign[5] = -1.0;
-    switch_sign[6] =  1.0;
-    switch_sign[7] = -1.0;
+    switch_sign_dbl[0] =  1.0;
+    switch_sign_dbl[1] = -1.0;
+    switch_sign_dbl[2] =  1.0;
+    switch_sign_dbl[3] = -1.0;
+    switch_sign_dbl[4] =  1.0;
+    switch_sign_dbl[5] = -1.0;
+    switch_sign_dbl[6] =  1.0;
+    switch_sign_dbl[7] = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[16];
-    switch_sign[0]  =  1.0f;
-    switch_sign[1]  = -1.0f;
-    switch_sign[2]  =  1.0f;
-    switch_sign[3]  = -1.0f;
-    switch_sign[4]  =  1.0f;
-    switch_sign[5]  = -1.0f;
-    switch_sign[6]  =  1.0f;
-    switch_sign[7]  = -1.0f;
-    switch_sign[8]  =  1.0f;
-    switch_sign[9]  = -1.0f;
-    switch_sign[10] =  1.0f;
-    switch_sign[11] = -1.0f;
-    switch_sign[12] =  1.0f;
-    switch_sign[13] = -1.0f;
-    switch_sign[14] =  1.0f;
-    switch_sign[15] = -1.0f;
+    switch_sign_dbl[0]  =  1.0f;
+    switch_sign_dbl[1]  = -1.0f;
+    switch_sign_dbl[2]  =  1.0f;
+    switch_sign_dbl[3]  = -1.0f;
+    switch_sign_dbl[4]  =  1.0f;
+    switch_sign_dbl[5]  = -1.0f;
+    switch_sign_dbl[6]  =  1.0f;
+    switch_sign_dbl[7]  = -1.0f;
+    switch_sign_dbl[8]  =  1.0f;
+    switch_sign_dbl[9]  = -1.0f;
+    switch_sign_dbl[10] =  1.0f;
+    switch_sign_dbl[11] = -1.0f;
+    switch_sign_dbl[12] =  1.0f;
+    switch_sign_dbl[13] = -1.0f;
+    switch_sign_dbl[14] =  1.0f;
+    switch_sign_dbl[15] = -1.0f;
 #endif
-    switch_sign = __LOAD(&switch_sign_dbl[0]);
+    switch_sign = _LOAD(&switch_sign_dbl[0]);
 #endif /* VEC_SET == SVE_512 */
 
     __SIMD_DATATYPE x1, x2, x3, x4, x5;
@@ -2877,10 +3476,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
@@ -2904,10 +3503,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET == SVE_512
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
@@ -2947,7 +3546,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
      y1 = _LOAD(&q_dbl[0]);
@@ -2957,37 +3556,77 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      y5 = _LOAD(&q_dbl[4*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, x3, _SHUFFLE(tmp3)));
+#else
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, x4, _SHUFFLE(tmp4)));
+#else
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMSUBADD(h2_real, x5, _SHUFFLE(tmp5)));
+#else
+     y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMSUBADD(h2_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -3030,7 +3669,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
         // conjugate
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+        h1_imag = _XOR(h1_imag, sign);
 #endif
 
         q1 = _LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -3041,36 +3680,76 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
         tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+        x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
         tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+        x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
         tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SHUFFLE(tmp3)));
+#else
+        x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
         x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
         tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SHUFFLE(tmp4)));
+#else
+        x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
         x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
         tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_FMSUBADD(h1_real, q5, _SHUFFLE(tmp5)));
+#else
+        x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_FMSUBADD(h1_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
         x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -3102,41 +3781,81 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+          h2_imag = _XOR(h2_imag, sign);
 #endif
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1)));
 #else
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2)));
 #else
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, q3, _SHUFFLE(tmp3)));
+#else
+          y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
           tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, q4, _SHUFFLE(tmp4)));
+#else
+          y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
           y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMSUBADD(h2_real, q5, _SHUFFLE(tmp5)));
+#else
+          y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMSUBADD(h2_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
           y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 	
 #endif /* BLOCK2 */
 
@@ -3172,7 +3891,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif
 
      q1 = _LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -3182,37 +3901,77 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q5 = _LOAD(&q_dbl[(2*nb*ldq)+4*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SHUFFLE(tmp3)));
+#else
+     x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SHUFFLE(tmp4)));
+#else
+     x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_FMSUBADD(h1_real, q5, _SHUFFLE(tmp5)));
+#else
+     x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_FMSUBADD(h1_real, q5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      x5 = _SIMD_ADD( ADDITIONAL_ARGUMENT x5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -3243,8 +4002,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-    h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-    h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+    h1_real = _XOR(h1_real, sign);
+    h1_imag = _XOR(h1_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -3260,44 +4019,84 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
 #endif
 #endif
 
 #endif /* VEC_SET == AVX_512 */
 
     tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-    x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+    x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1));
 #else
-    x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+    x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+    x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+    x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
     tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-    x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+    x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2));
 #else
-    x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+    x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+    x2 = _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+    x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
     tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+    x3 = _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3));
+#else
+    x3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
     x3 = _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #else
     x3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
     tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+    x4 = _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4));
+#else
+    x4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SHUFFLE(tmp4));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
     x4 = _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #else
     x4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
     tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+    x5 = _SIMD_FMADDSUB(h1_real, x5, _SHUFFLE(tmp5));
+#else
+    x5 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SHUFFLE(tmp5));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
     x5 = _SIMD_FMADDSUB(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL));
 #else
     x5 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -3343,10 +4142,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-     h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
+     h2_real = _XOR(h2_real, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -3373,10 +4172,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-        h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-        h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
+        h2_real = _XOR(h2_real, sign);
+        h2_imag = _XOR(h2_imag, sign);
 #endif
 #endif     
 #endif /* VEC_SET == AVX_512 */
@@ -3444,11 +4243,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, tmp2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1));
 #else
-     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -3465,8 +4272,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
@@ -3489,78 +4296,159 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
 #endif // VEC_SET == SVE_512 //
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1));
 #else
-     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2));
 #else
-     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_FMADDSUB(h1_real, y3, _SHUFFLE(tmp3));
+#else
+     y3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y3), _SHUFFLE(tmp3));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_FMADDSUB(h1_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #else
      y3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_FMADDSUB(h1_real, y4, _SHUFFLE(tmp4));
+#else
+     y4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y4), _SHUFFLE(tmp4));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_FMADDSUB(h1_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #else
      y4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y5 = _SIMD_FMADDSUB(h1_real, y5, _SHUFFLE(tmp5));
+#else
+     y5 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y5), _SHUFFLE(tmp5));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y5 = _SIMD_FMADDSUB(h1_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL));
 #else
      y5 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
+     tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMADDSUB(h2_real, x3, _SHUFFLE(tmp3)));
+#else
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMADDSUB(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMADDSUB(h2_real, x4, _SHUFFLE(tmp4)));
+#else
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMADDSUB(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMADDSUB(h2_real, x5, _SHUFFLE(tmp5)));
+#else
+     y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_FMADDSUB(h2_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      y5 = _SIMD_ADD( ADDITIONAL_ARGUMENT y5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -3635,37 +4523,78 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SHUFFLE(tmp3)));
+#else
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SHUFFLE(tmp4)));
+#else
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h2_real, y5, _SHUFFLE(tmp5)));
+#else
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h2_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
+
 
      _STORE(&q_dbl[(ldq*2)+0], q1);
      _STORE(&q_dbl[(ldq*2)+offset], q2);
@@ -3712,36 +4641,76 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         q5 = _LOAD(&q_dbl[(2*i*ldq)+4*offset]);
 
 	tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
         tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+        q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
         tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+        q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3)));
+#else
+        q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
         q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
         q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
          tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+         q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4)));
+#else
+         q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
          tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+         q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h1_real, x5, _SHUFFLE(tmp5)));
+#else
+         q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
          q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
          q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -3772,37 +4741,77 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SHUFFLE(tmp3)));
+#else
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
           tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SHUFFLE(tmp4)));
+#else
+          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
           q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h2_real, y5, _SHUFFLE(tmp5)));
+#else
+          q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h2_real, y5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
           q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -3847,37 +4856,77 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q5 = _LOAD(&q_dbl[(2*nb*ldq)+4*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3)));
+#else
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4)));
+#else
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp5 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x5);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h1_real, x5, _SHUFFLE(tmp5)));
+#else
+     q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SHUFFLE(tmp5)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_FMADDSUB(h1_real, x5, _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #else
      q5 = _SIMD_ADD( ADDITIONAL_ARGUMENT q5, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x5), _SIMD_SHUFFLE(tmp5, tmp5, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(2*nb*ldq)+0], q1);
      _STORE(&q_dbl[(2*nb*ldq)+offset], q2);
@@ -3890,6 +4939,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 }
 
 #if VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
@@ -3899,6 +4949,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
 #endif
@@ -3907,7 +4958,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 16
 #endif
@@ -3951,35 +5003,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef DOUBLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[8];
 
-    switch_sign[0] =  1.0;
-    switch_sign[1] = -1.0;
-    switch_sign[2] =  1.0;
-    switch_sign[3] = -1.0;
-    switch_sign[4] =  1.0;
-    switch_sign[5] = -1.0;
-    switch_sign[6] =  1.0;
-    switch_sign[7] = -1.0;
+    switch_sign_dbl[0] =  1.0;
+    switch_sign_dbl[1] = -1.0;
+    switch_sign_dbl[2] =  1.0;
+    switch_sign_dbl[3] = -1.0;
+    switch_sign_dbl[4] =  1.0;
+    switch_sign_dbl[5] = -1.0;
+    switch_sign_dbl[6] =  1.0;
+    switch_sign_dbl[7] = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[16];
-    switch_sign[0]  =  1.0f;
-    switch_sign[1]  = -1.0f;
-    switch_sign[2]  =  1.0f;
-    switch_sign[3]  = -1.0f;
-    switch_sign[4]  =  1.0f;
-    switch_sign[5]  = -1.0f;
-    switch_sign[6]  =  1.0f;
-    switch_sign[7]  = -1.0f;
-    switch_sign[8]  =  1.0f;
-    switch_sign[9]  = -1.0f;
-    switch_sign[10] =  1.0f;
-    switch_sign[11] = -1.0f;
-    switch_sign[12] =  1.0f;
-    switch_sign[13] = -1.0f;
-    switch_sign[14] =  1.0f;
-    switch_sign[15] = -1.0f;
+    switch_sign_dbl[0]  =  1.0f;
+    switch_sign_dbl[1]  = -1.0f;
+    switch_sign_dbl[2]  =  1.0f;
+    switch_sign_dbl[3]  = -1.0f;
+    switch_sign_dbl[4]  =  1.0f;
+    switch_sign_dbl[5]  = -1.0f;
+    switch_sign_dbl[6]  =  1.0f;
+    switch_sign_dbl[7]  = -1.0f;
+    switch_sign_dbl[8]  =  1.0f;
+    switch_sign_dbl[9]  = -1.0f;
+    switch_sign_dbl[10] =  1.0f;
+    switch_sign_dbl[11] = -1.0f;
+    switch_sign_dbl[12] =  1.0f;
+    switch_sign_dbl[13] = -1.0f;
+    switch_sign_dbl[14] =  1.0f;
+    switch_sign_dbl[15] = -1.0f;
 #endif
-    switch_sign = __LOAD(&switch_sign_dbl[0]);
+    switch_sign = _LOAD(&switch_sign_dbl[0]);
 #endif /* VEC_SET == SVE_512 */
 
     __SIMD_DATATYPE x1, x2, x3, x4;
@@ -4006,10 +5058,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
@@ -4033,10 +5085,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET == SVE_512
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
@@ -4075,7 +5127,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
      y1 = _LOAD(&q_dbl[0]);
@@ -4084,32 +5136,64 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      y4 = _LOAD(&q_dbl[3*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, x3, _SHUFFLE(tmp3)));
+#else
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, x4, _SHUFFLE(tmp4)));
+#else
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -4150,7 +5234,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+          h1_imag = _XOR(h1_imag, sign);
 #endif
 
           q1 = _LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -4160,31 +5244,63 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SHUFFLE(tmp3)));
+#else
+          x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
           tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SHUFFLE(tmp4)));
+#else
+          x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
           x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -4216,34 +5332,66 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+          h2_imag = _XOR(h2_imag, sign);
 #endif
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1)));
 #else
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2)));
 #else
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, q3, _SHUFFLE(tmp3)));
+#else
+          y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
           tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, q4, _SHUFFLE(tmp4)));
+#else
+          y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMSUBADD(h2_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
           y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 #endif /* BLOCK2 */
      }
 
@@ -4277,7 +5425,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif
 
      q1 = _LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -4286,32 +5434,64 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q4 = _LOAD(&q_dbl[(2*nb*ldq)+3*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SHUFFLE(tmp3)));
+#else
+     x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SHUFFLE(tmp4)));
+#else
+     x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_FMSUBADD(h1_real, q4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      x4 = _SIMD_ADD( ADDITIONAL_ARGUMENT x4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -4342,8 +5522,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -4359,40 +5539,72 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
 #endif
 #endif
 
 #endif /* VEC_SET == AVX_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1));
 #else
-     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2));
 #else
-     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3));
+#else
+     x3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x3 = _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #else
      x3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x4 = _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4));
+#else
+     x4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SHUFFLE(tmp4));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x4 = _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #else
      x4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -4438,10 +5650,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-     h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
+     h2_real = _XOR(h2_real, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -4468,10 +5680,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifdef HAVE_AVX512_XEON
 #if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-        h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-        h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
+        h2_real = _XOR(h2_real, sign);
+        h2_imag = _XOR(h2_imag, sign);
 #endif
 #endif     
 #endif /* VEC_SET == AVX_512 */
@@ -4539,11 +5751,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, tmp2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1));
 #else
-     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -4560,8 +5780,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
@@ -4584,68 +5804,133 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
 #endif // VEC_SET == SVE_512 //
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1));
 #else
-     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2));
 #else
-     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
+
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_FMADDSUB(h1_real, y3, _SHUFFLE(tmp3));
+#else
+     y3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y3), _SHUFFLE(tmp3));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_FMADDSUB(h1_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #else
      y3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_FMADDSUB(h1_real, y4, _SHUFFLE(tmp4));
+#else
+     y4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y4), _SHUFFLE(tmp4));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_FMADDSUB(h1_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #else
      y4 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMADDSUB(h2_real, x3, _SHUFFLE(tmp3)));
+#else
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMADDSUB(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMADDSUB(h2_real, x4, _SHUFFLE(tmp4)));
+#else
+     y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_FMADDSUB(h2_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      y4 = _SIMD_ADD( ADDITIONAL_ARGUMENT y4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -4712,32 +5997,64 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, x4);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SHUFFLE(tmp3)));
+#else
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SHUFFLE(tmp4)));
+#else
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(ldq*2)+0], q1);
      _STORE(&q_dbl[(ldq*2)+offset], q2);
@@ -4782,30 +6099,62 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3)));
+#else
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
           tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4)));
+#else
+          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
           q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -4836,30 +6185,62 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SHUFFLE(tmp3)));
+#else
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
           tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SHUFFLE(tmp4)));
+#else
+          q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h2_real, y4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
           q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -4903,30 +6284,62 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q4 = _LOAD(&q_dbl[(2*nb*ldq)+3*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3)));
+#else
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
      tmp4 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x4);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SHUFFLE(tmp4)));
+#else
+     q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SHUFFLE(tmp4)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_FMADDSUB(h1_real, x4, _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #else
      q4 = _SIMD_ADD( ADDITIONAL_ARGUMENT q4, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x4), _SIMD_SHUFFLE(tmp4, tmp4, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(2*nb*ldq)+0], q1);
      _STORE(&q_dbl[(2*nb*ldq)+offset], q2);
@@ -4938,6 +6351,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 
 #if VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 3
 #endif
@@ -4947,6 +6361,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 6
 #endif
@@ -4955,7 +6370,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 12
 #endif
@@ -5000,35 +6416,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef DOUBLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[8];
 
-    switch_sign[0] =  1.0;
-    switch_sign[1] = -1.0;
-    switch_sign[2] =  1.0;
-    switch_sign[3] = -1.0;
-    switch_sign[4] =  1.0;
-    switch_sign[5] = -1.0;
-    switch_sign[6] =  1.0;
-    switch_sign[7] = -1.0;
+    switch_sign_dbl[0] =  1.0;
+    switch_sign_dbl[1] = -1.0;
+    switch_sign_dbl[2] =  1.0;
+    switch_sign_dbl[3] = -1.0;
+    switch_sign_dbl[4] =  1.0;
+    switch_sign_dbl[5] = -1.0;
+    switch_sign_dbl[6] =  1.0;
+    switch_sign_dbl[7] = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[16];
-    switch_sign[0]  =  1.0f;
-    switch_sign[1]  = -1.0f;
-    switch_sign[2]  =  1.0f;
-    switch_sign[3]  = -1.0f;
-    switch_sign[4]  =  1.0f;
-    switch_sign[5]  = -1.0f;
-    switch_sign[6]  =  1.0f;
-    switch_sign[7]  = -1.0f;
-    switch_sign[8]  =  1.0f;
-    switch_sign[9]  = -1.0f;
-    switch_sign[10] =  1.0f;
-    switch_sign[11] = -1.0f;
-    switch_sign[12] =  1.0f;
-    switch_sign[13] = -1.0f;
-    switch_sign[14] =  1.0f;
-    switch_sign[15] = -1.0f;
+    switch_sign_dbl[0]  =  1.0f;
+    switch_sign_dbl[1]  = -1.0f;
+    switch_sign_dbl[2]  =  1.0f;
+    switch_sign_dbl[3]  = -1.0f;
+    switch_sign_dbl[4]  =  1.0f;
+    switch_sign_dbl[5]  = -1.0f;
+    switch_sign_dbl[6]  =  1.0f;
+    switch_sign_dbl[7]  = -1.0f;
+    switch_sign_dbl[8]  =  1.0f;
+    switch_sign_dbl[9]  = -1.0f;
+    switch_sign_dbl[10] =  1.0f;
+    switch_sign_dbl[11] = -1.0f;
+    switch_sign_dbl[12] =  1.0f;
+    switch_sign_dbl[13] = -1.0f;
+    switch_sign_dbl[14] =  1.0f;
+    switch_sign_dbl[15] = -1.0f;
 #endif
-    switch_sign = __LOAD(&switch_sign_dbl[0]);
+    switch_sign = _LOAD(&switch_sign_dbl[0]);
 #endif /* VEC_SET == SVE_512 */
 
     __SIMD_DATATYPE x1, x2, x3;
@@ -5055,10 +6471,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
@@ -5082,10 +6498,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET == SVE_512
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
@@ -5123,7 +6539,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
      y1 = _LOAD(&q_dbl[0]);
@@ -5131,25 +6547,49 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      y3 = _LOAD(&q_dbl[2*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, x3, _SHUFFLE(tmp3)));
+#else
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -5189,7 +6629,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+          h1_imag = _XOR(h1_imag, sign);
 #endif
 
           q1 = _LOAD(&q_dbl[(2*i*ldq)+0]);
@@ -5198,25 +6638,49 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SHUFFLE(tmp3)));
+#else
+          x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -5248,28 +6712,52 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+          h2_imag = _XOR(h2_imag, sign);
 #endif
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1)));
 #else
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2)));
 #else
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, q3, _SHUFFLE(tmp3)));
+#else
+          y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMSUBADD(h2_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 #endif /* BLOCK2 */
      }
 
@@ -5303,7 +6791,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif
 
      q1 = _LOAD(&q_dbl[(2*nb*ldq)+0]);
@@ -5311,25 +6799,49 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q3 = _LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SHUFFLE(tmp3)));
+#else
+     x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_FMSUBADD(h1_real, q3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      x3 = _SIMD_ADD( ADDITIONAL_ARGUMENT x3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -5360,8 +6872,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -5379,25 +6891,49 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1));
 #else
-     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2));
 #else
-     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     x3 = _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3));
+#else
+     x3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      x3 = _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #else
      x3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -5443,10 +6979,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-     h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
+     h2_real = _XOR(h2_real, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -5472,10 +7008,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* HAVE_AVX512_XEON_PHI */
 
 #ifdef HAVE_AVX512_XEON
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-        h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-        h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
+        h2_real = _XOR(h2_real, sign);
+        h2_imag = _XOR(h2_imag, sign);
 #endif     
 #endif /* VEC_SET == AVX_512 */
 
@@ -5542,11 +7078,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, tmp2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1));
 #else
-     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -5563,8 +7107,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
@@ -5587,54 +7131,102 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
 #endif // VEC_SET == SVE_512 //
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1));
 #else
-     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2));
 #else
-     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_FMADDSUB(h1_real, y3, _SHUFFLE(tmp3));
+#else
+     y3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y3), _SHUFFLE(tmp3));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_FMADDSUB(h1_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #else
      y3 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMADDSUB(h2_real, x3, _SHUFFLE(tmp3)));
+#else
+     y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_FMADDSUB(h2_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      y3 = _SIMD_ADD( ADDITIONAL_ARGUMENT y3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -5696,25 +7288,49 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SHUFFLE(tmp3)));
+#else
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(ldq*2)+0], q1);
      _STORE(&q_dbl[(ldq*2)+offset], q2);
@@ -5756,24 +7372,48 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
           q3 = _LOAD(&q_dbl[(2*i*ldq)+2*offset]);
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3)));
+#else
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -5804,24 +7444,48 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SHUFFLE(tmp3)));
+#else
+          q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h2_real, y3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
           q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -5863,24 +7527,48 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q3 = _LOAD(&q_dbl[(2*nb*ldq)+2*offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp3 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x3);
+#if VEC_SET == SVE_512
+#ifdef __ELPA_USE_FMA__
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3)));
+#else
+     q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3)));
+#endif
+#else /* VEC_SET == SVE_512 */
 #ifdef __ELPA_USE_FMA__
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_FMADDSUB(h1_real, x3, _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #else
      q3 = _SIMD_ADD( ADDITIONAL_ARGUMENT q3, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3, tmp3, _SHUFFLE_VAL)));
 #endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(2*nb*ldq)+0], q1);
      _STORE(&q_dbl[(2*nb*ldq)+offset], q2);
@@ -5891,6 +7579,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 
 #if VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 2
 #endif
@@ -5900,6 +7589,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
@@ -5908,7 +7598,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
-#if VEC_SET == AVX_512
+#if VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 8
 #endif
@@ -5954,35 +7645,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef DOUBLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[8];
 
-    switch_sign[0] =  1.0;
-    switch_sign[1] = -1.0;
-    switch_sign[2] =  1.0;
-    switch_sign[3] = -1.0;
-    switch_sign[4] =  1.0;
-    switch_sign[5] = -1.0;
-    switch_sign[6] =  1.0;
-    switch_sign[7] = -1.0;
+    switch_sign_dbl[0] =  1.0;
+    switch_sign_dbl[1] = -1.0;
+    switch_sign_dbl[2] =  1.0;
+    switch_sign_dbl[3] = -1.0;
+    switch_sign_dbl[4] =  1.0;
+    switch_sign_dbl[5] = -1.0;
+    switch_sign_dbl[6] =  1.0;
+    switch_sign_dbl[7] = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[16];
-    switch_sign[0]  =  1.0f;
-    switch_sign[1]  = -1.0f;
-    switch_sign[2]  =  1.0f;
-    switch_sign[3]  = -1.0f;
-    switch_sign[4]  =  1.0f;
-    switch_sign[5]  = -1.0f;
-    switch_sign[6]  =  1.0f;
-    switch_sign[7]  = -1.0f;
-    switch_sign[8]  =  1.0f;
-    switch_sign[9]  = -1.0f;
-    switch_sign[10] =  1.0f;
-    switch_sign[11] = -1.0f;
-    switch_sign[12] =  1.0f;
-    switch_sign[13] = -1.0f;
-    switch_sign[14] =  1.0f;
-    switch_sign[15] = -1.0f;
+    switch_sign_dbl[0]  =  1.0f;
+    switch_sign_dbl[1]  = -1.0f;
+    switch_sign_dbl[2]  =  1.0f;
+    switch_sign_dbl[3]  = -1.0f;
+    switch_sign_dbl[4]  =  1.0f;
+    switch_sign_dbl[5]  = -1.0f;
+    switch_sign_dbl[6]  =  1.0f;
+    switch_sign_dbl[7]  = -1.0f;
+    switch_sign_dbl[8]  =  1.0f;
+    switch_sign_dbl[9]  = -1.0f;
+    switch_sign_dbl[10] =  1.0f;
+    switch_sign_dbl[11] = -1.0f;
+    switch_sign_dbl[12] =  1.0f;
+    switch_sign_dbl[13] = -1.0f;
+    switch_sign_dbl[14] =  1.0f;
+    switch_sign_dbl[15] = -1.0f;
 #endif
-    switch_sign = __LOAD(&switch_sign_dbl[0]);
+    switch_sign = _LOAD(&switch_sign_dbl[0]);
 #endif /* VEC_SET == SVE_512 */
 
      __SIMD_DATATYPE x1, x2;
@@ -6009,10 +7700,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
@@ -6036,10 +7727,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET == SVE_512
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
@@ -6076,24 +7767,40 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
      y1 = _LOAD(&q_dbl[0]);
      y2 = _LOAD(&q_dbl[offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -6132,25 +7839,41 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+          h1_imag = _XOR(h1_imag, sign);
 #endif
 
           q1 = _LOAD(&q_dbl[(2*i*ldq)+0]);
           q2 = _LOAD(&q_dbl[(2*i*ldq)+offset]);
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -6182,21 +7905,37 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+          h2_imag = _XOR(h2_imag, sign);
 #endif
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1)));
 #else
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SHUFFLE(tmp2)));
 #else
-          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMSUBADD(h2_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -6232,24 +7971,40 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif
 
      q1 = _LOAD(&q_dbl[(2*nb*ldq)+0]);
      q2 = _LOAD(&q_dbl[(2*nb*ldq)+offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SHUFFLE(tmp2)));
 #else
-     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_FMSUBADD(h1_real, q2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     x2 = _SIMD_ADD( ADDITIONAL_ARGUMENT x2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -6280,8 +8035,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -6296,25 +8051,41 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif
 #ifdef HAVE_AVX512_XEON
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
 #endif
 
 #endif /* VEC_SET == AVX_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1));
 #else
-     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     x2 = _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2));
 #else
-     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x2 = _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+     x2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -6360,10 +8131,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-     h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
+     h2_real = _XOR(h2_real, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -6387,10 +8158,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif
 #ifdef HAVE_AVX512_XEON
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-     h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
+     h2_real = _XOR(h2_real, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
 #endif /* VEC_SET == AVX_512 */
@@ -6459,11 +8230,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, tmp2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1));
 #else
-     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -6480,8 +8259,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
@@ -6504,38 +8283,70 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
 #endif // VEC_SET == SVE_512 //
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1));
 #else
-     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SHUFFLE(tmp2));
 #else
-     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL));
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SHUFFLE(tmp2));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_FMADDSUB(h1_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#else
+     y2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SHUFFLE(tmp2)));
 #else
-     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_FMADDSUB(h2_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     y2 = _SIMD_ADD( ADDITIONAL_ARGUMENT y2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -6590,17 +8401,33 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(ldq*2)+0], q1);
      _STORE(&q_dbl[(ldq*2)+offset], q2);
@@ -6639,18 +8466,34 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
           q2 = _LOAD(&q_dbl[(2*i*ldq)+offset]);
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
 
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 
 #ifdef BLOCK2
@@ -6682,17 +8525,33 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
           tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SHUFFLE(tmp2)));
 #else
-          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h2_real, y2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+          q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -6731,17 +8590,33 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q2 = _LOAD(&q_dbl[(2*nb*ldq)+offset]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SHUFFLE(tmp2)));
 #else
-     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2, _SHUFFLE_VAL)));
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SHUFFLE(tmp2)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_FMADDSUB(h1_real, x2, _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#else
+     q2 = _SIMD_ADD( ADDITIONAL_ARGUMENT q2, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x2), _SIMD_SHUFFLE(tmp2, tmp2, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(2*nb*ldq)+0], q1);
      _STORE(&q_dbl[(2*nb*ldq)+offset], q2);
@@ -6751,6 +8626,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 }
 
 #if VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 1
 #endif
@@ -6760,6 +8636,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SSE_128 || VEC_SET == NEON_ARCH64_128 */
 
 #if VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 2
 #endif
@@ -6769,6 +8646,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
 
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define ROW_LENGTH 4
 #endif
@@ -6815,35 +8693,35 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef DOUBLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[8];
 
-    switch_sign[0] =  1.0;
-    switch_sign[1] = -1.0;
-    switch_sign[2] =  1.0;
-    switch_sign[3] = -1.0;
-    switch_sign[4] =  1.0;
-    switch_sign[5] = -1.0;
-    switch_sign[6] =  1.0;
-    switch_sign[7] = -1.0;
+    switch_sign_dbl[0] =  1.0;
+    switch_sign_dbl[1] = -1.0;
+    switch_sign_dbl[2] =  1.0;
+    switch_sign_dbl[3] = -1.0;
+    switch_sign_dbl[4] =  1.0;
+    switch_sign_dbl[5] = -1.0;
+    switch_sign_dbl[6] =  1.0;
+    switch_sign_dbl[7] = -1.0;
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[16];
-    switch_sign[0]  =  1.0f;
-    switch_sign[1]  = -1.0f;
-    switch_sign[2]  =  1.0f;
-    switch_sign[3]  = -1.0f;
-    switch_sign[4]  =  1.0f;
-    switch_sign[5]  = -1.0f;
-    switch_sign[6]  =  1.0f;
-    switch_sign[7]  = -1.0f;
-    switch_sign[8]  =  1.0f;
-    switch_sign[9]  = -1.0f;
-    switch_sign[10] =  1.0f;
-    switch_sign[11] = -1.0f;
-    switch_sign[12] =  1.0f;
-    switch_sign[13] = -1.0f;
-    switch_sign[14] =  1.0f;
-    switch_sign[15] = -1.0f;
+    switch_sign_dbl[0]  =  1.0f;
+    switch_sign_dbl[1]  = -1.0f;
+    switch_sign_dbl[2]  =  1.0f;
+    switch_sign_dbl[3]  = -1.0f;
+    switch_sign_dbl[4]  =  1.0f;
+    switch_sign_dbl[5]  = -1.0f;
+    switch_sign_dbl[6]  =  1.0f;
+    switch_sign_dbl[7]  = -1.0f;
+    switch_sign_dbl[8]  =  1.0f;
+    switch_sign_dbl[9]  = -1.0f;
+    switch_sign_dbl[10] =  1.0f;
+    switch_sign_dbl[11] = -1.0f;
+    switch_sign_dbl[12] =  1.0f;
+    switch_sign_dbl[13] = -1.0f;
+    switch_sign_dbl[14] =  1.0f;
+    switch_sign_dbl[15] = -1.0f;
 #endif
-    switch_sign = __LOAD(&switch_sign_dbl[0]);
+    switch_sign = _LOAD(&switch_sign_dbl[0]);
 #endif /* VEC_SET == SVE_512 */
 
      __SIMD_DATATYPE x1;
@@ -6870,10 +8748,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET == NEON_ARCH64_128
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = vdupq_n_f32(MONE);
 #endif
 #endif
@@ -6897,10 +8775,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 */
 
 #if VEC_SET == SVE_512
-#ifdef DOUBLE_PRECISION_REAL
+#ifdef DOUBLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f64(MONE);
 #endif
-#ifdef SINGLE_PRECISION_REAL
+#ifdef SINGLE_PRECISION_COMPLEX
     __SIMD_DATATYPE sign = svdup_f32(MONE);
 #endif
 #endif
@@ -6936,17 +8814,25 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
      y1 = _LOAD(&q_dbl[0]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -6984,17 +8870,25 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+          h1_imag = _XOR(h1_imag, sign);
 #endif
 
           q1 = _LOAD(&q_dbl[(2*i*ldq)+0]);
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -7026,15 +8920,23 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
           // conjugate
-          h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+          h2_imag = _XOR(h2_imag, sign);
 #endif
 
           tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SHUFFLE(tmp1)));
 #else
-          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMSUBADD(h2_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+          y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -7070,17 +8972,25 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 
 #ifndef __ELPA_USE_FMA__
      // conjugate
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif
 
      q1 = _LOAD(&q_dbl[(2*nb*ldq)+0]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, q1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SHUFFLE(tmp1)));
 #else
-     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_FMSUBADD(h1_real, q1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     x1 = _SIMD_ADD( ADDITIONAL_ARGUMENT x1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, q1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -7111,8 +9021,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
 #endif /* VEC_SET != AVX_512 */
 
 #if VEC_SET == AVX_512
@@ -7127,18 +9037,26 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif
 #ifdef HAVE_AVX512_XEON
-        h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-        h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
 #endif
 
 #endif /* VEC_SET == AVX_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     x1 = _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1));
 #else
-     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     x1 = _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     x1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -7184,10 +9102,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #if VEC_SET != AVX_512
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-     h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
+     h2_real = _XOR(h2_real, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
 #if VEC_SET == AVX_512
@@ -7211,10 +9129,10 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 #endif
 #ifdef HAVE_AVX512_XEON
-     h1_real = _XOR( ADDITIONAL_ARGUMENT h1_real, sign);
-     h1_imag = _XOR( ADDITIONAL_ARGUMENT h1_imag, sign);
-     h2_real = _XOR( ADDITIONAL_ARGUMENT h2_real, sign);
-     h2_imag = _XOR( ADDITIONAL_ARGUMENT h2_imag, sign);
+     h1_real = _XOR(h1_real, sign);
+     h1_imag = _XOR(h1_imag, sign);
+     h2_real = _XOR(h2_real, sign);
+     h2_imag = _XOR(h2_imag, sign);
 #endif
 
 #endif /* VEC_SET == AVX_512 */
@@ -7283,11 +9201,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, tmp2);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SHUFFLE(tmp1));
 #else
-     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     tmp2 = _SIMD_FMADDSUB(h2_real, tmp2, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     tmp2 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, tmp2), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #if VEC_SET == SSE_128
 #ifdef DOUBLE_PRECISION_COMPLEX
@@ -7304,8 +9230,8 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
@@ -7328,26 +9254,42 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      // need to store and then to broadcast
      _STORE(&s_dbl_tmp[0], tmp2);
 
-     s_dbl[0] = s_dbl_tmp[0]
-     s_dbl[1] = s_dbl_tmp[1]
+     s_dbl[0] = s_dbl_tmp[0];
+     s_dbl[1] = s_dbl_tmp[1];
 
      h2_real = _SIMD_SET1(s_dbl[0]);
      h2_imag = _SIMD_SET1(s_dbl[1]);
 #endif // VEC_SET == SVE_512 //
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SHUFFLE(tmp1));
 #else
-     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL));
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SHUFFLE(tmp1));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_FMADDSUB(h1_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#else
+     y1 = _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SHUFFLE(tmp1)));
 #else
-     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_FMADDSUB(h2_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     y1 = _SIMD_ADD( ADDITIONAL_ARGUMENT y1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #endif /* BLOCK2 */
 
@@ -7395,11 +9337,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, x1);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(ldq*2)+0], q1);
 
@@ -7436,11 +9386,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         q1 = _LOAD(&q_dbl[(2*i*ldq)+0]);
 
         tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
 #ifdef BLOCK2
 
@@ -7471,11 +9429,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 || VEC_SET == SVE_512 */
 
         tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h2_imag, y1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SHUFFLE(tmp1)));
 #else
-        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h2_real, y1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+        q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, y1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 #endif /* BLOCK2 */
 
         _STORE(&q_dbl[(2*i*ldq)+0], q1);
@@ -7511,11 +9477,19 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
      q1 = _LOAD(&q_dbl[(2*nb*ldq)+0]);
 
      tmp1 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x1);
+#if VEC_SET == SVE_512
 #ifdef __ELPA_USE_FMA__
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SHUFFLE(tmp1)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1)));
 #endif
+#else /* VEC_SET == SVE_512 */
+#ifdef __ELPA_USE_FMA__
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#else
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+#endif
+#endif /* VEC_SET == SVE_512 */
 
      _STORE(&q_dbl[(2*nb*ldq)+0], q1);
 
