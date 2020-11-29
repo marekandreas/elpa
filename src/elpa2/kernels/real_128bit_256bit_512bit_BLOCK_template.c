@@ -409,7 +409,15 @@
 #define __ELPA_USE_FMA__
 #ifdef DOUBLE_PRECISION_REAL
 #define ADDITIONAL_ARGUMENT svptrue_b64(),
+#if VEC_SET == SVE_512
 #define offset 8
+#endif
+#if VEC_SET == SVE_256
+#define offset 4
+#endif
+#if VEC_SET == SVE_128
+#define offset 2
+#endif
 #define __SIMD_DATATYPE svfloat64_t
 #define _SIMD_LOAD svld1_f64
 #define _SIMD_STORE svst1_f64
@@ -425,7 +433,15 @@
 #endif /* DOUBLE_PRECISION_REAL */
 #ifdef SINGLE_PRECISION_REAL
 #define ADDITIONAL_ARGUMENT svptrue_b32(),
+#if VEC_SET == SVE_512
 #define offset 16
+#endif
+#if VEC_SET == SVE_256
+#define offset 8
+#endif
+#if VEC_SET == SVE_128
+#define offset 4
+#endif
 #define __SIMD_DATATYPE svfloat32_t
 #define _SIMD_LOAD svld1_f32
 #define _SIMD_STORE svst1_f32
