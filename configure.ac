@@ -801,6 +801,14 @@ m4_define(elpa_m4_vsx_kernels, [
         real_vsx_block6
 ])
 
+m4_define(elpa_m4_sve128_kernels, [
+        real_sve128_block2
+        real_sve128_block4
+        real_sve128_block6
+        complex_sve128_block1
+        complex_sve128_block2
+])
+
 m4_define(elpa_m4_avx_kernels, [
         real_avx_block2
         real_avx_block4
@@ -817,12 +825,28 @@ m4_define(elpa_m4_avx2_kernels, [
         complex_avx2_block2
 ])
 
+m4_define(elpa_m4_sve256_kernels, [
+        real_sve256_block2
+        real_sve256_block4
+        real_sve256_block6
+        complex_sve256_block1
+        complex_sve256_block2
+])
+
 m4_define(elpa_m4_avx512_kernels, [
         real_avx512_block2
         real_avx512_block4
         real_avx512_block6
         complex_avx512_block1
         complex_avx512_block2
+])
+
+m4_define(elpa_m4_sve512_kernels, [
+        real_sve512_block2
+        real_sve512_block4
+        real_sve512_block6
+        complex_sve512_block1
+        complex_sve512_block2
 ])
 
 m4_define(elpa_m4_bgp_kernels, [
@@ -840,7 +864,7 @@ m4_define(elpa_m4_gpu_kernels, [
         complex_gpu
 ])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly avx avx2 avx512 bgp bgq gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -881,6 +905,9 @@ ELPA_SELECT_KERNELS([sse_assembly],[enable])
 ELPA_SELECT_KERNELS([avx],[enable])
 ELPA_SELECT_KERNELS([avx2],[enable])
 ELPA_SELECT_KERNELS([avx512],[enable])
+ELPA_SELECT_KERNELS([sve128],[disable])
+ELPA_SELECT_KERNELS([sve256],[disable])
+ELPA_SELECT_KERNELS([sve512],[disable])
 ELPA_SELECT_KERNELS([gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
@@ -890,7 +917,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 ])
 
 if test x"${enable_bgp}" = x"yes" -o x"$enable_bgq" = x"yes"; then
-        m4_foreach_w([elpa_m4_kernel], elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels, [
+        m4_foreach_w([elpa_m4_kernel], elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels, [
                 if x"$use_[]elpa_m4_kernel[]" = x"yes" ; then
                         echo "Disabling elpa_m4_kernel due to BGP/BGQ option"
                 fi
@@ -950,7 +977,7 @@ AC_DEFUN([ELPA_KERNEL_DEPENDS],[
                   ])
           fi
 ])
-m4_foreach_w([elpa_m4_arch],[sparc64 neon_arch64 vsx sse avx avx2 avx512],[
+m4_foreach_w([elpa_m4_arch],[sparc64 neon_arch64 vsx sse avx avx2 avx512 sve128 sve256 sve512],[
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block6], [real_]elpa_m4_arch[_block4 real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block4], [real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([complex_]elpa_m4_arch[_block2], [complex_]elpa_m4_arch[_block1])
@@ -1008,7 +1035,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_gpu_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_gpu_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -1231,6 +1258,69 @@ if test x"${need_avx2}" = x"yes"; then
     AC_MSG_ERROR([Could not compile a test program with AVX2, try with --disable-avx2, or adjust the C compiler or CFLAGS.  Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
   fi
   AC_DEFINE([HAVE_AVX2],[1],[AVX2 is supported on this CPU])
+fi
+
+if test x"${need_sve128}" = x"yes"; then
+  AC_MSG_CHECKING([whether we can compile SVE128 gcc intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <arm_sve.h>
+   int main(int argc, char **argv){
+   double *q;
+   svfloat64_t q1 = svld1_f64(svptrue_b64(), q);
+   svfloat64_t y1 = svmad_f64_z(svptrue_b64(), q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_sve128=yes],
+   [can_compile_sve128=no]
+  )
+  AC_MSG_RESULT([${can_compile_sve128}])
+  if test x"$can_compile_sve128" != x"yes"; then
+    AC_MSG_ERROR([Could not compile a test program with SVE128, adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
+  fi
+  AC_DEFINE([HAVE_SVE128],[1],[SVE128 is supported on this CPU])
+fi
+
+if test x"${need_sve256}" = x"yes"; then
+  AC_MSG_CHECKING([whether we can compile SVE256 gcc intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <arm_sve.h>
+   int main(int argc, char **argv){
+   double *q;
+   svfloat64_t q1 = svld1_f64(svptrue_b64(), q);
+   svfloat64_t y1 = svmad_f64_z(svptrue_b64(), q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_sve256=yes],
+   [can_compile_sve256=no]
+  )
+  AC_MSG_RESULT([${can_compile_sve256}])
+  if test x"$can_compile_sve256" != x"yes"; then
+    AC_MSG_ERROR([Could not compile a test program with SVE256, adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
+  fi
+  AC_DEFINE([HAVE_SVE256],[1],[SVE256 is supported on this CPU])
+fi
+
+if test x"${need_sve512}" = x"yes"; then
+  AC_MSG_CHECKING([whether we can compile SVE512 gcc intrinsics in C])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+   #include <arm_sve.h>
+   int main(int argc, char **argv){
+   double *q;
+   svfloat64_t q1 = svld1_f64(svptrue_b64(), q);
+   svfloat64_t y1 = svmad_f64_z(svptrue_b64(), q1, q1, q1);
+   return 0;
+   }
+   ])],
+   [can_compile_sve512=yes],
+   [can_compile_sve512=no]
+  )
+  AC_MSG_RESULT([${can_compile_sve512}])
+  if test x"$can_compile_sve512" != x"yes"; then
+    AC_MSG_ERROR([Could not compile a test program with SVE512, adjust the C compiler or CFLAGS. Possibly (some of) the flags " $SIMD_FLAGS " solve this issue])
+  fi
+  AC_DEFINE([HAVE_SVE512],[1],[SVE512 is supported on this CPU])
 fi
 
 
