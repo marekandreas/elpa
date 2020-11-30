@@ -48,6 +48,8 @@
 //
 #include "config-f90.h"
 
+#include <stdlib.h>
+
 #define CONCAT_8ARGS(a, b, c, d, e, f, g, h) CONCAT2_8ARGS(a, b, c, d, e, f, g, h)
 #define CONCAT2_8ARGS(a, b, c, d, e, f, g, h) a ## b ## c ## d ## e ## f ## g ## h
 
@@ -1606,6 +1608,48 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
   int worked_on;
 
   worked_on = 0;
+
+#if VEC_SET == SVE_512
+  double br;
+  uint64_t length;
+
+  svfloat64_t a_sve;
+  br=10.;
+  a_sve = svdup_f64(br);
+  length = svlen_f64(a_sve);
+  if (length != 8) {
+    printf("Vector length is %d instead of 8\n",length);
+    abort();
+  }
+#endif
+
+#if VEC_SET == SVE_256
+  double br;
+  uint64_t length;
+
+  svfloat64_t a_sve;
+  br=10.;
+  a_sve = svdup_f64(br);
+  length = svlen_f64(a_sve);
+  if (length != 4) {
+    printf("Vector length is %d instead of 4\n",length);
+    abort();
+  }
+#endif
+
+#if VEC_SET == SVE_128
+  double br;
+  uint64_t length;
+
+  svfloat64_t a_sve;
+  br=10.;
+  a_sve = svdup_f64(br);
+  length = svlen_f64(a_sve);
+  if (length != 2) {
+    printf("Vector length is %d instead of 2\n",length);
+    abort();
+  }
+#endif
 
 #ifdef BLOCK2
   // calculating scalar product to compute
