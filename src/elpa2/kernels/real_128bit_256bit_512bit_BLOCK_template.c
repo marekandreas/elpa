@@ -428,7 +428,8 @@
 #define _SIMD_SUB svsub_f64_z
 #define _SIMD_NEG svneg_f64_z
 #define _SIMD_FMA(a, b, c) svmad_f64_z(svptrue_b64(), a, b, c)
-#define _SIMD_NFMA(a, b, c) svneg_f64_z(svptrue_b64(), svmad_f64_z(svptrue_b64(), a, b, c))
+//#define _SIMD_NFMA(a, b, c) svneg_f64_z(svptrue_b64(), svmad_f64_z(svptrue_b64(), a, b, c))
+#define _SIMD_NFMA(a, b, c) svmsb_f64_z(svptrue_b64(), a, b, c)
 #define _SIMD_FMSUB(a, b, c) svneg_f64_z(svptrue_b64(), svmsb_f64_z(svptrue_b64(), a, b, c))
 //#define _SIMD_XOR _mm_xor_pd
 #define _SIMD_SET1 svdup_f64
@@ -452,7 +453,8 @@
 #define _SIMD_SUB svsub_f32_z
 #define _SIMD_NEG svneg_f32_z
 #define _SIMD_FMA(a, b, c) svmad_f32_z(svptrue_b32(), a, b, c)
-#define _SIMD_NFMA(a, b, c) svneg_f32_z(svptrue_b32(), svmad_f32_z(svptrue_b32(), a, b, c))
+//#define _SIMD_NFMA(a, b, c) svneg_f32_z(svptrue_b32(), svmad_f32_z(svptrue_b32(), a, b, c))
+#define _SIMD_NFMA(a, b, c) svmsb_f32_z(svptrue_b32(), a, b, c)
 #define _SIMD_FMSUB(a, b, c) svneg_f32_z(svptrue_b32(), svmsb_f32_z(svptrue_b32(), a, b, c))
 //#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_SET1 svdup_f32
@@ -2022,7 +2024,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 6
 #define STEP_SIZE 6
@@ -2033,9 +2035,9 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define STEP_SIZE 12
 #define UPPER_BOUND 8
 #endif
-#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 */
+#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 12
 #define STEP_SIZE 12
@@ -2046,7 +2048,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define STEP_SIZE 24
 #define UPPER_BOUND 16
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -2073,23 +2075,23 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
-#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 */
+#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -2108,23 +2110,23 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
     }
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 2
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
-#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 */
+#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -2165,7 +2167,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #ifdef BLOCK6
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #define STEP_SIZE 4
@@ -2176,9 +2178,9 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define STEP_SIZE 8
 #define UPPER_BOUND 4
 #endif
-#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE  || VEC_SET == NEON_ARCH64_128 */
+#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE  || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #define STEP_SIZE 8
@@ -2189,7 +2191,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define STEP_SIZE 16
 #define UPPER_BOUND 8
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -2215,23 +2217,23 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
       }
 
 #undef ROW_LENGTH
-#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
+#if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 2
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
-#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE  || VEC_SET == NEON_ARCH64_128 */
+#endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE  || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -17209,7 +17211,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
@@ -17232,7 +17234,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17250,7 +17252,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17268,7 +17270,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*3], q1);
@@ -17293,7 +17295,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif
 
    _STORE(&q[ldq],q1);
@@ -17313,7 +17315,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5)); 
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5)); 
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17329,7 +17331,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[ldq*2],q1);
@@ -17351,7 +17353,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17367,7 +17369,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17383,7 +17385,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif
 
    _STORE(&q[ldq*3],q1);
@@ -17404,7 +17406,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17420,7 +17422,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17436,7 +17438,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17452,7 +17454,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif
 
    _STORE(&q[ldq*4],q1);
@@ -17472,7 +17474,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17488,7 +17490,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17504,7 +17506,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17520,7 +17522,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17536,7 +17538,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif
 
    _STORE(&q[ldq*5],q1);
@@ -17574,13 +17576,13 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1,h1));
 #endif
 
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h2));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1,h2));
 #endif
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17598,7 +17600,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h3));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1,h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17616,7 +17618,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h4));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1,h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK4 || BLOCK6*/
@@ -17636,7 +17638,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17652,7 +17654,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_NFMA(t1, h6, q1);
 #else
-     q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
+   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT t1, h6));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -17686,7 +17688,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17704,7 +17706,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17722,7 +17724,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif
 
 #endif /* BLOCK4 || BLOCK6 */
@@ -17741,7 +17743,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17757,7 +17759,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(v1, h5, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT v1, h5));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -17783,7 +17785,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17801,7 +17803,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif
 
 #ifdef BLOCK6
@@ -17818,7 +17820,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17834,7 +17836,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(w1, h4, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT w1, h4));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -17857,7 +17859,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif
 
 #ifdef BLOCK6
@@ -17875,7 +17877,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17891,7 +17893,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(z1, h3, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT z1, h3));
 #endif /* __ELPA_USE_FMA__ */
 
 #endif /* BLOCK6 */
@@ -17916,7 +17918,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif /* __ELPA_USE_FMA__ */
 
 #if VEC_SET == SSE_128 || VEC_SET == AVX_512 || VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -17932,7 +17934,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(y1, h2, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT y1, h2));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+3)*ldq],q1);
@@ -17951,7 +17953,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef __ELPA_USE_FMA__
    q1 = _SIMD_NFMA(x1, h1, q1);
 #else
-   q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
+ q1 = _SIMD_SUB( ADDITIONAL_ARGUMENT q1, _SIMD_MUL( ADDITIONAL_ARGUMENT x1, h1));
 #endif /* __ELPA_USE_FMA__ */
 
    _STORE(&q[(nb+4)*ldq],q1);
