@@ -9,6 +9,7 @@ Changelog for ELPA 2020.11.001.rc1
 - add missing test_scalapack_template.F90 to EXTRA_DIST list
 - fix error in the GPU kernel
 - switch form python2 to python3
+- experimental feature: kernels for ARM SVE
 
 Changelog for ELPA 2020.05.001
 

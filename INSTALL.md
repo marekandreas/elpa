@@ -59,6 +59,9 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  `--disable-avx`                       | do not build AVX kernels, default: enabled            |
 |  `--disable-avx2`                      | do not build AVX2 kernels, default: enabled           |
 |  `--enable-avx512`                     | build AVX512 kernels, default: disabled               |
+|  `--enable-sve128`                     | Experimental feature build ARM SVE128 kernels, default: disabled               |
+|  `--enable-sve256`                     | Experimental feature build ARM SVE256 kernels, default: disabled               |
+|  `--enable-sve512`                     | Experimental feature build ARM SVE512 kernels, default: disabled               |
 |  `--enable-gpu`                        | build GPU kernels, default: disabled                  |
 |  `--enable-bgp`                        | build BGP kernels, default: disabled                  |
 |  `--enable-bgq`                        | build BGQ kernels, default: disabled                  |
