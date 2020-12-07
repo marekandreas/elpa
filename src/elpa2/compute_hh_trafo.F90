@@ -709,6 +709,36 @@ kernel)
 #endif /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK1_KERNEL */
 
+      ! neon_arch64 block1 complex kernel
+#if defined(WITH_COMPLEX_NEON_ARCH64_BLOCK1_KERNEL)
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+      if (kernel .eq. ELPA_2STAGE_COMPLEX_NEON_ARCH64_BLOCK1) then
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
+
+#if (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_NEON_ARCH64_BLOCK2_KERNEL))
+        ttt = mpi_wtime()
+        do j = ncols, 1, -1
+#ifdef WITH_OPENMP_TRADITIONAL
+          call single_hh_trafo_&
+          &MATH_DATATYPE&
+          &_neon_arch64_1hv_&
+          &PRECISION&
+          & (c_loc(a(1,j+off+a_off,istripe,my_thread)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#else
+          call single_hh_trafo_&
+          &MATH_DATATYPE&
+          &_neon_arch64_1hv_&
+          &PRECISION&
+          & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
+#endif
+        enddo
+#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_NEON_ARCH64_BLOCK2_KERNEL)) */
+
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+      endif ! (kernel .eq. ELPA_2STAGE_COMPLEX_NEON_ARCH64_BLOCK1)
+#endif /* not WITH_FIXED_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_NEON_ARCH64_BLOCK1_KERNEL */
+
       ! sve128 block1 complex kernel
 #if defined(WITH_COMPLEX_SVE128_BLOCK1_KERNEL)
 #ifndef WITH_FIXED_COMPLEX_KERNEL
@@ -732,12 +762,12 @@ kernel)
           & (c_loc(a(1,j+off+a_off,istripe)), bcast_buffer(1,j+off),nbw,nl,stripe_width)
 #endif
         enddo
-#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SSE_BLOCK2_KERNEL)) */
+#endif /* (!defined(WITH_FIXED_COMPLEX_KERNEL)) || (defined(WITH_FIXED_COMPLEX_KERNEL) && !defined(WITH_COMPLEX_SVE128_BLOCK2_KERNEL)) */
 
 #ifndef WITH_FIXED_COMPLEX_KERNEL
-      endif ! (kernel .eq. ELPA_2STAGE_COMPLEX_SSE_BLOCK1)
+      endif ! (kernel .eq. ELPA_2STAGE_COMPLEX_SVE128_BLOCK1)
 #endif /* not WITH_FIXED_COMPLEX_KERNEL */
-#endif /* WITH_COMPLEX_SSE_BLOCK1_KERNEL */
+#endif /* WITH_COMPLEX_SVE128_BLOCK1_KERNEL */
 
 #endif /* COMPLEXCASE */
 
@@ -1222,6 +1252,50 @@ kernel)
       endif ! (kernel .eq. ELPA_2STAGE_COMPLEX_SSE_BLOCK2)
 #endif  /* not WITH_FIXED_COMPLEX_KERNEL */
 #endif /* WITH_COMPLEX_SSE_BLOCK2_KERNEL */
+
+      ! implementation of neon_arch64 block 2 complex case
+
+#if defined(WITH_COMPLEX_NEON_ARCH64_BLOCK2_KERNEL)
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+      if (kernel .eq. ELPA_2STAGE_COMPLEX_NEON_ARCH64_BLOCK2) then
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
+
+        ttt = mpi_wtime()
+        do j = ncols, 2, -2
+          w(:,1) = bcast_buffer(1:nbw,j+off)
+          w(:,2) = bcast_buffer(1:nbw,j+off-1)
+#ifdef WITH_OPENMP_TRADITIONAL
+          call double_hh_trafo_&
+          &MATH_DATATYPE&
+          &_neon_arch64_2hv_&
+          &PRECISION&
+          & (c_loc(a(1,j+off+a_off-1,istripe,my_thread)), w, nbw, nl, stripe_width, nbw)
+#else
+          call double_hh_trafo_&
+          &MATH_DATATYPE&
+          &_neon_arch64_2hv_&
+          &PRECISION&
+          & (c_loc(a(1,j+off+a_off-1,istripe)), w, nbw, nl, stripe_width, nbw)
+#endif
+        enddo
+#ifdef WITH_OPENMP_TRADITIONAL
+        if (j==1) call single_hh_trafo_&
+        &MATH_DATATYPE&
+        &_neon_arch64_1hv_&
+        &PRECISION&
+        & (c_loc(a(1,1+off+a_off,istripe,my_thread)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#else
+        if (j==1) call single_hh_trafo_&
+        &MATH_DATATYPE&
+        &_neon_arch64_1hv_&
+        &PRECISION&
+        & (c_loc(a(1,1+off+a_off,istripe)), bcast_buffer(1,off+1), nbw, nl, stripe_width)
+#endif
+
+#ifndef WITH_FIXED_COMPLEX_KERNEL
+      endif ! (kernel .eq. ELPA_2STAGE_COMPLEX_NEON_ARCH64_BLOCK2)
+#endif  /* not WITH_FIXED_COMPLEX_KERNEL */
+#endif /* WITH_COMPLEX_NEON_ARCH64_BLOCK2_KERNEL */
 
       ! implementation of sve128 block 2 complex case
 

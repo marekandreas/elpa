@@ -142,26 +142,28 @@ module simd_kernel
     integer(kind=c_int), intent(in)  :: kernel
     integer(kind=c_int)              :: simd_set_index
 
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_GENERIC)        = GENERIC_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE) = GENERIC_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_BGP)            = BLUEGENE_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_BGQ)            = BLUEGENE_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SSE_ASSEMBLY)   = SSE_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SSE_BLOCK1)     = SSE_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SSE_BLOCK2)     = SSE_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX_BLOCK1)     = AVX_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX_BLOCK2)     = AVX_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX2_BLOCK1)    = AVX2_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX2_BLOCK2)    = AVX2_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX512_BLOCK1)  = AVX512_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX512_BLOCK2)  = AVX512_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE128_BLOCK1)  = SVE128_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE128_BLOCK2)  = SVE128_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE256_BLOCK1)  = SVE256_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE256_BLOCK2)  = SVE256_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE512_BLOCK1)  = SVE512_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE512_BLOCK2)  = SVE512_INSTR
-    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_GPU)            = NVIDIA_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_GENERIC)             = GENERIC_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE)      = GENERIC_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_BGP)                 = BLUEGENE_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_BGQ)                 = BLUEGENE_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SSE_ASSEMBLY)        = SSE_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SSE_BLOCK1)          = SSE_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SSE_BLOCK2)          = SSE_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX_BLOCK1)          = AVX_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX_BLOCK2)          = AVX_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX2_BLOCK1)         = AVX2_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX2_BLOCK2)         = AVX2_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX512_BLOCK1)       = AVX512_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_AVX512_BLOCK2)       = AVX512_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE128_BLOCK1)       = SVE128_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE128_BLOCK2)       = SVE128_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE256_BLOCK1)       = SVE256_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE256_BLOCK2)       = SVE256_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE512_BLOCK1)       = SVE512_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_SVE512_BLOCK2)       = SVE512_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_NEON_ARCH64_BLOCK1)  = ARCH64_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_NEON_ARCH64_BLOCK2)  = ARCH64_INSTR
+    complexKernels_to_simdTable(ELPA_2STAGE_COMPLEX_GPU)                 = NVIDIA_INSTR
     
 
     simd_set_index = complexKernels_to_simdTable(kernel)
@@ -184,6 +186,7 @@ module simd_kernel
     simdTable_to_complexKernels(SVE128_INSTR) = ELPA_2STAGE_COMPLEX_SVE128_BLOCK1
     simdTable_to_complexKernels(SVE256_INSTR) = ELPA_2STAGE_COMPLEX_SVE256_BLOCK1
     simdTable_to_complexKernels(SVE512_INSTR) = ELPA_2STAGE_COMPLEX_SVE512_BLOCK1
+    simdTable_to_complexKernels(ARCH64_INSTR) = ELPA_2STAGE_COMPLEX_NEON_ARCH64_BLOCK1
     simdTable_to_complexKernels(NVIDIA_INSTR) = ELPA_2STAGE_COMPLEX_GPU
 
     kernel = simdTable_to_complexKernels(simd_set_index)

@@ -825,7 +825,6 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 !f>#endif
 */
 
-
 /*
 !f>#ifdef HAVE_SPARC64_SSE
 !f> interface
@@ -836,6 +835,36 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 !f>     ! complex(kind=c_double_complex)     :: q(*)
 !f>     type(c_ptr), value                   :: q
 !f>     complex(kind=c_double_complex)     :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#ifdef HAVE_NEON_ARCH64_SSE
+!f> interface
+!f>   subroutine single_hh_trafo_complex_NEON_ARCH64_1hv_double(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_NEON_ARCH64_1hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     ! complex(kind=c_double_complex)     :: q(*)
+!f>     type(c_ptr), value                   :: q
+!f>     complex(kind=c_double_complex)     :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#ifdef HAVE_NEON_ARCH64_SSE
+!f> interface
+!f>   subroutine single_hh_trafo_complex_NEON_ARCH64_1hv_single(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_NEON_ARCH64_1hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     ! complex(kind=c_float_complex)     :: q(*)
+!f>     type(c_ptr), value                   :: q
+!f>     complex(kind=c_float_complex)     :: hh(pnb,2)
 !f>   end subroutine
 !f> end interface
 !f>#endif
@@ -1087,6 +1116,36 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 !f> interface
 !f>   subroutine double_hh_trafo_complex_SPARC64_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
 !f>                             bind(C, name="double_hh_trafo_complex_SPARC64_2hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     ! complex(kind=c_float_complex)   :: q(*)
+!f>     type(c_ptr), value                :: q
+!f>     complex(kind=c_float_complex)   :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#ifdef HAVE_NEON_ARCH64_SSE
+!f> interface
+!f>   subroutine double_hh_trafo_complex_NEON_ARCH64_2hv_double(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="double_hh_trafo_complex_NEON_ARCH64_2hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
+!f>     ! complex(kind=c_double_complex)     :: q(*)
+!f>     type(c_ptr), value                   :: q
+!f>     complex(kind=c_double_complex)     :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+
+/*
+!f>#ifdef HAVE_NEON_ARCH64_SSE
+!f> interface
+!f>   subroutine double_hh_trafo_complex_NEON_ARCH64_2hv_single(q, hh, pnb, pnq, pldq, pldh) &
+!f>                             bind(C, name="double_hh_trafo_complex_NEON_ARCH64_2hv_single")
 !f>     use, intrinsic :: iso_c_binding
 !f>     integer(kind=c_int)     :: pnb, pnq, pldq, pldh
 !f>     ! complex(kind=c_float_complex)   :: q(*)
