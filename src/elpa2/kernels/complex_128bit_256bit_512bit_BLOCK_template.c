@@ -198,7 +198,7 @@
 
 #if VEC_SET == NEON_ARCH64_128
 #define ADDITIONAL_ARGUMENT
-
+#define __ELPA_USE_FMA__
 #ifdef DOUBLE_PRECISION_COMPLEX
 #define offset 2
 #define __SIMD_DATATYPE __Float64x2_t
@@ -210,8 +210,12 @@
 #define _SIMD_ADD vaddq_f64
 #define _SIMD_SET1 vdupq_n_f64
 #define _SIMD_XOR vmulq_f64
+#define _SIMD_NEG vnegq_f64
 #define _SIMD_SHUFFLE 1
 #define _SHUFFLE_VAL
+#define _SIMD_ADDSUB 1
+#define _SIMD_FMADDSUB(a,b,c) _SIMD_ADD(_SIMD_MUL(a, b), _SIMD_MUL(vnegq_f64(switch_sign), c))
+#define _SIMD_FMSUBADD(a,b,c) _SIMD_ADD(_SIMD_MUL(a, b), _SIMD_MUL(switch_sign, c))
 
 #endif /* DOUBLE_PRECISION_COMPLEX */
 
@@ -225,11 +229,13 @@
 #define _SIMD_MUL vmulq_f32
 #define _SIMD_ADD vaddq_f32
 #define _SIMD_SET1 vdupq_n_f32
-#define _SIMD_XOR vmulq_f64
+#define _SIMD_XOR vmulq_f32
+#define _SIMD_NEG vnegq_f32
 #define _SIMD_SHUFFLE 1
 #define _SHUFFLE_VAL
-
-_SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
+#define _SIMD_ADDSUB 1
+#define _SIMD_FMADDSUB(a,b,c) _SIMD_ADD(_SIMD_MUL(a, b), _SIMD_MUL(vnegq_f32(switch_sign), c))
+#define _SIMD_FMSUBADD(a,b,c) _SIMD_ADD(_SIMD_MUL(a, b), _SIMD_MUL(switch_sign, c))
 
 #endif /* SINGLE_PRECISION_COMPLEX */
 
@@ -492,10 +498,10 @@ _SIMD_ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h2_real, x1), _SHUFFLE(tmp1)));
 #define _STORE(a, b) _SIMD_STORE(a, b)
 #define _XOR(a, b) _SIMD_XOR(a, b)
 #ifdef DOUBLE_PRECISION_COMPLEX
-#define _SHUFFLE(a) vtrn1q_f64(vtrn2q_f64(a))
+#define _SHUFFLE(a) vtrn1q_f64(vtrn2q_f64(a, a), a)
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-#define _SHUFFLE(a) vtrn1q_f32(vtrn2q_f32(a))
+#define _SHUFFLE(a) vtrn1q_f32(vtrn2q_f32(a, a), a)
 #endif
 #define _ADDSUB(a, b) _SIMD_ADD(a, _SIMD_MUL(b, switch_sign))
 #endif
@@ -1468,7 +1474,6 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 
         for (i = 0; i < nq - UPPER_BOUND; i+= STEP_SIZE)
         {
-
             CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (&q[i], hh, nb, ldq);
 	    worked_on += ROW_LENGTH;
         }
@@ -7259,7 +7264,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef __ELPA_USE_FMA__
      x3 = _SIMD_FMADDSUB(h1_real, x3, _SHUFFLE(tmp3));
 #else
-     x3 = _ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SIMD_SHUFFLE(tmp3));
+     x3 = _ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x3), _SHUFFLE(tmp3));
 #endif
 #else /* VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == NEON_ARCH64_128 */
 #ifdef __ELPA_USE_FMA__
@@ -9073,7 +9078,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     switch_sign_dbl[6] =  1.0;
     switch_sign_dbl[7] = -1.0;
 #endif
-#endif
+#endif /* DOUBLE_PRECISION_COMPLEX */
 #ifdef SINGLE_PRECISION_COMPLEX
     DATA_TYPE_REAL switch_sign_dbl[offset];
     switch_sign_dbl[0]  =  1.0f;
@@ -9096,7 +9101,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
     switch_sign_dbl[14] =  1.0f;
     switch_sign_dbl[15] = -1.0f;
 #endif
-#endif
+#endif /* SINGLE_PRECISION_COMPLEX */
     switch_sign = _LOAD(&switch_sign_dbl[0]);
 #endif /* VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == NEON_ARCH64_128 */
 
@@ -9189,8 +9194,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif
 
 #ifndef __ELPA_USE_FMA__
+#if VEC_SET == NEON_ARCH64_128
      // conjugate
+     h2_imag = _SIMD_NEG(h2_imag);
+#else
      h2_imag = _XOR(h2_imag, sign);
+#endif
 #endif
 
      y1 = _LOAD(&q_dbl[0]);
@@ -9245,8 +9254,12 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #endif /* VEC_SET == AVX_512 || SVE_512 */
 
 #ifndef __ELPA_USE_FMA__
-          // conjugate
-          h1_imag = _XOR(h1_imag, sign);
+         // conjugate
+#if VEC_SET == NEON_ARCH64_128
+         h1_imag = _SIMD_NEG(h1_imag);
+#else
+         h1_imag = _XOR(h1_imag, sign);
+#endif
 #endif
 
           q1 = _LOAD(&q_dbl[(2*i*ldq)+0]);
