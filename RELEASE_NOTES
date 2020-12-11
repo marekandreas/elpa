@@ -5,6 +5,8 @@ What is new?
 For detailed information about changes since release ELPA 2020.05.001 please have a look at the Changelog file
 
 - bugfixes
+- experimental feature: support for ARM SVE
+- experimental feature: complex kernels for arch64 NEON
 
 
 ABI change
