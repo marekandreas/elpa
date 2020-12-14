@@ -176,7 +176,7 @@
 
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(myid,numGPU)) then
+    if (check_for_gpu(obj, myid, numGPU)) then
       ! set the neccessary parameters
       cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
       cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
