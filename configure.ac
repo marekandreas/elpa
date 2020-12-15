@@ -46,7 +46,7 @@ AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, w
 AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
 AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20200417, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1605657599],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1623715200],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -2052,13 +2052,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-echo " "
-echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2020.11.001.rc1        *"
-echo "*  There might be still some changes until the final release of       *"
-echo "*  ELPA 2020.11.001                                                   *"
-echo "***********************************************************************"
-echo " "
+#echo " "
+#echo "***********************************************************************"
+#echo "*  This is the first release candidate of ELPA 2020.11.001.rc1        *"
+#echo "*  There might be still some changes until the final release of       *"
+#echo "*  ELPA 2020.11.001                                                   *"
+#echo "***********************************************************************"
+#echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

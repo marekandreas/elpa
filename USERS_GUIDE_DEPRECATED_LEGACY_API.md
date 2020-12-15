@@ -22,7 +22,7 @@ The *ELPA* library consists of two main parts:
 
 Both variants of the *ELPA* solvers are available for real or complex singe and double precision valued matrices.
 
-Thus *ELPA* provides the following user functions (see man pages or [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2020.11.001.rc1/html/index.html) for details):
+Thus *ELPA* provides the following user functions (see man pages or [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2020.11.001/html/index.html) for details):
 
 - elpa_get_communicators                        : set the row / column communicators for *ELPA*
 - elpa_solve_evp_complex_1stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 1stage* solver
