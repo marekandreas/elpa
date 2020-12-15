@@ -48,18 +48,21 @@ module mod_check_for_gpu
 
   contains
 
-    function check_for_gpu(myid, numberOfDevices, wantDebug) result(gpuAvailable)
+    function check_for_gpu(obj, myid, numberOfDevices, wantDebug) result(gpuAvailable)
       use cuda_functions
       use precision
       use elpa_mpi
+      use elpa_abstract_impl
       implicit none
 
+      class(elpa_abstract_impl_t), intent(inout)                         :: obj
       integer(kind=ik), intent(in)  :: myid
       logical, optional, intent(in) :: wantDebug
       logical                       :: success, wantDebugMessage
       integer(kind=ik), intent(out) :: numberOfDevices
       integer(kind=ik)              :: deviceNumber, mpierr, maxNumberOfDevices
       logical                       :: gpuAvailable
+      integer(kind=ik)              :: error, mpi_comm_all
       !character(len=1024)           :: envname
 
       if (.not.(present(wantDebug))) then
@@ -73,6 +76,12 @@ module mod_check_for_gpu
       endif
 
       gpuAvailable = .false.
+
+      call obj%get("mpi_comm_parent",mpi_comm_all,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for mpi_comm_parent. Aborting..."
+        stop
+      endif
 
       if (cublasHandle .ne. -1) then
         gpuAvailable = .true.
@@ -98,7 +107,7 @@ module mod_check_for_gpu
       ! make sure that all nodes have the same number of GPU's, otherwise
       ! we run into loadbalancing trouble
 #ifdef WITH_MPI
-      call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, mpierr)
+      call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
 
       if (maxNumberOfDevices .ne. numberOfDevices) then
         print *,"Different number of GPU devices on MPI tasks!"
