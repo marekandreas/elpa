@@ -4,7 +4,7 @@ subroutine transform_columns_&
   l_rows, mpi_comm_cols, p_col, l_col, qtrans)
   use precision
   use elpa_abstract_impl
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   use elpa_omp
 #endif
   use elpa_mpi
