@@ -27,7 +27,7 @@ autotools procedure. This is the **only supported way** how to build and install
 
 
 If you obtained *ELPA* from the official git repository, you will not find
-the needed configure script! You will have to create the configure script with autoconf.
+the needed configure script! You will have to create the configure script with autoconf. You can also run the `autogen.sh` script that does this step for you.
 
 
 ## (A): Installing *ELPA* as library with configure ##
