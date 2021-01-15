@@ -308,7 +308,7 @@ if test x"${FC_does_infer_interfaces}" = x"yes"; then
   #    argument checking or fail
   # 2. no MPI case: switch of PACK_REAL_TO_COMPLEX
   if test x"${with_mpi}" = x"yes"; then
-    CHECKING(whether MPI module defines all interfaces )
+    AC_MSG_CHECKING(whether MPI module defines all interfaces )
     # check whether MPI module defines all interfaces; not the case for Intel MPI!
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([
     program test_mpi_interfaces
