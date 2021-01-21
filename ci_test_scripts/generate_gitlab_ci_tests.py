@@ -618,6 +618,7 @@ coverage = {
 #}
 
 instruction_set = {
+        "avx2" : " --enable-avx2",
         "avx512" : "--enable-avx512",
 }
 
