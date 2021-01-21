@@ -83,6 +83,7 @@ function elpa_solve_evp_&
    use elpa_scalapack_interfaces
 #endif
    use solve_tridi
+   use thread_affinity
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
@@ -176,6 +177,8 @@ function elpa_solve_evp_&
    MATH_DATATYPE(kind=rck), allocatable, target               :: aIntern(:,:)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target   :: qIntern(:,:)
 #endif
+   integer(kind=c_int)                             :: pinningInfo
+
    logical                                         :: do_tridiag, do_solve, do_trans_ev
    integer(kind=ik)                                :: nrThreads
    integer(kind=ik)                                :: global_index
@@ -216,8 +219,19 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
    call nvtxRangePush("elpa1")
 #endif
+   call obj%get("output_pinning_information", pinningInfo, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option for debug. Aborting..."
+     stop
+   endif
+   
+   if (pinningInfo .eq. 1) then
+     call init_thread_affinity(nrThreads)
 
-
+     call check_thread_affinity()
+     if (my_pe .eq. 0) call print_thread_affinity(my_pe)
+     call cleanup_thread_affinity()
+   endif
    success = .true.
 
 #ifdef REDISTRIBUTE_MATRIX
@@ -619,7 +633,6 @@ function elpa_solve_evp_&
      call blacs_gridexit(blacs_ctxt_)
    endif
 #endif /* REDISTRIBUTE_MATRIX */
-
    call obj%timer%stop("elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
