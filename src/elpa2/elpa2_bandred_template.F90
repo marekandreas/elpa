@@ -693,7 +693,11 @@ max_threads)
         !This does not help performance due to the addition of two openmp barriers around the MPI call,
         !But in the future this may be beneficial if these barriers are replaced with a faster implementation
 
-        !$omp parallel private(mynlc, j, lcx, ii, pp ) shared(aux1)
+        !$omp  parallel &
+        !$omp  default(none) &
+        !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
+        !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj) &
+        !$omp private(mynlc, j, lcx, ii, pp, mpierr )        
         mynlc = 0 ! number of local columns
 
         !This loop does not have independent iterations,
