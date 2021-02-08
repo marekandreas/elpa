@@ -945,22 +945,20 @@ max_threads)
     n_way = 1
 #ifdef WITH_OPENMP_TRADITIONAL
 
-#if REALCASE == 1
     n_way = max_threads
-
-    !$omp parallel private( i,lcs,lce,lrs,lre)
-#endif
     if (n_way > 1) then
-#if REALCASE == 1
-      !$omp do
-#endif
+      !$omp parallel do &
+      !$omp default(none) &
+      !$omp private(i) &
+      !$omp shared(l_cols_tile, l_cols, umcCPU, n_cols)
       do i=1,min(l_cols_tile, l_cols)
         umcCPU(i,1:n_cols) = 0.0_rck
       enddo
 
-#if REALCASE == 1
-      !$omp do
-#endif
+      !$omp parallel do &
+      !$omp default(none) &
+      !$omp private(i) &
+      !$omp shared(l_rows, vmrCPU, n_cols)
       do i=1,l_rows
         vmrCPU(i,n_cols+1:2*n_cols) = 0.0_rck
       enddo
@@ -981,9 +979,11 @@ max_threads)
         !This algorithm chosen because in this algoirhtm, the loop around the dgemm calls
         !is easily parallelized, and regardless of choise of algorithm,
         !the startup cost for parallelizing the dgemms inside the loop is too great
-#if REALCASE == 1
-        !$omp do schedule(static,1)
-#endif
+        !$omp  parallel do schedule(static,1) &
+        !$omp  default(none) &
+        !$omp  private(i, lcs, lce, lrs, lre) &
+        !$omp  shared(istep, nbw, tile_size, obj, l_cols, l_cols_tile, l_rows, isSkewsymmetric, &
+        !$omp&       n_cols, l_rows_tile, umcCPU, vmrCPU, a_mat)
         do i=0,(istep*nbw-1)/tile_size
           lcs = i*l_cols_tile+1                   ! local column start
           lce = min(l_cols, (i+1)*l_cols_tile)    ! local column end
@@ -1143,9 +1143,6 @@ max_threads)
 
 #ifdef WITH_OPENMP_TRADITIONAL
     endif ! n_way > 1
-#if REALCASE == 1
-    !$omp end parallel
-#endif
 #endif
     ! Sum up all ur(:) parts along rows and add them to the uc(:) parts
     ! on the processors containing the diagonal
