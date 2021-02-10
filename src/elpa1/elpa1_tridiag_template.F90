@@ -581,8 +581,17 @@ subroutine tridiag_&
 
 #ifdef WITH_OPENMP_TRADITIONAL
      call obj%timer%start("OpenMP parallel")
-!$OMP PARALLEL PRIVATE(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end)
-
+!todo : check whether GPU implementation with large matrix multiply is beneficial
+!       for a larger number of threads; could be addressed with autotuning if this
+!       is the case
+!$omp parallel &
+!$omp num_threads(max_threads) &
+!$omp default(none) &
+!$omp private(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end) &
+!$omp shared(useGPU, isSkewsymmetric, cudaMemcpyDeviceToHost, successCuda, u_row, u_row_dev, &
+!$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, a_offset, &
+!$omp&       max_local_cols, max_local_rows, obj, wantDebug, l_rows_per_tile, l_cols_per_tile, &
+!$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat)
      my_thread = omp_get_thread_num()
           
      n_threads = omp_get_num_threads()
