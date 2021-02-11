@@ -99,7 +99,7 @@ Nonetheless, we are grateful if you cite the following publications:
   
   Yu, V.; Moussa, J.; Kus, P.; Marek, A.; Messmer, P.; Yoon, M.; Lederer, H.; Blum, V.
   "GPU-Acceleration of the ELPA2 Distributed Eigensolver for Dense Symmetric and Hermitian Eigenproblems",
-  https://arxiv.org/abs/2002.10991
+  Computer Physics Communications, 262, 2021
 
   If you use the new API and/or autotuning:
  
