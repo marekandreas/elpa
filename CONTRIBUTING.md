@@ -4,7 +4,7 @@ We are very happy and grateful if you are willing to help us improve *ELPA*.
 Thus, we would like to make this process as simple as possible for you,
 but at the same time still keep it manageable for us
 
-For recommendations and suggestions, a simple email to us (*elpa-libray at mpcdf.mpg.de*) is sufficient!
+For recommendations and suggestions, a simple email to us (*elpa-library at mpcdf.mpg.de*) is sufficient!
 
 If you would like to share with us your improvements, we suggest the following ways:
 
