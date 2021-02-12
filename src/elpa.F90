@@ -106,7 +106,7 @@
 !>
 !> \code{.f90}
 !>  use elpa
-!>  class(elpa_t), pointer :: elpa
+!>  class(elpa_t), pointer :: elpaInstance
 !>  integer :: success
 !>
 !>  ! We urge the user to always check the error code of all ELPA functions
@@ -121,34 +121,34 @@
 !>   endif
 !>
 !>   ! set parameters decribing the matrix and it's MPI distribution
-!>   call elpa%set("na", na, success, success)
+!>   call elpaIstance%set("na", na, success, success)
 !>   if (success /= ELPA_OK) then
 !>     print *,"Could not set entry"
 !>   endif
-!>   call elpa%set("nev", nev, success, success)
+!>   call elpaInstance%set("nev", nev, success, success)
 !>   ! check success code ...
 !>
-!>   call elpa%set("local_nrows", na_rows, success)
+!>   call elpaInstance%set("local_nrows", na_rows, success)
 !>   ! check success code ...
 !>
-!>   call elpa%set("local_ncols", na_cols, success)
-!>   call elpa%set("nblk", nblk, success)
-!>   call elpa%set("mpi_comm_parent", MPI_COMM_WORLD, success)
-!>   call elpa%set("process_row", my_prow, success)
-!>   call elpa%set("process_col", my_pcol, success)
+!>   call elpaInstance%set("local_ncols", na_cols, success)
+!>   call elpaInstance%set("nblk", nblk, success)
+!>   call elpaInstance%set("mpi_comm_parent", MPI_COMM_WORLD, success)
+!>   call elpaInstance%set("process_row", my_prow, success)
+!>   call elpaInstance%set("process_col", my_pcol, success)
 !>
 !>   ! set up the elpa object
-!>   success = elpa%setup()
+!>   success = elpaInstance%setup()
 !>   if (succes /= ELPA_OK) then
 !>     print *,"Could not setup ELPA object"
 !>   endif
 !>
 !>   ! if desired, set tunable run-time options
 !>   ! here we want to use the 2-stage solver
-!>   call elpa%set("solver", ELPA_SOLVER_2STAGE, success)
+!>   call elpaInstance%set("solver", ELPA_SOLVER_2STAGE, success)
 !>
 !>   ! and set a specific kernel (must be supported on the machine)
-!>   call elpa%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2)
+!>   call elpaInstance%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2)
 !> \endcode
 !>   ... set and get all other options that are desired
 !> \code{.f90}
@@ -159,7 +159,7 @@
 !>   ! use method solve to solve the eigenvalue problem to obtain eigenvalues
 !>   ! and eigenvectors
 !>   ! other possible methods are desribed in \ref elpa_api::elpa_t derived type
-!>   call elpa%eigenvectors(a, ev, z, success)
+!>   call elpaInstance%eigenvectors(a, ev, z, success)
 !>
 !>   ! cleanup
 !>   call elpa_deallocate(e, success)

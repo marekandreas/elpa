@@ -89,6 +89,7 @@
    use elpa_scalapack_interfaces
 #endif
    use solve_tridi
+   use thread_affinity
    use, intrinsic :: iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
@@ -200,6 +201,7 @@
 #endif
    integer(kind=ik)                                                   :: global_index
    logical                                                            :: reDistributeMatrix, doRedistributeMatrix
+   integer(kind=ik)                                                   :: pinningInfo
 
 #if REALCASE == 1
 #undef GPU_KERNEL
@@ -237,6 +239,20 @@
 #else
     nrThreads = 1
 #endif
+
+   call obj%get("output_pinning_information", pinningInfo, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option for debug. Aborting..."
+     stop
+   endif
+
+   if (pinningInfo .eq. 1) then
+     call init_thread_affinity(nrThreads)
+
+     call check_thread_affinity()
+     if (my_pe .eq. 0) call print_thread_affinity(my_pe)
+     call cleanup_thread_affinity()
+   endif
 
     success = .true.
 

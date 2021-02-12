@@ -69,6 +69,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/mod_distribute_global_column.F90 \
   src/elpa1/mod_v_add_s.F90 \
   src/elpa1/mod_solve_secular_equation.F90 \
+  src/helpers/mod_thread_affinity.F90 \
+  src/helpers/check_thread_affinity.c \
   src/elpa_index.c
 
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c

@@ -74,7 +74,7 @@
       use ELPA_utilities
       use elpa_mpi
       use solve_secular_equation
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       use omp_lib
 #endif
       implicit none
@@ -103,7 +103,7 @@
                                                      dbase(na), ddiff(na), ev_scale(na), tmp(na)
       real(kind=REAL_DATATYPE)                    :: d1u(na), zu(na), d1l(na), zl(na)
       real(kind=REAL_DATATYPE), allocatable       :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       real(kind=REAL_DATATYPE), allocatable       :: z_p(:,:)
 #endif
 
@@ -132,7 +132,7 @@
                                                                       &PRECISION&
                                                                       &_real
       integer(kind=ik), intent(in)                :: max_threads
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       integer(kind=ik)                            :: my_thread
 
       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
@@ -460,7 +460,7 @@
         ! Solve secular equation
 
         z(1:na1) = 1
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
         z_p(1:na1,:) = 1
 #endif
         dbase(1:na1) = 0
@@ -468,7 +468,7 @@
 
         info = 0
         infoBLAS = int(info,kind=BLAS_KIND)
-!#ifdef WITH_OPENMP
+!#ifdef WITH_OPENMP_TRADITIONAL
 !
 !        call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 !!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,infoBLAS,j)
@@ -492,7 +492,7 @@
 
           ! Compute updated z
 
-!#ifdef WITH_OPENMP
+!#ifdef WITH_OPENMP_TRADITIONAL
 !          do j=1,na1
 !            if (i/=j)  z_p(j,my_thread) = z_p(j,my_thread)*( delta(j) / (d1(j)-d1(i)) )
 !          enddo
@@ -518,7 +518,7 @@
             ddiff(i) = delta(i)
           endif
         enddo
-!#ifdef WITH_OPENMP
+!#ifdef WITH_OPENMP_TRADITIONAL
 !!$OMP END PARALLEL
 !
 !        call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -544,7 +544,7 @@
         ! Calculate scale factors for eigenvectors
         ev_scale(:) = 0.0_rk
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 
         call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
@@ -566,7 +566,7 @@
           &(obj, d1, dbase, ddiff, z, ev_scale(i), na1,i)
 !         ev_scale(i) = ev_scale_val
         enddo
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
 !$OMP END PARALLEL DO
 
         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -906,7 +906,7 @@
         deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)
         check_deallocate("merge_systems: ev, qtmp1, qtmp2",istat, errorMessage)
       endif !very outer test (na1==1 .or. na1==2)
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
       deallocate(z_p, stat=istat, errmsg=errorMessage)
       check_deallocate("merge_systems: z_p",istat, errorMessage)
 #endif

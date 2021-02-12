@@ -134,7 +134,7 @@ program test
 #ifdef HAVE_REDIRECT
    use test_redirect
 #endif
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    use omp_lib
 #endif
    use precision_for_tests
@@ -196,7 +196,7 @@ program test
                          do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                          do_test_hermitian_multiply
    logical            :: ignoreError
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
 
@@ -564,7 +564,7 @@ program test
    endif
 
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    threads_caller = omp_get_max_threads()
    if (myid == 0) then
      print *,"The calling program uses ",threads_caller," threads"
@@ -646,7 +646,7 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
    max_threads=omp_get_max_threads()
    call e%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
@@ -855,7 +855,7 @@ program test
 #endif
 
 
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
      if (threads_caller .ne. omp_get_max_threads()) then
        if (myid .eq. 0) then
          print *, " ERROR! the number of OpenMP threads has not been restored correctly"

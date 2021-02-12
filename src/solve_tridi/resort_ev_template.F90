@@ -5,7 +5,7 @@ subroutine resort_ev_&
   &(obj, idx_ev, nLength, na, p_col_out, q, ldq, matrixCols, l_rows, l_rqe, l_rqs, &
     mpi_comm_cols, p_col, l_col, l_col_out)
     use precision
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
     use elpa_omp
 #endif
     use elpa_mpi

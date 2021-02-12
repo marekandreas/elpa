@@ -5,7 +5,7 @@ subroutine global_product_&
   use precision
   use elpa_abstract_impl
   use elpa_mpi
-#ifdef WITH_OPENMP
+#ifdef WITH_OPENMP_TRADITIONAL
   !use elpa_omp
 #endif          
   implicit none
