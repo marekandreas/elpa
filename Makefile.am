@@ -138,7 +138,7 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_real.cu src/elpa2/GPU/ev_tridi_band_gpu_complex.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/elpa_index_gpu.cu src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_real.cu src/elpa2/GPU/ev_tridi_band_gpu_complex.cu
 endif
 
 if !WITH_MPI

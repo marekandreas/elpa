@@ -199,7 +199,9 @@ program test
 #ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
-
+#ifdef TEST_GPU_SET_ID
+   TEST_INT_TYPE      :: gpuID
+#endif
 #ifdef SPLIT_COMM_MYSELF
    TEST_INT_MPI_TYPE  :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
    character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
@@ -640,6 +642,16 @@ program test
 
    call e%set("gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
+
+#ifdef TEST_GPU_SET_ID
+   ! simple test
+   ! Can (and should) fail often
+   gpuID = mod(myid,2)
+   print *,"Task",myid,"wants to use GPU",gpuID
+   call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
 
 #if TEST_QR_DECOMPOSITION == 1
    call e%set("qr", 1_ik, error_elpa)
