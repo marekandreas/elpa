@@ -24,6 +24,10 @@ gpu_flag = {
     0: "-DTEST_GPU=0",
     1: "-DTEST_GPU=1",
 }
+gpu_id_flag = {
+    0: "-DTEST_GPU_SET_ID=0",
+    1: "-DTEST_GPU_SET_ID=1",
+}
 
 matrix_flag = {
     "random":   "-DTEST_MATRIX_RANDOM",
@@ -57,9 +61,10 @@ split_comm_flag = {
     "by_elpa": ""
 }
 
-for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
+for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
                                                    sorted(matrix_flag.keys()),
                                                    sorted(gpu_flag.keys()),
+                                                   sorted(gpu_id_flag.keys()),
                                                    sorted(qr_flag.keys()),
                                                    sorted(test_type_flag.keys()),
                                                    sorted(prec_flag.keys()),
@@ -67,6 +72,9 @@ for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
                                                    sorted(solver_flag.keys()),
                                                    sorted(layout_flag.keys()),
                                                    sorted(split_comm_flag.keys())):
+
+    if gid == 1 and (g == 0 ):
+        continue
 
     if lang == "C" and (m == "analytic" or m == "toeplitz" or m == "frank" or lay == "all_layouts"):
         continue
@@ -178,11 +186,12 @@ for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{qrsuffix}{m}{layoutsuffix}{spl}".format(
+        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{gpuidsuffix}{qrsuffix}{m}{layoutsuffix}{spl}".format(
             langsuffix=language_flag[lang],
             d=d, p=p, t=t, s=s,
             kernelsuffix="" if kernel == "nokernel" else "_" + kernel,
             gpusuffix="gpu_" if g else "",
+            gpuidsuffix="set_gpu_id_" if gid else "",
             qrsuffix="qr_" if q else "",
             m=m,
             layoutsuffix="_all_layouts" if lay == "all_layouts" else "",
@@ -227,6 +236,7 @@ for lang, m, g, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
             test_type_flag[t],
             solver_flag[s],
             gpu_flag[g],
+            gpu_id_flag[gid],
             qr_flag[q],
             matrix_flag[m]] + extra_flags))
 

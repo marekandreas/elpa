@@ -143,6 +143,16 @@
 !>     print *,"Could not setup ELPA object"
 !>   endif
 !>
+!>   ! settings for GPU
+!>   call elpaInstance%set("gpu", 1, success) ! 1=on, 2=off
+!>   ! in case of GPU usage you have the choice whether ELPA
+!>   ! should automatically assign each MPI task to a certain GPU
+!>   ! (this is default) or whether you want to set this assignment
+!>   ! for _each_ task yourself
+!>   ! set assignment your self (only using one task here and assigning it 
+!>   ! to GPU id 1)
+!>   if (my_rank .eq. 0) call elpaInstance%set("use_gpu_id", 1, success)
+!>
 !>   ! if desired, set tunable run-time options
 !>   ! here we want to use the 2-stage solver
 !>   call elpaInstance%set("solver", ELPA_SOLVER_2STAGE, success)
@@ -205,6 +215,16 @@
 !>   /* if desired, set tunable run-time options */
 !>   /* here we want to use the 2-stage solver */
 !>   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
+!>
+!>   /* settings for GPU */
+!>   elpa_set(handle, "gpu", 1, &error);  /* 1=on, 2=off */
+!>   /* in case of GPU usage you have the choice whether ELPA
+!>      should automatically assign each MPI task to a certain GPU
+!>      (this is default) or whether you want to set this assignment
+!>      for _each_ task yourself
+!>      set assignment your self (only using one task here and assigning it 
+!>      to GPU id 1) */
+!>   if (my_rank == 0) elpa_set(handle, "use_gpu_id", 1, &error);
 !>
 !>   elpa_set(handle,"real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, &error);
 !>  \endcode

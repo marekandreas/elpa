@@ -62,7 +62,7 @@ module mod_check_for_gpu
       integer(kind=ik), intent(out) :: numberOfDevices
       integer(kind=ik)              :: deviceNumber, mpierr, maxNumberOfDevices
       logical                       :: gpuAvailable
-      integer(kind=ik)              :: error, mpi_comm_all
+      integer(kind=ik)              :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
       !character(len=1024)           :: envname
 
       if (.not.(present(wantDebug))) then
@@ -83,42 +83,24 @@ module mod_check_for_gpu
         stop
       endif
 
-      if (cublasHandle .ne. -1) then
-        gpuAvailable = .true.
-        numberOfDevices = -1
-        if (myid == 0 .and. wantDebugMessage) then
-          print *, "Skipping GPU init, should have already been initialized "
+      if (obj%is_set("use_gpu_id") == 1) then
+        call obj%get("use_gpu_id", use_gpu_id, error)
+        if (use_gpu_id == -99) then
+          print *,"Problem you did not set which gpu id this task should use"
         endif
-        return
-      else
-        if (myid == 0 .and. wantDebugMessage) then
-          print *, "Initializing the GPU devices"
-        endif
-      endif
-
-      ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
-      success = cuda_getdevicecount(numberOfDevices)
-
-      if (.not.(success)) then
-        print *,"error in cuda_getdevicecount"
-        stop 1
-      endif
-
-      ! make sure that all nodes have the same number of GPU's, otherwise
-      ! we run into loadbalancing trouble
+ 
+        ! check whether gpu ud has been set for each proces
 #ifdef WITH_MPI
-      call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
+        call mpi_allreduce(use_gpu_id, min_use_gpu_id, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
 
-      if (maxNumberOfDevices .ne. numberOfDevices) then
-        print *,"Different number of GPU devices on MPI tasks!"
-        print *,"GPUs will NOT be used!"
-        gpuAvailable = .false.
-        return
-      endif
+        if (min_use_gpu_id .lt. 0) then
+          print *,"Not all tasks have set which GPU id should be used"
+          print *,"GPUs will NOT be used!"
+          gpuAvailable = .false.
+          return
+        endif
 #endif
-      if (numberOfDevices .ne. 0) then
         gpuAvailable = .true.
-        ! Usage of GPU is possible since devices have been detected
 
         if (myid==0) then
           if (wantDebugMessage) then
@@ -127,8 +109,7 @@ module mod_check_for_gpu
           endif
         endif
 
-        deviceNumber = mod(myid, numberOfDevices)
-        success = cuda_setdevice(deviceNumber)
+        success = cuda_setdevice(use_gpu_id)
 
         if (.not.(success)) then
           print *,"Cannot set CudaDevice"
@@ -137,14 +118,77 @@ module mod_check_for_gpu
         if (wantDebugMessage) then
           print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
         endif
-        
+          
         success = cublas_create(cublasHandle)
         if (.not.(success)) then
           print *,"Cannot create cublas handle"
           stop 1
         endif
-        
-      endif
+      else
 
+        if (cublasHandle .ne. -1) then
+          gpuAvailable = .true.
+          numberOfDevices = -1
+          if (myid == 0 .and. wantDebugMessage) then
+            print *, "Skipping GPU init, should have already been initialized "
+          endif
+          return
+        else
+          if (myid == 0 .and. wantDebugMessage) then
+            print *, "Initializing the GPU devices"
+          endif
+        endif
+
+        ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
+        success = cuda_getdevicecount(numberOfDevices)
+
+        if (.not.(success)) then
+          print *,"error in cuda_getdevicecount"
+          stop 1
+        endif
+
+        ! make sure that all nodes have the same number of GPU's, otherwise
+        ! we run into loadbalancing trouble
+#ifdef WITH_MPI
+        call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
+
+        if (maxNumberOfDevices .ne. numberOfDevices) then
+          print *,"Different number of GPU devices on MPI tasks!"
+          print *,"GPUs will NOT be used!"
+          gpuAvailable = .false.
+          return
+        endif
+#endif
+        if (numberOfDevices .ne. 0) then
+          gpuAvailable = .true.
+          ! Usage of GPU is possible since devices have been detected
+
+          if (myid==0) then
+            if (wantDebugMessage) then
+              print *
+              print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+            endif
+          endif
+
+          deviceNumber = mod(myid, numberOfDevices)
+          success = cuda_setdevice(deviceNumber)
+
+          if (.not.(success)) then
+            print *,"Cannot set CudaDevice"
+            stop 1
+          endif
+          if (wantDebugMessage) then
+            print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
+          endif
+          
+          success = cublas_create(cublasHandle)
+          if (.not.(success)) then
+            print *,"Cannot create cublas handle"
+            stop 1
+          endif
+          
+        endif
+
+      endif  
     end function
 end module
