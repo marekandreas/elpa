@@ -134,8 +134,11 @@ subroutine elpa_reduce_add_vectors_&
   aux2(:) = 0
 #ifdef WITH_OPENMP_TRADITIONAL
   !call omp_set_num_threads(nrThreads)
-
-  !$omp parallel private(ips, ipt, auxstride, lc, i, k, ns, nl) num_threads(nrThreads)
+  !$omp parallel &
+  !$omp default(none) &
+  !$omp private(ips, ipt, auxstride, lc, i, k, ns, nl) num_threads(nrThreads) &
+  !$omp shared(nps, npt, lcm_s_t, nblk, vmat_t, vmat_s, myps, mypt, mpierr, obj, &
+  !$omp&       comm_t, nblks_tot, aux2, aux1, nvr, nvc)
 #endif
   do n = 0, lcm_s_t-1
 
