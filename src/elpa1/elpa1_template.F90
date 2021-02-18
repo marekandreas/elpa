@@ -362,6 +362,7 @@ function elpa_solve_evp_&
        print *,"Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
        print *,"setting 1 openmp thread now"
        call obj%set("omp_threads",1, error)
+       nrThreads=1
        call omp_set_num_threads(nrThreads)
      endif
 #endif
