@@ -391,6 +391,18 @@
         success = .false.
         return
       endif
+#ifdef WITH_OPENMP_TRADITIONAL
+      ! check the number of threads that ELPA should use internally
+      ! in the GPU case at the moment only _1_ thread internally is allowed
+      call obj%get("omp_threads", nrThreads, error)
+      if (nrThreads .ne. 1) then
+        print *,"Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+        print *,"setting 1 openmp thread now"
+        call obj%set("omp_threads",1, error)
+        nrThreads=1
+        call omp_set_num_threads(nrThreads)
+      endif
+#endif
       call obj%timer%stop("check_for_gpu")
     endif
 
@@ -518,7 +530,7 @@
     endif
 #endif
 
-#endif
+#endif /* REALCASE == 1 */
 
      ! consistency check: is user set kernel still identical with "kernel" or did
      ! we change it above? This is a mess and should be cleaned up
@@ -614,9 +626,7 @@
     else
       useQR = .false.
     endif
-
-#endif
-
+#endif /* REALCASE == 1 */
 
 #if REALCASE == 1
     useQRActual = .false.
@@ -1009,8 +1019,6 @@
 
      ! restore original OpenMP settings
 #ifdef WITH_OPENMP_TRADITIONAL
-    ! store the number of OpenMP threads used in the calling function
-    ! restore this at the end of ELPA 2
     call omp_set_num_threads(omp_threads_caller)
 #endif
 

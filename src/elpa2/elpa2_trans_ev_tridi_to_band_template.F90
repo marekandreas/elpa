@@ -141,16 +141,20 @@ subroutine trans_ev_tridi_to_band_&
   MATH_DATATYPE(kind=rck), allocatable       :: row(:)
   MATH_DATATYPE(kind=rck), pointer           :: row_group(:,:)
 
-#ifdef WITH_OPENMP_TRADITIONAL
   MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:)
   MATH_DATATYPE(kind=rck), allocatable       :: top_border_recv_buffer(:,:)
   MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:)
   MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_recv_buffer(:,:)
+#ifdef WITH_OPENMP_TRADITIONAL
+  !MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:)
+  !MATH_DATATYPE(kind=rck), allocatable       :: top_border_recv_buffer(:,:)
+  !MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:)
+  !MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_recv_buffer(:,:)
 #else
-  MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:,:)
-  MATH_DATATYPE(kind=rck), allocatable       :: top_border_recv_buffer(:,:,:)
-  MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:,:)
-  MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_recv_buffer(:,:,:)
+  !MATH_DATATYPE(kind=rck), allocatable       :: top_border_send_buffer(:,:,:)
+  !MATH_DATATYPE(kind=rck), allocatable       :: top_border_recv_buffer(:,:,:)
+  !MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_send_buffer(:,:,:)
+  !MATH_DATATYPE(kind=rck), allocatable       :: bottom_border_recv_buffer(:,:,:)
 #endif
 
   integer(kind=c_intptr_t)                   :: aIntern_dev
@@ -987,22 +991,34 @@ subroutine trans_ev_tridi_to_band_&
 
 #else /* WITH_OPENMP_TRADITIONAL */
 
-      allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      allocate(top_border_send_buffer(stripe_width*nbw, stripe_count), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
+      !allocate(top_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      !check_allocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
 
-      allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_tridi_to_band: top_border_recv_buffer", istat, errorMessage)
+      !allocate(top_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      !check_allocate("trans_ev_tridi_to_band: top_border_recv_buffer", istat, errorMessage)
 
-      allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
+      !allocate(bottom_border_send_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      !check_allocate("trans_ev_tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
 
-      allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
+      !allocate(bottom_border_recv_buffer(stripe_width, nbw, stripe_count), stat=istat, errmsg=errorMessage)
+      !check_allocate("trans_ev_tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
 
-      top_border_send_buffer(:,:,:) = 0.0_rck
-      top_border_recv_buffer(:,:,:) = 0.0_rck
-      bottom_border_send_buffer(:,:,:) = 0.0_rck
-      bottom_border_recv_buffer(:,:,:) = 0.0_rck
+      top_border_send_buffer(:,:) = 0.0_rck
+      top_border_recv_buffer(:,:) = 0.0_rck
+      bottom_border_send_buffer(:,:) = 0.0_rck
+      bottom_border_recv_buffer(:,:) = 0.0_rck
+      !top_border_send_buffer(:,:,:) = 0.0_rck
+      !top_border_recv_buffer(:,:,:) = 0.0_rck
+      !bottom_border_send_buffer(:,:,:) = 0.0_rck
+      !bottom_border_recv_buffer(:,:,:) = 0.0_rck
 
       if (useGPU) then
         successCUDA = cuda_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
@@ -1120,7 +1136,7 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_MPI
-            call MPI_Irecv(bottom_border_recv_buffer(1,1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+            call MPI_Irecv(bottom_border_recv_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
                            MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
                            int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
                            bottom_recv_request(i), mpierr)
@@ -1244,13 +1260,14 @@ subroutine trans_ev_tridi_to_band_&
               if (useGPU) then
                 dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width *a_dim2 )) * size_of_datatype
                 successCUDA =  cuda_memcpy( aIntern_dev + dev_offset , &
-                                           int(loc(bottom_border_recv_buffer(1,1,i)),kind=c_intptr_t), &
+                                           int(loc(bottom_border_recv_buffer(1,i)),kind=c_intptr_t), &
                                            stripe_width*nbw*  size_of_datatype,    &
                                            cudaMemcpyHostToDevice)
                 check_memcpy_cuda("trans_ev_tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successCUDA)
 
               else
-                aIntern(:,n_off+1:n_off+nbw,i) = bottom_border_recv_buffer(:,1:nbw,i)
+                aIntern(:,n_off+1:n_off+nbw,i) = reshape( &
+                        bottom_border_recv_buffer(1:stripe_width*nbw,i),(/stripe_width,nbw/))
               endif
 
 #endif /* WITH_OPENMP_TRADITIONAL */
@@ -1281,7 +1298,7 @@ subroutine trans_ev_tridi_to_band_&
 
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
-             call MPI_Irecv(bottom_border_recv_buffer(1,1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+             call MPI_Irecv(bottom_border_recv_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
                             MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
                             int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
                             bottom_recv_request(i), mpierr)
@@ -1328,12 +1345,13 @@ subroutine trans_ev_tridi_to_band_&
              if (useGPU) then
                dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
                !             host_offset= (0 + (0 * stripe_width) + ( (i-1) * stripe_width * nbw ) ) * 8
-               successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , int(loc(top_border_recv_buffer(1,1,i)),kind=c_intptr_t),  &
+               successCUDA =  cuda_memcpy( aIntern_dev+dev_offset , int(loc(top_border_recv_buffer(1,i)),kind=c_intptr_t),  &
                                            stripe_width*top_msg_length* size_of_datatype,      &
                                            cudaMemcpyHostToDevice)
                 check_memcpy_cuda("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successCUDA)
              else ! useGPU
-               aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+               aIntern(:,a_off+1:a_off+top_msg_length,i) = &
+               reshape(top_border_recv_buffer(1:stripe_width*top_msg_length,i),(/stripe_width,top_msg_length/))
              endif ! useGPU
 #endif /* WITH_OPENMP_TRADITIONAL */
            endif ! top_msg_length
@@ -1411,24 +1429,25 @@ subroutine trans_ev_tridi_to_band_&
 
              if (useGPU) then
                dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-               successCUDA =  cuda_memcpy( int(loc(bottom_border_send_buffer(1,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
+               successCUDA =  cuda_memcpy( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                           stripe_width * bottom_msg_length * size_of_datatype,      &
                                           cudaMemcpyDeviceToHost)
                 check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successCUDA)
              else
-               bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
+               bottom_border_send_buffer(1:stripe_width*bottom_msg_length,i) = reshape(&
+                       aIntern(:,n_off+1:n_off+bottom_msg_length,i),(/stripe_width*bottom_msg_length/))
              endif
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
-             call MPI_Isend(bottom_border_send_buffer(1,1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
+             call MPI_Isend(bottom_border_send_buffer(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
                    MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                    int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
                 if (next_top_msg_length > 0) then
-                  top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
-                  bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+                  top_border_recv_buffer(1:stripe_width*next_top_msg_length,i) =  &
+                  bottom_border_send_buffer(1:stripe_width*next_top_msg_length,i)
                 endif
 
 #endif /* WITH_MPI */
@@ -1511,24 +1530,25 @@ subroutine trans_ev_tridi_to_band_&
 
           if (useGPU) then
             dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-            successCUDA =  cuda_memcpy(int(loc(bottom_border_send_buffer(1,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
+            successCUDA =  cuda_memcpy(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
                                          stripe_width*bottom_msg_length* size_of_datatype,  &
                                          cudaMemcpyDeviceToHost)
                 check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successCUDA)
           else
-            bottom_border_send_buffer(:,1:bottom_msg_length,i) = aIntern(:,n_off+1:n_off+bottom_msg_length,i)
+            bottom_border_send_buffer(1:stripe_width*bottom_msg_length,i) = reshape(&
+                    aIntern(:,n_off+1:n_off+bottom_msg_length,i),(/stripe_width*bottom_msg_length/))
           endif
 
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call MPI_Isend(bottom_border_send_buffer(1,1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
+          call MPI_Isend(bottom_border_send_buffer(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
                          MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
                 if (next_top_msg_length > 0) then
-                  top_border_recv_buffer(1:stripe_width,1:next_top_msg_length,i) =  &
-                  bottom_border_send_buffer(1:stripe_width,1:next_top_msg_length,i)
+                  top_border_recv_buffer(1:stripe_width*next_top_msg_length,i) =  &
+                  bottom_border_send_buffer(1:stripe_width*next_top_msg_length,i)
                 endif
 
 #endif /* WITH_MPI */
@@ -1597,12 +1617,13 @@ subroutine trans_ev_tridi_to_band_&
 #endif
           if (useGPU) then
             dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-            successCUDA =  cuda_memcpy( aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,1,i)),kind=c_intptr_t),  &
+            successCUDA =  cuda_memcpy( aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,i)),kind=c_intptr_t),  &
                                        stripe_width * top_msg_length * size_of_datatype,   &
                cudaMemcpyHostToDevice)
             check_memcpy_cuda("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successCUDA)
           else
-            aIntern(:,a_off+1:a_off+top_msg_length,i) = top_border_recv_buffer(:,1:top_msg_length,i)
+            aIntern(:,a_off+1:a_off+top_msg_length,i) = &
+            reshape(top_border_recv_buffer(1:stripe_width*top_msg_length,i),(/stripe_width,top_msg_length/))
           endif
 #endif /* WITH_OPENMP_TRADITIONAL */
         endif
@@ -1667,7 +1688,7 @@ subroutine trans_ev_tridi_to_band_&
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call MPI_Irecv(top_border_recv_buffer(1,1,i), int(next_top_msg_length*stripe_width,kind=MPI_KIND), &
+        call MPI_Irecv(top_border_recv_buffer(1,i), int(next_top_msg_length*stripe_width,kind=MPI_KIND), &
                        MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow-1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                        int(mpi_comm_rows,kind=MPI_KIND), top_recv_request(i), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
@@ -1717,25 +1738,25 @@ subroutine trans_ev_tridi_to_band_&
 #endif
         if (useGPU) then
           dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
-          successCUDA =  cuda_memcpy( int(loc(top_border_send_buffer(:,1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
+          successCUDA =  cuda_memcpy( int(loc(top_border_send_buffer(:,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                      stripe_width*nbw * size_of_datatype, &
                                      cudaMemcpyDeviceToHost)
           check_memcpy_cuda("trans_ev_tridi_to_band: aIntern_dev -> top_border_send_buffer", successCUDA)
         else
-          top_border_send_buffer(:,1:nbw,i) = aIntern(:,a_off+1:a_off+nbw,i)
+          top_border_send_buffer(:,i) = reshape(aIntern(:,a_off+1:a_off+nbw,i),(/stripe_width*nbw/))
         endif
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call MPI_Isend(top_border_send_buffer(1,1,i), int(nbw*stripe_width,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+        call MPI_Isend(top_border_send_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                        int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),   &
                        top_send_request(i), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
             if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
-               bottom_border_recv_buffer(1:nbw*stripe_width,1,i) = top_border_send_buffer(1:nbw*stripe_width,1,i)
+               bottom_border_recv_buffer(1:nbw*stripe_width,i) = top_border_send_buffer(1:nbw*stripe_width,i)
              endif
              if (next_n_end < next_n) then
-               bottom_border_recv_buffer(1:stripe_width,1:nbw,i) =  top_border_send_buffer(1:stripe_width,1:nbw,i)
+               bottom_border_recv_buffer(1:stripe_width*nbw,i) =  top_border_send_buffer(1:stripe_width*nbw,i)
              endif
 #endif /* WITH_MPI */
 
