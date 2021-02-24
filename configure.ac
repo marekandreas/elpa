@@ -1531,9 +1531,9 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kernel)[_COMPILED])
 ])
 
-AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes"])
+AM_CONDITIONAL([WITH_NVIDIA_GPU_VERSION],[test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes"])
 if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
-  AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
+  AC_DEFINE([WITH_NVIDIA_GPU_VERSION],[1],[enable GPU support])
   AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
   ELPA_2STAGE_REAL_GPU_COMPILED=1

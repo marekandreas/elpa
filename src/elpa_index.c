@@ -112,7 +112,7 @@ static int min_tile_size_cardinality(elpa_index_t index);
 static int min_tile_size_enumerate(elpa_index_t index, int i);
 static int min_tile_size_is_valid(elpa_index_t index, int n, int new_value);
 
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
 int gpu_count();
 #endif
 
@@ -1104,7 +1104,7 @@ static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 static int use_gpu_id_cardinality(elpa_index_t index) {
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
 	int count;
 	count = gpu_count();
         if (count == -1000) {
@@ -1123,7 +1123,7 @@ static int use_gpu_id_enumerate(elpa_index_t index, int i) {
 }
 
 static int use_gpu_id_is_valid(elpa_index_t index, int n, int new_value) {
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
 	int count;
 	count = gpu_count();
         if (count == -1000) {
