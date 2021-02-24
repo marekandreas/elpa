@@ -57,7 +57,7 @@ module qr_utils_mod
   public :: reverse_matrix_1dcomm_double
   public :: reverse_matrix_2dcomm_ref_double
 
-#if WANT_SINGLE_PRECISION_REAL
+#ifdef WANT_SINGLE_PRECISION_REAL
   public :: reverse_vector_local_single
   public :: reverse_matrix_local_single
   public :: reverse_matrix_1dcomm_single

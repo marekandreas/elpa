@@ -112,6 +112,14 @@ static int min_tile_size_cardinality(elpa_index_t index);
 static int min_tile_size_enumerate(elpa_index_t index, int i);
 static int min_tile_size_is_valid(elpa_index_t index, int n, int new_value);
 
+#ifdef WITH_GPU_VERSION
+int gpu_count();
+#endif
+
+static int use_gpu_id_cardinality(elpa_index_t index);
+static int use_gpu_id_enumerate(elpa_index_t index, int i);
+static int use_gpu_id_is_valid(elpa_index_t index, int n, int new_value);
+
 static int valid_with_gpu(elpa_index_t index, int n, int new_value);
 static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value);
 static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value);
@@ -236,6 +244,8 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
         INT_ENTRY("gpu_trans_ev_band_to_full", "Use GPU acceleration for ELPA2 trans_ev_band_to_full", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa2, NULL, PRINT_YES),
+	INT_ENTRY("use_gpu_id", "Calling MPI task will use this gpu id", -99, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
+		  use_gpu_id_cardinality, use_gpu_id_enumerate, use_gpu_id_is_valid, NULL, PRINT_YES), 
         INT_ENTRY("real_kernel", "Real kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_REAL_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, \
                         number_of_real_kernels, real_kernel_enumerate, real_kernel_is_valid, real_kernel_name, PRINT_YES),
         INT_ENTRY("complex_kernel", "Complex kernel to use if 'solver' is set to ELPA_SOLVER_2STAGE", ELPA_2STAGE_COMPLEX_DEFAULT, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
@@ -1093,6 +1103,40 @@ static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value) {
         }
 }
 
+static int use_gpu_id_cardinality(elpa_index_t index) {
+#ifdef WITH_GPU_VERSION
+	int count;
+	count = gpu_count();
+        if (count == -1000) {
+          fprintf(stderr, "Querrying GPUs failed! Set GPU count = 0\n");
+	return 0;
+        }
+	return count;
+#else
+	return 0;
+#endif
+}
+
+static int use_gpu_id_enumerate(elpa_index_t index, int i) {
+        fprintf(stderr, "use_gpu_id_is_enumerate should never be called. please report this bug\n");
+        return i;
+}
+
+static int use_gpu_id_is_valid(elpa_index_t index, int n, int new_value) {
+#ifdef WITH_GPU_VERSION
+	int count;
+	count = gpu_count();
+        if (count == -1000) {
+          fprintf(stderr, "Querrying GPUs failed! Return with error\n");
+	  return 0 == 1 ;
+	} else {
+          return (0 <= new_value) && (new_value <= count);
+	}
+#else
+	return 0 == 0;
+#endif
+
+}
 
 // TODO: this shoudl definitely be improved (too many options to test in autotuning)
 static const int TILE_SIZE_STEP = 128;

@@ -528,8 +528,13 @@ subroutine tridiag_band_&
           ! with MPI calls
           call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
-!$omp parallel do private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
-!$omp&                    nc, nr, hs, hd, vnorm2, hf, x, h, i), schedule(static,1), num_threads(max_threads)
+!$omp parallel do &
+!$omp default(none) &
+!$omp private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
+!$omp&        nc, nr, hs, hd, vnorm2, hf, x, h, i) &
+!$omp shared(max_threads, obj, ab, isSkewsymmetric, wantDebug, hh_gath, &
+!$omp        hh_cnt, tau_t, hv_t, na, istep, n_off, na_s, nb, omp_block_limits, iter) &
+!$omp         schedule(static,1), num_threads(max_threads)
           do my_thread = 1, max_threads
 
             if (iter == 1) then
@@ -1087,7 +1092,7 @@ subroutine tridiag_band_&
     endif
 #endif
 
-#if WITH_OPENMP_TRADITIONAL
+#ifdef WITH_OPENMP_TRADITIONAL
     do iblk = 1, nblocks
 
       if (hh_dst(iblk) >= np_rows) exit

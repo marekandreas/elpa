@@ -629,65 +629,65 @@ max_threads)
         aux1 = 0.0_rck
 
 #ifdef WITH_OPENMP_TRADITIONAL
-#if 0
- ! original complex implementation without openmp. check performance
-        nlc = 0 ! number of local columns
-        do j=1,lc-1
-          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-          if (lcx>0) then
-            nlc = nlc+1
-            aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
-          endif
-        enddo
-
-        ! Get global dot products
-#ifdef WITH_MPI
-        if (wantDebug) call obj%timer%start("mpi_communication")
-        if (nlc>0) call mpi_allreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
-                                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-
-        ! Transform
-
-        nlc = 0
-        do j=1,lc-1
-          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-          if (lcx>0) then
-            nlc = nlc+1
-            a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
-
-          endif
-        enddo
-
-
-        if (wantDebug) call obj%timer%stop("mpi_communication")
-
-#else /* WITH_MPI */
-
-        ! Transform
-
-        nlc = 0
-        do j=1,lc-1
-          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-          if (lcx>0) then
-            nlc = nlc+1
-            a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
-          endif
-        enddo
-
-#endif /* WITH_MPI */
+!#if 0
+! ! original complex implementation without openmp. check performance
+!        nlc = 0 ! number of local columns
+!        do j=1,lc-1
+!          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+!          if (lcx>0) then
+!            nlc = nlc+1
+!            aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
+!          endif
+!        enddo
 !
-!       ! Transform
+!        ! Get global dot products
+!#ifdef WITH_MPI
+!        if (wantDebug) call obj%timer%start("mpi_communication")
+!        if (nlc>0) call mpi_allreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
+!                                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 !
-!       nlc = 0
-!       do j=1,lc-1
-!         lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-!         if (lcx>0) then
-!           nlc = nlc+1
-!           a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
-
-!         endif
-!       enddo
-#endif /* if 0 */
+!        ! Transform
+!
+!        nlc = 0
+!        do j=1,lc-1
+!          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+!          if (lcx>0) then
+!            nlc = nlc+1
+!            a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+!
+!          endif
+!        enddo
+!
+!
+!        if (wantDebug) call obj%timer%stop("mpi_communication")
+!
+!#else /* WITH_MPI */
+!
+!        ! Transform
+!
+!        nlc = 0
+!        do j=1,lc-1
+!          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+!          if (lcx>0) then
+!            nlc = nlc+1
+!            a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
+!          endif
+!        enddo
+!
+!#endif /* WITH_MPI */
+!!
+!!       ! Transform
+!!
+!!       nlc = 0
+!!       do j=1,lc-1
+!!         lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+!!         if (lcx>0) then
+!!           nlc = nlc+1
+!!           a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+!
+!!         endif
+!!       enddo
+!#endif /* if 0 */
 
         !Open up one omp region to avoid paying openmp overhead.
         !This does not help performance due to the addition of two openmp barriers around the MPI call,
@@ -909,35 +909,35 @@ max_threads)
     ! of the tiles, so we can use strips of the matrix
 
 
-#if 0
-    ! original complex implemetation check for performance
-    umcCPU(1:l_cols,1:n_cols) = 0.0_rck
-    vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0.0_rck
-
-    if (l_cols>0 .and. l_rows>0) then
-      do i=0,(istep*nbw-1)/tile_size
-
-        lcs = i*l_cols_tile+1
-        lce = min(l_cols,(i+1)*l_cols_tile)
-        if (lce<lcs) cycle
-
-        lre = min(l_rows,(i+1)*l_rows_tile)
-
-          call obj%timer%start("blas")
-          call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a_mat(1,lcs), ubound(a_mat,dim=1), &
-                     vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
-          call obj%timer%stop("blas")
-
-        if (i==0) cycle
-        lre = min(l_rows,i*l_rows_tile)
-          call obj%timer%start("blas")
-          call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
-                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
-          call obj%timer%stop("blas")
-      enddo
-
-    endif ! (l_cols>0 .and. l_rows>0)
-#endif /* if 0 */
+!#if 0
+!    ! original complex implemetation check for performance
+!    umcCPU(1:l_cols,1:n_cols) = 0.0_rck
+!    vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0.0_rck
+!
+!    if (l_cols>0 .and. l_rows>0) then
+!      do i=0,(istep*nbw-1)/tile_size
+!
+!        lcs = i*l_cols_tile+1
+!        lce = min(l_cols,(i+1)*l_cols_tile)
+!        if (lce<lcs) cycle
+!
+!        lre = min(l_rows,(i+1)*l_rows_tile)
+!
+!          call obj%timer%start("blas")
+!          call PRECISION_GEMM('C', 'N', lce-lcs+1, n_cols, lre, ONE, a_mat(1,lcs), ubound(a_mat,dim=1), &
+!                     vmrCPU, ubound(vmrCPU,dim=1), ONE, umcCPU(lcs,1), ubound(umcCPU,dim=1))
+!          call obj%timer%stop("blas")
+!
+!        if (i==0) cycle
+!        lre = min(l_rows,i*l_rows_tile)
+!          call obj%timer%start("blas")
+!          call PRECISION_GEMM('N', 'N', lre, n_cols, lce-lcs+1, ONE, a_mat(1,lcs), lda, &
+!                     umcCPU(lcs,n_cols+1), ubound(umcCPU,dim=1), ONE, vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1))
+!          call obj%timer%stop("blas")
+!      enddo
+!
+!    endif ! (l_cols>0 .and. l_rows>0)
+!#endif /* if 0 */
 
     !Code for Algorithm 4
 
@@ -1396,7 +1396,11 @@ max_threads)
     ! A = A - V*U**T - U*V**T
 
 #ifdef WITH_OPENMP_TRADITIONAL
-    !$omp parallel private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  )
+    !$omp parallel &
+    !$omp default(none) &
+    !$omp private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  ) &
+    !$omp shared(a_mat, n_threads, istep, tile_size, nbw, n_cols, obj, vmrcpu, l_cols_tile, l_rows, l_rows_tile, &
+    !$omp&       umccpu, l_cols, a_dev, vmr_dev, useGPU, cur_l_rows, umc_dev, cur_l_cols, lda )
     n_threads = omp_get_num_threads()
 
     if (mod(n_threads, 2) == 0) then
@@ -1424,13 +1428,30 @@ max_threads)
       myend   = mystart + work_per_thread - 1
       if ( myend > lre ) myend = lre
       if ( myend-mystart+1 < 1) cycle
-      call obj%timer%start("blas")
-      call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
-                          int(lce-lcs+1,kind=BLAS_KIND), int(2*n_cols,kind=BLAS_KIND), -ONE, &
-                          vmrCPU(mystart, 1), int(ubound(vmrCPU,1),kind=BLAS_KIND), &
-                          umcCPU(lcs,1), int(ubound(umcCPU,1),kind=BLAS_KIND), &
-                          ONE, a_mat(mystart,lcs), int(ubound(a_mat,1),kind=BLAS_KIND) )
-       call obj%timer%stop("blas")
+      if (useGPU) then
+        if (n_way .gt. 1) then
+          print *,"error more than 1 openmp thread used in GPU part of elpa2_bandred"
+          print *,"this should never happen"
+          stop
+        endif
+        call obj%timer%start("cublas")
+
+        call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
+                                   lce-lcs+1, 2*n_cols, -ONE, &
+                                   vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
+                                   size_of_datatype), &
+                                   cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
+                                   size_of_datatype), lda)
+        call obj%timer%stop("cublas")
+      else
+        call obj%timer%start("blas")
+        call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
+                            int(lce-lcs+1,kind=BLAS_KIND), int(2*n_cols,kind=BLAS_KIND), -ONE, &
+                            vmrCPU(mystart, 1), int(ubound(vmrCPU,1),kind=BLAS_KIND), &
+                            umcCPU(lcs,1), int(ubound(umcCPU,1),kind=BLAS_KIND), &
+                            ONE, a_mat(mystart,lcs), int(ubound(a_mat,1),kind=BLAS_KIND) )
+        call obj%timer%stop("blas")
+      endif
     enddo
     !$omp end parallel
 

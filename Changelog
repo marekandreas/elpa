@@ -2,6 +2,9 @@ Changelog for next release
 
 - not yet decided
 
+Upcoming changes for ELPA 2021.05.001
+- allow the user to set the mapping of MPI tasks to GPU id per set/get
+
 Changelog for ELPA 2020.11.001
 
 - this release containts mostly bugfixes:
