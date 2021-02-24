@@ -165,7 +165,7 @@
    if (myid .eq. 0) then
       print *," "
       print *,"This ELPA2 is build with"
-#ifdef WITH_GPU_KERNEL
+#ifdef WITH_NVIDIA_GPU_KERNEL
         print *,"GPU support"
 #endif
       print *," "
