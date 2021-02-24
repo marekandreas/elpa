@@ -279,8 +279,6 @@ function elpa_solve_evp_&
 
      ! restore original OpenMP settings
 #ifdef WITH_OPENMP_TRADITIONAL
-     ! store the number of OpenMP threads used in the calling function
-     ! restore this at the end of ELPA 2
      call omp_set_num_threads(omp_threads_caller)
 #endif
      call obj%timer%stop("elpa_solve_evp_&
@@ -356,6 +354,18 @@ function elpa_solve_evp_&
        success = .false.
        return
      endif
+#ifdef WITH_OPENMP_TRADITIONAL
+     ! check the number of threads that ELPA should use internally
+     ! in the GPU case at the moment only _1_ thread internally is allowed
+     call obj%get("omp_threads", nrThreads, error)
+     if (nrThreads .ne. 1) then
+       print *,"Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+       print *,"setting 1 openmp thread now"
+       call obj%set("omp_threads",1, error)
+       nrThreads=1
+       call omp_set_num_threads(nrThreads)
+     endif
+#endif
      call obj%timer%stop("check_for_gpu")
    endif
 
@@ -589,8 +599,6 @@ function elpa_solve_evp_&
 #endif
    ! restore original OpenMP settings
 #ifdef WITH_OPENMP_TRADITIONAL
-   ! store the number of OpenMP threads used in the calling function
-   ! restore this at the end of ELPA 2
    call omp_set_num_threads(omp_threads_caller)
 #endif
 

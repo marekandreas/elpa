@@ -58,11 +58,10 @@ l_nev, &
 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 hh_tau_dev, kernel_flops, kernel_time, n_times, off, ncols, istripe, &
 #ifdef WITH_OPENMP_TRADITIONAL
-my_thread, thread_width, &
+my_thread, thread_width, kernel, last_stripe_width)
 #else
-last_stripe_width, &
+last_stripe_width, kernel)
 #endif
-kernel)
 
   use precision
   use elpa_abstract_impl
@@ -141,6 +140,7 @@ kernel)
 
 #else /* WITH_OPENMP_TRADITIONAL */
   integer(kind=ik), intent(in)               :: l_nev, thread_width
+  integer(kind=ik), intent(in), optional     :: last_stripe_width
 #if REALCASE == 1
 !  real(kind=C_DATATYPE_KIND)                :: a(stripe_width,a_dim2,stripe_count,max_threads)
   real(kind=C_DATATYPE_KIND), pointer        :: a(:,:,:,:)
@@ -221,54 +221,39 @@ kernel)
 
 
 #ifdef WITH_OPENMP_TRADITIONAL
-  if (my_thread==1) then
+  if (my_thread==1) then ! in the calling routine threads go form 1 .. max_threads
 #endif
     ttt = mpi_wtime()
 #ifdef WITH_OPENMP_TRADITIONAL
   endif
 #endif
 
-#ifdef WITH_OPENMP_TRADITIONAL
-
-#if REALCASE == 1
-  if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
-    print *,"compute_hh_trafo_&
-    &MATH_DATATYPE&
-    &_GPU OPENMP: not yet implemented"
-    stop 1
-  endif
-#endif
-#if COMPLEXCASE == 1
-  if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
-    print *,"compute_hh_trafo_&
-    &MATH_DATATYPE&
-    &_GPU OPENMP: not yet implemented"
-    stop 1
-  endif
-#endif
-#endif /* WITH_OPENMP_TRADITIONAL */
 
 #ifndef WITH_OPENMP_TRADITIONAL
   nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
 #else /* WITH_OPENMP_TRADITIONAL */
 
-  if (istripe<stripe_count) then
-    nl = stripe_width
+  if (present(last_stripe_width)) then
+    nl = merge(stripe_width, last_stripe_width, istripe<stripe_count)
   else
-    noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
-    nl = min(my_thread*thread_width-noff, l_nev-noff)
-    if (nl<=0) then
-      if (wantDebug) call obj%timer%stop("compute_hh_trafo_&
-      &MATH_DATATYPE&
+    if (istripe<stripe_count) then
+      nl = stripe_width
+    else
+      noff = (my_thread-1)*thread_width + (istripe-1)*stripe_width
+      nl = min(my_thread*thread_width-noff, l_nev-noff)
+      if (nl<=0) then
+        if (wantDebug) call obj%timer%stop("compute_hh_trafo_&
+        &MATH_DATATYPE&
 #ifdef WITH_OPENMP_TRADITIONAL
-      &_openmp" // &
+        &_openmp" // &
 #else
-      &" // &
+        &" // &
 #endif
-      &PRECISION_SUFFIX &
-      )
+        &PRECISION_SUFFIX &
+        )
 
-      return
+        return
+      endif
     endif
   endif
 #endif /* not WITH_OPENMP_TRADITIONAL */

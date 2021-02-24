@@ -137,7 +137,7 @@ module elpa1_auxiliary_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
-#if WANT_SINGLE_PRECISION_REAL
+#ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
@@ -287,7 +287,7 @@ module elpa1_auxiliary_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
-#if WANT_SINGLE_PRECISION_REAL
+#ifdef WANT_SINGLE_PRECISION_REAL
 #define REALCASE 1
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
