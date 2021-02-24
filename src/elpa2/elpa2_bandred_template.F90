@@ -1399,7 +1399,7 @@ max_threads)
     !$omp parallel &
     !$omp default(none) &
     !$omp private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend  ) &
-    !$omp shared(n_threads, istep, tile_size, nbw, n_cols, obj, vmrcpu, l_cols_tile, l_rows, l_rows_tile, &
+    !$omp shared(a_mat, n_threads, istep, tile_size, nbw, n_cols, obj, vmrcpu, l_cols_tile, l_rows, l_rows_tile, &
     !$omp&       umccpu, l_cols, a_dev, vmr_dev, useGPU, cur_l_rows, umc_dev, cur_l_cols, lda )
     n_threads = omp_get_num_threads()
 
