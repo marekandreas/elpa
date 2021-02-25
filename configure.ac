@@ -106,6 +106,11 @@ if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
 
+dnl CPP
+AC_LANG_PUSH([C++])
+AC_PROG_CXX
+AC_LANG_POP([C++])
+
 dnl C
 AC_LANG_PUSH([C])
 
@@ -1459,7 +1464,7 @@ fi
 AC_LANG_POP([Fortran])
 
 
-AC_MSG_CHECKING(whether GPU version should be used)
+AC_MSG_CHECKING(whether Nvidia-GPU version should be used)
 AC_ARG_ENABLE([Nvidia-gpu],
                 AS_HELP_STRING([--enable-Nvidia-gpu],
                                [do use Nvidia GPU version]),
@@ -1475,6 +1480,28 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   use_real_gpu=yes
   use_complex_gpu=yes
 fi
+
+
+AC_MSG_CHECKING(whether AMD-GPU version should be used)
+AC_ARG_ENABLE([AMD-gpu],
+                AS_HELP_STRING([--enable-AMD-gpu],
+                               [do use AMD GPU version]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_amd_gpu=yes
+                                else
+                                  use_amd_gpu=no
+                                fi],
+              [use_amd_gpu=no])
+AC_MSG_RESULT([${use_amd_gpu}])
+if test x"${use_amd_gpu}" = x"yes" ; then
+  need_amd_gpu=yes
+  ########################################
+  # must be changed
+  #######################################
+  use_real_gpu=no
+  use_complex_gpu=no
+fi
+
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
@@ -1501,6 +1528,35 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
     AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   fi
   AC_LANG_POP([C])
+fi
+
+
+if test x"${need_amd_gpu}" = x"yes" ; then
+  echo "no amd gpu yet"
+  #AC_LANG_PUSH([C])
+  #CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
+  #LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
+  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
+  #NVCC="nvcc"
+  #AC_SUBST(NVCC)
+  #AC_SUBST(NVCCFLAGS)
+
+  #dnl check whether nvcc compiler is found
+  #AC_CHECK_PROG(nvcc_found,nvcc,yes,no)
+  #if test x"${nvcc_found}" = x"no" ; then
+  #  AC_MSG_ERROR([nvcc not found; try to set the cuda-path or disable Nvidia GPU support])
+  #fi
+
+  #dnl check whether we find cublas
+  #AC_SEARCH_LIBS([cublasDgemm],[cublas],[have_cublas=yes],[have_cublas=no])
+  #if test x"${have_cublas}" = x"no"; then
+  #  AC_MSG_ERROR([Could not link cublas; try to set the cuda-path or disable Nvidia GPU support])
+  #fi
+  #AC_SEARCH_LIBS([cudaMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
+  #if test x"${have_cudart}" = x"no"; then
+  #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+  #fi
+  #AC_LANG_POP([C])
 fi
 
 AC_MSG_CHECKING(whether Nvidia GPU memory debugging should be enabled)
@@ -1564,8 +1620,48 @@ else
   ELPA_2STAGE_COMPLEX_GPU_COMPILED=0
   ELPA_2STAGE_REAL_GPU_COMPILED=0
 fi
+
+
+AM_CONDITIONAL([WITH_AMD_GPU_VERSION],[test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes"])
+if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
+  AC_DEFINE([WITH_AMD_GPU_VERSION],[1],[enable AMD GPU support])
+  AC_DEFINE([WITH_AMD_GPU_KERNEL],[1],[AMD GPU kernel should be build])
+  ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=1
+  ELPA_2STAGE_REAL_AMD_GPU_COMPILED=1
+
+  #AC_MSG_CHECKING(whether --enable-nvtx is specified)
+  #AC_ARG_ENABLE([nvtx],
+  #              AS_HELP_STRING([--enable-nvtx],
+  #                             [build and install nvtx wrapper for profiling the Nvidia GPU version, default no.]),
+  #              [
+  #               if test x"$enableval" = x"yes"; then
+  #                 enable_nvtx=yes
+  #               else
+  #                 enable_nvtx=no
+  #               fi
+  #               ],
+  #              [enable_nvtx=no])
+  #AC_MSG_RESULT([${enable_nvtx}])
+  #if test x"${enable_nvtx}" = x"yes"; then
+  #  AC_DEFINE([WITH_NVTX],[1],[enable NVTX support])
+  #  AC_LANG_PUSH([C])
+  #  AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
+  #  if test x"${have_nvtoolsext}" = x"no"; then
+  #    AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable Nvidia GPU support ])
+  #  fi
+  #  AC_LANG_POP([C])
+  #fi
+else
+  ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=0
+  ELPA_2STAGE_REAL_AMD_GPU_COMPILED=0
+fi
+
+
 AC_SUBST([ELPA_2STAGE_COMPLEX_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_GPU_COMPILED])
+
+
+
 
 LT_INIT
 

@@ -1025,7 +1025,7 @@ module hip_functions
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_cgemv_c(rocblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
-    end subroutine cublas_cgemv
+    end subroutine rocblas_cgemv
 
 
 !     subroutine cublas_dsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
