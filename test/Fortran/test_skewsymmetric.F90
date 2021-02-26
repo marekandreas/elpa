@@ -233,7 +233,7 @@ program test
    call e_complex%set("timings",1, error_elpa)
 
    call e_complex%set("debug",1,error_elpa)
-   call e_complex%set("gpu", 0,error_elpa)
+   call e_complex%set("nvidia-gpu", 0,error_elpa)
    call e_complex%set("omp_threads", 8, error_elpa)
 
    assert_elpa_ok(e_complex%setup())
@@ -271,7 +271,7 @@ program test
    call e_skewsymmetric%set("timings",1, error_elpa)
 
    call e_skewsymmetric%set("debug",1,error_elpa)
-   call e_skewsymmetric%set("gpu", 0,error_elpa)
+   call e_skewsymmetric%set("nvidia-gpu", 0,error_elpa)
    call e_skewsymmetric%set("omp_threads",8, error_elpa)
 
    assert_elpa_ok(e_skewsymmetric%setup())

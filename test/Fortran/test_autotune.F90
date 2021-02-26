@@ -228,7 +228,7 @@ program test
 
    call e%set("debug",1, error_elpa)
    assert_elpa_ok(error_elpa)
-   call e%set("gpu", 0, error_elpa)
+   call e%set("nvidia-gpu", 0, error_elpa)
    assert_elpa_ok(error_elpa)
    !call e%set("max_stored_rows", 15, error_elpa)
 

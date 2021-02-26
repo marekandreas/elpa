@@ -640,7 +640,7 @@ program test
 #endif
    assert_elpa_ok(error_elpa)
 
-   call e%set("gpu", TEST_GPU, error_elpa)
+   call e%set("nvidia-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 
 #ifdef TEST_GPU_SET_ID

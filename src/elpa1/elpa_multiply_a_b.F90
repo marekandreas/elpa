@@ -109,7 +109,7 @@
   success = .true.
 
   ! GPU settings
-  call obj%get("gpu", gpu,error)
+  call obj%get("nvidia-gpu", gpu,error)
   if (error .ne. ELPA_OK) then
     print *,"Problem getting option for gpu. Aborting..."
     stop

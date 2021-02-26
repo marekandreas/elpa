@@ -1,5 +1,5 @@
 extern "C" {
-  int gpu_count() {
+  int nvidia_gpu_count() {
     int count;
     cudaError_t cuerr = cudaGetDeviceCount(&count);
     if (cuerr != cudaSuccess) {

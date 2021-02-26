@@ -209,7 +209,7 @@ program test
    call e1%set("debug",1, error_elpa)
    assert_elpa_ok(error_elpa)
 
-   call e1%set("gpu", 0, error_elpa)
+   call e1%set("nvidia-gpu", 0, error_elpa)
    assert_elpa_ok(error_elpa)
    !call e1%set("max_stored_rows", 15, error_elpa)
 
@@ -238,7 +238,7 @@ program test
    assert_elpa_ok(error_elpa)
    call e2%get("debug", int(debug,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
-   call e2%get("gpu", int(gpu,kind=c_int), error_elpa)
+   call e2%get("nvidia-gpu", int(gpu,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 
    if ((timings .ne. 1) .or. (debug .ne. 1) .or. (gpu .ne. 0)) then
