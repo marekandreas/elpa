@@ -268,7 +268,7 @@ module cuda_functions
       implicit none
 
       integer(kind=C_intptr_T)                    :: a
-      integer(kind=c_intptr_t), intent(in), value   :: width_height
+      integer(kind=c_intptr_t), intent(in), value :: width_height
       integer(kind=C_INT)                         :: istat
 
     end function cuda_malloc_c
@@ -635,8 +635,8 @@ module cuda_functions
      use, intrinsic :: iso_c_binding
      implicit none
 
-     integer(kind=C_intptr_t)                  :: a
-     integer(kind=c_intptr_t), intent(in)        :: width_height
+     integer(kind=c_intptr_t)                  :: a
+     integer(kind=c_intptr_t), intent(in)      :: width_height
      logical                                   :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
      success = cuda_malloc_c(a, width_height) /= 0
@@ -664,8 +664,8 @@ module cuda_functions
      use, intrinsic :: iso_c_binding
      implicit none
 
-      type(c_ptr)                    :: a
-     integer(kind=c_intptr_t), intent(in)        :: width_height
+     type(c_ptr)                               :: a
+     integer(kind=c_intptr_t), intent(in)      :: width_height
      logical                                   :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
      success = cuda_malloc_host_c(a, width_height) /= 0

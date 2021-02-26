@@ -73,6 +73,8 @@ function elpa_solve_evp_&
 #endif
    use precision
    use cuda_functions
+   use hip_functions
+   use elpa_gpu
    use mod_check_for_gpu
    use, intrinsic :: iso_c_binding
    use elpa_abstract_impl
@@ -294,11 +296,22 @@ function elpa_solve_evp_&
      obj%eigenvalues_only = .true.
    endif
 
-   call obj%get("nvidia-gpu",gpu,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem getting option for gpu. Aborting..."
-     stop
+   if (gpu_vendor() == NVIDIA_GPU) then
+     call obj%get("nvidia-gpu",gpu,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option for NVIDIA GPU. Aborting..."
+       stop
+     endif
+   else if (gpu_vendor() == AMD_GPU) then
+     call obj%get("amd-gpu",gpu,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option for AMD GPU. Aborting..."
+       stop
+     endif
+   else
+     gpu = 0
    endif
+
    if (gpu .eq. 1) then
      useGPU =.true.
    else
@@ -344,11 +357,7 @@ function elpa_solve_evp_&
      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = .true.
        ! set the neccessary parameters
-       cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-       cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-       cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-       cudaHostRegisterPortable = cuda_hostRegisterPortable()
-       cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+       call set_gpu_parameters()
      else
        print *,"GPUs are requested but not detected! Aborting..."
        success = .false.

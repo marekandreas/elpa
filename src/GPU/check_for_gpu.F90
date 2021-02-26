@@ -50,6 +50,7 @@ module mod_check_for_gpu
 
     function check_for_gpu(obj, myid, numberOfDevices, wantDebug) result(gpuAvailable)
       use cuda_functions
+      use hip_functions
       use precision
       use elpa_mpi
       use elpa_abstract_impl
@@ -109,19 +110,38 @@ module mod_check_for_gpu
           endif
         endif
 
+#ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_setdevice(use_gpu_id)
-
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+        success = hip_setdevice(use_gpu_id)
+#endif
         if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
           print *,"Cannot set CudaDevice"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+          print *,"Cannot set HIPDevice"
+#endif
           stop 1
         endif
         if (wantDebugMessage) then
           print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
         endif
           
+#ifdef WITH_NVIDIA_GPU_VERSION
         success = cublas_create(cublasHandle)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+        success = rocblas_create(cublasHandle)
+#endif
         if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
           print *,"Cannot create cublas handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+          print *,"Cannot create rocblas handle"
+#endif
           stop 1
         endif
       else
@@ -139,11 +159,21 @@ module mod_check_for_gpu
           endif
         endif
 
+#ifdef WITH_NVIDIA_GPU_VERSION
         ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
         success = cuda_getdevicecount(numberOfDevices)
-
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+        ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
+        success = hip_getdevicecount(numberOfDevices)
+#endif
         if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
           print *,"error in cuda_getdevicecount"
+#endif
+#ifdef WITH_AMPD_GPU_VERSION
+          print *,"error in hip_getdevicecount"
+#endif
           stop 1
         endif
 
@@ -171,19 +201,39 @@ module mod_check_for_gpu
           endif
 
           deviceNumber = mod(myid, numberOfDevices)
+#ifdef WITH_NIVDIA_GPU_VERSION
           success = cuda_setdevice(deviceNumber)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+          success = hip_setdevice(deviceNumber)
+#endif
 
           if (.not.(success)) then
+#ifdef WITH_NIVDIA_GPU_VERSION
             print *,"Cannot set CudaDevice"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+            print *,"Cannot set hipDevice"
+#endif
             stop 1
           endif
           if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
           endif
           
+#ifdef WITH_NIVDIA_GPU_VERSION
           success = cublas_create(cublasHandle)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+          success = rocblas_create(cublasHandle)
+#endif
           if (.not.(success)) then
+#ifdef WITH_NIVDIA_GPU_VERSION
             print *,"Cannot create cublas handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+            print *,"Cannot create rocblas handle"
+#endif
             stop 1
           endif
           

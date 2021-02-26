@@ -820,7 +820,7 @@ module hip_functions
 #endif
     end function hip_memcpy2d
 
- function cuda_hip_register(a, size, flag) result(success)
+ function hip_host_register(a, size, flag) result(success)
 
       use, intrinsic :: iso_c_binding
 
@@ -837,7 +837,7 @@ module hip_functions
 #endif
     end function
 
- function cuda_hip_unregister(a) result(success)
+ function hip_host_unregister(a) result(success)
 
       use, intrinsic :: iso_c_binding
 
