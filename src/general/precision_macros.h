@@ -95,6 +95,10 @@
 #undef  PRECISION_COPY
 #undef  PRECISION_AXPY
 #undef  PRECISION_GER
+#undef  gpublas_PRECISION_GEMM
+#undef  gpublas_PRECISION_TRMM
+#undef  gpublas_PRECISION_GEMV
+#undef  gpublas_PRECISION_SYMV
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
@@ -165,6 +169,10 @@
 #define  PRECISION_SCAL DSCAL
 #define  PRECISION_COPY DCOPY
 #define  PRECISION_AXPY DAXPY
+#define  gpublas_PRECISION_GEMM gpublas_DGEMM
+#define  gpublas_PRECISION_TRMM gpublas_DTRMM
+#define  gpublas_PRECISION_GEMV gpublas_DGEMV
+#define  gpublas_PRECISION_SYMV gpublas_DSYMV
 #define  cublas_PRECISION_GEMM cublas_DGEMM
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
@@ -232,6 +240,10 @@
 #define  PRECISION_SCAL SSCAL
 #define  PRECISION_COPY SCOPY
 #define  PRECISION_AXPY SAXPY
+#define  gpublas_PRECISION_GEMM gpublas_SGEMM
+#define  gpublas_PRECISION_TRMM gpublas_STRMM
+#define  gpublas_PRECISION_GEMV gpublas_SGEMV
+#define  gpublas_PRECISION_SYMV gpublas_SSYMV
 #define  cublas_PRECISION_GEMM cublas_SGEMM
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
@@ -312,6 +324,10 @@
 #undef  PRECISION_SCAL
 #undef  PRECISION_COPY
 #undef  PRECISION_AXPY
+#undef  gpublas_PRECISION_GEMM
+#undef  gpublas_PRECISION_TRMM
+#undef  gpublas_PRECISION_GEMV
+#undef  gpublas_PRECISION_SYMV
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
@@ -392,6 +408,10 @@
 #define  PRECISION_SCAL ZSCAL
 #define  PRECISION_COPY ZCOPY
 #define  PRECISION_AXPY ZAXPY
+#define  gpublas_PRECISION_GEMM gpublas_ZGEMM
+#define  gpublas_PRECISION_TRMM gpublas_ZTRMM
+#define  gpublas_PRECISION_GEMV gpublas_ZGEMV
+#define  gpublas_PRECISION_SYMV gpublas_ZSYMV
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
@@ -463,6 +483,10 @@
 #define  PRECISION_COPY CCOPY
 #define  PRECISION_AXPY CAXPY
 #define  PRECISION_GER CGER
+#define  gpublas_PRECISION_GEMM gpublas_CGEMM
+#define  gpublas_PRECISION_TRMM gpublas_CTRMM
+#define  gpublas_PRECISION_GEMV gpublas_CGEMV
+#define  gpublas_PRECISION_SYMV gpublas_CSYMV
 #define  cublas_PRECISION_GEMM cublas_CGEMM
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV

@@ -589,7 +589,7 @@ subroutine tridiag_&
 !$omp num_threads(max_threads) &
 !$omp default(none) &
 !$omp private(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end) &
-!$omp shared(useGPU, isSkewsymmetric, cudaMemcpyDeviceToHost, successCuda, u_row, u_row_dev, &
+!$omp shared(useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successCuda, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, a_offset, &
 !$omp&       max_local_cols, max_local_rows, obj, wantDebug, l_rows_per_tile, l_cols_per_tile, &
 !$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat)
@@ -680,14 +680,14 @@ subroutine tridiag_&
               ! this requires altering of the algorithm when later explicitly updating the matrix
               ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
               if (wantDebug) call obj%timer%start("cublas")
-              call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
+              call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
                                         ONE, a_dev, matrixRows,                   &
                                         v_row_dev , 1,                          &
                                         ONE, u_col_dev, 1)
 
        ! todo: try with non transposed!!!
 !                 if(i/=j) then
-!                   call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+!                   call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
 !                                             ONE, a_dev + a_offset, matrixRows,                        &
 !                                             v_col_dev + (l_col_beg - 1) *                      &
 !                                             size_of_datatype, 1,                          &
@@ -710,7 +710,7 @@ subroutine tridiag_&
                   a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                           size_of_datatype
 
-                  call cublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                  call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                               l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                               ONE, a_dev + a_offset, matrixRows,  &
                               v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
@@ -728,12 +728,12 @@ subroutine tridiag_&
                   a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                           size_of_datatype
                   if (isSkewsymmetric) then
-                     call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                     call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                  -ONE, a_dev + a_offset, matrixRows, &
                                  v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                                  ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
                   else
-                     call cublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                     call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                  ONE, a_dev + a_offset, matrixRows, &
                                  v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                                  ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
@@ -741,12 +741,12 @@ subroutine tridiag_&
               enddo
             end if !multiplication as one block / per stripes
 
-            successCUDA = cuda_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
-                          u_col_dev, l_cols * size_of_datatype, cudaMemcpyDeviceToHost)
+            successCUDA = gpu_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
+                          u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
 
-            successCUDA = cuda_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
-                          u_row_dev, l_rows * size_of_datatype, cudaMemcpyDeviceToHost)
+            successCUDA = gpu_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
+                          u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost)
             check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
           endif ! useGPU
 
@@ -899,7 +899,7 @@ subroutine tridiag_&
                ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                ! we than use the same calls as for CPU version
                if (wantDebug) call obj%timer%start("cublas")
-               call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+               call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                          l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
                                          ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
                                          size_of_datatype,  &
@@ -928,7 +928,7 @@ subroutine tridiag_&
              !update whole (remaining) part of matrix, including tiles below diagonal
              !we can do that in one large cublas call
              if (wantDebug) call obj%timer%start("cublas")
-             call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
+             call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
                                        ONE, vu_stored_rows_dev, max_local_rows, &
                                        uv_stored_cols_dev, max_local_cols,  &
                                        ONE, a_dev, matrixRows)

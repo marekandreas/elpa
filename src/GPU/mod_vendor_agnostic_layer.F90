@@ -225,5 +225,184 @@ module elpa_gpu
       endif
 
     end function
-    
+
+    subroutine gpublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_DOUBLE)             :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      endif
+    end subroutine
+
+    subroutine gpublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_FLOAT)              :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_dgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m,n,k
+      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
+      real(kind=C_DOUBLE)             :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, b, c
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_dgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_dgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+
+    end subroutine 
+
+
+    subroutine gpublas_sgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m,n,k
+      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
+      real(kind=C_FLOAT)              :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, b, c
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_sgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_sgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+
+
+    end subroutine
+
+    subroutine gpublas_zgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m,n,k
+      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
+      complex(kind=C_DOUBLE_COMPLEX)          :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, b, c
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_zgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_zgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_cgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m,n,k
+      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
+      complex(kind=C_FLOAT_COMPLEX)           :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, b, c
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_cgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_cgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+    end subroutine
+
+
 end module 
