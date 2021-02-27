@@ -641,28 +641,28 @@
 
         if (useGPU) then
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
-          successCUDA = cuda_host_register(int(loc(qtmp1),kind=c_intptr_t),num,&
-                        cudaHostRegisterDefault)
+          successCUDA = gpu_host_register(int(loc(qtmp1),kind=c_intptr_t),num,&
+                        gpuHostRegisterDefault)
           check_host_register_cuda("merge_systems: qtmp1", successCUDA)
 
-          successCUDA = cuda_malloc(qtmp1_dev, num)
+          successCUDA = gpu_malloc(qtmp1_dev, num)
           check_alloc_cuda("merge_systems: qtmp1_dev", successCUDA)
 
           num = (gemm_dim_l * gemm_dim_m) * size_of_datatype
-          successCUDA = cuda_host_register(int(loc(ev),kind=c_intptr_t),num,&
-                        cudaHostRegisterDefault)
+          successCUDA = gpu_host_register(int(loc(ev),kind=c_intptr_t),num,&
+                        gpuHostRegisterDefault)
           check_host_register_cuda("merge_systems: ev", successCUDA)
 
-          successCUDA = cuda_malloc(ev_dev, num)
+          successCUDA = gpu_malloc(ev_dev, num)
           check_alloc_cuda("merge_systems: ev_dev", successCUDA)
 
 
           num = (gemm_dim_k * gemm_dim_m) * size_of_datatype
-          successCUDA = cuda_host_register(int(loc(qtmp2),kind=c_intptr_t),num,&
-                        cudaHostRegisterDefault)
+          successCUDA = gpu_host_register(int(loc(qtmp2),kind=c_intptr_t),num,&
+                        gpuHostRegisterDefault)
           check_host_register_cuda("merge_systems: qtmp2", successCUDA)
 
-          successCUDA = cuda_malloc(qtmp2_dev, num)
+          successCUDA = gpu_malloc(qtmp2_dev, num)
           check_alloc_cuda("merge_systems: qtmp2_dev", successCUDA)
         endif
 
@@ -726,8 +726,8 @@
           endif
 
           if (useGPU) then
-            successCUDA = cuda_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
-                 gemm_dim_k * gemm_dim_l  * size_of_datatype, cudaMemcpyHostToDevice)
+            successCUDA = gpu_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
+                 gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice)
             check_memcpy_cuda("merge_systems: qtmp1_dev", successCUDA)
           endif
 
@@ -791,14 +791,14 @@
 
             if(useGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
-              successCUDA = cuda_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
-                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
+              successCUDA = gpu_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
+                                 gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
 
               !TODO the previous loop could be possible to do on device and thus
               !copy less
-              successCUDA = cuda_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
-                                 gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
+              successCUDA = gpu_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
+                                 gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
             endif
 
@@ -807,7 +807,7 @@
             if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
               if (useGPU) then
                 call obj%timer%start("cublas")
-                call cublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
+                call gpublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
                                     1.0_rk, qtmp1_dev, ubound(qtmp1,dim=1),    &
                                     ev_dev, ubound(ev,dim=1), &
                                     1.0_rk, qtmp2_dev, ubound(qtmp2,dim=1))
@@ -842,8 +842,8 @@
             if(useGPU) then
               !TODO the previous loop could be possible to do on device and thus
               !copy less
-              successCUDA = cuda_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
-                                 gemm_dim_l * gemm_dim_m * size_of_datatype, cudaMemcpyHostToDevice)
+              successCUDA = gpu_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
+                                 gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
               check_memcpy_cuda("merge_systems: ev_dev", successCUDA)
             endif
 
@@ -852,7 +852,7 @@
             if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) then
               if (useGPU) then
                 call obj%timer%start("cublas")
-                call cublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
+                call gpublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
                                     1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
                                     ev_dev, ubound(ev,dim=1), &
                                     1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1))
@@ -873,8 +873,8 @@
             if(useGPU) then
               !TODO either copy only half of the matrix here, and get rid of the
               !previous copy or copy whole array here
-              successCUDA = cuda_memcpy(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
-                                 gemm_dim_k * gemm_dim_m * size_of_datatype, cudaMemcpyDeviceToHost)
+              successCUDA = gpu_memcpy(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
+                                 gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyDeviceToHost)
               check_memcpy_cuda("merge_systems: qtmp2_dev", successCUDA)
             endif
 
@@ -888,22 +888,22 @@
         enddo    !do np = 1, npc_n
 
         if(useGPU) then
-          successCUDA = cuda_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
+          successCUDA = gpu_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
           check_host_unregister_cuda("merge_systems: qtmp1", successCUDA)
 
-          successCUDA = cuda_free(qtmp1_dev)
+          successCUDA = gpu_free(qtmp1_dev)
           check_dealloc_cuda("merge_systems: qtmp1_dev", successCUDA)
           
-          successCUDA = cuda_host_unregister(int(loc(qtmp2),kind=c_intptr_t))
+          successCUDA = gpu_host_unregister(int(loc(qtmp2),kind=c_intptr_t))
           check_host_unregister_cuda("merge_systems: qtmp2", successCUDA)
 
-          successCUDA = cuda_free(qtmp2_dev)
+          successCUDA = gpu_free(qtmp2_dev)
           check_dealloc_cuda("merge_systems: qtmp2_dev", successCUDA)
 
-          successCUDA = cuda_host_unregister(int(loc(ev),kind=c_intptr_t))
+          successCUDA = gpu_host_unregister(int(loc(ev),kind=c_intptr_t))
           check_host_unregister_cuda("merge_systems: ev", successCUDA)
 
-          successCUDA = cuda_free(ev_dev)
+          successCUDA = gpu_free(ev_dev)
           check_dealloc_cuda("merge_systems: ev_dev", successCUDA)
         endif
 
