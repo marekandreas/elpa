@@ -367,10 +367,20 @@
     wantDebug = debug == 1
 
     ! GPU settings
-    call obj%get("nvidia-gpu", gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option gpu settings. Aborting..."
-      stop
+    if (gpu_vendor() == NVIDIA_GPU) then
+      call obj%get("nvidia-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for NVIDIA GPU. Aborting..."
+        stop
+      endif
+    else if (gpu_vendor() == AMD_GPU) then
+      call obj%get("amd-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for AMD GPU. Aborting..."
+        stop
+      endif
+    else
+      gpu = 0
     endif
 
     useGPU = (gpu == 1)
@@ -379,15 +389,10 @@
     if (useGPU) then
       call obj%timer%start("check_for_gpu")
       if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
+        do_useGPU = .true.
+        ! set the neccessary parameters
+        call set_gpu_parameters()
 
-         do_useGPU = .true.
-
-         ! set the neccessary parameters
-         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-         cudaHostRegisterPortable = cuda_hostRegisterPortable()
-         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
       else
         print *,"GPUs are requested but not detected! Aborting..."
         success = .false.

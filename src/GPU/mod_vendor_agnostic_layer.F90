@@ -236,6 +236,33 @@ module elpa_gpu
 
     end function
 
+
+    function gpu_memcpy2d(dst, dpitch, src, spitch, width, height , dir) result(success)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+
+      integer(kind=C_intptr_T)           :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      integer(kind=C_intptr_T)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      logical                            :: success
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy2d(dst, dpitch, src, spitch, width, height , dir)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_memcpy2d(dst, dpitch, src, spitch, width, height , dir)
+      endif
+    end function
+
     subroutine gpublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
       use, intrinsic :: iso_c_binding
       use cuda_functions

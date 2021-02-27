@@ -289,15 +289,15 @@ max_threads)
 #endif /* WITH_MPI */
 
     ! Here we convert the regular host array into a pinned host array
-    successCUDA = cuda_malloc(a_dev, lda*na_cols* size_of_datatype)
+    successCUDA = gpu_malloc(a_dev, lda*na_cols* size_of_datatype)
     check_alloc_cuda("bandred: a_dev", successCUDA)
 
-    successCUDA = cuda_host_register(int(loc(vav),kind=c_intptr_t), &
+    successCUDA = gpu_host_register(int(loc(vav),kind=c_intptr_t), &
                   nbw * nbw * size_of_datatype,&
-                  cudaHostRegisterDefault)
+                  gpuHostRegisterDefault)
     check_host_register_cuda("bandred: vav", successCUDA)
 
-    successCUDA = cuda_malloc(vav_dev, nbw*nbw* size_of_datatype)
+    successCUDA = gpu_malloc(vav_dev, nbw*nbw* size_of_datatype)
     check_alloc_cuda("bandred: vav_dev", successCUDA)
   endif ! useGPU
 
@@ -371,18 +371,18 @@ max_threads)
   blk_end = (na-1)/nbw
   if (useGPU) then
 
-    successCUDA = cuda_host_register(int(loc(a_mat),kind=c_intptr_t), &
-                  lda*na_cols*size_of_datatype, cudaHostRegisterDefault)
+    successCUDA = gpu_host_register(int(loc(a_mat),kind=c_intptr_t), &
+                  lda*na_cols*size_of_datatype, gpuHostRegisterDefault)
     check_host_register_cuda("bandred: a_mat", successCUDA)
 
     cur_l_rows = 0
     cur_l_cols = 0
 
-    successCUDA = cuda_memcpy(a_dev, int(loc(a_mat),kind=c_intptr_t), &
-                  lda*na_cols*size_of_datatype, cudaMemcpyHostToDevice)
+    successCUDA = gpu_memcpy(a_dev, int(loc(a_mat),kind=c_intptr_t), &
+                  lda*na_cols*size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_cuda("bandred: a_dev", successCUDA)
 
-    successCUDA = cuda_malloc(tmat_dev, nbw*nbw*size_of_datatype)
+    successCUDA = gpu_malloc(tmat_dev, nbw*nbw*size_of_datatype)
     check_alloc_cuda("bandred: tmat_dev", successCUDA)
 
     istep = (na-1)/nbw
@@ -416,18 +416,18 @@ max_threads)
       stop 1
     endif
 
-    successCUDA = cuda_malloc_host(vmr_host,vmr_size*size_of_datatype)
+    successCUDA = gpu_malloc_host(vmr_host,vmr_size*size_of_datatype)
     check_host_alloc_cuda("bandred: vmr_host", successCUDA)
     call c_f_pointer(vmr_host, vmrCUDA, (/vmr_size/))
 
-    successCUDA = cuda_malloc(vmr_dev, vmr_size*size_of_datatype)
+    successCUDA = gpu_malloc(vmr_dev, vmr_size*size_of_datatype)
     check_alloc_cuda("bandred: vmr_dev", successCUDA)
 
-    successCUDA = cuda_malloc_host(umc_host,umc_size*size_of_datatype)
+    successCUDA = gpu_malloc_host(umc_host,umc_size*size_of_datatype)
     check_host_alloc_cuda("bandred: umc_host", successCUDA)
     call c_f_pointer(umc_host, umcCUDA, (/umc_size/))
 
-    successCUDA = cuda_malloc(umc_dev, umc_size*size_of_datatype)
+    successCUDA = gpu_malloc(umc_dev, umc_size*size_of_datatype)
     check_alloc_cuda("bandred: umc_dev", successCUDA)
 
   endif ! useGPU
@@ -494,12 +494,12 @@ max_threads)
       enddo
 
       if (do_memcpy) then
-        successCUDA = cuda_memcpy2d(int(loc(a_mat(1, lc_start)),kind=c_intptr_t), &
+        successCUDA = gpu_memcpy2d(int(loc(a_mat(1, lc_start)),kind=c_intptr_t), &
                       int((lda*size_of_datatype),kind=c_intptr_t), &
                       (a_dev + int( ( (lc_start-1) * lda*size_of_datatype),kind=c_intptr_t )), &
                       int(lda*size_of_datatype,kind=c_intptr_t), &
                       int(lr_end*size_of_datatype,kind=c_intptr_t), &
-                      int((lc_end - lc_start+1),kind=c_intptr_t),int(cudaMemcpyDeviceToHost,kind=c_int))
+                      int((lc_end - lc_start+1),kind=c_intptr_t),int(gpuMemcpyDeviceToHost,kind=c_int))
 
         check_memcpy_cuda("bandred: a_dev -> a_mat", successCUDA)
       endif
@@ -797,13 +797,13 @@ max_threads)
       if (useGPU_reduction_lower_block_to_tridiagonal) then
         ! store column tiles back to GPU
         if (do_memcpy) then
-          successCUDA = cuda_memcpy2d((a_dev+ &
+          successCUDA = gpu_memcpy2d((a_dev+ &
                         int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)), &
                         int(lda*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
                         int(lda*size_of_datatype,kind=c_intptr_t), &
                         int(lr_end*size_of_datatype,kind=c_intptr_t), &
                         int((lc_end - lc_start+1),kind=c_intptr_t), &
-                        int(cudaMemcpyHostToDevice,kind=c_int))
+                        int(gpuMemcpyHostToDevice,kind=c_int))
           check_memcpy_cuda("bandred: a_mat -> a_dev", successCUDA)
         endif
       endif
@@ -873,13 +873,13 @@ max_threads)
       ! qr worked on *CPU arrarys
       !vmrCUDA(1:cur_l_rows * n_cols) = vmrCPU(1:cur_l_rows,1:n_cols)
       if (do_memcpy) then
-        successCUDA = cuda_memcpy2d((a_dev+ &
+        successCUDA = gpu_memcpy2d((a_dev+ &
                       int(((lc_start-1)*lda*size_of_datatype),kind=c_intptr_t)), &
                       int(lda*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
                       int(lda*size_of_datatype,kind=c_intptr_t), &
                       int(lr_end*size_of_datatype,kind=c_intptr_t), &
                       int((lc_end - lc_start+1),kind=c_intptr_t), &
-                      int(cudaMemcpyHostToDevice,kind=c_int))
+                      int(gpuMemcpyHostToDevice,kind=c_int))
         check_memcpy_cuda("bandred: a_mat -> a_dev", successCUDA)
       endif
 
@@ -1038,21 +1038,21 @@ max_threads)
       if (l_cols>0 .and. l_rows>0) then
 
         if (useGPU) then
-          successCUDA = cuda_memset(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
+          successCUDA = gpu_memset(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
                         0, cur_l_rows*n_cols*size_of_datatype)
           check_memset_cuda("bandred: vmr_dev", successCUDA)
 
-          successCUDA = cuda_memcpy(vmr_dev, int(loc(vmrCUDA(1)),kind=c_intptr_t), &
-                        cur_l_rows*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
+          successCUDA = gpu_memcpy(vmr_dev, int(loc(vmrCUDA(1)),kind=c_intptr_t), &
+                        cur_l_rows*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_cuda("bandred: vmrCUDA -> vmr_dev", successCUDA)
 
-          successCUDA = cuda_memset(umc_dev, 0, l_cols*n_cols*size_of_datatype)
+          successCUDA = gpu_memset(umc_dev, 0, l_cols*n_cols*size_of_datatype)
           check_memset_cuda("bandred: umc_dev", successCUDA)
 
-          successCUDA = cuda_memcpy(umc_dev+l_cols*n_cols*size_of_datatype, &
+          successCUDA = gpu_memcpy(umc_dev+l_cols*n_cols*size_of_datatype, &
                         int(loc(umcCUDA(1+l_cols*n_cols)),kind=c_intptr_t), &
                         (umc_size-l_cols*n_cols)*size_of_datatype, &
-                        cudaMemcpyHostToDevice)
+                        gpuMemcpyHostToDevice)
           check_memcpy_cuda("bandred: umcCUDA -> umc_dev", successCUDA)
         endif ! useGPU
 
@@ -1065,7 +1065,7 @@ max_threads)
 
           if (useGPU) then
             call obj%timer%start("cublas")
-            call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
+            call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
                                        lce-lcs+1, n_cols, lre,     &
                                        ONE, (a_dev + ((lcs-1)*lda* &
                                        size_of_datatype)),         &
@@ -1081,7 +1081,7 @@ max_threads)
 
             lre = min(l_rows,i*l_rows_tile)
             if (isSkewsymmetric) then
-              call cublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, -ONE, &
+              call gpublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, -ONE, &
                             (a_dev+ ((lcs-1)*lda*                 &
                                   size_of_datatype)),             &
                        lda, (umc_dev+(cur_l_cols * n_cols+lcs-1)* &
@@ -1090,7 +1090,7 @@ max_threads)
                             size_of_datatype),              &
                               cur_l_rows)
             else
-              call cublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
+              call gpublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
                                           (a_dev+ ((lcs-1)*lda*                 &
                                                 size_of_datatype)),             &
                                      lda, (umc_dev+(cur_l_cols * n_cols+lcs-1)* &
@@ -1131,14 +1131,14 @@ max_threads)
 
         if (useGPU) then
           if (tile_size < istep*nbw .or. n_way > 1) then
-            successCUDA = cuda_memcpy(int(loc(vmrCUDA(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
+            successCUDA = gpu_memcpy(int(loc(vmrCUDA(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
                           vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
-                          (vmr_size-cur_l_rows*n_cols)*size_of_datatype, cudaMemcpyDeviceToHost)
+                          (vmr_size-cur_l_rows*n_cols)*size_of_datatype, gpuMemcpyDeviceToHost)
             check_memcpy_cuda("bandred: vmr_dev -> vmrCUDA", successCUDA)
           endif
 
-          successCUDA = cuda_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
-                        umc_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
+          successCUDA = gpu_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
+                        umc_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_cuda("bandred: umc_dev -> umcCUDA", successCUDA)
         endif ! useGPU
       endif ! l_cols>0 .and. l_rows>0
@@ -1217,32 +1217,32 @@ max_threads)
     ! U = U * Tmat**T
 
     if (useGPU) then
-      successCUDA = cuda_memcpy(umc_dev, int(loc(umcCUDA(1)),kind=c_intptr_t), &
-                    l_cols*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
+      successCUDA = gpu_memcpy(umc_dev, int(loc(umcCUDA(1)),kind=c_intptr_t), &
+                    l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_cuda("bandred: umcCUDA -> umc_dev ", successCUDA)
 
-      successCUDA = cuda_memcpy(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
-                    nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+      successCUDA = gpu_memcpy(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
+                    nbw*nbw*size_of_datatype,gpuMemcpyHostToDevice)
       check_memcpy_cuda("bandred: tmat -> tmat_dev ", successCUDA)
 
       call obj%timer%start("cublas")
-      call cublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
+      call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
                             l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
       call obj%timer%stop("cublas")
 
       ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
       call obj%timer%start("cublas")
-      call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',             &
+      call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',             &
                                  n_cols, n_cols, l_cols, ONE, umc_dev, cur_l_cols, &
                                  (umc_dev+(cur_l_cols * n_cols )*size_of_datatype),cur_l_cols, &
                                  ZERO, vav_dev, nbw)
 
-      call cublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
+      call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
            n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
       call obj%timer%stop("cublas")
 
-      successCUDA = cuda_memcpy(int(loc(vav),kind=c_intptr_t), &
-                    vav_dev, nbw*nbw*size_of_datatype, cudaMemcpyDeviceToHost)
+      successCUDA = gpu_memcpy(int(loc(vav),kind=c_intptr_t), &
+                    vav_dev, nbw*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_cuda("bandred: vav_dev -> vav ", successCUDA)
     else ! useGPU
 
@@ -1289,8 +1289,8 @@ max_threads)
 #endif
 
     if (useGPU) then
-      successCUDA = cuda_memcpy(vav_dev, int(loc(vav),kind=c_intptr_t), &
-                       nbw*nbw*size_of_datatype,cudaMemcpyHostToDevice)
+      successCUDA = gpu_memcpy(vav_dev, int(loc(vav),kind=c_intptr_t), &
+                       nbw*nbw*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_cuda("bandred: vav -> vav_dev ", successCUDA)
     endif
 
@@ -1299,7 +1299,7 @@ max_threads)
     if (useGPU) then
         call obj%timer%start("cublas")
       if (isSkewsymmetric) then
-        call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
+        call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
                                     0.5_rk,                      &
 #endif
@@ -1311,7 +1311,7 @@ max_threads)
                                     cur_l_cols, vav_dev,nbw,        &
                                     ONE, umc_dev, cur_l_cols)
       else
-        call cublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
+        call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
                                    -0.5_rk,                      &
 #endif
@@ -1325,8 +1325,8 @@ max_threads)
       endif
       call obj%timer%stop("cublas")
 
-      successCUDA = cuda_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
-                    umc_dev, umc_size*size_of_datatype, cudaMemcpyDeviceToHost)
+      successCUDA = gpu_memcpy(int(loc(umcCUDA(1)),kind=c_intptr_t), &
+                    umc_dev, umc_size*size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_cuda("bandred: umc_dev -> umcCUDA ", successCUDA)
 
       ! Transpose umc -> umr (stored in vmr, second half)
@@ -1348,9 +1348,9 @@ max_threads)
                           1, istep*nbw, n_cols, nblk, max_threads)
       endif
 
-      successCUDA = cuda_memcpy(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
+      successCUDA = gpu_memcpy(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
                     int(loc(vmrCUDA(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
-                    (vmr_size-cur_l_rows*n_cols)*size_of_datatype, cudaMemcpyHostToDevice)
+                    (vmr_size-cur_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_cuda("bandred: vmr -> vmrCUDA ", successCUDA)
 
     else ! useGPU
@@ -1438,7 +1438,7 @@ max_threads)
         endif
         call obj%timer%start("cublas")
 
-        call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
+        call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
                                    lce-lcs+1, 2*n_cols, -ONE, &
                                    vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
                                    size_of_datatype), &
@@ -1468,7 +1468,7 @@ max_threads)
       if (useGPU) then
         call obj%timer%start("cublas")
 
-        call cublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+        call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                    lre, lce-lcs+1, 2*n_cols, -ONE, &
                                    vmr_dev, cur_l_rows, (umc_dev +(lcs-1)*  &
                                    size_of_datatype), &
@@ -1515,44 +1515,44 @@ max_threads)
     ! (band to tridi). Previously, a has been kept on the device and then
     ! copied in redist_band (called from tridiag_band). However, it seems to
     ! be easier to do it here.
-    successCUDA = cuda_memcpy(int(loc(a_mat),kind=c_intptr_t), &
+    successCUDA = gpu_memcpy(int(loc(a_mat),kind=c_intptr_t), &
                   int(a_dev,kind=c_intptr_t), &
                   int(lda*matrixCols* size_of_datatype, kind=c_intptr_t), &
-                  cudaMemcpyDeviceToHost)
+                  gpuMemcpyDeviceToHost)
     check_memcpy_cuda("bandred: a_dev -> a_mat ", successCUDA)
 
-    successCUDA = cuda_host_unregister(int(loc(a_mat),kind=c_intptr_t))
+    successCUDA = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
     check_host_unregister_cuda("bandred: a_mat ", successCUDA)
 
-    successCUDA = cuda_free(a_dev)
+    successCUDA = gpu_free(a_dev)
     check_dealloc_cuda("bandred: a_dev ", successCUDA)
 
-    successCUDA = cuda_free(vav_dev)
+    successCUDA = gpu_free(vav_dev)
     check_dealloc_cuda("bandred: vav_dev ", successCUDA)
 
-    successCUDA = cuda_free(tmat_dev)
+    successCUDA = gpu_free(tmat_dev)
     check_dealloc_cuda("bandred: tmat_dev ", successCUDA)
 
-    successCUDA = cuda_host_unregister(int(loc(vav),kind=c_intptr_t))
+    successCUDA = gpu_host_unregister(int(loc(vav),kind=c_intptr_t))
     check_host_unregister_cuda("bandred: vav", successCUDA)
 
     if (associated(umcCUDA)) then
       nullify(umcCUDA)
 
-      successCUDA = cuda_free_host(umc_host)
+      successCUDA = gpu_free_host(umc_host)
       check_host_dealloc_cuda("bandred: umc_host ", successCUDA)
 
-      successCUDA = cuda_free(umc_dev)
+      successCUDA = gpu_free(umc_dev)
       check_dealloc_cuda("bandred: umc_dev ", successCUDA)
     endif
 
     if (associated(vmrCUDA)) then
       nullify(vmrCUDA)
 
-      successCUDA = cuda_free_host(vmr_host)
+      successCUDA = gpu_free_host(vmr_host)
       check_host_dealloc_cuda("bandred: vmr_host ", successCUDA)
 
-      successCUDA = cuda_free(vmr_dev)
+      successCUDA = gpu_free(vmr_dev)
       check_dealloc_cuda("bandred: vmr_dev ", successCUDA)
     endif
   endif ! useGPU
