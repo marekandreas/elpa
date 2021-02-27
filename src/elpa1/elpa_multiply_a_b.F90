@@ -60,6 +60,8 @@
   use elpa_abstract_impl
   use, intrinsic :: iso_c_binding
   use cuda_functions
+  use hip_functions
+  use elpa_gpu
   use mod_check_for_gpu
   use elpa_blas_interfaces
   implicit none

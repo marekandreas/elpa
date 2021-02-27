@@ -59,6 +59,8 @@ subroutine redist_band_&
   use precision
   use, intrinsic :: iso_c_binding
   use cuda_functions
+  use hip_functions
+  use elpa_gpu
   use elpa_utilities, only : local_index, check_allocate_f, check_deallocate_f
   use elpa_mpi
   implicit none

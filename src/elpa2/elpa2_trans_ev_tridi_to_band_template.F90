@@ -92,6 +92,8 @@ subroutine trans_ev_tridi_to_band_&
   use pack_unpack_gpu
   use compute_hh_trafo
   use cuda_functions
+  use hip_functions
+  use elpa_gpu
   use precision
   use, intrinsic :: iso_c_binding
 #ifdef WITH_OPENMP_TRADITIONAL

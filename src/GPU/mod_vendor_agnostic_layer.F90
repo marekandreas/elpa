@@ -1,5 +1,6 @@
 #include "config-f90.h"
 module elpa_gpu
+  use precision
   use iso_c_binding
 
   integer(kind=c_int), parameter :: nvidia_gpu = 1
@@ -13,6 +14,15 @@ module elpa_gpu
   integer(kind=c_int)            :: gpuHostRegisterMapped
   integer(kind=c_int)            :: gpuHostRegisterPortable
 
+  integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
+#ifdef WANT_SINGLE_PRECISION_REAL
+  integer(kind=c_intptr_t), parameter :: size_of_single_real    = 4_rk4
+#endif
+
+  integer(kind=c_intptr_t), parameter :: size_of_double_complex = 16_ck8
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
+#endif
   contains
     function gpu_vendor() result(vendor)
       use precision
@@ -401,6 +411,100 @@ module elpa_gpu
 
       if (use_gpu_vendor == amd_gpu) then
         call rocblas_cgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      endif
+    end subroutine
+
+
+    subroutine gpublas_dtrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE)             :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_dtrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_dtrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+    end subroutine
+
+
+    subroutine gpublas_strmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT)              :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_strmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_strmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+    end subroutine
+
+
+
+    subroutine gpublas_ztrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX)          :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_ztrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_ztrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+    end subroutine
+
+
+    subroutine gpublas_ctrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX)           :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_ctrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_ctrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
     end subroutine
 

@@ -80,6 +80,8 @@
    use elpa2_compute
    use elpa_mpi
    use cuda_functions
+   use hip_functions
+   use elpa_gpu
    use mod_check_for_gpu
    use elpa_omp
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT

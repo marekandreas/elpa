@@ -69,6 +69,8 @@ module matrix_plot
 
     subroutine prmat(na, useGpu, a_mat, a_dev, lda, matrixCols, nblk, my_prow, my_pcol, np_rows, np_cols, name, iteration)
       use cuda_functions
+      use hip_functions
+      use elpa_gpu
       use, intrinsic :: iso_c_binding
       use precision
       implicit none

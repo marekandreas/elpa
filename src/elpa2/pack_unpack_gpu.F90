@@ -52,6 +52,8 @@ subroutine pack_row_group_&
                                        rows, n_offset, row_count)
   use cuda_c_kernel
   use cuda_functions
+  use hip_functions
+  use elpa_gpu
   use precision
   use, intrinsic :: iso_c_binding
   implicit none
@@ -112,6 +114,8 @@ end subroutine
       use precision
       use, intrinsic :: iso_c_binding
       use cuda_functions
+      use hip_functions
+      use elpa_gpu
       implicit none
       integer(kind=c_intptr_t)                     :: row_group_dev, a_dev
       integer(kind=ik), intent(in)                 :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev

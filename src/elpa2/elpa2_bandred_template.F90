@@ -101,6 +101,8 @@ max_threads)
 !-------------------------------------------------------------------------------
 
   use cuda_functions
+  use hip_functions
+  use elpa_gpu
   use, intrinsic :: iso_c_binding
   use elpa1_compute
 #ifdef WITH_OPENMP_TRADITIONAL

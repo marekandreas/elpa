@@ -107,6 +107,8 @@ last_stripe_width, kernel)
 
   use cuda_c_kernel
   use cuda_functions
+  use hip_functions
+  use elpa_gpu
 
   use elpa_generated_fortran_interfaces
 
