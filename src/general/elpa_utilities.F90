@@ -62,9 +62,9 @@ module ELPA_utilities
   private ! By default, all routines contained are private
 
   public :: output_unit, error_unit
-  public :: check_alloc, check_alloc_CUDA_f, check_memcpy_CUDA_f, check_dealloc_CUDA_f
-  public :: check_host_alloc_CUDA_f, check_host_dealloc_CUDA_f, check_host_register_CUDA_f, check_host_unregister_CUDA_f
-  public :: check_memset_cuda_f
+  public :: check_alloc, check_alloc_GPU_f, check_memcpy_GPU_f, check_dealloc_GPU_f
+  public :: check_host_alloc_GPU_f, check_host_dealloc_GPU_f, check_host_register_GPU_f, check_host_unregister_GPU_f
+  public :: check_memset_GPU_f
   public :: check_allocate_f, check_deallocate_f
   public :: map_global_array_index_to_local_index
   public :: pcol, prow
@@ -169,8 +169,8 @@ module ELPA_utilities
     endif
  end subroutine
 
- subroutine check_alloc_CUDA_f(file_name, line, successGPU)
-
+ subroutine check_alloc_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
     implicit none
 
     character(len=*), intent(in)    :: file_name
@@ -178,13 +178,18 @@ module ELPA_utilities
     logical                         :: successGPU
 
     if (.not.(successGPU)) then
-      print *, file_name, ":", line,  " error in cuda_malloc when allocating "
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_malloc when allocating "
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_malloc when allocating "
+      endif
       stop 1
     endif
  end subroutine
 
- subroutine check_dealloc_CUDA_f(file_name, line, successGPU)
-
+ subroutine check_dealloc_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
     implicit none
 
     character(len=*), intent(in)    :: file_name
@@ -192,13 +197,18 @@ module ELPA_utilities
     logical                         :: successGPU
 
     if (.not.(successGPU)) then
-      print *, file_name, ":", line,  " error in cuda_free when deallocating "
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_free when deallocating "
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_free when deallocating "
+      endif
       stop 1
     endif
  end subroutine
 
- subroutine check_memcpy_CUDA_f(file_name, line, successGPU)
-
+ subroutine check_memcpy_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
     implicit none
 
     character(len=*), intent(in)    :: file_name
@@ -206,13 +216,18 @@ module ELPA_utilities
     logical                         :: successGPU
 
     if (.not.(successGPU)) then
-      print *, file_name, ":", line,  " error in cuda_memcpy when copying "
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_memcpy when copying "
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_memcpy when copying "
+      endif
       stop 1
     endif
  end subroutine
 
- subroutine check_host_alloc_CUDA_f(file_name, line, successGPU)
-
+ subroutine check_host_alloc_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
     implicit none
 
     character(len=*), intent(in)    :: file_name
@@ -220,13 +235,18 @@ module ELPA_utilities
     logical                         :: successGPU
 
     if (.not.(successGPU)) then
-      print *, file_name, ":", line,  " error in cuda_alloc_host when allocating "
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_alloc_host when allocating "
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_alloc_host when allocating "
+      endif
       stop 1
     endif
  end subroutine
 
- subroutine check_host_dealloc_CUDA_f(file_name, line, successGPU)
-
+ subroutine check_host_dealloc_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
     implicit none
 
     character(len=*), intent(in)    :: file_name
@@ -234,13 +254,18 @@ module ELPA_utilities
     logical                         :: successGPU
 
     if (.not.(successGPU)) then
-      print *, file_name, ":", line,  " error in cuda_free_host when deallocating "
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_free_host when deallocating "
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_free_host when deallocating "
+      endif
       stop 1
     endif
  end subroutine
 
- subroutine check_host_register_CUDA_f(file_name, line, successGPU)
-
+ subroutine check_host_register_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
     implicit none
 
     character(len=*), intent(in)    :: file_name
@@ -248,13 +273,18 @@ module ELPA_utilities
     logical                         :: successGPU
 
     if (.not.(successGPU)) then
-      print *, file_name, ":", line,  " error in cuda_host_register when registering "
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_host_register when registering "
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_host_register when registering "
+      endif
       stop 1
     endif
  end subroutine
 
- subroutine check_host_unregister_CUDA_f(file_name, line, successGPU)
-
+ subroutine check_host_unregister_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
     implicit none
 
     character(len=*), intent(in)    :: file_name
@@ -262,13 +292,18 @@ module ELPA_utilities
     logical                         :: successGPU
 
     if (.not.(successGPU)) then
-      print *, file_name, ":", line,  " error in cuda_host_unregister when unregistering "
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_host_unregister when unregistering "
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_host_unregister when unregistering "
+      endif
       stop 1
     endif
  end subroutine
 
- subroutine check_memset_CUDA_f(file_name, line, successGPU)
-
+ subroutine check_memset_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
     implicit none
 
     character(len=*), intent(in)    :: file_name
@@ -276,7 +311,12 @@ module ELPA_utilities
     logical                         :: successGPU
 
     if (.not.(successGPU)) then
-      print *, file_name, ":", line,  " error in cuda_memset "
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_memset "
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_memset "
+      endif
       stop 1
     endif
  end subroutine

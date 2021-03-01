@@ -643,27 +643,27 @@
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
           successGPU = gpu_host_register(int(loc(qtmp1),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
-          check_host_register_cuda("merge_systems: qtmp1", successGPU)
+          check_host_register_gpu("merge_systems: qtmp1", successGPU)
 
           successGPU = gpu_malloc(qtmp1_dev, num)
-          check_alloc_cuda("merge_systems: qtmp1_dev", successGPU)
+          check_alloc_gpu("merge_systems: qtmp1_dev", successGPU)
 
           num = (gemm_dim_l * gemm_dim_m) * size_of_datatype
           successGPU = gpu_host_register(int(loc(ev),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
-          check_host_register_cuda("merge_systems: ev", successGPU)
+          check_host_register_gpu("merge_systems: ev", successGPU)
 
           successGPU = gpu_malloc(ev_dev, num)
-          check_alloc_cuda("merge_systems: ev_dev", successGPU)
+          check_alloc_gpu("merge_systems: ev_dev", successGPU)
 
 
           num = (gemm_dim_k * gemm_dim_m) * size_of_datatype
           successGPU = gpu_host_register(int(loc(qtmp2),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
-          check_host_register_cuda("merge_systems: qtmp2", successGPU)
+          check_host_register_gpu("merge_systems: qtmp2", successGPU)
 
           successGPU = gpu_malloc(qtmp2_dev, num)
-          check_alloc_cuda("merge_systems: qtmp2_dev", successGPU)
+          check_alloc_gpu("merge_systems: qtmp2_dev", successGPU)
         endif
 
         ! Gather nonzero upper/lower components of old matrix Q
@@ -728,7 +728,7 @@
           if (useGPU) then
             successGPU = gpu_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice)
-            check_memcpy_cuda("merge_systems: qtmp1_dev", successGPU)
+            check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
           endif
 
           ! Gather the parts in d1 and z which are fitting to qtmp1.
@@ -793,13 +793,13 @@
               !TODO: it should be enough to copy l_rows x ncnt
               successGPU = gpu_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
-              check_memcpy_cuda("merge_systems: qtmp2_dev", successGPU)
+              check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
 
               !TODO the previous loop could be possible to do on device and thus
               !copy less
               successGPU = gpu_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
-              check_memcpy_cuda("merge_systems: ev_dev", successGPU)
+              check_memcpy_gpu("merge_systems: ev_dev", successGPU)
             endif
 
             ! Multiply old Q with eigenvectors (upper half)
@@ -844,7 +844,7 @@
               !copy less
               successGPU = gpu_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
-              check_memcpy_cuda("merge_systems: ev_dev", successGPU)
+              check_memcpy_gpu("merge_systems: ev_dev", successGPU)
             endif
 
             ! Multiply old Q with eigenvectors (lower half)
@@ -875,7 +875,7 @@
               !previous copy or copy whole array here
               successGPU = gpu_memcpy(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyDeviceToHost)
-              check_memcpy_cuda("merge_systems: qtmp2_dev", successGPU)
+              check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
             endif
 
              ! Put partial result into (output) Q
@@ -889,22 +889,22 @@
 
         if(useGPU) then
           successGPU = gpu_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
-          check_host_unregister_cuda("merge_systems: qtmp1", successGPU)
+          check_host_unregister_gpu("merge_systems: qtmp1", successGPU)
 
           successGPU = gpu_free(qtmp1_dev)
-          check_dealloc_cuda("merge_systems: qtmp1_dev", successGPU)
+          check_dealloc_gpu("merge_systems: qtmp1_dev", successGPU)
           
           successGPU = gpu_host_unregister(int(loc(qtmp2),kind=c_intptr_t))
-          check_host_unregister_cuda("merge_systems: qtmp2", successGPU)
+          check_host_unregister_gpu("merge_systems: qtmp2", successGPU)
 
           successGPU = gpu_free(qtmp2_dev)
-          check_dealloc_cuda("merge_systems: qtmp2_dev", successGPU)
+          check_dealloc_gpu("merge_systems: qtmp2_dev", successGPU)
 
           successGPU = gpu_host_unregister(int(loc(ev),kind=c_intptr_t))
-          check_host_unregister_cuda("merge_systems: ev", successGPU)
+          check_host_unregister_gpu("merge_systems: ev", successGPU)
 
           successGPU = gpu_free(ev_dev)
-          check_dealloc_cuda("merge_systems: ev_dev", successGPU)
+          check_dealloc_gpu("merge_systems: ev_dev", successGPU)
         endif
 
         deallocate(ev, qtmp1, qtmp2, stat=istat, errmsg=errorMessage)

@@ -199,26 +199,26 @@ subroutine trans_ev_band_to_full_&
   if (useGPU) then
     ! copy q_mat to q_dev
     successGPU = gpu_malloc(q_dev,ldq*matrixCols*size_of_datatype)
-    check_alloc_cuda("trans_ev_band_to_full: q_dev", successGPU)
+    check_alloc_gpu("trans_ev_band_to_full: q_dev", successGPU)
 
     successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),&
                   ldq*matrixCols*size_of_datatype, gpuHostRegisterDefault)
-    check_host_register_cuda("trans_ev_band_to_full: q_mat", successGPU)
+    check_host_register_gpu("trans_ev_band_to_full: q_mat", successGPU)
 
     successGPU = gpu_memcpy(q_dev,int(loc(q_mat),kind=c_intptr_t),&
                   ldq*matrixCols*size_of_datatype, gpuMemcpyHostToDevice)
-    check_memcpy_cuda("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
+    check_memcpy_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
 
     successGPU = gpu_malloc_host(tmp1_host,max_local_cols*cwy_blocking*size_of_datatype)
-    check_host_alloc_cuda("trans_ev_band_to_full: tmp1_host", successGPU)
+    check_host_alloc_gpu("trans_ev_band_to_full: tmp1_host", successGPU)
     call c_f_pointer(tmp1_host, tmp1, (/max_local_cols*cwy_blocking/))
 
     successGPU = gpu_malloc_host(tmp2_host,max_local_cols*cwy_blocking*size_of_datatype)
-    check_host_alloc_cuda("trans_ev_band_to_full: tmp2_host", successGPU)
+    check_host_alloc_gpu("trans_ev_band_to_full: tmp2_host", successGPU)
     call c_f_pointer(tmp2_host, tmp2, (/max_local_cols*cwy_blocking/))
 
     successGPU = gpu_malloc_host(hvm_host,max_local_rows*cwy_blocking*size_of_datatype)
-    check_host_alloc_cuda("trans_ev_band_to_full: hvm_host", successGPU)
+    check_host_alloc_gpu("trans_ev_band_to_full: hvm_host", successGPU)
     call c_f_pointer(hvm_host, hvm, (/max_local_rows,cwy_blocking/))
 
   else ! useGPU
@@ -242,7 +242,7 @@ subroutine trans_ev_band_to_full_&
     successGPU = gpu_host_register(int(loc(tmat_complete),kind=c_intptr_t), &
                   cwy_blocking * cwy_blocking * size_of_datatype,&
                   gpuHostRegisterDefault)
-    check_host_register_cuda("trans_ev_band_to_full: tmat_complete", successGPU)
+    check_host_register_gpu("trans_ev_band_to_full: tmat_complete", successGPU)
   endif
 
   if (blocking_factor > 1) then
@@ -255,13 +255,13 @@ subroutine trans_ev_band_to_full_&
 
   if (useGPU) then
     successGPU = gpu_malloc(hvm_dev,max_local_rows*cwy_blocking*size_of_datatype)
-    check_alloc_cuda("trans_ev_band_to_full: hvm_dev", successGPU)
+    check_alloc_gpu("trans_ev_band_to_full: hvm_dev", successGPU)
 
     successGPU = gpu_malloc(tmp_dev,max_local_cols*cwy_blocking*size_of_datatype)
-    check_alloc_cuda("trans_ev_band_to_full: tmp_dev", successGPU)
+    check_alloc_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
 
     successGPU = gpu_malloc(tmat_dev,cwy_blocking*cwy_blocking*size_of_datatype)
-    check_alloc_cuda("trans_ev_band_to_full: tmat_dev", successGPU)
+    check_alloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
   endif
 
   hvm = 0.0_rck ! Must be set to 0 !!!
@@ -387,7 +387,7 @@ subroutine trans_ev_band_to_full_&
       if (useGPU) then
         successGPU = gpu_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
                         max_local_rows*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
+        check_memcpy_gpu("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
 
         call obj%timer%start("cublas")
         call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
@@ -399,7 +399,7 @@ subroutine trans_ev_band_to_full_&
         ! copy data from device to host for a later MPI_ALLREDUCE
         successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), &
                       tmp_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_cuda("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
+        check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 #endif /* WITH_MPI */
 
       else
@@ -424,11 +424,11 @@ subroutine trans_ev_band_to_full_&
       if (useGPU) then
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                       l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
+        check_memcpy_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 
         successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
         call obj%timer%start("cublas")
         call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -454,7 +454,7 @@ subroutine trans_ev_band_to_full_&
       if (useGPU) then
         successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
         call obj%timer%start("cublas")
         call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -484,39 +484,39 @@ subroutine trans_ev_band_to_full_&
 
   if (useGPU) then
     successGPU = gpu_free(hvm_dev)
-    check_dealloc_cuda("trans_ev_band_to_full: hvm_dev", successGPU)
+    check_dealloc_gpu("trans_ev_band_to_full: hvm_dev", successGPU)
 
     successGPU = gpu_free(tmp_dev)
-    check_dealloc_cuda("trans_ev_band_to_full: tmp_dev", successGPU)
+    check_dealloc_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
 
     successGPU = gpu_free(tmat_dev)
-    check_dealloc_cuda("trans_ev_band_to_full: tmat_dev", successGPU)
+    check_dealloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
 
     ! final transfer of q_dev
     successGPU = gpu_memcpy(int(loc(q_mat),kind=c_intptr_t), q_dev, ldq*matrixCols*size_of_datatype, &
                   gpuMemcpyDeviceToHost)
-    check_memcpy_cuda("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
+    check_memcpy_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
 
     successGPU = gpu_free(q_dev)
-    check_dealloc_cuda("trans_ev_band_to_full: q_dev", successGPU)
+    check_dealloc_gpu("trans_ev_band_to_full: q_dev", successGPU)
 
     successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
-    check_host_unregister_cuda("trans_ev_band_to_full: q_mat", successGPU)
+    check_host_unregister_gpu("trans_ev_band_to_full: q_mat", successGPU)
     nullify(tmp1)
     nullify(tmp2)
     nullify(hvm)
 
     successGPU = gpu_free_host(tmp1_host)
-    check_host_dealloc_cuda("trans_ev_band_to_full: tmp1_host", successGPU)
+    check_host_dealloc_gpu("trans_ev_band_to_full: tmp1_host", successGPU)
 
     successGPU = gpu_free_host(tmp2_host)
-    check_host_dealloc_cuda("trans_ev_band_to_full: tmp2_host", successGPU)
+    check_host_dealloc_gpu("trans_ev_band_to_full: tmp2_host", successGPU)
 
     successGPU = gpu_free_host(hvm_host)
-    check_host_dealloc_cuda("trans_ev_band_to_full: hvm_host", successGPU)
+    check_host_dealloc_gpu("trans_ev_band_to_full: hvm_host", successGPU)
 
     successGPU = gpu_host_unregister(int(loc(tmat_complete),kind=c_intptr_t))
-    check_host_unregister_cuda("trans_ev_band_to_full: tmat_complete", successGPU)
+    check_host_unregister_gpu("trans_ev_band_to_full: tmat_complete", successGPU)
   else ! useGPU
     deallocate(tmp1, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)

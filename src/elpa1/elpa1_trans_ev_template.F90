@@ -243,44 +243,44 @@ subroutine trans_ev_&
     !&", "hvm1", istat, errorMessage)
     num = (max_local_rows*max_stored_rows) * size_of_datatype
     successGPU = gpu_malloc_host(hvm1_host,num)
-    check_alloc_cuda("trans_ev: hvm1_host", successGPU)
+    check_alloc_gpu("trans_ev: hvm1_host", successGPU)
     call c_f_pointer(hvm1_host,hvm1,(/(max_local_rows*max_stored_rows)/))
 
     num = (max_stored_rows*max_stored_rows) * size_of_datatype
     successGPU = gpu_malloc_host(tmat_host,num)
-    check_alloc_cuda("trans_ev: tmat_host", successGPU)
+    check_alloc_gpu("trans_ev: tmat_host", successGPU)
     call c_f_pointer(tmat_host,tmat,(/max_stored_rows,max_stored_rows/))
 
     num = (max_local_cols*max_stored_rows) * size_of_datatype
     successGPU = gpu_malloc_host(tmp1_host,num)
-    check_alloc_cuda("trans_ev: tmp1_host", successGPU)
+    check_alloc_gpu("trans_ev: tmp1_host", successGPU)
     call c_f_pointer(tmp1_host,tmp1,(/(max_local_cols*max_stored_rows)/))
 
     num = (max_local_cols*max_stored_rows) * size_of_datatype
     successGPU = gpu_malloc_host(tmp2_host,num)
-    check_alloc_cuda("trans_ev: tmp2_host", successGPU)
+    check_alloc_gpu("trans_ev: tmp2_host", successGPU)
     call c_f_pointer(tmp2_host,tmp2,(/(max_local_cols*max_stored_rows)/))
 
     successGPU = gpu_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
-    check_alloc_cuda("trans_ev", successGPU)
+    check_alloc_gpu("trans_ev", successGPU)
 
     successGPU = gpu_malloc(hvm_dev, max_local_rows * max_stored_rows * size_of_datatype)
-    check_alloc_cuda("trans_ev", successGPU)
+    check_alloc_gpu("trans_ev", successGPU)
 
     successGPU = gpu_malloc(tmp_dev, max_local_cols * max_stored_rows * size_of_datatype)
-    check_alloc_cuda("trans_ev", successGPU)
+    check_alloc_gpu("trans_ev", successGPU)
 
     num = ldq * matrixCols * size_of_datatype
     successGPU = gpu_malloc(q_dev, num)
-    check_alloc_cuda("trans_ev", successGPU)
+    check_alloc_gpu("trans_ev", successGPU)
 
     successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
-    check_host_register_cuda("trans_ev: q_mat", successGPU)
+    check_host_register_gpu("trans_ev: q_mat", successGPU)
 
     successGPU = gpu_memcpy(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
                   num, gpuMemcpyHostToDevice)
-    check_memcpy_cuda("trans_ev", successGPU)
+    check_memcpy_gpu("trans_ev", successGPU)
   endif  ! useGPU
 
   do istep = 1, na, blockStep
@@ -390,12 +390,12 @@ subroutine trans_ev_&
         successGPU = gpu_memcpy(hvm_dev, int(loc(hvm1(1)),kind=c_intptr_t),   &
                       hvm_ubnd * nstor * size_of_datatype, gpuMemcpyHostToDevice)
 
-        check_memcpy_cuda("trans_ev", successGPU)
+        check_memcpy_gpu("trans_ev", successGPU)
 
         !tmat_dev = tmat
         successGPU = gpu_memcpy(tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t),   &
                       max_stored_rows * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev", successGPU)
+        check_memcpy_gpu("trans_ev", successGPU)
       endif
 
       ! Q = Q - V * T * V**T * Q
@@ -422,7 +422,7 @@ subroutine trans_ev_&
 
         if (useGPU) then
           successGPU = gpu_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
-          check_memcpy_cuda("trans_ev", successGPU)
+          check_memcpy_gpu("trans_ev", successGPU)
         else
           tmp1(1:l_cols*nstor) = 0
         endif
@@ -434,7 +434,7 @@ subroutine trans_ev_&
       if (useGPU) then
         successGPU = gpu_memcpy(int(loc(tmp1(1)),kind=c_intptr_t), tmp_dev,  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_cuda("trans_ev", successGPU)
+        check_memcpy_gpu("trans_ev", successGPU)
       endif
       call obj%timer%start("mpi_communication")
       call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
@@ -444,7 +444,7 @@ subroutine trans_ev_&
       if (useGPU) then
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev", successGPU)
+        check_memcpy_gpu("trans_ev", successGPU)
       endif ! useGPU
 
 
@@ -500,25 +500,25 @@ subroutine trans_ev_&
     !q_mat = q_dev
     successGPU = gpu_memcpy(int(loc(q_mat(1,1)),kind=c_intptr_t), &
                   q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost)
-    check_memcpy_cuda("trans_ev", successGPU)
+    check_memcpy_gpu("trans_ev", successGPU)
 
     successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
-    check_host_unregister_cuda("trans_ev: q_mat", successGPU)
+    check_host_unregister_gpu("trans_ev: q_mat", successGPU)
 
     successGPU = gpu_free_host(hvm1_host)
-    check_host_dealloc_cuda("trans_ev: hvm1_host", successGPU)
+    check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
     nullify(hvm1)
 
     successGPU = gpu_free_host(tmat_host)
-    check_host_dealloc_cuda("trans_ev: tmat_host", successGPU)
+    check_host_dealloc_gpu("trans_ev: tmat_host", successGPU)
     nullify(tmat)
 
     successGPU = gpu_free_host(tmp1_host)
-    check_host_dealloc_cuda("trans_ev: tmp1_host", successGPU)
+    check_host_dealloc_gpu("trans_ev: tmp1_host", successGPU)
     nullify(tmp1)
 
     successGPU = gpu_free_host(tmp2_host)
-    check_host_dealloc_cuda("trans_ev: tmp2_host", successGPU)
+    check_host_dealloc_gpu("trans_ev: tmp2_host", successGPU)
     nullify(tmp2)
 
     !deallocate(hvm1, stat=istat, errmsg=errorMessage)
@@ -531,16 +531,16 @@ subroutine trans_ev_&
 
     !deallocate(q_dev, tmp_dev, hvm_dev, tmat_dev)
     successGPU = gpu_free(q_dev)
-    check_dealloc_cuda("trans_ev", successGPU)
+    check_dealloc_gpu("trans_ev", successGPU)
 
     successGPU = gpu_free(tmp_dev)
-    check_dealloc_cuda("trans_ev", successGPU)
+    check_dealloc_gpu("trans_ev", successGPU)
 
     successGPU = gpu_free(hvm_dev)
-    check_dealloc_cuda("trans_ev", successGPU)
+    check_dealloc_gpu("trans_ev", successGPU)
 
     successGPU = gpu_free(tmat_dev)
-    check_dealloc_cuda("trans_ev", successGPU)
+    check_dealloc_gpu("trans_ev", successGPU)
   else
     deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_&
