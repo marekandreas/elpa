@@ -98,8 +98,6 @@ subroutine trans_ev_band_to_full_&
 !
 !-------------------------------------------------------------------------------
   use precision
-  use cuda_functions
-  use hip_functions
   use elpa_gpu
   use, intrinsic :: iso_c_binding
   use elpa_abstract_impl

@@ -97,7 +97,6 @@ subroutine tridiag_&
   &_&
   &PRECISION &
   (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, max_threads)
-  use cuda_functions
   use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
@@ -448,8 +447,8 @@ subroutine tridiag_&
       ! copy l_cols + 1 column of A to v_row
       if (useGPU) then
         a_offset = l_cols * matrixRows * size_of_datatype
-        ! we use v_row on the host at the moment! successGPU = cuda_memcpy(v_row_dev, a_dev + a_offset, 
-        ! (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
+        ! we use v_row on the host at the moment! successGPU = gpu_memcpy(v_row_dev, a_dev + a_offset, 
+        ! (l_rows)*size_of_PRECISION_real, gpuMemcpyDeviceToDevice)
 
         successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), &
                                   a_dev + a_offset, (l_rows)* size_of_datatype, gpuMemcpyDeviceToHost)
@@ -966,7 +965,7 @@ subroutine tridiag_&
 
          if (useGPU) then
            !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-           !successGPU = cuda_threadsynchronize()
+           !successGPU = gpu_threadsynchronize()
            !check_memcpy_gpu("tridiag: a_dev 4a5a", successGPU)
 
            successGPU = gpu_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &

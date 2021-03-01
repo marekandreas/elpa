@@ -59,8 +59,6 @@
   use precision
   use elpa_abstract_impl
   use, intrinsic :: iso_c_binding
-  use cuda_functions
-  use hip_functions
   use elpa_gpu
   use mod_check_for_gpu
   use elpa_blas_interfaces
@@ -205,12 +203,12 @@
     check_alloc_gpu("elpa_mult_at_b: b_dev", successGPU)
 
     successGPU = gpu_host_register(int(loc(b),kind=c_intptr_t),num,&
-                  cudaHostRegisterDefault)
+                  gpuHostRegisterDefault)
 
     check_host_register_gpu("elpa_mult_at_b: b", successGPU)
 
     successGPU = gpu_memcpy(b_dev,int(loc(b),kind=c_intptr_t),num,&
-                  cudaMemcpyHostToDevice)
+                  gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_mult_at_b: b to b_dev", successGPU)
 
     num = l_rows*nblk_mult*size_of_datatype
