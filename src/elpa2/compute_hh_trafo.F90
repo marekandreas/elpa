@@ -105,9 +105,10 @@ last_stripe_width, kernel)
 
 #endif /* COMPLEXCASE */
 
-  use cuda_c_kernel
-  use cuda_functions
-  use hip_functions
+  !use cuda_c_kernel
+  !use cuda_functions
+  !use hip_functions
+  use gpu_c_kernel
   use elpa_gpu
 
   use elpa_generated_fortran_interfaces

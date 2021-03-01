@@ -50,9 +50,7 @@ subroutine pack_row_group_&
 &PRECISION &
 (row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
                                        rows, n_offset, row_count)
-  use cuda_c_kernel
-  use cuda_functions
-  use hip_functions
+  use gpu_c_kernel
   use elpa_gpu
   use precision
   use, intrinsic :: iso_c_binding
@@ -86,11 +84,11 @@ subroutine pack_row_group_&
   ! Issue one single transfer call for all rows (device to host)
 !    rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
 
-  successGPU =  cuda_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
+  successGPU =  gpu_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
   &PRECISION&
   &_&
   &MATH_DATATYPE&
-  & , cudaMemcpyDeviceToHost)
+  & , gpuMemcpyDeviceToHost)
   if (.not.(successGPU)) then
     print *,"pack_row_group_&
     &MATH_DATATYPE&
@@ -110,11 +108,9 @@ end subroutine
     &PRECISION &
     (row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, &
                                          a_dim2, l_nev, rows, n_offset, row_count)
-      use cuda_c_kernel
+      use gpu_c_kernel
       use precision
       use, intrinsic :: iso_c_binding
-      use cuda_functions
-      use hip_functions
       use elpa_gpu
       implicit none
       integer(kind=c_intptr_t)                     :: row_group_dev, a_dev
@@ -137,12 +133,12 @@ end subroutine
 !      row_group_dev(:, 1 : row_count) = rows(:, 1 : row_count)
 
 
-      successGPU =  cuda_memcpy( row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
+      successGPU =  gpu_memcpy( row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
                                  size_of_&
                                  &PRECISION&
                                  &_&
                                  &MATH_DATATYPE&
-                                 &, cudaMemcpyHostToDevice)
+                                 &, gpuMemcpyHostToDevice)
       if (.not.(successGPU)) then
         print *,"unpack_row_group_&
         &MATH_DATATYPE&
@@ -176,6 +172,7 @@ end subroutine
 
       use, intrinsic :: iso_c_binding
       use precision
+      use gpu_c_kernel
       implicit none
 #if REALCASE == 1
       real(kind=C_DATATYPE_KIND)      :: row_group(:,:)
@@ -219,7 +216,7 @@ end subroutine
     &_gpu_&
     &PRECISION&
     & (bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero)
-      use cuda_c_kernel
+      use gpu_c_kernel
       use precision
       use, intrinsic :: iso_c_binding
       implicit none

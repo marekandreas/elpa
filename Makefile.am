@@ -48,7 +48,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/mod_vendor_agnostic_layer.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
   src/GPU/ROCm/mod_hip.F90 \
-  src/elpa2/GPU/CUDA/interface_c_kernel.F90 \
+  src/elpa2/GPU/interface_c_gpu_kernel.F90 \
+  src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
+  src/elpa2/GPU/ROCm/interface_c_hip_kernel.F90 \
   src/elpa2/mod_pack_unpack_gpu.F90 \
   src/elpa2/qr/qr_utils.F90 \
   src/elpa2/qr/elpa_qrkernels.F90 \
