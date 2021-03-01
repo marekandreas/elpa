@@ -169,113 +169,113 @@ module ELPA_utilities
     endif
  end subroutine
 
- subroutine check_alloc_CUDA_f(file_name, line, successCUDA)
+ subroutine check_alloc_CUDA_f(file_name, line, successGPU)
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
     integer(kind=c_int), intent(in)    :: line
-    logical                         :: successCUDA
+    logical                         :: successGPU
 
-    if (.not.(successCUDA)) then
+    if (.not.(successGPU)) then
       print *, file_name, ":", line,  " error in cuda_malloc when allocating "
       stop 1
     endif
  end subroutine
 
- subroutine check_dealloc_CUDA_f(file_name, line, successCUDA)
+ subroutine check_dealloc_CUDA_f(file_name, line, successGPU)
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
     integer(kind=c_int), intent(in)    :: line
-    logical                         :: successCUDA
+    logical                         :: successGPU
 
-    if (.not.(successCUDA)) then
+    if (.not.(successGPU)) then
       print *, file_name, ":", line,  " error in cuda_free when deallocating "
       stop 1
     endif
  end subroutine
 
- subroutine check_memcpy_CUDA_f(file_name, line, successCUDA)
+ subroutine check_memcpy_CUDA_f(file_name, line, successGPU)
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
     integer(kind=c_int), intent(in)    :: line
-    logical                         :: successCUDA
+    logical                         :: successGPU
 
-    if (.not.(successCUDA)) then
+    if (.not.(successGPU)) then
       print *, file_name, ":", line,  " error in cuda_memcpy when copying "
       stop 1
     endif
  end subroutine
 
- subroutine check_host_alloc_CUDA_f(file_name, line, successCUDA)
+ subroutine check_host_alloc_CUDA_f(file_name, line, successGPU)
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
     integer(kind=c_int), intent(in)    :: line
-    logical                         :: successCUDA
+    logical                         :: successGPU
 
-    if (.not.(successCUDA)) then
+    if (.not.(successGPU)) then
       print *, file_name, ":", line,  " error in cuda_alloc_host when allocating "
       stop 1
     endif
  end subroutine
 
- subroutine check_host_dealloc_CUDA_f(file_name, line, successCUDA)
+ subroutine check_host_dealloc_CUDA_f(file_name, line, successGPU)
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
     integer(kind=c_int), intent(in)    :: line
-    logical                         :: successCUDA
+    logical                         :: successGPU
 
-    if (.not.(successCUDA)) then
+    if (.not.(successGPU)) then
       print *, file_name, ":", line,  " error in cuda_free_host when deallocating "
       stop 1
     endif
  end subroutine
 
- subroutine check_host_register_CUDA_f(file_name, line, successCUDA)
+ subroutine check_host_register_CUDA_f(file_name, line, successGPU)
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
     integer(kind=c_int), intent(in)    :: line
-    logical                         :: successCUDA
+    logical                         :: successGPU
 
-    if (.not.(successCUDA)) then
+    if (.not.(successGPU)) then
       print *, file_name, ":", line,  " error in cuda_host_register when registering "
       stop 1
     endif
  end subroutine
 
- subroutine check_host_unregister_CUDA_f(file_name, line, successCUDA)
+ subroutine check_host_unregister_CUDA_f(file_name, line, successGPU)
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
     integer(kind=c_int), intent(in)    :: line
-    logical                         :: successCUDA
+    logical                         :: successGPU
 
-    if (.not.(successCUDA)) then
+    if (.not.(successGPU)) then
       print *, file_name, ":", line,  " error in cuda_host_unregister when unregistering "
       stop 1
     endif
  end subroutine
 
- subroutine check_memset_CUDA_f(file_name, line, successCUDA)
+ subroutine check_memset_CUDA_f(file_name, line, successGPU)
 
     implicit none
 
     character(len=*), intent(in)    :: file_name
     integer(kind=c_int), intent(in)    :: line
-    logical                         :: successCUDA
+    logical                         :: successGPU
 
-    if (.not.(successCUDA)) then
+    if (.not.(successGPU)) then
       print *, file_name, ":", line,  " error in cuda_memset "
       stop 1
     endif

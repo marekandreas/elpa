@@ -82,7 +82,7 @@ subroutine redist_band_&
   integer(kind=ik)                                 :: istat
   character(200)                                   :: errorMessage
 
-  logical                                          :: successCUDA
+  logical                                          :: successGPU
   !integer(kind=c_intptr_t), parameter              :: size_of_datatype = size_of_&
   !                                                                     &PRECISION&
   !                                                                     &_&

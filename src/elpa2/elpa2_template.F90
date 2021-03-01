@@ -158,7 +158,7 @@
 
 
    integer(kind=c_int)                                                :: i
-   logical                                                            :: success, successCUDA
+   logical                                                            :: success, successGPU
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage

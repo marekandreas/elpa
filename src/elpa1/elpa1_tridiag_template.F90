@@ -139,7 +139,7 @@ subroutine tridiag_&
 
   integer(kind=C_intptr_T)                      :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
                                                    uv_stored_cols_dev
-  logical                                       :: successCUDA
+  logical                                       :: successGPU
 
   integer(kind=ik)                              :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
   integer(kind=ik)                              :: tile_size, l_rows_per_tile, l_cols_per_tile
@@ -290,52 +290,52 @@ subroutine tridiag_&
 
   if (useGPU) then
     num = (max_local_rows+1) * size_of_datatype
-    successCUDA = gpu_malloc_host(v_row_host, num)
-    check_host_alloc_cuda("tridiag: v_row_host", successCUDA)
+    successGPU = gpu_malloc_host(v_row_host, num)
+    check_host_alloc_cuda("tridiag: v_row_host", successGPU)
     call c_f_pointer(v_row_host,v_row,(/(max_local_rows+1)/))
 
     num = (max_local_cols) * size_of_datatype
-    successCUDA = gpu_malloc_host(v_col_host,num)
-    check_host_alloc_cuda("tridiag: v_col_host", successCUDA)
+    successGPU = gpu_malloc_host(v_col_host,num)
+    check_host_alloc_cuda("tridiag: v_col_host", successGPU)
     call c_f_pointer(v_col_host,v_col,(/(max_local_cols)/))
 
     num = (max_local_cols) * size_of_datatype
-    successCUDA = gpu_malloc_host(u_col_host,num)
-    check_host_alloc_cuda("tridiag: u_col_host", successCUDA)
+    successGPU = gpu_malloc_host(u_col_host,num)
+    check_host_alloc_cuda("tridiag: u_col_host", successGPU)
     call c_f_pointer(u_col_host,u_col,(/(max_local_cols)/))
 
     num = (max_local_rows) * size_of_datatype
-    successCUDA = gpu_malloc_host(u_row_host,num)
-    check_host_alloc_cuda("tridiag: u_row_host", successCUDA)
+    successGPU = gpu_malloc_host(u_row_host,num)
+    check_host_alloc_cuda("tridiag: u_row_host", successGPU)
     call c_f_pointer(u_row_host,u_row,(/(max_local_rows)/))
 
     num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
-    successCUDA = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
+    successGPU = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
-    check_host_register_cuda("tridiag: vu_stored_roes", successCUDA)
+    check_host_register_cuda("tridiag: vu_stored_roes", successGPU)
 
     num = (max_local_cols * 2*max_stored_uv) * size_of_datatype
-    successCUDA = gpu_host_register(int(loc(uv_stored_cols),kind=c_intptr_t),num,&
+    successGPU = gpu_host_register(int(loc(uv_stored_cols),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
-    check_host_register_cuda("tridiag: uv_stored_cols", successCUDA)
+    check_host_register_cuda("tridiag: uv_stored_cols", successGPU)
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
     num = na * 8
 #else
     num = na * 4
 #endif
-    successCUDA = gpu_host_register(int(loc(e_vec),kind=c_intptr_t),num,&
+    successGPU = gpu_host_register(int(loc(e_vec),kind=c_intptr_t),num,&
                       gpuHostRegisterDefault)
-    check_host_register_cuda("tridiag: e_vec", successCUDA)
+    check_host_register_cuda("tridiag: e_vec", successGPU)
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
     num = na * 8
 #else
     num = na * 4
 #endif
-    successCUDA = gpu_host_register(int(loc(d_vec),kind=c_intptr_t),num,&
+    successGPU = gpu_host_register(int(loc(d_vec),kind=c_intptr_t),num,&
                       gpuHostRegisterDefault)
-    check_host_register_cuda("tridiag: d_vec", successCUDA)
+    check_host_register_cuda("tridiag: d_vec", successGPU)
 
   else
     allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
@@ -373,24 +373,24 @@ subroutine tridiag_&
   u_col = 0
 
   if (useGPU) then
-     successCUDA = gpu_malloc(v_row_dev, max_local_rows * size_of_datatype)
-     check_alloc_cuda("tridiag: v_row_dev", successCUDA)
+     successGPU = gpu_malloc(v_row_dev, max_local_rows * size_of_datatype)
+     check_alloc_cuda("tridiag: v_row_dev", successGPU)
 
-     successCUDA = gpu_malloc(u_row_dev, max_local_rows * size_of_datatype)
+     successGPU = gpu_malloc(u_row_dev, max_local_rows * size_of_datatype)
 
-     check_alloc_cuda("tridiag: u_row_dev", successCUDA)
+     check_alloc_cuda("tridiag: u_row_dev", successGPU)
 
-     successCUDA = gpu_malloc(v_col_dev, max_local_cols * size_of_datatype)
-     check_alloc_cuda("tridiag: v_col_dev", successCUDA)
+     successGPU = gpu_malloc(v_col_dev, max_local_cols * size_of_datatype)
+     check_alloc_cuda("tridiag: v_col_dev", successGPU)
 
-     successCUDA = gpu_malloc(u_col_dev, max_local_cols * size_of_datatype)
-     check_alloc_cuda("tridiag: u_col_dev", successCUDA)
+     successGPU = gpu_malloc(u_col_dev, max_local_cols * size_of_datatype)
+     check_alloc_cuda("tridiag: u_col_dev", successGPU)
 
-     successCUDA = gpu_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_datatype)
-     check_alloc_cuda("tridiag: vu_stored_rows_dev", successCUDA)
+     successGPU = gpu_malloc(vu_stored_rows_dev, max_local_rows * 2 * max_stored_uv * size_of_datatype)
+     check_alloc_cuda("tridiag: vu_stored_rows_dev", successGPU)
 
-     successCUDA = gpu_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
-     check_alloc_cuda("tridiag: vu_stored_rows_dev", successCUDA)
+     successGPU = gpu_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
+     check_alloc_cuda("tridiag: vu_stored_rows_dev", successGPU)
   endif !useGPU
 
 
@@ -416,16 +416,16 @@ subroutine tridiag_&
 
     num = matrixRows * matrixCols * size_of_datatype
 
-    successCUDA = gpu_malloc(a_dev, num)
-    check_alloc_cuda("tridiag: a_dev", successCUDA)
+    successGPU = gpu_malloc(a_dev, num)
+    check_alloc_cuda("tridiag: a_dev", successGPU)
 
-    successCUDA = gpu_host_register(int(loc(a_mat),kind=c_intptr_t),num,&
+    successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
-    check_host_register_cuda("tridiag: a_mat", successCUDA)
+    check_host_register_cuda("tridiag: a_mat", successGPU)
 
-    successCUDA = gpu_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
+    successGPU = gpu_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-    check_memcpy_cuda("tridiag: a_dev", successCUDA)
+    check_memcpy_cuda("tridiag: a_dev", successGPU)
   endif
 
   ! main cycle of tridiagonalization
@@ -448,12 +448,12 @@ subroutine tridiag_&
       ! copy l_cols + 1 column of A to v_row
       if (useGPU) then
         a_offset = l_cols * matrixRows * size_of_datatype
-        ! we use v_row on the host at the moment! successCUDA = cuda_memcpy(v_row_dev, a_dev + a_offset, 
+        ! we use v_row on the host at the moment! successGPU = cuda_memcpy(v_row_dev, a_dev + a_offset, 
         ! (l_rows)*size_of_PRECISION_real, cudaMemcpyDeviceToDevice)
 
-        successCUDA = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), &
+        successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), &
                                   a_dev + a_offset, (l_rows)* size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_cuda("tridiag a_dev 1", successCUDA)
+        check_memcpy_cuda("tridiag a_dev 1", successGPU)
       else
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
       endif
@@ -564,20 +564,20 @@ subroutine tridiag_&
     u_row(1:l_rows) = 0
     if (l_rows > 0 .and. l_cols> 0 ) then
      if (useGPU) then
-       successCUDA = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
-       check_memcpy_cuda("tridiag: u_col_dev", successCUDA)
+       successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
+       check_memcpy_cuda("tridiag: u_col_dev", successGPU)
 
-       successCUDA = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype)
-       check_memcpy_cuda("tridiag: u_row_dev", successCUDA)
+       successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype)
+       check_memcpy_cuda("tridiag: u_row_dev", successGPU)
 
-       successCUDA = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
+       successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
                      l_cols * size_of_datatype, gpuMemcpyHostToDevice)
 
-       check_memcpy_cuda("tridiag: v_col_dev", successCUDA)
+       check_memcpy_cuda("tridiag: v_col_dev", successGPU)
 
-       successCUDA = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
+       successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
                                  l_rows * size_of_datatype, gpuMemcpyHostToDevice)
-       check_memcpy_cuda("tridiag: v_row_dev", successCUDA)
+       check_memcpy_cuda("tridiag: v_row_dev", successGPU)
      endif ! useGU
 
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -589,7 +589,7 @@ subroutine tridiag_&
 !$omp num_threads(max_threads) &
 !$omp default(none) &
 !$omp private(my_thread,n_threads,n_iter,i,l_col_beg,l_col_end,j,l_row_beg,l_row_end) &
-!$omp shared(useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successCuda, u_row, u_row_dev, &
+!$omp shared(useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, a_offset, &
 !$omp&       max_local_cols, max_local_rows, obj, wantDebug, l_rows_per_tile, l_cols_per_tile, &
 !$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat)
@@ -741,13 +741,13 @@ subroutine tridiag_&
               enddo
             end if !multiplication as one block / per stripes
 
-            successCUDA = gpu_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
+            successGPU = gpu_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
                           u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag: u_col_dev 1", successCUDA)
+            check_memcpy_cuda("tridiag: u_col_dev 1", successGPU)
 
-            successCUDA = gpu_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
+            successGPU = gpu_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
                           u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag: u_row_dev 1", successCUDA)
+            check_memcpy_cuda("tridiag: u_row_dev 1", successGPU)
           endif ! useGPU
 
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -873,15 +873,15 @@ subroutine tridiag_&
        if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
          if (useGPU) then
-           successCUDA = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
+           successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
                                      max_local_rows * 2 * max_stored_uv *          &
                                      size_of_datatype, gpuMemcpyHostToDevice)
-           check_memcpy_cuda("tridiag: uv_stored_rows_dev", successCUDA)
+           check_memcpy_cuda("tridiag: uv_stored_rows_dev", successGPU)
 
-           successCUDA = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
+           successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
                                      max_local_cols * 2 * max_stored_uv *          &
                                      size_of_datatype, gpuMemcpyHostToDevice)
-           check_memcpy_cuda("tridiag: uv_stored_cols_dev", successCUDA)
+           check_memcpy_cuda("tridiag: uv_stored_cols_dev", successGPU)
          endif
 
          do i = 0, (istep-2)/tile_size
@@ -944,9 +944,9 @@ subroutine tridiag_&
            !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
             a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 
-            successCUDA = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
+            successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
                                       1 *  size_of_datatype, gpuMemcpyDeviceToHost)
-            check_memcpy_cuda("tridiag: a_dev 3", successCUDA)
+            check_memcpy_cuda("tridiag: a_dev 3", successGPU)
 
          endif
          if (n_stored_vecs > 0) then
@@ -966,12 +966,12 @@ subroutine tridiag_&
 
          if (useGPU) then
            !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-           !successCUDA = cuda_threadsynchronize()
-           !check_memcpy_cuda("tridiag: a_dev 4a5a", successCUDA)
+           !successGPU = cuda_threadsynchronize()
+           !check_memcpy_cuda("tridiag: a_dev 4a5a", successGPU)
 
-           successCUDA = gpu_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
+           successGPU = gpu_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
                                      int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
-           check_memcpy_cuda("tridiag: a_dev 4", successCUDA)
+           check_memcpy_cuda("tridiag: a_dev 4", successGPU)
          endif
        endif
 
@@ -984,9 +984,9 @@ subroutine tridiag_&
       if (my_prow==prow(1, nblk, np_rows)) then
        ! We use last l_cols value of loop above
        if (useGPU) then
-         successCUDA = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
+         successGPU = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                    1 * size_of_datatype, gpuMemcpyDeviceToHost)
-         check_memcpy_cuda("tridiag: a_dev 5", successCUDA)
+         check_memcpy_cuda("tridiag: a_dev 5", successGPU)
          vrl = aux3(1)
        else !useGPU
          vrl = a_mat(1,l_cols)
@@ -1020,9 +1020,9 @@ subroutine tridiag_&
 #endif /* WITH_MPI */
   if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
     if (useGPU) then
-      successCUDA = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
+      successGPU = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
                                1 * size_of_datatype, gpuMemcpyDeviceToHost)
-      check_memcpy_cuda("tridiag: a_dev 6", successCUDA)
+      check_memcpy_cuda("tridiag: a_dev 6", successGPU)
       d_vec(1) = PRECISION_REAL(aux3(1))
     else !useGPU
       d_vec(1) = PRECISION_REAL(a_mat(1,1))
@@ -1036,9 +1036,9 @@ subroutine tridiag_&
 
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
     if (useGPU) then
-      successCUDA = gpu_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
+      successGPU = gpu_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                 1 * size_of_datatype, gpuMemcpyDeviceToHost)
-      check_memcpy_cuda("tridiag: a_dev 7", successCUDA)
+      check_memcpy_cuda("tridiag: a_dev 7", successGPU)
     else !useGPU
       e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
     endif !useGPU
@@ -1047,8 +1047,8 @@ subroutine tridiag_&
   ! Store d_vec(1)
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
     if(useGPU) then
-      successCUDA = gpu_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, gpuMemcpyDeviceToHost)
-      check_memcpy_cuda("tridiag: a_dev 8", successCUDA)
+      successGPU = gpu_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, gpuMemcpyDeviceToHost)
+      check_memcpy_cuda("tridiag: a_dev 8", successGPU)
     else !useGPU
       if (isSkewsymmetric) then
         d_vec(1) = 0.0_rk
@@ -1064,26 +1064,26 @@ subroutine tridiag_&
 
   if (useGPU) then
     ! todo: should we leave a_mat on the device for further use?
-    successCUDA = gpu_free(a_dev)
-    check_dealloc_cuda("tridiag: a_dev 9", successCUDA)
+    successGPU = gpu_free(a_dev)
+    check_dealloc_cuda("tridiag: a_dev 9", successGPU)
 
-    successCUDA = gpu_free(v_row_dev)
-    check_dealloc_cuda("tridiag: v_row_dev", successCUDA)
+    successGPU = gpu_free(v_row_dev)
+    check_dealloc_cuda("tridiag: v_row_dev", successGPU)
 
-    successCUDA = gpu_free(u_row_dev)
-    check_dealloc_cuda("tridiag: (u_row_dev", successCUDA)
+    successGPU = gpu_free(u_row_dev)
+    check_dealloc_cuda("tridiag: (u_row_dev", successGPU)
 
-    successCUDA = gpu_free(v_col_dev)
-    check_dealloc_cuda("tridiag: v_col_dev", successCUDA)
+    successGPU = gpu_free(v_col_dev)
+    check_dealloc_cuda("tridiag: v_col_dev", successGPU)
 
-    successCUDA = gpu_free(u_col_dev)
-    check_dealloc_cuda("tridiag: u_col_dev ", successCUDA)
+    successGPU = gpu_free(u_col_dev)
+    check_dealloc_cuda("tridiag: u_col_dev ", successGPU)
 
-    successCUDA = gpu_free(vu_stored_rows_dev)
-    check_dealloc_cuda("tridiag: vu_stored_rows_dev ", successCUDA)
+    successGPU = gpu_free(vu_stored_rows_dev)
+    check_dealloc_cuda("tridiag: vu_stored_rows_dev ", successGPU)
 
-    successCUDA = gpu_free(uv_stored_cols_dev)
-    check_dealloc_cuda("tridiag:uv_stored_cols_dev ", successCUDA)
+    successGPU = gpu_free(uv_stored_cols_dev)
+    check_dealloc_cuda("tridiag:uv_stored_cols_dev ", successGPU)
   endif
 
   ! distribute the arrays d_vec and e_vec to all processors
@@ -1112,36 +1112,36 @@ subroutine tridiag_&
   check_deallocate("tridiag: tmp_real", istat, errorMessage)
 
   if (useGPU) then
-    successCUDA = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
-    check_host_unregister_cuda("tridiag: a_mat", successCUDA)
+    successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: a_mat", successGPU)
 
-    successCUDA = gpu_free_host(v_row_host)
-    check_host_dealloc_cuda("tridiag: v_row_host", successCUDA)
+    successGPU = gpu_free_host(v_row_host)
+    check_host_dealloc_cuda("tridiag: v_row_host", successGPU)
     nullify(v_row)
 
-    successCUDA = gpu_free_host(v_col_host)
-    check_host_dealloc_cuda("tridiag: v_col_host", successCUDA)
+    successGPU = gpu_free_host(v_col_host)
+    check_host_dealloc_cuda("tridiag: v_col_host", successGPU)
     nullify(v_col)
 
-    successCUDA = gpu_free_host(u_col_host)
-    check_host_dealloc_cuda("tridiag: u_col_host", successCUDA)
+    successGPU = gpu_free_host(u_col_host)
+    check_host_dealloc_cuda("tridiag: u_col_host", successGPU)
     nullify(u_col)
 
-    successCUDA = gpu_free_host(u_row_host)
-    check_host_dealloc_cuda("tridiag: u_row_host", successCUDA)
+    successGPU = gpu_free_host(u_row_host)
+    check_host_dealloc_cuda("tridiag: u_row_host", successGPU)
     nullify(u_row)
 
-    successCUDA = gpu_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
-    check_host_unregister_cuda("tridiag: uv_stored_cols", successCUDA)
+    successGPU = gpu_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: uv_stored_cols", successGPU)
 
-    successCUDA = gpu_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
-    check_host_unregister_cuda("tridiag: vu_stored_rows", successCUDA)
+    successGPU = gpu_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: vu_stored_rows", successGPU)
 
-    successCUDA = gpu_host_unregister(int(loc(e_vec),kind=c_intptr_t))
-    check_host_unregister_cuda("tridiag: e_vec", successCUDA)
+    successGPU = gpu_host_unregister(int(loc(e_vec),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: e_vec", successGPU)
 
-    successCUDA = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
-    check_host_unregister_cuda("tridiag: d_vec", successCUDA)
+    successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
+    check_host_unregister_cuda("tridiag: d_vec", successGPU)
   else
     deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
     check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)

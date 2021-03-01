@@ -68,7 +68,7 @@ subroutine pack_row_group_&
   complex(kind=C_DATATYPE_KIND) :: rows(:,:)
 #endif
   integer(kind=ik)             :: max_idx
-  logical                      :: successCUDA
+  logical                      :: successGPU
 
   ! Use many blocks for higher GPU occupancy
   max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
@@ -86,12 +86,12 @@ subroutine pack_row_group_&
   ! Issue one single transfer call for all rows (device to host)
 !    rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
 
-  successCUDA =  cuda_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
+  successGPU =  cuda_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
   &PRECISION&
   &_&
   &MATH_DATATYPE&
   & , cudaMemcpyDeviceToHost)
-  if (.not.(successCUDA)) then
+  if (.not.(successGPU)) then
     print *,"pack_row_group_&
     &MATH_DATATYPE&
     &_gpu_&
@@ -128,7 +128,7 @@ end subroutine
 #endif
 
       integer(kind=ik)                             :: max_idx
-      logical                                      :: successCUDA
+      logical                                      :: successGPU
 
       ! Use many blocks for higher GPU occupancy
       max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
@@ -137,13 +137,13 @@ end subroutine
 !      row_group_dev(:, 1 : row_count) = rows(:, 1 : row_count)
 
 
-      successCUDA =  cuda_memcpy( row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
+      successGPU =  cuda_memcpy( row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
                                  size_of_&
                                  &PRECISION&
                                  &_&
                                  &MATH_DATATYPE&
                                  &, cudaMemcpyHostToDevice)
-      if (.not.(successCUDA)) then
+      if (.not.(successGPU)) then
         print *,"unpack_row_group_&
         &MATH_DATATYPE&
         &_gpu_&
