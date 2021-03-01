@@ -236,7 +236,7 @@ subroutine tridiag_band_&
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab)
 
   ! Calculate the workload for each sweep in the back transformation
   ! and the space requirements to hold the HH vectors
