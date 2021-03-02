@@ -47,6 +47,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/check_for_gpu.F90 \
   src/GPU/mod_vendor_agnostic_layer.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
+  src/GPU/INTEL/mod_mkl_offload.F90 \
   src/GPU/ROCm/mod_hip.F90 \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
@@ -143,6 +144,10 @@ endif
 
 if WITH_NVIDIA_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_gpu_complex.cu
+endif
+
+if WITH_INTEL_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mkl_offload.cpp
 endif
 
 if WITH_AMD_GPU_VERSION

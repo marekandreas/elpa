@@ -176,7 +176,16 @@ module mod_check_for_gpu
 #endif
           stop 1
         endif
+#ifdef  WITH_INTEL_GPU_VERSION
+      gpuAvailable = .false.
+      numberOfDevices = -1
 
+      numberOfDevices = 1
+      print *,"Manually setting",numberOfDevices," of GPUs"
+      if (numberOfDevices .ge. 1) then
+        gpuAvailable = .true.
+      endif
+#endif
         ! make sure that all nodes have the same number of GPU's, otherwise
         ! we run into loadbalancing trouble
 #ifdef WITH_MPI
