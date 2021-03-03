@@ -794,6 +794,7 @@ clean-local:
 	-rm -rf single_complex_2stage*.sh
 	-rm -rf single_real_2stage*.sh
 	-rm -rf double_instance_onenode*.sh
+	-rm -rf test_*.sh
 	-rm -rf $(generated_headers)
 
 distclean-local:

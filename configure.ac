@@ -1465,6 +1465,18 @@ if test x"${need_bgq}" = x"yes"; then
 fi
 AC_LANG_POP([Fortran])
 
+#compatibiility flag
+AC_MSG_CHECKING(whether GPU version should be used)
+AC_ARG_ENABLE([gpu],
+                AS_HELP_STRING([--enable-gpu],
+                               [do use Nvidia GPU version (compatibility flag, better set explicitely)]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_gpu=yes
+                                else
+                                  use_gpu=no
+                                fi],
+              [use_gpu=no])
+AC_MSG_RESULT([${use_gpu}])
 
 AC_MSG_CHECKING(whether Nvidia-GPU version should be used)
 AC_ARG_ENABLE([Nvidia-gpu],
@@ -1482,6 +1494,13 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   use_nvidia_real_gpu=yes
   use_nvidia_complex_gpu=yes
 fi
+if test x"${use_gpu}" = x"yes" ; then
+  need_nvidia_gpu=yes
+  use_nvidia_real_gpu=yes
+  use_nvidia_complex_gpu=yes
+fi
+
+
 
 AC_MSG_CHECKING(whether INTEL GPU version should be used)
 AC_ARG_ENABLE([intel-gpu],
