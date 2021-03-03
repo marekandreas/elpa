@@ -187,10 +187,10 @@ last_stripe_width, kernel)
   if (wantDebug) then
     if (useGPU .and. &
 #if REALCASE == 1
-      ( kernel .ne. ELPA_2STAGE_REAL_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU)) then
 #endif
 #if COMPLEXCASE == 1
-      ( kernel .ne. ELPA_2STAGE_COMPLEX_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
 #endif
       print *,"ERROR: useGPU is set in conpute_hh_trafo but not GPU kernel!"
       stop
@@ -198,10 +198,10 @@ last_stripe_width, kernel)
   endif
 
 #if REALCASE == 1
-  if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+  if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) then
 #endif
 #if COMPLEXCASE == 1
-  if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU) then
 #endif
     ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
     if (ncols < 1) then
@@ -263,11 +263,11 @@ last_stripe_width, kernel)
 
 #if REALCASE == 1
 ! GPU kernel real
-  if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+  if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) then
 #endif
 #if COMPLEXCASE == 1
 ! GPU kernel complex
-  if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU) then
 #endif
     if (wantDebug) then
       call obj%timer%start("compute_hh_trafo: GPU")

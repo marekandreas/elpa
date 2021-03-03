@@ -209,7 +209,7 @@
 #undef GPU_KERNEL
 #undef GENERIC_KERNEL
 #undef KERNEL_STRING
-#define GPU_KERNEL ELPA_2STAGE_REAL_GPU
+#define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
 #define GENERIC_KERNEL ELPA_2STAGE_REAL_GENERIC
 #define KERNEL_STRING "real_kernel"
 #endif
@@ -217,7 +217,7 @@
 #undef GPU_KERNEL
 #undef GENERIC_KERNEL
 #undef KERNEL_STRING
-#define GPU_KERNEL ELPA_2STAGE_COMPLEX_GPU
+#define GPU_KERNEL ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #define GENERIC_KERNEL ELPA_2STAGE_COMPLEX_GENERIC
 #define KERNEL_STRING "complex_kernel"
 #endif
@@ -377,6 +377,12 @@
       call obj%get("amd-gpu",gpu,error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for AMD GPU. Aborting..."
+        stop
+      endif
+    else if (gpu_vendor() == INTEL_GPU) then
+      call obj%get("intel-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for INTEL GPU. Aborting..."
         stop
       endif
     else

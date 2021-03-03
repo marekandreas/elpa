@@ -501,6 +501,7 @@ subroutine tridiag_&
         aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
         if (useIntelGPU) then
+                print *,"intel phase aaaaaaaaaaaaaaaaaaaaaaaaaa"
           if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
           aux(1:2*n_stored_vecs) = uv_stored_cols(l_cols+1,1:2*n_stored_vecs)
@@ -675,7 +676,8 @@ subroutine tridiag_&
 !$omp shared(useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, a_offset, &
 !$omp&       max_local_cols, max_local_rows, obj, wantDebug, l_rows_per_tile, l_cols_per_tile, &
-!$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat, useIntelGPU)
+!$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat, useIntelGPU, &
+!$omp&       matrixCols)
      my_thread = omp_get_thread_num()
           
      n_threads = omp_get_num_threads()

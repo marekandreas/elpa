@@ -370,7 +370,7 @@ subroutine trans_ev_band_to_full_&
 
       if (i > 1) then
         if (useIntelGPU) then
-          call obj%timer%start("mkl_offload")
+          !call obj%timer%start("mkl_offload")
 #if 0
           call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
                               int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, hvm, &
@@ -383,7 +383,7 @@ subroutine trans_ev_band_to_full_&
                               int(max_local_rows,kind=BLAS_KIND), hvm(:,(i-1)*nbw+1:), &
                               int(max_local_rows,kind=BLAS_KIND), ZERO, t_tmp, int(cwy_blocking, kind=BLAS_KIND))
 #endif
-          call obj%timer%stop("mkl_offload")
+          !call obj%timer%stop("mkl_offload")
 
         else
           call obj%timer%start("blas")
@@ -402,7 +402,7 @@ subroutine trans_ev_band_to_full_&
         call obj%timer%stop("mpi_communication")
 
         if (useIntelGPU) then
-          call obj%timer%start("mkl_offload")
+          !call obj%timer%start("mkl_offload")
 #if 0
           call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
                               int(cwy_blocking,kind=BLAS_KIND), t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
@@ -418,7 +418,7 @@ subroutine trans_ev_band_to_full_&
                               tmat_complete(t_rows+1,t_rows+1), &
                               int(cwy_blocking,kind=BLAS_KIND), t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
 #endif
-          call obj%timer%stop("mkl_offload")
+          !call obj%timer%stop("mkl_offload")
         else
           call obj%timer%start("blas")
           call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
@@ -432,7 +432,7 @@ subroutine trans_ev_band_to_full_&
 
 #else /* WITH_MPI */
         if (useIntelGPU) then
-          call obj%timer%start("mkl_offload")
+          !call obj%timer%start("mkl_offload")
 #if 0
           call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
                               int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
@@ -448,7 +448,7 @@ subroutine trans_ev_band_to_full_&
                               tmat_complete(t_rows+1,t_rows+1), &
                               int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
 #endif
-          call obj%timer%stop("mkl_offload")
+          !call obj%timer%stop("mkl_offload")
 
         else
           call obj%timer%start("blas")
@@ -471,7 +471,7 @@ subroutine trans_ev_band_to_full_&
     if (l_rows>0) then
       if (useGPU) then
         if (useIntelGPU) then
-          call obj%timer%start("mkl_offload")
+          !call obj%timer%start("mkl_offload")
 #if 0
           call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
                               int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
@@ -484,7 +484,7 @@ subroutine trans_ev_band_to_full_&
                             hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, &
                             int(n_cols,kind=BLAS_KIND))
 #endif
-          call obj%timer%stop("mkl_offload")
+          !call obj%timer%stop("mkl_offload")
 
         else
           successGPU = gpu_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
@@ -525,7 +525,7 @@ subroutine trans_ev_band_to_full_&
     if (l_rows>0) then
       if (useGPU) then
         if (useIntelGPU) then
-          call obj%timer%start("mkl_offload")
+          !call obj%timer%start("mkl_offload")
           call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                               int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
                               int(cwy_blocking,kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND))
@@ -533,7 +533,7 @@ subroutine trans_ev_band_to_full_&
                               int(n_cols,kind=BLAS_KIND), -ONE, hvm, &
                               int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND), ONE, &
                               q_mat, int(ldq,kind=BLAS_KIND))
-          call obj%timer%stop("mkl_offload")
+          !call obj%timer%stop("mkl_offload")
 
         else
           successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
@@ -569,7 +569,7 @@ subroutine trans_ev_band_to_full_&
       if (useGPU) then
         if (useIntelGPU) then
 #if 0
-          call obj%timer%start("mkl_offload")
+          !call obj%timer%start("mkl_offload")
           call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                             int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
                             int(cwy_blocking,kind=BLAS_KIND), &
@@ -587,7 +587,7 @@ subroutine trans_ev_band_to_full_&
                             -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, &
                             int(ldq,kind=BLAS_KIND))
 #endif
-          call obj%timer%stop("mkl_offload")
+          !call obj%timer%stop("mkl_offload")
         else
           successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                         cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)

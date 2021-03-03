@@ -110,6 +110,7 @@ module mod_check_for_gpu
           endif
         endif
 
+        success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_setdevice(use_gpu_id)
 #endif
@@ -128,7 +129,8 @@ module mod_check_for_gpu
         if (wantDebugMessage) then
           print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
         endif
-          
+ 
+        success = .true.        
 #ifdef WITH_NVIDIA_GPU_VERSION
         success = cublas_create(cublasHandle)
 #endif
@@ -159,6 +161,7 @@ module mod_check_for_gpu
           endif
         endif
 
+        success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
         ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
         success = cuda_getdevicecount(numberOfDevices)
