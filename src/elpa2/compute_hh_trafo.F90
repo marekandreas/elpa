@@ -185,8 +185,8 @@ last_stripe_width, kernel)
   j = -99
 
   if (wantDebug) then
-    if (useGPU .and. &
 #ifdef WITH_NVIDIA_GPU_VERSION
+    if (useGPU .and. &
 #if REALCASE == 1
       ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU)) then
 #endif
@@ -194,8 +194,11 @@ last_stripe_width, kernel)
       ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
 #endif
       print *,"ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
+      stop
+    endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
+    if (useGPU .and. &
 #if REALCASE == 1
       ( kernel .ne. ELPA_2STAGE_REAL_AMD_GPU)) then
 #endif
@@ -203,9 +206,9 @@ last_stripe_width, kernel)
       ( kernel .ne. ELPA_2STAGE_COMPLEX_AMD_GPU)) then
 #endif
       print *,"ERROR: useGPU is set in compute_hh_trafo but not a AMD GPU kernel!"
-#endif
       stop
     endif
+#endif
   endif
 
 #if REALCASE == 1

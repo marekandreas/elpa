@@ -199,7 +199,7 @@ program test
 #ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
-#ifdef TEST_GPU_SET_ID
+#if  TEST_GPU_SET_ID == 1
    TEST_INT_TYPE      :: gpuID
 #endif
 #ifdef SPLIT_COMM_MYSELF
@@ -643,7 +643,7 @@ program test
    call e%set("nvidia-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 
-#ifdef TEST_GPU_SET_ID
+#if TEST_GPU_SET_ID == 1
    ! simple test
    ! Can (and should) fail often
    gpuID = mod(myid,2)

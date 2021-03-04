@@ -776,9 +776,12 @@ static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         switch(new_value) {
 #ifdef WITH_NVIDIA_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
-#endif
+#else
 #ifdef WITH_AMD_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#else
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
 #endif
                 default:
                         return 0;
@@ -822,9 +825,12 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         switch(new_value) {
 #ifdef WITH_NVIDIA_GPU_VERISION
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
-#endif
+#else
 #ifdef WITH_AMD_GPU_VERISION
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#else
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
 #endif
                 default:
                         return 0;
