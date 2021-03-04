@@ -670,8 +670,8 @@ program test
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
      if (TEST_GPU .eq. 0) then
        kernel = elpa_option_enumerate(KERNEL_KEY, int(i,kind=c_int))
-       if (kernel .eq. ELPA_2STAGE_REAL_GPU) continue
-       if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) continue
+       if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) continue
+       if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU) continue
      endif
 #endif
 #ifdef TEST_KERNEL
@@ -681,10 +681,10 @@ program test
 #ifdef TEST_SOLVER_2STAGE
 #if TEST_GPU == 1
 #if defined TEST_REAL
-     kernel = ELPA_2STAGE_REAL_GPU
+     kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
 #endif
 #if defined TEST_COMPLEX
-     kernel = ELPA_2STAGE_COMPLEX_GPU
+     kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #endif
 #endif
      call e%set(KERNEL_KEY, kernel, error_elpa)

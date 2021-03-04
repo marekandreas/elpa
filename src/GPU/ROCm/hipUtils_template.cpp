@@ -51,30 +51,32 @@
 // written by A. Marek, MPCDF
 #endif
 
-#include "config-f90.h"
 
-//#include <cuda_runtime.h>
+
+#include "config-f90.h"
+#include "hip/hip_runtime.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
 #if COMPLEXCASE == 1
-//#include <cuComplex.h>
+#include <hip/hip_complex.h>
 #endif
 
 #define MAX_BLOCK_SIZE 1024
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-__global__ void my_pack_c_kernel_real_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, double *src, double *dst, int i_off)
+__global__ void my_pack_c_hip_kernel_real_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, double *src, double *dst, int i_off)
 #else
-__global__ void my_pack_c_kernel_real_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, float *src, float *dst, int i_off)
+__global__ void my_pack_c_hip_kernel_real_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, float *src, float *dst, int i_off)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-__global__ void my_pack_c_kernel_complex_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, cuDoubleComplex *src, cuDoubleComplex *dst, int i_off)
+__global__ void my_pack_c_hip_kernel_complex_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, hipDoubleComplex *src, hipDoubleComplex *dst, int i_off)
 #else
-__global__ void my_pack_c_kernel_complex_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, cuFloatComplex *src, cuFloatComplex *dst, int i_off)
+__global__ void my_pack_c_hip_kernel_complex_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, hipFloatComplex *src, hipFloatComplex *dst, int i_off)
 #endif
 #endif
 {
@@ -98,16 +100,16 @@ __global__ void my_pack_c_kernel_complex_single(const int n_offset, const int ma
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-__global__ void my_unpack_c_kernel_real_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, double *src, double *dst, int i_off)
+__global__ void my_unpack_c_hip_kernel_real_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, double *src, double *dst, int i_off)
 #else
-__global__ void my_unpack_c_kernel_real_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, float *src, float *dst, int i_off)
+__global__ void my_unpack_c_hip_kernel_real_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, float *src, float *dst, int i_off)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-__global__ void my_unpack_c_kernel_complex_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, cuDoubleComplex *src, cuDoubleComplex *dst, int i_off)
+__global__ void my_unpack_c_hip_kernel_complex_double(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, hipDoubleComplex *src, hipDoubleComplex *dst, int i_off)
 #else
-__global__ void my_unpack_c_kernel_complex_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, cuFloatComplex *src, cuFloatComplex *dst, int i_off)
+__global__ void my_unpack_c_hip_kernel_complex_single(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, hipFloatComplex *src, hipFloatComplex *dst, int i_off)
 #endif
 #endif
 {
@@ -129,16 +131,16 @@ __global__ void my_unpack_c_kernel_complex_single(const int n_offset, const int 
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-__global__ void extract_hh_tau_c_kernel_real_double(double *hh, double *hh_tau, const int nbw, const int n, int val)
+__global__ void extract_hh_tau_c_hip_kernel_real_double(double *hh, double *hh_tau, const int nbw, const int n, int val)
 #else
-__global__ void extract_hh_tau_c_kernel_real_single(float *hh, float *hh_tau, const int nbw, const int n, int val)
+__global__ void extract_hh_tau_c_hip_kernel_real_single(float *hh, float *hh_tau, const int nbw, const int n, int val)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-__global__ void extract_hh_tau_c_kernel_complex_double(cuDoubleComplex *hh, cuDoubleComplex *hh_tau, const int nbw, const int n, int val)
+__global__ void extract_hh_tau_c_hip_kernel_complex_double(hipDoubleComplex *hh, hipDoubleComplex *hh_tau, const int nbw, const int n, int val)
 #else
-__global__ void extract_hh_tau_c_kernel_complex_single(cuFloatComplex *hh, cuFloatComplex *hh_tau, const int nbw, const int n, int val)
+__global__ void extract_hh_tau_c_hip_kernel_complex_single(hipFloatComplex *hh, hipFloatComplex *hh_tau, const int nbw, const int n, int val)
 #endif
 #endif
 {
@@ -182,20 +184,20 @@ __global__ void extract_hh_tau_c_kernel_complex_single(cuFloatComplex *hh, cuFlo
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_my_pack_c_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *a_dev, double *row_group_dev)
+extern "C" void launch_my_pack_c_hip_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *a_dev, double *row_group_dev)
 #else
-extern "C" void launch_my_pack_c_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *a_dev, float *row_group_dev)
+extern "C" void launch_my_pack_c_hip_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *a_dev, float *row_group_dev)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_my_pack_c_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex *a_dev, cuDoubleComplex *row_group_dev)
+extern "C" void launch_my_pack_c_hip_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipDoubleComplex *a_dev, hipDoubleComplex *row_group_dev)
 #else
-extern "C" void launch_my_pack_c_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex *a_dev, cuFloatComplex *row_group_dev)
+extern "C" void launch_my_pack_c_hip_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipFloatComplex *a_dev, hipFloatComplex *row_group_dev)
 #endif
 #endif
 {
-    cudaError_t err;
+    hipError_t err;
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
 
@@ -203,83 +205,83 @@ extern "C" void launch_my_pack_c_kernel_complex_single(const int row_count, cons
     {
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-        my_pack_c_kernel_real_double<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        hipLaunchKernelGGL(my_pack_c_hip_kernel_real_double, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
-        my_pack_c_kernel_real_single<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        hipLaunchKernelGGL(my_pack_c_hip_kernel_real_single, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-        my_pack_c_kernel_complex_double<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        hipLaunchKernelGGL(my_pack_c_hip_kernel_complex_double, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
-        my_pack_c_kernel_complex_single<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        hipLaunchKernelGGL(my_pack_c_hip_kernel_complex_single, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
 #endif
     }
 
-    err = cudaGetLastError();
-    if (err != cudaSuccess)
+    err = hipGetLastError();
+    if (err != hipSuccess)
     {
-        printf("\n my pack_kernel failed %s \n", cudaGetErrorString(err));
+        printf("\n my pack_hip_kernel failed %s \n", hipGetErrorString(err));
     }
 }
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_extract_hh_tau_c_kernel_real_double(double *bcast_buffer_dev, double *hh_tau_dev, const int nbw, const int n, const int is_zero)
+extern "C" void launch_extract_hh_tau_c_hip_kernel_real_double(double *bcast_buffer_dev, double *hh_tau_dev, const int nbw, const int n, const int is_zero)
 #else
-extern "C" void launch_extract_hh_tau_c_kernel_real_single(float *bcast_buffer_dev, float *hh_tau_dev, const int nbw, const int n, const int is_zero)
+extern "C" void launch_extract_hh_tau_c_hip_kernel_real_single(float *bcast_buffer_dev, float *hh_tau_dev, const int nbw, const int n, const int is_zero)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_extract_hh_tau_c_kernel_complex_double(cuDoubleComplex *bcast_buffer_dev, cuDoubleComplex *hh_tau_dev, const int nbw, const int n, const int is_zero)
+extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_double(hipDoubleComplex *bcast_buffer_dev, hipDoubleComplex *hh_tau_dev, const int nbw, const int n, const int is_zero)
 #else
-extern "C" void launch_extract_hh_tau_c_kernel_complex_single(cuFloatComplex *bcast_buffer_dev, cuFloatComplex *hh_tau_dev, const int nbw, const int n, const int is_zero)
+extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_single(hipFloatComplex *bcast_buffer_dev, hipFloatComplex *hh_tau_dev, const int nbw, const int n, const int is_zero)
 #endif
 #endif
 {
-    cudaError_t err;
+    hipError_t err;
     int grid_size = 1 + (n - 1) / MAX_BLOCK_SIZE;
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-    extract_hh_tau_c_kernel_real_double<<<grid_size, MAX_BLOCK_SIZE>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_real_double, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, 0, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
-    extract_hh_tau_c_kernel_real_single<<<grid_size, MAX_BLOCK_SIZE>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_real_single, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, 0, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-    extract_hh_tau_c_kernel_complex_double<<<grid_size, MAX_BLOCK_SIZE>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_complex_double, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, 0, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
-    extract_hh_tau_c_kernel_complex_single<<<grid_size, MAX_BLOCK_SIZE>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_complex_single, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, 0, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
 #endif
 
-    err = cudaGetLastError();
-    if (err != cudaSuccess)
+    err = hipGetLastError();
+    if (err != hipSuccess)
     {
-        printf("\n extract _kernel failed %s \n", cudaGetErrorString(err));
+        printf("\n extract hip__kernel failed %s \n", hipGetErrorString(err));
     }
 }
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_my_unpack_c_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *row_group_dev, double *a_dev)
+extern "C" void launch_my_unpack_c_hip_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *row_group_dev, double *a_dev)
 #else
-extern "C" void launch_my_unpack_c_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *row_group_dev, float *a_dev)
+extern "C" void launch_my_unpack_c_hip_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *row_group_dev, float *a_dev)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_my_unpack_c_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex *row_group_dev, cuDoubleComplex *a_dev)
+extern "C" void launch_my_unpack_c_hip_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipDoubleComplex *row_group_dev, hipDoubleComplex *a_dev)
 #else
-extern "C" void launch_my_unpack_c_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex *row_group_dev, cuFloatComplex *a_dev)
+extern "C" void launch_my_unpack_c_hip_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipFloatComplex *row_group_dev, hipFloatComplex *a_dev)
 #endif
 #endif
 {
-    cudaError_t err;
+    hipError_t err;
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
 
@@ -287,32 +289,33 @@ extern "C" void launch_my_unpack_c_kernel_complex_single(const int row_count, co
     {
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-        my_unpack_c_kernel_real_double<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        hipLaunchKernelGGL(my_unpack_c_hip_kernel_real_double, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
-        my_unpack_c_kernel_real_single<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        hipLaunchKernelGGL(my_unpack_c_hip_kernel_real_single, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-        my_unpack_c_kernel_complex_double<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        hipLaunchKernelGGL(my_unpack_c_hip_kernel_complex_double, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
-        my_unpack_c_kernel_complex_single<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        hipLaunchKernelGGL(my_unpack_c_hip_kernel_complex_single, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
 #endif
     }
 
-    err = cudaGetLastError();
-    if (err != cudaSuccess)
+    err = hipGetLastError();
+    if (err != hipSuccess)
     {
-        printf("\n my_unpack_c_kernel failed %s \n", cudaGetErrorString(err));
+        printf("\n my_unpack_c_hip_kernel failed %s \n", hipGetErrorString(err));
     }
 }
 
 #ifndef MEMCPY_ALREADY_DEFINED
-extern "C" int cuda_MemcpyDeviceToDevice(int val)
+extern "C" int hip_MemcpyDeviceToDevice(int val)
 {
-    val = cudaMemcpyDeviceToDevice;
+    val = hipMemcpyDeviceToDevice;
     return val;
 }
 #define MEMCPY_ALREADY_DEFINED 1
 #endif
+

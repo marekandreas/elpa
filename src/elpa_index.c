@@ -762,8 +762,10 @@ static const char *real_kernel_name(int kernel) {
         }
 }
 
-#define REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
+#define REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_REAL_NVIDIA_GPU ? gpu_is_active : 1
+#define REAL_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_REAL_AMD_GPU ? gpu_is_active : 1
 
 static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
@@ -772,7 +774,12 @@ static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         }
         int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL));
         switch(new_value) {
-                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#ifdef WITH_NVIDIA_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
                 default:
                         return 0;
         }
@@ -801,8 +808,10 @@ static const char *complex_kernel_name(int kernel) {
         }
 }
 
-#define COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
+#define COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_COMPLEX_NVIDIA_GPU ? gpu_is_active : 1
+#define COMPLEX_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_COMPLEX_AMD_GPU ? gpu_is_active : 1
 
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
@@ -811,7 +820,12 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         }
         int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL));
         switch(new_value) {
-                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#ifdef WITH_NVIDIA_GPU_VERISION
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#ifdef WITH_AMD_GPU_VERISION
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
                 default:
                         return 0;
         }

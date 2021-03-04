@@ -878,12 +878,17 @@ m4_define(elpa_m4_bgq_kernels, [
         complex_bgq
 ])
 
-m4_define(elpa_m4_gpu_kernels, [
-        real_gpu
-        complex_gpu
+m4_define(elpa_m4_nvidia_gpu_kernels, [
+        real_nvidia_gpu
+        complex_nvidia_gpu
 ])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq gpu])
+m4_define(elpa_m4_amd_gpu_kernels, [
+        real_amd_gpu
+        complex_amd_gpu
+])
+
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -927,7 +932,8 @@ ELPA_SELECT_KERNELS([avx512],[enable])
 ELPA_SELECT_KERNELS([sve128],[disable])
 ELPA_SELECT_KERNELS([sve256],[disable])
 ELPA_SELECT_KERNELS([sve512],[disable])
-ELPA_SELECT_KERNELS([gpu],[disable])
+ELPA_SELECT_KERNELS([nvidia_gpu],[disable])
+ELPA_SELECT_KERNELS([amd_gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
 
@@ -969,15 +975,26 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
 ])
 
-AC_ARG_WITH(gpu-support-only, [AS_HELP_STRING([--with-gpu-support-only],
-            [Compile and always use the GPU version])],
-            [],[with_gpu_support_only=no])
-if test x"$with_gpu_support_only" = x"yes" ; then
+AC_ARG_WITH(nvidia-gpu-support-only, [AS_HELP_STRING([--with-nvidia-gpu-support-only],
+            [Compile and always use the NVIDIA GPU version])],
+            [],[with_nvidia_gpu_support_only=no])
+if test x"$with_nvidia_gpu_support_only" = x"yes" ; then
         m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
                       use_[]elpa_m4_kernel[]=no
         ])
-        use_real_gpu=yes
-        use_complex_gpu=yes
+        use_real_nvidia_gpu=yes
+        use_complex_nvidia_gpu=yes
+fi
+
+AC_ARG_WITH(amd-gpu-support-only, [AS_HELP_STRING([--with-amd-gpu-support-only],
+            [Compile and always use the AMD GPU version])],
+            [],[with_amd_gpu_support_only=no])
+if test x"$with_amd_gpu_support_only" = x"yes" ; then
+        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+                      use_[]elpa_m4_kernel[]=no
+        ])
+        use_real_amd_gpu=yes
+        use_complex_amd_gpu=yes
 fi
 
 
@@ -1054,7 +1071,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_gpu_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -1477,8 +1494,8 @@ AC_ARG_ENABLE([Nvidia-gpu],
 AC_MSG_RESULT([${use_nvidia_gpu}])
 if test x"${use_nvidia_gpu}" = x"yes" ; then
   need_nvidia_gpu=yes
-  use_real_gpu=yes
-  use_complex_gpu=yes
+  use_real_nvidia_gpu=yes
+  use_complex_nvidia_gpu=yes
 fi
 
 
@@ -1495,11 +1512,8 @@ AC_ARG_ENABLE([AMD-gpu],
 AC_MSG_RESULT([${use_amd_gpu}])
 if test x"${use_amd_gpu}" = x"yes" ; then
   need_amd_gpu=yes
-  ########################################
-  # must be changed
-  #######################################
-  use_real_gpu=no
-  use_complex_gpu=no
+  use_real_amd_gpu=yes
+  use_complex_amd_gpu=yes
 fi
 
 
@@ -1532,8 +1546,7 @@ fi
 
 
 if test x"${need_amd_gpu}" = x"yes" ; then
-  echo "no amd gpu yet"
-  #AC_LANG_PUSH([C])
+  AC_LANG_PUSH([C])
   #CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
   #LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
@@ -1541,18 +1554,18 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   #AC_SUBST(NVCC)
   #AC_SUBST(NVCCFLAGS)
 
-  #dnl check whether nvcc compiler is found
-  #AC_CHECK_PROG(nvcc_found,nvcc,yes,no)
-  #if test x"${nvcc_found}" = x"no" ; then
-  #  AC_MSG_ERROR([nvcc not found; try to set the cuda-path or disable Nvidia GPU support])
-  #fi
+  dnl check whether hipcc compiler is found
+  AC_CHECK_PROG(hipcc_found,hipcc,yes,no)
+  if test x"${hipcc_found}" = x"no" ; then
+    AC_MSG_ERROR([hipcc not found; try to set the hip-path or disable AMD GPU support])
+  fi
 
-  #dnl check whether we find cublas
-  #AC_SEARCH_LIBS([cublasDgemm],[cublas],[have_cublas=yes],[have_cublas=no])
-  #if test x"${have_cublas}" = x"no"; then
-  #  AC_MSG_ERROR([Could not link cublas; try to set the cuda-path or disable Nvidia GPU support])
-  #fi
-  #AC_SEARCH_LIBS([cudaMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
+  #dnl check whether we find rocblas
+  AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
+  if test x"${have_rocblas}" = x"no"; then
+    AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
+  fi
+  #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
   #if test x"${have_cudart}" = x"no"; then
   #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   #fi
@@ -1587,12 +1600,12 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kernel)[_COMPILED])
 ])
 
-AM_CONDITIONAL([WITH_NVIDIA_GPU_VERSION],[test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes"])
-if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
+AM_CONDITIONAL([WITH_NVIDIA_GPU_VERSION],[test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes"])
+if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" ; then
   AC_DEFINE([WITH_NVIDIA_GPU_VERSION],[1],[enable Nvidia GPU support])
   AC_DEFINE([WITH_NVIDIA_GPU_KERNEL],[1],[Nvidia GPU kernel should be build])
-  ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
-  ELPA_2STAGE_REAL_GPU_COMPILED=1
+  ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=1
+  ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=1
 
   AC_MSG_CHECKING(whether --enable-nvtx is specified)
   AC_ARG_ENABLE([nvtx],
@@ -1617,10 +1630,16 @@ if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
     AC_LANG_POP([C])
   fi
 else
-  ELPA_2STAGE_COMPLEX_GPU_COMPILED=0
-  ELPA_2STAGE_REAL_GPU_COMPILED=0
+  ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=0
+  ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=0
 fi
+AC_SUBST([ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED])
 
+
+echo "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+echo "$use_real_amd_gpu"
+echo "$use_complex_amd_gpu"
 
 AM_CONDITIONAL([WITH_AMD_GPU_VERSION],[test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes"])
 if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
@@ -1655,10 +1674,8 @@ else
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=0
   ELPA_2STAGE_REAL_AMD_GPU_COMPILED=0
 fi
-
-
-AC_SUBST([ELPA_2STAGE_COMPLEX_GPU_COMPILED])
-AC_SUBST([ELPA_2STAGE_REAL_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_AMD_GPU_COMPILED])
 
 
 

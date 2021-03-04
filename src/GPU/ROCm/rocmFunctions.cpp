@@ -61,8 +61,8 @@
 #include <stdint.h>
 #include <complex.h>
 //missing header for rocblas
-//#include "rocblas.h"
-//#include "hip/hip_runtime_api.h"
+#include "rocblas.h"
+#include "hip/hip_runtime_api.h"
 #include "config-f90.h"
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
@@ -346,7 +346,7 @@ extern "C" {
                                const float *A, int lda,  const float *x, int incx,
                                float beta, float *y, int incy) {
 
-    rocblas_sgemv(*((rocblas_handl*)handle), hip_operation(trans),
+    rocblas_sgemv(*((rocblas_handle*)handle), hip_operation(trans),
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);
   }
 
@@ -399,7 +399,7 @@ extern "C" {
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
   }
 
-  void rocblas_zemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
+  void rocblas_zgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
                                double _Complex alpha, const double _Complex *A, int lda,
                                const double _Complex *B, int ldb, double _Complex beta,
                                double _Complex *C, int ldc) {
@@ -440,15 +440,15 @@ extern "C" {
                                int m, int n, double alpha, const double *A,
                                int lda, double *B, int ldb){
 
-    cublasDtrmm(*((cublasHandle_t*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
-                diag_type_new_api(diag), m, n, &alpha, A, lda, B, ldb);
+    rocblas_dtrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
   void rocblas_strmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, const float *A,
                                int lda, float *B, int ldb){
-    cublasStrmm(*((cublasHandle_t*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
-                diag_type_new_api(diag), m, n, &alpha, A, lda, B, ldb);
+    rocblas_strmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
   void rocblas_ztrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
@@ -459,8 +459,8 @@ extern "C" {
 
     const rocblas_double_complex* A_casted = (const rocblas_double_complex*) A;
     rocblas_double_complex* B_casted = (rocblas_double_complex*) B;
-    cublasZtrmm(*((cublasHandle_t*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
-                diag_type_new_api(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
+    rocblas_ztrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
   void rocblas_ctrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
@@ -471,8 +471,8 @@ extern "C" {
 
     const rocblas_float_complex* A_casted = (const rocblas_float_complex*) A;
     rocblas_float_complex* B_casted = (rocblas_float_complex*) B;
-    cublasCtrmm(*((cublasHandle_t*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
-                diag_type_new_api(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
+    rocblas_ctrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
 
