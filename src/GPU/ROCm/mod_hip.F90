@@ -74,7 +74,7 @@ module hip_functions
   ! functions to set and query the CUDA devices
   interface
     function rocblas_create_c(handle) result(istat) &
-             bind(C, name="roclasCreateFromC")
+             bind(C, name="rocblasCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: handle

@@ -259,12 +259,12 @@ module gpu_c_kernel
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call launch_my_pack_c_cuda_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+      call launch_my_pack_c_cuda_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
+              a_dev, row_group_dev)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_my_pack_c_hip_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+      call launch_my_pack_c_hip_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
+              a_dev, row_group_dev)
 #endif
     end subroutine
 

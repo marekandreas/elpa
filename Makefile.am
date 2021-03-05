@@ -143,7 +143,7 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_NVIDIA_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_gpu_complex.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu
 endif
 
 if WITH_INTEL_GPU_VERSION
@@ -151,7 +151,7 @@ if WITH_INTEL_GPU_VERSION
 endif
 
 if WITH_AMD_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/CUDA/ev_tridi_band_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_gpu_complex.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp
 endif
 
 if !WITH_MPI

@@ -200,7 +200,7 @@ program test
 #ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
-#ifdef TEST_GPU_SET_ID
+#if  TEST_GPU_SET_ID == 1
    TEST_INT_TYPE      :: gpuID
 #endif
 #ifdef SPLIT_COMM_MYSELF
@@ -660,7 +660,7 @@ program test
   print *,"Using intel gpu"
 #endif
 
-#if defined(TEST_GPU_SET_ID) && (TEST_INTEL_GPU == 0)
+#if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0)
    ! simple test
    ! Can (and should) fail often
    gpuID = mod(myid,2)
@@ -706,7 +706,17 @@ program test
 #if defined TEST_COMPLEX
      kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #endif
+#endif /* TEST_NVIDIA_GPU == 1 */
+
+#if TEST_AMD_GPU == 1
+#if defined TEST_REAL
+     kernel = ELPA_2STAGE_REAL_AMD_GPU
 #endif
+#if defined TEST_COMPLEX
+     kernel = ELPA_2STAGE_COMPLEX_AMD_GPU
+#endif
+#endif /* TEST_AMD_GPU == 1 */
+
 #if TEST_INTEL_GPU == 1
 #if defined TEST_REAL
      !kernel = ELPA_2STAGE_REAL_INTEL_GPU

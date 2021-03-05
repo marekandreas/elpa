@@ -46,9 +46,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <cuda_runtime.h>
+#include <hip/hip_runtime.h>
 
-#if (CUDART_VERSION >= 9000)
+#if (CUDART_VERSION > 9000)
 template <typename T, unsigned int blk> __device__ void warp_shfl_reduce_real(volatile T *s_block)
 {
     unsigned int tid = threadIdx.x;
@@ -67,6 +67,7 @@ template <typename T, unsigned int blk> __device__ void warp_shfl_reduce_real(vo
 
     for (int i = 16; i >= 1; i /= 2)
     {
+	    // fix this
         val += __shfl_xor_sync(0xffffffff, val, i, 32);
     }
 
@@ -195,7 +196,7 @@ template <typename T, unsigned int blk> __device__ void reduce_real(T *s_block)
 }
 
 template <typename T, unsigned int blk>
-__global__ void compute_hh_trafo_kernel_real(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
+__global__ void compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ T q_s[blk + 1];
     __shared__ T dotp_s[blk];
@@ -244,98 +245,98 @@ __global__ void compute_hh_trafo_kernel_real(T * __restrict__ q, const T * __res
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" void launch_compute_hh_trafo_c_hip_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
 {
-    cudaError_t err;
+    hipError_t err;
 
     switch (nb)
     {
     case 1024:
-        compute_hh_trafo_kernel_real<double, 1024><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 1024>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 512:
-        compute_hh_trafo_kernel_real<double, 512><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 512>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 256:
-        compute_hh_trafo_kernel_real<double, 256><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 256>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 128:
-        compute_hh_trafo_kernel_real<double, 128><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 128>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 64:
-        compute_hh_trafo_kernel_real<double, 64><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 64>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 32:
-        compute_hh_trafo_kernel_real<double, 32><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 32>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 16:
-        compute_hh_trafo_kernel_real<double, 16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 16>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 8:
-        compute_hh_trafo_kernel_real<double, 8><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 8>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 4:
-        compute_hh_trafo_kernel_real<double, 4><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 4>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 2:
-        compute_hh_trafo_kernel_real<double, 2><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 2>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 1:
-        compute_hh_trafo_kernel_real<double, 1><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<double, 1>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     }
 
-    err = cudaGetLastError();
-    if (err != cudaSuccess)
+    err = hipGetLastError();
+    if (err != hipSuccess)
     {
-        printf("\n compute_hh_trafo CUDA kernel failed: %s \n",cudaGetErrorString(err));
+        printf("\n compute_hh_trafo CUDA kernel failed: %s \n",hipGetErrorString(err));
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" void launch_compute_hh_trafo_c_hip_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
 {
-    cudaError_t err;
+    hipError_t err;
 
     switch (nb)
     {
     case 1024:
-        compute_hh_trafo_kernel_real<float, 1024><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 1024>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 512:
-        compute_hh_trafo_kernel_real<float, 512><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 512>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 256:
-        compute_hh_trafo_kernel_real<float, 256><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 256>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 128:
-        compute_hh_trafo_kernel_real<float, 128><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 128>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 64:
-        compute_hh_trafo_kernel_real<float, 64><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 64>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 32:
-        compute_hh_trafo_kernel_real<float, 32><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 32>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 16:
-        compute_hh_trafo_kernel_real<float, 16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 16>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 8:
-        compute_hh_trafo_kernel_real<float, 8><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 8>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 4:
-        compute_hh_trafo_kernel_real<float, 4><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 4>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 2:
-        compute_hh_trafo_kernel_real<float, 2><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 2>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 1:
-        compute_hh_trafo_kernel_real<float, 1><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_real<float, 1>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
         break;
     }
 
-    err = cudaGetLastError();
-    if (err != cudaSuccess)
+    err = hipGetLastError();
+    if (err != hipSuccess)
     {
-        printf("\n compute_hh_trafo CUDA kernel failed: %s \n",cudaGetErrorString(err));
+        printf("\n compute_hh_trafo CUDA kernel failed: %s \n",hipGetErrorString(err));
     }
 }
