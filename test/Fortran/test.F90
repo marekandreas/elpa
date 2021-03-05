@@ -45,7 +45,8 @@
 ! Define one of TEST_REAL or TEST_COMPLEX
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
-! Define TEST_GPU \in [0, 1]
+! Define TEST_NVIDIA_GPU \in [0, 1]
+! Define TEST_AMD_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
@@ -116,6 +117,13 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
 #define INT_MPI_TYPE c_int32_t
 #endif
+
+#define TEST_GPU 0
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1)
+#undef TEST_GPU
+#define TEST_GPU 1
+#endif
+
 #include "assert.h"
 
 program test
@@ -640,8 +648,15 @@ program test
 #endif
    assert_elpa_ok(error_elpa)
 
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0)
    call e%set("nvidia-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
+#endif
+
+#if TEST_AMD_GPU == 1
+   call e%set("amd-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
 
 #if TEST_GPU_SET_ID == 1
    ! simple test
@@ -681,12 +696,24 @@ program test
 #ifdef TEST_SOLVER_2STAGE
 #if TEST_GPU == 1
 #if defined TEST_REAL
+#if (TEST_NVIDIA_GPU == 1)
      kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
 #endif
+#if (TEST_AMD_GPU == 1)
+     kernel = ELPA_2STAGE_REAL_AND_GPU
+#endif
+#endif /* TEST_REAL */
 #if defined TEST_COMPLEX
+#if (TEST_NVIDIA_GPU == 1)
      kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #endif
+#if (TEST_AMD_GPU == 1)
+     kernel = ELPA_2STAGE_COMPLEX_AMD_GPU
 #endif
+#endif /* TEST_COMPLEX */
+#endif /* TEST_GPU == 1 */
+
+
      call e%set(KERNEL_KEY, kernel, error_elpa)
 #ifdef TEST_KERNEL
      assert_elpa_ok(error_elpa)

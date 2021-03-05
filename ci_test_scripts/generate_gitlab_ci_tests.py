@@ -346,7 +346,7 @@ ilp64_no_omp_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_NOOMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_NOOMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=no --disable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -364,7 +364,7 @@ ilp64_no_omp_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_OMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_OMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=no --enable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -388,7 +388,7 @@ ilp64_no_omp_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NOOMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NOOMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=yes --disable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -406,7 +406,7 @@ ilp64_no_omp_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP_ILP64 \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP_ILP64 \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -430,7 +430,7 @@ matrix_redistribute_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --disable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -448,7 +448,7 @@ matrix_redistribute_mpi_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -472,7 +472,7 @@ python_ci_tests = [
     'SCALAPACK_LDFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\" '
     'SCALAPACK_FCFLAGS=\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -486,7 +486,7 @@ python_ci_tests = [
     'SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP\\\" '
     'SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP\\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
+    '--disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }'
     '" -j 8 -t $MPI_TASKS -m 150 -n 50 -b 16 '
     '-s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM',
     "\n",
@@ -496,13 +496,13 @@ python_ci_tests = [
     'SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\\" '
     'SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --enable-python --enable-python-tests "'
+    '--disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests "'
     '-d " CC=\\\\\\\"mpiicc\\\\\\\" CFLAGS=\\\\\\\"-O3 -xAVX\\\\\\\" '
     'FC=\\\\\\\"mpiifort\\\\\\\" FCFLAGS=\\\\\\\"-O3 -xAVX\\\\\\\" '
     'SCALAPACK_LDFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \\\" '
     'SCALAPACK_FCFLAGS=\\\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \\\" '
     '--enable-option-checking=fatal --with-mpi=yes --enable-openmp '
-    '--disable-gpu --enable-avx --enable-python --enable-python-tests'
+    '--disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests'
     '" -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM  || { chmod u+rwX -R . ; exit 1 ; }',
     "\n",
 ]
@@ -597,8 +597,8 @@ band_to_full_blocking = {
 }
 
 gpu = {
-        "no-gpu" : "--disable-gpu",
-        "with-gpu" : "--enable-gpu --with-cuda-path=\\$CUDA_HOME/",
+        "no-gpu" : "--disable-nvidia-gpu",
+        "with-gpu" : "--enable-nvidia-gpu --with-cuda-path=\\$CUDA_HOME/",
 }
 
 
