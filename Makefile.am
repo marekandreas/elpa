@@ -789,6 +789,7 @@ CLEANFILES = \
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
 	-rm -rf validate_*.sh
+	-rm -rf test_*.sh
 	-rm -rf real_2stage*.sh
 	-rm -rf complex_2stage*.sh
 	-rm -rf single_complex_2stage*.sh
