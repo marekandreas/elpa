@@ -128,7 +128,7 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
         continue
 
     # qr only for 2stage real
-    if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == "NVIDIA_GPU_ON" or "AMD_GPU_ON" or m != "random")):
+    if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == "NVIDIA_GPU_ON" or g == "AMD_GPU_ON" or m != "random")):
         continue
 
     if(spl == "myself" and (d != "real" or p != "double" or q != 0 or m != "random" or (t != "eigenvectors" and t != "cholesky")  or lang != "Fortran" or lay != "square")):

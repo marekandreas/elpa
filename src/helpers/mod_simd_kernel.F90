@@ -91,7 +91,7 @@ module simd_kernel
     realKernels_to_simdTable(ELPA_2STAGE_REAL_SVE512_BLOCK4)         = SVE512_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_SVE512_BLOCK6)         = SVE512_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_NVIDIA_GPU)            = NVIDIA_INSTR
-    realKernels_to_simdTable(ELPA_2STAGE_REAL_AND_GPU)               = AMD_GPU_INSTR
+    realKernels_to_simdTable(ELPA_2STAGE_REAL_AMD_GPU)               = AMD_GPU_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_SPARC64_BLOCK2)        = SPARC_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_SPARC64_BLOCK4)        = SPARC_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_SPARC64_BLOCK6)        = SPARC_INSTR
