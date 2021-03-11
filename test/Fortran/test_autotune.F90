@@ -46,6 +46,7 @@
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
 ! Define TEST_NVIDIA_GPU \in [0, 1]
+! Define TEST_INTEL_GPU \in [0, 1]
 ! Define TEST_AMD_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
@@ -239,12 +240,16 @@ program test
 
    call e%set("debug",1, error_elpa)
    assert_elpa_ok(error_elpa)
-#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0)
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
    call e%set("nvidia-gpu", 0, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 #if TEST_AMD_GPU == 1
    call e%set("amd-gpu", 0, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+#if TEST_INTEL_GPU == 1
+   call e%set("intel-gpu", 0, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 

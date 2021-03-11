@@ -211,6 +211,7 @@ last_stripe_width, kernel)
 #endif
   endif
 
+  ! intel missing
 #if REALCASE == 1
   if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
 #endif

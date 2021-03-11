@@ -1480,9 +1480,11 @@ if test x"${need_bgq}" = x"yes"; then
 fi
 AC_LANG_POP([Fortran])
 
+#compatibiility flag
+AC_MSG_CHECKING(whether GPU version should be used)
 AC_ARG_ENABLE([gpu],
                 AS_HELP_STRING([--enable-gpu],
-                               [do use GPU version (just for backward compatibility)]),
+                               [do use Nvidia GPU version (compatibility flag, better set explicitely)]),
                                [if test x"$enableval" = x"yes"; then
                                   use_gpu=yes
                                 else
@@ -1495,7 +1497,6 @@ if test x"${use_gpu}" = x"yes" ; then
   use_real_nvidia_gpu=yes
   use_complex_nvidia_gpu=yes
 fi
-
 
 AC_MSG_CHECKING(whether Nvidia-GPU version should be used)
 AC_ARG_ENABLE([Nvidia-gpu],
@@ -1510,10 +1511,28 @@ AC_ARG_ENABLE([Nvidia-gpu],
 AC_MSG_RESULT([${use_nvidia_gpu}])
 if test x"${use_nvidia_gpu}" = x"yes" ; then
   need_nvidia_gpu=yes
-  use_real_nvidia_gpu=yes
-  use_complex_nvidia_gpu=yes
+  use_nvidia_real_gpu=yes
+  use_nvidia_complex_gpu=yes
 fi
 
+
+
+AC_MSG_CHECKING(whether INTEL GPU version should be used)
+AC_ARG_ENABLE([intel-gpu],
+                AS_HELP_STRING([--enable-intel-gpu],
+                               [do use INTEL GPU version]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_intel_gpu=yes
+                                else
+                                  use_intel_gpu=no
+                                fi],
+              [use_intel_gpu=no])
+AC_MSG_RESULT([${use_intel_gpu}])
+if test x"${use_intel_gpu}" = x"yes" ; then
+  need_intel_gpu=yes
+  use_real_intel_gpu=yes
+  use_complex_intel_gpu=yes
+fi
 
 AC_MSG_CHECKING(whether AMD-GPU version should be used)
 AC_ARG_ENABLE([AMD-gpu],
@@ -1693,7 +1712,18 @@ fi
 AC_SUBST([ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_AMD_GPU_COMPILED])
 
-
+AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
+if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
+  AC_DEFINE([WITH_INTEL_GPU_VERSION],[1],[enable INTEL GPU support])
+  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  #ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
+  #ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
+else
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
+  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
+fi
+AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
 
 
 LT_INIT
@@ -2027,7 +2057,7 @@ AC_CONFIG_FILES([
 m4_include([m4/ax_fc_check_define.m4])
 AC_MSG_CHECKING([if workaround for broken preprocessor is needed])
 
-need_manual_cpp=no
+need_manual_cpp=yes
 AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[is_intel=yes],[])
 AX_FC_CHECK_DEFINE([__PGI],[is_pgi=yes],[])
 ACTUAL_FC="$FC"

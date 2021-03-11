@@ -46,6 +46,7 @@
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
 ! Define TEST_NVIDIA_GPU \in [0, 1]
+! Define TEST_INTEL_GPU \in [0, 1]
 ! Define TEST_AMD_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
@@ -98,7 +99,7 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #endif
 
 #define TEST_GPU 0
-#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1)
 #undef TEST_GPU
 #define TEST_GPU 1
 #endif
@@ -241,11 +242,15 @@ program test
    call e_complex%set("timings",1, error_elpa)
 
    call e_complex%set("debug",1,error_elpa)
-#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0)   
+
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)  
    call e_complex%set("nvidia-gpu", TEST_GPU,error_elpa)
 #endif
 #if TEST_AMD_GPU == 1
    call e_complex%set("amd-gpu", TEST_GPU,error_elpa)
+#endif
+#if TEST_INTEL_GPU == 1
+   call e_complex%set("intel-gpu", TEST_GPU,error_elpa)
 #endif
 
    call e_complex%set("omp_threads", 8, error_elpa)
@@ -286,11 +291,14 @@ program test
 
    call e_skewsymmetric%set("debug",1,error_elpa)
 
-#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0)
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
    call e_skewsymmetric%set("nvidia-gpu", TEST_GPU,error_elpa)
 #endif
 #if TEST_AMD_GPU == 1
    call e_skewsymmetric%set("amd-gpu", TEST_GPU,error_elpa)
+#endif
+#if TEST_INTEL_GPU == 1
+   call e_skewsymmetric%set("intel-gpu", TEST_GPU,error_elpa)
 #endif
    call e_skewsymmetric%set("omp_threads",8, error_elpa)
 

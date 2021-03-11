@@ -110,6 +110,7 @@ module mod_check_for_gpu
           endif
         endif
 
+        success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_setdevice(use_gpu_id)
 #endif
@@ -128,7 +129,8 @@ module mod_check_for_gpu
         if (wantDebugMessage) then
           print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
         endif
-          
+ 
+        success = .true.        
 #ifdef WITH_NVIDIA_GPU_VERSION
         success = cublas_create(cublasHandle)
 #endif
@@ -159,6 +161,7 @@ module mod_check_for_gpu
           endif
         endif
 
+        success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
         ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
         success = cuda_getdevicecount(numberOfDevices)
@@ -176,7 +179,16 @@ module mod_check_for_gpu
 #endif
           stop 1
         endif
+#ifdef  WITH_INTEL_GPU_VERSION
+      gpuAvailable = .false.
+      numberOfDevices = -1
 
+      numberOfDevices = 1
+      print *,"Manually setting",numberOfDevices," of GPUs"
+      if (numberOfDevices .ge. 1) then
+        gpuAvailable = .true.
+      endif
+#endif
         ! make sure that all nodes have the same number of GPU's, otherwise
         ! we run into loadbalancing trouble
 #ifdef WITH_MPI

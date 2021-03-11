@@ -7,11 +7,12 @@
 #define AVX512_INSTR 7
 #define NVIDIA_INSTR 8
 #define AMD_GPU_INSTR 9
-#define VSX_INSTR 10
-#define ARCH64_INSTR 11
-#define SPARC_INSTR 12
-#define SVE128_INSTR 13
+#define INTEL_GPU_INSTR 10
+#define VSX_INSTR 11
+#define ARCH64_INSTR 12
+#define SPARC_INSTR 13
+#define SVE128_INSTR 14
 #define SVE256_INSTR 15
-#define SVE512_INSTR 15
+#define SVE512_INSTR 16
 
-#define NUMBER_OF_INSTR 16
+#define NUMBER_OF_INSTR 17

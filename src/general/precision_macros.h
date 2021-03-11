@@ -103,6 +103,9 @@
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
+#undef  mkl_offload_PRECISION_GEMM
+#undef  mkl_offload_PRECISION_GEMV
+#undef  mkl_offload_PRECISION_TRMM
 #undef  scal_PRECISION_GEMM
 #undef  scal_PRECISION_NRM2
 #undef  scal_PRECISION_LASET
@@ -177,6 +180,9 @@
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
 #define  cublas_PRECISION_SYMV cublas_DSYMV
+#define  mkl_offload_PRECISION_GEMM mkl_offload_DGEMM
+#define  mkl_offload_PRECISION_GEMV mkl_offload_DGEMV
+#define  mkl_offload_PRECISION_TRMM mkl_offload_DTRMM
 #define  scal_PRECISION_GEMM PDGEMM
 #define  scal_PRECISION_NRM2 PDNRM2
 #define  scal_PRECISION_LASET PDLASET
@@ -248,6 +254,9 @@
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
 #define  cublas_PRECISION_SYMV cublas_SSYMV
+#define  mkl_offload_PRECISION_GEMM mkl_offload_SGEMM
+#define  mkl_offload_PRECISION_GEMV mkl_offload_SGEMV
+#define  mkl_offload_PRECISION_TRMM mkl_offload_STRMM
 #define  scal_PRECISION_GEMM PSGEMM
 #define  scal_PRECISION_NRM2 PSNRM2
 #define  scal_PRECISION_LASET PSLASET
@@ -332,6 +341,9 @@
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
+#undef  mkl_offload_PRECISION_GEMM 
+#undef  mkl_offload_PRECISION_GEMV 
+#undef  mkl_offload_PRECISION_TRMM 
 #undef  scal_PRECISION_GEMM
 #undef  scal_PRECISION_DOTC
 #undef  scal_PRECISION_LASET
@@ -416,6 +428,9 @@
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
 #define  cublas_PRECISION_SYMV cublas_ZSYMV
+#define  mkl_offload_PRECISION_GEMM mkl_offload_ZGEMM
+#define  mkl_offload_PRECISION_GEMV mkl_offload_ZGEMV
+#define  mkl_offload_PRECISION_TRMM mkl_offload_ZTRMM
 #define  scal_PRECISION_GEMM PZGEMM
 #define  scal_PRECISION_DOTC PZDOTC
 #define  scal_PRECISION_LASET PZLASET
@@ -491,6 +506,9 @@
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
 #define  cublas_PRECISION_SYMV cublas_CSYMV
+#define  mkl_offload_PRECISION_GEMM mkl_offload_CGEMM
+#define  mkl_offload_PRECISION_GEMV mkl_offload_CGEMV
+#define  mkl_offload_PRECISION_TRMM mkl_offload_CTRMM
 #define  scal_PRECISION_GEMM PCGEMM
 #define  scal_PRECISION_DOTC PCDOTC
 #define  scal_PRECISION_LASET PCLASET

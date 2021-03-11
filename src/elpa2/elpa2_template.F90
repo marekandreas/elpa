@@ -221,6 +221,8 @@
 #define GENERIC_KERNEL ELPA_2STAGE_REAL_GENERIC
 #define KERNEL_STRING "real_kernel"
 #endif
+! intel missing
+
 
 #if COMPLEXCASE == 1
 #undef GPU_KERNEL
@@ -394,6 +396,12 @@
       call obj%get("amd-gpu",gpu,error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for AMD GPU. Aborting..."
+        stop
+      endif
+    else if (gpu_vendor() == INTEL_GPU) then
+      call obj%get("intel-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for INTEL GPU. Aborting..."
         stop
       endif
     else

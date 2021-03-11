@@ -51,9 +51,12 @@
 module elpa_gpu
   use precision
   use iso_c_binding
-
+#ifdef WITH_INTEL_GPU_VERSION
+  use mkl_offload
+#endif
   integer(kind=c_int), parameter :: nvidia_gpu = 1
   integer(kind=c_int), parameter :: amd_gpu = 2
+  integer(kind=c_int), parameter :: intel_gpu = 3
   integer(kind=c_int), parameter :: no_gpu = -1
   integer(kind=c_int)            :: use_gpu_vendor
   integer(kind=c_int)            :: gpuHostRegisterDefault    
@@ -84,6 +87,9 @@ module elpa_gpu
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       vendor = amd_gpu
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+      vendor = intel_gpu
 #endif
       use_gpu_vendor = vendor
       return
