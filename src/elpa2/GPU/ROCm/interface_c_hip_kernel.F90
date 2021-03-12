@@ -330,8 +330,8 @@ module hip_c_kernel
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_my_pack_c_hip_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+      call launch_my_pack_c_hip_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, &
+              a_dev, row_group_dev)
 #endif
     end subroutine
 
@@ -344,8 +344,8 @@ module hip_c_kernel
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_my_pack_c_hip_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+      call launch_my_pack_c_hip_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, &
+              a_dev, row_group_dev)
 #endif
     end subroutine
 #endif
@@ -426,8 +426,8 @@ module hip_c_kernel
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_my_pack_c_hip_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+      call launch_my_pack_c_hip_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
+              a_dev, row_group_dev)
 #endif
     end subroutine
 #endif

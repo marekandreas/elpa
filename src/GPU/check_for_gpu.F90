@@ -146,9 +146,10 @@ module mod_check_for_gpu
 #endif
           stop 1
         endif
+
       else
 
-#ifdef WITH_NVIDIA_GPU_VERSION
+#if defined(WITH_NVIDIA_GPU_VERSION) || !defined(WITH_AMD_GPU_VERSION)
         if (cublasHandle .ne. -1) then
 #endif
 #ifdef WITH_AMD_GPU_VERSION

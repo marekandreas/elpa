@@ -360,11 +360,11 @@
               aux_off = (lrs-1)*size_of_datatype
               b_off = ((lcs-1)*ldb+lrs-1)*size_of_datatype
 
-              call obj%timer%start("cublas")
+              call obj%timer%start("gpublas")
               call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nstor, lce-lcs+1, &
                    lre-lrs+1, ONE, aux_dev+aux_off, l_rows, b_dev+b_off, ldb, ZERO, &
                    tmp1_dev, nstor)
-              call obj%timer%stop("cublas")
+              call obj%timer%stop("gpublas")
 
               num = nstor*(lce-lcs+1)*size_of_datatype
               successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), &

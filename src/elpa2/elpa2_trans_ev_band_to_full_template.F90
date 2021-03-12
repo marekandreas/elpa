@@ -491,11 +491,11 @@ subroutine trans_ev_band_to_full_&
                           max_local_rows*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
 
-          call obj%timer%start("cublas")
+          call obj%timer%start("gpublas")
           call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
                                        n_cols, l_cols, l_rows, ONE, hvm_dev, max_local_rows, &
                                        q_dev, ldq , ZERO, tmp_dev, n_cols)
-          call obj%timer%stop("cublas")
+          call obj%timer%stop("gpublas")
 
 #ifdef WITH_MPI
           ! copy data from device to host for a later MPI_ALLREDUCE
@@ -544,12 +544,12 @@ subroutine trans_ev_band_to_full_&
                         cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
-          call obj%timer%start("cublas")
+          call obj%timer%start("gpublas")
           call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                                    n_cols, l_cols, ONE, tmat_dev, cwy_blocking, tmp_dev, n_cols)
           call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, tmp_dev, &
                                      n_cols, ONE, q_dev, ldq)
-          call obj%timer%stop("cublas")
+          call obj%timer%stop("gpublas")
         endif
       else
         call obj%timer%start("blas")
@@ -593,13 +593,13 @@ subroutine trans_ev_band_to_full_&
                         cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
-          call obj%timer%start("cublas")
+          call obj%timer%start("gpublas")
           call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                                      n_cols, l_cols, ONE, tmat_dev, cwy_blocking, &
                                      tmp_dev, n_cols)
           call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
                                       -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq)
-          call obj%timer%stop("cublas")
+          call obj%timer%stop("gpublas")
         endif
       else
         call obj%timer%start("blas")

@@ -1187,7 +1187,7 @@ max_threads)
               call obj%timer%stop("mkl_offload")
 
             else
-              call obj%timer%start("cublas")
+              call obj%timer%start("gpublas")
               call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
                                          lce-lcs+1, n_cols, lre,     &
                                          ONE, (a_dev + ((lcs-1)*lda* &
@@ -1197,10 +1197,10 @@ max_threads)
                                              size_of_datatype),      &
                                          cur_l_cols)
 
-              call obj%timer%stop("cublas")
+              call obj%timer%stop("gpublas")
 
               if(i==0) cycle
-              call obj%timer%start("cublas")
+              call obj%timer%start("gpublas")
 
               lre = min(l_rows,i*l_rows_tile)
               if (isSkewsymmetric) then
@@ -1222,7 +1222,7 @@ max_threads)
                                             size_of_datatype),              &
                                               cur_l_rows)
               endif
-              call obj%timer%stop("cublas")
+              call obj%timer%stop("gpublas")
             endif
           else ! useGPU
 
@@ -1419,13 +1419,13 @@ max_threads)
                       nbw*nbw*size_of_datatype,gpuMemcpyHostToDevice)
         check_memcpy_gpu("bandred: tmat -> tmat_dev ", successGPU)
 
-        call obj%timer%start("cublas")
+        call obj%timer%start("gpublas")
         call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
                             l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, cur_l_cols)
-        call obj%timer%stop("cublas")
+        call obj%timer%stop("gpublas")
 
         ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-        call obj%timer%start("cublas")
+        call obj%timer%start("gpublas")
         call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',             &
                                  n_cols, n_cols, l_cols, ONE, umc_dev, cur_l_cols, &
                                  (umc_dev+(cur_l_cols * n_cols )*size_of_datatype),cur_l_cols, &
@@ -1433,7 +1433,7 @@ max_threads)
 
         call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
            n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
-        call obj%timer%stop("cublas")
+        call obj%timer%stop("gpublas")
 
         successGPU = gpu_memcpy(int(loc(vav),kind=c_intptr_t), &
                     vav_dev, nbw*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
@@ -1538,7 +1538,7 @@ max_threads)
       endif
 
       else
-        call obj%timer%start("cublas")
+        call obj%timer%start("gpublas")
         if (isSkewsymmetric) then
           call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
@@ -1564,7 +1564,7 @@ max_threads)
                                    cur_l_cols, vav_dev,nbw,        &
                                    ONE, umc_dev, cur_l_cols)
         endif
-        call obj%timer%stop("cublas")
+        call obj%timer%stop("gpublas")
 
         successGPU = gpu_memcpy(int(loc(umcGPU(1)),kind=c_intptr_t), &
                     umc_dev, umc_size*size_of_datatype, gpuMemcpyDeviceToHost)
@@ -1689,7 +1689,7 @@ max_threads)
             print *,"this should never happen"
             stop
           endif
-          call obj%timer%start("cublas")
+          call obj%timer%start("gpublas")
 
           call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
                                    lce-lcs+1, 2*n_cols, -ONE, &
@@ -1697,7 +1697,7 @@ max_threads)
                                    size_of_datatype), &
                                    cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
                                    size_of_datatype), lda)
-          call obj%timer%stop("cublas")
+          call obj%timer%stop("gpublas")
         endif
       else
         call obj%timer%start("blas")
@@ -1731,7 +1731,7 @@ max_threads)
           call obj%timer%stop("mkl_offload")
 
         else
-          call obj%timer%start("cublas")
+          call obj%timer%start("gpublas")
 
           call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                      lre, lce-lcs+1, 2*n_cols, -ONE, &
@@ -1739,7 +1739,7 @@ max_threads)
                                      size_of_datatype), &
                                      cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
                                      size_of_datatype), lda)
-          call obj%timer%stop("cublas")
+          call obj%timer%stop("gpublas")
         endif
       else ! useGPU
 

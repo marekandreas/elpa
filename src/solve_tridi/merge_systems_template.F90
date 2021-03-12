@@ -836,12 +836,12 @@
 #endif
                   call obj%timer%stop("mkl_offload")
                 else
-                  call obj%timer%start("cublas")
+                  call obj%timer%start("gpublas")
                   call gpublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
                                       1.0_rk, qtmp1_dev, ubound(qtmp1,dim=1),    &
                                       ev_dev, ubound(ev,dim=1), &
                                       1.0_rk, qtmp2_dev, ubound(qtmp2,dim=1))
-                  call obj%timer%stop("cublas")
+                  call obj%timer%stop("gpublas")
                 endif
               else
                 call obj%timer%start("blas")
@@ -898,12 +898,12 @@
                   call obj%timer%stop("mkl_offload")
 
                 else
-                  call obj%timer%start("cublas")
+                  call obj%timer%start("gpublas")
                   call gpublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
                                       1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
                                       ev_dev, ubound(ev,dim=1), &
                                       1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1))
-                  call obj%timer%stop("cublas")
+                  call obj%timer%stop("gpublas")
                 endif
               else
                 call obj%timer%start("blas")

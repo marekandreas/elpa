@@ -1532,22 +1532,22 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   use_nvidia_complex_gpu=yes
 fi
 
-AC_MSG_CHECKING(whether INTEL GPU version should be used)
-AC_ARG_ENABLE([intel-gpu],
-                AS_HELP_STRING([--enable-intel-gpu],
-                               [do use INTEL GPU version]),
-                               [if test x"$enableval" = x"yes"; then
-                                  use_intel_gpu=yes
-                                else
-                                  use_intel_gpu=no
-                                fi],
-              [use_intel_gpu=no])
-AC_MSG_RESULT([${use_intel_gpu}])
-if test x"${use_intel_gpu}" = x"yes" ; then
-  need_intel_gpu=yes
-  use_real_intel_gpu=yes
-  use_complex_intel_gpu=yes
-fi
+#AC_MSG_CHECKING(whether INTEL GPU version should be used)
+#AC_ARG_ENABLE([intel-gpu],
+#                AS_HELP_STRING([--enable-intel-gpu],
+#                               [do use INTEL GPU version]),
+#                               [if test x"$enableval" = x"yes"; then
+#                                  use_intel_gpu=yes
+#                                else
+#                                  use_intel_gpu=no
+#                                fi],
+#              [use_intel_gpu=no])
+#AC_MSG_RESULT([${use_intel_gpu}])
+#if test x"${use_intel_gpu}" = x"yes" ; then
+#  need_intel_gpu=yes
+#  use_real_intel_gpu=yes
+#  use_complex_intel_gpu=yes
+#fi
 
 AC_MSG_CHECKING(whether AMD-GPU version should be used)
 AC_ARG_ENABLE([AMD-gpu],
@@ -2094,7 +2094,7 @@ AC_CONFIG_FILES([
 m4_include([m4/ax_fc_check_define.m4])
 AC_MSG_CHECKING([if workaround for broken preprocessor is needed])
 
-need_manual_cpp=yes
+need_manual_cpp=no
 AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[is_intel=yes],[])
 AX_FC_CHECK_DEFINE([__PGI],[is_pgi=yes],[])
 ACTUAL_FC="$FC"

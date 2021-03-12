@@ -782,7 +782,7 @@ subroutine tridiag_&
                 ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
                 ! this requires altering of the algorithm when later explicitly updating the matrix
                 ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
-                if (wantDebug) call obj%timer%start("cublas")
+                if (wantDebug) call obj%timer%start("gpublas")
                 call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
                                           ONE, a_dev, matrixRows,                   &
                                           v_row_dev , 1,                          &
@@ -797,7 +797,7 @@ subroutine tridiag_&
 !                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
 !                                             size_of_datatype, 1)
 !                 endif
-                if (wantDebug) call obj%timer%stop("cublas")
+                if (wantDebug) call obj%timer%stop("gpublas")
               endif
             else  ! mat_vec_as_one_block
               !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
@@ -1096,7 +1096,7 @@ subroutine tridiag_&
                else
                  ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                  ! we than use the same calls as for CPU version
-                 if (wantDebug) call obj%timer%start("cublas")
+                 if (wantDebug) call obj%timer%start("gpublas")
                  call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                          l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
                                          ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
@@ -1105,7 +1105,7 @@ subroutine tridiag_&
                                          size_of_datatype,  &
                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
                                          size_of_datatype , matrixRows)
-                 if (wantDebug) call obj%timer%stop("cublas")
+                 if (wantDebug) call obj%timer%stop("gpublas")
                endif
              endif
            else !useGPU
@@ -1147,12 +1147,12 @@ subroutine tridiag_&
              else
                !update whole (remaining) part of matrix, including tiles below diagonal
                !we can do that in one large cublas call
-               if (wantDebug) call obj%timer%start("cublas")
+               if (wantDebug) call obj%timer%start("gpublas")
                call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
                                          ONE, vu_stored_rows_dev, max_local_rows, &
                                          uv_stored_cols_dev, max_local_cols,  &
                                          ONE, a_dev, matrixRows)
-               if (wantDebug) call obj%timer%stop("cublas")
+               if (wantDebug) call obj%timer%stop("gpublas")
              endif
            endif
          endif

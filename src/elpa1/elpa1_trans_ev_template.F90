@@ -453,11 +453,11 @@ subroutine trans_ev_&
             call obj%timer%stop("mkl_offload")
 
           else
-            call obj%timer%start("cublas")
+            call obj%timer%start("gpublas")
             call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',   &
                                      nstor, l_cols, l_rows, ONE, hvm_dev, hvm_ubnd,  &
                                      q_dev, ldq, ZERO, tmp_dev, nstor)
-            call obj%timer%stop("cublas")
+            call obj%timer%stop("gpublas")
           endif
         else ! useGPU
 
@@ -559,7 +559,7 @@ subroutine trans_ev_&
             call obj%timer%stop("mkl_offload")
 #endif /* WITH_MPI */
           else
-            call obj%timer%start("cublas")
+            call obj%timer%start("gpublas")
             call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
                                      nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
                                      tmp_dev, nstor)
@@ -567,7 +567,7 @@ subroutine trans_ev_&
             call gpublas_PRECISION_GEMM('N', 'N' ,l_rows ,l_cols ,nstor,  &
                                      -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
                                      ONE, q_dev, ldq)
-            call obj%timer%stop("cublas")
+            call obj%timer%stop("gpublas")
           endif
         else !useGPU
 #ifdef WITH_MPI
