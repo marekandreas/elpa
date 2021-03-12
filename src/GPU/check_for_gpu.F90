@@ -135,7 +135,7 @@ module mod_check_for_gpu
         success = cublas_create(cublasHandle)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        success = rocblas_create(cublasHandle)
+        success = rocblas_create(rocblasHandle)
 #endif
         if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -148,7 +148,12 @@ module mod_check_for_gpu
         endif
       else
 
+#ifdef WITH_NVIDIA_GPU_VERSION
         if (cublasHandle .ne. -1) then
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+        if (rocblasHandle .ne. -1) then
+#endif
           gpuAvailable = .true.
           numberOfDevices = -1
           if (myid == 0 .and. wantDebugMessage) then
@@ -237,7 +242,7 @@ module mod_check_for_gpu
           success = cublas_create(cublasHandle)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-          success = rocblas_create(cublasHandle)
+          success = rocblas_create(rocblasHandle)
 #endif
           if (.not.(success)) then
 #ifdef WITH_NIVDIA_GPU_VERSION
