@@ -39,10 +39,14 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
-
+print_earliest_api_version=20170403
 AC_DEFINE_SUBST(CURRENT_API_VERSION, 20200417, "Current ELPA API version")
+print_current_api_version=20200417
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
+print_earliest_autotune_version=20171201
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
+print_current_autotune_version=20200417
 AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
 AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20200417, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
@@ -2028,6 +2032,13 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
                 fi
         ])
 ])
+
+echo ""
+echo " This version of ELPA support the minimal API version: ${print_earliest_api_version}"
+echo " The current API version is: ${print_current_api_version}"
+echo " This version of ELPA support the minimal autotuning version: ${print_earliest_autotune_version}"
+echo " The current autotune version is: ${print_current_autotune_version}"
+echo ""
 
 if test x"${ax_cv_have_sse3_cpu_ext}" = x"yes" -a  x"${need_sse}" = x"no"; then
   echo " "
