@@ -199,7 +199,7 @@ program test
 #ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
-#ifdef TEST_GPU_SET_ID
+#if TEST_GPU_SET_ID == 1
    TEST_INT_TYPE      :: gpuID
 #endif
 #ifdef SPLIT_COMM_MYSELF
@@ -617,12 +617,15 @@ program test
    assert_elpa_ok(error_elpa)
    call e%set("mpi_comm_cols", int(mpi_comm_cols,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
+
 #else
    call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("process_row", int(my_prow,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("process_col", int(my_pcol,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("verbose", 1, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 #endif
@@ -643,7 +646,7 @@ program test
    call e%set("gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 
-#ifdef TEST_GPU_SET_ID
+#if TEST_GPU_SET_ID == 1
    ! simple test
    ! Can (and should) fail often
    gpuID = mod(myid,2)
