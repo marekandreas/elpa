@@ -104,7 +104,8 @@ module test_analytic
   end interface
 
   TEST_INT_TYPE, parameter, private  :: num_primes = 3
-  TEST_INT_TYPE, parameter, private  :: primes(num_primes) = (/2,3,5/)
+  !TEST_INT_TYPE, parameter, private  :: primes(num_primes) = (/2,3,5/)
+  TEST_INT_TYPE, private  :: primes(num_primes)
 
   TEST_INT_TYPE, parameter, private  :: ANALYTIC_MATRIX = 0
   TEST_INT_TYPE, parameter, private  :: ANALYTIC_EIGENVECTORS = 1
@@ -119,6 +120,9 @@ module test_analytic
     logical                        :: possible
     TEST_INT_TYPE               :: reminder, prime, prime_id
 
+    primes(1) = 2
+    primes(2) = 3
+    primes(3) = 5
     decomposition = 0
     possible = .true.
     reminder = num
@@ -140,6 +144,9 @@ module test_analytic
     TEST_INT_TYPE               :: num, prime_id
 
     num = 1;
+    primes(1) = 2
+    primes(2) = 3
+    primes(3) = 5
     do prime_id = 1, num_primes
       num = num * primes(prime_id) ** decomposition(prime_id)
     end do

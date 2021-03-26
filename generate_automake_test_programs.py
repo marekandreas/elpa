@@ -31,7 +31,6 @@ gpu_id_flag = {
 
 matrix_flag = {
     "random":   "-DTEST_MATRIX_RANDOM",
-    "analytic": "-DTEST_MATRIX_ANALYTIC",
     "toeplitz": "-DTEST_MATRIX_TOEPLITZ",
     "frank":    "-DTEST_MATRIX_FRANK",
 }
