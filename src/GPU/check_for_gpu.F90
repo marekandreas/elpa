@@ -219,7 +219,7 @@ module mod_check_for_gpu
           endif
 
           deviceNumber = mod(myid, numberOfDevices)
-#ifdef WITH_NIVDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
           success = cuda_setdevice(deviceNumber)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -227,7 +227,7 @@ module mod_check_for_gpu
 #endif
 
           if (.not.(success)) then
-#ifdef WITH_NIVDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
             print *,"Cannot set CudaDevice"
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -239,14 +239,14 @@ module mod_check_for_gpu
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
           endif
           
-#ifdef WITH_NIVDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
           success = cublas_create(cublasHandle)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
           success = rocblas_create(rocblasHandle)
 #endif
           if (.not.(success)) then
-#ifdef WITH_NIVDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
             print *,"Cannot create cublas handle"
 #endif
 #ifdef WITH_AMD_GPU_VERSION
