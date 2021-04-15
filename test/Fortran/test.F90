@@ -245,7 +245,8 @@ program test
    endif
 
    if (myid == 0) then
-     print '((a,i0))', 'Program ' // TEST_CASE
+     print '((a,i0))', 'Program ' &
+     // TEST_CASE
      print *, ""
    endif
 
