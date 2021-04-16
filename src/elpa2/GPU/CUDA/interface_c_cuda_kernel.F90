@@ -49,7 +49,7 @@ module cuda_c_kernel
   implicit none
 
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols) &
+    subroutine launch_compute_hh_trafo_c_cuda_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -61,7 +61,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
+    subroutine launch_compute_hh_trafo_c_cuda_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -73,7 +73,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols) &
+    subroutine launch_compute_hh_trafo_c_cuda_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -85,7 +85,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_compute_hh_trafo_c_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
+    subroutine launch_compute_hh_trafo_c_cuda_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -97,7 +97,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_my_unpack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+    subroutine launch_my_unpack_c_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                l_nev,row_group_dev, a_dev) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -109,7 +109,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_my_unpack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+    subroutine launch_my_unpack_c_cuda_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                l_nev,row_group_dev, a_dev) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -121,7 +121,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_my_pack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
+    subroutine launch_my_pack_c_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
                stripe_count, l_nev, a_dev, row_group_dev) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -133,7 +133,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_my_pack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+    subroutine launch_my_pack_c_cuda_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                l_nev, a_dev, row_group_dev) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -145,7 +145,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_extract_hh_tau_c_kernel_real_double(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_cuda_kernel_real_double(hh, hh_tau, nb, n, is_zero) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -158,7 +158,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_extract_hh_tau_c_kernel_real_single(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_cuda_kernel_real_single(hh, hh_tau, nb, n, is_zero) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -171,7 +171,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_my_unpack_c_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, &
+    subroutine launch_my_unpack_c_cuda_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, &
                stripe_count, l_nev, row_group_dev, a_dev) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -183,8 +183,8 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
  interface
-    subroutine launch_my_unpack_c_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-               row_group_dev, a_dev) bind(c)
+    subroutine launch_my_unpack_c_cuda_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, &
+               l_nev, row_group_dev, a_dev) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count
@@ -195,7 +195,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_my_pack_c_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
+    subroutine launch_my_pack_c_cuda_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
                stripe_count, l_nev, a_dev, row_group_dev) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -207,7 +207,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_my_pack_c_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
+    subroutine launch_my_pack_c_cuda_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
                stripe_count, l_nev, a_dev, row_group_dev) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -219,7 +219,7 @@ module cuda_c_kernel
 #endif
 
   interface
-    subroutine launch_extract_hh_tau_c_kernel_complex_double(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_cuda_kernel_complex_double(hh, hh_tau, nb, n, is_zero) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -232,7 +232,7 @@ module cuda_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_extract_hh_tau_c_kernel_complex_single(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_cuda_kernel_complex_single(hh, hh_tau, nb, n, is_zero) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -246,214 +246,214 @@ module cuda_c_kernel
 
   contains
 
-    subroutine launch_compute_hh_trafo_gpu_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_cuda_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(c_intptr_t) :: hh_tau ,hh
-#ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_compute_hh_trafo_c_cuda_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_compute_hh_trafo_gpu_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_cuda_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(c_intptr_t) :: hh_tau ,hh
-#ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_compute_hh_trafo_c_cuda_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_compute_hh_trafo_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_cuda_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
-#ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_compute_hh_trafo_c_cuda_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_compute_hh_trafo_gpu_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_cuda_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
-#ifdef WITH_GPU_VERSION
-      call launch_compute_hh_trafo_c_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_compute_hh_trafo_c_cuda_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_my_unpack_gpu_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+    subroutine launch_my_unpack_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                l_nev,row_group_dev, a_dev)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count
       integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_unpack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_my_unpack_c_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
            l_nev,row_group_dev, a_dev)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_my_unpack_gpu_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+    subroutine launch_my_unpack_cuda_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                l_nev,row_group_dev, a_dev)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count
       integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_unpack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_my_unpack_c_cuda_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
            l_nev,row_group_dev, a_dev)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_my_pack_gpu_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
+    subroutine launch_my_pack_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
                stripe_count, l_nev, a_dev, row_group_dev)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_pack_c_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_my_pack_c_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
            row_group_dev)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_my_pack_gpu_kernel_real_single(row_count, n_offset, max_idx,stripe_width, &
+    subroutine launch_my_pack_cuda_kernel_real_single(row_count, n_offset, max_idx,stripe_width, &
                a_dim2, stripe_count, l_nev, a_dev, row_group_dev)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_pack_c_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_my_pack_c_cuda_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
            row_group_dev)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_extract_hh_tau_gpu_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_cuda_kernel_real_double(hh, hh_tau, nb, n, is_zero)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int) :: nb, n
       integer(kind=c_int) :: is_zero
-#ifdef WITH_GPU_VERSION
-      call launch_extract_hh_tau_c_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_extract_hh_tau_c_cuda_kernel_real_double(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_extract_hh_tau_gpu_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_cuda_kernel_real_single(hh, hh_tau, nb, n, is_zero)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int) :: nb, n
       integer(kind=c_int) :: is_zero
-#ifdef WITH_GPU_VERSION
-      call launch_extract_hh_tau_c_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_extract_hh_tau_c_cuda_kernel_real_single(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_my_unpack_gpu_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, &
+    subroutine launch_my_unpack_cuda_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, &
                a_dim2, stripe_count, l_nev, row_group_dev, a_dev)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count
       integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_unpack_c_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_my_unpack_c_cuda_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
            row_group_dev, a_dev)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_my_unpack_gpu_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, &
+    subroutine launch_my_unpack_cuda_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, &
                a_dim2, stripe_count, l_nev, row_group_dev, a_dev)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count
       integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_unpack_c_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_my_unpack_c_cuda_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
            row_group_dev, a_dev)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_my_pack_gpu_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
+    subroutine launch_my_pack_cuda_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
                stripe_count, l_nev, a_dev, row_group_dev)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_pack_c_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_my_pack_c_cuda_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
            row_group_dev)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_my_pack_gpu_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
+    subroutine launch_my_pack_cuda_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
                stripe_count, l_nev, a_dev, row_group_dev)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
-#ifdef WITH_GPU_VERSION
-      call launch_my_pack_c_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_my_pack_c_cuda_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
            row_group_dev)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_extract_hh_tau_gpu_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_cuda_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int) :: nb, n
       integer(kind=c_int) :: is_zero
-#ifdef WITH_GPU_VERSION
-      call launch_extract_hh_tau_c_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_extract_hh_tau_c_cuda_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_extract_hh_tau_gpu_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_cuda_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int) :: nb, n
       integer(kind=c_int) :: is_zero
-#ifdef WITH_GPU_VERSION
-      call launch_extract_hh_tau_c_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_extract_hh_tau_c_cuda_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 #endif

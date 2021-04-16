@@ -223,7 +223,10 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(elpa_handle_1));
 
-   elpa_set(elpa_handle_1, "gpu", 0, &error_elpa);
+   elpa_set(elpa_handle_1, "nvidia-gpu", 0, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   elpa_set(elpa_handle_1, "intel-gpu", 0, &error_elpa);
    assert_elpa_ok(error_elpa);
 
    elpa_set(elpa_handle_1, "timings", 1, &error_elpa);
@@ -253,7 +256,10 @@ int main(int argc, char** argv) {
 
    elpa_load_settings(elpa_handle_2, "initial_parameters.txt", &error_elpa);
 
-   elpa_get(elpa_handle_2, "gpu", &gpu, &error_elpa);
+   elpa_get(elpa_handle_2, "nvidia-gpu", &gpu, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   elpa_get(elpa_handle_2, "intel-gpu", &gpu, &error_elpa);
    assert_elpa_ok(error_elpa);
 
    elpa_get(elpa_handle_2, "timings", &timings, &error_elpa);

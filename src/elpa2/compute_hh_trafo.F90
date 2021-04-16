@@ -105,8 +105,11 @@ last_stripe_width, kernel)
 
 #endif /* COMPLEXCASE */
 
-  use cuda_c_kernel
-  use cuda_functions
+  !use cuda_c_kernel
+  !use cuda_functions
+  !use hip_functions
+  use gpu_c_kernel
+  use elpa_gpu
 
   use elpa_generated_fortran_interfaces
 
@@ -182,23 +185,38 @@ last_stripe_width, kernel)
   j = -99
 
   if (wantDebug) then
+#ifdef WITH_NVIDIA_GPU_VERSION
     if (useGPU .and. &
 #if REALCASE == 1
-      ( kernel .ne. ELPA_2STAGE_REAL_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU)) then
 #endif
 #if COMPLEXCASE == 1
-      ( kernel .ne. ELPA_2STAGE_COMPLEX_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
 #endif
-      print *,"ERROR: useGPU is set in conpute_hh_trafo but not GPU kernel!"
+      print *,"ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
       stop
     endif
-  endif
-
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    if (useGPU .and. &
 #if REALCASE == 1
-  if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+      ( kernel .ne. ELPA_2STAGE_REAL_AMD_GPU)) then
 #endif
 #if COMPLEXCASE == 1
-  if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_AMD_GPU)) then
+#endif
+      print *,"ERROR: useGPU is set in compute_hh_trafo but not a AMD GPU kernel!"
+      stop
+    endif
+#endif
+  endif
+
+  ! intel missing
+#if REALCASE == 1
+  if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
+#endif
+#if COMPLEXCASE == 1
+  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
 #endif
     ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
     if (ncols < 1) then
@@ -260,11 +278,11 @@ last_stripe_width, kernel)
 
 #if REALCASE == 1
 ! GPU kernel real
-  if (kernel .eq. ELPA_2STAGE_REAL_GPU) then
+  if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
 #endif
 #if COMPLEXCASE == 1
 ! GPU kernel complex
-  if (kernel .eq. ELPA_2STAGE_COMPLEX_GPU) then
+  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
 #endif
     if (wantDebug) then
       call obj%timer%start("compute_hh_trafo: GPU")

@@ -164,7 +164,7 @@ template <typename T, unsigned int blk> __device__ void reduce_complex(T *s_bloc
 }
 
 template <unsigned int blk>
-__global__ void compute_hh_trafo_kernel_complex_double(cuDoubleComplex * __restrict__ q, const cuDoubleComplex * __restrict__ hh, const cuDoubleComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
+__global__ void compute_hh_trafo_cuda_kernel_complex_double(cuDoubleComplex * __restrict__ q, const cuDoubleComplex * __restrict__ hh, const cuDoubleComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ cuDoubleComplex q_s[blk + 1];
     __shared__ cuDoubleComplex dotp_s[blk];
@@ -213,44 +213,44 @@ __global__ void compute_hh_trafo_kernel_complex_double(cuDoubleComplex * __restr
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_kernel_complex_double(cuDoubleComplex *q, const cuDoubleComplex *hh, const cuDoubleComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" void launch_compute_hh_trafo_c_cuda_kernel_complex_double(cuDoubleComplex *q, const cuDoubleComplex *hh, const cuDoubleComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
 {
     cudaError_t err;
 
     switch (nb)
     {
     case 1024:
-        compute_hh_trafo_kernel_complex_double<1024><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<1024><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 512:
-        compute_hh_trafo_kernel_complex_double<512><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<512><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 256:
-        compute_hh_trafo_kernel_complex_double<256><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<256><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 128:
-        compute_hh_trafo_kernel_complex_double<128><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<128><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 64:
-        compute_hh_trafo_kernel_complex_double<64><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<64><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 32:
-        compute_hh_trafo_kernel_complex_double<32><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<32><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 16:
-        compute_hh_trafo_kernel_complex_double<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 8:
-        compute_hh_trafo_kernel_complex_double<8><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<8><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 4:
-        compute_hh_trafo_kernel_complex_double<4><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<4><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 2:
-        compute_hh_trafo_kernel_complex_double<2><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<2><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 1:
-        compute_hh_trafo_kernel_complex_double<1><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_double<1><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     }
 
@@ -262,7 +262,7 @@ extern "C" void launch_compute_hh_trafo_c_kernel_complex_double(cuDoubleComplex 
 }
 
 template <unsigned int blk>
-__global__ void compute_hh_trafo_kernel_complex_single(cuFloatComplex * __restrict__ q, const cuFloatComplex * __restrict__ hh, const cuFloatComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
+__global__ void compute_hh_trafo_cuda_kernel_complex_single(cuFloatComplex * __restrict__ q, const cuFloatComplex * __restrict__ hh, const cuFloatComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ cuFloatComplex q_s[blk + 1];
     __shared__ cuFloatComplex dotp_s[blk];
@@ -311,44 +311,44 @@ __global__ void compute_hh_trafo_kernel_complex_single(cuFloatComplex * __restri
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_kernel_complex_single(cuFloatComplex *q, const cuFloatComplex *hh, const cuFloatComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" void launch_compute_hh_trafo_c_cuda_kernel_complex_single(cuFloatComplex *q, const cuFloatComplex *hh, const cuFloatComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
 {
     cudaError_t err;
 
     switch (nb)
     {
     case 1024:
-        compute_hh_trafo_kernel_complex_single<1024><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<1024><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 512:
-        compute_hh_trafo_kernel_complex_single<512><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<512><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 256:
-        compute_hh_trafo_kernel_complex_single<256><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<256><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 128:
-        compute_hh_trafo_kernel_complex_single<128><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<128><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 64:
-        compute_hh_trafo_kernel_complex_single<64><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<64><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 32:
-        compute_hh_trafo_kernel_complex_single<32><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<32><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 16:
-        compute_hh_trafo_kernel_complex_single<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 8:
-        compute_hh_trafo_kernel_complex_single<8><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<8><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 4:
-        compute_hh_trafo_kernel_complex_single<4><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<4><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 2:
-        compute_hh_trafo_kernel_complex_single<2><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<2><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     case 1:
-        compute_hh_trafo_kernel_complex_single<1><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+        compute_hh_trafo_cuda_kernel_complex_single<1><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
         break;
     }
 

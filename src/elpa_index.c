@@ -112,8 +112,14 @@ static int min_tile_size_cardinality(elpa_index_t index);
 static int min_tile_size_enumerate(elpa_index_t index, int i);
 static int min_tile_size_is_valid(elpa_index_t index, int n, int new_value);
 
-#ifdef WITH_GPU_VERSION
-int gpu_count();
+#ifdef WITH_NVIDIA_GPU_VERSION
+int nvidia_gpu_count();
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+int amd_gpu_count();
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+//missing function for GPU count
 #endif
 
 static int use_gpu_id_cardinality(elpa_index_t index);
@@ -226,7 +232,11 @@ static const elpa_index_int_entry_t int_entries[] = {
                          number_of_matrix_layouts, matrix_layout_enumerate, matrix_layout_is_valid, elpa_matrix_layout_name, PRINT_YES), \
         INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
-        INT_ENTRY("gpu", "Use GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+        INT_ENTRY("nvidia-gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("intel-gpu", "Use INTEL GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("amd-gpu", "Use AMD GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         INT_ENTRY("is_skewsymmetric", "Matrix is skewsymmetic", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0,
                         cardinality_bool, enumerate_identity, skewsymmetric_is_valid, NULL, PRINT_YES),
@@ -762,17 +772,35 @@ static const char *real_kernel_name(int kernel) {
         }
 }
 
-#define REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_REAL_GPU ? gpu_is_active : 1
+#define REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_REAL_NVIDIA_GPU ? gpu_is_active : 1
+
+#define REAL_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_REAL_AMD_GPU ? gpu_is_active : 1
+
+#define REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_REAL_INTEL_GPU ? gpu_is_active : 1
 
 static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
         if (solver == ELPA_SOLVER_1STAGE) {
                 return new_value == ELPA_2STAGE_REAL_DEFAULT;
         }
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         switch(new_value) {
-                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#ifdef WITH_NVIDIA_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION)
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+		// intel missing
                 default:
                         return 0;
         }
@@ -801,17 +829,35 @@ static const char *complex_kernel_name(int kernel) {
         }
 }
 
-#define COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
-        kernel_number == ELPA_2STAGE_COMPLEX_GPU ? gpu_is_active : 1
+#define COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_COMPLEX_NVIDIA_GPU ? gpu_is_active : 1
+
+#define COMPLEX_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_COMPLEX_AMD_GPU ? gpu_is_active : 1
+
+#define COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE(kernel_number) \
+        kernel_number == ELPA_2STAGE_COMPLEX_INTEL_GPU ? gpu_is_active : 1
 
 static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
         if (solver == ELPA_SOLVER_1STAGE) {
                 return new_value == ELPA_2STAGE_COMPLEX_DEFAULT;
         }
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         switch(new_value) {
-                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#ifdef WITH_NVIDIA_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION)
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+		// intel missing
                 default:
                         return 0;
         }
@@ -1047,7 +1093,7 @@ static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
 
 
 static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if (gpu_is_active == 1) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
@@ -1058,7 +1104,7 @@ static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
 
 static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if ((solver == ELPA_SOLVER_1STAGE) && (gpu_is_active == 1)) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
@@ -1069,7 +1115,7 @@ static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
 
 static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        int gpu_is_active = elpa_index_get_int_value(index, "gpu", NULL);
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if ((solver == ELPA_SOLVER_2STAGE) && (gpu_is_active == 1)) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
@@ -1113,14 +1159,24 @@ static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 static int use_gpu_id_cardinality(elpa_index_t index) {
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
 	int count;
-	count = gpu_count();
+	count = nvidia_gpu_count();
         if (count == -1000) {
           fprintf(stderr, "Querrying GPUs failed! Set GPU count = 0\n");
 	return 0;
         }
 	return count;
+#elif WITH_AMD_GPU_VERION
+	int count;
+	count = amd_gpu_count();
+        if (count == -1000) {
+          fprintf(stderr, "Querrying GPUs failed! Set GPU count = 0\n");
+	return 0;
+        }
+	return count;
+#elif WITH_INTEL_GPU_VERSION
+	return 0;
 #else
 	return 0;
 #endif
@@ -1132,15 +1188,27 @@ static int use_gpu_id_enumerate(elpa_index_t index, int i) {
 }
 
 static int use_gpu_id_is_valid(elpa_index_t index, int n, int new_value) {
-#ifdef WITH_GPU_VERSION
+#ifdef WITH_NVIDIA_GPU_VERSION
 	int count;
-	count = gpu_count();
+	count = nvidia_gpu_count();
         if (count == -1000) {
           fprintf(stderr, "Querrying GPUs failed! Return with error\n");
 	  return 0 == 1 ;
 	} else {
           return (0 <= new_value) && (new_value <= count);
 	}
+#elif WITH_AMD_GPU_VERSION
+	int count;
+	count = amd_gpu_count();
+        if (count == -1000) {
+          fprintf(stderr, "Querrying GPUs failed! Return with error\n");
+	  return 0 == 1 ;
+	} else {
+          return (0 <= new_value) && (new_value <= count);
+	}
+
+#elif WITH_INTEL_GPU_VERSION
+	return 0 == 1;
 #else
 	return 0 == 0;
 #endif

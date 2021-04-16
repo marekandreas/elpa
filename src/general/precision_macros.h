@@ -95,10 +95,17 @@
 #undef  PRECISION_COPY
 #undef  PRECISION_AXPY
 #undef  PRECISION_GER
+#undef  gpublas_PRECISION_GEMM
+#undef  gpublas_PRECISION_TRMM
+#undef  gpublas_PRECISION_GEMV
+#undef  gpublas_PRECISION_SYMV
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
+#undef  mkl_offload_PRECISION_GEMM
+#undef  mkl_offload_PRECISION_GEMV
+#undef  mkl_offload_PRECISION_TRMM
 #undef  scal_PRECISION_GEMM
 #undef  scal_PRECISION_NRM2
 #undef  scal_PRECISION_LASET
@@ -165,10 +172,17 @@
 #define  PRECISION_SCAL DSCAL
 #define  PRECISION_COPY DCOPY
 #define  PRECISION_AXPY DAXPY
+#define  gpublas_PRECISION_GEMM gpublas_DGEMM
+#define  gpublas_PRECISION_TRMM gpublas_DTRMM
+#define  gpublas_PRECISION_GEMV gpublas_DGEMV
+#define  gpublas_PRECISION_SYMV gpublas_DSYMV
 #define  cublas_PRECISION_GEMM cublas_DGEMM
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
 #define  cublas_PRECISION_SYMV cublas_DSYMV
+#define  mkl_offload_PRECISION_GEMM mkl_offload_DGEMM
+#define  mkl_offload_PRECISION_GEMV mkl_offload_DGEMV
+#define  mkl_offload_PRECISION_TRMM mkl_offload_DTRMM
 #define  scal_PRECISION_GEMM PDGEMM
 #define  scal_PRECISION_NRM2 PDNRM2
 #define  scal_PRECISION_LASET PDLASET
@@ -232,10 +246,17 @@
 #define  PRECISION_SCAL SSCAL
 #define  PRECISION_COPY SCOPY
 #define  PRECISION_AXPY SAXPY
+#define  gpublas_PRECISION_GEMM gpublas_SGEMM
+#define  gpublas_PRECISION_TRMM gpublas_STRMM
+#define  gpublas_PRECISION_GEMV gpublas_SGEMV
+#define  gpublas_PRECISION_SYMV gpublas_SSYMV
 #define  cublas_PRECISION_GEMM cublas_SGEMM
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
 #define  cublas_PRECISION_SYMV cublas_SSYMV
+#define  mkl_offload_PRECISION_GEMM mkl_offload_SGEMM
+#define  mkl_offload_PRECISION_GEMV mkl_offload_SGEMV
+#define  mkl_offload_PRECISION_TRMM mkl_offload_STRMM
 #define  scal_PRECISION_GEMM PSGEMM
 #define  scal_PRECISION_NRM2 PSNRM2
 #define  scal_PRECISION_LASET PSLASET
@@ -312,10 +333,17 @@
 #undef  PRECISION_SCAL
 #undef  PRECISION_COPY
 #undef  PRECISION_AXPY
+#undef  gpublas_PRECISION_GEMM
+#undef  gpublas_PRECISION_TRMM
+#undef  gpublas_PRECISION_GEMV
+#undef  gpublas_PRECISION_SYMV
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
+#undef  mkl_offload_PRECISION_GEMM 
+#undef  mkl_offload_PRECISION_GEMV 
+#undef  mkl_offload_PRECISION_TRMM 
 #undef  scal_PRECISION_GEMM
 #undef  scal_PRECISION_DOTC
 #undef  scal_PRECISION_LASET
@@ -392,10 +420,17 @@
 #define  PRECISION_SCAL ZSCAL
 #define  PRECISION_COPY ZCOPY
 #define  PRECISION_AXPY ZAXPY
+#define  gpublas_PRECISION_GEMM gpublas_ZGEMM
+#define  gpublas_PRECISION_TRMM gpublas_ZTRMM
+#define  gpublas_PRECISION_GEMV gpublas_ZGEMV
+#define  gpublas_PRECISION_SYMV gpublas_ZSYMV
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
 #define  cublas_PRECISION_SYMV cublas_ZSYMV
+#define  mkl_offload_PRECISION_GEMM mkl_offload_ZGEMM
+#define  mkl_offload_PRECISION_GEMV mkl_offload_ZGEMV
+#define  mkl_offload_PRECISION_TRMM mkl_offload_ZTRMM
 #define  scal_PRECISION_GEMM PZGEMM
 #define  scal_PRECISION_DOTC PZDOTC
 #define  scal_PRECISION_LASET PZLASET
@@ -463,10 +498,17 @@
 #define  PRECISION_COPY CCOPY
 #define  PRECISION_AXPY CAXPY
 #define  PRECISION_GER CGER
+#define  gpublas_PRECISION_GEMM gpublas_CGEMM
+#define  gpublas_PRECISION_TRMM gpublas_CTRMM
+#define  gpublas_PRECISION_GEMV gpublas_CGEMV
+#define  gpublas_PRECISION_SYMV gpublas_CSYMV
 #define  cublas_PRECISION_GEMM cublas_CGEMM
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
 #define  cublas_PRECISION_SYMV cublas_CSYMV
+#define  mkl_offload_PRECISION_GEMM mkl_offload_CGEMM
+#define  mkl_offload_PRECISION_GEMV mkl_offload_CGEMV
+#define  mkl_offload_PRECISION_TRMM mkl_offload_CTRMM
 #define  scal_PRECISION_GEMM PCGEMM
 #define  scal_PRECISION_DOTC PCDOTC
 #define  scal_PRECISION_LASET PCLASET

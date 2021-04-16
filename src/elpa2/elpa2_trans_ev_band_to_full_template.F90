@@ -98,7 +98,7 @@ subroutine trans_ev_band_to_full_&
 !
 !-------------------------------------------------------------------------------
   use precision
-  use cuda_functions
+  use elpa_gpu
   use, intrinsic :: iso_c_binding
   use elpa_abstract_impl
   use elpa_blas_interfaces
@@ -144,18 +144,27 @@ subroutine trans_ev_band_to_full_&
   integer(kind=ik)                       :: istat
   character(200)                         :: errorMessage
   character(20)                          :: gpuString
-  logical                                :: successCUDA
+  logical                                :: successGPU
   integer(kind=c_intptr_t), parameter    :: size_of_datatype = size_of_&
                                                                &PRECISION&
                                                                &_&
                                                                &MATH_DATATYPE
   integer(kind=ik)                       :: blocking_factor, error, blk_end
+  logical                                :: useIntelGPU
 
   if(useGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
   endif
+
+  useIntelGPU = .false.
+  if (useGPU) then
+    if (gpu_vendor() == INTEL_GPU) then
+      useIntelGPU = .true.
+    endif
+  endif
+
 
   call obj%timer%start("trans_ev_band_to_full_&
   &MATH_DATATYPE&
@@ -195,30 +204,41 @@ subroutine trans_ev_band_to_full_&
   cwy_blocking = blocking_factor * nbw
 
   if (useGPU) then
-    ! copy q_mat to q_dev
-    successCUDA = cuda_malloc(q_dev,ldq*matrixCols*size_of_datatype)
-    check_alloc_cuda("trans_ev_band_to_full: q_dev", successCUDA)
+    if (useIntelGPU) then
+      allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
+      check_allocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
+  
+      allocate(tmp2(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
+      check_allocate("trans_ev_band_to_full: tmp2", istat, errorMessage)
+  
+      allocate(hvm(max_local_rows,cwy_blocking), stat=istat, errmsg=errorMessage)
+      check_allocate("trans_ev_band_to_full: hvm", istat, errorMessage)
 
-    successCUDA = cuda_host_register(int(loc(q_mat),kind=c_intptr_t),&
-                  ldq*matrixCols*size_of_datatype,cudaHostRegisterDefault)
-    check_host_register_cuda("trans_ev_band_to_full: q_mat", successCUDA)
+    else
+      ! copy q_mat to q_dev
+      successGPU = gpu_malloc(q_dev,ldq*matrixCols*size_of_datatype)
+      check_alloc_gpu("trans_ev_band_to_full: q_dev", successGPU)
 
-    successCUDA = cuda_memcpy(q_dev,int(loc(q_mat),kind=c_intptr_t),&
-                  ldq*matrixCols*size_of_datatype,cudaMemcpyHostToDevice)
-    check_memcpy_cuda("trans_ev_band_to_full: q_mat -> q_dev", successCUDA)
+      successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),&
+                    ldq*matrixCols*size_of_datatype, gpuHostRegisterDefault)
+      check_host_register_gpu("trans_ev_band_to_full: q_mat", successGPU)
 
-    successCUDA = cuda_malloc_host(tmp1_host,max_local_cols*cwy_blocking*size_of_datatype)
-    check_host_alloc_cuda("trans_ev_band_to_full: tmp1_host", successCUDA)
-    call c_f_pointer(tmp1_host, tmp1, (/max_local_cols*cwy_blocking/))
+      successGPU = gpu_memcpy(q_dev,int(loc(q_mat),kind=c_intptr_t),&
+                    ldq*matrixCols*size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
 
-    successCUDA = cuda_malloc_host(tmp2_host,max_local_cols*cwy_blocking*size_of_datatype)
-    check_host_alloc_cuda("trans_ev_band_to_full: tmp2_host", successCUDA)
-    call c_f_pointer(tmp2_host, tmp2, (/max_local_cols*cwy_blocking/))
+      successGPU = gpu_malloc_host(tmp1_host,max_local_cols*cwy_blocking*size_of_datatype)
+      check_host_alloc_gpu("trans_ev_band_to_full: tmp1_host", successGPU)
+      call c_f_pointer(tmp1_host, tmp1, (/max_local_cols*cwy_blocking/))
 
-    successCUDA = cuda_malloc_host(hvm_host,max_local_rows*cwy_blocking*size_of_datatype)
-    check_host_alloc_cuda("trans_ev_band_to_full: hvm_host", successCUDA)
-    call c_f_pointer(hvm_host, hvm, (/max_local_rows,cwy_blocking/))
+      successGPU = gpu_malloc_host(tmp2_host,max_local_cols*cwy_blocking*size_of_datatype)
+      check_host_alloc_gpu("trans_ev_band_to_full: tmp2_host", successGPU)
+      call c_f_pointer(tmp2_host, tmp2, (/max_local_cols*cwy_blocking/))
 
+      successGPU = gpu_malloc_host(hvm_host,max_local_rows*cwy_blocking*size_of_datatype)
+      check_host_alloc_gpu("trans_ev_band_to_full: hvm_host", successGPU)
+      call c_f_pointer(hvm_host, hvm, (/max_local_rows,cwy_blocking/))
+    endif
   else ! useGPU
     allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
     check_allocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
@@ -236,12 +256,15 @@ subroutine trans_ev_band_to_full_&
   allocate(tmat_complete(cwy_blocking,cwy_blocking), stat=istat, errmsg=errorMessage)
   check_allocate("trans_ev_band_to_full: tmat_complete", istat, errorMessage)
 
-  if (useGPU) then
-    successCUDA = cuda_host_register(int(loc(tmat_complete),kind=c_intptr_t), &
+  if (useGPU .and. .not.(useIntelGPU)) then
+    successGPU = gpu_host_register(int(loc(tmat_complete),kind=c_intptr_t), &
                   cwy_blocking * cwy_blocking * size_of_datatype,&
-                  cudaHostRegisterDefault)
-    check_host_register_cuda("trans_ev_band_to_full: tmat_complete", successCUDA)
+                  gpuHostRegisterDefault)
+    check_host_register_gpu("trans_ev_band_to_full: tmat_complete", successGPU)
   endif
+  !if (useIntelGPU) then
+  !  ! needed later
+  !endif
 
   if (blocking_factor > 1) then
     allocate(t_tmp(cwy_blocking,nbw), stat=istat, errmsg=errorMessage)
@@ -251,16 +274,21 @@ subroutine trans_ev_band_to_full_&
     check_allocate("trans_ev_band_to_full: t_tmp2", istat, errorMessage)
   endif
 
-  if (useGPU) then
-    successCUDA = cuda_malloc(hvm_dev,max_local_rows*cwy_blocking*size_of_datatype)
-    check_alloc_cuda("trans_ev_band_to_full: hvm_dev", successCUDA)
+  if (useGPU .and. .not.(useIntelGPU)) then
+    successGPU = gpu_malloc(hvm_dev,max_local_rows*cwy_blocking*size_of_datatype)
+    check_alloc_gpu("trans_ev_band_to_full: hvm_dev", successGPU)
 
-    successCUDA = cuda_malloc(tmp_dev,max_local_cols*cwy_blocking*size_of_datatype)
-    check_alloc_cuda("trans_ev_band_to_full: tmp_dev", successCUDA)
+    successGPU = gpu_malloc(tmp_dev,max_local_cols*cwy_blocking*size_of_datatype)
+    check_alloc_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
 
-    successCUDA = cuda_malloc(tmat_dev,cwy_blocking*cwy_blocking*size_of_datatype)
-    check_alloc_cuda("trans_ev_band_to_full: tmat_dev", successCUDA)
+    successGPU = gpu_malloc(tmat_dev,cwy_blocking*cwy_blocking*size_of_datatype)
+    check_alloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
   endif
+
+  !if (useIntelGPU) then
+  !  ! needed later
+  !endif
+
 
   hvm = 0.0_rck ! Must be set to 0 !!!
   hvb = 0.0_rck ! Safety only
@@ -341,37 +369,96 @@ subroutine trans_ev_band_to_full_&
       tmat_complete(t_rows+1:t_rows+t_cols,t_rows+1:t_rows+t_cols) = tmat(1:t_cols,1:t_cols,(istep-1)*blocking_factor + i)
 
       if (i > 1) then
-        call obj%timer%start("blas")
-        call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
+        if (useIntelGPU) then
+          !call obj%timer%start("mkl_offload")
+#if 0
+          call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
+                              int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, hvm, &
+                              int(max_local_rows,kind=BLAS_KIND), hvm(:,(i-1)*nbw+1:), &
+                              int(max_local_rows,kind=BLAS_KIND), ZERO, t_tmp, int(cwy_blocking, kind=BLAS_KIND))
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+          call mkl_offload_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
+                              int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, hvm, &
+                              int(max_local_rows,kind=BLAS_KIND), hvm(:,(i-1)*nbw+1:), &
+                              int(max_local_rows,kind=BLAS_KIND), ZERO, t_tmp, int(cwy_blocking, kind=BLAS_KIND))
+#endif
+          !call obj%timer%stop("mkl_offload")
+
+        else
+          call obj%timer%start("blas")
+          call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
                             int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, hvm, &
                             int(max_local_rows,kind=BLAS_KIND), hvm(:,(i-1)*nbw+1:), &
                             int(max_local_rows,kind=BLAS_KIND), ZERO, t_tmp, int(cwy_blocking, kind=BLAS_KIND))
-        call obj%timer%stop("blas")
+          call obj%timer%stop("blas")
+        endif
+
+
 #ifdef WITH_MPI
         call obj%timer%start("mpi_communication")
         call mpi_allreduce(t_tmp, t_tmp2, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
         call obj%timer%stop("mpi_communication")
 
-        call obj%timer%start("blas")
-        call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+        if (useIntelGPU) then
+          !call obj%timer%start("mkl_offload")
+#if 0
+          call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
+          call PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), -ONE, &
+                              tmat_complete(t_rows+1,t_rows+1), &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+          call mkl_offload_PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, &
+                  tmat_complete, &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
+          call mkl_offload_PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), -ONE, &
+                              tmat_complete(t_rows+1,t_rows+1), &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
+#endif
+          !call obj%timer%stop("mkl_offload")
+        else
+          call obj%timer%start("blas")
+          call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
                             int(cwy_blocking,kind=BLAS_KIND), t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
-        call PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), -ONE, &
+          call PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), -ONE, &
                             tmat_complete(t_rows+1,t_rows+1), &
                             int(cwy_blocking,kind=BLAS_KIND), t_tmp2, int(cwy_blocking,kind=BLAS_KIND))
-        call obj%timer%stop("blas")
-
+          call obj%timer%stop("blas")
+        endif
         tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
 
 #else /* WITH_MPI */
-        call obj%timer%start("blas")
-        call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
-                            int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
-        call PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), -ONE, &
-                            tmat_complete(t_rows+1,t_rows+1), &
-                            int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
-        call obj%timer%stop("blas")
+        if (useIntelGPU) then
+          !call obj%timer%start("mkl_offload")
+#if 0
+          call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
+          call PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), -ONE, &
+                              tmat_complete(t_rows+1,t_rows+1), &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+          call mkl_offload_PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, &
+                                          tmat_complete, &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
+          call mkl_offload_PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), -ONE, &
+                              tmat_complete(t_rows+1,t_rows+1), &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
+#endif
+          !call obj%timer%stop("mkl_offload")
 
+        else
+          call obj%timer%start("blas")
+          call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                            int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
+          call PRECISION_TRMM('R', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), -ONE, &
+                              tmat_complete(t_rows+1,t_rows+1), &
+                              int(cwy_blocking,kind=BLAS_KIND), t_tmp, int(cwy_blocking,kind=BLAS_KIND))
+          call obj%timer%stop("blas")
+        endif
         tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
 
 #endif /* WITH_MPI */
@@ -383,23 +470,40 @@ subroutine trans_ev_band_to_full_&
 
     if (l_rows>0) then
       if (useGPU) then
-        successCUDA = cuda_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
-                        max_local_rows*cwy_blocking*size_of_datatype, cudaMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev_band_to_full: hvm -> hvm_dev", successCUDA)
+        if (useIntelGPU) then
+          !call obj%timer%start("mkl_offload")
+#if 0
+          call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
+                              int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
+                              hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, &
+                              int(n_cols,kind=BLAS_KIND))
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+          call mkl_offload_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
+                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
+                            hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), q_mat, int(ldq,kind=BLAS_KIND), ZERO, tmp1, &
+                            int(n_cols,kind=BLAS_KIND))
+#endif
+          !call obj%timer%stop("mkl_offload")
 
-        call obj%timer%start("cublas")
-        call cublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
-                                     n_cols, l_cols, l_rows, ONE, hvm_dev, max_local_rows, &
-                                     q_dev, ldq , ZERO, tmp_dev, n_cols)
-        call obj%timer%stop("cublas")
+        else
+          successGPU = gpu_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
+                          max_local_rows*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
+
+          call obj%timer%start("gpublas")
+          call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
+                                       n_cols, l_cols, l_rows, ONE, hvm_dev, max_local_rows, &
+                                       q_dev, ldq , ZERO, tmp_dev, n_cols)
+          call obj%timer%stop("gpublas")
 
 #ifdef WITH_MPI
-        ! copy data from device to host for a later MPI_ALLREDUCE
-        successCUDA = cuda_memcpy(int(loc(tmp1),kind=c_intptr_t), &
-                      tmp_dev, l_cols*n_cols*size_of_datatype, cudaMemcpyDeviceToHost)
-        check_memcpy_cuda("trans_ev_band_to_full: tmp_dev -> tmp1", successCUDA)
+          ! copy data from device to host for a later MPI_ALLREDUCE
+          successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), &
+                        tmp_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 #endif /* WITH_MPI */
-
+        endif
       else
         call obj%timer%start("blas")
         call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
@@ -420,20 +524,33 @@ subroutine trans_ev_band_to_full_&
 
     if (l_rows>0) then
       if (useGPU) then
-        successCUDA = cuda_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
-                      l_cols*n_cols*size_of_datatype, cudaMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev_band_to_full: tmp2 -> tmp_dev", successCUDA)
+        if (useIntelGPU) then
+          !call obj%timer%start("mkl_offload")
+          call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+                              int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                              int(cwy_blocking,kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND))
+          call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                              int(n_cols,kind=BLAS_KIND), -ONE, hvm, &
+                              int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND), ONE, &
+                              q_mat, int(ldq,kind=BLAS_KIND))
+          !call obj%timer%stop("mkl_offload")
 
-        successCUDA = cuda_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
-                      cwy_blocking*cwy_blocking*size_of_datatype, cudaMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev_band_to_full: tmat_complete -> tmat_dev", successCUDA)
+        else
+          successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
+                        l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 
-        call obj%timer%start("cublas")
-        call cublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+          successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+                        cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+
+          call obj%timer%start("gpublas")
+          call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                                    n_cols, l_cols, ONE, tmat_dev, cwy_blocking, tmp_dev, n_cols)
-        call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, tmp_dev, &
-                                   n_cols, ONE, q_dev, ldq)
-        call obj%timer%stop("cublas")
+          call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, tmp_dev, &
+                                     n_cols, ONE, q_dev, ldq)
+          call obj%timer%stop("gpublas")
+        endif
       else
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -450,17 +567,40 @@ subroutine trans_ev_band_to_full_&
 #else /* WITH_MPI */
     if (l_rows>0) then
       if (useGPU) then
-        successCUDA = cuda_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
-                      cwy_blocking*cwy_blocking*size_of_datatype, cudaMemcpyHostToDevice)
-        check_memcpy_cuda("trans_ev_band_to_full: tmat_complete -> tmat_dev", successCUDA)
+        if (useIntelGPU) then
+#if 0
+          !call obj%timer%start("mkl_offload")
+          call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                            int(cwy_blocking,kind=BLAS_KIND), &
+                            tmp1, int(n_cols,kind=BLAS_KIND))
+          call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
+                            -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, &
+                            int(ldq,kind=BLAS_KIND))
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+          call mkl_offload_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                            int(cwy_blocking,kind=BLAS_KIND), &
+                            tmp1, int(n_cols,kind=BLAS_KIND))
+          call mkl_offload_PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
+                            -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, &
+                            int(ldq,kind=BLAS_KIND))
+#endif
+          !call obj%timer%stop("mkl_offload")
+        else
+          successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+                        cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
-        call obj%timer%start("cublas")
-        call cublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
-                                   n_cols, l_cols, ONE, tmat_dev, cwy_blocking, &
-                                   tmp_dev, n_cols)
-        call cublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
-                                   -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq)
-        call obj%timer%stop("cublas")
+          call obj%timer%start("gpublas")
+          call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+                                     n_cols, l_cols, ONE, tmat_dev, cwy_blocking, &
+                                     tmp_dev, n_cols)
+          call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
+                                      -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq)
+          call obj%timer%stop("gpublas")
+        endif
       else
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -481,40 +621,52 @@ subroutine trans_ev_band_to_full_&
   check_deallocate("trans_ev_band_to_full: hvb", istat, errorMessage)
 
   if (useGPU) then
-    successCUDA = cuda_free(hvm_dev)
-    check_dealloc_cuda("trans_ev_band_to_full: hvm_dev", successCUDA)
+    if (useIntelGPU) then
+      deallocate(tmp1, stat=istat, errmsg=errorMessage)
+      check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
 
-    successCUDA = cuda_free(tmp_dev)
-    check_dealloc_cuda("trans_ev_band_to_full: tmp_dev", successCUDA)
+      deallocate(tmp2, stat=istat, errmsg=errorMessage)
+      check_deallocate("trans_ev_band_to_full: tmp2", istat, errorMessage)
 
-    successCUDA = cuda_free(tmat_dev)
-    check_dealloc_cuda("trans_ev_band_to_full: tmat_dev", successCUDA)
+      deallocate(hvm, stat=istat, errmsg=errorMessage)
+      check_deallocate("trans_ev_band_to_full: hvm", istat, errorMessage)
 
-    ! final transfer of q_dev
-    successCUDA = cuda_memcpy(int(loc(q_mat),kind=c_intptr_t), q_dev, ldq*matrixCols*size_of_datatype, &
-                  cudaMemcpyDeviceToHost)
-    check_memcpy_cuda("trans_ev_band_to_full: q_dev -> q_mat", successCUDA)
+    else
+      successGPU = gpu_free(hvm_dev)
+      check_dealloc_gpu("trans_ev_band_to_full: hvm_dev", successGPU)
 
-    successCUDA = cuda_free(q_dev)
-    check_dealloc_cuda("trans_ev_band_to_full: q_dev", successCUDA)
+      successGPU = gpu_free(tmp_dev)
+      check_dealloc_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
 
-    successCUDA = cuda_host_unregister(int(loc(q_mat),kind=c_intptr_t))
-    check_host_unregister_cuda("trans_ev_band_to_full: q_mat", successCUDA)
-    nullify(tmp1)
-    nullify(tmp2)
-    nullify(hvm)
+      successGPU = gpu_free(tmat_dev)
+      check_dealloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
 
-    successCUDA = cuda_free_host(tmp1_host)
-    check_host_dealloc_cuda("trans_ev_band_to_full: tmp1_host", successCUDA)
+      ! final transfer of q_dev
+      successGPU = gpu_memcpy(int(loc(q_mat),kind=c_intptr_t), q_dev, ldq*matrixCols*size_of_datatype, &
+                    gpuMemcpyDeviceToHost)
+      check_memcpy_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
 
-    successCUDA = cuda_free_host(tmp2_host)
-    check_host_dealloc_cuda("trans_ev_band_to_full: tmp2_host", successCUDA)
+      successGPU = gpu_free(q_dev)
+      check_dealloc_gpu("trans_ev_band_to_full: q_dev", successGPU)
 
-    successCUDA = cuda_free_host(hvm_host)
-    check_host_dealloc_cuda("trans_ev_band_to_full: hvm_host", successCUDA)
+      successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
+      check_host_unregister_gpu("trans_ev_band_to_full: q_mat", successGPU)
+      nullify(tmp1)
+      nullify(tmp2)
+      nullify(hvm)
 
-    successCUDA = cuda_host_unregister(int(loc(tmat_complete),kind=c_intptr_t))
-    check_host_unregister_cuda("trans_ev_band_to_full: tmat_complete", successCUDA)
+      successGPU = gpu_free_host(tmp1_host)
+      check_host_dealloc_gpu("trans_ev_band_to_full: tmp1_host", successGPU)
+
+      successGPU = gpu_free_host(tmp2_host)
+      check_host_dealloc_gpu("trans_ev_band_to_full: tmp2_host", successGPU)
+
+      successGPU = gpu_free_host(hvm_host)
+      check_host_dealloc_gpu("trans_ev_band_to_full: hvm_host", successGPU)
+
+      successGPU = gpu_host_unregister(int(loc(tmat_complete),kind=c_intptr_t))
+      check_host_unregister_gpu("trans_ev_band_to_full: tmat_complete", successGPU)
+    endif
   else ! useGPU
     deallocate(tmp1, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)

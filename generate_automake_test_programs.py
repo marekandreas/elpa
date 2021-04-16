@@ -21,8 +21,10 @@ solver_flag = {
     "scalapack_part": "-DTEST_SCALAPACK_PART",
 }
 gpu_flag = {
-    0: "-DTEST_GPU=0",
-    1: "-DTEST_GPU=1",
+    "GPU_OFF": "-DTEST_NVIDIA_GPU=0 -DTEST_INTEL_GPU=0 -DTEST_AMD_GPU=0",
+    "NVIDIA_GPU_ON": "-DTEST_NVIDIA_GPU=1",
+    "INTEL_GPU_ON": "-DTEST_INTEL_GPU=1",
+    "AMD_GPU_ON": "-DTEST_AMD_GPU=1",
 }
 gpu_id_flag = {
     0: "-DTEST_GPU_SET_ID=0",
@@ -86,14 +88,14 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
     # exclude some test combinations
 
     # analytic tests only for "eigenvectors" and not on GPU
-    if(m == "analytic" and (g == 1 or t != "eigenvectors")):
+    if(m == "analytic" and ( g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or t != "eigenvectors")):
         continue
 
     # Frank tests only for "eigenvectors" and eigenvalues and real double precision case
     if(m == "frank" and ((t != "eigenvectors" or t != "eigenvalues") and (d != "real" or p != "double"))):
         continue
 
-    if(s in ["scalapack_all", "scalapack_part"] and (g == 1 or t != "eigenvectors" or m != "analytic")):
+    if(s in ["scalapack_all", "scalapack_part"] and (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or t != "eigenvectors" or m != "analytic")):
         continue
 
     # do not test single-precision scalapack
@@ -127,7 +129,7 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
         continue
 
     # qr only for 2stage real
-    if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == 1 or m != "random")):
+    if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == "NVIDIA_GPU_ON" or "INTEL_GPU_ON"  or g == "AMD_GPU_ON" or m != "random")):
         continue
 
     if(spl == "myself" and (d != "real" or p != "double" or q != 0 or m != "random" or (t != "eigenvectors" and t != "cholesky")  or lang != "Fortran" or lay != "square")):
@@ -154,8 +156,16 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
             print("if ENABLE_C_TESTS")
             endifs += 1
 
-        if (g == 1):
-            print("if WITH_GPU_VERSION")
+        if (g == "NVIDIA_GPU_ON"):
+            print("if WITH_NVIDIA_GPU_VERSION")
+            endifs += 1
+
+        if (g == "INTEL_GPU_ON"):
+            print("if WITH_INTEL_GPU_VERSION")
+            endifs += 1
+
+        if (g == "AMD_GPU_ON"):
+            print("if WITH_AMD_GPU_VERSION")
             endifs += 1
 
         if (lay == "all_layouts"):
@@ -190,7 +200,7 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
             langsuffix=language_flag[lang],
             d=d, p=p, t=t, s=s,
             kernelsuffix="" if kernel == "nokernel" else "_" + kernel,
-            gpusuffix="gpu_" if g else "",
+            gpusuffix="gpu_" if  (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON") else "",
             gpuidsuffix="set_gpu_id_" if gid else "",
             qrsuffix="qr_" if q else "",
             m=m,

@@ -94,6 +94,7 @@ subroutine tridiag_band_&
 #endif
   use elpa_blas_interfaces
   use elpa_skewsymmetric_blas
+  use elpa_gpu
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)   :: obj
@@ -142,6 +143,7 @@ subroutine tridiag_band_&
 #ifndef WITH_MPI
   integer(kind=ik)                             :: startAddr
 #endif
+  logical                                      :: useIntelGPU
 
   call obj%get("is_skewsymmetric",skewsymmetric,istat)
   if (istat .ne. ELPA_OK) then
@@ -154,6 +156,13 @@ subroutine tridiag_band_&
     gpuString = "_gpu"
   else
     gpuString = ""
+  endif
+
+  useIntelGPU = .false.
+  if (useGPU) then
+    if (gpu_vendor() == INTEL_GPU) then
+      useIntelGPU = .true.
+    endif
   endif
 
   call obj%timer%start("tridiag_band_&
@@ -236,7 +245,7 @@ subroutine tridiag_band_&
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab)
 
   ! Calculate the workload for each sweep in the back transformation
   ! and the space requirements to hold the HH vectors
@@ -532,7 +541,7 @@ subroutine tridiag_band_&
 !$omp default(none) &
 !$omp private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
 !$omp&        nc, nr, hs, hd, vnorm2, hf, x, h, i) &
-!$omp shared(max_threads, obj, ab, isSkewsymmetric, wantDebug, hh_gath, &
+!$omp shared(max_threads, obj, ab, isSkewsymmetric, wantDebug, hh_gath, useIntelGPU, &
 !$omp        hh_cnt, tau_t, hv_t, na, istep, n_off, na_s, nb, omp_block_limits, iter) &
 !$omp         schedule(static,1), num_threads(max_threads)
           do my_thread = 1, max_threads
@@ -567,21 +576,40 @@ subroutine tridiag_band_&
                                         ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
               ! Transform diagonal block
-              if (wantDebug) call obj%timer%start("blas")
+              if (useIntelGPU) then
+                if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
-              if (isSkewsymmetric) then
-                hd(:) = 0.0_rk
-                call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
-              else
-                call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                if (isSkewsymmetric) then
+                  hd(:) = 0.0_rk
+                  call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+                else
+                  call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
                                       hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
-              endif
+                endif
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
                                     hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
-              if (wantDebug) call obj%timer%stop("blas")
+                if (wantDebug) call obj%timer%stop("mkl_offload")
+              else
+                if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+                if (isSkewsymmetric) then
+                  hd(:) = 0.0_rk
+                  call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+                else
+                  call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                      hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+                endif
+#endif
+#if COMPLEXCASE == 1
+                call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+#endif
+                if (wantDebug) call obj%timer%stop("blas")
+              endif
+
 #if REALCASE == 1
               if (.NOT. isSkewsymmetric) then
                 x = dot_product(hv(1:nc),hd(1:nc))*tau
@@ -593,31 +621,61 @@ subroutine tridiag_band_&
               if (.NOT. isSkewsymmetric) then
                 hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
               endif
-              if (wantDebug) call obj%timer%start("blas")
+
+              if (useIntelGPU) then
+                if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
-              if (isSkewsymmetric) then
-                call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd,  hv, ab(1,ns), &
+                if (isSkewsymmetric) then
+                  call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd,  hv, ab(1,ns), &
                                            int(2*nb-1,kind=BLAS_KIND) )
-              else
-                call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                else
+                  call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
                                     hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
-              endif
+                endif
 #endif
 #if COMPLEXCASE == 1
-              call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
                                   hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
-              if (wantDebug) call obj%timer%stop("blas")
+                if (wantDebug) call obj%timer%stop("mkl_offload")
+              else
+                if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+                if (isSkewsymmetric) then
+                  call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd,  hv, ab(1,ns), &
+                                           int(2*nb-1,kind=BLAS_KIND) )
+                else
+                  call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                                      hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+                endif
+#endif
+#if COMPLEXCASE == 1
+                call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, &
+                                  hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+#endif
+              
+                if (wantDebug) call obj%timer%stop("blas")
+              endif
+
               hv_t(:,my_thread) = 0.0_rck
               tau_t(my_thread)  = 0.0_rck
               if (nr<=0) cycle ! No subdiagonal block present any more
 
               ! Transform subdiagonal block
-              if (wantDebug) call obj%timer%start("blas")
-              call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
-                                  ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
-                                  ZERO, hs, 1_BLAS_KIND)
-              if (wantDebug) call obj%timer%stop("blas")
+              if (useIntelGPU) then
+                if (wantDebug) call obj%timer%start("mkl_offload")
+                call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
+                                    ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                    ZERO, hs, 1_BLAS_KIND)
+                if (wantDebug) call obj%timer%stop("mkl_offload")
+              else
+                if (wantDebug) call obj%timer%start("blas")
+                call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
+                                    ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                    ZERO, hs, 1_BLAS_KIND)
+                if (wantDebug) call obj%timer%stop("blas")
+              endif
+
               if (nr>1) then
 
               ! complete (old) Householder transformation for first column
@@ -649,12 +707,21 @@ subroutine tridiag_band_&
               ab(nb+2:,ns) = 0.0_rck
               ! update subdiagonal block for old and new Householder transformation
               ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
-              if (wantDebug) call obj%timer%start("blas")
-              call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
-                                  int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
-                                  tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
-                                  hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
-              if (wantDebug) call obj%timer%stop("blas")
+              if (useIntelGPU) then
+                if (wantDebug) call obj%timer%start("mkl_offload")
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
+                                    int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                    tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
+                if (wantDebug) call obj%timer%stop("mkl_offload")
+              else
+                if (wantDebug) call obj%timer%start("blas")
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
+                                    int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                    tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                    hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
+                if (wantDebug) call obj%timer%stop("blas")
+              endif
 
               x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
               h(2:nb) = h(2:nb) - x*hv(2:nb)
@@ -837,26 +904,51 @@ subroutine tridiag_band_&
 
           ! Diagonal block, the contribution of the last element is added below!
           ab(1,ne) = 0.0_rck
-          if (wantDebug) call obj%timer%start("blas")
+
+          if (useIntelGPU) then
+            if (wantDebug) call obj%timer%start("mkl_offload")
 
 #if REALCASE == 1
-          if (isSkewsymmetric) then
-            hd(:) = 0.0_rk
-            call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
-          else
-            call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+            if (isSkewsymmetric) then
+              hd(:) = 0.0_rk
+              call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+            else
+              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
                                hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
-          endif
+            endif
 #endif
 #if COMPLEXCASE == 1
-          call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+            call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                               hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+#endif
+            ! Subdiagonal block
+            if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                          tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                          ZERO, hs, 1_BLAS_KIND)
+            if (wantDebug) call obj%timer%stop("mkl_offload")
+
+          else
+            if (wantDebug) call obj%timer%start("blas")
+
+#if REALCASE == 1
+            if (isSkewsymmetric) then
+              hd(:) = 0.0_rk
+              call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+            else
+              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                               hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+            endif
+#endif
+#if COMPLEXCASE == 1
+            call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
                              hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
-          ! Subdiagonal block
-          if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
-                                        tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
-                                        ZERO, hs, 1_BLAS_KIND)
-          if (wantDebug) call obj%timer%stop("blas")
+            ! Subdiagonal block
+            if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                          tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
+                                          ZERO, hs, 1_BLAS_KIND)
+            if (wantDebug) call obj%timer%stop("blas")
+          endif
 
           ! ... then request last column ...
 #ifdef WITH_MPI
@@ -884,23 +976,47 @@ subroutine tridiag_band_&
         else
 
           ! Normal matrix multiply
-          if (wantDebug) call obj%timer%start("blas")
+          if (useIntelGPU) then
+            if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
-          if (isSkewsymmetric) then
-            hd(:) = 0.0_rk
-            call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
-          else
-            call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+            if (isSkewsymmetric) then
+              hd(:) = 0.0_rk
+              call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+            else
+              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
                                 hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
-          endif
+            endif
 #endif
 #if COMPLEXCASE == 1
-          call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
-                              hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+            call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
-          if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, ab(nb+1,ns), &
+
+#ifdef WITH_INTEL_GPU_VERSION
+            if (nr>0) call mkl_offload_PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
+                            ab(nb+1,ns), &
                                         int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
-          if (wantDebug) call obj%timer%stop("blas")
+#endif
+            if (wantDebug) call obj%timer%stop("mkl_offload")
+          else
+            if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+            if (isSkewsymmetric) then
+              hd(:) = 0.0_rk
+              call ELPA_PRECISION_SSMV(int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), hv, hd)
+            else
+              call PRECISION_SYMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                                hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+            endif
+#endif
+#if COMPLEXCASE == 1
+            call PRECISION_HEMV('L', int(nc,kind=BLAS_KIND), tau, ab(1,ns), int(2*nb-1,kind=BLAS_KIND), &
+                               hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
+#endif
+            if (nr>0) call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, ab(nb+1,ns), &
+                                        int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
+            if (wantDebug) call obj%timer%stop("blas")
+          endif
         endif
 
         ! Calculate first column of subdiagonal block and calculate new
@@ -1014,50 +1130,98 @@ subroutine tridiag_band_&
 
 #endif /* WITH_MPI */
           ! ... and calculate remaining columns with rank-2 update
-          if (wantDebug) call obj%timer%start("blas")
+          if (useIntelGPU) then
+            if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
-          if (isSkewsymmetric) then 
-            if (nc>1) call ELPA_PRECISION_SSR2(int(nc-1,kind=BLAS_KIND), hd(2), hv(2), ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
-          else
-            if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+            if (isSkewsymmetric) then
+              if (nc>1) call ELPA_PRECISION_SSR2(int(nc-1,kind=BLAS_KIND), hd(2), hv(2), ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+            else
+              if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
                                          hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
-          endif
+            endif
 #endif
 #if COMPLEXCASE == 1
-          if (nc>1) call PRECISION_HER2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+            if (nc>1) call PRECISION_HER2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                         hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+#endif
+            if (wantDebug) call obj%timer%stop("mkl_offload")
+          else
+            if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+            if (isSkewsymmetric) then 
+              if (nc>1) call ELPA_PRECISION_SSR2(int(nc-1,kind=BLAS_KIND), hd(2), hv(2), ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+            else
+              if (nc>1) call PRECISION_SYR2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
+                                         hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
+            endif
+#endif
+#if COMPLEXCASE == 1
+            if (nc>1) call PRECISION_HER2('L', int(nc-1,kind=BLAS_KIND), -ONE, hd(2), 1_BLAS_KIND, &
                                        hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
 #endif
-          if (wantDebug) call obj%timer%stop("blas")
+            if (wantDebug) call obj%timer%stop("blas")
+          endif
 
         else
           ! No need to  send, just a rank-2 update
-          if (wantDebug) call obj%timer%start("blas")
+          if (useIntelGPU) then
+            if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
-          if (isSkewsymmetric) then 
-            call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd, hv, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
-          else
-            call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
-                                hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
-          endif
+            if (isSkewsymmetric) then
+              call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd, hv, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+            else
+              call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
+                                  hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
+            endif
 #endif
 #if COMPLEXCASE == 1
-          call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, hv, 1_BLAS_KIND, &
-                              ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+            call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, hv, 1_BLAS_KIND, &
+                                ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
-          if (wantDebug) call obj%timer%stop("blas")
+            if (wantDebug) call obj%timer%stop("mkl_offload")
 
+          else
+            if (wantDebug) call obj%timer%start("blas")
+#if REALCASE == 1
+            if (isSkewsymmetric) then 
+              call ELPA_PRECISION_SSR2(int(nc,kind=BLAS_KIND), hd, hv, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+            else
+              call PRECISION_SYR2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND,  &
+                                hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND) )
+            endif
+#endif
+#if COMPLEXCASE == 1
+            call PRECISION_HER2('L', int(nc,kind=BLAS_KIND), -ONE, hd, 1_BLAS_KIND, hv, 1_BLAS_KIND, &
+                                ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
+#endif
+            if (wantDebug) call obj%timer%stop("blas")
+          endif
         endif
 
         ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
         if (nr>0) then
           if (nr>1) then
-            if (wantDebug) call obj%timer%start("blas")
-            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
-                                tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
-                                hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
-            if (wantDebug) call obj%timer%stop("blas")
-
+            if (useIntelGPU) then
+              if (wantDebug) call obj%timer%start("mkl_offload")
+              call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                  tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
+#ifdef WITH_INTEL_GPU_VERSION
+#if 0
+              call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                  tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
+#endif
+#endif
+              if (wantDebug) call obj%timer%stop("mkl_offload")
+            else
+              if (wantDebug) call obj%timer%start("blas")
+              call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
+                                  tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
+                                  hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
+              if (wantDebug) call obj%timer%stop("blas")
+            endif
             x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
             h(2:nb) = h(2:nb) - x*hv(2:nb)
             ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update

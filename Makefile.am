@@ -45,8 +45,13 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
   src/GPU/check_for_gpu.F90 \
-  src/GPU/mod_cuda.F90 \
-  src/elpa2/GPU/interface_c_kernel.F90 \
+  src/GPU/mod_vendor_agnostic_layer.F90 \
+  src/GPU/CUDA/mod_cuda.F90 \
+  src/GPU/INTEL/mod_mkl_offload.F90 \
+  src/GPU/ROCm/mod_hip.F90 \
+  src/elpa2/GPU/interface_c_gpu_kernel.F90 \
+  src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
+  src/elpa2/GPU/ROCm/interface_c_hip_kernel.F90 \
   src/elpa2/mod_pack_unpack_gpu.F90 \
   src/elpa2/qr/qr_utils.F90 \
   src/elpa2/qr/elpa_qrkernels.F90 \
@@ -137,8 +142,16 @@ libelpa@SUFFIX@_private_la_SOURCES += \
   src/helpers/timer_dummy.F90
 endif
 
-if WITH_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/elpa_index_gpu.cu src/GPU/cudaFunctions.cu src/GPU/cuUtils.cu src/elpa2/GPU/ev_tridi_band_gpu_real.cu src/elpa2/GPU/ev_tridi_band_gpu_complex.cu
+if WITH_NVIDIA_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu
+endif
+
+if WITH_INTEL_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mkl_offload.cpp
+endif
+
+if WITH_AMD_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp
 endif
 
 if !WITH_MPI
@@ -555,6 +568,7 @@ if STORE_BUILD_CONFIG
   libelpa@SUFFIX@_private_la_SOURCES += src/helpers/print_build_config.c
 endif
 
+# rule for ROCm files
 
 # Cuda files
 .cu.lo:
@@ -775,11 +789,13 @@ CLEANFILES = \
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
 	-rm -rf validate_*.sh
+	-rm -rf test_*.sh
 	-rm -rf real_2stage*.sh
 	-rm -rf complex_2stage*.sh
 	-rm -rf single_complex_2stage*.sh
 	-rm -rf single_real_2stage*.sh
 	-rm -rf double_instance_onenode*.sh
+	-rm -rf test_*.sh
 	-rm -rf $(generated_headers)
 
 distclean-local:
@@ -806,7 +822,8 @@ EXTRA_DIST = \
   remove_xcompiler \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
-  src/GPU/cuUtils_template.cu \
+  src/GPU/CUDA/cuUtils_template.cu \
+  src/GPU/ROCm/hipUtils_template.cpp \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
