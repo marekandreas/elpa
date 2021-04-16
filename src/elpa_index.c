@@ -143,6 +143,7 @@ static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
 static int output_build_config_is_valid(elpa_index_t index, int n, int new_value);
 static int gpu_is_valid(elpa_index_t index, int n, int new_value);
+static int verbose_is_valid(elpa_index_t index, int n, int new_value);
 static int skewsymmetric_is_valid(elpa_index_t index, int n, int new_value);
 
 static int is_positive(elpa_index_t index, int n, int new_value);
@@ -217,6 +218,8 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", PRINT_NO),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator", PRINT_NO),
         INT_ANY_ENTRY("blacs_context", "BLACS context", PRINT_NO),
+        INT_ENTRY("verbose", "ELPA API prints verbose messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, verbose_is_valid, NULL, PRINT_YES),
 //#ifdef REDISTRIBUTE_MATRIX
         INT_ENTRY("internal_nblk", "Internally used block size of scalapack block-cyclic distribution", 0, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                    internal_nblk_cardinality, internal_nblk_enumerate, internal_nblk_is_valid, NULL, PRINT_YES),
@@ -370,8 +373,10 @@ FOR_ALL_TYPES(IMPLEMENT_FIND_ENTRY)
                                 if (elpa_##TYPE##_value_to_string(TYPE##_entries[n].base.name, *value, &value_string) == ELPA_OK) { \
                                         if (!(index->TYPE##_options.notified[n] & notify_flag)) { \
                                                 if (elpa_index_is_printing_mpi_rank(index)) { \
+                                                  if (elpa_index_int_value_is_set(index, "verbose")) { \
                                                         fprintf(stderr, "ELPA: %s '%s' is set to %s due to environment variable %s\n", \
                                                                       error_string, TYPE##_entries[n].base.name, value_string, env_variable); \
+					          } \
                                                 } \
                                                 index->TYPE##_options.notified[n] |= notify_flag; \
                                         } \
@@ -904,6 +909,10 @@ static int output_build_config_is_valid(elpa_index_t index, int n, int new_value
 }
 
 static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
+        return new_value == 0 || new_value == 1;
+}
+
+static int verbose_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value == 0 || new_value == 1;
 }
 
@@ -1640,6 +1649,8 @@ int elpa_index_is_printing_mpi_rank(elpa_index_t index)
     process_id = elpa_index_get_int_value(index, "process_id", NULL);
     return (process_id == 0);
   }
-  printf("Warning: process_id not set, printing on all MPI ranks. This can happen with legacy API.");
+  if (elpa_index_int_value_is_set(index, "verbose")) {
+    printf("Warning: process_id not set, printing on all MPI ranks. This can happen with legacy API.");
+  }
   return 1;
 }

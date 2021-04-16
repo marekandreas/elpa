@@ -208,7 +208,7 @@ program test
 #ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
-#if  TEST_GPU_SET_ID == 1
+#if TEST_GPU_SET_ID == 1
    TEST_INT_TYPE      :: gpuID
 #endif
 #ifdef SPLIT_COMM_MYSELF
@@ -254,7 +254,8 @@ program test
    endif
 
    if (myid == 0) then
-     print '((a,i0))', 'Program ' // TEST_CASE
+     print '((a,i0))', 'Program ' &
+     // TEST_CASE
      print *, ""
    endif
 
@@ -626,12 +627,15 @@ program test
    assert_elpa_ok(error_elpa)
    call e%set("mpi_comm_cols", int(mpi_comm_cols,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
+
 #else
    call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("process_row", int(my_prow,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("process_col", int(my_pcol,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+   call e%set("verbose", 1, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 #endif
