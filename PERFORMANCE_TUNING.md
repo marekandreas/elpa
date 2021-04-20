@@ -58,9 +58,11 @@ works best, the setups
 - 1,16
 
 do work, but with less optimal performance. Especially, setups which allow only for one row (or column) in the 2D MPI grid do result in less than optimal performance.
-This is illustrated in the figure below where we show the run-time for the solution of a real 10k matrix with the ELPA 1stage solver, with the number of MPI processes varying from 2 to 40. Please not that setups which enforce one process row (or process column), since the total number of MPI tasks is a prime number should always be avoided.
+This is illustrated in the figure below where we show the run-time for the solution of a real 10k matrix with the ELPA 1stage solver, with the number of MPI processes varying from 2 to 40. Please note, that setups which enforce one process row (or process column), since the total number of MPI tasks is a prime number should always be avoided.
 
-![Figure 1](./documentation/plots/mpi_elpa1.png)
+| ![](./documentation/plots/mpi_elpa1.png) | ![](./documentation/plots/mpi_elpa2.png) |
+|:----------------------------------------:|:----------------------------------------:|
+| ELPA 1stage: "bad" mpi-distributions     | ELPA 2stage: "bad" mpi-distributions     |
 
 In case you do have the free choice of the number of MPI-tasks which you want to use, try to use a setup which can be split up in a "quadratic" way. If this is not possible, you might want to use less MPI tasks within ELPA than in your calling application and try the internal redistribution of ELPA to a new process grid.
 
