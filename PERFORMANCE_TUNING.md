@@ -37,7 +37,10 @@ The following ELPA2 kernels will be build:
   complex_avx512_block1 (default)
   complex_avx512_block2
 ```
+#### Builds with OpenMP enabled ####
+If you enable OpenMP support in your ELPA build -- independent wheter MPI is enabled or disabled -- please ensure that you link against a BLAS and LAPACK library which does offer threading support. If you link with libraries which do not offer support for threading then you will observe a severe performance loss.
 
+#### Builds for NVIDIA GPU support ####
 If you build the GPU version of ELPA please make sure that you set during the configure step the compute capability to the highest level your Nvidia GPU cards support.Please also make sure that at the end of the configure steps the GPU kernels are listed.
 
 ### Runtime pitfalls ###
@@ -54,7 +57,19 @@ works best, the setups
 - 16,1
 - 1,16
 
-do work, but with less optimal performance. In case you do have the free choice of the number of MPI-tasks which you want to use, try to use a setup which can be split up in a "quadratic" way. If this is not possible, you might want to use less MPI tasks in ELPA than in your calling application and try the internal redistribution of ELPA.
+do work, but with less optimal performance. Especially, setups which allow only for one row (or column) in the 2D MPI grid do result in less than optimal performance.
+This is illustrated in the figure below where we show the run-time for the solution of a 20k matrix, with the number of MPI processes varying from 2 to 40. Please not that setups which enforce one process row (or process column), since the total number of MPI tasks is a prime number should always be avoided.
+
+In case you do have the free choice of the number of MPI-tasks which you want to use, try to use a setup which can be split up in a "quadratic" way. If this is not possible, you might want to use less MPI tasks within ELPA than in your calling application and try the internal redistribution of ELPA to a new process grid.
+
+#### Hybrid MPI-OpenMP runs ####
+For the optimal performance of hybrid MPI-OpenMP runs with the  *ELPA*-library, it is mandatory that you do not overbook the node with a combination of MPI tasks and OpenMP threads. Also, disable "nested OpenMP" and ensure that your threaded BLAS and LAPACK libraries do use more than one thread. Last but not least, please check that on your system the appropriate pinning of the MPI tasks and the OpenMP threads per tasks is ensured. Thus please, keep an eye on
+- the number of MPI tasks * OpenMP threads <= number of cores per node
+- set the number of OpenMP threads by setting the OMP_NUM_THREADS variable
+- set the number of threads in the BLAS and LAPACK library (for Intel's MKL set MKL_NUM_THREADS to a value larger 1)
+- check the pinning of MPI tasks and OpenMP threads, but do not pin to hyperthreads
 
 
+#### GPU runs ####
+If you want to use the GPU version of ELPA, please ensure that the same number of MPI tasks is mapped to each GPU in the node. If this cannot be achieved, then do not fully occupy the node with all MPI tasks. For example on a hypothetical node with 34 cores and 3 GPUs, do use only 33 MPI tasks per node and map always 11 MPI tasks to each GPU. Furthermore, if you have (the very common situation) with more than 1 MPI task per GPU, the performance will be improved quite dramatically if you ensure that the NVIDIA MPS daemon is running on each node. Please make sure that only one MPS daemon is started per node. For more details please also have a look at [this](https://www.sciencedirect.com/science/article/abs/pii/S0010465520304021) publication.
 
