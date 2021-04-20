@@ -180,7 +180,7 @@ module mod_check_for_gpu
 #ifdef WITH_NVIDIA_GPU_VERSION
           print *,"error in cuda_getdevicecount"
 #endif
-#ifdef WITH_AMPD_GPU_VERSION
+#ifdef WITH_AMD_GPU_VERSION
           print *,"error in hip_getdevicecount"
 #endif
           stop 1
