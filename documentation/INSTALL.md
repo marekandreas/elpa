@@ -487,3 +487,15 @@ FC=mpif90 CC=mpicc ./configure --prefix=$(pwd) CFLAGS="-fast -tp=pwr9" CFLAGS="-
 ```
 FC=mpixlf CC=mpixlc ../configure --prefix=$(pwd) FCFLAGS="-O2 -qarch=pwr9 -qstrict -WF,-qfpp=linecont" CFLAGS="-O2 -qarch=pwr9 -qstrict" CPP="cpp -E" LDFLAGS="-L${OLCF_NETLIB_SCALAPACK_ROOT}/lib -lscalapack -L${OLCF_ESSL_ROOT}/lib64 -lessl -L${OLCF_NETLIB_LAPACK_ROOT}/lib64 -llapack" --enable-gpu --with-cuda-path=${OLCF_CUDA_ROOT} --with-GPU-compute-capability=sm_70 --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-avx512 --enable-c-tests=no
 ```
+
+
+#### EXPERIMENTAL: Building for AMD GPUs (currently tested only --with-mpi=0 ####
+
+
+In order to build *ELPA* for AMD GPUs please ensure that you have a working installation of HIP, ROCm, BLAS, and LAPACK
+
+```
+./configure CXX=hipcc CXXFLAGS="-I/opt/rocm-4.0.0/hip/include/ -I/opt/rocm-4.0.0/rocblas/inlcude -g" CC=hipcc CFLAGS="-I/opt/rocm-4.0.0/hip/include/ -I/opt/rocm-4.0.0/rocblas/include -g" LIBS="-L/opt/rocm-4.0.0/rocblas/lib" --enable-option-checking=fatal --with-mpi=0 FC=gfortran FCFLAGS="-g -LPATH_TO_YOUR_LAPACK_INSTALLATION -lopenblas -llapack" --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-avx512 --enable-AMD-gpu --enable-single-precision
+```
+
+
