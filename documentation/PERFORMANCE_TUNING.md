@@ -23,9 +23,9 @@ The following ELPA2 kernels will be build:
   real_avx2_block2
   real_avx2_block4
   real_avx2_block6
-  **real_avx512_block2 (default)**
-  **real_avx512_block4**
-  **real_avx512_block6**
+  real_avx512_block2 (default)    <-- note than the AVX-512 kernels are listed
+  real_avx512_block4
+  real_avx512_block6
   complex_generic
   complex_generic_simple
   complex_sse_block1
@@ -35,8 +35,8 @@ The following ELPA2 kernels will be build:
   complex_avx_block2
   complex_avx2_block1
   complex_avx2_block2
-  **complex_avx512_block1 (default)**
-  **complex_avx512_block2**
+  complex_avx512_block1 (default) <-- note than the AVX-512 kernels are listed
+  complex_avx512_block2
 ```
 #### Builds with OpenMP enabled ####
 If you enable OpenMP support in your build of the *ELPA* library -- independent wheter MPI is enabled or disabled -- please ensure that you link against a BLAS and LAPACK library which does offer threading support. If you link with libraries which do not offer support for threading then you will observe a severe performance loss. Please refer to the documentation of your BLAS and LAPACK library, whether threading is supported and how to activate it.
@@ -98,7 +98,7 @@ do work, but with less optimal performance. Especially, very elongated setups wi
 This is illustrated in the figures below, where we show the run-time for the solution of a real 10k matrix with the number of MPI processes varying from 2 to 40. For prime numbers with only very elongated process grids a dramatic performance drop is shown.
 
 
-| ![](./documentation/plots/mpi_elpa1.png) | ![](./documentation/plots/mpi_elpa2.png) |
+| ![](./plots/mpi_elpa1.png) | ![](./plots/mpi_elpa2.png) |
 |:----------------------------------------:|:----------------------------------------:|
 | ELPA 1stage | ELPA 2stage |
 | The runtime for different number of MPI processes. Note that the setup in process rows and columns is always chosen as optimal as possible. Please also note, that this setup has been tuned to show best the effect of the process grids, the run-time is not optimal in this setup (no optimizations for this build). |
