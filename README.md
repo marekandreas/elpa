@@ -125,7 +125,7 @@ configure *ELPA*):
   - Scalapack routines
   - a working MPI library
 
-Please refer to the [INSTALL document](INSTALL.md) on details of the installation process and
+Please refer to the [INSTALL document](./documentation/INSTALL.md) on details of the installation process and
 the possible configure options.
 
 ## Using *ELPA*

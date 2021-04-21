@@ -1,4 +1,4 @@
-# Installation guide for the *ELPA* library#
+# Installation guide for the *ELPA* library #
 
 ## Preamble ##
 
@@ -384,7 +384,7 @@ Remarks:
 FC=mpi_wrapper_for_gnu_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -march=native -mavx2 -mfma" CFLAGS="-O3 -march=native -mavx2 -mfma  -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
 ```
 
-2. Building with Intel Fortran compiler and Intel C compiler:
+3. Building with Intel Fortran compiler and Intel C compiler:
 
 Remarks:
   - you have to know the name of the Intel Fortran compiler wrapper
@@ -392,13 +392,98 @@ Remarks:
   - you should specify compiler flags for Intel Fortran compiler; in the example only "-O3 -xAVX2" is set
   - you should be careful with the CFLAGS, the example shows typical flags
 
+```
 FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -xAVX2" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
+```
+
+#### Intel cores supporting AVX-512 (Skylake and newer) ####
+
+We recommend that you build ELPA with the Intel compiler (if available) for the Fortran part, but
+with GNU compiler for the C part.
+
+1. Building with Intel Fortran compiler and GNU C compiler:
+
+Remarks:
+  - you have to know the name of the Intel Fortran compiler wrapper
+  - you do not have to specify a C compiler (with CC); GNU C compiler is recognized automatically
+  - you should specify compiler flags for Intel Fortran compiler; in the example only `-O3 -xCORE-AVX512` is set
+  - you should be careful with the CFLAGS, the example shows typical flags
+
+```
+FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -xCORE-AVX512" CFLAGS="-O3 -march=skylake-avx512 -mfma -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64" --enable-avx2 --enable-avx512
+```
+
+2. Building with GNU Fortran compiler and GNU C compiler:
+
+Remarks: 
+  - you have to know the name of the GNU Fortran compiler wrapper
+  - you DO have to specify a C compiler (with CC); GNU C compiler is recognized automatically
+  - you should specify compiler flags for GNU Fortran compiler; in the example only `-O3 -march=skylake-avx512 -mfma` is set
+  - you should be careful with the CFLAGS, the example shows typical flags
+
+```
+FC=mpi_wrapper_for_gnu_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -march=skylake-avx512 -mfma" CFLAGS="-O3 -march=skylake-avx512 -mfma  -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64" --enable-avx2 --enable-avx512
+```
+
+3. Building with Intel Fortran compiler and Intel C compiler:
+
+Remarks:
+  - you have to know the name of the Intel Fortran compiler wrapper
+  - you have to specify the Intel C compiler
+  - you should specify compiler flags for Intel Fortran compiler; in the example only "-O3 -xCORE-AVX512" is set
+  - you should be careful with the CFLAGS, the example shows typical flags
+
+```
+FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./configure FCFLAGS="-O3 -xCORE-AVX512" CFLAGS="-O3 -xCORE-AVX512" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64" --enable-avx2 --enable-avx512
+```
 
 
+#### Building for NVIDIA A100 GPUS (and Intel Icelake CPUs) ####
+
+For the GPU builds of ELPA it is mandatory that you choose a GNU compiler for the C part, the Fortran part can be compiled with any compiler, for example with the Intel Fortran compiler
+
+1. Building with Intel Fortran compiler and GNU C compiler:
+
+Remarks:
+  - you have to know the name of the Intel Fortran compiler wrapper
+  - you do not have to specify a C compiler (with CC); GNU C compiler is recognized automatically
+  - you should specify compiler flags for Intel Fortran compiler; in the example only `-O3 -xCORE-AVX512` is set
+  - you should be careful with the CFLAGS, the example shows typical flags
+
+```
+FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -xCORE-AVX512" CFLAGS="-O3 -march=skylake-avx512 -mfma -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64" --enable-avx2 --enable-avx512 --enable-nvidia-gpu --with-cuda-path=PATH_TO_YOUR_CUDA_INSTALLATION --with-NVIDIA-GPU-compute-capability=sm_80
+```
+
+2. Building with GNU Fortran compiler and GNU C compiler:
+
+Remarks: 
+  - you have to know the name of the GNU Fortran compiler wrapper
+  - you DO have to specify a C compiler (with CC); GNU C compiler is recognized automatically
+  - you should specify compiler flags for GNU Fortran compiler; in the example only `-O3 -march=skylake-avx512 -mfma` is set
+  - you should be careful with the CFLAGS, the example shows typical flags
+
+```
+FC=mpi_wrapper_for_gnu_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -march=skylake-avx512 -mfma" CFLAGS="-O3 -march=skylake-avx512 -mfma  -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64" --enable-avx2 --enable-avx512 --enable-nvidia-gpu --with-cuda-path=PATH_TO_YOUR_CUDA_INSTALLATION --with-NVIDIA-GPU-compute-capability=sm_80
+```
+
+#### Building for IBM SUMMIT HPC system ####
 
 
+1. Building with GNU Fortran compiler and GNU C compiler:
+
+```
+FC=mpif90 CC=mpicc ./configure --prefix=$(pwd) CFLAGS="-O2 -mcpu=power9" CFLAGS="-O2 -mcpu=power9" CPP="cpp -E" LDFLAGS="-L${OLCF_NETLIB_SCALAPACK_ROOT}/lib -lscalapack -L${OLCF_ESSL_ROOT}/lib64 -lessl -L${OLCF_NETLIB_LAPACK_ROOT}/lib64 -llapack" --enable-gpu --with-cuda-path=${OLCF_CUDA_ROOT} --with-GPU-compute-capability=sm_70 --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-avx512 --enable-c-tests=no
+```
 
 
+2. Building with PGI Fortran compiler and PGI C compiler:
 
+```
+FC=mpif90 CC=mpicc ./configure --prefix=$(pwd) CFLAGS="-fast -tp=pwr9" CFLAGS="-fast -tp=pwr9" CPP="cpp -E" LDFLAGS="-L${OLCF_NETLIB_SCALAPACK_ROOT}/lib -lscalapack -L${OLCF_ESSL_ROOT}/lib64 -lessl -L${OLCF_NETLIB_LAPACK_ROOT}/lib64 -llapack" --enable-gpu --with-cuda-path=${OLCF_CUDA_ROOT} --with-GPU-compute-capability=sm_70 --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-avx512 --enable-c-tests=no
+```
 
+3. Building with IBM Fortran compiler and IBM C compiler:
 
+```
+FC=mpixlf CC=mpixlc ../configure --prefix=$(pwd) FCFLAGS="-O2 -qarch=pwr9 -qstrict -WF,-qfpp=linecont" CFLAGS="-O2 -qarch=pwr9 -qstrict" CPP="cpp -E" LDFLAGS="-L${OLCF_NETLIB_SCALAPACK_ROOT}/lib -lscalapack -L${OLCF_ESSL_ROOT}/lib64 -lessl -L${OLCF_NETLIB_LAPACK_ROOT}/lib64 -llapack" --enable-gpu --with-cuda-path=${OLCF_CUDA_ROOT} --with-GPU-compute-capability=sm_70 --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-avx512 --enable-c-tests=no
+```
