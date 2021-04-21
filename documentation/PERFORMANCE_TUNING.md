@@ -81,7 +81,7 @@ mpiexec -n 8 ./validate_real_double_eigenvectors_1stage_random_all_layouts 1000 
 where the values "1000 1000 16" coresponds to the matrix-size, the number of eigenvectors sought and the blacs block-cyclic block size. You will get timings for all the solutions of the eigenvalue problem in all the possible combinations of the layout and 2D process grid. **CAREFULL:** do this only on small matrix sizes, and a low number of MPI tasks, since otherwise the total runtime will be very large.
 
 
-#### More on the 2D process grid: quadratic setups and chosing the number of MPI tasks####
+#### More on the 2D process grid: quadratic setups and chosing the number of MPI tasks ####
 As said, *ELPA* does work correctly independent of the choice of the BLACS layout and the distribution of the 2D process grid (and even if this is sub-optimal, see above). However, some 2D process grids lead to better performance than others. As a rule of thumb, the *ELPA* solvers work best, if the 2D process grid internal to *ELPA* is quadratic or at least as "quadratic" as possible. For example, using ELPA with 16 MPI tasks the setup (MPI-rows, MPI-columns)
 
 - 4,4
@@ -95,13 +95,12 @@ works best, the setups
 
 do work, but with less optimal performance. Especially, very elongated setups with only one process row (or process column) should be avoided. This also implies, that the runtime of the solution can be influenced by the number of MPI tasks employed: in some situations it might be beneficial to use less MPI tasks than possible, in order to ensure that a good 2D grid can be chosen. For example, on a hypothetical machine with 13 cores, one should **not** use 13 MPI tasks (the only possible combinations are 1,13 or 13,1) but rather use 12 MPI tasks (and leave one core idle), since the better distributions 4,3 or 3,4 could be choosen.
 
-This is illustrated in the figures below, where we show the run-time for the solution of a real 10k matrix with the number of MPI processes varying from 2 to 40. For prime numbers with only very elongated process grids a dramatic performance drop is shown.
+This is illustrated in the figures below, where we show the run-time for the solution of a real 10k matrix with the number of MPI processes varying from 2 to 40. For prime numbers with only very elongated process grids a dramatic performance drop is shown.Note that the setup in process rows and columns is always chosen as optimal as possible. Please also note, that this setup has been tuned to show best the effect of the process grids, the run-time is not optimal in this setup (no optimizations for this build).
 
 
 | ![](./plots/mpi_elpa1.png) | ![](./plots/mpi_elpa2.png) |
 |:----------------------------------------:|:----------------------------------------:|
 | ELPA 1stage | ELPA 2stage |
-| The runtime for different number of MPI processes. Note that the setup in process rows and columns is always chosen as optimal as possible. Please also note, that this setup has been tuned to show best the effect of the process grids, the run-time is not optimal in this setup (no optimizations for this build). |
 
 If your calling application does have to run with a process grid which is less optimal for *ELPA*, you might want to test the funcionality to re-distribute the matrix and the process grid **internally** to *ELPA* to more suitable values.
 
@@ -114,5 +113,26 @@ For the optimal performance of hybrid MPI-OpenMP runs with the  *ELPA*-library, 
 
 
 #### GPU runs ####
-If you want to use the GPU version of ELPA, please ensure that the same number of MPI tasks is mapped to each GPU in the node. If this cannot be achieved, then do not fully occupy the node with all MPI tasks. For example on a hypothetical node with 34 cores and 3 GPUs, do use only 33 MPI tasks per node and map always 11 MPI tasks to each GPU. Furthermore, if you have (the very common situation) with more than 1 MPI task per GPU, the performance will be improved quite dramatically if you ensure that the NVIDIA MPS daemon is running on each node. Please make sure that only one MPS daemon is started per node. For more details please also have a look at [this](https://www.sciencedirect.com/science/article/abs/pii/S0010465520304021) publication.
+If you want to use the GPU version of ELPA, please ensure that the same number of MPI tasks is mapped to each GPU in the node. If this cannot be achieved, then do not fully occupy the node with all MPI tasks. For example on a hypothetical node with 34 cores and 3 GPUs, do use only 33 MPI tasks per node and map always 11 MPI tasks to each GPU. Furthermore, if you have (the very common situation) with more than 1 MPI task per GPU, the performance will be improved quite dramatically if you ensure that the NVIDIA MPS daemon is running on each node. Please make sure that the MPS daemon is only started **once** per node. 
+If the batch submission script on your HPC system does not offer this automatically you can achieve this by something like this:
+
+
+```Fortran
+In your submission script (example SLURM):
+
+srun ./my_application.sh
+```
+and the content of my_application.sh:
+```Fortran
+#!/bin/bash
+if [ $SLURM_LOCALID -eq 0 ]; then
+   nvidia-cuda-mps-control -d
+fi
+./validate_real_double_eigenvectors_1stage_gpu_random 80000 80000 16
+```
+
+In the above a test program of *ELPA* is run in a SLURM submission script and the NVIDIA MPS daemon is started once on every note. Please adapt this to the batch system used on your HPC systems and refer to the documentation how to achieve this.
+
+For more details for *ELPA*-GPU and NVIDIA MPS please also have a look at [this](https://www.sciencedirect.com/science/article/abs/pii/S0010465520304021) publication.
+
 
