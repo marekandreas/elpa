@@ -468,6 +468,7 @@ FC=mpi_wrapper_for_gnu_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./conf
 
 #### Building for IBM SUMMIT HPC system ####
 
+For more information please have  a look at the [ELSI wiki](https://git.elsi-interchange.org/elsi-devel/elsi-interface/-/wikis/install-elpa).
 
 1. Building with GNU Fortran compiler and GNU C compiler:
 
