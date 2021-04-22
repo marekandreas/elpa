@@ -627,7 +627,9 @@ dist_man_MANS = \
   man/elpa_autotune_deallocate.3 \
   man/elpa_uninit.3
 
-dist_doc_DATA = README.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt documentation/*
+dist_doc_DATA = README.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt documentation/INSTALL.md \
+	       documentation/PERFORMANCE_TUNING.md  documentation/SWITCHING_TO_NEW_INTERFACE.md  documentation/USERS_GUIDE.md  \
+	       documentation/USERS_GUIDE_DEPRECATED_LEGACY_API.md documentation/plots/mpi_elpa1.png  documentation/plots/mpi_elpa2.png
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
