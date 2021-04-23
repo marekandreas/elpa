@@ -110,6 +110,11 @@ if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
 
+dnl CPP
+AC_LANG_PUSH([C++])
+AC_PROG_CXX
+AC_LANG_POP([C++])
+
 dnl C
 AC_LANG_PUSH([C])
 
@@ -718,23 +723,23 @@ AC_ARG_WITH([cuda-sdk-path],[AS_HELP_STRING([--with-cuda-sdk-path=PATH],[prefix 
 
 
 dnl setup nvcc flags and use them in later tests
-user_sets_gpu_compute_capability="no"
-AC_MSG_CHECKING(whether a GPU compute capability is specified)
-AC_ARG_WITH([GPU-compute-capability],
-            [AS_HELP_STRING([--with-GPU-compute-capability=VALUE],
-                            [use compute capability VALUE for GPU version, default: "sm_35"])],
-            [user_sets_gpu_compute_capability="yes"],[cuda_compute_capability="sm_35"])
-AC_MSG_RESULT([${user_sets_gpu_compute_capability}])
+user_sets_nvidia_gpu_compute_capability="no"
+AC_MSG_CHECKING(whether a Nvidia GPU compute capability is specified)
+AC_ARG_WITH([NVIDIA-GPU-compute-capability],
+            [AS_HELP_STRING([--with-NVIDIA-GPU-compute-capability=VALUE],
+                            [use compute capability VALUE for NVIDIA GPU version, default: "sm_35"])],
+            [user_sets_nvidia_gpu_compute_capability="yes"],[cuda_compute_capability="sm_35"])
+AC_MSG_RESULT([${user_sets_nvidia_gpu_compute_capability}])
 
 
 dnl sanity check whether compute capability setting by user is reasonable
-if test x"${user_sets_gpu_compute_capability}" = x"yes" ; then
+if test x"${user_sets_nvidia_gpu_compute_capability}" = x"yes" ; then
   dnl the user must set a value which starts with "sm_"
   value=$(echo $withval | cut -c1-3)
   if test x"${value}" = x"sm_" ; then
     cuda_compute_capability=$withval
   else
-    AC_MSG_ERROR([Unknown GPU compute capability set: ${withval}])
+    AC_MSG_ERROR([Unknown Nvidia GPU compute capability set: ${withval}])
   fi
 fi
 
@@ -877,12 +882,22 @@ m4_define(elpa_m4_bgq_kernels, [
         complex_bgq
 ])
 
-m4_define(elpa_m4_gpu_kernels, [
-        real_gpu
-        complex_gpu
+m4_define(elpa_m4_nvidia_gpu_kernels, [
+        real_nvidia_gpu
+        complex_nvidia_gpu
 ])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq gpu])
+m4_define(elpa_m4_amd_gpu_kernels, [
+        real_amd_gpu
+        complex_amd_gpu
+])
+
+m4_define(elpa_m4_intel_gpu_kernels, [
+        real_intel_gpu
+        complex_intel_gpu
+])
+
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -926,7 +941,9 @@ ELPA_SELECT_KERNELS([avx512],[enable])
 ELPA_SELECT_KERNELS([sve128],[disable])
 ELPA_SELECT_KERNELS([sve256],[disable])
 ELPA_SELECT_KERNELS([sve512],[disable])
-ELPA_SELECT_KERNELS([gpu],[disable])
+ELPA_SELECT_KERNELS([nvidia_gpu],[disable])
+ELPA_SELECT_KERNELS([amd_gpu],[disable])
+ELPA_SELECT_KERNELS([intel_gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
 
@@ -968,15 +985,37 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
 ])
 
-AC_ARG_WITH(gpu-support-only, [AS_HELP_STRING([--with-gpu-support-only],
-            [Compile and always use the GPU version])],
-            [],[with_gpu_support_only=no])
-if test x"$with_gpu_support_only" = x"yes" ; then
+AC_ARG_WITH(nvidia-gpu-support-only, [AS_HELP_STRING([--with-nvidia-gpu-support-only],
+            [Compile and always use the NVIDIA GPU version])],
+            [],[with_nvidia_gpu_support_only=no])
+if test x"$with_nvidia_gpu_support_only" = x"yes" ; then
         m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
                       use_[]elpa_m4_kernel[]=no
         ])
-        use_real_gpu=yes
-        use_complex_gpu=yes
+        use_real_nvidia_gpu=yes
+        use_complex_nvidia_gpu=yes
+fi
+
+AC_ARG_WITH(amd-gpu-support-only, [AS_HELP_STRING([--with-amd-gpu-support-only],
+            [Compile and always use the AMD GPU version])],
+            [],[with_amd_gpu_support_only=no])
+if test x"$with_amd_gpu_support_only" = x"yes" ; then
+        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+                      use_[]elpa_m4_kernel[]=no
+        ])
+        use_real_amd_gpu=yes
+        use_complex_amd_gpu=yes
+fi
+
+AC_ARG_WITH(intel-gpu-support-only, [AS_HELP_STRING([--with-intel-gpu-support-only],
+            [Compile and always use the INTEL GPU version])],
+            [],[with_intel_gpu_support_only=no])
+if test x"$with_intel_gpu_support_only" = x"yes" ; then
+        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+                      use_[]elpa_m4_kernel[]=no
+        ])
+        use_real_intel_gpu=yes
+        use_complex_intel_gpu=yes
 fi
 
 
@@ -1053,7 +1092,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_gpu_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels elpa_m4_intel_gpu_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -1462,11 +1501,11 @@ if test x"${need_bgq}" = x"yes"; then
 fi
 AC_LANG_POP([Fortran])
 
-
+#compatibiility flag
 AC_MSG_CHECKING(whether GPU version should be used)
 AC_ARG_ENABLE([gpu],
                 AS_HELP_STRING([--enable-gpu],
-                               [do use GPU version]),
+                               [do use Nvidia GPU version (compatibility flag, better set explicitely)]),
                                [if test x"$enableval" = x"yes"; then
                                   use_gpu=yes
                                 else
@@ -1475,12 +1514,64 @@ AC_ARG_ENABLE([gpu],
               [use_gpu=no])
 AC_MSG_RESULT([${use_gpu}])
 if test x"${use_gpu}" = x"yes" ; then
-  need_gpu=yes
-  use_real_gpu=yes
-  use_complex_gpu=yes
+  need_nvidia_gpu=yes
+  use_real_nvidia_gpu=yes
+  use_complex_nvidia_gpu=yes
 fi
 
-if test x"${need_gpu}" = x"yes" ; then
+AC_MSG_CHECKING(whether Nvidia-GPU version should be used)
+AC_ARG_ENABLE([Nvidia-gpu],
+                AS_HELP_STRING([--enable-Nvidia-gpu],
+                               [do use Nvidia GPU version]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_nvidia_gpu=yes
+                                else
+                                  use_nvidia_gpu=no
+                                fi],
+              [use_nvidia_gpu=no])
+AC_MSG_RESULT([${use_nvidia_gpu}])
+if test x"${use_nvidia_gpu}" = x"yes" ; then
+  need_nvidia_gpu=yes
+  use_nvidia_real_gpu=yes
+  use_nvidia_complex_gpu=yes
+fi
+
+#AC_MSG_CHECKING(whether INTEL GPU version should be used)
+#AC_ARG_ENABLE([intel-gpu],
+#                AS_HELP_STRING([--enable-intel-gpu],
+#                               [do use INTEL GPU version]),
+#                               [if test x"$enableval" = x"yes"; then
+#                                  use_intel_gpu=yes
+#                                else
+#                                  use_intel_gpu=no
+#                                fi],
+#              [use_intel_gpu=no])
+#AC_MSG_RESULT([${use_intel_gpu}])
+#if test x"${use_intel_gpu}" = x"yes" ; then
+#  need_intel_gpu=yes
+#  use_real_intel_gpu=yes
+#  use_complex_intel_gpu=yes
+#fi
+
+AC_MSG_CHECKING(whether AMD-GPU version should be used)
+AC_ARG_ENABLE([AMD-gpu],
+                AS_HELP_STRING([--enable-AMD-gpu],
+                               [do use AMD GPU version]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_amd_gpu=yes
+                                else
+                                  use_amd_gpu=no
+                                fi],
+              [use_amd_gpu=no])
+AC_MSG_RESULT([${use_amd_gpu}])
+if test x"${use_amd_gpu}" = x"yes" ; then
+  need_amd_gpu=yes
+  use_real_amd_gpu=yes
+  use_complex_amd_gpu=yes
+fi
+
+
+if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
   CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
@@ -1492,33 +1583,88 @@ if test x"${need_gpu}" = x"yes" ; then
   dnl check whether nvcc compiler is found
   AC_CHECK_PROG(nvcc_found,nvcc,yes,no)
   if test x"${nvcc_found}" = x"no" ; then
-    AC_MSG_ERROR([nvcc not found; try to set the cuda-path or disable GPU support])
+    AC_MSG_ERROR([nvcc not found; try to set the cuda-path or disable Nvidia GPU support])
   fi
 
   dnl check whether we find cublas
   AC_SEARCH_LIBS([cublasDgemm],[cublas],[have_cublas=yes],[have_cublas=no])
   if test x"${have_cublas}" = x"no"; then
-    AC_MSG_ERROR([Could not link cublas; try to set the cuda-path or disable GPU support])
+    AC_MSG_ERROR([Could not link cublas; try to set the cuda-path or disable Nvidia GPU support])
   fi
   AC_SEARCH_LIBS([cudaMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
   if test x"${have_cudart}" = x"no"; then
-    AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable GPU support])
+    AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   fi
   AC_LANG_POP([C])
 fi
 
-AC_MSG_CHECKING(whether GPU memory debugging should be enabled)
-AC_ARG_ENABLE([gpu-memory-debug],
-                AS_HELP_STRING([--enable-gpu-memory-debug],
-                               [Output information on GPU memory to be processed by utils/memory/check_memory.py]),
+
+if test x"${need_amd_gpu}" = x"yes" ; then
+  AC_LANG_PUSH([C])
+  #CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
+  #LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
+  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
+  #NVCC="nvcc"
+  #AC_SUBST(NVCC)
+  #AC_SUBST(NVCCFLAGS)
+
+  dnl check whether hipcc compiler is found
+  AC_CHECK_PROG(hipcc_found,hipcc,yes,no)
+  if test x"${hipcc_found}" = x"no" ; then
+    AC_MSG_ERROR([hipcc not found; try to set the hip-path or disable AMD GPU support])
+  fi
+
+  #dnl check whether we find rocblas
+  AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
+  if test x"${have_rocblas}" = x"no"; then
+    AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
+  fi
+  #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
+  #if test x"${have_cudart}" = x"no"; then
+  #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+  #fi
+  #AC_LANG_POP([C])
+fi
+
+if test x"${need_intel_gpu}" = x"yes" ; then
+  AC_LANG_PUSH([C])
+  #CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
+  #LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
+  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
+  #NVCC="nvcc"
+  #AC_SUBST(NVCC)
+  #AC_SUBST(NVCCFLAGS)
+
+  dnl check whether hipcc compiler is found
+  AC_CHECK_PROG(icx_found,icx,yes,no)
+  if test x"${icx_found}" = x"no" ; then
+    AC_MSG_ERROR([icx not found; try to set the oneapi-path or disable INTEL GPU support])
+  fi
+
+  ##dnl check whether we find rocblas
+  #AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
+  #if test x"${have_rocblas}" = x"no"; then
+  #  AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
+  #fi
+  #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
+  #if test x"${have_cudart}" = x"no"; then
+  #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+  #fi
+  #AC_LANG_POP([C])
+fi
+
+AC_MSG_CHECKING(whether Nvidia GPU memory debugging should be enabled)
+AC_ARG_ENABLE([nvidia-gpu-memory-debug],
+                AS_HELP_STRING([--enable-nvidia-gpu-memory-debug],
+                               [Output information on Nvidia GPU memory to be processed by utils/memory/check_memory.py]),
                                [if test x"$enableval" = x"yes"; then
-                                  enable_gpu_memory_debug=yes
+                                  enable_nvidia_gpu_memory_debug=yes
                                 else
-                                  enable_gpu_memory_debug=no
+                                  enable_nvidia_gpu_memory_debug=no
                                 fi],
-              [enable_gpu_memory_debug=no])
-AC_MSG_RESULT([${enable_gpu_memory_debug}])
-if test x"${enable_gpu_memory_debug}" = x"yes" ; then
+              [enable_nvidia_gpu_memory_debug=no])
+AC_MSG_RESULT([${enable_nvidia_gpu_memory_debug}])
+if test x"${enable_nvidia_gpu_memory_debug}" = x"yes" ; then
   AC_DEFINE([DEBUG_CUDA],[1],[enable CUDA debugging])
 fi
 
@@ -1535,17 +1681,17 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kernel)[_COMPILED])
 ])
 
-AM_CONDITIONAL([WITH_GPU_VERSION],[test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes"])
-if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
-  AC_DEFINE([WITH_GPU_VERSION],[1],[enable GPU support])
-  AC_DEFINE([WITH_GPU_KERNEL],[1],[GPU kernel should be build])
-  ELPA_2STAGE_COMPLEX_GPU_COMPILED=1
-  ELPA_2STAGE_REAL_GPU_COMPILED=1
+AM_CONDITIONAL([WITH_NVIDIA_GPU_VERSION],[test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes"])
+if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" ; then
+  AC_DEFINE([WITH_NVIDIA_GPU_VERSION],[1],[enable Nvidia GPU support])
+  AC_DEFINE([WITH_NVIDIA_GPU_KERNEL],[1],[Nvidia GPU kernel should be build])
+  ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=1
+  ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=1
 
   AC_MSG_CHECKING(whether --enable-nvtx is specified)
   AC_ARG_ENABLE([nvtx],
                 AS_HELP_STRING([--enable-nvtx],
-                               [build and install nvtx wrapper for profiling th GPU version, default no.]),
+                               [build and install nvtx wrapper for profiling the Nvidia GPU version, default no.]),
                 [
                  if test x"$enableval" = x"yes"; then
                    enable_nvtx=yes
@@ -1560,16 +1706,66 @@ if test x"$use_real_gpu" = x"yes" -o x"$use_complex_gpu" = x"yes" ; then
     AC_LANG_PUSH([C])
     AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
     if test x"${have_nvtoolsext}" = x"no"; then
-      AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable GPU support ])
+      AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable Nvidia GPU support ])
     fi
     AC_LANG_POP([C])
   fi
 else
-  ELPA_2STAGE_COMPLEX_GPU_COMPILED=0
-  ELPA_2STAGE_REAL_GPU_COMPILED=0
+  ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=0
+  ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=0
 fi
-AC_SUBST([ELPA_2STAGE_COMPLEX_GPU_COMPILED])
-AC_SUBST([ELPA_2STAGE_REAL_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED])
+
+AM_CONDITIONAL([WITH_AMD_GPU_VERSION],[test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes"])
+if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
+  AC_DEFINE([WITH_AMD_GPU_VERSION],[1],[enable AMD GPU support])
+  AC_DEFINE([WITH_AMD_GPU_KERNEL],[1],[AMD GPU kernel should be build])
+  ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=1
+  ELPA_2STAGE_REAL_AMD_GPU_COMPILED=1
+
+  #AC_MSG_CHECKING(whether --enable-nvtx is specified)
+  #AC_ARG_ENABLE([nvtx],
+  #              AS_HELP_STRING([--enable-nvtx],
+  #                             [build and install nvtx wrapper for profiling the Nvidia GPU version, default no.]),
+  #              [
+  #               if test x"$enableval" = x"yes"; then
+  #                 enable_nvtx=yes
+  #               else
+  #                 enable_nvtx=no
+  #               fi
+  #               ],
+  #              [enable_nvtx=no])
+  #AC_MSG_RESULT([${enable_nvtx}])
+  #if test x"${enable_nvtx}" = x"yes"; then
+  #  AC_DEFINE([WITH_NVTX],[1],[enable NVTX support])
+  #  AC_LANG_PUSH([C])
+  #  AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
+  #  if test x"${have_nvtoolsext}" = x"no"; then
+  #    AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable Nvidia GPU support ])
+  #  fi
+  #  AC_LANG_POP([C])
+  #fi
+else
+  ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=0
+  ELPA_2STAGE_REAL_AMD_GPU_COMPILED=0
+fi
+AC_SUBST([ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_AMD_GPU_COMPILED])
+
+AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
+if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
+  AC_DEFINE([WITH_INTEL_GPU_VERSION],[1],[enable INTEL GPU support])
+  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
+  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
+else
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
+  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
+fi
+AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
+
 
 LT_INIT
 

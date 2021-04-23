@@ -73,6 +73,8 @@ function elpa_solve_evp_&
 #endif
    use precision
    use cuda_functions
+   use hip_functions
+   use elpa_gpu
    use mod_check_for_gpu
    use, intrinsic :: iso_c_binding
    use elpa_abstract_impl
@@ -294,17 +296,35 @@ function elpa_solve_evp_&
      obj%eigenvalues_only = .true.
    endif
 
-   call obj%get("gpu",gpu,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem getting option for gpu. Aborting..."
-     stop
+   if (gpu_vendor() == NVIDIA_GPU) then
+     call obj%get("nvidia-gpu",gpu,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option for NVIDIA GPU. Aborting..."
+       stop
+     endif
+   else if (gpu_vendor() == AMD_GPU) then
+     call obj%get("amd-gpu",gpu,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option for AMD GPU. Aborting..."
+       stop
+     endif
+   else if (gpu_vendor() == INTEL_GPU) then
+     call obj%get("intel-gpu",gpu,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option for INTEL GPU. Aborting..."
+       stop
+     endif
+   else
+     gpu = 0
    endif
+
    if (gpu .eq. 1) then
      useGPU =.true.
    else
      useGPU = .false.
    endif
 
+     print *,"after activating gpu..."
    call obj%get("is_skewsymmetric",skewsymmetric,error)
    if (error .ne. ELPA_OK) then
      print *,"Problem getting option for skewsymmetric. Aborting..."
@@ -338,17 +358,14 @@ function elpa_solve_evp_&
    do_useGPU = .false.
 
 
+     print *,"before check gpu..."
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
 
      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = .true.
        ! set the neccessary parameters
-       cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-       cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-       cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-       cudaHostRegisterPortable = cuda_hostRegisterPortable()
-       cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+       call set_gpu_parameters()
      else
        print *,"GPUs are requested but not detected! Aborting..."
        success = .false.
@@ -370,6 +387,7 @@ function elpa_solve_evp_&
    endif
 
 
+     print *,"after check gpu..."
    do_useGPU_tridiag = do_useGPU
    do_useGPU_solve_tridi = do_useGPU
    do_useGPU_trans_ev = do_useGPU
@@ -438,7 +456,7 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("tridi")
 #endif
-
+     print *,"before tridiag..."
      call tridiag_&
      &MATH_DATATYPE&
      &_&

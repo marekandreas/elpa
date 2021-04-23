@@ -45,7 +45,9 @@
 ! Define one of TEST_REAL or TEST_COMPLEX
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
-! Define TEST_GPU \in [0, 1]
+! Define TEST_NVIDIA_GPU \in [0, 1]
+! Define TEST_INTEL_GPU \in [0, 1]
+! Define TEST_AMD_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
@@ -95,6 +97,11 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #define INT_MPI_TYPE c_int32_t
 #endif
 
+#define TEST_GPU 0
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1)
+#undef TEST_GPU
+#define TEST_GPU 1
+#endif
 
 #include "assert.h"
 
@@ -209,8 +216,20 @@ program test
    call e1%set("debug",1, error_elpa)
    assert_elpa_ok(error_elpa)
 
-   call e1%set("gpu", 0, error_elpa)
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
+   call e1%set("nvidia-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
+#endif
+
+#if TEST_AMD_GPU == 1
+   call e1%set("amd-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
+#if TEST_INTEL_GPU == 1
+   call e1%set("intel-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
    !call e1%set("max_stored_rows", 15, error_elpa)
 
    assert_elpa_ok(e1%setup())
@@ -238,8 +257,18 @@ program test
    assert_elpa_ok(error_elpa)
    call e2%get("debug", int(debug,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
-   call e2%get("gpu", int(gpu,kind=c_int), error_elpa)
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
+   call e2%get("nvidia-gpu", int(gpu,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
+#endif
+#if TEST_AMD_GPU == 1
+   call e2%get("amd-gpu", int(gpu,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+#if TEST_INTEL_GPU == 1
+   call e2%get("intel-gpu", int(gpu,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
 
    if ((timings .ne. 1) .or. (debug .ne. 1) .or. (gpu .ne. 0)) then
      print *, "Parameters not stored or loaded correctly. Aborting...", timings, debug, gpu

@@ -52,19 +52,18 @@ subroutine redist_band_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab, useGPU)
+(obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab)
 
   use elpa_abstract_impl
   use elpa2_workload
   use precision
   use, intrinsic :: iso_c_binding
-  use cuda_functions
   use elpa_utilities, only : local_index, check_allocate_f, check_deallocate_f
   use elpa_mpi
   implicit none
 
   class(elpa_abstract_impl_t), intent(inout)       :: obj
-  logical, intent(in)                              :: useGPU
+  !logical, intent(in)                              :: useGPU
   integer(kind=ik), intent(in)                     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)  :: a_mat(lda, matrixCols)
   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(out) :: ab(:,:)
@@ -83,11 +82,11 @@ subroutine redist_band_&
   integer(kind=ik)                                 :: istat
   character(200)                                   :: errorMessage
 
-  logical                                          :: successCUDA
-  integer(kind=c_intptr_t), parameter              :: size_of_datatype = size_of_&
-                                                                       &PRECISION&
-                                                                       &_&
-                                                                       &MATH_DATATYPE
+  logical                                          :: successGPU
+  !integer(kind=c_intptr_t), parameter              :: size_of_datatype = size_of_&
+  !                                                                     &PRECISION&
+  !                                                                     &_&
+  !                                                                     &MATH_DATATYPE
 
   call obj%timer%start("redist_band_&
   &MATH_DATATYPE&

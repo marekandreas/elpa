@@ -127,6 +127,14 @@
 #define TEST_C_INT_MPI_TYPE int
 #define C_INT_MPI_TYPE int
 #endif
+
+#define TEST_GPU  0
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1)
+#undef TEST_GPU
+#define TEST_GPU  1
+#endif
+
+
 #include "test/shared/generated.h"
 
 int main(int argc, char** argv) {
@@ -273,8 +281,20 @@ int main(int argc, char** argv) {
 #endif
    assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "gpu", TEST_GPU, &error_elpa);
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0)   
+   elpa_set(handle, "nvidia-gpu", TEST_GPU, &error_elpa);
    assert_elpa_ok(error_elpa);
+#endif
+
+#if TEST_AMD_GPU == 1
+   elpa_set(handle, "amd-gpu", TEST_GPU, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+
+#if TEST_INTEL_GPU == 1
+   elpa_set(handle, "intel-gpu", TEST_GPU, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
 
 #if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)
 # ifdef TEST_COMPLEX

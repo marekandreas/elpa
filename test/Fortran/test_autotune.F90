@@ -45,7 +45,9 @@
 ! Define one of TEST_REAL or TEST_COMPLEX
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
-! Define TEST_GPU \in [0, 1]
+! Define TEST_NVIDIA_GPU \in [0, 1]
+! Define TEST_INTEL_GPU \in [0, 1]
+! Define TEST_AMD_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
@@ -94,6 +96,16 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #define TEST_INT_MPI_TYPE integer(kind=c_int32_t)
 #define INT_MPI_TYPE c_int32_t
 #endif
+
+
+
+#define TEST_GPU 0
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1)
+#undef TEST_GPU
+#define TEST_GPU 1
+#endif
+
+
 #include "assert.h"
 
 program test
@@ -228,8 +240,19 @@ program test
 
    call e%set("debug",1, error_elpa)
    assert_elpa_ok(error_elpa)
-   call e%set("gpu", 0, error_elpa)
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
+   call e%set("nvidia-gpu", 0, error_elpa)
    assert_elpa_ok(error_elpa)
+#endif
+#if TEST_AMD_GPU == 1
+   call e%set("amd-gpu", 0, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+#if TEST_INTEL_GPU == 1
+   call e%set("intel-gpu", 0, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
    !call e%set("max_stored_rows", 15, error_elpa)
 
    assert_elpa_ok(e%setup())

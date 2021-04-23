@@ -69,6 +69,8 @@ module matrix_plot
 
     subroutine prmat(na, useGpu, a_mat, a_dev, lda, matrixCols, nblk, my_prow, my_pcol, np_rows, np_cols, name, iteration)
       use cuda_functions
+      use hip_functions
+      use elpa_gpu
       use, intrinsic :: iso_c_binding
       use precision
       implicit none
@@ -85,7 +87,7 @@ module matrix_plot
       integer(kind=ik)                              :: row, col, mpi_rank
       integer(kind=ik), save                        :: counter = 0
       real(kind=REAL_DATATYPE)                      :: a_dev_helper(lda,matrixCols)
-      logical                                       :: successCUDA
+      logical                                       :: successGPU
       integer(kind=c_size_t), parameter             :: size_of_datatype = size_of_double_real
 
       mpi_rank = np_rows * my_pcol + my_prow
@@ -106,7 +108,7 @@ module matrix_plot
 
       if(useGpu) then
 #ifdef HAVE_GPU_VERSION
-        successCUDA = cuda_memcpy(int(loc(a_dev_helper(1,1)),kind=c_intptr_t), &
+        successGPU = cuda_memcpy(int(loc(a_dev_helper(1,1)),kind=c_intptr_t), &
                       a_dev, lda * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
 #endif
         write(filename, "(A,A,I0.4,A,I0.2,A)") trim(directory), "/a_dev-", counter, "-", mpi_rank, ".txt"

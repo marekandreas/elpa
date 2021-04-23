@@ -80,6 +80,8 @@
    use elpa2_compute
    use elpa_mpi
    use cuda_functions
+   use hip_functions
+   use elpa_gpu
    use mod_check_for_gpu
    use elpa_omp
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
@@ -156,7 +158,7 @@
 
 
    integer(kind=c_int)                                                :: i
-   logical                                                            :: success, successCUDA
+   logical                                                            :: success, successGPU
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage
@@ -205,17 +207,36 @@
 
 #if REALCASE == 1
 #undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
 #undef GENERIC_KERNEL
 #undef KERNEL_STRING
-#define GPU_KERNEL ELPA_2STAGE_REAL_GPU
+#ifdef WITH_NVIDIA_GPU_VERSION
+#undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+#undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_REAL_AMD_GPU
+#endif
 #define GENERIC_KERNEL ELPA_2STAGE_REAL_GENERIC
 #define KERNEL_STRING "real_kernel"
 #endif
+! intel missing
+
+
 #if COMPLEXCASE == 1
 #undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #undef GENERIC_KERNEL
 #undef KERNEL_STRING
-#define GPU_KERNEL ELPA_2STAGE_COMPLEX_GPU
+#ifdef WITH_NVIDIA_GPU_VERSION
+#undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_COMPLEX_NVIDIA_GPU
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+#undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_COMPLEX_AMD_GPU
+#endif
 #define GENERIC_KERNEL ELPA_2STAGE_COMPLEX_GENERIC
 #define KERNEL_STRING "complex_kernel"
 #endif
@@ -365,10 +386,26 @@
     wantDebug = debug == 1
 
     ! GPU settings
-    call obj%get("gpu", gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option gpu settings. Aborting..."
-      stop
+    if (gpu_vendor() == NVIDIA_GPU) then
+      call obj%get("nvidia-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for NVIDIA GPU. Aborting..."
+        stop
+      endif
+    else if (gpu_vendor() == AMD_GPU) then
+      call obj%get("amd-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for AMD GPU. Aborting..."
+        stop
+      endif
+    else if (gpu_vendor() == INTEL_GPU) then
+      call obj%get("intel-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for INTEL GPU. Aborting..."
+        stop
+      endif
+    else
+      gpu = 0
     endif
 
     useGPU = (gpu == 1)
@@ -377,15 +414,10 @@
     if (useGPU) then
       call obj%timer%start("check_for_gpu")
       if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
+        do_useGPU = .true.
+        ! set the neccessary parameters
+        call set_gpu_parameters()
 
-         do_useGPU = .true.
-
-         ! set the neccessary parameters
-         cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-         cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-         cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-         cudaHostRegisterPortable = cuda_hostRegisterPortable()
-         cudaHostRegisterMapped   = cuda_hostRegisterMapped()
       else
         print *,"GPUs are requested but not detected! Aborting..."
         success = .false.

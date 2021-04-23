@@ -45,7 +45,8 @@
 ! Define one of TEST_REAL or TEST_COMPLEX
 ! Define one of TEST_SINGLE or TEST_DOUBLE
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
-! Define TEST_GPU \in [0, 1]
+! Define TEST_NVIDIA_GPU \in [0, 1]
+! Define TEST_INTEL_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
@@ -264,7 +265,8 @@ program test
    call e%set("timings",1, error_elpa)
 
    call e%set("debug",1, error_elpa)
-   call e%set("gpu", 0, error_elpa)
+   call e%set("nvidia-gpu", 0, error_elpa)
+   call e%set("intel-gpu", 0, error_elpa)
    !call e%set("max_stored_rows", 15, error_elpa)
 
    assert_elpa_ok(e%setup())
