@@ -2,7 +2,7 @@
 
 ## Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2020.11.001**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2021.05.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
@@ -10,7 +10,7 @@ The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).
 With the release ELPA 2019.11.001, the legacy API has been deprecated and the support has been closed.
 
-The release of ELPA 2020.11.001 does change the API and ABI compared to the release 2019.11.001, since
+The release of ELPA 2021.05.001.rc1 does change the API and ABI compared to the release 2019.11.001, since
 the legacy API has been dropped.
 
 ## How to install *ELPA* ##
@@ -62,7 +62,10 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  `--enable-sve128`                     | Experimental feature build ARM SVE128 kernels, default: disabled               |
 |  `--enable-sve256`                     | Experimental feature build ARM SVE256 kernels, default: disabled               |
 |  `--enable-sve512`                     | Experimental feature build ARM SVE512 kernels, default: disabled               |
-|  `--enable-gpu`                        | build GPU kernels, default: disabled                  |
+|  `--enable-nvidia-gpu`                 | build NVIDIA GPU kernels, default: disabled           |
+|  `--enable-gpu`                        | same as --enable-nvidia-gpu                           |
+|  `--enable-amd-gpu`                    | EXPERIMENTAL: build AMD GPU kernels, default: disabled           |
+|  `--enable-intel-gpu`                  | VERY EXPERIMENTAL: build INTEL GPU kernels, default: disabled           |
 |  `--enable-bgp`                        | build BGP kernels, default: disabled                  |
 |  `--enable-bgq`                        | build BGQ kernels, default: disabled                  |
 |  `--with-mpi=[yes|no]`                 | compile with MPI. Default: yes                        |
@@ -71,7 +74,9 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  `--with-GPU-compute-capability=VALUE` | use compute capability VALUE for GPU version, <br> default: "sm_35" |
 |  `--with-fixed-real-kernel=KERNEL`     | compile with only a single specific real kernel.      |
 |  `--with-fixed-complex-kernel=KERNEL`  | compile with only a single specific complex kernel.   |
-|  `--with-gpu-support-only`             | Compile and always use the GPU version                |
+|  `--with-nvidia-gpu-support-only`      | Compile and always use the NVIDIA GPU version         |
+|  `--with-amd-gpu-support-only`         | EXPERIMENTAL: Compile and always use the AMD GPU version         |
+|  `--with-intel-gpu-support-only`       | EXPERIMENTAL: Compile and always use the INTEL GPU version         |
 |  `--with-likwid=[yes|no|PATH]`         | use the likwid tool to measure performance (has an performance impact!), default: no |
 |  `--with-default-real-kernel=KERNEL`   | set the real kernel KERNEL as default                 |
 |  `--with-default-complex-kernel=KERNEL`| set the compplex kernel KERNEL as default             |
