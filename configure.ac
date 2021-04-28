@@ -985,7 +985,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
 ])
 
-AC_ARG_WITH(nvidia-gpu-support-only, [AS_HELP_STRING([--with-nvidia-gpu-support-only],
+AC_ARG_WITH(NVIDIA-gpu-support-only, [AS_HELP_STRING([--with-NVIDIA-gpu-support-only],
             [Compile and always use the NVIDIA GPU version])],
             [],[with_nvidia_gpu_support_only=no])
 if test x"$with_nvidia_gpu_support_only" = x"yes" ; then
@@ -996,7 +996,7 @@ if test x"$with_nvidia_gpu_support_only" = x"yes" ; then
         use_complex_nvidia_gpu=yes
 fi
 
-AC_ARG_WITH(amd-gpu-support-only, [AS_HELP_STRING([--with-amd-gpu-support-only],
+AC_ARG_WITH(AMD-gpu-support-only, [AS_HELP_STRING([--with-AMD-gpu-support-only],
             [Compile and always use the AMD GPU version])],
             [],[with_amd_gpu_support_only=no])
 if test x"$with_amd_gpu_support_only" = x"yes" ; then
@@ -1007,7 +1007,7 @@ if test x"$with_amd_gpu_support_only" = x"yes" ; then
         use_complex_amd_gpu=yes
 fi
 
-AC_ARG_WITH(intel-gpu-support-only, [AS_HELP_STRING([--with-intel-gpu-support-only],
+AC_ARG_WITH(INTEL-gpu-support-only, [AS_HELP_STRING([--with-INTEL-gpu-support-only],
             [Compile and always use the INTEL GPU version])],
             [],[with_intel_gpu_support_only=no])
 if test x"$with_intel_gpu_support_only" = x"yes" ; then
@@ -1505,7 +1505,7 @@ AC_LANG_POP([Fortran])
 AC_MSG_CHECKING(whether GPU version should be used)
 AC_ARG_ENABLE([gpu],
                 AS_HELP_STRING([--enable-gpu],
-                               [do use Nvidia GPU version (compatibility flag, better set explicitely)]),
+                               [do use NVIDIA GPU version (compatibility flag, better set explicitely)]),
                                [if test x"$enableval" = x"yes"; then
                                   use_gpu=yes
                                 else
@@ -1519,10 +1519,10 @@ if test x"${use_gpu}" = x"yes" ; then
   use_complex_nvidia_gpu=yes
 fi
 
-AC_MSG_CHECKING(whether Nvidia-GPU version should be used)
-AC_ARG_ENABLE([Nvidia-gpu],
-                AS_HELP_STRING([--enable-Nvidia-gpu],
-                               [do use Nvidia GPU version]),
+AC_MSG_CHECKING(whether NVIDIA-GPU version should be used)
+AC_ARG_ENABLE([nvidia-gpu],
+                AS_HELP_STRING([--enable-nvidia-gpu],
+                               [do use NVIDIA GPU version]),
                                [if test x"$enableval" = x"yes"; then
                                   use_nvidia_gpu=yes
                                 else
@@ -1554,8 +1554,8 @@ fi
 #fi
 
 AC_MSG_CHECKING(whether AMD-GPU version should be used)
-AC_ARG_ENABLE([AMD-gpu],
-                AS_HELP_STRING([--enable-AMD-gpu],
+AC_ARG_ENABLE([amd-gpu],
+                AS_HELP_STRING([--enable-amd-gpu],
                                [do use AMD GPU version]),
                                [if test x"$enableval" = x"yes"; then
                                   use_amd_gpu=yes
@@ -1653,9 +1653,9 @@ if test x"${need_intel_gpu}" = x"yes" ; then
   #AC_LANG_POP([C])
 fi
 
-AC_MSG_CHECKING(whether Nvidia GPU memory debugging should be enabled)
-AC_ARG_ENABLE([nvidia-gpu-memory-debug],
-                AS_HELP_STRING([--enable-nvidia-gpu-memory-debug],
+AC_MSG_CHECKING(whether NVIDIA GPU memory debugging should be enabled)
+AC_ARG_ENABLE([NVIDIA-gpu-memory-debug],
+                AS_HELP_STRING([--enable-NVIDIA-gpu-memory-debug],
                                [Output information on Nvidia GPU memory to be processed by utils/memory/check_memory.py]),
                                [if test x"$enableval" = x"yes"; then
                                   enable_nvidia_gpu_memory_debug=yes
