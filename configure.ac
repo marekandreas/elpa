@@ -1789,7 +1789,7 @@ AC_ARG_ENABLE([FUGAKU],
               [enable_fugaku=no])
 AC_MSG_RESULT([${enable_fugaku}])
 AM_CONDITIONAL([BUILD_FUGAKU],[test x"$enable_fugaku" = x"yes"])
-if test x"${enable_fugalu}" = x"yes"; then
+if test x"${enable_fugaku}" = x"yes"; then
  AC_DEFINE([BUILD_FUGAKU], [1], [build for FUGAKU])
  FC_MODINC="-I"
 fi

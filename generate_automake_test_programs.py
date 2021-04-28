@@ -31,6 +31,7 @@ gpu_id_flag = {
 
 matrix_flag = {
     "random":   "-DTEST_MATRIX_RANDOM",
+    "analytic": "-DTEST_MATRIX_ANALYTIC",
     "toeplitz": "-DTEST_MATRIX_TOEPLITZ",
     "frank":    "-DTEST_MATRIX_FRANK",
 }
@@ -71,6 +72,7 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
                                                    sorted(solver_flag.keys()),
                                                    sorted(layout_flag.keys()),
                                                    sorted(split_comm_flag.keys())):
+    
 
     if gid == 1 and (g == 0 ):
         continue
@@ -196,11 +198,22 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
             layoutsuffix="_all_layouts" if lay == "all_layouts" else "",
             spl="_split_comm_myself" if spl == "myself" else "")
 
-        print("if BUILD_KCOMPUTER")
-        print("bin_PROGRAMS += " + name)
-        print("else")
-        print("noinst_PROGRAMS += " + name)
-        print("endif")
+        if (m == "analytic"):
+          print("if BUILD_FUGAKU")
+          print("")
+          print("else")
+          print("if BUILD_KCOMPUTER")
+          print("bin_PROGRAMS += " + name)
+          print("else")
+          print("noinst_PROGRAMS += " + name)
+          print("endif")
+          print("endif")
+        else:
+          print("if BUILD_KCOMPUTER")
+          print("bin_PROGRAMS += " + name)
+          print("else")
+          print("noinst_PROGRAMS += " + name)
+          print("endif")
 
         if lay == "square" or t == "generalized":
             if kernel == "all_kernels":
