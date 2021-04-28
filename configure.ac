@@ -397,7 +397,7 @@ want_mpi_launcher="no"
 AC_MSG_CHECKING(whether mpi-launcher should be detected)
 AC_ARG_ENABLE(detect-mpi-launcher,
               [AS_HELP_STRING([--enable-detect-mpi-launcher],
-                              [detect mpi launcer])],
+                              [detect mpi launcher])],
               [want_mpi_launcher="$enableval"],
               [want_mpi_launcher="yes"])
 AC_MSG_RESULT([${want_mpi_launcher}])
@@ -1777,10 +1777,10 @@ if test x"${enable_kcomputer}" = x"yes"; then
   fi
 fi
 
-AC_MSG_CHECKING(whether we build for Fugaku)
-AC_ARG_ENABLE([Fugaku],
-              AS_HELP_STRING([--enable-Fugaku],
-                             [enable builds on Fugaki, default no.]),
+AC_MSG_CHECKING(whether we build for FUGAKU)
+AC_ARG_ENABLE([FUGAKU],
+              AS_HELP_STRING([--enable-FUGAKU],
+                             [enable builds on FUGAKU, default no.]),
 			     [if test x"$enableval" = x"yes"; then
 			        enable_fugaku=yes
 		              else
@@ -1789,18 +1789,10 @@ AC_ARG_ENABLE([Fugaku],
               [enable_fugaku=no])
 AC_MSG_RESULT([${enable_fugaku}])
 AM_CONDITIONAL([BUILD_FUGAKU],[test x"$enable_fugaku" = x"yes"])
-if test x"${enable_fugaku}" = x"yes"; then
- AC_DEFINE([BUILD_FUGAKU], [1], [build for Fugaku])
- #FC_MODINC="-I"
-  #if test x"${USE_ASSUMED_SIZE}" = x"yes" ; then
-  #  AC_MSG_ERROR(on K-computer you have to switch off assumed-size arrays!)
-  #fi
-  #if test x"${enable_fortran2008_features}" = x"yes" ; then
-  #  AC_MSG_ERROR(on K-computer you have to switch off Fortran 2008 features!)
-  #fi
+if test x"${enable_fugalu}" = x"yes"; then
+ AC_DEFINE([BUILD_FUGAKU], [1], [build for FUGAKU])
+ FC_MODINC="-I"
 fi
-
-
 
 AC_MSG_CHECKING(whether we build for NEC SX-Auroa)
 AC_ARG_ENABLE([SX-Aurora],

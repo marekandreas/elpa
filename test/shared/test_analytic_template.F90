@@ -449,9 +449,11 @@
 #endif
     total_level = 0
     am = a
+#ifdef BUILD_FUGAKU
     primes(1) = 2
     primes(2) = 3
     primes(3) = 5
+#endif
     do prime_id = 1,num_primes
       prime = primes(prime_id)
       do  level = 1, levels(prime_id)
@@ -459,58 +461,74 @@
         total_level = total_level + 1
         if(what == ANALYTIC_MATRIX) then
 #ifdef REALCASE
-          !mat2x2 = reshape((/ c*c + amp * s*s, (amp - 1.0_rk) * s*c,  &
-          !                 (amp - 1.0_rk) * s*c, s*s + amp * c*c  /), &
-          !                            (/2, 2/), order=(/2,1/))
+#ifndef FUGAKU
+          mat2x2 = reshape((/ c*c + amp * s*s, (amp - 1.0_rk) * s*c,  &
+                           (amp - 1.0_rk) * s*c, s*s + amp * c*c  /), &
+                                      (/2, 2/), order=(/2,1/))
+#endif
 #endif
 #ifdef COMPLEXCASE
-          !mat2x2 = reshape((/ 0.5_rck * (amp + 1.0_rck) * (1.0_rk, 0.0_rk),   sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, 1.0_rk),   &
-          !                    sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, -1.0_rk),  0.5_rck * (amp + 1.0_rck) * (1.0_rk, 0.0_rk) /), &
-          !                            (/2, 2/), order=(/2,1/))
+#ifndef FUGAKU
+          mat2x2 = reshape((/ 0.5_rck * (amp + 1.0_rck) * (1.0_rk, 0.0_rk),   sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, 1.0_rk),   &
+                              sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, -1.0_rk),  0.5_rck * (amp + 1.0_rck) * (1.0_rk, 0.0_rk) /), &
+                                      (/2, 2/), order=(/2,1/))
 ! intel 2018 does not reshape correctly (one would have to specify order=(/1,2/)
 ! until this is resolved, I resorted to the following
-          !mat2x2(1,2) = sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, 1.0_rk)
-          !mat2x2(2,1) = sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, -1.0_rk)
+          mat2x2(1,2) = sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, 1.0_rk)
+          mat2x2(2,1) = sq2/4.0_rk * (amp - 1.0_rk) * (1.0_rk, -1.0_rk)
+#endif
 #endif
         else if(what == ANALYTIC_EIGENVECTORS) then
 #ifdef REALCASE
-          !mat2x2 = reshape((/ c, s,  &
-          !                 -s,  c  /), &
-          !                      (/2, 2/), order=(/2,1/))
+#ifndef FUGAKU
+          mat2x2 = reshape((/ c, s,  &
+                           -s,  c  /), &
+                                (/2, 2/), order=(/2,1/))
 ! intel 2018 does not reshape correctly (one would have to specify order=(/1,2/)
 ! until this is resolved, I resorted to the following
-          !mat2x2(1,2) = s
-          !mat2x2(2,1) = -s
+          mat2x2(1,2) = s
+          mat2x2(2,1) = -s
+#endif
 #endif
 #ifdef COMPLEXCASE
-          !mat2x2 = reshape((/ -sq2/2.0_rck * (1.0_rk, 0.0_rk),       -sq2/2.0_rck * (1.0_rk, 0.0_rk),  &
-          !                    0.5_rk * (1.0_rk, -1.0_rk),  0.5_rk * (-1.0_rk, 1.0_rk)  /), &
-          !                      (/2, 2/), order=(/2,1/))
+#ifndef FUGAKU
+          mat2x2 = reshape((/ -sq2/2.0_rck * (1.0_rk, 0.0_rk),       -sq2/2.0_rck * (1.0_rk, 0.0_rk),  &
+                              0.5_rk * (1.0_rk, -1.0_rk),  0.5_rk * (-1.0_rk, 1.0_rk)  /), &
+                                (/2, 2/), order=(/2,1/))
 ! intel 2018 does not reshape correctly (one would have to specify order=(/1,2/)
 ! until this is resolved, I resorted to the following
-          !mat2x2(1,2) = -sq2/2.0_rck * (1.0_rk, 0.0_rk)
-          !mat2x2(2,1) = 0.5_rk * (1.0_rk, -1.0_rk)
+          mat2x2(1,2) = -sq2/2.0_rck * (1.0_rk, 0.0_rk)
+          mat2x2(2,1) = 0.5_rk * (1.0_rk, -1.0_rk)
+#endif
 #endif
         else if(what == ANALYTIC_EIGENVALUES) then
-          !mat2x2 = reshape((/ 1.0_rck, 0.0_rck,  &
-          !                 0.0_rck, amp  /), &
-          !                       (/2, 2/), order=(/2,1/))
+#ifndef FUGAKU
+          mat2x2 = reshape((/ 1.0_rck, 0.0_rck,  &
+                           0.0_rck, amp  /), &
+                                 (/2, 2/), order=(/2,1/))
+#endif
         else
           assert(.false.)
         end if
 
         mat = 0.0_rck
         if(prime == 2) then
-          !mat(1:2, 1:2) = mat2x2
+#ifndef BUILD_FUGAKU
+          mat(1:2, 1:2) = mat2x2
+#endif
         else if(prime == 3) then
-          !mat((/1,3/),(/1,3/)) = mat2x2
+#ifndef BUILD_FUGAKU
+          mat((/1,3/),(/1,3/)) = mat2x2
+#endif
           if(what == ANALYTIC_EIGENVECTORS) then
             mat(2,2) = 1.0_rck
           else
             mat(2,2) = am
           end if
         else if(prime == 5) then
-          !mat((/1,5/),(/1,5/)) = mat2x2
+#ifndef BUILD_FUGAKU
+          mat((/1,5/),(/1,5/)) = mat2x2
+#endif
           if(what == ANALYTIC_EIGENVECTORS) then
             mat(2,2) = 1.0_rck
             mat(3,3) = 1.0_rck
@@ -642,36 +660,42 @@
     implicit none
     TEST_INT_TYPE, intent(in)   :: myid
     TEST_INT_TYPE               :: decomposition(num_primes), i
+#ifndef BUILD_FUGAKU
+    TEST_INT_TYPE, parameter    :: check_sizes(7) = (/2, 3, 5, 6, 10, 25, 150/)
+#else
     TEST_INT_TYPE    :: check_sizes(7)
-    !TEST_INT_TYPE, parameter    :: check_sizes(7) = (/2, 3, 5, 6, 10, 25, 150/)
+#endif
     if(myid == 0) print *, "Checking test_analytic module sanity.... "
-!#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
-!    assert(decompose(1500_lik, decomposition))
-!#else
-!    assert(decompose(1500_ik, decomposition))
-!#endif
-!    assert(all(decomposition == (/2,1,3/)))
-!#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
-!    assert(decompose(6_lik,decomposition))
-!#else
-!    assert(decompose(6_ik,decomposition))
-!#endif
-!    assert(all(decomposition == (/1,1,0/)))
-!
-!    check_sizes(1) = 2
-!    check_sizes(2) = 3
-!    check_sizes(3) = 5
-!    check_sizes(4) = 10
-!    check_sizes(5) = 25
-!    check_sizes(6) = 150
-!    do i =1, size(check_sizes)
-!      call check_matrices_&
-!          &MATH_DATATYPE&
-!          &_&
-!          &PRECISION&
-!          &(myid, check_sizes(i))
-!    end do
-!
-!    if(myid == 0) print *, "Checking test_analytic module sanity.... DONE"
+#ifndef BUILD_FUGAKU
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+    assert(decompose(1500_lik, decomposition))
+#else
+    assert(decompose(1500_ik, decomposition))
+#endif
+    assert(all(decomposition == (/2,1,3/)))
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+    assert(decompose(6_lik,decomposition))
+#else
+    assert(decompose(6_ik,decomposition))
+#endif
+    assert(all(decomposition == (/1,1,0/)))
 
+#ifdef BUILD_FUGAKU
+    check_sizes(1) = 2
+    check_sizes(2) = 3
+    check_sizes(3) = 5
+    check_sizes(4) = 10
+    check_sizes(5) = 25
+    check_sizes(6) = 150
+#endif
+    do i =1, size(check_sizes)
+      call check_matrices_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION&
+          &(myid, check_sizes(i))
+    end do
+
+    if(myid == 0) print *, "Checking test_analytic module sanity.... DONE"
+#endif
   end subroutine
