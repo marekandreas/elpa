@@ -636,9 +636,12 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = @PKG_CONFIG_FILE@
 
 # programs
+if BUILD_FUGAKU
+bin_PROGRAMS =
+else
 bin_PROGRAMS = \
   elpa2_print_kernels@SUFFIX@
-
+endif
 noinst_PROGRAMS =
 check_SCRIPTS =
 
@@ -672,10 +675,12 @@ libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/test_redirect.F90
 endif
 
-
+if BUILD_FUGAKU
+else
 elpa2_print_kernels@SUFFIX@_SOURCES = src/elpa2/elpa2_print_kernels.F90
 elpa2_print_kernels@SUFFIX@_LDADD = libelpa@SUFFIX@.la
 elpa2_print_kernels@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)modules
+endif
 
 include test_programs.am
 

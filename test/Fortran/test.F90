@@ -193,8 +193,12 @@ program test
    TEST_INT_TYPE      :: i
 #endif
 #ifdef TEST_ALL_LAYOUTS
-   character(len=1), parameter :: layouts(2) = [ 'C', 'R' ]
    TEST_INT_TYPE      :: i_layout
+#ifdef BUILD_FUGAKU
+   character(len=1) :: layouts(2)
+#else
+   character(len=1), parameter :: layouts(2) = [ 'C', 'R' ]
+#endif
 #endif
    integer(kind=c_int):: kernel
    character(len=1)   :: layout
@@ -214,6 +218,13 @@ program test
 #ifdef SPLIT_COMM_MYSELF
    TEST_INT_MPI_TYPE  :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
    character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
+#endif
+
+#ifdef TEST_ALL_LAYOUTS
+#ifdef BUILD_FUGAKU
+   layouts(1) = 'C'
+   layouts(2) = 'R'
+#endif
 #endif
 
    ignoreError = .false.

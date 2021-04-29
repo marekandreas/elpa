@@ -398,11 +398,22 @@ if test x"${enable_openmp}" = x"yes"; then
   FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 fi
 
+want_mpi_launcher="no"
+AC_MSG_CHECKING(whether mpi-launcher should be detected)
+AC_ARG_ENABLE(detect-mpi-launcher,
+              [AS_HELP_STRING([--enable-detect-mpi-launcher],
+                              [detect mpi launcher])],
+              [want_mpi_launcher="$enableval"],
+              [want_mpi_launcher="yes"])
+AC_MSG_RESULT([${want_mpi_launcher}])
+
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
-  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun aprun], [no])
-  if test x"$MPI_BINARY" = x"no"; then
-    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
+  if test x"$want_mpi_launcher" = x"yes"; then
+    AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun aprun], [no])
+    if test x"$MPI_BINARY" = x"no"; then
+      AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
+    fi
   fi
 fi
 
@@ -1962,6 +1973,23 @@ if test x"${enable_kcomputer}" = x"yes"; then
   fi
 fi
 
+AC_MSG_CHECKING(whether we build for FUGAKU)
+AC_ARG_ENABLE([FUGAKU],
+              AS_HELP_STRING([--enable-FUGAKU],
+                             [enable builds on FUGAKU, default no.]),
+			     [if test x"$enableval" = x"yes"; then
+			        enable_fugaku=yes
+		              else
+				enable_fugaku=no
+			      fi],
+              [enable_fugaku=no])
+AC_MSG_RESULT([${enable_fugaku}])
+AM_CONDITIONAL([BUILD_FUGAKU],[test x"$enable_fugaku" = x"yes"])
+if test x"${enable_fugaku}" = x"yes"; then
+ AC_DEFINE([BUILD_FUGAKU], [1], [build for FUGAKU])
+ FC_MODINC="-I"
+fi
+
 AC_MSG_CHECKING(whether we build for NEC SX-Auroa)
 AC_ARG_ENABLE([SX-Aurora],
               AS_HELP_STRING([--enable-SX-Aurora],
@@ -2098,7 +2126,11 @@ AC_CONFIG_FILES([
 m4_include([m4/ax_fc_check_define.m4])
 AC_MSG_CHECKING([if workaround for broken preprocessor is needed])
 
-need_manual_cpp=no
+if test x"${enable_fugaku}" = x"yes"; then
+  need_manual_cpp=yes
+else
+  need_manual_cpp=no
+fi
 AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[is_intel=yes],[])
 AX_FC_CHECK_DEFINE([__PGI],[is_pgi=yes],[])
 ACTUAL_FC="$FC"
