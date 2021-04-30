@@ -158,6 +158,8 @@
 !>   call elpaInstance%set("solver", ELPA_SOLVER_2STAGE, success)
 !>
 !>   ! and set a specific kernel (must be supported on the machine)
+!>   ! the CALLING order is important: you have FIRST to set the solver to ELPA_SOLVER_2STAGE
+!>   ! and THEN you can choose a kernel other than the DEFAULT kernel
 !>   call elpaInstance%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2)
 !> \endcode
 !>   ... set and get all other options that are desired
@@ -226,6 +228,9 @@
 !>      to GPU id 1) */
 !>   if (my_rank == 0) elpa_set(handle, "use_gpu_id", 1, &error);
 !>
+!>   /* and set a specific kernel (must be supported on the machine)
+!>      the CALLING order is important: you have FIRST to set the solver to ELPA_SOLVER_2STAGE
+!>     and THEN you can choose a kernel other than the DEFAULT kernel */
 !>   elpa_set(handle,"real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, &error);
 !>  \endcode
 !>   ... set and get all other options that are desired
@@ -281,6 +286,8 @@
 !>   call e%set("solver", ELPA_SOLVER_2STAGE, success)
 !>
 !>   ! and set a specific kernel (must be supported on the machine)
+!>   ! the CALLING order is important: you have FIRST to set the solver to ELPA_SOLVER_2STAGE
+!>   ! and THEN you can choose a kernel other than the DEFAULT kernel
 !>   call e%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, success)
 !> \endcode
 !>   ... set and get all other options that are desired
