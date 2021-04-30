@@ -111,7 +111,7 @@
 !>
 !>  ! We urge the user to always check the error code of all ELPA functions
 !>
-!>  if (elpa_init(20200417) /= ELPA_OK) then
+!>  if (elpa_init(20210430) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
 !>     stop
 !>   endif
@@ -188,7 +188,7 @@
 !>
 !>   /*  We urge the user to always check the error code of all ELPA functions */
 !>
-!>   if (elpa_init(20200417) != ELPA_OK) {
+!>   if (elpa_init(20210430) != ELPA_OK) {
 !>     fprintf(stderr, "Error: ELPA API version not supported");
 !>     exit(1);
 !>   }
@@ -253,7 +253,7 @@
 !>  class(elpa_autotune_t), pointer :: tune_state
 !>  integer :: success
 !>
-!>  if (elpa_init(20200417) /= ELPA_OK) then
+!>  if (elpa_init(20210430) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
 !>     stop
 !>   endif
