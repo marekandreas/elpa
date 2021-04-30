@@ -504,4 +504,10 @@ In order to build *ELPA* for AMD GPUs please ensure that you have a working inst
 ./configure CXX=hipcc CXXFLAGS="-I/opt/rocm-4.0.0/hip/include/ -I/opt/rocm-4.0.0/rocblas/inlcude -g" CC=hipcc CFLAGS="-I/opt/rocm-4.0.0/hip/include/ -I/opt/rocm-4.0.0/rocblas/include -g" LIBS="-L/opt/rocm-4.0.0/rocblas/lib" --enable-option-checking=fatal --with-mpi=0 FC=gfortran FCFLAGS="-g -LPATH_TO_YOUR_LAPACK_INSTALLATION -lopenblas -llapack" --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-avx512 --enable-AMD-gpu --enable-single-precision
 ```
 
-
+#### Problems of building with clang-12.0 ####
+The libtool tool adds some flags to the compiler commands (to be used for linking by ld) which are not known
+by the clang-12 compiler. One way to solve this issue is by calling directly after the configue step
+```
+sed -i 's/\\$wl-soname \\$wl\\$soname/-fuse-ld=ld -Wl,-soname,\\$soname/g' libtool
+sed -i 's/\\$wl--whole-archive\\$convenience \\$wl--no-whole-archive//g' libtool
+```
