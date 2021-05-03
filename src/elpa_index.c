@@ -59,6 +59,7 @@
 
 int max_threads_glob;
 int set_max_threads_glob=0;
+int const default_max_stored_rows = 256;   
 
 static int enumerate_identity(elpa_index_t index, int i);
 static int cardinality_bool(elpa_index_t index);
@@ -147,6 +148,7 @@ static int elpa_float_value_to_string(char *name, float value, const char **stri
 static int elpa_double_string_to_value(char *name, char *string, double *value);
 static int elpa_double_value_to_string(char *name, double value, const char **string);
 
+         
 #define BASE_ENTRY(option_name, option_description, once_value, readonly_value, print_flag_value) \
                 .base = { \
                         .name = option_name, \
@@ -263,7 +265,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
                         stripewidth_complex_cardinality, stripewidth_complex_enumerate, stripewidth_complex_is_valid, NULL, PRINT_YES),
 
-        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY, \
+        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation", default_max_stored_rows, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL, PRINT_YES),
 #ifdef WITH_OPENMP_TRADITIONAL
         INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
@@ -1074,24 +1076,24 @@ static int max_stored_rows_cardinality(elpa_index_t index) {
 }
 
 static int max_stored_rows_enumerate(elpa_index_t index, int i) {
-	switch(i) {
-	  case 0:
-	    return 15;
-	  case 1:
-	    return 31;
-	  case 2:
-	    return 47;
-	  case 3:
-	    return 63;
-	  case 4:
-	    return 79;
-	  case 5:
-	    return 95;
-	  case 6:
-	    return 111;
-	  case 7:
-	    return 127;
-	}
+  switch(i) {
+  case 0:
+    return 63;
+  case 1:
+    return 79;
+  case 2:
+    return 95;
+  case 3:
+    return 120;
+  case 4:
+    return 256;
+  case 5:
+    return 320;
+  case 6:
+    return 384;
+  case 7:
+    return 448;
+  }
 }
 
 static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value) {
