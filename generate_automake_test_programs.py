@@ -74,6 +74,7 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
                                                    sorted(solver_flag.keys()),
                                                    sorted(layout_flag.keys()),
                                                    sorted(split_comm_flag.keys())):
+    
 
     if gid == 1 and (g == 0 ):
         continue
@@ -207,50 +208,107 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
             layoutsuffix="_all_layouts" if lay == "all_layouts" else "",
             spl="_split_comm_myself" if spl == "myself" else "")
 
-        print("if BUILD_KCOMPUTER")
-        print("bin_PROGRAMS += " + name)
-        print("else")
-        print("noinst_PROGRAMS += " + name)
-        print("endif")
-
-        if lay == "square" or t == "generalized":
-            if kernel == "all_kernels":
-                print("check_SCRIPTS += " + name + "_extended.sh")
-            else:
-                print("check_SCRIPTS += " + name + "_default.sh")
-        elif lay == "all_layouts":
-            if kernel == "all_kernels":
-                print("check_SCRIPTS += " + name + "_extended.sh")
-            else:
-                print("check_SCRIPTS += " + name + "_extended.sh")
+        if (m == "analytic"):
+          print("if BUILD_FUGAKU")
+          print("else")
+          print("if BUILD_KCOMPUTER")
+          print("bin_PROGRAMS += " + name)
+          print("else")
+          print("noinst_PROGRAMS += " + name)
+          print("endif")
+          print("endif")
         else:
-            raise Exception("Unknown layout {0}".format(lay))
+          print("if BUILD_KCOMPUTER")
+          print("bin_PROGRAMS += " + name)
+          print("else")
+          print("noinst_PROGRAMS += " + name)
+          print("endif")
 
-        if lang == "Fortran":
-            print(name + "_SOURCES = test/Fortran/test.F90")
-            print(name + "_LDADD = $(test_program_ldadd)")
-            print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+        if (m == "analytic"):
+          print("if BUILD_FUGAKU")
+          print("else")
+          if lay == "square" or t == "generalized":
+              if kernel == "all_kernels":
+                  print("check_SCRIPTS += " + name + "_extended.sh")
+              else:
+                  print("check_SCRIPTS += " + name + "_default.sh")
+          elif lay == "all_layouts":
+              if kernel == "all_kernels":
+                  print("check_SCRIPTS += " + name + "_extended.sh")
+              else:
+                  print("check_SCRIPTS += " + name + "_extended.sh")
+          else:
+              raise Exception("Unknown layout {0}".format(lay))
 
-        elif lang == "C":
-            print(name + "_SOURCES = test/C/test.c")
-            print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-            print(name + "_CFLAGS = $(test_program_cflags) \\")
+          if lang == "Fortran":
+              print(name + "_SOURCES = test/Fortran/test.F90")
+              print(name + "_LDADD = $(test_program_ldadd)")
+              print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+
+          elif lang == "C":
+              print(name + "_SOURCES = test/C/test.c")
+              print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+              print(name + "_CFLAGS = $(test_program_cflags) \\")
+
+          else:
+              raise Exception("Unknown language")
+
+          print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
+          print("  " + " \\\n  ".join([
+              domain_flag[d],
+              prec_flag[p],
+              test_type_flag[t],
+              solver_flag[s],
+              gpu_flag[g],
+              gpu_id_flag[gid],
+              qr_flag[q],
+              matrix_flag[m]] + extra_flags))
+
+          print("endif\n" * endifs)
+          print("")
+          print("endif")
+          print("")
 
         else:
-            raise Exception("Unknown language")
+          if lay == "square" or t == "generalized":
+              if kernel == "all_kernels":
+                  print("check_SCRIPTS += " + name + "_extended.sh")
+              else:
+                  print("check_SCRIPTS += " + name + "_default.sh")
+          elif lay == "all_layouts":
+              if kernel == "all_kernels":
+                  print("check_SCRIPTS += " + name + "_extended.sh")
+              else:
+                  print("check_SCRIPTS += " + name + "_extended.sh")
+          else:
+              raise Exception("Unknown layout {0}".format(lay))
 
-        print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
-        print("  " + " \\\n  ".join([
-            domain_flag[d],
-            prec_flag[p],
-            test_type_flag[t],
-            solver_flag[s],
-            gpu_flag[g],
-            gpu_id_flag[gid],
-            qr_flag[q],
-            matrix_flag[m]] + extra_flags))
+          if lang == "Fortran":
+              print(name + "_SOURCES = test/Fortran/test.F90")
+              print(name + "_LDADD = $(test_program_ldadd)")
+              print(name + "_FCFLAGS = $(test_program_fcflags) \\")
 
-        print("endif\n" * endifs)
+          elif lang == "C":
+              print(name + "_SOURCES = test/C/test.c")
+              print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+              print(name + "_CFLAGS = $(test_program_cflags) \\")
+
+          else:
+              raise Exception("Unknown language")
+
+          print("  -DTEST_CASE=\\\"{0}\\\" \\".format(name))
+          print("  " + " \\\n  ".join([
+              domain_flag[d],
+              prec_flag[p],
+              test_type_flag[t],
+              solver_flag[s],
+              gpu_flag[g],
+              gpu_id_flag[gid],
+              qr_flag[q],
+              matrix_flag[m]] + extra_flags))
+
+          print("endif\n" * endifs)
+          print("")
 
 
 for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys()), sorted(domain_flag.keys())):

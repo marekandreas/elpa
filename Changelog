@@ -2,11 +2,14 @@ Changelog for next release
 
 - not yet decided
 
-Upcoming changes for ELPA 2021.05.001
+Changelog for ELPA 2021.05.001.rc
+
 - allow the user to set the mapping of MPI tasks to GPU id per set/get
 - experimental feature: port to AMD GPUS, works correctly, performance yet
   unclear; only tested --with-mpi=0
 - On request, ELPA can print the pinning of MPI tasks and OpenMP thread
+- support for FUGAKU: some minor fix still have to be fixed due to compiler
+issues
 
 Changelog for ELPA 2020.11.001
 

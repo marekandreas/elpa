@@ -111,7 +111,7 @@
 !>
 !>  ! We urge the user to always check the error code of all ELPA functions
 !>
-!>  if (elpa_init(20200417) /= ELPA_OK) then
+!>  if (elpa_init(20210430) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
 !>     stop
 !>   endif
@@ -158,6 +158,8 @@
 !>   call elpaInstance%set("solver", ELPA_SOLVER_2STAGE, success)
 !>
 !>   ! and set a specific kernel (must be supported on the machine)
+!>   ! the CALLING order is important: you have FIRST to set the solver to ELPA_SOLVER_2STAGE
+!>   ! and THEN you can choose a kernel other than the DEFAULT kernel
 !>   call elpaInstance%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2)
 !> \endcode
 !>   ... set and get all other options that are desired
@@ -188,7 +190,7 @@
 !>
 !>   /*  We urge the user to always check the error code of all ELPA functions */
 !>
-!>   if (elpa_init(20200417) != ELPA_OK) {
+!>   if (elpa_init(20210430) != ELPA_OK) {
 !>     fprintf(stderr, "Error: ELPA API version not supported");
 !>     exit(1);
 !>   }
@@ -226,6 +228,9 @@
 !>      to GPU id 1) */
 !>   if (my_rank == 0) elpa_set(handle, "use_gpu_id", 1, &error);
 !>
+!>   /* and set a specific kernel (must be supported on the machine)
+!>      the CALLING order is important: you have FIRST to set the solver to ELPA_SOLVER_2STAGE
+!>     and THEN you can choose a kernel other than the DEFAULT kernel */
 !>   elpa_set(handle,"real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, &error);
 !>  \endcode
 !>   ... set and get all other options that are desired
@@ -253,7 +258,7 @@
 !>  class(elpa_autotune_t), pointer :: tune_state
 !>  integer :: success
 !>
-!>  if (elpa_init(20200417) /= ELPA_OK) then
+!>  if (elpa_init(20210430) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
 !>     stop
 !>   endif
@@ -281,6 +286,8 @@
 !>   call e%set("solver", ELPA_SOLVER_2STAGE, success)
 !>
 !>   ! and set a specific kernel (must be supported on the machine)
+!>   ! the CALLING order is important: you have FIRST to set the solver to ELPA_SOLVER_2STAGE
+!>   ! and THEN you can choose a kernel other than the DEFAULT kernel
 !>   call e%set("real_kernel", ELPA_2STAGE_REAL_AVX_BLOCK2, success)
 !> \endcode
 !>   ... set and get all other options that are desired

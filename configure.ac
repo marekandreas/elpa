@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [15:2:0])
+AC_SUBST([ELPA_SO_VERSION], [15:3:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -40,15 +40,15 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20200417, "Current ELPA API version")
-print_current_api_version=20200417
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20210430, "Current ELPA API version")
+print_current_api_version=20210430
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
-print_current_autotune_version=20200417
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20200417], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20200417, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20210430], [Current ELPA autotune version])
+print_current_autotune_version=20210430
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20210430], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20210430, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
 AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1623715200],[old_elpa_version=yes],[old_elpa_version=no])
 
@@ -398,11 +398,22 @@ if test x"${enable_openmp}" = x"yes"; then
   FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 fi
 
+want_mpi_launcher="no"
+AC_MSG_CHECKING(whether mpi-launcher should be detected)
+AC_ARG_ENABLE(detect-mpi-launcher,
+              [AS_HELP_STRING([--enable-detect-mpi-launcher],
+                              [detect mpi launcher])],
+              [want_mpi_launcher="$enableval"],
+              [want_mpi_launcher="yes"])
+AC_MSG_RESULT([${want_mpi_launcher}])
+
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
-  AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun aprun], [no])
-  if test x"$MPI_BINARY" = x"no"; then
-    AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
+  if test x"$want_mpi_launcher" = x"yes"; then
+    AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun aprun], [no])
+    if test x"$MPI_BINARY" = x"no"; then
+      AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
+    fi
   fi
 fi
 
@@ -985,7 +996,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
         fi
 ])
 
-AC_ARG_WITH(nvidia-gpu-support-only, [AS_HELP_STRING([--with-nvidia-gpu-support-only],
+AC_ARG_WITH(NVIDIA-gpu-support-only, [AS_HELP_STRING([--with-NVIDIA-gpu-support-only],
             [Compile and always use the NVIDIA GPU version])],
             [],[with_nvidia_gpu_support_only=no])
 if test x"$with_nvidia_gpu_support_only" = x"yes" ; then
@@ -996,7 +1007,7 @@ if test x"$with_nvidia_gpu_support_only" = x"yes" ; then
         use_complex_nvidia_gpu=yes
 fi
 
-AC_ARG_WITH(amd-gpu-support-only, [AS_HELP_STRING([--with-amd-gpu-support-only],
+AC_ARG_WITH(AMD-gpu-support-only, [AS_HELP_STRING([--with-AMD-gpu-support-only],
             [Compile and always use the AMD GPU version])],
             [],[with_amd_gpu_support_only=no])
 if test x"$with_amd_gpu_support_only" = x"yes" ; then
@@ -1007,7 +1018,7 @@ if test x"$with_amd_gpu_support_only" = x"yes" ; then
         use_complex_amd_gpu=yes
 fi
 
-AC_ARG_WITH(intel-gpu-support-only, [AS_HELP_STRING([--with-intel-gpu-support-only],
+AC_ARG_WITH(INTEL-gpu-support-only, [AS_HELP_STRING([--with-INTEL-gpu-support-only],
             [Compile and always use the INTEL GPU version])],
             [],[with_intel_gpu_support_only=no])
 if test x"$with_intel_gpu_support_only" = x"yes" ; then
@@ -1505,7 +1516,7 @@ AC_LANG_POP([Fortran])
 AC_MSG_CHECKING(whether GPU version should be used)
 AC_ARG_ENABLE([gpu],
                 AS_HELP_STRING([--enable-gpu],
-                               [do use Nvidia GPU version (compatibility flag, better set explicitely)]),
+                               [do use NVIDIA GPU version (compatibility flag, better set explicitely)]),
                                [if test x"$enableval" = x"yes"; then
                                   use_gpu=yes
                                 else
@@ -1519,10 +1530,10 @@ if test x"${use_gpu}" = x"yes" ; then
   use_complex_nvidia_gpu=yes
 fi
 
-AC_MSG_CHECKING(whether Nvidia-GPU version should be used)
-AC_ARG_ENABLE([Nvidia-gpu],
-                AS_HELP_STRING([--enable-Nvidia-gpu],
-                               [do use Nvidia GPU version]),
+AC_MSG_CHECKING(whether NVIDIA-GPU version should be used)
+AC_ARG_ENABLE([nvidia-gpu],
+                AS_HELP_STRING([--enable-nvidia-gpu],
+                               [do use NVIDIA GPU version]),
                                [if test x"$enableval" = x"yes"; then
                                   use_nvidia_gpu=yes
                                 else
@@ -1554,8 +1565,8 @@ fi
 #fi
 
 AC_MSG_CHECKING(whether AMD-GPU version should be used)
-AC_ARG_ENABLE([AMD-gpu],
-                AS_HELP_STRING([--enable-AMD-gpu],
+AC_ARG_ENABLE([amd-gpu],
+                AS_HELP_STRING([--enable-amd-gpu],
                                [do use AMD GPU version]),
                                [if test x"$enableval" = x"yes"; then
                                   use_amd_gpu=yes
@@ -1653,9 +1664,9 @@ if test x"${need_intel_gpu}" = x"yes" ; then
   #AC_LANG_POP([C])
 fi
 
-AC_MSG_CHECKING(whether Nvidia GPU memory debugging should be enabled)
-AC_ARG_ENABLE([nvidia-gpu-memory-debug],
-                AS_HELP_STRING([--enable-nvidia-gpu-memory-debug],
+AC_MSG_CHECKING(whether NVIDIA GPU memory debugging should be enabled)
+AC_ARG_ENABLE([NVIDIA-gpu-memory-debug],
+                AS_HELP_STRING([--enable-NVIDIA-gpu-memory-debug],
                                [Output information on Nvidia GPU memory to be processed by utils/memory/check_memory.py]),
                                [if test x"$enableval" = x"yes"; then
                                   enable_nvidia_gpu_memory_debug=yes
@@ -1962,6 +1973,23 @@ if test x"${enable_kcomputer}" = x"yes"; then
   fi
 fi
 
+AC_MSG_CHECKING(whether we build for FUGAKU)
+AC_ARG_ENABLE([FUGAKU],
+              AS_HELP_STRING([--enable-FUGAKU],
+                             [enable builds on FUGAKU, default no.]),
+			     [if test x"$enableval" = x"yes"; then
+			        enable_fugaku=yes
+		              else
+				enable_fugaku=no
+			      fi],
+              [enable_fugaku=no])
+AC_MSG_RESULT([${enable_fugaku}])
+AM_CONDITIONAL([BUILD_FUGAKU],[test x"$enable_fugaku" = x"yes"])
+if test x"${enable_fugaku}" = x"yes"; then
+ AC_DEFINE([BUILD_FUGAKU], [1], [build for FUGAKU])
+ FC_MODINC="-I"
+fi
+
 AC_MSG_CHECKING(whether we build for NEC SX-Auroa)
 AC_ARG_ENABLE([SX-Aurora],
               AS_HELP_STRING([--enable-SX-Aurora],
@@ -2098,7 +2126,11 @@ AC_CONFIG_FILES([
 m4_include([m4/ax_fc_check_define.m4])
 AC_MSG_CHECKING([if workaround for broken preprocessor is needed])
 
-need_manual_cpp=no
+if test x"${enable_fugaku}" = x"yes"; then
+  need_manual_cpp=yes
+else
+  need_manual_cpp=no
+fi
 AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[is_intel=yes],[])
 AX_FC_CHECK_DEFINE([__PGI],[is_pgi=yes],[])
 ACTUAL_FC="$FC"
@@ -2271,13 +2303,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2020.11.001.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2020.11.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2021.05.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2021.05.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
