@@ -1072,27 +1072,19 @@ static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value) {
 }
 
 static int max_stored_rows_cardinality(elpa_index_t index) {
-	return 8;
+	return 4;
 }
 
 static int max_stored_rows_enumerate(elpa_index_t index, int i) {
   switch(i) {
   case 0:
-    return 63;
+    return 64;
   case 1:
-    return 79;
+    return 128;
   case 2:
-    return 95;
-  case 3:
-    return 120;
-  case 4:
     return 256;
-  case 5:
-    return 320;
-  case 6:
-    return 384;
-  case 7:
-    return 448;
+  case 3:
+    return 512;
   }
 }
 
