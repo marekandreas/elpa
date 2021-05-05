@@ -2,7 +2,7 @@ Changelog for next release
 
 - not yet decided
 
-Changelog for ELPA 2021.05.001.rc
+Changelog for ELPA 2021.05.001.rc1
 
 - allow the user to set the mapping of MPI tasks to GPU id per set/get
 - experimental feature: port to AMD GPUS, works correctly, performance yet
@@ -10,6 +10,11 @@ Changelog for ELPA 2021.05.001.rc
 - On request, ELPA can print the pinning of MPI tasks and OpenMP thread
 - support for FUGAKU: some minor fix still have to be fixed due to compiler
 issues
+- BUG FIX: if matrix is already banded, check whether bandwidth >= 2. DO NOT
+  ALLOW a bandwidth = 1, since this would imply that the input matrix is
+  already diagonal which the ELPA algorithms do not support
+- BUG FIX in internal test programs: do not consider a residual of 0.0 to be
+  an error
 
 Changelog for ELPA 2020.11.001
 
