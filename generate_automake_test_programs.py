@@ -76,7 +76,7 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
                                                    sorted(split_comm_flag.keys())):
     
 
-    if gid == 1 and (g == 0 ):
+    if gid == 1 and (g == "GPU_OFF" ):
         continue
 
     if lang == "C" and (m == "analytic" or m == "toeplitz" or m == "frank" or lay == "all_layouts"):
