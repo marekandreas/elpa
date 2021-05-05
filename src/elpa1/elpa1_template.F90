@@ -324,7 +324,6 @@ function elpa_solve_evp_&
      useGPU = .false.
    endif
 
-     print *,"after activating gpu..."
    call obj%get("is_skewsymmetric",skewsymmetric,error)
    if (error .ne. ELPA_OK) then
      print *,"Problem getting option for skewsymmetric. Aborting..."
@@ -358,7 +357,6 @@ function elpa_solve_evp_&
    do_useGPU = .false.
 
 
-     print *,"before check gpu..."
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
 
@@ -387,7 +385,6 @@ function elpa_solve_evp_&
    endif
 
 
-     print *,"after check gpu..."
    do_useGPU_tridiag = do_useGPU
    do_useGPU_solve_tridi = do_useGPU
    do_useGPU_trans_ev = do_useGPU
@@ -456,7 +453,6 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("tridi")
 #endif
-     print *,"before tridiag..."
      call tridiag_&
      &MATH_DATATYPE&
      &_&
