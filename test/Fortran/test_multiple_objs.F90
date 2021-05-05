@@ -152,7 +152,7 @@ program test
 
    TEST_INT_TYPE                     :: iter
    character(len=5)            :: iter_string
-   TEST_INT_TYPE                     :: timings, debug, gpu
+   integer(kind=c_int)         :: timings, debug, gpu
 
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -252,21 +252,21 @@ program test
 
    assert_elpa_ok(e2%setup())
 
-   ! test whether the user setting of e1 are correctly loade to e2
-   call e2%get("timings", int(timings,kind=c_int), error_elpa)
+   call e2%get("timings", timings, error_elpa)
    assert_elpa_ok(error_elpa)
-   call e2%get("debug", int(debug,kind=c_int), error_elpa)
+
+   call e2%get("debug", debug, error_elpa)
    assert_elpa_ok(error_elpa)
 #if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
-   call e2%get("nvidia-gpu", int(gpu,kind=c_int), error_elpa)
+   call e2%get("nvidia-gpu", gpu, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 #if TEST_AMD_GPU == 1
-   call e2%get("amd-gpu", int(gpu,kind=c_int), error_elpa)
+   call e2%get("amd-gpu", gpu, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 #if TEST_INTEL_GPU == 1
-   call e2%get("intel-gpu", int(gpu,kind=c_int), error_elpa)
+   call e2%get("intel-gpu", gpu, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 
