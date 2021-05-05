@@ -148,6 +148,10 @@ program test_real2_double_banded
 
    call read_input_parameters(na, nev, nblk, write_to_file)
 
+   if (nblk .eq. 1) then
+     stop 77
+   endif
+
    !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)

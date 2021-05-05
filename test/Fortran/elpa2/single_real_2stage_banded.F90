@@ -142,6 +142,9 @@ program test_real2_single_banded
 #define DOUBLE_PRECISION_REAL 1
 
    call read_input_parameters(na, nev, nblk, write_to_file)
+   if (nblk .eq. 1) then
+     stop 77
+   endif
 
    !-------------------------------------------------------------------------------
    !  MPI Initialization
