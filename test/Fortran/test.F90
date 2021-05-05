@@ -765,10 +765,11 @@ program test
      endif
 #endif
 
-
+#if !defined(TEST_ALL_LAYOUTS)
 ! print all parameters
      call e%print_settings(error_elpa)
      assert_elpa_ok(error_elpa)
+#endif
 
 #ifdef TEST_ALL_KERNELS
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
