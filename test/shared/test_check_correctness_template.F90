@@ -790,21 +790,21 @@ function check_correctness_evp_gen_numeric_residuals_&
      maxerr = maxval( (ev(:) - ev_analytic(:))/ev_analytic(:) , 1)
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-     if (maxerr .gt. 8.e-13_c_double .or. maxerr .eq. 0.0_c_double) then
+     if (abs(maxerr) .gt. 8.e-13_c_double) then
 #else
-     if (maxerr .gt. 8.e-4_c_float .or. maxerr .eq. 0.0_c_float) then
+     if (abs(maxerr) .gt. 8.e-4_c_float) then
 #endif
        status = 1
        if (myid .eq. 0) then
          print *,"Result of Toeplitz matrix test: "
-         print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+         print *,"Eigenvalues differ from analytic solution: maxerr = ",abs(maxerr)
        endif
      endif
 
     if (status .eq. 0) then
        if (myid .eq. 0) then
          print *,"Result of Toeplitz matrix test: test passed"
-         print *,"Eigenvalues differ from analytic solution: maxerr = ",maxerr
+         print *,"Eigenvalues differ from analytic solution: maxerr = ",abs(maxerr)
        endif
     endif
     end function
