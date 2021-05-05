@@ -501,7 +501,7 @@ subroutine tridiag_&
         aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
         if (useIntelGPU) then
-                print *,"intel phase aaaaaaaaaaaaaaaaaaaaaaaaaa"
+                !print *,"intel phase aaaaaaaaaaaaaaaaaaaaaaaaaa"
           if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
           aux(1:2*n_stored_vecs) = uv_stored_cols(l_cols+1,1:2*n_stored_vecs)
@@ -543,6 +543,7 @@ subroutine tridiag_&
 
           if (wantDebug) call obj%timer%stop("mkl_offload")
         else
+          if (wantDebug) call obj%timer%start("blas")
           call PRECISION_GEMV('N',   &
                             int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
                             ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
@@ -1125,6 +1126,7 @@ subroutine tridiag_&
          if (useGPU) then
            if (mat_vec_as_one_block) then
              if (useIntelGPU) then
+                if (wantDebug) call obj%timer%start("mkl_offload")
                 call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
                                     int(2*n_stored_vecs, kind=BLAS_KIND), ONE,  &
                                     vu_stored_rows, int(max_local_rows,kind=BLAS_KIND), &
