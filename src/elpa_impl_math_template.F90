@@ -207,6 +207,7 @@
               & (self, a, ev, q, error)
     end subroutine    
 
+#ifdef HAVE_SKEWSYMMETRIC
 #ifdef REALCASE 
     !>  \brief elpa_skew_eigenvectors_d: class method to solve the real valued skew-symmetric eigenvalue problem
     !>
@@ -258,7 +259,7 @@
 
       success_l = .false.
       call self%get("solver", solver,error2)
-      call self%set("is_skewsymmetric",1,error2)
+      !call self%set("is_skewsymmetric",1,error2)
       if (error2 .ne. ELPA_OK) then
         print *,"Problem setting is_skewsymmetric. Aborting..."
 #ifdef USE_FORTRAN2008
@@ -273,7 +274,7 @@
       if (solver .eq. ELPA_SOLVER_1STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-        success_l = elpa_solve_evp_&
+        success_l = elpa_solve_skew_evp_&
                 &MATH_DATATYPE&
                 &_1stage_&
                 &PRECISION&
@@ -284,7 +285,7 @@
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-        success_l = elpa_solve_evp_&
+        success_l = elpa_solve_skew_evp_&
                 &MATH_DATATYPE&
                 &_2stage_&
                 &PRECISION&
@@ -357,6 +358,7 @@
               & (self, a, ev, q, error)
     end subroutine
 #endif /* REALCASE */
+#endif /* HAVE_SKEWSYMMETRIC */
 
     !>  \brief elpa_eigenvalues_d: class method to solve the eigenvalue problem
     !>
@@ -508,6 +510,7 @@
               & (self, a, ev, error)
     end subroutine    
 
+#ifdef HAVE_SKEWSYMMETRIC
 #ifdef REALCASE
     !>  \brief elpa_skew_eigenvalues_d: class method to solve the real valued skew-symmetric eigenvalue problem
     !>
@@ -550,7 +553,7 @@
 
       success_l = .false.
       call self%get("solver", solver,error2)
-      call self%set("is_skewsymmetric",1,error2)
+      !call self%set("is_skewsymmetric",1,error2)
       if (error2 .ne. ELPA_OK) then
          print *,"Problem getting solver option. Aborting..."
 #ifdef USE_FORTRAN2008
@@ -566,7 +569,7 @@
       if (solver .eq. ELPA_SOLVER_1STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-        success_l = elpa_solve_evp_&
+        success_l = elpa_solve_skew_evp_&
                 &MATH_DATATYPE&
                           &_1stage_&
                           &PRECISION&
@@ -577,7 +580,7 @@
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-        success_l = elpa_solve_evp_&
+        success_l = elpa_solve_skew_evp_&
                 &MATH_DATATYPE&
                                    &_2stage_&
                                    &PRECISION&
@@ -643,6 +646,7 @@
               & (self, a, ev, error)
     end subroutine
 #endif /* REALCASE */
+#endif /* HAVE_SKEWSYMMETRIC */
 
     !>  \brief elpa_generalized_eigenvectors_d: class method to solve the eigenvalue problem
     !>

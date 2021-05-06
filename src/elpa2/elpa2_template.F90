@@ -55,7 +55,11 @@
 #include "elpa/elpa_simd_constants.h"
 #include "../general/error_checking.inc"
 
+#ifdef ACTIVATE_SKEW
+ function elpa_solve_skew_evp_&
+#else
  function elpa_solve_evp_&
+#endif
   &MATH_DATATYPE&
   &_&
   &2stage_&
@@ -110,7 +114,7 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target :: qExtern(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout), target         :: aExtern(obj%local_nrows,obj%local_ncols)
-#ifdef HAVE_SKEWSYMMETRIC
+#ifdef ACTIVATE_SKEW
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
@@ -124,7 +128,7 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target :: q(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,obj%local_ncols)
-#ifdef HAVE_SKEWSYMMETRIC
+#ifdef ACTIVATE_SKEW
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
@@ -241,7 +245,11 @@
 #define KERNEL_STRING "complex_kernel"
 #endif
 
+#ifdef ACTIVATE_SKEW
+    call obj%timer%start("elpa_solve_skew_evp_&
+#else
     call obj%timer%start("elpa_solve_evp_&
+#endif
     &MATH_DATATYPE&
     &_2stage_&
     &PRECISION&
@@ -351,7 +359,11 @@
      call omp_set_num_threads(omp_threads_caller)
 #endif
 
+#ifdef ACTIVATE_SKEW
+     call obj%timer%stop("elpa_solve_skew_evp_&
+#else
      call obj%timer%stop("elpa_solve_evp_&
+#endif
      &MATH_DATATYPE&
      &_2stage_&
      &PRECISION&
@@ -370,13 +382,17 @@
       stop
     endif
 
-    call obj%get("is_skewsymmetric",skewsymmetric,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for skewsymmetric settings. Aborting..."
-      stop
-    endif
-
-    isSkewsymmetric = (skewsymmetric == 1)
+#ifdef ACTIVATE_SKEW
+    !call obj%get("is_skewsymmetric",skewsymmetric,error)
+    !if (error .ne. ELPA_OK) then
+    !  print *,"Problem getting option for skewsymmetric settings. Aborting..."
+    !  stop
+    !endif
+    !isSkewsymmetric = (skewsymmetric == 1)
+    isSkewsymmetric = .true.
+#else
+    isSkewsymmetric = .false.
+#endif
 
     call obj%get("debug",debug,error)
     if (error .ne. ELPA_OK) then
@@ -795,7 +811,7 @@
 #if REALCASE == 1
       useQRActual, &
 #endif
-       nrThreads)
+       nrThreads, isSkewsymmetric)
 #ifdef HAVE_LIKWID
       call likwid_markerStopRegion("bandred")
 #endif
@@ -818,7 +834,7 @@
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-       do_useGPU_tridiag_band, wantDebug, nrThreads)
+       do_useGPU_tridiag_band, wantDebug, nrThreads, isSkewsymmetric)
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
@@ -1097,15 +1113,22 @@
 
 
 
-
+#ifdef ACTIVATE_SKEW
+     call obj%timer%stop("elpa_solve_skew_evp_&
+#else
      call obj%timer%stop("elpa_solve_evp_&
+#endif
      &MATH_DATATYPE&
      &_2stage_&
      &PRECISION&
      &")
 1    format(a,f10.3)
 
+#ifdef ACTIVATE_SKEW
+   end function elpa_solve_skew_evp_&
+#else
    end function elpa_solve_evp_&
+#endif
    &MATH_DATATYPE&
    &_2stage_&
    &PRECISION&

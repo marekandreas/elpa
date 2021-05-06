@@ -96,7 +96,8 @@ subroutine tridiag_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
-  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, max_threads)
+  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, max_threads, &
+   isSkewsymmetric)
   use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
@@ -110,8 +111,7 @@ subroutine tridiag_&
   class(elpa_abstract_impl_t), intent(inout)    :: obj
   integer(kind=ik), intent(in)                  :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
   logical, intent(in)                           :: useGPU, wantDebug
-  integer(kind=c_int)                           :: skewsymmetric
-  logical                                       :: isSkewsymmetric
+  logical, intent(in)                           :: isSkewsymmetric
 
   MATH_DATATYPE(kind=rck), intent(out)          :: tau(na)
 #ifdef USE_ASSUMED_SIZE
@@ -188,13 +188,6 @@ subroutine tridiag_&
                                                                       &_&
                                                                       &MATH_DATATYPE
   logical                                       :: useIntelGPU
-
-  call obj%get("is_skewsymmetric",skewsymmetric,istat)
-  if (istat .ne. ELPA_OK) then
-       print *,"Problem getting option for skewsymmetric settings. Aborting..."
-       stop
-  endif
-  isSkewsymmetric = (skewsymmetric == 1)
 
   if(useGPU) then
     gpuString = "_gpu"

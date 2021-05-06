@@ -2020,8 +2020,6 @@ fi
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_REAL],[test x"$want_single_precision" = x"yes"])
 AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" = x"yes"])
 
-#always define SKEWSYMMETRIC for the moment
-
 AC_MSG_CHECKING(whether we should enable skew-symmetric support)
 AC_ARG_ENABLE([skew-symmetric-support],
               AS_HELP_STRING([--enable-skew-symmetric-support],
@@ -2031,7 +2029,7 @@ AC_ARG_ENABLE([skew-symmetric-support],
 		              else
 				enable_skewsymmetric=no
 			      fi],
-              [enable_skewsymmetric=no])
+              [enable_skewsymmetric=yes])
 AC_MSG_RESULT([${enable_skewsymmetric}])
 AM_CONDITIONAL([HAVE_SKEWSYMMETRIC],[test x"$enable_skewsymmetric" = x"yes"])
 if test x"${enable_skewsymmetric}" = x"yes"; then

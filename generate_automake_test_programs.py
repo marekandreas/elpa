@@ -362,7 +362,8 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 
-name = "test_skewsymmetric_real_double"
+name = "validate_skewsymmetric_real_double"
+print("if HAVE_SKEWSYMMETRIC")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
 print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
@@ -371,8 +372,10 @@ print(name + "_FCFLAGS = $(test_program_fcflags) \\")
 print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
+print("endif")
 
-name = "test_skewsymmetric_real_single"
+name = "validate_skewsymmetric_real_single"
+print("if HAVE_SKEWSYMMETRIC")
 print("if WANT_SINGLE_PRECISION_REAL")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
@@ -382,6 +385,7 @@ print(name + "_FCFLAGS = $(test_program_fcflags) \\")
 print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['single']]))
+print("endif")
 print("endif")
 
 

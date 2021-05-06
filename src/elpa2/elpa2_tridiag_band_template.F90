@@ -56,7 +56,7 @@ subroutine tridiag_band_&
   &_&
   &PRECISION &
   (obj, na, nb, nblk, a_mat, lda, d, e, matrixCols, &
-  hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug, nrThreads)
+  hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug, nrThreads, isSkewsymmetric)
   !-------------------------------------------------------------------------------
   ! tridiag_band_real/complex:
   ! Reduces a real symmetric band matrix to tridiagonal form
@@ -99,8 +99,7 @@ subroutine tridiag_band_&
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)   :: obj
   logical, intent(in)                          :: useGPU, wantDebug
-  integer(kind=c_int)                          :: skewsymmetric
-  logical                                      :: isSkewsymmetric
+  logical, intent(in)                          :: isSkewsymmetric
   integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
 #ifdef USE_ASSUMED_SIZE
   MATH_DATATYPE(kind=rck), intent(in)         :: a_mat(lda,*)
@@ -145,13 +144,6 @@ subroutine tridiag_band_&
 #endif
   logical                                      :: useIntelGPU
 
-  call obj%get("is_skewsymmetric",skewsymmetric,istat)
-  if (istat .ne. ELPA_OK) then
-       print *,"Problem getting option for skewsymmetric settings. Aborting..."
-       stop
-  endif
-  isSkewsymmetric = (skewsymmetric == 1)
-  
   if(useGPU) then
     gpuString = "_gpu"
   else
