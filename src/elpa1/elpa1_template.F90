@@ -477,8 +477,8 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, nrThreads, &
-        isSkewsymmetric)
+     & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, &
+        nrThreads, isSkewsymmetric)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
