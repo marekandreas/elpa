@@ -96,8 +96,8 @@ subroutine tridiag_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
-  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, max_threads, &
-   isSkewsymmetric)
+  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, &
+   max_threads, isSkewsymmetric)
   use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
