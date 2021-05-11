@@ -376,6 +376,8 @@ to be done in the application using MPI which wants to call ELPA, namely
 
 - Initializing the MPI
 - creating a blacs distributed matrix
+- IMPORTANT: it is very, very important that you check the return value of "descinit" of your blacs distribution!
+  ELPA relies that the distribution it should work on is _valid_. If this is not the case the behavior is undefined!
 - using this matrix within ELPA
 
 The skeleton is not ment to be copied and pasted, since the details will always be dependent on the application which should 
@@ -437,6 +439,12 @@ call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
 ! - first row and column of the distributed matrix must be on row/col 0/0 (args 6+7)
 
 call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
+
+! check the return code
+if (info .ne. 0) then
+  print *,"Invalid blacs-distribution. Abort!"
+  stop
+endif
 
 ! Allocate matrices 
 
