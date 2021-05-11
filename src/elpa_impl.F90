@@ -563,6 +563,7 @@ module elpa_impl
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
+      use elpa_scalapack_interfaces
       class(elpa_impl_t), intent(inout)   :: self
       integer                             :: error, timings, performance, build_config
 
@@ -572,13 +573,14 @@ module elpa_impl
                                              present_np_rows, present_np_cols, np_total
       integer(kind=MPI_KIND)              :: mpierr, mpierr2, my_idMPI, np_totalMPI, process_rowMPI, process_colMPI
       integer(kind=MPI_KIND)              :: mpi_comm_rowsMPI, mpi_comm_colsMPI, np_rowsMPI, np_colsMPI, &
-                                             mpi_string_lengthMPI
+                                             mpi_string_lengthMPI, my_pcolMPI, my_prowMPI
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
+      integer(kind=BLAS_KIND)             :: numroc_resultBLAS
+      integer(kind=c_int)                 :: info, na, nblk, na_rows, my_pcol, my_prow, numroc_result
       character(*), parameter             :: MPI_CONSISTENCY_MSG = &
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
 
 #endif
-
 
 #ifdef HAVE_LIKWID
       !initialize likwid
@@ -755,7 +757,46 @@ module elpa_impl
         endif
       endif
 
-#else
+      ! check first whether BLACS-GRID, which was setup by the user is reasonable. Too often this is _not_ done by the
+      ! user and then there are complaints about "errors" in ELPA but the problem is in a misconfigured setup
+      call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
+
+      my_prow = int(my_prowMPI, kind=c_int)
+      my_pcol = int(my_pcolMPI, kind=c_int)
+
+      call self%get("na", na, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+
+      call self%get("nblk", nblk, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+
+      call self%get("local_nrows", na_rows, error)
+      if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+
+      numroc_resultBLAS = numroc(int(na, kind=BLAS_KIND), int(nblk, kind=BLAS_KIND), int(my_prow, kind=BLAS_KIND), &
+                                 0_BLAS_KIND, int(np_rows, kind=BLAS_KIND))
+      numroc_result=int(numroc_resultBLAS, kind=c_int)
+      info = 0
+      if ( na < 0 ) then
+        info = -2
+      else if ( nblk < 1 ) then
+        info = -4
+      else if ( np_rows .eq. -1 ) then
+        info = -8
+      else if ( na_rows < max( 1, numroc_result ) ) then
+        info = -9
+      endif
+
+      if (info .ne. 0) then
+        print *,"ELPA_SETUP ERROR: your provided blacsgrid is not ok!"
+        print *,"BLACS_GRIDINFO returned an error! Aborting..."
+        error = ELPA_ERROR_SETUP
+        return
+      endif
+
+
+#else /* WITH_MPI */
       call self%set("process_row", 0, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("process_col", 0, error)
@@ -768,7 +809,7 @@ module elpa_impl
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       call self%set("num_processes", 1, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
-#endif
+#endif /* WITH_MPI */
 
 #if STORE_BUILD_CONFIG
       call self%get("output_build_config",build_config, error)

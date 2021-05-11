@@ -16,6 +16,10 @@ issues
 - BUG FIX in internal test programs: do not consider a residual of 0.0 to be
   an error
 - support for skew-symmetric matrices now enabled by default
+- BUG FIX in generalized case: in setups like "mpiexec -np 4 ./validate_real_double_generalized_1stage_random 90 90 45`
+- ELPA_SETUPS does now (in case of MPI-runs) check whether the user-provided BLACSGRID is reasonable (i.e. ELPA does 
+  _not_ rely anymore that the user does check prior to calling ELPA whether the BLACSGRID is ok) if this check fails 
+  then ELPA returns with an error
 
 Changelog for ELPA 2020.11.001
 
