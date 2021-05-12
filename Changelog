@@ -20,6 +20,7 @@ issues
 - ELPA_SETUPS does now (in case of MPI-runs) check whether the user-provided BLACSGRID is reasonable (i.e. ELPA does 
   _not_ rely anymore that the user does check prior to calling ELPA whether the BLACSGRID is ok) if this check fails 
   then ELPA returns with an error
+- limit number of OpenMP threads to one, if MPI thread level is not at least MPI_THREAD_SERIALIZED
 
 Changelog for ELPA 2020.11.001
 

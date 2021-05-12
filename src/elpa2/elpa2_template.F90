@@ -201,7 +201,7 @@
                                                                          do_trans_to_band, do_trans_to_full
    logical                                                            :: good_nblk_gpu
 
-   integer(kind=ik)                                                   :: nrThreads
+   integer(kind=ik)                                                   :: nrThreads, limitThreads
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
    integer(kind=c_int)                                                :: simdSetAvailable(NUMBER_OF_INSTR)
 #endif
@@ -262,9 +262,16 @@
     ! restore this at the end of ELPA 2
     omp_threads_caller = omp_get_max_threads()
 
-    ! check the number of threads that ELPA should use internally
-    call obj%get("omp_threads",nrThreads,error)
-    call omp_set_num_threads(nrThreads)
+   ! check the number of threads that ELPA should use internally
+   call obj%get("limit_openmp_threads",limitThreads,error)
+   if (limitThreads .eq. 0) then
+     call obj%get("omp_threads",nrThreads,error)
+     call omp_set_num_threads(nrThreads)
+   else
+     nrThreads = 1
+     call omp_set_num_threads(nrThreads)
+   endif
+
 #else
     nrThreads = 1
 #endif

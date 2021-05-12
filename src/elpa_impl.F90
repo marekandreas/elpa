@@ -573,7 +573,7 @@ module elpa_impl
                                              present_np_rows, present_np_cols, np_total
       integer(kind=MPI_KIND)              :: mpierr, mpierr2, my_idMPI, np_totalMPI, process_rowMPI, process_colMPI
       integer(kind=MPI_KIND)              :: mpi_comm_rowsMPI, mpi_comm_colsMPI, np_rowsMPI, np_colsMPI, &
-                                             mpi_string_lengthMPI, my_pcolMPI, my_prowMPI
+                                             mpi_string_lengthMPI, my_pcolMPI, my_prowMPI, providedMPI
       character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
       integer(kind=BLAS_KIND)             :: numroc_resultBLAS
       integer(kind=c_int)                 :: info, na, nblk, na_rows, my_pcol, my_prow, numroc_result
@@ -633,6 +633,19 @@ module elpa_impl
           return
         endif
       endif
+
+#ifdef WITH_OPENMP_TRADITIONAL
+      ! check the threading level supported by the MPI library
+      call mpi_query_thread(providedMPI, mpierr)
+      if ((providedMPI .ne. MPI_THREAD_SERIALIZED) .or. (providedMPI .ne. MPI_THREAD_MULTIPLE)) then
+        write(error_unit,*) "WARNING elpa_setup: MPI threading level MPI_THREAD_SERALIZED or MPI_THREAD_MULTIPLE required but &
+                            &your implementation does not support this. The number of OpenMP threads within ELPA will be &
+                            &limited to 1"
+        call self%set("limit_openmp_threads", 1, error)
+        if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+      endif
+
+#endif
 
       ! Create communicators ourselves
       if (self%is_set("process_row") == 1 .and. self%is_set("process_col") == 1) then

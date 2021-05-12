@@ -190,7 +190,7 @@ function elpa_solve_evp_&
    integer(kind=c_int)                             :: pinningInfo
 
    logical                                         :: do_tridiag, do_solve, do_trans_ev
-   integer(kind=ik)                                :: nrThreads
+   integer(kind=ik)                                :: nrThreads, limitThreads
    integer(kind=ik)                                :: global_index
 
    logical                                         :: reDistributeMatrix, doRedistributeMatrix
@@ -225,8 +225,14 @@ function elpa_solve_evp_&
    omp_threads_caller = omp_get_max_threads()
 
    ! check the number of threads that ELPA should use internally
-   call obj%get("omp_threads",nrThreads,error)
-   call omp_set_num_threads(nrThreads)
+   call obj%get("limit_openmp_threads",limitThreads,error)
+   if (limitThreads .eq. 0) then
+     call obj%get("omp_threads",nrThreads,error)
+     call omp_set_num_threads(nrThreads)
+   else
+     nrThreads = 1
+     call omp_set_num_threads(nrThreads)
+   endif
 #else
    nrThreads = 1
 #endif

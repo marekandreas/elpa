@@ -74,7 +74,7 @@
   logical                       :: success
   integer(kind=ik)              :: istat, debug, error
   character(200)                :: errorMessage
-  integer(kind=ik)              :: nrThreads
+  integer(kind=ik)              :: nrThreads, limitThreads
 
   call obj%timer%start("elpa_cholesky_&
   &MATH_DATATYPE&
@@ -88,8 +88,15 @@
   omp_threads_caller = omp_get_max_threads()
 
   ! check the number of threads that ELPA should use internally
-  call obj%get("omp_threads",nrThreads,error)
-  call omp_set_num_threads(nrThreads)
+  call obj%get("limit_openmp_threads",limitThreads,error)
+  if (limitThreads .eq. 0) then
+    call obj%get("omp_threads",nrThreads,error)
+    call omp_set_num_threads(nrThreads)
+  else
+    nrThreads = 1
+    call omp_set_num_threads(nrThreads)
+  endif
+
 #else
   nrThreads=1
 #endif

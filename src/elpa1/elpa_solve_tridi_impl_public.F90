@@ -80,7 +80,7 @@
       logical                  :: success
 
       integer                  :: debug, error
-      integer                  :: nrThreads
+      integer                  :: nrThreads, limitThreads
 
       call obj%timer%start("elpa_solve_tridi_public_&
       &MATH_DATATYPE&
@@ -99,8 +99,14 @@
       omp_threads_caller = omp_get_max_threads()
 
       ! check the number of threads that ELPA should use internally
-
-      call obj%get("omp_threads",nrThreads,error)
+      call obj%get("limit_openmp_threads",limitThreads,error)
+      if (limitThreads .eq. 0) then
+        call obj%get("omp_threads",nrThreads,error)
+        call omp_set_num_threads(nrThreads)
+      else
+        nrThreads = 1
+        call omp_set_num_threads(nrThreads)
+      endif
 #else
       nrThreads=1
 #endif

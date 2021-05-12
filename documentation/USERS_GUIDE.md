@@ -197,6 +197,13 @@ The following compute routines are available in *ELPA*: Please have a look at th
 
 ## IV) Using OpenMP threading ##
 
+IMPORTANT: In case of hybrid MPI and OpenMP builds it is **mandatory** that your MPI library supports the threading levels "MPI_THREAD_SERIALIZED" or
+"MPI_THREAD_MULTIPLE" (you can check this for example by building ELPA with MPI and OpenMP and run one of the test programs, they will warn you
+if this prerequiste is not met). If your MPI library does **not** provide these threading levels, then ELPA will internally (independent of what you
+set) use only **one** OpenMP thread and inform you at runtime with a warning. The number of threads used in a threaded implementation of your BLAS library
+are not affected by this, as long as these threads can be controlled with another method than specifying OMP_NUM_THREADS (for instance with Intel's MKL
+libray you can specify MKL_NUM_THREADS).
+
 If *ELPA* has been build with OpenMP threading support you can specify the number of OpenMP threads that *ELPA* will use internally.
 Please note that it is **mandatory**  to set the number of threads to be used with the OMP_NUM_THREADS environment variable **and**
 with the **set method** 
