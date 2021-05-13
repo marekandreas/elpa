@@ -30,7 +30,7 @@ If you obtained *ELPA* from the official git repository, you will not find
 the needed configure script! You will have to create the configure script with autoconf. You can also run the `autogen.sh` script that does this step for you.
 
 
-## (A): Installing *ELPA* as library with configure ##
+## Installing *ELPA* as library with configure ##
 
 *ELPA* can be installed with the build steps
 - `configure`
@@ -94,6 +94,8 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  `--64bit-integer-math-support`        | assumes that BLAS/LAPACK/SCALAPACK use 64bit integers (experimentatl) |
 |  `--64bit-integer-mpi-support`         | assumes that MPI uses 64bit integers (experimental) |
 |  `--heterogenous-cluster-support`      | allows ELPA to run on clusters of nodes with different Intel CPUs (experimental) |
+|  `--enable_threading_support_checks`   | in case of MPI and OPENMP builds, check during the configure step whether the provided threading support level is sufficient |
+|  `--enable-allow-thread-limiting`      | in case of MPI and OPENMP builds, ELPA is allowed to limit the number of OpenMP threads, if the threading support level is not sufficient |
 
 We recommend that you do not build ELPA in its main directory but that you use it
 in a sub-directory:
@@ -220,6 +222,62 @@ To enable OpenMP support, add
 --enable-openmp
 
 as configure option.
+
+In any case, whether you are building MPI+OpenMP or only OpenMP (without MPI) it is recommended (for performance reasons)
+to use BLAS and LAPACK libraries which _also_ do have threading support. For example, you can link against with the Intel MKL
+library in the flavor without threading or with threading. Please consult the documentation of your BLAS and LAPACK libraries.
+
+
+If you want to build a hybrid version of *ELPA* with MPI and with OpenMP support, your
+MPI library **should** provide a sufficient level of threading support (i.e. "MPI_THREAD_SERIALIZED" or
+"MPI_THREAD_MULTIPLE"). On HPC systems this is almost always the case. In many MPI packages available with
+Linux distributions, however, the threading support is quite often limited and **not** sufficient for *ELPA*.
+Since release 2021.05.001 ELPA does check during the build time in the configure if the threading support of
+your MPI library is sufficient. This option (--enable-threading-support-checks) is enabled by default. **DO NOT
+SWITCH THIS OFF, UNLESS YOU KNOW WHAT YOU ARE DOING OR UNLESS CONFIGURE INSTRUCTS YOU TO DO SO.**
+
+If this test passes without an abort of configure and *no* instructions how to cure a threading level support issue,
+your hybrid MPI-OpenMP build will be fine and for performance reasons **runtime** checks for threading support will
+be disabled.
+
+In the case that configure aborts with these messages
+```
+configure: WARNING: Your MPI implementation does not provide a sufficient threading level for OpenMP
+configure: WARNING: You do have several options:
+configure: WARNING:  * disable OpenMP (--disable-openmp): this will ensure correct results, but maybe some performance drop
+configure: WARNING:  * use an MPI-library with the required threading support level (see the INSTALL and USER_GUIDE): this will ensure correct results and best performance
+configure: WARNING:  * allow ELPA at runtime to change the number of threads to 1 (--enable-allow-thread-limiting): this will ensure correct results, 
+configure: WARNING:    but maybe also not the best performance (dependence on the threading of your blas/lapack libraries), see the USER_GUIDE
+configure: WARNING:  * switch of the checking of threading support (--disable-threading-support-checks): DO THIS AT YOUR OWN RISK! This will be fast, 
+configure: WARNING:    but might (depending on your MPI library sometimes) lead to wrong results
+configure: error: You do have to take an action of the choices above!
+```
+you can cure the problem in several ways:
+- disable OpenMP (by setting --disable-openmp): this will ensure (if the build is successful) that the results of *ELPA* will be correct. However, this option might
+  lead to a performance drop, if your application calling *ELPA* does use OpenMP threading, since in this situation you will have less MPI tasks than cores on your machine and *ELPA* will only use MPI and thus not utilize all cores.
+- the best solution will be to use an MPI library which does offer the required level of threading support. However, this _might_ require some work on your side to build your own MPI library. In any way it does not harm to search the internet whether for your Linux distribution their exist already such MPI packages (quite often they do but they are not the default onces).
+- if you do not want to disable OpenMP and you cannot provide a MPI library with a sufficient level of threading support, you can re-run configure with the option "--enable-allow-thread-limiting". If this option is enabled, *ELPA* will always do a runtime check whether the MPI library does provide a sufficient level of threading support. If this is not the case, **internally** to *ELPA* (i.e. not affecting your application calling *ELPA*) only **1** OpenMP thread will be used. In case you do use a threaded implementation of BLAS and LAPACK (which performance wise you should always do when using an OpenMP build of *ELPA*), one can still use more than one thread within the BLAS and LAPACK library, **if** the number of threads in these libraries can be controlled with another mechanism then setting the **OMP_NUM_THREADS** environment variable. For example, in case of Intel's MKL library one can controll the number of threads with the MKL_NUM_THREADS environment variable.
+- by switching of the threading level support checks (with --disable-threading-support-checks) *ELPA* **assumes** that your MPI library does provide a sufficient level. **DO NOT USE THIS OPTION UNLESS YOU ARE SURE WHAT YOU ARE DOING !** This setting could cause different problems like crashes, sporadic wrong results and so forth since this will lead to undefined behaviour! The *ELPA* developers **will not accept bug reports if this option is used, unless you can document in a detailed way that you did not set this option light heartedly (see below)!** You might wonder why this option is then at all available. Simply, because some very experienced HPC-experts did ask for this option because of a the situation we will discuss now.
+
+Last but not least we want to mention that prior to executing this check, configure will print this information:
+```
+configure: **************************************************************************************************************************
+configure: * Please notice if the following step hangs or aborts abnormaly then you cannot run a short MPI-program during configure *
+configure: * In this case please re-run configure with '--with-threading-support-check-during-build=no'                             *
+configure: * In case you get some other warnings about threading support follow on of the steps detailed there                      *
+configure: **************************************************************************************************************************
+```
+You do not have to care about this, unless configure hangs after printing this message, or configure aborts **without** printing the messages discussed before.
+This behaviour might occure, if:
+- you (and also configure) does not have the rights to run an MPI program on the compilation machine. Sometimes HPC centers implement this, in order to ensure that login nodes are only used for compilation but not for compute.
+- you do have to cross-compile (i.e. you build *ELPA* for a specific architecture on a different architecture)
+- some other reason why an MPI program cannot run successfully 
+
+If you encounter this situation you can switch of this check during configure by setting "--with-threading-support-check-during-build=no". However, of course *ELPA* cannot know then whether your MPI library does provide a sufficient level of threading support or not. Thus you will have to tell configure what to do by either
+- also setting "--enable-allow-thread-limiting" (see above)
+- or setting "--disable-threading-support-checks" (see above, especially the warnings)
+We recommend the followin in a first step you set "--with-threading-support-check-during-build=no" and "--enable-allow-thread-limiting". After a successful build you do run *ELPA* on the target machine with the environment variable "OMP_NUM_THREADS" set to 2. Now, carefully inspect the output (stdout **and** stderr). If *ELPA* does not give a warning that it will limit the number of OpenMP threads to 1 due to an insufficent level of threading support in the MPI library, you can assume that your MPI library does provide a sufficient level. Then **and only then** you can rebuild *ELPA* with the settings "--with-threading-support-check-during-build=no" and "--disable-threading-support-checks".
+
 
 Note that as in case with/without MPI, you can also build and install versions of *ELPA*
 with/without OpenMP support at the same time.

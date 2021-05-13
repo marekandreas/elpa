@@ -398,6 +398,9 @@ if test x"${enable_openmp}" = x"yes"; then
   FCFLAGS="$OPENMP_FCFLAGS $FCFLAGS"
 fi
 
+
+#AC_LANG_POP([Fortran])
+
 want_mpi_launcher="no"
 AC_MSG_CHECKING(whether mpi-launcher should be detected)
 AC_ARG_ENABLE(detect-mpi-launcher,
@@ -596,6 +599,8 @@ if test x"$can_compile_with_mkl" = x"yes" ; then
   AC_MSG_RESULT([${have_mkl}])
 fi
 
+#AC_LANG_POP([Fortran])
+
 dnl if not mkl, check all the necessary individually
 if test x"${have_mkl}" = x"yes" ; then
   WITH_MKL=1
@@ -657,6 +662,7 @@ else
       AC_MSG_ERROR([could not link with scalapack: specify path])
     fi
   fi
+AC_LANG_PUSH([Fortran])
 
   dnl check whether we can link alltogehter
   AC_MSG_CHECKING([whether we can link a Fortran program with all blacs/scalapack])
@@ -704,7 +710,7 @@ AC_MSG_RESULT([${fortran_can_check_environment}])
 if test x"${fortran_can_check_environment}" = x"yes" ; then
  AC_DEFINE([HAVE_ENVIRONMENT_CHECKING],[1],[Fortran can query environment variables])
 fi
-
+AC_LANG_POP([Fortran])
 
 dnl check whether BAND_TO_FULL_BLOCKING is set
 AC_MSG_CHECKING(whether BAND_TO_FLULL_BLOCKING is requested)
@@ -754,7 +760,7 @@ if test x"${user_sets_nvidia_gpu_compute_capability}" = x"yes" ; then
   fi
 fi
 
-
+AC_LANG_PUSH([Fortran])
 dnl Test possibility of 'use mpi', if requested
 if test x"${with_mpi}" = x"yes" ; then
   AC_ARG_ENABLE([mpi-module],
@@ -788,6 +794,115 @@ if test x"${with_mpi}" = x"yes" ; then
     fi
   fi
 fi
+
+if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
+
+  AC_MSG_CHECKING(whether the threading support of the MPI library should be checked)
+  AC_ARG_ENABLE([threading-support-checks],
+                  AS_HELP_STRING([--disable-threading-support-checks],
+                                 [do neither at build nor at runtime check the required threading support of the MPI library. USE AT YOUR OWN RISK!]),
+                  [
+                   if test x"$enableval" = x"yes"; then
+                     enable_threading_support_checks=yes
+                   else
+                     enable_threading_support_checks=no
+                   fi
+                   ],
+                  [enable_threading_support_checks=yes])
+  
+  AC_MSG_RESULT([${enable_threading_support_checks}])
+  if test x"${enable_threading_support_checks}" = x"yes" ; then
+   AC_DEFINE([THREADING_SUPPORT_CHECK],[1],[can check at runtime the threading support level of MPI])
+  fi
+
+  AC_MSG_CHECKING(whether ELPA is allowed to limit the number of OpenMP threads at runtime)
+  AC_ARG_ENABLE([allow-thread-limiting],
+                  AS_HELP_STRING([--enable-allow-thread-limiting],
+  			       [do a runtime check whether threading support of the MPI library is sufficient. If not ELPA will limit the number of OpenMP threads to 1 during the run]),
+                  [
+                   if test x"$enableval" = x"yes"; then
+                     enable_allow_thread_limiting=yes
+                   else
+                     enable_allow_thread_limiting=no
+                   fi
+                   ],
+                  [enable_allow_thread_limiting=no])
+  
+  AC_MSG_RESULT([${enable_allow_thread_limiting}])
+  if test x"${enable_allow_thread_limiting}" = x"yes" ; then
+   AC_DEFINE([ALLOW_THREAD_LIMITING],[1],[ELPA can at runtime limit the number of OpenMP threads to 1 if needed])
+  fi
+
+  #consistency check
+  if test x"${enable_allow_thread_limiting}" = x"yes" && test x"${enable_threading_support_checks}" = x"no"; then
+    AC_MSG_ERROR([You cannot set --enable-allow-thread-limiting and --disable-threading-support-checks at the same time. Thread limiting needs support checks!])
+  fi
+
+  AC_ARG_WITH([threading-support-check-during-build],[AS_HELP_STRING([--with-threading-support-check-during-build],[Do checks at build time whether the MPI threading level support is sufficient])],
+            [
+               if test x"$withval" = x"yes"; then
+                 with_threading_support_check_during_build=yes
+               else
+                 with_threading_support_check_during_build=no
+               fi
+             ],
+            [with_threading_support_check_during_build=yes])
+  #if test x"$with_threading_support_check_during_build" = x"no" && test x"$enable_allow_thread_limiting" = x"no"; then
+  #  
+  #fi
+fi
+
+if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"${enable_threading_support_checks}" = x"yes" && test x"${enable_allow_thread_limiting}" = x"no" && test x"${with_threading_support_check_during_build}" = x"yes"; then
+  mpi_threading_level_sufficient=no
+  AC_MSG_NOTICE([**************************************************************************************************************************])
+  AC_MSG_NOTICE([* Please notice if the following step hangs or aborts abnormaly then you cannot run a short MPI-program during configure *])
+  AC_MSG_NOTICE([* In this case please re-run configure with '--with-threading-support-check-during-build=no' _AND_ follow the hints in   *])
+  AC_MSG_NOTICE([* the INSTALL and USER_GUIDE documents                                                                                   *])
+  AC_MSG_NOTICE([* In case you get some other warnings about threading support follow on of the steps detailed there                      *])
+  AC_MSG_NOTICE([**************************************************************************************************************************])
+  AC_MSG_CHECKING(what threading level is supported by the MPI library)
+  AC_RUN_IFELSE([AC_LANG_SOURCE([
+    program  testit
+      use iso_c_binding
+      implicit none
+      include "mpif.h"
+    
+      integer(kind=c_int) :: provided, error, status
+    
+      status = 1
+      call mpi_init_thread(MPI_THREAD_MULTIPLE, provided,error)
+      !call mpi_query_thread(provided, error)
+      print *,provided,MPI_THREAD_SINGLE,MPI_THREAD_FUNNELED,MPI_THREAD_SERIALIZED,MPI_THREAD_MULTIPLE 
+      if (provided .eq. MPI_THREAD_SERIALIZED .or. provided .eq. MPI_THREAD_MULTIPLE) then
+        status = 0
+      endif
+      call  mpi_finalize(error)
+      call exit(status)
+    
+    end
+  ])],
+  [mpi_threading_level_sufficient=yes],
+  [mpi_threading_level_sufficient=no],
+  [mpi_threading_level_sufficient=yes]
+  )
+  AC_MSG_RESULT([${mpi_threading_level_sufficient}])
+  if test x"${mpi_threading_level_sufficient}" = x"yes" ; then
+    AC_DEFINE([HAVE_SUFFICIENT_MPI_THREADING_SUPPORT],[1],[MPI threading support is sufficient])
+  else
+    AC_MSG_WARN([Your MPI implementation does not provide a sufficient threading level for OpenMP])
+    AC_MSG_WARN([You do have several options:])
+    AC_MSG_WARN([ * disable OpenMP (--disable-openmp): this will ensure correct results, but maybe some performance drop])
+    AC_MSG_WARN([ * use an MPI-library with the required threading support level (see the INSTALL and USER_GUIDE): this will ensure correct results and best performance])
+    AC_MSG_WARN([ * allow ELPA at runtime to change the number of threads to 1 (--enable-allow-thread-limiting): this will ensure correct results, ])
+    AC_MSG_WARN([   but maybe also not the best performance (dependence on the threading of your blas/lapack libraries), see the USER_GUIDE])
+    AC_MSG_WARN([ * switch of the checking of threading support (--disable-threading-support-checks): DO THIS AT YOUR OWN RISK! This will be fast, ])
+    AC_MSG_WARN([   but might (depending on your MPI library sometimes) lead to wrong results])
+    AC_MSG_ERROR([You do have to take an action of the choices above!])
+  fi		 
+fi
+
+
+
 AC_LANG_POP([Fortran])
 
 dnl Assemble the list of kernels to build
@@ -2329,6 +2444,13 @@ else
 
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
 fi
+if test x"$enable_threading_support_checks" = x"no" && test x"$with_mpi" = x"yes" && test x"${enable_openmp}" = x"yes"; then
+  echo " "
+  echo " You disabled the checking whether your MPI library offers a sufficient level of threading support!"
+  echo " You 'convince' ELPA that everything is ok, do not complain about problems with ELPA in this build!"
+  echo " "
+fi
+
 if test x"$old_elpa_version" = x"yes"; then
   echo " "
   echo " It is possible that your current version of ELPA is not the latest one."

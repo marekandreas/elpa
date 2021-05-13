@@ -286,7 +286,9 @@ static const elpa_index_int_entry_t int_entries[] = {
 #endif
         INT_ENTRY("cannon_buffer_size", "Increasing the buffer size might make it faster, but costs memory", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL, PRINT_YES),
+#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
         BOOL_ENTRY("limit_openmp_threads", "Limit the number if openmp threads to 1", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_NO),
+#endif
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL, PRINT_YES),
         BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("debug", "Emit verbose debugging messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),

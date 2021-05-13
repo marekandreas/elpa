@@ -634,15 +634,22 @@ module elpa_impl
         endif
       endif
 
-#ifdef WITH_OPENMP_TRADITIONAL
+#if defined(WITH_OPENMP_TRADITIONAL) && defined(THREADING_SUPPORT_CHECK) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
       ! check the threading level supported by the MPI library
       call mpi_query_thread(providedMPI, mpierr)
       if ((providedMPI .ne. MPI_THREAD_SERIALIZED) .or. (providedMPI .ne. MPI_THREAD_MULTIPLE)) then
+#if defined(ALLOW_THREAD_LIMITING)
         write(error_unit,*) "WARNING elpa_setup: MPI threading level MPI_THREAD_SERALIZED or MPI_THREAD_MULTIPLE required but &
-                            &your implementation does not support this. The number of OpenMP threads within ELPA will be &
+                            &your implementation does not support this! The number of OpenMP threads within ELPA will be &
                             &limited to 1"
         call self%set("limit_openmp_threads", 1, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+#else
+        write(error_unit,*) "WARNING elpa_setup: MPI threading level MPI_THREAD_SERALIZED or MPI_THREAD_MULTIPLE required but &
+                            &your implementation does not support this! Since you did not build elpa with &
+                            &--enable-allow-thread-limiting, this is just a warning. ELPA will not try to cure this problem and&
+                            &the results might be wrong. USE AT YOUR OWN RISK"
+#endif
       endif
 
 #endif
