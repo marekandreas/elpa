@@ -211,10 +211,10 @@ then
       echo " " >> ./run_${CLUSTER}_1node.sh
       echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node.sh
       echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
-      #echo "while ! \[ -f ./build_done \];" >> ./run_${CLUSTER}_1node.sh
-      #echo "do" >> ./run_${CLUSTER}_1node.sh
-      #echo "echo \" \" > /dev/null" >> ./run_${CLUSTER}_1node.sh
-      #echo "done" >> ./run_${CLUSTER}_1node.sh
+      echo "while ! [ -f ./build_done ];" >> ./run_${CLUSTER}_1node.sh
+      echo "do" >> ./run_${CLUSTER}_1node.sh
+      echo "echo \" \" > /dev/null" >> ./run_${CLUSTER}_1node.sh
+      echo "done" >> ./run_${CLUSTER}_1node.sh
       echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  " >> ./run_${CLUSTER}_1node.sh
       echo " " >> ./run_${CLUSTER}_1node.sh
       echo "exitCode=\$?" >> ./run_${CLUSTER}_1node.sh
