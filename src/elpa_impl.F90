@@ -646,9 +646,9 @@ module elpa_impl
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
 #else
         write(error_unit,*) "WARNING elpa_setup: MPI threading level MPI_THREAD_SERALIZED or MPI_THREAD_MULTIPLE required but &
-                            &your implementation does not support this! Since you did not build elpa with &
-                            &--enable-allow-thread-limiting, this is just a warning. ELPA will not try to cure this problem and&
-                            &the results might be wrong. USE AT YOUR OWN RISK"
+                            &your implementation does not support this! Since you did not build ELPA with &
+                            &--enable-allow-thread-limiting, this is severe warning. ELPA will _not_ try to cure this problem and&
+                            &the results might be wrong. USE AT YOUR OWN RISK !"
 #endif
       endif
 

@@ -797,21 +797,21 @@ fi
 
 if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
 
-  AC_MSG_CHECKING(whether the threading support of the MPI library should be checked)
-  AC_ARG_ENABLE([threading-support-checks],
-                  AS_HELP_STRING([--disable-threading-support-checks],
-                                 [do neither at build nor at runtime check the required threading support of the MPI library. USE AT YOUR OWN RISK!]),
+  AC_MSG_CHECKING(whether the threading support of the MPI library should be checked during RUNTIME)
+  AC_ARG_ENABLE([runtime-threading-support-checks],
+                  AS_HELP_STRING([--disable-runtime-threading-support-checks],
+                                 [do not check at runtime the required threading support of the MPI library. DISABLE ONLY AT YOUR OWN RISK! (default: on)]),
                   [
                    if test x"$enableval" = x"yes"; then
-                     enable_threading_support_checks=yes
+                     enable_runtime_threading_support_checks=yes
                    else
-                     enable_threading_support_checks=no
+                     enable_runtime_threading_support_checks=no
                    fi
                    ],
-                  [enable_threading_support_checks=yes])
+                  [enable_runtime_threading_support_checks=yes])
   
-  AC_MSG_RESULT([${enable_threading_support_checks}])
-  if test x"${enable_threading_support_checks}" = x"yes" ; then
+  AC_MSG_RESULT([${enable_runtime_threading_support_checks}])
+  if test x"${enable_runtime_threading_support_checks}" = x"yes" ; then
    AC_DEFINE([THREADING_SUPPORT_CHECK],[1],[can check at runtime the threading support level of MPI])
   fi
 
@@ -826,7 +826,7 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
                      enable_allow_thread_limiting=no
                    fi
                    ],
-                  [enable_allow_thread_limiting=no])
+                  [enable_allow_thread_limiting=yes])
   
   AC_MSG_RESULT([${enable_allow_thread_limiting}])
   if test x"${enable_allow_thread_limiting}" = x"yes" ; then
@@ -834,11 +834,16 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
   fi
 
   #consistency check
-  if test x"${enable_allow_thread_limiting}" = x"yes" && test x"${enable_threading_support_checks}" = x"no"; then
-    AC_MSG_ERROR([You cannot set --enable-allow-thread-limiting and --disable-threading-support-checks at the same time. Thread limiting needs support checks!])
+  if test x"${enable_allow_thread_limiting}" = x"yes" && test x"${enable_runtime_threading_support_checks}" = x"no"; then
+    AC_MSG_ERROR([You cannot set --enable-allow-thread-limiting and --disable-runtime-threading-support-checks at the same time. Thread limiting needs runtime support checks!])
+  fi
+  if test x"${enable_allow_thread_limiting}" = x"no" && test x"${enable_runtime_threading_support_checks}" = x"yes"; then
+    AC_MSG_NOTICE([You set --disable-allow-thread-limiting and --enable-runtime-threading-support-checks. If ELPA detects during a run that])
+    AC_MSG_NOTICE([your MPI library does not provide a sufficient level of threading support, ELPA will only _print_ a warning and continue])
+    AC_MSG_NOTICE([This might lead to undefined behavior, includig wrong results])    
   fi
 
-  AC_ARG_WITH([threading-support-check-during-build],[AS_HELP_STRING([--with-threading-support-check-during-build],[Do checks at build time whether the MPI threading level support is sufficient])],
+  AC_ARG_WITH([threading-support-check-during-build],[AS_HELP_STRING([--with-threading-support-check-during-build],[Do checks at build time whether the MPI threading level support is sufficient. (default: on)])],
             [
                if test x"$withval" = x"yes"; then
                  with_threading_support_check_during_build=yes
@@ -847,17 +852,15 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
                fi
              ],
             [with_threading_support_check_during_build=yes])
-  #if test x"$with_threading_support_check_during_build" = x"no" && test x"$enable_allow_thread_limiting" = x"no"; then
-  #  
-  #fi
+
 fi
 
-if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"${enable_threading_support_checks}" = x"yes" && test x"${enable_allow_thread_limiting}" = x"no" && test x"${with_threading_support_check_during_build}" = x"yes"; then
+if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"${with_threading_support_check_during_build}" = x"yes"; then
   mpi_threading_level_sufficient=no
   AC_MSG_NOTICE([**************************************************************************************************************************])
   AC_MSG_NOTICE([* Please notice if the following step hangs or aborts abnormaly then you cannot run a short MPI-program during configure *])
-  AC_MSG_NOTICE([* In this case please re-run configure with '--with-threading-support-check-during-build=no' _AND_ follow the hints in   *])
-  AC_MSG_NOTICE([* the INSTALL and USER_GUIDE documents                                                                                   *])
+  AC_MSG_NOTICE([* In this case please re-run configure with '--without-threading-support-check-during-build' _AND_ follow the hints in   *])
+  AC_MSG_NOTICE([* the INSTALL and USER_GUIDE documents!                                                                                  *])
   AC_MSG_NOTICE([* In case you get some other warnings about threading support follow on of the steps detailed there                      *])
   AC_MSG_NOTICE([**************************************************************************************************************************])
   AC_MSG_CHECKING(what threading level is supported by the MPI library)
@@ -871,6 +874,7 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
     
       status = 1
       call mpi_init_thread(MPI_THREAD_MULTIPLE, provided,error)
+      !call mpi_init(error)
       !call mpi_query_thread(provided, error)
       if (provided .eq. MPI_THREAD_SERIALIZED .or. provided .eq. MPI_THREAD_MULTIPLE) then
         status = 0
@@ -891,16 +895,17 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
     AC_MSG_WARN([Your MPI implementation does not provide a sufficient threading level for OpenMP])
     AC_MSG_WARN([You do have several options:])
     AC_MSG_WARN([ * disable OpenMP (--disable-openmp): this will ensure correct results, but maybe some performance drop])
-    AC_MSG_WARN([ * use an MPI-library with the required threading support level (see the INSTALL and USER_GUIDE): this will ensure correct results and best performance])
-    AC_MSG_WARN([ * allow ELPA at runtime to change the number of threads to 1 (--enable-allow-thread-limiting): this will ensure correct results, ])
-    AC_MSG_WARN([   but maybe also not the best performance (dependence on the threading of your blas/lapack libraries), see the USER_GUIDE])
-    AC_MSG_WARN([ * switch of the checking of threading support (--disable-threading-support-checks): DO THIS AT YOUR OWN RISK! This will be fast, ])
-    AC_MSG_WARN([   but might (depending on your MPI library sometimes) lead to wrong results])
+    AC_MSG_WARN([ * use an MPI-library with the required threading support level (see the INSTALL and USER_GUIDE): this will ])
+    AC_MSG_WARN([   ensure correct results and best performance])
+    AC_MSG_WARN([ * allow ELPA at runtime to change the number of threads to 1 by setting "--enable-runtime-threading-support-checks])
+    AC_MSG_WARN([    --enable-allow-thread-limiting --without-threading-support-check-during-build": this will ensure correct results, but ])
+    AC_MSG_WARN([    maybe not the best performance (depends on the threading of your blas/lapack libraries), see the USER_GUIDE])
+    AC_MSG_WARN([ * switch of the checking of threading support "--disable-runtime-threading-support-checks ])
+    AC_MSG_WARN([   --without-threading-support-check-during-build: DO THIS AT YOUR OWN RISK! This will be fast, but might])
+    AC_MSG_WARN([   (depending on your MPI library sometimes) lead to wrong results])
     AC_MSG_ERROR([You do have to take an action of the choices above!])
   fi		 
 fi
-
-
 
 AC_LANG_POP([Fortran])
 

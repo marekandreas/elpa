@@ -44,58 +44,60 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 
 | configure option                     | description                                           |
 |:------------------------------------ |:----------------------------------------------------- |
-|  `--enable-legacy-interface`           | build legacy API, will not be build as default        |
-|  `--enable-optional-argument-in-C-API` | treat error arguments in C-API as optional            |
-|  `--enable-openmp`                     | use OpenMP threading, default no.                     |
-|  `--enable-redirect`                   | for ELPA test programs, allow redirection of <br> stdout/stderr per MPI taks in a file <br> (useful for timing), default no. |
-|  `--enable-single-precision`           | build with single precision version                   |
-|  `--disable-timings`                   | more detailed timing, default yes <br> **If disabled some features like autotune will <br> not work anymmore !** |
-|  `--disable-band-to-full-blocking`     | build ELPA2 with blocking in band_to_full <br> (default:enabled) |
-|  `--disable-mpi-module`                | do not use the Fortran MPI module, <br> get interfaces by 'include "mpif.h') |
-|  `--disable-generic`                   | do not build GENERIC kernels, default: enabled        |
-|  `--enable-sparc64`                    | do not build SPARC64 kernels, default: disabled        |
-|  `--disable-sse`                       | do not build SSE kernels, default: enabled            |
-|  `--disable-sse-assembly`              | do not build SSE_ASSEMBLY kernels, default: enabled   |
-|  `--disable-avx`                       | do not build AVX kernels, default: enabled            |
-|  `--disable-avx2`                      | do not build AVX2 kernels, default: enabled           |
-|  `--enable-avx512`                     | build AVX512 kernels, default: disabled               |
-|  `--enable-sve128`                     | Experimental feature build ARM SVE128 kernels, default: disabled               |
-|  `--enable-sve256`                     | Experimental feature build ARM SVE256 kernels, default: disabled               |
-|  `--enable-sve512`                     | Experimental feature build ARM SVE512 kernels, default: disabled               |
-|  `--enable-nvidia-gpu`                 | build NVIDIA GPU kernels, default: disabled           |
-|  `--enable-gpu`                        | same as --enable-nvidia-gpu                           |
-|  `--enable-amd-gpu`                    | EXPERIMENTAL: build AMD GPU kernels, default: disabled           |
-|  `--enable-intel-gpu`                  | VERY EXPERIMENTAL: build INTEL GPU kernels, default: disabled           |
-|  `--enable-bgp`                        | build BGP kernels, default: disabled                  |
-|  `--enable-bgq`                        | build BGQ kernels, default: disabled                  |
-|  `--with-mpi=[yes|no]`                 | compile with MPI. Default: yes                        |
-|  `--with-cuda-path=PATH`               | prefix where CUDA is installed [default=auto]         |
-|  `--with-cuda-sdk-path=PATH`           | prefix where CUDA SDK is installed [default=auto]     |
-|  `--with-GPU-compute-capability=VALUE` | use compute capability VALUE for GPU version, <br> default: "sm_35" |
-|  `--with-fixed-real-kernel=KERNEL`     | compile with only a single specific real kernel.      |
-|  `--with-fixed-complex-kernel=KERNEL`  | compile with only a single specific complex kernel.   |
-|  `--with-nvidia-gpu-support-only`      | Compile and always use the NVIDIA GPU version         |
-|  `--with-amd-gpu-support-only`         | EXPERIMENTAL: Compile and always use the AMD GPU version         |
-|  `--with-intel-gpu-support-only`       | EXPERIMENTAL: Compile and always use the INTEL GPU version         |
-|  `--with-likwid=[yes|no|PATH]`         | use the likwid tool to measure performance (has an performance impact!), default: no |
-|  `--with-default-real-kernel=KERNEL`   | set the real kernel KERNEL as default                 |
-|  `--with-default-complex-kernel=KERNEL`| set the compplex kernel KERNEL as default             |
-|  `--enable-scalapack-tests`            | build SCALAPACK test cases for performance <br> omparison, needs MPI, default no. |
-|  `--enable-autotune-redistribute-matrix` | EXPERIMENTAL FEATURE; NOT FULLY SUPPORTED YET: Allows ELPA during autotuning to re-distribute the matrix to find the best (ELPA internal) block size for block-cyclic distribution (Needs Scalapack functionality |
-|  `--enable-autotuning`                 | enables autotuning functionality, default yes         |
-|  `--enable-c-tests`                    | enables the C tests for elpa, default yes             |
-|  `--disable-assumed-size`              | do NOT use assumed-size Fortran arrays. default use   |
-|  `--enable-scalapack-tests`            | build also ScalaPack tests for performance comparison; needs MPI |
-|  `--disable-Fortran2008-features`      | disable Fortran 2008 if compiler does not support it  |
-|  `--enable-pyhton`                     | build and install python wrapper, default no          |
-|  `--enable-python-tests`               | enable python tests, default no.                      |
-|  `--enable-skew-symmetric-support`     | enable support for real valued skew-symmetric matrices |
-|  `--enable-store-build-config`         | stores the build config in the library object |
-|  `--64bit-integer-math-support`        | assumes that BLAS/LAPACK/SCALAPACK use 64bit integers (experimentatl) |
-|  `--64bit-integer-mpi-support`         | assumes that MPI uses 64bit integers (experimental) |
-|  `--heterogenous-cluster-support`      | allows ELPA to run on clusters of nodes with different Intel CPUs (experimental) |
-|  `--enable_threading_support_checks`   | in case of MPI and OPENMP builds, check during the configure step whether the provided threading support level is sufficient |
-|  `--enable-allow-thread-limiting`      | in case of MPI and OPENMP builds, ELPA is allowed to limit the number of OpenMP threads, if the threading support level is not sufficient |
+|  `--enable-legacy-interface`                   | build legacy API, will not be build as default        |
+|  `--enable-optional-argument-in-C-API`         | treat error arguments in C-API as optional            |
+|  `--enable-openmp`                             | use OpenMP threading, default no.                     |
+|  `--enable-redirect`                           | for ELPA test programs, allow redirection of <br> stdout/stderr per MPI taks in a file <br> (useful for timing), default no. |
+|  `--enable-single-precision`                   | build with single precision version                   |
+|  `--disable-timings`                           | more detailed timing, default yes <br> **If disabled some features like autotune will <br> not work anymmore !** |
+|  `--disable-band-to-full-blocking`             | build ELPA2 with blocking in band_to_full <br> (default:enabled) |
+|  `--disable-mpi-module`                        | do not use the Fortran MPI module, <br> get interfaces by 'include "mpif.h') |
+|  `--disable-generic`                           | do not build GENERIC kernels, default: enabled        |
+|  `--enable-sparc64`                            | do not build SPARC64 kernels, default: disabled        |
+|  `--disable-sse`                               | do not build SSE kernels, default: enabled            |
+|  `--disable-sse-assembly`                      | do not build SSE_ASSEMBLY kernels, default: enabled   |
+|  `--disable-avx`                               | do not build AVX kernels, default: enabled            |
+|  `--disable-avx2`                              | do not build AVX2 kernels, default: enabled           |
+|  `--enable-avx512`                             | build AVX512 kernels, default: disabled               |
+|  `--enable-sve128`                             | Experimental feature build ARM SVE128 kernels, default: disabled               |
+|  `--enable-sve256`                             | Experimental feature build ARM SVE256 kernels, default: disabled               |
+|  `--enable-sve512`                             | Experimental feature build ARM SVE512 kernels, default: disabled               |
+|  `--enable-nvidia-gpu`                         | build NVIDIA GPU kernels, default: disabled           |
+|  `--enable-gpu`                                | same as --enable-nvidia-gpu                           |
+|  `--enable-amd-gpu`                            | EXPERIMENTAL: build AMD GPU kernels, default: disabled           |
+|  `--enable-intel-gpu`                          | VERY EXPERIMENTAL: build INTEL GPU kernels, default: disabled           |
+|  `--enable-bgp`                                | build BGP kernels, default: disabled                  |
+|  `--enable-bgq`                                | build BGQ kernels, default: disabled                  |
+|  `--with-mpi=[yes|no]`                         | compile with MPI. Default: yes                        |
+|  `--with-cuda-path=PATH`                       | prefix where CUDA is installed [default=auto]         |
+|  `--with-cuda-sdk-path=PATH`                   | prefix where CUDA SDK is installed [default=auto]     |
+|  `--with-GPU-compute-capability=VALUE`         | use compute capability VALUE for GPU version, <br> default: "sm_35" |
+|  `--with-fixed-real-kernel=KERNEL`             | compile with only a single specific real kernel.      |
+|  `--with-fixed-complex-kernel=KERNEL`          | compile with only a single specific complex kernel.   |
+|  `--with-nvidia-gpu-support-only`              | Compile and always use the NVIDIA GPU version         |
+|  `--with-amd-gpu-support-only`                 | EXPERIMENTAL: Compile and always use the AMD GPU version         |
+|  `--with-intel-gpu-support-only`               | EXPERIMENTAL: Compile and always use the INTEL GPU version         |
+|  `--with-likwid=[yes|no|PATH]`                 | use the likwid tool to measure performance (has an performance impact!), default: no |
+|  `--with-default-real-kernel=KERNEL`           | set the real kernel KERNEL as default                 |
+|  `--with-default-complex-kernel=KERNEL`        | set the compplex kernel KERNEL as default             |
+|  `--enable-scalapack-tests`                    | build SCALAPACK test cases for performance <br> omparison, needs MPI, default no. |
+|  `--enable-autotune-redistribute-matrix`       | EXPERIMENTAL FEATURE; NOT FULLY SUPPORTED YET: Allows ELPA during autotuning to re-distribute the matrix to find the best (ELPA internal) block size for block-cyclic distribution (Needs Scalapack functionality |
+|  `--enable-autotuning`                         | enables autotuning functionality, default yes         |
+|  `--enable-c-tests`                            | enables the C tests for elpa, default yes             |
+|  `--disable-assumed-size`                      | do NOT use assumed-size Fortran arrays. default use   |
+|  `--enable-scalapack-tests`                    | build also ScalaPack tests for performance comparison; needs MPI |
+|  `--disable-Fortran2008-features`              | disable Fortran 2008 if compiler does not support it  |
+|  `--enable-pyhton`                             | build and install python wrapper, default no          |
+|  `--enable-python-tests`                       | enable python tests, default no.                      |
+|  `--enable-skew-symmetric-support`             | enable support for real valued skew-symmetric matrices |
+|  `--enable-store-build-config`                 | stores the build config in the library object |
+|  `--64bit-integer-math-support`                | assumes that BLAS/LAPACK/SCALAPACK use 64bit integers (experimentatl) |
+|  `--64bit-integer-mpi-support`                 | assumes that MPI uses 64bit integers (experimental) |
+|  `--heterogenous-cluster-support`              | allows ELPA to run on clusters of nodes with different Intel CPUs (experimental) |
+|  `--enable-allow-thread-limiting`              | in case of MPI and OPENMP builds, ELPA is allowed to limit the number of OpenMP threads, if the threading support level is not sufficient (default: on) |
+|  `--with-threading-support-check-during-build` | during configure run a test to check which level of threading your MPI library does support (default: on) |
+|  `--disable-runtime-threading-support-checks`  | in case of MPI and OpenMP ELPA disable runtime checks of the threading level of the supported MPI-libray (default: on) |
+
 
 We recommend that you do not build ELPA in its main directory but that you use it
 in a sub-directory:
@@ -245,38 +247,58 @@ In the case that configure aborts with these messages
 configure: WARNING: Your MPI implementation does not provide a sufficient threading level for OpenMP
 configure: WARNING: You do have several options:
 configure: WARNING:  * disable OpenMP (--disable-openmp): this will ensure correct results, but maybe some performance drop
-configure: WARNING:  * use an MPI-library with the required threading support level (see the INSTALL and USER_GUIDE): this will ensure correct results and best performance
-configure: WARNING:  * allow ELPA at runtime to change the number of threads to 1 (--enable-allow-thread-limiting): this will ensure correct results, 
-configure: WARNING:    but maybe also not the best performance (dependence on the threading of your blas/lapack libraries), see the USER_GUIDE
-configure: WARNING:  * switch of the checking of threading support (--disable-threading-support-checks): DO THIS AT YOUR OWN RISK! This will be fast, 
-configure: WARNING:    but might (depending on your MPI library sometimes) lead to wrong results
+configure: WARNING:  * use an MPI-library with the required threading support level (see the INSTALL and USER_GUIDE): this will 
+configure: WARNING:    ensure correct results and best performance
+configure: WARNING:  * allow ELPA at runtime to change the number of threads to 1 by setting "--enable-runtime-threading-support-checks
+configure: WARNING:     --enable-allow-thread-limiting --without-threading-support-check-during-build": this will ensure correct results, but 
+configure: WARNING:     maybe not the best performance (depends on the threading of your blas/lapack libraries), see the USER_GUIDE
+configure: WARNING:  * switch of the checking of threading support "--disable-runtime-threading-support-checks 
+configure: WARNING:    --without-threading-support-check-during-build: DO THIS AT YOUR OWN RISK! This will be fast, but might
+configure: WARNING:    (depending on your MPI library sometimes) lead to wrong results
 configure: error: You do have to take an action of the choices above!
 ```
-you can cure the problem in several ways:
+
+your MPI library does _not_ provide a sufficient level of threading support. 
+You can continue with buildig *ELPA* in several ways:
+
 - disable OpenMP (by setting --disable-openmp): this will ensure (if the build is successful) that the results of *ELPA* will be correct. However, this option might
   lead to a performance drop, if your application calling *ELPA* does use OpenMP threading, since in this situation you will have less MPI tasks than cores on your machine and *ELPA* will only use MPI and thus not utilize all cores.
+
 - the best solution will be to use an MPI library which does offer the required level of threading support. However, this _might_ require some work on your side to build your own MPI library. In any way it does not harm to search the internet whether for your Linux distribution their exist already such MPI packages (quite often they do but they are not the default onces).
-- if you do not want to disable OpenMP and you cannot provide a MPI library with a sufficient level of threading support, you can re-run configure with the option "--enable-allow-thread-limiting". If this option is enabled, *ELPA* will always do a runtime check whether the MPI library does provide a sufficient level of threading support. If this is not the case, **internally** to *ELPA* (i.e. not affecting your application calling *ELPA*) only **1** OpenMP thread will be used. In case you do use a threaded implementation of BLAS and LAPACK (which performance wise you should always do when using an OpenMP build of *ELPA*), one can still use more than one thread within the BLAS and LAPACK library, **if** the number of threads in these libraries can be controlled with another mechanism then setting the **OMP_NUM_THREADS** environment variable. For example, in case of Intel's MKL library one can controll the number of threads with the MKL_NUM_THREADS environment variable.
-- by switching of the threading level support checks (with --disable-threading-support-checks) *ELPA* **assumes** that your MPI library does provide a sufficient level. **DO NOT USE THIS OPTION UNLESS YOU ARE SURE WHAT YOU ARE DOING !** This setting could cause different problems like crashes, sporadic wrong results and so forth since this will lead to undefined behaviour! The *ELPA* developers **will not accept bug reports if this option is used, unless you can document in a detailed way that you did not set this option light heartedly (see below)!** You might wonder why this option is then at all available. Simply, because some very experienced HPC-experts did ask for this option because of a the situation we will discuss now.
+
+- if you do not want to disable OpenMP and you cannot provide a MPI library with a sufficient level of threading support, you can re-run configure with the options "--enable-allow-thread-limiting --without-threading-support-check-during-build". If these options are enabled, *ELPA* will skip the test during the configure step, but will always do a **runtime** check whether the MPI library does provide a sufficient level of threading support. If this is not the case, **internally** to *ELPA* (i.e. not affecting your application calling *ELPA*) only **1** OpenMP thread will be used. In case you do use a threaded implementation of BLAS and LAPACK (which performance wise you should always do when using an OpenMP build of *ELPA*), one can still use more than one thread within the BLAS and LAPACK library, **if** the number of threads in these libraries can be controlled with another mechanism then setting the **OMP_NUM_THREADS** environment variable. For example, in case of Intel's MKL library one can controll the number of threads with the MKL_NUM_THREADS environment variable.
+
+- by switching of the threading level support checks **both at build and runtime**. This can be achieved by calling configure with --disable-runtime-threading-support-checks   --without-threading-support-check-during-build" In this case *ELPA* **assumes** that your MPI library does provide a sufficient level. **DO NOT USE THIS OPTION UNLESS YOU ARE SURE WHAT YOU ARE DOING !** This setting could cause different problems like crashes, sporadic wrong results and so forth since this will lead to undefined behaviour! The *ELPA* developers **will not accept bug reports if this option is used, unless you can document in a detailed way that you first know what you are doing and second can proof that this option did not create the bug you would like to report (see below)!** You might wonder why this option is then at all available. Simply, because some very experienced HPC-experts did ask for this option because of a the situation we will discuss now.
 
 Last but not least we want to mention that prior to executing this check, configure will print this information:
 ```
 configure: **************************************************************************************************************************
 configure: * Please notice if the following step hangs or aborts abnormaly then you cannot run a short MPI-program during configure *
-configure: * In this case please re-run configure with '--with-threading-support-check-during-build=no'                             *
+configure: * In this case please re-run configure with '--without-threading-support-check-during-build' _AND_ follow the hints in   *
+configure: * the INSTALL and USER_GUIDE documents!                                                                                  *
 configure: * In case you get some other warnings about threading support follow on of the steps detailed there                      *
 configure: **************************************************************************************************************************
 ```
-You do not have to care about this, unless configure hangs after printing this message, or configure aborts **without** printing the messages discussed before.
+You do not have to care about this, unless configure hangs after printing this message, or configure aborts **without** printing the error messages 
+```
+configure: error: You do have to take an action of the choices above!
+```
+as discussed before.
+
 This behaviour might occure, if:
 - you (and also configure) does not have the rights to run an MPI program on the compilation machine. Sometimes HPC centers implement this, in order to ensure that login nodes are only used for compilation but not for compute.
 - you do have to cross-compile (i.e. you build *ELPA* for a specific architecture on a different architecture)
 - some other reason why an MPI program cannot run successfully 
 
-If you encounter this situation you can switch of this check during configure by setting "--with-threading-support-check-during-build=no". However, of course *ELPA* cannot know then whether your MPI library does provide a sufficient level of threading support or not. Thus you will have to tell configure what to do by either
+If you encounter this situation you can switch of this check during configure by setting "--without-threading-support-check-during-build". However, of course *ELPA* cannot know then whether your MPI library does provide a sufficient level of threading support or not. Thus you will have to tell configure what to do by either
 - also setting "--enable-allow-thread-limiting" (see above)
-- or setting "--disable-threading-support-checks" (see above, especially the warnings)
-We recommend the followin in a first step you set "--with-threading-support-check-during-build=no" and "--enable-allow-thread-limiting". After a successful build you do run *ELPA* on the target machine with the environment variable "OMP_NUM_THREADS" set to 2. Now, carefully inspect the output (stdout **and** stderr). If *ELPA* does not give a warning that it will limit the number of OpenMP threads to 1 due to an insufficent level of threading support in the MPI library, you can assume that your MPI library does provide a sufficient level. Then **and only then** you can rebuild *ELPA* with the settings "--with-threading-support-check-during-build=no" and "--disable-threading-support-checks".
+- or setting "--disable-runtime-threading-support-checks" (see above, **especially the warnings**)
+We recommend the following procedure: 
+
+- in a first step you set "--with-threading-support-check-during-build=no" and "--enable-allow-thread-limiting". 
+- after the successful build you do run *ELPA* on the target machine with the environment variable "OMP_NUM_THREADS" set to 2. 
+- Now, carefully inspect the output (stdout **and** stderr). If *ELPA* does not give a warning that it will limit the number of OpenMP threads to 1 due to an insufficent level of threading support in the MPI library, you can assume that your MPI library does provide a sufficient level. 
+- Then **and only then** you can rebuild *ELPA* with the settings "--without-threading-support-check-during-build" and "--disable-runtime-threading-support-checks".
 
 
 Note that as in case with/without MPI, you can also build and install versions of *ELPA*
