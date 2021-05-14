@@ -872,7 +872,6 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
       status = 1
       call mpi_init_thread(MPI_THREAD_MULTIPLE, provided,error)
       !call mpi_query_thread(provided, error)
-      print *,provided,MPI_THREAD_SINGLE,MPI_THREAD_FUNNELED,MPI_THREAD_SERIALIZED,MPI_THREAD_MULTIPLE 
       if (provided .eq. MPI_THREAD_SERIALIZED .or. provided .eq. MPI_THREAD_MULTIPLE) then
         status = 0
       endif
