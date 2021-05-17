@@ -1,6 +1,6 @@
 # Installation guide for the *ELPA* library #
 
-## Preamble ##
+## 0. Preamble ##
 
 This file provides documentation on how to build the *ELPA* library in **version ELPA-2021.05.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
@@ -13,7 +13,7 @@ With the release ELPA 2019.11.001, the legacy API has been deprecated and the su
 The release of ELPA 2021.05.001.rc1 does change the API and ABI compared to the release 2019.11.001, since
 the legacy API has been dropped.
 
-## How to install *ELPA* ##
+## 1. How to install *ELPA* ##
 
 First of all, if you do not want to build *ELPA* yourself, and you run Linux,
 it is worth having a look at the [*ELPA* webpage*](http://elpa.mpcdf.mpg.de)
@@ -30,7 +30,7 @@ If you obtained *ELPA* from the official git repository, you will not find
 the needed configure script! You will have to create the configure script with autoconf. You can also run the `autogen.sh` script that does this step for you.
 
 
-## Installing *ELPA* as library with configure ##
+## 2. Installing *ELPA* from source ##
 
 *ELPA* can be installed with the build steps
 - `configure`
@@ -121,27 +121,29 @@ For details, please have a look at the documentation for the compilers of your c
 have been enabled.
 
 
-### Choice of building with or without MPI ###
+### 2.1 Choice of building with or without MPI ###
 
 It is possible to build the *ELPA* library with or without MPI support.
 
 Normally *ELPA* is build with MPI, in order to speed-up calculations by using distributed
 parallelisation over several nodes. This is, however, only reasonably if the programs
 calling the *ELPA* library are already MPI parallelized, and *ELPA* can use the same
-block-cyclic distribution of data as in the calling program.
+block-cyclic distribution of data as in the calling program. **This is the main use case *ELPA* is being developed for**.
 
 Programs which do not support MPI parallelisation can still make use of the *ELPA* library if it
-has also been build without MPI support.
+has also been build without MPI support. This might be suitable for development purposes, or if you have an application which
+should benefit from the *ELPA* eigensolvers, even if your application does not support MPI. **In order to achieve a reasonable performance
+*ELPA*, however, should be then either build with OpenMP threading support or be used (if GPUs are available) with GPU support.**
 
-If you want to build *ELPA* with MPI support, please have a look at "A) Setting of MPI compiler and libraries".
-For builds without MPI support, please have a look at "B) Building *ELPA* without MPI support".
+If you want to build *ELPA* with MPI support, please have a look at "2.1.1 Setting of MPI compiler and libraries".
+For builds without MPI support, please have a look at "2.1.2 Building *ELPA* without MPI support".
 **NOTE** that if *ELPA* is build without MPI support, it will be serial unless the OpenMP parallelization is
-explicitely enabled.
+explicitely enabled or GPU support is enabled.
 
 Please note, that it is absolutely supported that both versions of the *ELPA* library are build
 and installed in the same directory.
 
-#### A) Setting of MPI compiler and libraries ####
+#### 2.1.1 Setting of MPI compiler and libraries ####
 
 In the standard case *ELPA* needs a MPI compiler and MPI libraries. The configure script
 will try to set this by itself. If, however, on the build system the compiler wrapper
@@ -162,10 +164,10 @@ adding
 
 to the configure call.
 
-Please continue reading at "C) Enabling GPU support"
+Please continue reading at "2.2 Enabling GPU support"
 
 
-#### B) Building *ELPA* without MPI support ####
+#### 2.1.2 Building *ELPA* without MPI support ####
 
 If you want to build *ELPA* without MPI support, add
 
@@ -187,9 +189,9 @@ Note, that the installed *ELPA* library files will be suffixed with
 `_onenode`, in order to discriminate this build from possible ones with MPI.
 
 
-Please continue reading at "C) Enabling GPU support"
+Please continue reading at "2.2 Enabling GPU support"
 
-### Enabling GPU support ###
+### 2.2 Enabling GPU support ###
 
 The *ELPA* library can be build with GPU support. If *ELPA* is build with GPU
 support, users can choose at RUNTIME, whether to use the GPU version or not.
@@ -199,7 +201,7 @@ For GPU support, NVIDIA GPUs with compute capability >= 3.5 are needed.
 GPU support is set with
 
 ```
---enable-gpu
+--enable-nvidia-gpu
 ```
 
 It might be necessary to also set the options (please see configure --help)
@@ -210,10 +212,23 @@ It might be necessary to also set the options (please see configure --help)
 --with-GPU-compute-capability
 ```
 
-Please continue reading at "D) Enabling OpenMP support".
+Please note that with release 2021.05.001.rc1 also GPU support of AMD and Intel GPUS has been introduced.
+However, this is still considered experimental. Especially the following features do not yet work, or have not
+been tested.
+
+AMD GPUs:
+- runs in the MPI build have not yet been tested.
+
+Intel GPUs:
+- memory management is still missing. Data will always be copied between the host and the GPUs, even if not necessary.
+- runs with MPI build have not yet been tested.
+- ELPA 2-stage optimized Intel GPU kernels are still missing.
 
 
-### Enabling OpenMP support ###
+Please continue reading at "2.2.1 Enabling OpenMP support".
+
+
+#### 2.2.1 Enabling OpenMP support ####
 
 The *ELPA* library can be build with OpenMP support. This can be support of hybrid
 MPI/OpenMP parallelization, since *ELPA* is build with MPI support (see A ) or only
@@ -306,10 +321,10 @@ with/without OpenMP support at the same time.
 
 However, the GPU choice at runtime is not compatible with OpenMP support.
 
-Please continue reading at "E) Standard libraries in default installation paths".
+Please continue reading at "2.3 Standard libraries in default installation paths".
 
 
-### Standard libraries in default installation paths ###
+### 2.3 Standard libraries in default installation paths ###
 
 In order to build the *ELPA* library, some (depending on the settings during the
 configure step) libraries are needed.
@@ -327,11 +342,11 @@ If the needed library are installed on the build system in standard paths (e.g. 
 in the most cases the *ELPA* configure step will recognize the needed libraries
 automatically. No setting of any library paths should be necessary.
 
-If your configure steps finish succcessfully, please continue at "G) Choice of ELPA2 compute kernels".
+If your configure steps finish succcessfully, please continue at "2.5 Choice of ELPA2 compute kernels".
 If your configure step aborts, or you want to use libraries in non standard paths please continue at
-"F) Non standard paths or non standard libraries".
+"2.4 Non standard paths or non standard libraries".
 
-### Non standard paths or non standard libraries ###
+### 2.4 Non standard paths or non standard libraries ###
 
 If standard libraries are on the build system either installed in non standard paths, or
 special non standard libraries (e.g. *Intel's MKL*) should be used, it might be necessary
@@ -363,7 +378,7 @@ Please, for the correct link-line refer to the documentation of the correspondig
 suggest the [Intel Math Kernel Library Link Line Advisor](https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor).
 
 
-### Choice of ELPA2 compute kernels ###
+### 2.5 Choice of ELPA2 compute kernels ###
 
 ELPA 2stage can be used with different implementations of compute intensive kernels, which are architecture dependent.
 Some kernels (all for x86_64 architectures) are enabled by default (and must be disabled if you do not want them),
@@ -395,7 +410,7 @@ It this is not desired, it is possible to build *ELPA* with only one (not necess
 real and complex valued case, respectively. This can be done with the `--with-fixed-real-kernel=NAME` or
 `--with-fixed-complex-kernel=NAME` configure options. For details please do a "configure --help"
 
-#### Cross compilation ####
+#### 2.5.1 Cross compilation ####
 
 The ELPA library does _not_ supports cross-compilation by itself, i.e. compilation of the ELPA library on an architecture wich is not
 identical than the architecture ELPA should be used on.
@@ -435,12 +450,12 @@ In the case above, setting
 during build, will remdy this problem.
 
 
-### Doxygen documentation ###
+### 2.6 Doxygen documentation ###
 A doxygen documentation can be created with the `--enable-doxygen-doc` configure option
 
-### Some examples ###
+### 2.7 Some examples ###
 
-#### Intel cores supporting AVX2 (Hasell and newer) ####
+#### 2.7.1 Intel cores supporting AVX2 (Hasell and newer) ####
 
 We recommend that you build ELPA with the Intel compiler (if available) for the Fortran part, but
 with GNU compiler for the C part.
@@ -481,7 +496,7 @@ Remarks:
 FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./configure FCFLAGS="-O3 -xAVX2" CFLAGS="-O3 -xAVX2" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64"
 ```
 
-#### Intel cores supporting AVX-512 (Skylake and newer) ####
+#### 2.7.2 Intel cores supporting AVX-512 (Skylake and newer) ####
 
 We recommend that you build ELPA with the Intel compiler (if available) for the Fortran part, but
 with GNU compiler for the C part.
@@ -523,7 +538,7 @@ FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./
 ```
 
 
-#### Building for NVIDIA A100 GPUS (and Intel Icelake CPUs) ####
+#### 2.7.3 Building for NVIDIA A100 GPUS (and Intel Icelake CPUs) ####
 
 For the GPU builds of ELPA it is mandatory that you choose a GNU compiler for the C part, the Fortran part can be compiled with any compiler, for example with the Intel Fortran compiler
 
@@ -551,7 +566,7 @@ Remarks:
 FC=mpi_wrapper_for_gnu_Fortran_compiler CC=mpi_wrapper_for_gnu_C_compiler ./configure FCFLAGS="-O3 -march=skylake-avx512 -mfma" CFLAGS="-O3 -march=skylake-avx512 -mfma  -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64" --enable-avx2 --enable-avx512 --enable-nvidia-gpu --with-cuda-path=PATH_TO_YOUR_CUDA_INSTALLATION --with-NVIDIA-GPU-compute-capability=sm_80
 ```
 
-#### Building for IBM SUMMIT HPC system ####
+#### 2.7.4 Building for IBM SUMMIT HPC system ####
 
 For more information please have  a look at the [ELSI wiki](https://git.elsi-interchange.org/elsi-devel/elsi-interface/-/wikis/install-elpa).
 
@@ -575,7 +590,7 @@ FC=mpixlf CC=mpixlc ../configure --prefix=$(pwd) FCFLAGS="-O2 -qarch=pwr9 -qstri
 ```
 
 
-#### EXPERIMENTAL: Building for AMD GPUs (currently tested only --with-mpi=0 ####
+#### 2.7.5 EXPERIMENTAL: Building for AMD GPUs (currently tested only --with-mpi=0 ####
 
 
 In order to build *ELPA* for AMD GPUs please ensure that you have a working installation of HIP, ROCm, BLAS, and LAPACK
@@ -584,7 +599,7 @@ In order to build *ELPA* for AMD GPUs please ensure that you have a working inst
 ./configure CXX=hipcc CXXFLAGS="-I/opt/rocm-4.0.0/hip/include/ -I/opt/rocm-4.0.0/rocblas/inlcude -g" CC=hipcc CFLAGS="-I/opt/rocm-4.0.0/hip/include/ -I/opt/rocm-4.0.0/rocblas/include -g" LIBS="-L/opt/rocm-4.0.0/rocblas/lib" --enable-option-checking=fatal --with-mpi=0 FC=gfortran FCFLAGS="-g -LPATH_TO_YOUR_LAPACK_INSTALLATION -lopenblas -llapack" --disable-sse --disable-sse-assembly --disable-avx --disable-avx2 --disable-avx512 --enable-AMD-gpu --enable-single-precision
 ```
 
-#### Problems of building with clang-12.0 ####
+#### 2.7.8 Problems of building with clang-12.0 ####
 The libtool tool adds some flags to the compiler commands (to be used for linking by ld) which are not known
 by the clang-12 compiler. One way to solve this issue is by calling directly after the configue step
 ```
