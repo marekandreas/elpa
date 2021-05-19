@@ -100,6 +100,13 @@
 !> \brief Abstract definition of the elpa_t type
 !>
 !>
+!> Since ELPA needs (in case of MPI builds) that the matix is block-cyclic distributed
+!> the user has to ensure this distribution _before_ calling ELPA.
+!> Experience shows, that it is very important that the user checks the return code of
+!> 'descinit' to check whether the block-cyclic distribution is valid.
+!> Note that ELPA relies on a valid block-cyclic distribution and might show unexpected
+!> behavior if this has not been ensured before calling ELPA.
+!>
 !> A typical usage of ELPA might look like this:
 !>
 !> Fortran synopsis

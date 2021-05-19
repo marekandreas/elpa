@@ -104,6 +104,7 @@
     end subroutine
   end interface
 
+#ifdef HAVE_SKEWSYMMETRIC
   !> \brief abstract definition of interface to solve double real skew-symmetric eigenvalue problem
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
@@ -150,6 +151,7 @@
 #endif
     end subroutine
   end interface
+#endif /* HAVE_SKEWSYMMETRIC */
 
   !> \brief abstract definition of interface to solve a eigenvalue problem
   !>
@@ -203,7 +205,7 @@
     end subroutine
   end interface       
 
-
+#ifdef HAVE_SKEWSYMMETRIC
   !> \brief abstract definition of interface to solve a skew-symmetric eigenvalue problem
   !>
   !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
@@ -247,7 +249,7 @@
 #endif
     end subroutine
   end interface       
-
+#endif /* HAVE_SKEWSYMMETRIC */
 
   !> \brief abstract definition of interface to solve a generalized eigenvalue problem
   !>

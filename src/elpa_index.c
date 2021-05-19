@@ -59,6 +59,7 @@
 
 int max_threads_glob;
 int set_max_threads_glob=0;
+int const default_max_stored_rows = 256;   
 
 static int enumerate_identity(elpa_index_t index, int i);
 static int cardinality_bool(elpa_index_t index);
@@ -144,7 +145,6 @@ static int bw_is_valid(elpa_index_t index, int n, int new_value);
 static int output_build_config_is_valid(elpa_index_t index, int n, int new_value);
 static int gpu_is_valid(elpa_index_t index, int n, int new_value);
 static int verbose_is_valid(elpa_index_t index, int n, int new_value);
-static int skewsymmetric_is_valid(elpa_index_t index, int n, int new_value);
 
 static int is_positive(elpa_index_t index, int n, int new_value);
 
@@ -154,6 +154,7 @@ static int elpa_float_value_to_string(char *name, float value, const char **stri
 static int elpa_double_string_to_value(char *name, char *string, double *value);
 static int elpa_double_value_to_string(char *name, double value, const char **string);
 
+         
 #define BASE_ENTRY(option_name, option_description, once_value, readonly_value, print_flag_value) \
                 .base = { \
                         .name = option_name, \
@@ -213,7 +214,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("num_process_rows", "Number of process row number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
         INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
         INT_PARAMETER_ENTRY("num_processes", "Total number of processes", NULL, PRINT_STRUCTURE),
-        INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk", bw_is_valid, PRINT_YES),
+        INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk and at least 2", bw_is_valid, PRINT_YES),
         INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication", PRINT_NO),
         INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", PRINT_NO),
         INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator", PRINT_NO),
@@ -232,14 +233,14 @@ static const elpa_index_int_entry_t int_entries[] = {
                          number_of_matrix_layouts, matrix_layout_enumerate, matrix_layout_is_valid, elpa_matrix_layout_name, PRINT_YES), \
         INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
+        INT_ENTRY("gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         INT_ENTRY("nvidia-gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         INT_ENTRY("intel-gpu", "Use INTEL GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         INT_ENTRY("amd-gpu", "Use AMD GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("is_skewsymmetric", "Matrix is skewsymmetic", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0,
-                        cardinality_bool, enumerate_identity, skewsymmetric_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
         INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
@@ -276,7 +277,7 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_COMPLEX, \
                         stripewidth_complex_cardinality, stripewidth_complex_enumerate, stripewidth_complex_is_valid, NULL, PRINT_YES),
 
-        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation, default 63", 63, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY, \
+        INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation", default_max_stored_rows, ELPA_AUTOTUNE_EXTENSIVE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL, PRINT_YES),
 #ifdef WITH_OPENMP_TRADITIONAL
         INT_ENTRY("omp_threads", "OpenMP threads used in ELPA, default 1", 1, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
@@ -287,7 +288,9 @@ static const elpa_index_int_entry_t int_entries[] = {
 #endif
         INT_ENTRY("cannon_buffer_size", "Increasing the buffer size might make it faster, but costs memory", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL, PRINT_YES),
-        //BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_REAL),
+#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
+        BOOL_ENTRY("limit_openmp_threads", "Limit the number if openmp threads to 1", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_NO),
+#endif
         BOOL_ENTRY("qr", "Use QR decomposition, only used for ELPA_SOLVER_2STAGE, real case", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_REAL, PRINT_YES),
         BOOL_ENTRY("timings", "Enable time measurement", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
         BOOL_ENTRY("debug", "Emit verbose debugging messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, 0, PRINT_YES),
@@ -786,7 +789,7 @@ static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         if (solver == ELPA_SOLVER_1STAGE) {
                 return new_value == ELPA_2STAGE_REAL_DEFAULT;
         }
-        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         switch(new_value) {
 #ifdef WITH_NVIDIA_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
@@ -901,7 +904,7 @@ static int bw_is_valid(elpa_index_t index, int n, int new_value) {
         }
 
         na = elpa_index_get_int_value(index, "na", NULL);
-        return (0 <= new_value) && (new_value < na);
+        return (2 <= new_value) && (new_value < na);
 }
 
 static int output_build_config_is_valid(elpa_index_t index, int n, int new_value) {
@@ -913,10 +916,6 @@ static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 static int verbose_is_valid(elpa_index_t index, int n, int new_value) {
-        return new_value == 0 || new_value == 1;
-}
-
-static int skewsymmetric_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value == 0 || new_value == 1;
 }
 
@@ -1093,7 +1092,7 @@ static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
 
 
 static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
-        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if (gpu_is_active == 1) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
@@ -1104,7 +1103,7 @@ static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
 
 static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if ((solver == ELPA_SOLVER_1STAGE) && (gpu_is_active == 1)) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
@@ -1115,7 +1114,7 @@ static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
 
 static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if ((solver == ELPA_SOLVER_2STAGE) && (gpu_is_active == 1)) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
@@ -1125,28 +1124,20 @@ static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value) {
 }
 
 static int max_stored_rows_cardinality(elpa_index_t index) {
-	return 8;
+	return 4;
 }
 
 static int max_stored_rows_enumerate(elpa_index_t index, int i) {
-	switch(i) {
-	  case 0:
-	    return 15;
-	  case 1:
-	    return 31;
-	  case 2:
-	    return 47;
-	  case 3:
-	    return 63;
-	  case 4:
-	    return 79;
-	  case 5:
-	    return 95;
-	  case 6:
-	    return 111;
-	  case 7:
-	    return 127;
-	}
+  switch(i) {
+  case 0:
+    return 64;
+  case 1:
+    return 128;
+  case 2:
+    return 256;
+  case 3:
+    return 512;
+  }
 }
 
 static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value) {

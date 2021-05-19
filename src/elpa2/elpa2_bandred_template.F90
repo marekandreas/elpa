@@ -69,7 +69,7 @@ wantDebug, useGPU, success, &
 #if REALCASE == 1
 useQR, &
 #endif
-max_threads)
+max_threads, isSkewsymmetric)
 
 !-------------------------------------------------------------------------------
 !  bandred_real/complex: Reduces a distributed symmetric matrix to band form
@@ -130,8 +130,7 @@ max_threads)
   real(kind=rk)                               :: eps
 #endif
   logical, intent(in)                         :: useGPU
-  integer(kind=c_int)                         :: skewsymmetric
-  logical                                     :: isSkewsymmetric
+  logical, intent(in)                         :: isSkewsymmetric
   character(20)                               :: gpuString
 
   integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols
@@ -204,13 +203,6 @@ max_threads)
   logical                                     :: do_memcpy
   integer(kind=ik)                            :: i_blk,blk_off, blk_end
   logical                                     :: useIntelGPU
-
-  call obj%get("is_skewsymmetric",skewsymmetric,error)
-  if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for skewsymmetric settings. Aborting..."
-       stop
-  endif
-  isSkewsymmetric = (skewsymmetric == 1)
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -1463,19 +1455,19 @@ max_threads)
     endif ! useGPU
 
 #if REALCASE == 1
-#ifdef HAVE_SKEWSYMMETRIC
+!#ifdef HAVE_SKEWSYMMETRIC
     if (isSkewsymmetric) then
       call ssymm_matrix_allreduce_&
       &PRECISION &
       (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
     else
-#endif
+!#endif
       call symm_matrix_allreduce_&
       &PRECISION &
       (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
-#ifdef HAVE_SKEWSYMMETRIC
+!#ifdef HAVE_SKEWSYMMETRIC
     endif
-#endif
+!#endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
     call herm_matrix_allreduce_&

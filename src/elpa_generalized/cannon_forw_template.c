@@ -165,7 +165,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    
   if(na%nblk == 0)
       if(my_prow <= last_proc_row)
-         Buf_rows = na_rows;
+         Buf_rows = na_rows + 1;   //Soheil: added + 1 to be able to accomodate for MPI message sizes in the case of pure blocked configuration e.g. na=100; with 9xMPI ranks and nblk=30 or with 4xMPI ranks and nblk=45 
       else
          Buf_rows = na_rows + nblk;      
    else

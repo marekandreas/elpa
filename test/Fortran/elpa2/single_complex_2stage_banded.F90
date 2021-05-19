@@ -152,7 +152,11 @@ program test_complex2_single_banded
 #define DOUBLE_PRECISION_COMPLEX 1
 
    call read_input_parameters(na, nev, nblk, write_to_file)
-      !-------------------------------------------------------------------------------
+   if (nblk .eq. 1) then
+     stop 77
+   endif
+
+   !-------------------------------------------------------------------------------
    !  MPI Initialization
    call setup_mpi(myid, nprocs)
 

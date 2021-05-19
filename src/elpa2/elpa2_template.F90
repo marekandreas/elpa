@@ -55,7 +55,11 @@
 #include "elpa/elpa_simd_constants.h"
 #include "../general/error_checking.inc"
 
+#ifdef ACTIVATE_SKEW
+ function elpa_solve_skew_evp_&
+#else
  function elpa_solve_evp_&
+#endif
   &MATH_DATATYPE&
   &_&
   &2stage_&
@@ -110,7 +114,7 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target :: qExtern(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout), target         :: aExtern(obj%local_nrows,obj%local_ncols)
-#ifdef HAVE_SKEWSYMMETRIC
+#ifdef ACTIVATE_SKEW
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
@@ -124,7 +128,7 @@
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, intent(out), target :: q(obj%local_nrows,*)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout)                 :: a(obj%local_nrows,obj%local_ncols)
-#ifdef HAVE_SKEWSYMMETRIC
+#ifdef ACTIVATE_SKEW
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
@@ -197,7 +201,7 @@
                                                                          do_trans_to_band, do_trans_to_full
    logical                                                            :: good_nblk_gpu
 
-   integer(kind=ik)                                                   :: nrThreads
+   integer(kind=ik)                                                   :: nrThreads, limitThreads
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
    integer(kind=c_int)                                                :: simdSetAvailable(NUMBER_OF_INSTR)
 #endif
@@ -241,7 +245,11 @@
 #define KERNEL_STRING "complex_kernel"
 #endif
 
+#ifdef ACTIVATE_SKEW
+    call obj%timer%start("elpa_solve_skew_evp_&
+#else
     call obj%timer%start("elpa_solve_evp_&
+#endif
     &MATH_DATATYPE&
     &_2stage_&
     &PRECISION&
@@ -254,9 +262,20 @@
     ! restore this at the end of ELPA 2
     omp_threads_caller = omp_get_max_threads()
 
-    ! check the number of threads that ELPA should use internally
-    call obj%get("omp_threads",nrThreads,error)
-    call omp_set_num_threads(nrThreads)
+   ! check the number of threads that ELPA should use internally
+#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
+   call obj%get("limit_openmp_threads",limitThreads,error)
+   if (limitThreads .eq. 0) then
+#endif
+     call obj%get("omp_threads",nrThreads,error)
+     call omp_set_num_threads(nrThreads)
+#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
+   else
+     nrThreads = 1
+     call omp_set_num_threads(nrThreads)
+   endif
+#endif
+
 #else
     nrThreads = 1
 #endif
@@ -351,7 +370,11 @@
      call omp_set_num_threads(omp_threads_caller)
 #endif
 
+#ifdef ACTIVATE_SKEW
+     call obj%timer%stop("elpa_solve_skew_evp_&
+#else
      call obj%timer%stop("elpa_solve_evp_&
+#endif
      &MATH_DATATYPE&
      &_2stage_&
      &PRECISION&
@@ -370,13 +393,17 @@
       stop
     endif
 
-    call obj%get("is_skewsymmetric",skewsymmetric,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for skewsymmetric settings. Aborting..."
-      stop
-    endif
-
-    isSkewsymmetric = (skewsymmetric == 1)
+#ifdef ACTIVATE_SKEW
+    !call obj%get("is_skewsymmetric",skewsymmetric,error)
+    !if (error .ne. ELPA_OK) then
+    !  print *,"Problem getting option for skewsymmetric settings. Aborting..."
+    !  stop
+    !endif
+    !isSkewsymmetric = (skewsymmetric == 1)
+    isSkewsymmetric = .true.
+#else
+    isSkewsymmetric = .false.
+#endif
 
     call obj%get("debug",debug,error)
     if (error .ne. ELPA_OK) then
@@ -387,6 +414,21 @@
 
     ! GPU settings
     if (gpu_vendor() == NVIDIA_GPU) then
+      call obj%get("gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for GPU. Aborting..."
+        stop
+      endif
+      if (gpu .eq. 1) then
+        print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new keyword &
+               & 'nvidia-gpu' now"
+        call obj%set("nvidia-gpu",gpu,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem setting option for NVIDIA GPU. Aborting..."
+          stop
+        endif
+      endif
+
       call obj%get("nvidia-gpu",gpu,error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for NVIDIA GPU. Aborting..."
@@ -795,7 +837,7 @@
 #if REALCASE == 1
       useQRActual, &
 #endif
-       nrThreads)
+       nrThreads, isSkewsymmetric)
 #ifdef HAVE_LIKWID
       call likwid_markerStopRegion("bandred")
 #endif
@@ -818,7 +860,7 @@
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-       do_useGPU_tridiag_band, wantDebug, nrThreads)
+       do_useGPU_tridiag_band, wantDebug, nrThreads, isSkewsymmetric)
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
@@ -1097,15 +1139,22 @@
 
 
 
-
+#ifdef ACTIVATE_SKEW
+     call obj%timer%stop("elpa_solve_skew_evp_&
+#else
      call obj%timer%stop("elpa_solve_evp_&
+#endif
      &MATH_DATATYPE&
      &_2stage_&
      &PRECISION&
      &")
 1    format(a,f10.3)
 
+#ifdef ACTIVATE_SKEW
+   end function elpa_solve_skew_evp_&
+#else
    end function elpa_solve_evp_&
+#endif
    &MATH_DATATYPE&
    &_2stage_&
    &PRECISION&

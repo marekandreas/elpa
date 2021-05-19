@@ -197,6 +197,13 @@ The following compute routines are available in *ELPA*: Please have a look at th
 
 ## IV) Using OpenMP threading ##
 
+IMPORTANT: In case of hybrid MPI and OpenMP builds it is **mandatory** that your MPI library supports the threading levels "MPI_THREAD_SERIALIZED" or
+"MPI_THREAD_MULTIPLE" (you can check this for example by building ELPA with MPI and OpenMP and run one of the test programs, they will warn you
+if this prerequiste is not met). If your MPI library does **not** provide these threading levels, then ELPA will internally (independent of what you
+set) use only **one** OpenMP thread and inform you at runtime with a warning. The number of threads used in a threaded implementation of your BLAS library
+are not affected by this, as long as these threads can be controlled with another method than specifying OMP_NUM_THREADS (for instance with Intel's MKL
+libray you can specify MKL_NUM_THREADS).
+
 If *ELPA* has been build with OpenMP threading support you can specify the number of OpenMP threads that *ELPA* will use internally.
 Please note that it is **mandatory**  to set the number of threads to be used with the OMP_NUM_THREADS environment variable **and**
 with the **set method** 
@@ -376,6 +383,8 @@ to be done in the application using MPI which wants to call ELPA, namely
 
 - Initializing the MPI
 - creating a blacs distributed matrix
+- IMPORTANT: it is very, very important that you check the return value of "descinit" of your blacs distribution!
+  ELPA relies that the distribution it should work on is _valid_. If this is not the case the behavior is undefined!
 - using this matrix within ELPA
 
 The skeleton is not ment to be copied and pasted, since the details will always be dependent on the application which should 
@@ -437,6 +446,12 @@ call BLACS_Gridinfo( my_blacs_ctxt, nprow, npcol, my_prow, my_pcol )
 ! - first row and column of the distributed matrix must be on row/col 0/0 (args 6+7)
 
 call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
+
+! check the return code
+if (info .ne. 0) then
+  print *,"Invalid blacs-distribution. Abort!"
+  stop
+endif
 
 ! Allocate matrices 
 
