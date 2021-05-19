@@ -233,6 +233,8 @@ static const elpa_index_int_entry_t int_entries[] = {
                          number_of_matrix_layouts, matrix_layout_enumerate, matrix_layout_is_valid, elpa_matrix_layout_name, PRINT_YES), \
         INT_ENTRY("solver", "Solver to use", ELPA_SOLVER_1STAGE, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         number_of_solvers, solver_enumerate, solver_is_valid, elpa_solver_name, PRINT_YES),
+        INT_ENTRY("gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         INT_ENTRY("nvidia-gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         INT_ENTRY("intel-gpu", "Use INTEL GPU acceleration", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
@@ -787,7 +789,7 @@ static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
         if (solver == ELPA_SOLVER_1STAGE) {
                 return new_value == ELPA_2STAGE_REAL_DEFAULT;
         }
-        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         switch(new_value) {
 #ifdef WITH_NVIDIA_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
@@ -1090,7 +1092,7 @@ static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
 
 
 static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
-        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if (gpu_is_active == 1) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
@@ -1101,7 +1103,7 @@ static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
 
 static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if ((solver == ELPA_SOLVER_1STAGE) && (gpu_is_active == 1)) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
@@ -1112,7 +1114,7 @@ static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
 
 static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
+        int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
         if ((solver == ELPA_SOLVER_2STAGE) && (gpu_is_active == 1)) {
                 return ((new_value == 0 ) || (new_value == 1));
         }

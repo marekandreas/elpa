@@ -110,6 +110,21 @@
 
   ! GPU settings
   if (gpu_vendor() == NVIDIA_GPU) then
+    call obj%get("gpu",gpu,error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option for GPU. Aborting..."
+      stop
+    endif
+    if (gpu .eq. 1) then
+      print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new &
+              & keyword 'nvidia-gpu'"
+      call obj%set("nvidia-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem setting option for NVIDIA GPU. Aborting..."
+        stop
+      endif
+    endif
+
     call obj%get("nvidia-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option for NVIDIA GPU. Aborting..."

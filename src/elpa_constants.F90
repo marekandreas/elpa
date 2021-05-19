@@ -53,4 +53,7 @@ module elpa_constants
   integer(kind=C_INT),  parameter          :: SC_DESC_LEN = 9
 
 #include "src/fortran_constants.F90"
+
+  integer(kind=C_INT), parameter           :: ELPA_2STAGE_REAL_GPU    = ELPA_2STAGE_REAL_NVIDIA_GPU
+  integer(kind=C_INT), parameter           :: ELPA_2STAGE_COMPLEX_GPU = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 end module
