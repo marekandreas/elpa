@@ -6,6 +6,7 @@ The legacy interface is deprecated and will be disabled at some point without an
 The following guidelines will not be updated or corrected anymore.
 **We strongly recommend all users to use the long-term supported new API of ELPA, which has been published with the
 release of 2017.05.001.**
+**The legacy interface has been removed with release 2019.11.001, this document will be removed with release 2021.11.001!**
 
 ## A) Using the legacy API of the *ELPA* library ##
 
@@ -22,7 +23,7 @@ The *ELPA* library consists of two main parts:
 
 Both variants of the *ELPA* solvers are available for real or complex singe and double precision valued matrices.
 
-Thus *ELPA* provides the following user functions (see man pages or [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.001.rc1/html/index.html) for details):
+Thus *ELPA* provides the following user functions (see man pages or [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.001.rc2/html/index.html) for details):
 
 - elpa_get_communicators                        : set the row / column communicators for *ELPA*
 - elpa_solve_evp_complex_1stage_{single|double} : solve a {single|double} precision complex eigenvalue proplem with the *ELPA 1stage* solver

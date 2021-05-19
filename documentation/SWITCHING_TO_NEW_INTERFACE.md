@@ -2,6 +2,7 @@
 
 This document gives some hints how one can switch from the **deprecated** legacy API to new, long-term supported API of the *ELPA* library.
 **At latest with the release ELPA 2019.11.001 you have to use the new API, since the old API has been removed**
+**Thus is document is also obsolete now, and will be removed with the 2021.11.001 release**
 
 ### Using *ELPA* from a Fortran code ###
 
@@ -146,7 +147,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example `man elpa2_print_kernels` should provide the documentation for the *ELPA* program which prints all
 the available kernels.
 
-Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.001.rc1/html/index.html)
+Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.001.rc2/html/index.html)
 for each *ELPA* release is available.
 
 
