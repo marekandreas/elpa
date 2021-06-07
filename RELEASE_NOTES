@@ -1,4 +1,4 @@
-This file contains the release notes for the ELPA 2021.05.001.rc2 version
+This file contains the release notes for the ELPA 2021.05.001 version
 
 What is new?
 -------------
@@ -6,6 +6,9 @@ For detailed information about changes since release ELPA 2020.11.001 please hav
 
 - bugfixes
 - experimental feature: support for AMD GPUs
+- experimental feature: support for INTEL GPUs
+- better checking of OpenMP threading support
+
 
 
 ABI change

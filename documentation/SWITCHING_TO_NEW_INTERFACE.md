@@ -147,7 +147,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example `man elpa2_print_kernels` should provide the documentation for the *ELPA* program which prints all
 the available kernels.
 
-Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.001.rc2/html/index.html)
+Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.001/html/index.html)
 for each *ELPA* release is available.
 
 
