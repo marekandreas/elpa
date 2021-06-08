@@ -136,6 +136,11 @@ subroutine trans_ev_&
 
   integer(kind=c_intptr_t)                      :: num
   integer(kind=C_intptr_T)                      :: q_dev, tmp_dev, hvm_dev, tmat_dev
+#ifdef WITH_CUDA_AWARE_MPI
+  type(c_ptr)                                   :: tmp_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer              :: tmp1_mpi(:)
+#endif
+
   integer(kind=ik)                              :: blockStep
   logical                                       :: successGPU
   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
@@ -484,12 +489,22 @@ subroutine trans_ev_&
       endif  !l_rows>0
 
 #ifdef WITH_MPI
-      ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
-      ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
+
       if (useGPU .and. .not.(useIntelGPU)) then
+#ifndef WITH_CUDA_AWARE_MPI
+        ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
+        ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
         successGPU = gpu_memcpy(int(loc(tmp1(1)),kind=c_intptr_t), tmp_dev,  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("trans_ev", successGPU)
+#else
+        ! in case of CUDA_AWARE MPI
+        ! associate devicePointer with a fortran pointer
+        ! do MPI
+        tmp_mpi_dev = transfer(tmp_dev, tmp_mpi_dev)
+        call c_f_pointer(tmp_mpi_dev,tmp_mpi,(/(max_local_cols*max_stored_rows)/))
+
+#endif
       endif
 
       !if (useIntelGPU) then
@@ -497,15 +512,29 @@ subroutine trans_ev_&
       !endif
 
       call obj%timer%start("mpi_communication")
+#ifndef WITH_CUDA_AWARE_MPI
       call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+#else
+      call mpi_allreduce(mpi_in_place, tmp_mpi, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+#endif
       call obj%timer%stop("mpi_communication")
-      ! copy back tmp2 - after reduction...
+
       if (useGPU .and. .not.(useIntelGPU)) then
+#ifndef WITH_CUDA_AWARE_MPI
+        ! copy back tmp2 - after reduction...
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("trans_ev", successGPU)
+#else
+        
+        tmp_dev = transfer(tmp_mpi_dev, tmp_dev)
+        tmp_mpi_dev = C_NULL_PTR
+        tmp_mpi => null()
+#endif
       endif ! useGPU
+
 
       !if (useIntelGPU) then
       !   ! needed later
