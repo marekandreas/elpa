@@ -84,6 +84,36 @@ module mod_check_for_gpu
         stop
       endif
 
+      success = .true.
+      numberOfDevices = -1
+#ifdef WITH_NVIDIA_GPU_VERSION
+      ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
+      success = cuda_getdevicecount(numberOfDevices)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
+      success = hip_getdevicecount(numberOfDevices)
+#endif
+      if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
+        print *,"error in cuda_getdevicecount"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+        print *,"error in hip_getdevicecount"
+#endif
+        stop 1
+      endif
+#ifdef  WITH_INTEL_GPU_VERSION
+      gpuAvailable = .false.
+      numberOfDevices = -1
+
+      numberOfDevices = 1
+      print *,"Manually setting",numberOfDevices," of GPUs"
+      if (numberOfDevices .ge. 1) then
+        gpuAvailable = .true.
+      endif
+#endif
+
       if (obj%is_set("use_gpu_id") == 1) then
         call obj%get("use_gpu_id", use_gpu_id, error)
         if (use_gpu_id == -99) then
@@ -108,6 +138,12 @@ module mod_check_for_gpu
             print *
             print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
           endif
+        endif
+
+        if (use_gpu_id+1 .gt. numberOfDevices) then
+          print *,"Task=",myid," wants to use GPU id=",use_gpu_id," allowed (0:#GPUs-1)"
+          print *,"However, there are only ",numberOfDevices," on the node"
+          stop 1
         endif
 
         success = .true.

@@ -654,6 +654,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
                              sorted(address_sanitize_flag.keys()),
                              sorted(matrix_size.keys())):
 
+
     cov = "no-coverage"
 
     nev = 150
@@ -744,7 +745,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         continue
 
     #at the moment gpu testing only on AVX machines or minskys
-    if (g == "with-gpu" and (instr !="avx" and instr !="power8")):
+    if (g == "with-gpu" and (instr !="avx512" and instr !="power8")):
         continue
 
 #    #on KNL do only intel tests
