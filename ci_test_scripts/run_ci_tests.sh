@@ -136,7 +136,7 @@ then
   if [ "$gpuJob" == "yes" ]
   then
     cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_2GPU.sh .
-    echo "if \[ \$SLURM_PROCID -eq 0 \]" >> ./run_${CLUSTER}_1node_GPU.sh
+    echo "if \[ \$SLURM_PROCID -eq 0 \]" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "then" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "echo \"process \$SLURM_PROCID running configure\"" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "#decouple from SLURM (maybe this could be removed)" >> ./run_${CLUSTER}_1node_2GPU.sh
