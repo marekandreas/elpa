@@ -13,7 +13,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example `man elpa2_print_kernels` should provide the documentation for the *ELPA* program, which prints all
 the available kernels.
 
-Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.001/html/index.html)
+Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.002/html/index.html)
 for each *ELPA* release is available.
 
 
@@ -180,7 +180,7 @@ The following table gives a list of all supported parameters which can be used t
 
 ## III) List of computational routines ##
 
-The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.001/html/index.html) for details.
+The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.002/html/index.html) for details.
 
 
 | Name         | Purpose                                                                 | since API version |
