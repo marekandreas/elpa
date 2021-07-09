@@ -138,7 +138,7 @@ subroutine trans_ev_&
   integer(kind=C_intptr_T)                      :: q_dev, tmp_dev, hvm_dev, tmat_dev
 #ifdef WITH_CUDA_AWARE_MPI
   type(c_ptr)                                   :: tmp_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer              :: tmp1_mpi(:)
+  MATH_DATATYPE(kind=rck), pointer              :: tmp_mpi(:)
 #endif
 
   integer(kind=ik)                              :: blockStep
