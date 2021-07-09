@@ -1826,7 +1826,6 @@ if test x"${need_gpu}" = x"yes"; then
        # error No CUDA support.
        #endif
       ])],
-      ])],
       [use_cuda_aware_mpi="yes"],
       [use_cuda_aware_mpi="no"]
       )
