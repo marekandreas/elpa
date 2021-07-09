@@ -266,7 +266,7 @@ module hip_functions
       integer(kind=C_INT), intent(in), value         :: dir
       integer(kind=C_INT)                            :: istat
 
-    end function hip_memcpy2d_cpt_c
+    end function hip_memcpy2d_cptr_c
   end interface
 
   interface
@@ -1162,7 +1162,7 @@ module hip_functions
 #else
       success = .true.
 #endif
-    end function hip_memcpy2d_intptr
+    end function hip_memcpy2d_cptr
 
  function hip_host_register(a, size, flag) result(success)
 
@@ -1277,7 +1277,7 @@ module hip_functions
 #endif
     end subroutine rocblas_scopy_cptr
 
-    subroutine rocblas_dtrmm_inptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+    subroutine rocblas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
 
@@ -1290,7 +1290,7 @@ module hip_functions
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dtrmm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
-    end subroutine rocblas_dtrmm_inptr
+    end subroutine rocblas_dtrmm_intptr
 
     subroutine rocblas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
@@ -1331,7 +1331,7 @@ module hip_functions
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
-      integer(kind=C_intptr_T)        :: a, b
+      type(c_ptr)                     :: a, b
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_strmm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
