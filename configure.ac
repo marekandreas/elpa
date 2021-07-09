@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [15:3:1])
+AC_SUBST([ELPA_SO_VERSION], [16:2:1])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -2460,13 +2460,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-echo " "
-echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2021.05.001.rc2        *"
-echo "*  There might be still some changes until the final release of       *"
-echo "*  ELPA 2021.05.001                                                   *"
-echo "***********************************************************************"
-echo " "
+#echo " "
+#echo "***********************************************************************"
+#echo "*  This is the first release candidate of ELPA 2021.05.002.rc2        *"
+#echo "*  There might be still some changes until the final release of       *"
+#echo "*  ELPA 2021.05.002                                                   *"
+#echo "***********************************************************************"
+#echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
