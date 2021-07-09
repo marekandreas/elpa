@@ -158,8 +158,8 @@ max_threads, isSkewsymmetric)
 #if REALCASE == 1
   ! needed for blocked QR decomposition
   integer(kind=ik)                            :: PQRPARAM(11), work_size
-  real(kind=rk)                    :: dwork_size(1)
-  real(kind=rk), allocatable       :: work_blocked(:), tauvector(:), blockheuristic(:)
+  real(kind=rk)                               :: dwork_size(1)
+  real(kind=rk), allocatable                  :: work_blocked(:), tauvector(:), blockheuristic(:)
 #endif
   integer(kind=C_intptr_T)                    :: a_dev, vmr_dev, umc_dev, tmat_dev, vav_dev
   type(c_ptr)                                 :: vmr_host, umc_host
