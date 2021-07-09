@@ -44,46 +44,71 @@
 
 ! Pack a filled row group (i.e. an array of consecutive rows)
 
+#ifdef WITH_CUDA_AWARE_MPI
+#define WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
+#else
+#undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
+#endif
+
 subroutine pack_row_group_&
 &MATH_DATATYPE&
 &_gpu_&
 &PRECISION &
-(row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
-                                       rows, n_offset, row_count)
+(obj, row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
+ rows, n_offset, row_count, result_buffer_dev, nblk, num_result_buffers, nbuf, doCopyResult, wantDebug)
   use gpu_c_kernel
   use elpa_gpu
+  use elpa_abstract_impl
   use precision
   use, intrinsic :: iso_c_binding
   implicit none
-  integer(kind=c_intptr_t)     :: row_group_dev, a_dev
+  class(elpa_abstract_impl_t), intent(inout)   :: obj
+  integer(kind=c_intptr_t)                     :: row_group_dev, a_dev, result_buffer_dev
 
-  integer(kind=ik), intent(in) :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev
-  integer(kind=ik), intent(in) :: n_offset, row_count
+  integer(kind=ik), intent(in)                 :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev
+  integer(kind=ik), intent(in)                 :: n_offset, row_count
 #if REALCASE == 1
-  real(kind=C_DATATYPE_KIND)   :: rows(:,:)
+  real(kind=C_DATATYPE_KIND)                   :: rows(:,:)
 #endif
 #if COMPLEXCASE == 1
-  complex(kind=C_DATATYPE_KIND) :: rows(:,:)
+  complex(kind=C_DATATYPE_KIND)                 :: rows(:,:)
 #endif
-  integer(kind=ik)             :: max_idx
-  logical                      :: successGPU
+  integer(kind=ik)                             :: max_idx
+  logical                                      :: successGPU
+  logical, intent(in)                          :: doCopyResult, wantDebug
+  integer(kind=ik), intent(in)                 :: nblk, nbuf
+  integer(kind=ik), intent(in)                 :: num_result_buffers
+#ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
+  type(c_ptr)                                  :: result_buffer_mpi_dev
+#if REALCASE == 1
+  real(kind=C_DATATYPE_KIND), pointer          :: result_buffer_mpi_fortran_ptr(:,:,:)
+#endif
+#if COMPLEXCASE == 1
+  complex(kind=C_DATATYPE_KIND), pointer       :: result_buffer_mpi_fortran_ptr(:,:,:)
+#endif
+#endif
+ 
+  if (wantDebug) call obj%timer%start("pack_row_group")
+#ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND 
+  ! associate with c_ptr
+  result_buffer_mpi_dev = transfer(result_buffer_dev, result_buffer_mpi_dev)
+  ! and associate a fortran pointer
+  call c_f_pointer(result_buffer_mpi_dev, result_buffer_mpi_fortran_ptr, &
+                  [l_nev,nblk,num_result_buffers])
+#endif
 
   ! Use many blocks for higher GPU occupancy
   max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
 
   ! Use one kernel call to pack the entire row group
-
-!  call my_pack_kernel<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, a_dev, row_group_dev)
-
+  ! writes to row_group_dev
   call launch_my_pack_gpu_kernel_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
   (row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev)
 
-  ! Issue one single transfer call for all rows (device to host)
-!    rows(:, 1 : row_count) = row_group_dev(:, 1 : row_count)
-
+#ifndef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
   successGPU =  gpu_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
   &PRECISION&
   &_&
@@ -97,22 +122,46 @@ subroutine pack_row_group_&
     &: error in cudaMemcpy"
     stop 1
   endif
+#else
+  if (doCopyResult) then
+    ! need to copy row_group_dev -> result_buffer_dev
+    successGPU =  gpu_memcpy(c_loc(result_buffer_mpi_fortran_ptr(1, 1, nbuf)), &
+                  row_group_dev , row_count * l_nev * size_of_&
+                  &PRECISION&
+                  &_&
+                  &MATH_DATATYPE&
+                  & , gpuMemcpyDeviceToDevice)
+    if (.not.(successGPU)) then
+      print *,"pack_row_group_&
+      &MATH_DATATYPE&
+      &_gpu_&
+      &PRECISION&
+      &: error in cudaMemcpy"
+      stop 1
+    endif
+
+  endif
+#endif
+  if (wantDebug) call obj%timer%stop("pack_row_group")
 
 end subroutine
 
 
-    ! Unpack a filled row group (i.e. an array of consecutive rows)
-    subroutine unpack_row_group_&
+! Unpack a filled row group (i.e. an array of consecutive rows)
+subroutine unpack_row_group_&
     &MATH_DATATYPE&
     &_gpu_&
     &PRECISION &
-    (row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, &
-                                         a_dim2, l_nev, rows, n_offset, row_count)
+    (obj, row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, &
+     a_dim2, l_nev, rows, n_offset, row_count, wantDebug)
       use gpu_c_kernel
+      use elpa_abstract_impl
+
       use precision
       use, intrinsic :: iso_c_binding
       use elpa_gpu
       implicit none
+      class(elpa_abstract_impl_t), intent(inout)   :: obj
       integer(kind=c_intptr_t)                     :: row_group_dev, a_dev
       integer(kind=ik), intent(in)                 :: stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev
       integer(kind=ik), intent(in)                 :: n_offset, row_count
@@ -125,14 +174,13 @@ end subroutine
 
       integer(kind=ik)                             :: max_idx
       logical                                      :: successGPU
+      logical, intent(in)                          :: wantDebug
 
+      if (wantDebug) call obj%timer%start("unpack_row_group")
       ! Use many blocks for higher GPU occupancy
       max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
 
-      ! Issue one single transfer call for all rows (host to device)
-!      row_group_dev(:, 1 : row_count) = rows(:, 1 : row_count)
-
-
+#ifndef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
       successGPU =  gpu_memcpy( row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
                                  size_of_&
                                  &PRECISION&
@@ -147,10 +195,9 @@ end subroutine
         &: error in cudaMemcpy"
         stop 1
       endif
+#endif
 
-      ! Use one kernel call to pack the entire row group
-      !        call my_unpack_kernel<<<grid_size, stripe_width>>>(n_offset, max_idx, stripe_width, a_dim2, stripe_count, row_group_dev, a_dev)
-
+      ! only read access to row_group_dev
       call launch_my_unpack_gpu_kernel_&
       &MATH_DATATYPE&
       &_&
@@ -158,22 +205,42 @@ end subroutine
       ( row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
                                           row_group_dev,a_dev)
 
-    end subroutine
 
-    ! This subroutine must be called before queuing the next row for unpacking; it ensures that an unpacking of the current row group
-    ! occurs when the queue is full or when the next row belongs to another group
-    subroutine unpack_and_prepare_row_group_&
+#ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
+      if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
+      successGPU = gpu_devicesynchronize()
+      if (.not.(successGPU)) then
+        print *,"unpack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in cudaMemcpy"
+        stop 1
+      endif
+      if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
+#endif
+    if (wantDebug) call obj%timer%stop("unpack_row_group")
+
+end subroutine
+
+! This subroutine must be called before queuing the next row for unpacking; it ensures that an unpacking of the current row group
+! occurs when the queue is full or when the next row belongs to another group
+subroutine unpack_and_prepare_row_group_&
     &MATH_DATATYPE&
     &_gpu_&
     &PRECISION &
-    (row_group, row_group_dev, a_dev, stripe_count, stripe_width, &
+    (obj, row_group, row_group_dev, a_dev, stripe_count, stripe_width, &
                                                      last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
-                                                     unpack_idx, next_unpack_idx, force)
+                                                     unpack_idx, next_unpack_idx, force, wantDebug)
 
       use, intrinsic :: iso_c_binding
       use precision
       use gpu_c_kernel
+      use elpa_abstract_impl
+
       implicit none
+
+      class(elpa_abstract_impl_t), intent(inout)   :: obj
 #if REALCASE == 1
       real(kind=C_DATATYPE_KIND)      :: row_group(:,:)
 #endif
@@ -186,7 +253,9 @@ end subroutine
       integer(kind=ik), intent(in)    :: nblk
       integer(kind=ik), intent(inout) :: unpack_idx
       integer(kind=ik), intent(in)    :: next_unpack_idx
-      logical, intent(in)             :: force
+      logical, intent(in)             :: force, wantDebug
+
+      if (wantDebug) call obj%timer%start("unpack_and_prepare_row_group")
 
       if (row_group_size == 0) then
         ! Nothing to flush, just prepare for the upcoming row
@@ -198,8 +267,9 @@ end subroutine
           &MATH_DATATYPE&
           &_gpu_&
           &PRECISION&
-          (row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, &
-                                         a_dim2, l_nev, row_group(:, :), unpack_idx - row_group_size, row_group_size)
+          (obj, row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, &
+           a_dim2, l_nev, row_group(:, :), unpack_idx - row_group_size, row_group_size, &
+           wantDebug)
           row_group_size = 1
         else
           ! Just prepare for the upcoming row
@@ -208,10 +278,12 @@ end subroutine
       endif
       ! Always update the index for the upcoming row
       unpack_idx = next_unpack_idx
-    end subroutine
 
-    ! The host wrapper for extracting "tau" from the HH reflectors (see the kernel below)
-    subroutine extract_hh_tau_&
+      if (wantDebug) call obj%timer%stop("unpack_and_prepare_row_group")
+end subroutine
+
+! The host wrapper for extracting "tau" from the HH reflectors (see the kernel below)
+subroutine extract_hh_tau_&
     &MATH_DATATYPE&
     &_gpu_&
     &PRECISION&
@@ -235,4 +307,4 @@ end subroutine
       &_&
       &PRECISION&
       & (bcast_buffer_dev, hh_tau_dev, nbw, n, val_is_zero)
-    end subroutine
+end subroutine
