@@ -75,6 +75,58 @@ module elpa_gpu
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
 #endif
+
+  interface gpu_memcpy
+    module procedure gpu_memcpy_intptr
+    module procedure gpu_memcpy_cptr
+    module procedure gpu_memcpy_mixed
+  end interface
+
+  interface gpu_memcpy2d
+    module procedure gpu_memcpy2d_intptr
+    module procedure gpu_memcpy2d_cptr
+  end interface
+
+  interface gpublas_dcopy
+    module procedure gpublas_dcopy_intptr
+    module procedure gpublas_dcopy_cptr
+  end interface
+
+  interface gpublas_scopy
+    module procedure gpublas_scopy_intptr
+    module procedure gpublas_scopy_cptr
+  end interface
+
+  interface gpublas_zcopy
+    module procedure gpublas_zcopy_intptr
+    module procedure gpublas_zcopy_cptr
+  end interface
+
+  interface gpublas_ccopy
+    module procedure gpublas_ccopy_intptr
+    module procedure gpublas_ccopy_cptr
+  end interface
+
+  interface gpublas_dtrmm
+    module procedure gpublas_dtrmm_intptr
+    module procedure gpublas_dtrmm_cptr
+  end interface
+  
+  interface gpublas_strmm
+    module procedure gpublas_strmm_intptr
+    module procedure gpublas_strmm_cptr
+  end interface
+
+  interface gpublas_ztrmm
+    module procedure gpublas_ztrmm_intptr
+    module procedure gpublas_ztrmm_cptr
+  end interface
+
+  interface gpublas_ctrmm
+    module procedure gpublas_ctrmm_intptr
+    module procedure gpublas_ctrmm_cptr
+  end interface
+
   contains
     function gpu_vendor() result(vendor)
       use precision
@@ -131,6 +183,23 @@ module elpa_gpu
       endif
 
     end subroutine
+
+    function gpu_devicesynchronize() result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+      implicit none
+      logical                              :: success
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_devicesynchronize()
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_devicesynchronize()
+      endif
+    end function
+
 
     function gpu_malloc_host(array, elements) result(success)
       use, intrinsic :: iso_c_binding
@@ -190,7 +259,7 @@ module elpa_gpu
 
     end function
     
-    function gpu_memcpy(dst, src, size, dir) result(success)
+    function gpu_memcpy_intptr(dst, src, size, dir) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
@@ -202,11 +271,53 @@ module elpa_gpu
       logical :: success
 
       if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy(dst, src, size, dir)
+        success = cuda_memcpy_intptr(dst, src, size, dir)
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy(dst, src, size, dir)
+        !success = hip_memcpy_intptr(dst, src, size, dir)
+      endif
+    
+    end function
+    
+    function gpu_memcpy_cptr(dst, src, size, dir) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+      implicit none
+      type(c_ptr)                           :: dst
+      type(c_ptr)                           :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy_cptr(dst, src, size, dir)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        !success = hip_memcpy_cptr(dst, src, size, dir)
+      endif
+    
+    end function
+    
+    function gpu_memcpy_mixed(dst, src, size, dir) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+      implicit none
+      type(c_ptr)                           :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy_mixed(dst, src, size, dir)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        !success = hip_memcpy_cptr(dst, src, size, dir)
       endif
     
     end function
@@ -292,7 +403,7 @@ module elpa_gpu
     end function
 
 
-    function gpu_memcpy2d(dst, dpitch, src, spitch, width, height , dir) result(success)
+    function gpu_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir) result(success)
 
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -310,11 +421,37 @@ module elpa_gpu
       logical                            :: success
 
       if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy2d(dst, dpitch, src, spitch, width, height , dir)
+        success = cuda_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy2d(dst, dpitch, src, spitch, width, height , dir)
+        !success = hip_memcpy2d(dst, dpitch, src, spitch, width, height , dir)
+      endif
+    end function
+
+    function gpu_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+
+      type(c_ptr)         :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      type(c_ptr)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      logical                            :: success
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        !success = hip_memcpy2d(dst, dpitch, src, spitch, width, height , dir)
       endif
     end function
 
@@ -496,8 +633,177 @@ module elpa_gpu
       endif
     end subroutine
 
+    subroutine gpublas_dcopy_intptr(n, x, incx, y, incy)
 
-    subroutine gpublas_dtrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_dcopy_intptr(n, x, incx, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_dcopy_intptr(n, x, incx, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_dcopy_cptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)        :: x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_dcopy_cptr(n, x, incx, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_dcopy_cptr(n, x, incx, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_scopy_intptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_scopy_intptr(n, x, incx, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_dcopy_intptr(n, x, incx, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_scopy_cptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)        :: x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_scopy_cptr(n, x, incx, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_scopy_cptr(n, x, incx, y, incy)
+      endif
+
+    end subroutine
+
+
+    subroutine gpublas_zcopy_intptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_zcopy_intptr(n, x, incx, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_zcopy_intptr(n, x, incx, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_zcopy_cptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)        :: x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_zcopy_cptr(n, x, incx, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_dcopy_cptr(n, x, incx, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_ccopy_intptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_ccopy_intptr(n, x, incx, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_ccopy_intptr(n, x, incx, y, incy)
+      endif
+
+    end subroutine
+
+    subroutine gpublas_ccopy_cptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)        :: x, y
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_ccopy_cptr(n, x, incx, y, incy)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_ccopy_cptr(n, x, incx, y, incy)
+      endif
+
+    end subroutine
+
+
+    subroutine gpublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -511,17 +817,41 @@ module elpa_gpu
       integer(kind=C_intptr_T)        :: a, b
 
       if (use_gpu_vendor == nvidia_gpu) then
-        call cublas_dtrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        call cublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        call rocblas_dtrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        call rocblas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
 
     end subroutine
 
 
-    subroutine gpublas_strmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+    subroutine gpublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE)             :: alpha
+      type(c_ptr)                     :: a, b
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+    end subroutine
+
+
+    subroutine gpublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -535,17 +865,41 @@ module elpa_gpu
       integer(kind=C_intptr_T)        :: a, b
 
       if (use_gpu_vendor == nvidia_gpu) then
-        call cublas_strmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        call cublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        call rocblas_strmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        call rocblas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
+
     end subroutine
 
 
+    subroutine gpublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
-    subroutine gpublas_ztrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT)              :: alpha
+      type(c_ptr)                     :: a, b
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+    end subroutine
+
+
+    subroutine gpublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -559,16 +913,17 @@ module elpa_gpu
       integer(kind=C_intptr_T)        :: a, b
 
       if (use_gpu_vendor == nvidia_gpu) then
-        call cublas_ztrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        call cublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        call rocblas_ztrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        call rocblas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
     end subroutine
 
 
-    subroutine gpublas_ctrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+    subroutine gpublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -578,15 +933,62 @@ module elpa_gpu
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX)           :: alpha
-      integer(kind=C_intptr_T)        :: a, b
+      complex(kind=C_DOUBLE_COMPLEX)          :: alpha
+      type(c_ptr)                     :: a, b
 
       if (use_gpu_vendor == nvidia_gpu) then
-        call cublas_ctrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        call cublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        call rocblas_ctrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        call rocblas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+    end subroutine
+
+
+    subroutine gpublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX)   :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+    end subroutine
+
+
+
+    subroutine gpublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX)   :: alpha
+      type(c_ptr)                     :: a, b
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        call rocblas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
       endif
     end subroutine
 
