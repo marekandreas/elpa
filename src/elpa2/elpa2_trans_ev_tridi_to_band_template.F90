@@ -2159,8 +2159,8 @@ subroutine trans_ev_tridi_to_band_&
                      &MATH_DATATYPE&
                      &_openmp_&
                      &PRECISION&
-                     &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
-                     nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
+                     &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, &
+                     a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                      hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
                      bottom_msg_length, i, my_thread, thread_width, kernel)
               enddo
