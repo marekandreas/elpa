@@ -1799,7 +1799,7 @@ if test x"${enable_nvidia_gpu_memory_debug}" = x"yes" ; then
 fi
 
 use_cuda_aware_mpi=no
-if test x"${need_gpu}" = x"yes"; then
+if test x"${need_nvidia_gpu}" = x"yes"; then
   if test x"${with_mpi}" = x"yes"; then
     AC_MSG_CHECKING(whether CUDA aware MPI should be used)
     AC_ARG_ENABLE([cuda-aware-mpi],
@@ -1815,7 +1815,6 @@ if test x"${need_gpu}" = x"yes"; then
     if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
       AC_DEFINE([WITH_CUDA_AWARE_MPI],[1],[enable CUDA-aware MPI])
     fi
-
     if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
       AC_MSG_CHECKING([whether CUDA-aware MPI is supported])
       AC_LANG_PUSH([C])
