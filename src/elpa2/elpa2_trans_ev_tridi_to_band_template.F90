@@ -2149,8 +2149,8 @@ subroutine trans_ev_tridi_to_band_&
                 reshape(aIntern(1:csw,n_off+1:n_off+bottom_msg_length,i,:), (/ b_len /))
 #ifdef WITH_MPI
                 if (wantDebug) call obj%timer%start("mpi_communication")
-                !call MPI_Isend(bottom_border_send_buffer(1,i), int(b_len,kind=MPI_KIND),  &
-                call MPI_Isend(bottom_border_send_buffer(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
+                call MPI_Isend(bottom_border_send_buffer(1,i), int(b_len,kind=MPI_KIND),  &
+                !call MPI_Isend(bottom_border_send_buffer(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
                      MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                      int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
                 if (wantDebug) call obj%timer%stop("mpi_communication")
