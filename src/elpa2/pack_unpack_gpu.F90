@@ -46,8 +46,6 @@
 
 #ifdef WITH_CUDA_AWARE_MPI
 #define WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
-#else
-#undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
 #endif
 
 subroutine pack_row_group_&
