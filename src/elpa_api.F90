@@ -114,25 +114,25 @@ module elpa_api
 
       ! Actual math routines
       generic, public :: eigenvectors => &                          !< method eigenvectors for solving the full eigenvalue problem
-          elpa_eigenvectors_d, &                                    !< the eigenvalues and (parts of) the eigenvectors are computed
-          elpa_eigenvectors_f, &                                    !< for symmetric real valued / hermitian complex valued matrices
-          elpa_eigenvectors_dc, &
-          elpa_eigenvectors_fc
+          elpa_eigenvectors_all_host_arrays_d, &                    !< the eigenvalues and (parts of) the eigenvectors are computed
+          elpa_eigenvectors_all_host_arrays_f, &                    !< for symmetric real valued / hermitian complex valued matrices
+          elpa_eigenvectors_all_host_arrays_dc, &
+          elpa_eigenvectors_all_host_arrays_fc
 
       generic, public :: eigenvalues => &                           !< method eigenvalues for solving the eigenvalue problem
-          elpa_eigenvalues_d, &                                     !< only the eigenvalues are computed
-          elpa_eigenvalues_f, &                                     !< for symmetric real valued / hermitian complex valued matrices
-          elpa_eigenvalues_dc, &
-          elpa_eigenvalues_fc
+          elpa_eigenvalues_all_host_arrays_d, &                     !< only the eigenvalues are computed
+          elpa_eigenvalues_all_host_arrays_f, &                     !< for symmetric real valued / hermitian complex valued matrices
+          elpa_eigenvalues_all_host_arrays_dc, &
+          elpa_eigenvalues_all_host_arrays_fc
 
 #ifdef HAVE_SKEWSYMMETRIC
       generic, public :: skew_eigenvectors => &                     !< method skew_eigenvectors for solving the full skew-symmetric eigenvalue problem
-          elpa_skew_eigenvectors_d, &                               !< the eigenvalues and (parts of) the eigenvectors are computed
-          elpa_skew_eigenvectors_f                                  !< for symmetric real valued skew-symmetric matrices
+          elpa_skew_eigenvectors_all_host_arrays_d, &               !< the eigenvalues and (parts of) the eigenvectors are computed
+          elpa_skew_eigenvectors_all_host_arrays_f                  !< for symmetric real valued skew-symmetric matrices
 
       generic, public :: skew_eigenvalues => &                      !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
-          elpa_skew_eigenvalues_d, &                                !< only the eigenvalues are computed
-          elpa_skew_eigenvalues_f                                   !< for symmetric real valued skew-symmetric matrices
+          elpa_skew_eigenvalues_all_host_arrays_d, &                !< only the eigenvalues are computed
+          elpa_skew_eigenvalues_all_host_arrays_f                   !< for symmetric real valued skew-symmetric matrices
 #endif
 
       generic, public :: generalized_eigenvectors => &              !< method eigenvectors for solving the full generalized eigenvalue problem
@@ -192,23 +192,23 @@ module elpa_api
       procedure(elpa_get_float_i),  deferred, public :: elpa_get_float
       procedure(elpa_get_double_i),  deferred, public :: elpa_get_double
 
-      procedure(elpa_eigenvectors_d_i),    deferred, public :: elpa_eigenvectors_d
-      procedure(elpa_eigenvectors_f_i),    deferred, public :: elpa_eigenvectors_f
-      procedure(elpa_eigenvectors_dc_i), deferred, public :: elpa_eigenvectors_dc
-      procedure(elpa_eigenvectors_fc_i), deferred, public :: elpa_eigenvectors_fc
+      procedure(elpa_eigenvectors_all_host_arrays_d_i),    deferred, public :: elpa_eigenvectors_all_host_arrays_d
+      procedure(elpa_eigenvectors_all_host_arrays_f_i),    deferred, public :: elpa_eigenvectors_all_host_arrays_f
+      procedure(elpa_eigenvectors_all_host_arrays_dc_i), deferred, public :: elpa_eigenvectors_all_host_arrays_dc
+      procedure(elpa_eigenvectors_all_host_arrays_fc_i), deferred, public :: elpa_eigenvectors_all_host_arrays_fc
 
-      procedure(elpa_eigenvalues_d_i),    deferred, public :: elpa_eigenvalues_d
-      procedure(elpa_eigenvalues_f_i),    deferred, public :: elpa_eigenvalues_f
-      procedure(elpa_eigenvalues_dc_i), deferred, public :: elpa_eigenvalues_dc
-      procedure(elpa_eigenvalues_fc_i), deferred, public :: elpa_eigenvalues_fc
+      procedure(elpa_eigenvalues_all_host_arrays_d_i),    deferred, public :: elpa_eigenvalues_all_host_arrays_d
+      procedure(elpa_eigenvalues_all_host_arrays_f_i),    deferred, public :: elpa_eigenvalues_all_host_arrays_f
+      procedure(elpa_eigenvalues_all_host_arrays_dc_i), deferred, public :: elpa_eigenvalues_all_host_arrays_dc
+      procedure(elpa_eigenvalues_all_host_arrays_fc_i), deferred, public :: elpa_eigenvalues_all_host_arrays_fc
 
 #ifdef HAVE_SKEWSYMMETRIC
-      procedure(elpa_skew_eigenvectors_d_i),    deferred, public :: elpa_skew_eigenvectors_d
-      procedure(elpa_skew_eigenvectors_f_i),    deferred, public :: elpa_skew_eigenvectors_f
+      procedure(elpa_skew_eigenvectors_all_host_arrays_d_i),    deferred, public :: elpa_skew_eigenvectors_all_host_arrays_d
+      procedure(elpa_skew_eigenvectors_all_host_arrays_f_i),    deferred, public :: elpa_skew_eigenvectors_all_host_arrays_f
 
 
-      procedure(elpa_skew_eigenvalues_d_i),    deferred, public :: elpa_skew_eigenvalues_d
-      procedure(elpa_skew_eigenvalues_f_i),    deferred, public :: elpa_skew_eigenvalues_f
+      procedure(elpa_skew_eigenvalues_all_host_arrays_d_i),    deferred, public :: elpa_skew_eigenvalues_all_host_arrays_d
+      procedure(elpa_skew_eigenvalues_all_host_arrays_f_i),    deferred, public :: elpa_skew_eigenvalues_all_host_arrays_f
 #endif
 
       procedure(elpa_generalized_eigenvectors_d_i),    deferred, public :: elpa_generalized_eigenvectors_d

@@ -81,7 +81,7 @@
 #endif
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_eigenvectors_&
+    subroutine elpa_eigenvectors_all_host_arrays_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
       use, intrinsic :: iso_c_binding
@@ -129,7 +129,7 @@
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_skew_eigenvectors_&
+    subroutine elpa_skew_eigenvectors_all_host_arrays_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
       use, intrinsic :: iso_c_binding
@@ -183,7 +183,7 @@
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_eigenvalues_&
+    subroutine elpa_eigenvalues_all_host_arrays_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
       use, intrinsic :: iso_c_binding
@@ -228,7 +228,7 @@
 #endif
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_skew_eigenvalues_&
+    subroutine elpa_skew_eigenvalues_all_host_arrays_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
       use, intrinsic :: iso_c_binding

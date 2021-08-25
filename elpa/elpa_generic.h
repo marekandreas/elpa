@@ -48,16 +48,16 @@
  */
 #define elpa_eigenvectors(handle, a, ev, q, error) _Generic((a), \
                 double*: \
-                  elpa_eigenvectors_d, \
+                  elpa_eigenvectors_all_host_arrays_d, \
                 \
                 float*: \
-                  elpa_eigenvectors_f, \
+                  elpa_eigenvectors_all_host_arrays_f, \
                 \
                 double complex*: \
-                  elpa_eigenvectors_dc, \
+                  elpa_eigenvectors_all_host_arrays_dc, \
                 \
                 float complex*: \
-                  elpa_eigenvectors_fc \
+                  elpa_eigenvectors_all_host_arrays_fc \
         )(handle, a, ev, q, error)
 
 /*! \brief generic C method for elpa_skew_eigenvectors
@@ -72,10 +72,10 @@
  */
 #define elpa_skew_eigenvectors(handle, a, ev, q, error) _Generic((a), \
                 double*: \
-                  elpa_eigenvectors_d, \
+                  elpa_eigenvectors_all_host_arrays_d, \
                 \
                 float*: \
-                  elpa_eigenvectors_f, \
+                  elpa_eigenvectors_all_host_arrays_f, \
         )(handle, a, ev, q, error)
 
 
@@ -118,16 +118,16 @@
  */
 #define elpa_eigenvalues(handle, a, ev, error) _Generic((a), \
                 double*: \
-                  elpa_eigenvalues_d, \
+                  elpa_eigenvalues_all_host_arrays_d, \
                 \
                 float*: \
-                  elpa_eigenvalues_f, \
+                  elpa_eigenvalues_all_host_arrays_f, \
                 \
                 double complex*: \
-                  elpa_eigenvalues_dc, \
+                  elpa_eigenvalues_all_host_arrays_dc, \
                 \
                 float complex*: \
-                  elpa_eigenvalues_fc \
+                  elpa_eigenvalues_all_host_arrays_fc \
         )(handle, a, ev, error)
 
 /*! \brief generic C method for elpa_skew_eigenvalues
@@ -141,10 +141,10 @@
  */
 #define elpa_skew_eigenvalues(handle, a, ev, error) _Generic((a), \
                 double*: \
-                  elpa_eigenvalues_d, \
+                  elpa_eigenvalues_all_host_arrays_d, \
                 \
                 float*: \
-                  elpa_eigenvalues_f, \
+                  elpa_eigenvalues_all_host_arrays_f, \
         )(handle, a, ev, error)
 
 

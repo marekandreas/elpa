@@ -105,26 +105,26 @@ module elpa_impl
 
      !> \brief the implemenation methods
 
-     procedure, public :: elpa_eigenvectors_d                  !< public methods to implement the solve step for real/complex
-                                                               !< double/single matrices
-     procedure, public :: elpa_eigenvectors_f
-     procedure, public :: elpa_eigenvectors_dc
-     procedure, public :: elpa_eigenvectors_fc
+     procedure, public :: elpa_eigenvectors_all_host_arrays_d                  !< public methods to implement the solve step for real/complex
+                                                                               !< double/single matrices
+     procedure, public :: elpa_eigenvectors_all_host_arrays_f
+     procedure, public :: elpa_eigenvectors_all_host_arrays_dc
+     procedure, public :: elpa_eigenvectors_all_host_arrays_fc
 
-     procedure, public :: elpa_eigenvalues_d                   !< public methods to implement the solve step for real/complex
-                                                               !< double/single matrices; only the eigenvalues are computed
-     procedure, public :: elpa_eigenvalues_f
-     procedure, public :: elpa_eigenvalues_dc
-     procedure, public :: elpa_eigenvalues_fc
+     procedure, public :: elpa_eigenvalues_all_host_arrays_d                   !< public methods to implement the solve step for real/complex
+                                                                               !< double/single matrices; only the eigenvalues are computed
+     procedure, public :: elpa_eigenvalues_all_host_arrays_f
+     procedure, public :: elpa_eigenvalues_all_host_arrays_dc
+     procedure, public :: elpa_eigenvalues_all_host_arrays_fc
 
 #ifdef HAVE_SKEWSYMMETRIC
-     procedure, public :: elpa_skew_eigenvectors_d             !< public methods to implement the solve step for real skew-symmetric
-                                                               !< double/single matrices
-     procedure, public :: elpa_skew_eigenvectors_f
+     procedure, public :: elpa_skew_eigenvectors_all_host_arrays_d             !< public methods to implement the solve step for real skew-symmetric
+                                                                               !< double/single matrices
+     procedure, public :: elpa_skew_eigenvectors_all_host_arrays_f
 
-     procedure, public :: elpa_skew_eigenvalues_d              !< public methods to implement the solve step for real skew-symmetric
-                                                               !< double/single matrices; only the eigenvalues are computed
-     procedure, public :: elpa_skew_eigenvalues_f
+     procedure, public :: elpa_skew_eigenvalues_all_host_arrays_d              !< public methods to implement the solve step for real skew-symmetric
+                                                                               !< double/single matrices; only the eigenvalues are computed
+     procedure, public :: elpa_skew_eigenvalues_all_host_arrays_f
 #endif
 
      procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized

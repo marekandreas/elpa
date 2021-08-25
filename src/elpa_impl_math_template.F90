@@ -71,7 +71,7 @@
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr   
 
-    subroutine elpa_eigenvectors_&
+    subroutine elpa_eigenvectors_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     & (self, a, ev, q, error)
       class(elpa_impl_t)  :: self
@@ -153,37 +153,37 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
-    !c> void elpa_eigenvectors_d(elpa_t handle, double *a, double *ev, double *q, int *error);
+    !c> void elpa_eigenvectors_all_host_arrays_d(elpa_t handle, double *a, double *ev, double *q, int *error);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    !c> void elpa_eigenvectors_f(elpa_t handle, float *a, float *ev, float *q, int *error);
+    !c> void elpa_eigenvectors_all_host_arrays_f(elpa_t handle, float *a, float *ev, float *q, int *error);
 #endif
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvectors_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
+    !c> void elpa_eigenvectors_all_host_arrays_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvectors_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
+    !c> void elpa_eigenvectors_all_host_arrays_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
 #endif
 #endif
-    subroutine elpa_eigenvectors_&
+    subroutine elpa_eigenvectors_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     &_c(handle, a_p, ev_p, q_p, error) &
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL  
-                    bind(C, name="elpa_eigenvectors_d")
+                    bind(C, name="elpa_eigenvectors_all_host_arrays_d")
 #endif
 #ifdef SINGLE_PRECISION_REAL  
-                    bind(C, name="elpa_eigenvectors_f")
+                    bind(C, name="elpa_eigenvectors_all_host_arrays_f")
 #endif
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-                    bind(C, name="elpa_eigenvectors_dc")
+                    bind(C, name="elpa_eigenvectors_all_host_arrays_dc")
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-                    bind(C, name="elpa_eigenvectors_fc")
+                    bind(C, name="elpa_eigenvectors_all_host_arrays_fc")
 #endif
 #endif
       type(c_ptr), intent(in), value            :: handle, a_p, ev_p, q_p
@@ -202,7 +202,7 @@
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_eigenvectors_&
+      call elpa_eigenvectors_all_host_arrays_&
               &ELPA_IMPL_SUFFIX&
               & (self, a, ev, q, error)
     end subroutine    
@@ -235,7 +235,7 @@
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr   
 
-    subroutine elpa_skew_eigenvectors_&
+    subroutine elpa_skew_eigenvectors_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     & (self, a, ev, q, error)
       class(elpa_impl_t)  :: self
@@ -319,21 +319,21 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
-    !c> void elpa_skew_eigenvectors_d(elpa_t handle, double *a, double *ev, double *q, int *error);
+    !c> void elpa_skew_eigenvectors_all_host_arrays_d(elpa_t handle, double *a, double *ev, double *q, int *error);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    !c> void elpa_skew_eigenvectors_f(elpa_t handle, float *a, float *ev, float *q, int *error);
+    !c> void elpa_skew_eigenvectors_all_host_arrays_f(elpa_t handle, float *a, float *ev, float *q, int *error);
 #endif
 #endif
-    subroutine elpa_skew_eigenvectors_&
+    subroutine elpa_skew_eigenvectors_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     &_c(handle, a_p, ev_p, q_p, error) &
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
-                    bind(C, name="elpa_skew_eigenvectors_d")
+                    bind(C, name="elpa_skew_eigenvectors_all_host_arrays_d")
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                    bind(C, name="elpa_skew_eigenvectors_f")
+                    bind(C, name="elpa_skew_eigenvectors_all_host_arrays_f")
 #endif
 #endif
 
@@ -353,7 +353,7 @@
       call c_f_pointer(ev_p, ev, [self%na])
       call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
 
-      call elpa_skew_eigenvectors_&
+      call elpa_skew_eigenvectors_all_host_arrays_&
               &ELPA_IMPL_SUFFIX&
               & (self, a, ev, q, error)
     end subroutine
@@ -380,7 +380,7 @@
     !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_eigenvalues_&
+    subroutine elpa_eigenvalues_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     & (self, a, ev, error)
       class(elpa_impl_t)  :: self
@@ -460,37 +460,37 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
-    !c> void elpa_eigenvalues_d(elpa_t handle, double *a, double *ev, int *error);
+    !c> void elpa_eigenvalues_all_host_arrays_d(elpa_t handle, double *a, double *ev, int *error);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    !c> void elpa_eigenvalues_f(elpa_t handle, float *a, float *ev, int *error);
+    !c> void elpa_eigenvalues_all_host_arrays_f(elpa_t handle, float *a, float *ev, int *error);
 #endif
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvalues_dc(elpa_t handle, double complex *a, double *ev, int *error);
+    !c> void elpa_eigenvalues_all_host_arrays_dc(elpa_t handle, double complex *a, double *ev, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvalues_fc(elpa_t handle, float complex *a, float *ev, int *error);
+    !c> void elpa_eigenvalues_all_host_arrays_fc(elpa_t handle, float complex *a, float *ev, int *error);
 #endif
 #endif
-    subroutine elpa_eigenvalues_&
+    subroutine elpa_eigenvalues_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     &_c(handle, a_p, ev_p, error) &
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL    
-                    bind(C, name="elpa_eigenvalues_d")
+                    bind(C, name="elpa_eigenvalues_all_host_arrays_d")
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                    bind(C, name="elpa_eigenvalues_f")
+                    bind(C, name="elpa_eigenvalues_all_host_arrays_f")
 #endif
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX 
-                    bind(C, name="elpa_eigenvalues_dc")
+                    bind(C, name="elpa_eigenvalues_all_host_arrays_dc")
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-                    bind(C, name="elpa_eigenvalues_fc")
+                    bind(C, name="elpa_eigenvalues_all_host_arrays_fc")
 #endif
 #endif
 
@@ -505,7 +505,7 @@
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
       call c_f_pointer(ev_p, ev, [self%na])
 
-      call elpa_eigenvalues_&
+      call elpa_eigenvalues_all_host_arrays_&
               &ELPA_IMPL_SUFFIX&
               & (self, a, ev, error)
     end subroutine    
@@ -532,7 +532,7 @@
     !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_skew_eigenvalues_&
+    subroutine elpa_skew_eigenvalues_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     & (self, a, ev, error)
       class(elpa_impl_t)  :: self
@@ -613,21 +613,21 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
-    !c> void elpa_skew_eigenvalues_d(elpa_t handle, double *a, double *ev, int *error);
+    !c> void elpa_skew_eigenvalues_all_host_arrays_d(elpa_t handle, double *a, double *ev, int *error);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    !c> void elpa_skew_eigenvalues_f(elpa_t handle, float *a, float *ev, int *error);
+    !c> void elpa_skew_eigenvalues_all_host_arrays_f(elpa_t handle, float *a, float *ev, int *error);
 #endif
 #endif
-    subroutine elpa_skew_eigenvalues_&
+    subroutine elpa_skew_eigenvalues_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     &_c(handle, a_p, ev_p, error) &
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
-                    bind(C, name="elpa_skew_eigenvalues_d")
+                    bind(C, name="elpa_skew_eigenvalues_all_host_arrays_d")
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                    bind(C, name="elpa_skew_eigenvalues_f")
+                    bind(C, name="elpa_skew_eigenvalues_all_host_arrays_f")
 #endif
 #endif
       type(c_ptr), intent(in), value :: handle, a_p, ev_p
@@ -641,7 +641,7 @@
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
       call c_f_pointer(ev_p, ev, [self%na])
 
-      call elpa_skew_eigenvalues_&
+      call elpa_skew_eigenvalues_all_host_arrays_&
               &ELPA_IMPL_SUFFIX&
               & (self, a, ev, error)
     end subroutine
