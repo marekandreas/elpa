@@ -58,13 +58,13 @@
 #ifdef ACTIVATE_SKEW
 function elpa_solve_skew_evp_&
          &MATH_DATATYPE&
-   &_1stage_&
+   &_1stage_all_host_arrays_&
    &PRECISION&
    &_impl (obj, &
 #else
 function elpa_solve_evp_&
          &MATH_DATATYPE&
-   &_1stage_&
+   &_1stage_all_host_arrays_&
    &PRECISION&
    &_impl (obj, &
 #endif

@@ -110,7 +110,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
-                &_1stage_&
+                &_1stage_all_host_arrays_&
                 &PRECISION&
                 &_impl(self, a, ev, q)
 #endif
@@ -121,7 +121,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
-                &_2stage_&
+                &_2stage_all_host_arrays_&
                 &PRECISION&
                 &_impl(self, a, ev, q)
 #endif
@@ -276,7 +276,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_skew_evp_&
                 &MATH_DATATYPE&
-                &_1stage_&
+                &_1stage_all_host_arrays_&
                 &PRECISION&
                 &_impl(self, a, ev, q)
 #endif
@@ -287,7 +287,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_skew_evp_&
                 &MATH_DATATYPE&
-                &_2stage_&
+                &_2stage_all_host_arrays_&
                 &PRECISION&
                 &_impl(self, a, ev, q)
 #endif
@@ -418,7 +418,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
-                          &_1stage_&
+                          &_1stage_all_host_arrays_&
                           &PRECISION&
                           &_impl(self, a, ev)
 #endif
@@ -429,7 +429,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
-                                   &_2stage_&
+                                   &_2stage_all_host_arrays_&
                                    &PRECISION&
                                    &_impl(self, a, ev)
 #endif
@@ -571,7 +571,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_skew_evp_&
                 &MATH_DATATYPE&
-                          &_1stage_&
+                          &_1stage_all_host_arrays_&
                           &PRECISION&
                           &_impl(self, a, ev)
 #endif
@@ -582,7 +582,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_skew_evp_&
                 &MATH_DATATYPE&
-                                   &_2stage_&
+                                   &_2stage_all_host_arrays_&
                                    &PRECISION&
                                    &_impl(self, a, ev)
 #endif
@@ -723,7 +723,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
-                &_1stage_&
+                &_1stage_all_host_arrays_&
                 &PRECISION&
                 &_impl(self, a, ev, q)
 #endif
@@ -731,7 +731,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
-                &_2stage_&
+                &_2stage_all_host_arrays_&
                 &PRECISION&
                 &_impl(self, a, ev, q)
 #endif
@@ -900,7 +900,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
-                &_1stage_&
+                &_1stage_all_host_arrays_&
                 &PRECISION&
                 &_impl(self, a, ev)
 #endif
@@ -908,7 +908,7 @@
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
-                &_2stage_&
+                &_2stage_all_host_arrays_&
                 &PRECISION&
                 &_impl(self, a, ev)
 #endif

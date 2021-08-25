@@ -62,7 +62,7 @@
 #endif
   &MATH_DATATYPE&
   &_&
-  &2stage_&
+  &2stage_all_host_arrays_&
   &PRECISION&
   &_impl (obj, &
 #ifdef REDISTRIBUTE_MATRIX
@@ -1150,14 +1150,6 @@
      &")
 1    format(a,f10.3)
 
-#ifdef ACTIVATE_SKEW
-   end function elpa_solve_skew_evp_&
-#else
-   end function elpa_solve_evp_&
-#endif
-   &MATH_DATATYPE&
-   &_2stage_&
-   &PRECISION&
-   &_impl
+   end function
 
 ! vim: syntax=fortran
