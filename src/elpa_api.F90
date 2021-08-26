@@ -119,20 +119,58 @@ module elpa_api
           elpa_eigenvectors_all_host_arrays_dc, &
           elpa_eigenvectors_all_host_arrays_fc
 
+      generic, public :: eigenvectors_double => &                   !< method eigenvectors for solving the full eigenvalue problem
+          elpa_eigenvectors_all_host_arrays_d                       !< the eigenvalues and (parts of) the eigenvectors are computed
+
+      generic, public :: eigenvectors_float => &                    !< method eigenvectors for solving the full eigenvalue problem
+          elpa_eigenvectors_all_host_arrays_f                       !< the eigenvalues and (parts of) the eigenvectors are computed
+
+      generic, public :: eigenvectors_double_complex => &           !< method eigenvectors for solving the full eigenvalue problem
+          elpa_eigenvectors_all_host_arrays_dc                       !< the eigenvalues and (parts of) the eigenvectors are computed
+
+      generic, public :: eigenvectors_float_complex => &             !< method eigenvectors for solving the full eigenvalue problem
+          elpa_eigenvectors_all_host_arrays_fc                       !< the eigenvalues and (parts of) the eigenvectors are computed
+
       generic, public :: eigenvalues => &                           !< method eigenvalues for solving the eigenvalue problem
           elpa_eigenvalues_all_host_arrays_d, &                     !< only the eigenvalues are computed
           elpa_eigenvalues_all_host_arrays_f, &                     !< for symmetric real valued / hermitian complex valued matrices
           elpa_eigenvalues_all_host_arrays_dc, &
           elpa_eigenvalues_all_host_arrays_fc
 
+      generic, public :: eigenvalues_double => &                    !< method eigenvalues for solving the eigenvalue problem
+          elpa_eigenvalues_all_host_arrays_d                        !< only the eigenvalues are computed
+
+      generic, public :: eigenvalues_float => &                     !< method eigenvalues for solving the eigenvalue problem
+          elpa_eigenvalues_all_host_arrays_f                        !< only the eigenvalues are computed
+
+      generic, public :: eigenvalues_double_complex => &            !< method eigenvalues for solving the eigenvalue problem
+          elpa_eigenvalues_all_host_arrays_dc                       !< only the eigenvalues are computed
+
+      generic, public :: eigenvalues_float_complex => &             !< method eigenvalues for solving the eigenvalue problem
+          elpa_eigenvalues_all_host_arrays_fc                       !< only the eigenvalues are computed
+
+
 #ifdef HAVE_SKEWSYMMETRIC
       generic, public :: skew_eigenvectors => &                     !< method skew_eigenvectors for solving the full skew-symmetric eigenvalue problem
           elpa_skew_eigenvectors_all_host_arrays_d, &               !< the eigenvalues and (parts of) the eigenvectors are computed
           elpa_skew_eigenvectors_all_host_arrays_f                  !< for symmetric real valued skew-symmetric matrices
 
+      generic, public :: skew_eigenvectors_double => &              !< method skew_eigenvectors for solving the full skew-symmetric eigenvalue problem
+          elpa_skew_eigenvectors_all_host_arrays_d                  !< the eigenvalues and (parts of) the eigenvectors are computed
+
+      generic, public :: skew_eigenvectors_float => &               !< method skew_eigenvectors for solving the full skew-symmetric eigenvalue problem
+          elpa_skew_eigenvectors_all_host_arrays_f                  !< the eigenvalues and (parts of) the eigenvectors are computed
+
       generic, public :: skew_eigenvalues => &                      !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
           elpa_skew_eigenvalues_all_host_arrays_d, &                !< only the eigenvalues are computed
           elpa_skew_eigenvalues_all_host_arrays_f                   !< for symmetric real valued skew-symmetric matrices
+
+      generic, public :: skew_eigenvalues_double => &               !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
+          elpa_skew_eigenvalues_all_host_arrays_d                   !< only the eigenvalues are computed
+
+      generic, public :: skew_eigenvalues_float => &                !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
+          elpa_skew_eigenvalues_all_host_arrays_f                   !< only the eigenvalues are computed
+
 #endif
 
       generic, public :: generalized_eigenvectors => &              !< method eigenvectors for solving the full generalized eigenvalue problem
@@ -141,9 +179,9 @@ module elpa_api
           elpa_generalized_eigenvectors_dc, &
           elpa_generalized_eigenvectors_fc
 
-      generic, public :: generalized_eigenvalues => &              !< method eigenvectors for solving the full generalized eigenvalue problem
-          elpa_generalized_eigenvalues_d, &                        !< only the eigenvalues
-          elpa_generalized_eigenvalues_f, &                        !< for symmetric real valued / hermitian complex valued matrices
+      generic, public :: generalized_eigenvalues => &               !< method eigenvectors for solving the full generalized eigenvalue problem
+          elpa_generalized_eigenvalues_d, &                         !< only the eigenvalues
+          elpa_generalized_eigenvalues_f, &                         !< for symmetric real valued / hermitian complex valued matrices
           elpa_generalized_eigenvalues_dc, &
           elpa_generalized_eigenvalues_fc
 

@@ -795,9 +795,29 @@ program test
 #elif TEST_SCALAPACK_PART
      call solve_scalapack_part(na, a, sc_desc, nev, ev, z)
      check_all_evals = .false. ! scalapack does not compute all eigenvectors
-#else
-     call e%eigenvectors(a, ev, z, error_elpa)
+#else /* TEST_SCALAPACK_PART */
+
+#ifdef TEST_EXPLICIT_NAME
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+     call e%eigenvectors_double(a, ev, z, error_elpa)
 #endif
+#if defined(TEST_SINGLE)
+     call e%eigenvectors_float(a, ev, z, error_elpa)
+#endif
+#endif /* TEST_REAL */
+#if definded(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+     call e%eigenvectors_double_complex(a, ev, z, error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%eigenvectors_float_complex(a, ev, z, error_elpa)
+#endif
+#endif
+#else /* TEST_EXPLICIT_NAME */
+     call e%eigenvectors(a, ev, z, error_elpa)
+#endif /* TEST_EXPLICIT_NAME */
+#endif /* TEST_SCALAPACK_PART */
 #if TEST_QR_DECOMPOSITION == 1
      call e%timer_stop("e%eigenvectors_qr()")
 #else
@@ -807,7 +827,26 @@ program test
 
 #ifdef TEST_EIGENVALUES
      call e%timer_start("e%eigenvalues()")
+#ifdef TEST_EXPLICIT_NAME
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+     call e%eigenvalues_double(a, ev, error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%eigenvalues_float(a, ev, error_elpa)
+#endif
+#endif /* TEST_REAL */
+#if definded(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+     call e%eigenvalues_double_complex(a, ev, error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%eigenvalues_float_complex(a, ev, error_elpa)
+#endif
+#endif
+#else /* TEST_EXPLICIT_NAME */
      call e%eigenvalues(a, ev, error_elpa)
+#endif /* TEST_EXPLICIT_NAME */
      call e%timer_stop("e%eigenvalues()")
 #endif
 

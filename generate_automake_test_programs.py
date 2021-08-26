@@ -63,7 +63,12 @@ split_comm_flag = {
     "by_elpa": ""
 }
 
-for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.keys()),
+explicit_name_flag = {
+        "explicit": "-DTEST_EXPLICIT_NAME",
+        "implicit": ""
+}
+
+for lang, m, g, gid, q, t, p, d, s, lay, spl, api_name in product(sorted(language_flag.keys()),
                                                    sorted(matrix_flag.keys()),
                                                    sorted(gpu_flag.keys()),
                                                    sorted(gpu_id_flag.keys()),
@@ -73,7 +78,8 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
                                                    sorted(domain_flag.keys()),
                                                    sorted(solver_flag.keys()),
                                                    sorted(layout_flag.keys()),
-                                                   sorted(split_comm_flag.keys())):
+                                                   sorted(split_comm_flag.keys()),
+                                                   sorted(explicit_name_flag.keys())):
     
 
     if gid == 1 and (g == "GPU_OFF" ):
@@ -197,7 +203,7 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{gpuidsuffix}{qrsuffix}{m}{layoutsuffix}{spl}".format(
+        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{gpuidsuffix}{qrsuffix}{m}{layoutsuffix}{spl}{api_name}".format(
             langsuffix=language_flag[lang],
             d=d, p=p, t=t, s=s,
             kernelsuffix="" if kernel == "nokernel" else "_" + kernel,
@@ -206,7 +212,8 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl in product(sorted(language_flag.key
             qrsuffix="qr_" if q else "",
             m=m,
             layoutsuffix="_all_layouts" if lay == "all_layouts" else "",
-            spl="_split_comm_myself" if spl == "myself" else "")
+            spl="_split_comm_myself" if spl == "myself" else "", 
+            api_name="_explicit" if api_name == "explicit" else "")
 
         if (m == "analytic"):
           print("if BUILD_FUGAKU")
