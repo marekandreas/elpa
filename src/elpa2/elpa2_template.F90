@@ -55,11 +55,34 @@
 #include "elpa/elpa_simd_constants.h"
 #include "../general/error_checking.inc"
 
+#ifdef DEVICE_POINTER
 #ifdef ACTIVATE_SKEW
  function elpa_solve_skew_evp_&
 #else
  function elpa_solve_evp_&
-#endif
+#endif /* ACTIVATE_SKEW */
+  &MATH_DATATYPE&
+  &_&
+  &2stage_device_pointer_&
+  &PRECISION&
+  &_impl (obj, &
+#ifdef REDISTRIBUTE_MATRIX
+   aExtern, &
+#else
+   a, &
+#endif /* REDISTRIBUTE_MATRIX */
+   ev, &
+#ifdef REDISTRIBUTE_MATRIX
+   qExtern) result(success)
+#else
+   q) result(success)
+#endif /* REDISTRIBUTE_MATRIX */
+#else /* DEVICE_POINTER */
+#ifdef ACTIVATE_SKEW
+ function elpa_solve_skew_evp_&
+#else
+ function elpa_solve_evp_&
+#endif /* ACTIVATE_SKEW */
   &MATH_DATATYPE&
   &_&
   &2stage_all_host_arrays_&
@@ -69,13 +92,14 @@
    aExtern, &
 #else
    a, &
-#endif
+#endif /* REDISTRIBUTE_MATRIX */
    ev, &
 #ifdef REDISTRIBUTE_MATRIX
    qExtern) result(success)
 #else
    q) result(success)
-#endif
+#endif /* REDISTRIBUTE_MATRIX */
+#endif /* DEVICE_POINTER */
 
    !use matrix_plot
    use elpa_abstract_impl
@@ -107,6 +131,17 @@
    logical                                                            :: useQRActual
 #endif
    integer(kind=c_int)                                                :: kernel, kernelByUser
+
+#ifdef DEVICE_POINTER
+
+#ifdef REDISTRIBUTE_MATRIX
+   type(c_ptr)                                                        :: aExtern, qExtern
+#else /* REDISTRIBUTE_MATRIX */
+   type(c_ptr)                                                        :: a, q
+#endif /* REDISTRIBUTE_MATRIX */
+
+#else /* DEVICE_POINTER */
+   
 #ifdef REDISTRIBUTE_MATRIX
 
 #ifdef USE_ASSUMED_SIZE
@@ -137,12 +172,24 @@
 
 #endif /* REDISTRIBUTE_MATRIX */
 
+#endif /* DEVICE_POINTER */
+
+#ifdef DEVICE_POINTER
+#ifdef REDISTRIBUTE_MATRIX
+    type(c_ptr)                                                       :: a, q
+#endif
+#else /* DEVICE_POINTER */
 #ifdef REDISTRIBUTE_MATRIX
     MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
     MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
 #endif
+#endif /* DEVICE_POINTER */
 
+#ifdef DEVICE_POINTER
+   type(c_ptr)                                                        :: ev
+#else
    real(kind=C_DATATYPE_KIND), intent(inout)                          :: ev(obj%na)
+#endif
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: hh_trans(:,:)
 
    integer(kind=c_int)                                                :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols
@@ -296,6 +343,7 @@
 
     success = .true.
 
+#ifndef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
     if (present(qExtern)) then
 #else
@@ -305,7 +353,7 @@
     else
       obj%eigenvalues_only = .true.
     endif
-
+#endif
     na         = obj%na
     nev        = obj%nev
     nblk       = obj%nblk
@@ -346,13 +394,15 @@
 
     call obj%timer%stop("mpi_communication")
 
-
+#ifndef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
 #include "../helpers/elpa_redistribute_template.F90"
 #endif /* REDISTRIBUTE_MATRIX */
+#endif
 
    ! special case na = 1
    if (na .eq. 1) then
+#ifndef DEVICE_POINTER
 #if REALCASE == 1
      ev(1) = a(1,1)
 #endif
@@ -362,7 +412,7 @@
      if (.not.(obj%eigenvalues_only)) then
        q(1,1) = ONE
      endif
-
+#endif
      ! restore original OpenMP settings
 #ifdef WITH_OPENMP_TRADITIONAL
      ! store the number of OpenMP threads used in the calling function
@@ -720,6 +770,7 @@
     endif
 #endif /* REALCASE */
 
+#ifndef DEVICE_POINTER
     if (.not. obj%eigenvalues_only) then
       q_actual => q(1:matrixRows,1:matrixCols)
     else
@@ -727,6 +778,7 @@
      check_allocate("elpa2_template: q_dummy", istat, errorMessage)
      q_actual => q_dummy(1:matrixRows,1:matrixCols)
     endif
+#endif
 
     ! set the default values for each of the 5 compute steps
     do_bandred        = .true.
@@ -826,6 +878,8 @@
 #ifdef HAVE_LIKWID
       call likwid_markerStartRegion("bandred")
 #endif
+
+#ifndef DEVICE_POINTER
       ! Reduction full -> band
       call bandred_&
       &MATH_DATATYPE&
@@ -838,6 +892,8 @@
       useQRActual, &
 #endif
        nrThreads, isSkewsymmetric)
+
+#endif
 #ifdef HAVE_LIKWID
       call likwid_markerStopRegion("bandred")
 #endif
@@ -855,19 +911,25 @@
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("tridiag")
 #endif
+
+#ifndef DEVICE_POINTER
        call tridiag_band_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
        do_useGPU_tridiag_band, wantDebug, nrThreads, isSkewsymmetric)
+#endif
 
+#ifndef DEVICE_POINTER
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
        call mpi_bcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
        call mpi_bcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
+#endif
+
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("tridiag")
 #endif
@@ -890,6 +952,8 @@
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("solve")
 #endif
+
+#ifndef DEVICE_POINTER
        call solve_tridi_&
        &PRECISION &
        (obj, na, nev, ev, e, &
@@ -901,6 +965,9 @@
 #endif
        nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, &
                success, nrThreads)
+#endif
+
+
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("solve")
 #endif
@@ -931,12 +998,14 @@
             stop
          endif
 
+#ifndef DEVICE_POINTER
          check_pd = 0
          do i = 1, na
            if (ev(i) .gt. thres_pd) then
              check_pd = check_pd + 1
            endif
          enddo
+#endif
          if (check_pd .lt. na) then
            ! not positiv definite => eigenvectors needed
            do_trans_to_band = .true.
@@ -951,8 +1020,9 @@
 #if COMPLEXCASE == 1
      if (do_trans_to_band) then
        ! q must be given thats why from here on we can use q and not q_actual
-
+#ifndef DEVICE_POINTER
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
+#endif
      endif
 
      ! make sure q_real is deallocated when using check_pd
@@ -963,6 +1033,7 @@
 #endif
 
        if (isSkewsymmetric) then
+#ifndef DEVICE_POINTER
        ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
        ! This makes the eigenvectors complex.
        ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
@@ -985,6 +1056,7 @@
               q(i,1:matrixCols) = 0
            end if
          end do
+#endif
        endif
        ! Backtransform stage 1
      if (do_trans_to_band) then
@@ -992,7 +1064,7 @@
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("trans_ev_to_band")
 #endif
-
+#ifndef DEVICE_POINTER
        ! In the skew-symmetric case this transforms the real part
        call trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
@@ -1001,6 +1073,7 @@
        (obj, na, nev, nblk, nbw, q, &
        matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
+#endif
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_band")
 #endif
@@ -1020,7 +1093,7 @@
 
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
-
+#ifndef DEVICE_POINTER
        call trans_ev_band_to_full_&
        &MATH_DATATYPE&
        &_&
@@ -1032,6 +1105,7 @@
        , useQRActual  &
 #endif
        )
+#endif
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
 ! #ifdef DOUBLE_PRECISION_REAL
@@ -1042,6 +1116,7 @@
        if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
+#ifndef DEVICE_POINTER
            call trans_ev_tridi_to_band_&
            &MATH_DATATYPE&
            &_&
@@ -1049,6 +1124,7 @@
            (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
            matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
+#endif
          endif
               ! We can now deallocate the stored householder vectors
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
@@ -1060,7 +1136,7 @@
        if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
-
+#ifndef DEVICE_POINTER
          call trans_ev_band_to_full_&
          &MATH_DATATYPE&
          &_&
@@ -1072,6 +1148,7 @@
          , useQRActual  &
 #endif
          )
+#endif
        endif
 
 #ifdef HAVE_LIKWID
@@ -1096,7 +1173,7 @@
     call omp_set_num_threads(omp_threads_caller)
 #endif
 
-
+#ifndef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
    ! redistribute back if necessary
    if (doRedistributeMatrix) then
@@ -1136,7 +1213,7 @@
      call blacs_gridexit(blacs_ctxt_)
    endif
 #endif /* REDISTRIBUTE_MATRIX */
-
+#endif
 
 
 #ifdef ACTIVATE_SKEW
