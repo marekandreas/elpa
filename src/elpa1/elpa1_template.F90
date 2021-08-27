@@ -120,7 +120,8 @@ function elpa_solve_evp_&
 #ifdef DEVICE_POINTER
 
 !#ifdef REDISTRIBUTE_MATRIX
-   type(c_ptr)                                                        :: aExtern, qExtern
+   type(c_ptr)                                                        :: aExtern
+   type(c_ptr), optional                                              :: qExtern
 !#else /* REDISTRIBUTE_MATRIX */
 !   type(c_ptr)                                                        :: a, q
 !#endif /* REDISTRIBUTE_MATRIX */
@@ -165,8 +166,10 @@ function elpa_solve_evp_&
 
 #ifdef DEVICE_POINTER
 !#ifdef REDISTRIBUTE_MATRIX
-    type(c_ptr)                                                       :: a, q
+    !type(c_ptr)                                                       :: a, q
 !#endif
+  MATH_DATATYPE(kind=rck), pointer                                   :: a(:,:)
+  MATH_DATATYPE(kind=rck), pointer                                   :: q(:,:)
 #else /* DEVICE_POINTER */
 #ifdef REDISTRIBUTE_MATRIX
 !    MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
@@ -249,7 +252,26 @@ function elpa_solve_evp_&
    &PRECISION&
    &")
 
-#ifndef DEVICE_POINTER
+#ifdef DEVICE_POINTER
+#ifndef REDISTRIBUTE_MATRIX
+   ! in case that aExtern and qExtern are device pointers
+   ! we have to allocate aIntern and qIntern and 
+   ! point a and q to this
+   allocate(aIntern(1:obj%local_nrows,1:obj%local_ncols))
+   a       => aIntern(1:obj%local_nrows,1:obj%local_ncols)
+   
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     allocate(qIntern(1:obj%local_nrows,1:2*obj%local_ncols))
+     q       => qIntern(1:obj%local_nrows,1:2*obj%local_ncols)
+#else
+     allocate(qIntern(1:obj%local_nrows,1:obj%local_ncols))
+     q       => qIntern(1:obj%local_nrows,1:obj%local_ncols)
+#endif
+   endif
+
+#endif 
+#else /* DEVICE_POINTER */
 
    ! aIntern, qIntern are normally pointers,
    ! in case of redistribute aIntern, qIntern, are arrays storing the internally
@@ -271,6 +293,7 @@ function elpa_solve_evp_&
 #endif
    endif
 #endif /* REDISTRIBUTE_MATRIX */
+
 #endif /* DEVICE_POINTER */
 
    reDistributeMatrix = .false.
@@ -792,6 +815,24 @@ function elpa_solve_evp_&
    endif
 #endif /* REDISTRIBUTE_MATRIX */
 #endif
+
+
+#ifdef DEVICE_POINTER
+#ifdef REDISTRIBUTE_MATRIX
+   ! in case that aExtern and qExtern are device pointers
+   ! we have to allocate aIntern and qIntern and 
+   ! point a and q to this
+   deallocate(aIntern)
+   
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     deallocate(qIntern)
+#else
+     deallocate(qIntern)
+#endif
+   endif
+#endif
+#endif /* DEVICE_POINTER */
 
 #ifdef ACTIVATE_SKEW
    call obj%timer%stop("elpa_solve_skew_evp_&
