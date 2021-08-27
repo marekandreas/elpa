@@ -69,18 +69,9 @@ function elpa_solve_evp_&
    &PRECISION&
    &_impl (obj, &
 #endif /* ACTIVATE_SKEW */
-#ifdef REDISTRIBUTE_MATRIX
    aExtern, &
-#else
-   a, &
-#endif /* REDISTRIBUTE_MATRIX */
    ev, &
-#ifdef REDISTRIBUTE_MATRIX
    qExtern) result(success)
-#else
-   q) result(success)
-#endif /* REDISTRIBUTE_MATRIX */
-
 #else /* DEVICE_POINTER */
 
 #ifdef ACTIVATE_SKEW
@@ -96,17 +87,9 @@ function elpa_solve_evp_&
    &PRECISION&
    &_impl (obj, &
 #endif /* ACTIVATE_SKEW */
-#ifdef REDISTRIBUTE_MATRIX
    aExtern, &
-#else
-   a, &
-#endif /* REDISTRIBUTE_MATRIX */
    ev, &
-#ifdef REDISTRIBUTE_MATRIX
    qExtern) result(success)
-#else
-   q) result(success)
-#endif /* REDISTRIBUTE_MATRIX */
 
 #endif /* DEVICE_POINTER */
 
@@ -136,54 +119,58 @@ function elpa_solve_evp_&
 
 #ifdef DEVICE_POINTER
 
-#ifdef REDISTRIBUTE_MATRIX
+!#ifdef REDISTRIBUTE_MATRIX
    type(c_ptr)                                                        :: aExtern, qExtern
-#else /* REDISTRIBUTE_MATRIX */
-   type(c_ptr)                                                        :: a, q
-#endif /* REDISTRIBUTE_MATRIX */
+!#else /* REDISTRIBUTE_MATRIX */
+!   type(c_ptr)                                                        :: a, q
+!#endif /* REDISTRIBUTE_MATRIX */
 
 #else /* DEVICE_POINTER */
 
-#ifdef REDISTRIBUTE_MATRIX
+!#ifdef REDISTRIBUTE_MATRIX
 
-#ifdef USE_ASSUMED_SIZE
-   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,*)
-   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: qExtern(obj%local_nrows,*)
-#else
-   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,obj%local_ncols)
+!#ifdef USE_ASSUMED_SIZE
+!   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,*)
+!   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: qExtern(obj%local_nrows,*)
+!#else
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(1:obj%local_nrows,1:obj%local_ncols)
 #ifdef ACTIVATE_SKEW
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(1:obj%local_nrows,1:2*obj%local_ncols)
 #else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(1:obj%local_nrows,1:obj%local_ncols)
 #endif
-#endif /* USE_ASSUMED_SIZE */
+!#endif /* USE_ASSUMED_SIZE */
 
-#else /* REDISTRIBUTE_MATRIX */
+  MATH_DATATYPE(kind=rck), pointer                                   :: a(:,:)
+  MATH_DATATYPE(kind=rck), pointer                                   :: q(:,:)
 
-#ifdef USE_ASSUMED_SIZE
-   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,*)
-   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: q(obj%local_nrows,*)
-#else
-   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,obj%local_ncols)
-#ifdef ACTIVATE_SKEW
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
-#else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
-#endif
-#endif /* USE_ASSUMED_SIZE */
 
-#endif /* REDISTRIBUTE_MATRIX */
+!#else /* REDISTRIBUTE_MATRIX */
+!
+!#ifdef USE_ASSUMED_SIZE
+!   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,*)
+!   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: q(obj%local_nrows,*)
+!#else
+!   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,obj%local_ncols)
+!#ifdef ACTIVATE_SKEW
+!   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
+!#else
+!   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
+!#endif
+!#endif /* USE_ASSUMED_SIZE */
+
+!#endif /* REDISTRIBUTE_MATRIX */
 
 #endif /* DEVICE_POINTER */
 
 #ifdef DEVICE_POINTER
-#ifdef REDISTRIBUTE_MATRIX
+!#ifdef REDISTRIBUTE_MATRIX
     type(c_ptr)                                                       :: a, q
-#endif
+!#endif
 #else /* DEVICE_POINTER */
 #ifdef REDISTRIBUTE_MATRIX
-    MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
-    MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
+!    MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
+!    MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
 #endif
 #endif /* DEVICE_POINTER */
 
@@ -239,6 +226,10 @@ function elpa_solve_evp_&
 
    MATH_DATATYPE(kind=rck), allocatable, target               :: aIntern(:,:)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target   :: qIntern(:,:)
+#else
+   MATH_DATATYPE(kind=rck), pointer                           :: aIntern(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer               :: qIntern(:,:)
+
 #endif
    integer(kind=c_int)                             :: pinningInfo
 
@@ -257,6 +248,30 @@ function elpa_solve_evp_&
    &_1stage_&
    &PRECISION&
    &")
+
+#ifndef DEVICE_POINTER
+
+   ! aIntern, qIntern are normally pointers,
+   ! in case of redistribute aIntern, qIntern, are arrays storing the internally
+   ! redistributed matrix
+
+   ! in case of redistribute matrix the pointers will be reassigned
+
+#ifndef REDISTRIBUTE_MATRIX
+   aIntern => aExtern(1:obj%local_nrows,1:obj%local_ncols)
+   a       => aIntern(1:obj%local_nrows,1:obj%local_ncols)
+
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     qIntern => qExtern(1:obj%local_nrows,1:2*obj%local_ncols)
+     q       => qIntern(1:obj%local_nrows,1:2*obj%local_ncols)
+#else
+     qIntern => qExtern(1:obj%local_nrows,1:obj%local_ncols)
+     q       => qIntern(1:obj%local_nrows,1:obj%local_ncols)
+#endif
+   endif
+#endif /* REDISTRIBUTE_MATRIX */
+#endif /* DEVICE_POINTER */
 
    reDistributeMatrix = .false.
 
@@ -312,11 +327,11 @@ function elpa_solve_evp_&
    success = .true.
 
 #ifndef DEVICE_POINTER
-#ifdef REDISTRIBUTE_MATRIX
+!#ifdef REDISTRIBUTE_MATRIX
    if (present(qExtern)) then
-#else
-   if (present(q)) then
-#endif
+!#else
+!   if (present(q)) then
+!#endif
      obj%eigenvalues_only = .false.
    else
      obj%eigenvalues_only = .true.
