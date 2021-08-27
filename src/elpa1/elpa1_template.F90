@@ -129,17 +129,17 @@ function elpa_solve_evp_&
 
 !#ifdef REDISTRIBUTE_MATRIX
 
-!#ifdef USE_ASSUMED_SIZE
-!   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,*)
-!   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: qExtern(obj%local_nrows,*)
-!#else
+#ifdef USE_ASSUMED_SIZE
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,*)
+   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: qExtern(obj%local_nrows,*)
+#else
    MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(1:obj%local_nrows,1:obj%local_ncols)
 #ifdef ACTIVATE_SKEW
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(1:obj%local_nrows,1:2*obj%local_ncols)
 #else
    MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(1:obj%local_nrows,1:obj%local_ncols)
 #endif
-!#endif /* USE_ASSUMED_SIZE */
+#endif /* USE_ASSUMED_SIZE */
 
   MATH_DATATYPE(kind=rck), pointer                                   :: a(:,:)
   MATH_DATATYPE(kind=rck), pointer                                   :: q(:,:)
