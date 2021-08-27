@@ -280,7 +280,7 @@ module gpu_c_kernel
       call launch_my_pack_c_cuda_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
            row_group_dev)
 #endif
-#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_AMD_GPU_VERSION
       call launch_my_pack_c_hip_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, a_dev, &
            row_group_dev)
 #endif
