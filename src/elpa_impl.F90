@@ -111,11 +111,21 @@ module elpa_impl
      procedure, public :: elpa_eigenvectors_all_host_arrays_dc
      procedure, public :: elpa_eigenvectors_all_host_arrays_fc
 
+     procedure, public :: elpa_eigenvectors_device_pointer_d 
+     procedure, public :: elpa_eigenvectors_device_pointer_f
+     procedure, public :: elpa_eigenvectors_device_pointer_dc
+     procedure, public :: elpa_eigenvectors_device_pointer_fc
+
      procedure, public :: elpa_eigenvalues_all_host_arrays_d                   !< public methods to implement the solve step for real/complex
                                                                                !< double/single matrices; only the eigenvalues are computed
      procedure, public :: elpa_eigenvalues_all_host_arrays_f
      procedure, public :: elpa_eigenvalues_all_host_arrays_dc
      procedure, public :: elpa_eigenvalues_all_host_arrays_fc
+
+     procedure, public :: elpa_eigenvalues_device_pointer_d 
+     procedure, public :: elpa_eigenvalues_device_pointer_f
+     procedure, public :: elpa_eigenvalues_device_pointer_dc
+     procedure, public :: elpa_eigenvalues_device_pointer_fc
 
 #ifdef HAVE_SKEWSYMMETRIC
      procedure, public :: elpa_skew_eigenvectors_all_host_arrays_d             !< public methods to implement the solve step for real skew-symmetric
@@ -125,6 +135,11 @@ module elpa_impl
      procedure, public :: elpa_skew_eigenvalues_all_host_arrays_d              !< public methods to implement the solve step for real skew-symmetric
                                                                                !< double/single matrices; only the eigenvalues are computed
      procedure, public :: elpa_skew_eigenvalues_all_host_arrays_f
+
+     procedure, public :: elpa_skew_eigenvectors_device_pointer_d 
+     procedure, public :: elpa_skew_eigenvectors_device_pointer_f
+     procedure, public :: elpa_skew_eigenvalues_device_pointer_d 
+     procedure, public :: elpa_skew_eigenvalues_device_pointer_f
 #endif
 
      procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized

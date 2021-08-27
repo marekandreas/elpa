@@ -55,30 +55,61 @@
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
 
+#ifdef DEVICE_POINTER
+#ifdef ACTIVATE_SKEW
+function elpa_solve_skew_evp_&
+         &MATH_DATATYPE&
+   &_1stage_device_pointer_&
+   &PRECISION&
+   &_impl (obj, &
+#else /* ACTIVATE_SKEW */
+function elpa_solve_evp_&
+         &MATH_DATATYPE&
+   &_1stage_device_pointer_&
+   &PRECISION&
+   &_impl (obj, &
+#endif /* ACTIVATE_SKEW */
+#ifdef REDISTRIBUTE_MATRIX
+   aExtern, &
+#else
+   a, &
+#endif /* REDISTRIBUTE_MATRIX */
+   ev, &
+#ifdef REDISTRIBUTE_MATRIX
+   qExtern) result(success)
+#else
+   q) result(success)
+#endif /* REDISTRIBUTE_MATRIX */
+
+#else /* DEVICE_POINTER */
+
 #ifdef ACTIVATE_SKEW
 function elpa_solve_skew_evp_&
          &MATH_DATATYPE&
    &_1stage_all_host_arrays_&
    &PRECISION&
    &_impl (obj, &
-#else
+#else /* ACTIVATE_SKEW */
 function elpa_solve_evp_&
          &MATH_DATATYPE&
    &_1stage_all_host_arrays_&
    &PRECISION&
    &_impl (obj, &
-#endif
+#endif /* ACTIVATE_SKEW */
 #ifdef REDISTRIBUTE_MATRIX
    aExtern, &
 #else
    a, &
-#endif
+#endif /* REDISTRIBUTE_MATRIX */
    ev, &
 #ifdef REDISTRIBUTE_MATRIX
    qExtern) result(success)
 #else
    q) result(success)
-#endif
+#endif /* REDISTRIBUTE_MATRIX */
+
+#endif /* DEVICE_POINTER */
+
    use precision
    use cuda_functions
    use hip_functions
@@ -97,7 +128,21 @@ function elpa_solve_evp_&
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
+#ifdef DEVICE_POINTER
+   type(c_ptr)                                                        :: ev
+#else
    real(kind=REAL_DATATYPE), intent(out)                              :: ev(obj%na)
+#endif
+
+#ifdef DEVICE_POINTER
+
+#ifdef REDISTRIBUTE_MATRIX
+   type(c_ptr)                                                        :: aExtern, qExtern
+#else /* REDISTRIBUTE_MATRIX */
+   type(c_ptr)                                                        :: a, q
+#endif /* REDISTRIBUTE_MATRIX */
+
+#else /* DEVICE_POINTER */
 
 #ifdef REDISTRIBUTE_MATRIX
 
@@ -129,10 +174,18 @@ function elpa_solve_evp_&
 
 #endif /* REDISTRIBUTE_MATRIX */
 
+#endif /* DEVICE_POINTER */
+
+#ifdef DEVICE_POINTER
+#ifdef REDISTRIBUTE_MATRIX
+    type(c_ptr)                                                       :: a, q
+#endif
+#else /* DEVICE_POINTER */
 #ifdef REDISTRIBUTE_MATRIX
     MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
     MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
 #endif
+#endif /* DEVICE_POINTER */
 
 #if REALCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable           :: tau(:)
@@ -258,6 +311,7 @@ function elpa_solve_evp_&
    endif
    success = .true.
 
+#ifndef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
    if (present(qExtern)) then
 #else
@@ -267,6 +321,8 @@ function elpa_solve_evp_&
    else
      obj%eigenvalues_only = .true.
    endif
+#endif
+
 
    na         = obj%na
    nev        = obj%nev
@@ -285,12 +341,15 @@ function elpa_solve_evp_&
      stop
    endif
 
+#ifndef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
 #include "../helpers/elpa_redistribute_template.F90"
 #endif /* REDISTRIBUTE_MATRIX */
+#endif
 
    ! special case na = 1
    if (na .eq. 1) then
+#ifndef DEVICE_POINTER
 #if REALCASE == 1
      ev(1) = a(1,1)
 #endif
@@ -300,6 +359,7 @@ function elpa_solve_evp_&
      if (.not.(obj%eigenvalues_only)) then
        q(1,1) = ONE
      endif
+#endif
 
      ! restore original OpenMP settings
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -461,7 +521,7 @@ function elpa_solve_evp_&
    ! for elpa1 the easy thing is, that the individual phases of the algorithm
    ! do not share any data on the GPU.
 
-
+#ifndef DEVICE_POINTER
    ! allocate a dummy q_intern, if eigenvectors should not be commputed and thus q is NOT present
    if (.not.(obj%eigenvalues_only)) then
      q_actual => q(1:matrixRows,1:matrixCols)
@@ -470,6 +530,7 @@ function elpa_solve_evp_&
      check_allocate("elpa1_template: q_dummy", istat, errorMessage)
      q_actual => q_dummy
    endif
+#endif
 
 #if COMPLEXCASE == 1
    l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a and q
@@ -497,12 +558,15 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("tridi")
 #endif
+
+#ifndef DEVICE_POINTER
      call tridiag_&
      &MATH_DATATYPE&
      &_&
      &PRECISION&
      & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, &
         nrThreads, isSkewsymmetric)
+#endif
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -521,6 +585,7 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("solve")
 #endif
+#ifndef DEVICE_POINTER
      call solve_tridi_&
      &PRECISION&
      & (obj, na, nev, ev, e,  &
@@ -532,6 +597,7 @@ function elpa_solve_evp_&
 #endif
         nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, &
                 success, nrThreads)
+#endif
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -563,11 +629,13 @@ function elpa_solve_evp_&
        endif
 
        check_pd = 0
+#ifndef DEVICE_POINTER
        do i = 1, na
          if (ev(i) .gt. thres_pd) then
            check_pd = check_pd + 1
          endif
        enddo
+#endif
        if (check_pd .lt. na) then
          ! not positiv definite => eigenvectors needed
          do_trans_ev = .true.
@@ -579,13 +647,16 @@ function elpa_solve_evp_&
 
    if (do_trans_ev) then
     ! q must be given thats why from here on we can use q and not q_actual
+#ifndef DEVICE_POINTER
 #if COMPLEXCASE == 1
      q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
+#endif
 #endif
      if (isSkewsymmetric) then
      ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
      ! This makes the eigenvectors complex.
      ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
+#ifndef DEVICE_POINTER
        q(1:matrixRows, matrixCols+1:2*matrixCols) = 0.0
        do i = 1, matrixRows
 !        global_index = indxl2g(i, nblk, my_prow, 0, np_rows)
@@ -605,6 +676,7 @@ function elpa_solve_evp_&
             q(i,1:matrixCols) = 0
          end if
        end do
+#endif
      endif
 
      call obj%timer%start("back")
@@ -614,6 +686,8 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("trans_ev")
 #endif
+
+#ifndef DEVICE_POINTER
      ! In the skew-symmetric case this transforms the real part
      call trans_ev_&
      &MATH_DATATYPE&
@@ -630,6 +704,7 @@ function elpa_solve_evp_&
              & (obj, na, nev, a, matrixRows, tau, q(1:matrixRows, matrixCols+1:2*matrixCols), matrixRows, nblk, matrixCols, &
                 mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
        endif
+#endif
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -661,6 +736,7 @@ function elpa_solve_evp_&
    call omp_set_num_threads(omp_threads_caller)
 #endif
 
+#ifndef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
    ! redistribute back if necessary
    if (doRedistributeMatrix) then
@@ -700,6 +776,8 @@ function elpa_solve_evp_&
      call blacs_gridexit(blacs_ctxt_)
    endif
 #endif /* REDISTRIBUTE_MATRIX */
+#endif
+
 #ifdef ACTIVATE_SKEW
    call obj%timer%stop("elpa_solve_skew_evp_&
 #else
