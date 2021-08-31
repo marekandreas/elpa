@@ -605,7 +605,15 @@ dist_man_MANS = \
   man/elpa_set.3 \
   man/elpa_setup.3 \
   man/elpa_eigenvalues.3 \
+  man/elpa_eigenvalues_double.3 \
+  man/elpa_eigenvalues_float.3 \
+  man/elpa_eigenvalues_double_complex.3 \
+  man/elpa_eigenvalues_float_complex.3 \
   man/elpa_eigenvectors.3 \
+  man/elpa_eigenvectors_double.3 \
+  man/elpa_eigenvectors_float.3 \
+  man/elpa_eigenvectors_double_complex.3 \
+  man/elpa_eigenvectors_float_complex.3 \
   man/elpa_skew_eigenvalues.3 \
   man/elpa_skew_eigenvectors.3 \
   man/elpa_generalized_eigenvectors.3 \
@@ -662,7 +670,20 @@ libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/test_blacs_infrastructure.F90 \
   test/shared/test_prepare_matrix.F90 \
   test/shared/test_analytic.F90 \
+  test/shared/GPU/test_gpu_vendor_agnostic_layer.F90 \
   test/shared/test_output_type.F90
+
+if WITH_NVIDIA_GPU_VERSION
+libelpatest@SUFFIX@_la_SOURCES += \
+  test/shared/GPU/CUDA/test_cuda.F90 \
+  test/shared/GPU/CUDA/test_cudaFunctions.cu
+endif
+
+if WITH_AMD_GPU_VERSION
+libelpatest@SUFFIX@_la_SOURCES += \
+  test/shared/GPU/ROCm/test_hip.F90 \
+  test/shared/GPU/ROCm/test_rocmFunctions.cpp
+endif
 
 if WITH_SCALAPACK_TESTS
 libelpatest@SUFFIX@_la_SOURCES += \

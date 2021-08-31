@@ -114,6 +114,27 @@ module elpa1_impl
 #endif
 #endif /* HAVE_SKEWSYMMETRIC */
 
+  public :: elpa_solve_evp_real_1stage_device_pointer_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public :: elpa_solve_evp_real_1stage_device_pointer_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
+
+#endif
+  public :: elpa_solve_evp_complex_1stage_device_pointer_double_impl !< Driver routine for complex 1-stage eigenvalue problem
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  public :: elpa_solve_evp_complex_1stage_device_pointer_single_impl !< Driver routine for complex 1-stage eigenvalue problem
+#endif
+
+#ifdef HAVE_SKEWSYMMETRIC
+  public :: elpa_solve_skew_evp_real_1stage_device_pointer_double_impl    !< Driver routine for real double-precision 1-stage skew-symmetric eigenvalue problem
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public :: elpa_solve_skew_evp_real_1stage_device_pointer_single_impl    !< Driver routine for real single-precision 1-stage skew-symmetric eigenvalue problem
+
+#endif
+#endif /* HAVE_SKEWSYMMETRIC */
+
+
 
   ! imported from elpa1_auxilliary
 

@@ -597,8 +597,6 @@ subroutine trans_ev_tridi_to_band_&
                        [ldq,matrixCols])
       if (wantDebug) call obj%timer%stop("cuda_memcpy")
 
-      print *,"hh_trans:",size(hh_trans,dim=1),size(hh_trans,dim=2)
-
       successGPU = gpu_malloc(hh_trans_dev, size(hh_trans,dim=1)*size(hh_trans,dim=2)* size_of_datatype)
       check_alloc_gpu("trans_ev_tridi_to_band: hh_trans_dev", successGPU)
       ! associate with c_ptr

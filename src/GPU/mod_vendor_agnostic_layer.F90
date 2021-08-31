@@ -275,7 +275,7 @@ module elpa_gpu
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        !success = hip_memcpy_intptr(dst, src, size, dir)
+        success = hip_memcpy_intptr(dst, src, size, dir)
       endif
     
     end function
@@ -296,7 +296,7 @@ module elpa_gpu
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        !success = hip_memcpy_cptr(dst, src, size, dir)
+        success = hip_memcpy_cptr(dst, src, size, dir)
       endif
     
     end function
@@ -317,7 +317,7 @@ module elpa_gpu
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        !success = hip_memcpy_cptr(dst, src, size, dir)
+        success = hip_memcpy_mixed(dst, src, size, dir)
       endif
     
     end function
@@ -425,7 +425,7 @@ module elpa_gpu
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        !success = hip_memcpy2d(dst, dpitch, src, spitch, width, height , dir)
+        success = hip_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
       endif
     end function
 
@@ -451,7 +451,7 @@ module elpa_gpu
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        !success = hip_memcpy2d(dst, dpitch, src, spitch, width, height , dir)
+        success = hip_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
       endif
     end function
 

@@ -148,6 +148,17 @@ program test
 #endif
    use precision_for_tests
 
+#if TEST_GPU_DEVICE_POINTER_API == 1
+   use test_gpu
+#if TEST_NVIDIA_GPU == 1
+   use test_cuda_functions
+#endif
+#if TEST_AMD_GPU == 1
+   use test_hip_functions
+#endif
+
+#endif /* TEST_GPU_DEVICE_POINTER_API */
+
    implicit none
 
    ! matrix dimensions
@@ -165,7 +176,8 @@ program test
    TEST_INT_TYPE     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
 
    ! The Matrix
-   MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
+   MATRIX_TYPE, allocatable, target    :: a(:,:)
+   MATRIX_TYPE, allocatable           :: as(:,:)
 #if defined(TEST_HERMITIAN_MULTIPLY)
    MATRIX_TYPE, allocatable    :: b(:,:), c(:,:)
 #endif
@@ -173,9 +185,14 @@ program test
    MATRIX_TYPE, allocatable    :: b(:,:), bs(:,:)
 #endif
    ! eigenvectors
-   MATRIX_TYPE, allocatable    :: z(:,:)
+   MATRIX_TYPE, allocatable, target    :: z(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable        :: ev(:)
+   EV_TYPE, allocatable, target        :: ev(:)
+
+#if TEST_GPU_DEVICE_POINTER_API == 1
+   type(c_ptr)                :: a_dev, q_dev, ev_dev
+#endif
+
 
    logical                     :: check_all_evals, skip_check_correctness
 
@@ -208,7 +225,7 @@ program test
                          do_test_frank_eigenvalues,  &
                          do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                          do_test_hermitian_multiply
-   logical            :: ignoreError
+   logical            :: ignoreError, success, successGPU
 #ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE      :: max_threads, threads_caller
 #endif
@@ -219,6 +236,27 @@ program test
    TEST_INT_MPI_TYPE  :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
    character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
 #endif
+
+
+#if TEST_GPU_DEVICE_POINTER_API == 1
+#if TEST_REAL == 1
+#if TEST_DOUBLE
+   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_double_real
+#endif
+#if TEST_SINGLE
+   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_single_real
+#endif
+#endif /* TEST_REAL == 1 */
+
+#if TEST_COMPLEX == 1
+#if TEST_DOUBLE
+   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_double_complex
+#endif
+#if TEST_SINGLE
+   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_single_complex
+#endif
+#endif
+#endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
 
 #ifdef TEST_ALL_LAYOUTS
 #ifdef BUILD_FUGAKU
@@ -691,11 +729,63 @@ program test
    ! Can (and should) fail often
    !gpuID = mod(myid,2)
    gpuID = mod(myid,1)
-   print *,"Task",myid,"wants to use GPU",gpuID
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
+   print *,gpuID
    assert_elpa_ok(error_elpa)
 #endif
 
+#if TEST_GPU_DEVICE_POINTER_API == 1
+#if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)
+   ! create device pointers for a,q, ev copy a to
+#if TEST_NVIDIA_GPU == 1
+   if (gpu_vendor(NVIDIA_GPU) == NVIDIA_GPU) then
+     call set_gpu_parameters()
+   endif
+#endif
+#if TEST_AMD_GPU == 1
+   if (gpu_vendor(AMD_GPU) == AMD_GPU) then
+     call set_gpu_parameters()
+   endif
+#endif
+
+   ! set device
+   success = .true.
+#if TEST_NVIDIA_GPU == 1
+   success = cuda_setdevice(gpuID)
+#endif
+#if TEST_AMD_GPU == 1
+   success = cuda_setdevice(gpuID)
+#endif
+   if (.not.(success)) then
+     print *,"Cannot set GPU device. Aborting..."
+     stop
+   endif
+
+   ! malloc
+   successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
+   if (.not.(successGPU)) then
+     print *,"Cannot allocate matrix a on GPU! Aborting..."
+     stop
+   endif
+   successGPU = gpu_malloc(q_dev, na_rows*na_cols*size_of_datatype)
+   if (.not.(successGPU)) then
+     print *,"Cannot allocate matrix q on GPU! Aborting..."
+     stop
+   endif
+   successGPU = gpu_malloc(ev_dev, na*size_of_datatype)
+   if (.not.(successGPU)) then
+     print *,"Cannot allocate vector of eigenvalues on GPU! Aborting..."
+     stop
+   endif
+
+   successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
+                           gpuMemcpyHostToDevice)
+   if (.not.(successGPU)) then
+     print *,"Cannot copy matrix a to GPU! Aborting..."
+     stop
+   endif
+#endif
+#endif /* TEST_GPU_DEVICE_POINTER_API */
 
 #if TEST_QR_DECOMPOSITION == 1
    call e%set("qr", 1_ik, error_elpa)
@@ -796,24 +886,39 @@ program test
      call solve_scalapack_part(na, a, sc_desc, nev, ev, z)
      check_all_evals = .false. ! scalapack does not compute all eigenvectors
 #else /* TEST_SCALAPACK_PART */
-
 #ifdef TEST_EXPLICIT_NAME
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
+     call e%eigenvectors_double(a_dev, ev_dev, q_dev, error_elpa)
+#else
      call e%eigenvectors_double(a, ev, z, error_elpa)
 #endif
+#endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
+     call e%eigenvectors_float(a_dev, ev_dev, q_dev, error_elpa)
+#else
      call e%eigenvectors_float(a, ev, z, error_elpa)
 #endif
+#endif /* TEST_SINGLE */
 #endif /* TEST_REAL */
-#if definded(TEST_COMPLEX)
+#if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
+     call e%eigenvectors_double_complex(a_dev, ev_dev, q_dev, error_elpa)
+#else
      call e%eigenvectors_double_complex(a, ev, z, error_elpa)
 #endif
+#endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
+     call e%eigenvectors_float_complex(a_dev, ev_dev, q_dev, error_elpa)
+#else
      call e%eigenvectors_float_complex(a, ev, z, error_elpa)
 #endif
-#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_COMPLEX */
 #else /* TEST_EXPLICIT_NAME */
      call e%eigenvectors(a, ev, z, error_elpa)
 #endif /* TEST_EXPLICIT_NAME */
@@ -836,7 +941,7 @@ program test
      call e%eigenvalues_float(a, ev, error_elpa)
 #endif
 #endif /* TEST_REAL */
-#if definded(TEST_COMPLEX)
+#if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
      call e%eigenvalues_double_complex(a, ev, error_elpa)
 #endif
@@ -924,6 +1029,52 @@ program test
 #endif /* TEST_ALL_KERNELS */
      endif
 
+
+
+
+#if TEST_GPU_DEVICE_POINTER_API == 1
+#if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)
+   ! copy for testing
+   successGPU = gpu_memcpy(c_loc(z), q_dev, na_rows*na_cols*size_of_datatype, &
+                           gpuMemcpyDeviceToHost)
+   if (.not.(successGPU)) then
+     print *,"cannot copy matrix of eigenvectors from GPU to host! Aborting..."
+     stop
+   endif
+
+   successGPU = gpu_memcpy(c_loc(ev), ev_dev, na*&
+#ifdef TEST_DOUBLE
+           size_of_double_real, &
+#endif
+#ifdef TEST_SINGLE
+           size_of_single_real, &
+#endif
+                           gpuMemcpyDeviceToHost)
+   if (.not.(successGPU)) then
+     print *,"cannot copy vector of eigenvalues from GPU to host! Aborting..."
+     stop
+   endif
+
+   ! and deallocate device pointer
+   successGPU = gpu_free(a_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of a_dev on GPU. Aborting..."
+     stop
+   endif
+   successGPU = gpu_free(q_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of q_dev on GPU. Aborting..."
+     stop
+   endif
+   successGPU = gpu_free(ev_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of ev_dev on GPU. Aborting..."
+     stop
+   endif
+#endif
+#endif
+
+
      if (do_test_analytic_eigenvalues) then
        status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
                                            my_prow, my_pcol, check_all_evals, .false.)
@@ -1005,6 +1156,7 @@ program test
    deallocate(as)
    deallocate(z)
    deallocate(ev)
+
 #ifdef TEST_HERMITIAN_MULTIPLY
    deallocate(b)
    deallocate(c)
@@ -1028,6 +1180,7 @@ program test
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
+
    call exit(status)
 
    contains

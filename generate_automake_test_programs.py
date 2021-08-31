@@ -31,6 +31,12 @@ gpu_id_flag = {
     1: "-DTEST_GPU_SET_ID=1",
 }
 
+device_pointer_flag = {
+    0: "-DTEST_GPU_DEVICE_POINTER_API=0",
+    1: "-DTEST_GPU_DEVICE_POINTER_API=1",
+}
+
+
 matrix_flag = {
     "random":   "-DTEST_MATRIX_RANDOM",
     "analytic": "-DTEST_MATRIX_ANALYTIC",
@@ -68,10 +74,11 @@ explicit_name_flag = {
         "implicit": ""
 }
 
-for lang, m, g, gid, q, t, p, d, s, lay, spl, api_name in product(sorted(language_flag.keys()),
+for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sorted(language_flag.keys()),
                                                    sorted(matrix_flag.keys()),
                                                    sorted(gpu_flag.keys()),
                                                    sorted(gpu_id_flag.keys()),
+                                                   sorted(device_pointer_flag.keys()),
                                                    sorted(qr_flag.keys()),
                                                    sorted(test_type_flag.keys()),
                                                    sorted(prec_flag.keys()),
@@ -85,8 +92,34 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl, api_name in product(sorted(languag
     if gid == 1 and (g == "GPU_OFF" ):
         continue
 
+    if deviceptr == 1 and (gid == 0 ):
+        continue
+
+    if deviceptr == 1 and (api_name != "explicit"):
+        continue
+
+    if lay == "all_layouts" and (api_name == "explicit"):
+        continue
+
+    if api_name == "explicit" and (m  != "random"):
+        continue
+
+    if gid == 1 and (m  != "random"):
+        continue
+
+    if deviceptr == 1 and (m  != "random"):
+        continue
+
     if lang == "C" and (m == "analytic" or m == "toeplitz" or m == "frank" or lay == "all_layouts"):
         continue
+
+    if lang == "C" and (api_name == "explicit"):
+        continue
+
+    if api_name == "explicit" and (t != "eigenvectors"):
+        continue
+
+
 
     # not implemented in the test.c file yet
     if lang == "C" and (t == "cholesky" or t == "hermitian_multiply" or q == 1):
@@ -203,12 +236,21 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl, api_name in product(sorted(languag
                 raise Exception("Oh no!")
             endifs += 1
 
-        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{gpusuffix}{gpuidsuffix}{qrsuffix}{m}{layoutsuffix}{spl}{api_name}".format(
+
+        if (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON"):
+          combined_suffix="gpu_"
+          if (gid):
+            combined_suffix="gpu_id_"
+            if (deviceptr):
+              combined_suffix="gpu_api_"
+        else:
+          combined_suffix=""
+
+        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{appended_suffix}{qrsuffix}{m}{layoutsuffix}{spl}{api_name}".format(
             langsuffix=language_flag[lang],
             d=d, p=p, t=t, s=s,
             kernelsuffix="" if kernel == "nokernel" else "_" + kernel,
-            gpusuffix="gpu_" if  (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON") else "",
-            gpuidsuffix="set_gpu_id_" if gid else "",
+            appended_suffix=combined_suffix,
             qrsuffix="qr_" if q else "",
             m=m,
             layoutsuffix="_all_layouts" if lay == "all_layouts" else "",
@@ -268,7 +310,9 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl, api_name in product(sorted(languag
               solver_flag[s],
               gpu_flag[g],
               gpu_id_flag[gid],
+              device_pointer_flag[deviceptr],
               qr_flag[q],
+              explicit_name_flag[api_name],
               matrix_flag[m]] + extra_flags))
 
           print("endif\n" * endifs)
@@ -311,7 +355,9 @@ for lang, m, g, gid, q, t, p, d, s, lay, spl, api_name in product(sorted(languag
               solver_flag[s],
               gpu_flag[g],
               gpu_id_flag[gid],
+              device_pointer_flag[deviceptr],
               qr_flag[q],
+              explicit_name_flag[api_name],
               matrix_flag[m]] + extra_flags))
 
           print("endif\n" * endifs)

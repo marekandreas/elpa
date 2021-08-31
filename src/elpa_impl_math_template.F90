@@ -212,22 +212,22 @@
       if (solver .eq. ELPA_SOLVER_1STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-        !success_l = elpa_solve_evp_&
-        !        &MATH_DATATYPE&
-        !        &_1stage_all_host_arrays_&
-        !        &PRECISION&
-        !        &_impl(self, a, ev, q)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                &_1stage_device_pointer_&
+                &PRECISION&
+                &_impl(self, a, ev, q)
 #endif
         call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-        !success_l = elpa_solve_evp_&
-        !        &MATH_DATATYPE&
-        !        &_2stage_all_host_arrays_&
-        !        &PRECISION&
-        !        &_impl(self, a, ev, q)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                &_2stage_device_pointer_&
+                &PRECISION&
+                &_impl(self, a, ev, q)
 #endif
         call self%autotune_timer%stop("accumulator")
 
@@ -579,22 +579,22 @@
       if (solver .eq. ELPA_SOLVER_1STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-!        success_l = elpa_solve_skew_evp_&
-!                &MATH_DATATYPE&
-!                &_1stage_all_host_arrays_&
-!                &PRECISION&
-!                &_impl(self, a, ev, q)
+        success_l = elpa_solve_skew_evp_&
+                &MATH_DATATYPE&
+                &_1stage_device_pointer_&
+                &PRECISION&
+                &_impl(self, a, ev, q)
 #endif
         call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-!        success_l = elpa_solve_skew_evp_&
-!                &MATH_DATATYPE&
-!                &_2stage_all_host_arrays_&
-!                &PRECISION&
-!                &_impl(self, a, ev, q)
+        success_l = elpa_solve_skew_evp_&
+                &MATH_DATATYPE&
+                &_2stage_device_pointer_&
+                &PRECISION&
+                &_impl(self, a, ev, q)
 #endif
         call self%autotune_timer%stop("accumulator")
 
@@ -819,22 +819,22 @@
       if (solver .eq. ELPA_SOLVER_1STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-!        success_l = elpa_solve_evp_&
-!                &MATH_DATATYPE&
-!                          &_1stage_all_host_arrays_&
-!                          &PRECISION&
-!                          &_impl(self, a, ev)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                          &_1stage_device_pointer_&
+                          &PRECISION&
+                          &_impl(self, a, ev)
 #endif
         call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-!        success_l = elpa_solve_evp_&
-!                &MATH_DATATYPE&
-!                                   &_2stage_all_host_arrays_&
-!                                   &PRECISION&
-!                                   &_impl(self, a, ev)
+        success_l = elpa_solve_evp_&
+                &MATH_DATATYPE&
+                                   &_2stage_device_pointer_&
+                                   &PRECISION&
+                                   &_impl(self, a, ev)
 #endif
         call self%autotune_timer%stop("accumulator")
 
@@ -1120,22 +1120,22 @@
       if (solver .eq. ELPA_SOLVER_1STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-!        success_l = elpa_solve_skew_evp_&
-!                &MATH_DATATYPE&
-!                          &_1stage_all_host_arrays_&
-!                          &PRECISION&
-!                          &_impl(self, a, ev)
+        success_l = elpa_solve_skew_evp_&
+                &MATH_DATATYPE&
+                          &_1stage_device_pointer_&
+                          &PRECISION&
+                          &_impl(self, a, ev)
 #endif
         call self%autotune_timer%stop("accumulator")
 
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
         call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
-!        success_l = elpa_solve_skew_evp_&
-!                &MATH_DATATYPE&
-!                                   &_2stage_all_host_arrays_&
-!                                   &PRECISION&
-!                                   &_impl(self, a, ev)
+        success_l = elpa_solve_skew_evp_&
+                &MATH_DATATYPE&
+                                   &_2stage_device_pointer_&
+                                   &PRECISION&
+                                   &_impl(self, a, ev)
 #endif
         call self%autotune_timer%stop("accumulator")
 

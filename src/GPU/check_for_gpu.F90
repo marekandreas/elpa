@@ -103,12 +103,12 @@ module mod_check_for_gpu
 #endif
         gpuAvailable = .true.
 
-        if (myid==0) then
-          if (wantDebugMessage) then
-            print *
-            print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
-          endif
-        endif
+        !if (myid==0) then
+        !  if (wantDebugMessage) then
+        !    print *
+        !    print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+        !  endif
+        !endif
 
         success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -127,7 +127,7 @@ module mod_check_for_gpu
           stop 1
         endif
         if (wantDebugMessage) then
-          print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
+          print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', use_gpu_id
         endif
  
         success = .true.        

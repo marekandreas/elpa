@@ -67,7 +67,7 @@
   &PRECISION&
   &_impl (obj, &
    aExtern, &
-   ev, &
+   evExtern, &
    qExtern) result(success)
 #else /* DEVICE_POINTER */
 #ifdef ACTIVATE_SKEW
@@ -81,7 +81,7 @@
   &PRECISION&
   &_impl (obj, &
    aExtern, &
-   ev, &
+   evExtern, &
    qExtern) result(success)
 #endif /* DEVICE_POINTER */
 
@@ -119,7 +119,8 @@
 #ifdef DEVICE_POINTER
 
 !#ifdef REDISTRIBUTE_MATRIX
-   type(c_ptr)                                                        :: aExtern, qExtern
+   type(c_ptr)                                                        :: aExtern
+   type(c_ptr), optional                                              :: qExtern
 !#else /* REDISTRIBUTE_MATRIX */
 !   type(c_ptr)                                                        :: a, q
 !#endif /* REDISTRIBUTE_MATRIX */
@@ -156,27 +157,18 @@
 !
 !#endif /* REDISTRIBUTE_MATRIX */
 
+#endif /* DEVICE_POINTER */
+
     MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
     MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
-
-#endif /* DEVICE_POINTER */
-
-#ifdef DEVICE_POINTER
-#ifdef REDISTRIBUTE_MATRIX
-    type(c_ptr)                                                       :: a, q
-#endif
-#else /* DEVICE_POINTER */
-!#ifdef REDISTRIBUTE_MATRIX
-!    MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
-!    MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
-!#endif
-#endif /* DEVICE_POINTER */
+    real(kind=REAL_DATATYPE), pointer                                  :: ev(:)
 
 #ifdef DEVICE_POINTER
-   type(c_ptr)                                                        :: ev
+   type(c_ptr)                                                        :: evExtern
 #else
-   real(kind=C_DATATYPE_KIND), intent(inout)                          :: ev(obj%na)
+   real(kind=C_DATATYPE_KIND), target, intent(inout)                  :: evExtern(obj%na)
 #endif
+
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable                   :: hh_trans(:,:)
 
    integer(kind=c_int)                                                :: my_pe, n_pes, my_prow, my_pcol, np_rows, np_cols
@@ -228,9 +220,11 @@
 
    MATH_DATATYPE(kind=rck), allocatable, target                       :: aIntern(:,:)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target           :: qIntern(:,:)
+   real(kind=REAL_DATATYPE), pointer                                  :: evIntern(:)
 #else
    MATH_DATATYPE(kind=rck), pointer                                   :: aIntern(:,:)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer                       :: qIntern(:,:)
+   real(kind=REAL_DATATYPE), pointer                                  :: evIntern(:)
 #endif
 
    logical                                                            :: do_bandred, do_tridiag, do_solve_tridi,  &
@@ -244,6 +238,7 @@
    integer(kind=ik)                                                   :: global_index
    logical                                                            :: reDistributeMatrix, doRedistributeMatrix
    integer(kind=ik)                                                   :: pinningInfo
+
 
 #if REALCASE == 1
 #undef GPU_KERNEL
@@ -291,84 +286,6 @@
     &PRECISION&
     &")
 
-#ifndef DEVICE_POINTER
-
-   ! aIntern, qIntern are normally pointers,
-   ! in case of redistribute aIntern, qIntern, are arrays storing the internally
-   ! redistributed matrix
-
-   ! in case of redistribute matrix the pointers will be reassigned
-
-#ifndef REDISTRIBUTE_MATRIX
-   aIntern => aExtern(1:obj%local_nrows,1:obj%local_ncols)
-   a       => aIntern(1:obj%local_nrows,1:obj%local_ncols)
-
-   if (present(qExtern)) then
-#ifdef ACTIVATE_SKEW
-     qIntern => qExtern(1:obj%local_nrows,1:2*obj%local_ncols)
-     q       => qIntern(1:obj%local_nrows,1:2*obj%local_ncols)
-#else
-     qIntern => qExtern(1:obj%local_nrows,1:obj%local_ncols)
-     q       => qIntern(1:obj%local_nrows,1:obj%local_ncols)
-#endif
-   endif
-#endif /* REDISTRIBUTE_MATRIX */
-#endif /* DEVICE_POINTER */
-
-   reDistributeMatrix = .false.
-
-#ifdef WITH_OPENMP_TRADITIONAL
-    ! store the number of OpenMP threads used in the calling function
-    ! restore this at the end of ELPA 2
-    omp_threads_caller = omp_get_max_threads()
-
-   ! check the number of threads that ELPA should use internally
-#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
-   call obj%get("limit_openmp_threads",limitThreads,error)
-   if (limitThreads .eq. 0) then
-#endif
-     call obj%get("omp_threads",nrThreads,error)
-     call omp_set_num_threads(nrThreads)
-#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
-   else
-     nrThreads = 1
-     call omp_set_num_threads(nrThreads)
-   endif
-#endif
-
-#else
-    nrThreads = 1
-#endif
-
-   call obj%get("output_pinning_information", pinningInfo, error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem setting option for debug. Aborting..."
-     stop
-   endif
-
-   if (pinningInfo .eq. 1) then
-     call init_thread_affinity(nrThreads)
-
-     call check_thread_affinity()
-     if (my_pe .eq. 0) call print_thread_affinity(my_pe)
-     call cleanup_thread_affinity()
-   endif
-
-    success = .true.
-
-#ifndef DEVICE_POINTER
-    if (present(qExtern)) then
-      obj%eigenvalues_only = .false.
-    else
-      obj%eigenvalues_only = .true.
-    endif
-#endif
-    na         = obj%na
-    nev        = obj%nev
-    nblk       = obj%nblk
-    matrixCols = obj%local_ncols
-    matrixRows = obj%local_nrows
-
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option for mpi_comm_rows. Aborting..."
@@ -403,15 +320,252 @@
 
     call obj%timer%stop("mpi_communication")
 
+    na         = obj%na
+    nev        = obj%nev
+    nblk       = obj%nblk
+    matrixCols = obj%local_ncols
+    matrixRows = obj%local_nrows
+
+#ifdef WITH_OPENMP_TRADITIONAL
+    ! store the number of OpenMP threads used in the calling function
+    ! restore this at the end of ELPA 2
+    omp_threads_caller = omp_get_max_threads()
+
+   ! check the number of threads that ELPA should use internally
+#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
+   call obj%get("limit_openmp_threads",limitThreads,error)
+   if (limitThreads .eq. 0) then
+#endif
+     call obj%get("omp_threads",nrThreads,error)
+     call omp_set_num_threads(nrThreads)
+#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
+   else
+     nrThreads = 1
+     call omp_set_num_threads(nrThreads)
+   endif
+#endif
+
+#else /* WITH_OPENMP_TRADITIONAL */
+    nrThreads = 1
+#endif /* WITH_OPENMP_TRADITIONAL */
+
+    ! GPU settings
+    if (gpu_vendor() == NVIDIA_GPU) then
+      call obj%get("gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for GPU. Aborting..."
+        stop
+      endif
+      if (gpu .eq. 1) then
+        print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new keyword &
+               & 'nvidia-gpu' now"
+        call obj%set("nvidia-gpu",gpu,error)
+        if (error .ne. ELPA_OK) then
+          print *,"Problem setting option for NVIDIA GPU. Aborting..."
+          stop
+        endif
+      endif
+
+      call obj%get("nvidia-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for NVIDIA GPU. Aborting..."
+        stop
+      endif
+    else if (gpu_vendor() == AMD_GPU) then
+      call obj%get("amd-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for AMD GPU. Aborting..."
+        stop
+      endif
+    else if (gpu_vendor() == INTEL_GPU) then
+      call obj%get("intel-gpu",gpu,error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem getting option for INTEL GPU. Aborting..."
+        stop
+      endif
+    else
+      gpu = 0
+    endif
+
+   if (gpu .eq. 1) then
+     useGPU =.true.
+   else
+#ifdef DEVICE_POINTER
+     print *,"You used the interface for device pointers but did not specify GPU usage!. Aborting..."
+     stop
+#endif
+     useGPU = .false.
+   endif
+
+    useGPU = (gpu == 1)
+
+    do_useGPU = .false.
+    if (useGPU) then
+      call obj%timer%start("check_for_gpu")
+      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
+        do_useGPU = .true.
+        ! set the neccessary parameters
+        call set_gpu_parameters()
+
+      else
+        print *,"GPUs are requested but not detected! Aborting..."
+        success = .false.
+        return
+      endif
+#ifdef WITH_OPENMP_TRADITIONAL
+      ! check the number of threads that ELPA should use internally
+      ! in the GPU case at the moment only _1_ thread internally is allowed
+      call obj%get("omp_threads", nrThreads, error)
+      if (nrThreads .ne. 1) then
+        print *,"Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+        print *,"setting 1 openmp thread now"
+        call obj%set("omp_threads",1, error)
+        nrThreads=1
+        call omp_set_num_threads(nrThreads)
+      endif
+#endif
+      call obj%timer%stop("check_for_gpu")
+    endif
+
+    if (nblk*(max(np_rows,np_cols)-1) >= na) then
+      write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
+      write(error_unit,*) "Choose a smaller block size if possible.",nblk*(max(np_rows,np_cols)-1),na
+
+      do_useGPU = .false.
+
+      if (kernel == GPU_KERNEL) then
+        kernel = GENERIC_KERNEL
+      endif
+    endif
+
+    do_useGPU_bandred = do_useGPU
+    do_useGPU_tridiag_band = .false.  ! not yet ported
+    do_useGPU_solve_tridi = do_useGPU
+    do_useGPU_trans_ev_tridi_to_band = do_useGPU
+    do_useGPU_trans_ev_band_to_full = do_useGPU
+
+
+   reDistributeMatrix = .false.
+
 #ifndef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
+   ! if a matrix redistribution is done then
+   ! - aIntern, qIntern are getting allocated for the new distribution
+   ! - nblk, matrixCols, matrixRows, mpi_comm_cols, mpi_comm_rows are getting updated
+   ! TODO: make sure that nowhere in ELPA the communicators are getting "getted",
+   ! and the variables obj%local_nrows,1:obj%local_ncols are being used
+   ! - a points then to aIntern, q points to qIntern
 #include "../helpers/elpa_redistribute_template.F90"
+
+   ! still have to point ev
+#endif /* REDISTRIBUTE_MATRIX */
+#else
+#ifdef REDISTRIBUTE_MATRIX
+print *,"Device pointer + REDIST"
 #endif /* REDISTRIBUTE_MATRIX */
 #endif
 
+#ifdef DEVICE_POINTER
+#ifdef REDISTRIBUTE_MATRIX
+  ! this case is not yet implemeted
+#else
+   allocate(aIntern(1:matrixRows,1:matrixCols))
+   a       => aIntern(1:matrixRows,1:matrixCols)
+
+   allocate(evIntern(1:obj%na))
+   ev      => evIntern(1:obj%na)
+
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     allocate(qIntern(1:matrixRows,1:2*matrixCols))
+#else
+     allocate(qIntern(1:matrixRows,1:matrixCols))
+#endif
+   endif
+#endif /* REDISTRIBUTE_MATRIX */
+   !TODO: intel gpu
+   ! in case of devcice pointer _AND_ redistribute
+   ! 1. copy aExtern to aIntern_dummy
+   ! 2. redistribute aIntern_dummy to aIntern
+
+   successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
+                             gpuMemcpyDeviceToHost)
+   check_memcpy_gpu("elpa1: aExtern -> aIntern", successGPU)
+
+#else /* DEVICE_POINTER */
+
+#ifdef REDISTRIBUTE_MATRIX
+   ! a and q point already to the allocated arrays aIntern, qIntern
+   if (.not.(doRedistributeMatrix)) then
+     ! no redistribution happend
+     a => aExtern(1:matrixRows,1:matrixCols)
+     if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+       q => qExtern(1:matrixRows,1:2*matrixCols)
+#else
+       q => qExtern(1:matrixRows,1:matrixCols)
+#endif
+     endif
+   endif
+#else
+   ! aIntern, qIntern, are normally pointers since no matrix redistribution is used
+   ! point them to  the external arrays
+   aIntern => aExtern(1:matrixRows,1:matrixCols)
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     qIntern => qExtern(1:matrixRows,1:2*matrixCols)
+#else
+     qIntern => qExtern(1:matrixRows,1:matrixCols)
+#endif
+   endif
+#endif
+
+  ! whether a matrix redistribution or not is happening we still
+  ! have to point ev
+   evIntern => evExtern(1:obj%na)
+#endif /* DEVICE_POINTER */
+
+#ifdef REDISTRIBUTE_MATRIX
+   if (doRedistributeMatrix) then
+#endif
+     a       => aIntern(1:matrixRows,1:matrixCols)
+     if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+       q       => qIntern(1:matrixRows,1:2*matrixCols)
+#else
+       q       => qIntern(1:matrixRows,1:matrixCols)
+#endif
+     endif
+#ifdef REDISTRIBUTE_MATRIX
+   endif
+#endif
+
+   ev      => evIntern(1:obj%na)
+
+   call obj%get("output_pinning_information", pinningInfo, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option for debug. Aborting..."
+     stop
+   endif
+
+   if (pinningInfo .eq. 1) then
+     call init_thread_affinity(nrThreads)
+
+     call check_thread_affinity()
+     if (my_pe .eq. 0) call print_thread_affinity(my_pe)
+     call cleanup_thread_affinity()
+   endif
+
+    success = .true.
+
+    if (present(qExtern)) then
+      obj%eigenvalues_only = .false.
+    else
+      obj%eigenvalues_only = .true.
+    endif
+
    ! special case na = 1
    if (na .eq. 1) then
-#ifndef DEVICE_POINTER
 #if REALCASE == 1
      ev(1) = a(1,1)
 #endif
@@ -421,7 +575,7 @@
      if (.not.(obj%eigenvalues_only)) then
        q(1,1) = ONE
      endif
-#endif
+
      ! restore original OpenMP settings
 #ifdef WITH_OPENMP_TRADITIONAL
      ! store the number of OpenMP threads used in the calling function
@@ -470,91 +624,6 @@
       stop
     endif
     wantDebug = debug == 1
-
-    ! GPU settings
-    if (gpu_vendor() == NVIDIA_GPU) then
-      call obj%get("gpu",gpu,error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for GPU. Aborting..."
-        stop
-      endif
-      if (gpu .eq. 1) then
-        print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new keyword &
-               & 'nvidia-gpu' now"
-        call obj%set("nvidia-gpu",gpu,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem setting option for NVIDIA GPU. Aborting..."
-          stop
-        endif
-      endif
-
-      call obj%get("nvidia-gpu",gpu,error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for NVIDIA GPU. Aborting..."
-        stop
-      endif
-    else if (gpu_vendor() == AMD_GPU) then
-      call obj%get("amd-gpu",gpu,error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for AMD GPU. Aborting..."
-        stop
-      endif
-    else if (gpu_vendor() == INTEL_GPU) then
-      call obj%get("intel-gpu",gpu,error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for INTEL GPU. Aborting..."
-        stop
-      endif
-    else
-      gpu = 0
-    endif
-
-    useGPU = (gpu == 1)
-
-    do_useGPU = .false.
-    if (useGPU) then
-      call obj%timer%start("check_for_gpu")
-      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
-        do_useGPU = .true.
-        ! set the neccessary parameters
-        call set_gpu_parameters()
-
-      else
-        print *,"GPUs are requested but not detected! Aborting..."
-        success = .false.
-        return
-      endif
-#ifdef WITH_OPENMP_TRADITIONAL
-      ! check the number of threads that ELPA should use internally
-      ! in the GPU case at the moment only _1_ thread internally is allowed
-      call obj%get("omp_threads", nrThreads, error)
-      if (nrThreads .ne. 1) then
-        print *,"Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-        print *,"setting 1 openmp thread now"
-        call obj%set("omp_threads",1, error)
-        nrThreads=1
-        call omp_set_num_threads(nrThreads)
-      endif
-#endif
-      call obj%timer%stop("check_for_gpu")
-    endif
-
-    if (nblk*(max(np_rows,np_cols)-1) >= na) then
-      write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
-      write(error_unit,*) "Choose a smaller block size if possible."
-
-      do_useGPU = .false.
-
-      if (kernel == GPU_KERNEL) then
-        kernel = GENERIC_KERNEL
-      endif
-    endif
-
-    do_useGPU_bandred = do_useGPU
-    do_useGPU_tridiag_band = .false.  ! not yet ported
-    do_useGPU_solve_tridi = do_useGPU
-    do_useGPU_trans_ev_tridi_to_band = do_useGPU
-    do_useGPU_trans_ev_band_to_full = do_useGPU
 
     ! only if we want (and can) use GPU in general, look what are the
     ! requirements for individual routines. Implicitly they are all set to 1, so
@@ -779,7 +848,6 @@
     endif
 #endif /* REALCASE */
 
-#ifndef DEVICE_POINTER
     if (.not. obj%eigenvalues_only) then
       q_actual => q(1:matrixRows,1:matrixCols)
     else
@@ -787,7 +855,6 @@
      check_allocate("elpa2_template: q_dummy", istat, errorMessage)
      q_actual => q_dummy(1:matrixRows,1:matrixCols)
     endif
-#endif
 
     ! set the default values for each of the 5 compute steps
     do_bandred        = .true.
@@ -888,7 +955,6 @@
       call likwid_markerStartRegion("bandred")
 #endif
 
-#ifndef DEVICE_POINTER
       ! Reduction full -> band
       call bandred_&
       &MATH_DATATYPE&
@@ -902,7 +968,6 @@
 #endif
        nrThreads, isSkewsymmetric)
 
-#endif
 #ifdef HAVE_LIKWID
       call likwid_markerStopRegion("bandred")
 #endif
@@ -921,23 +986,19 @@
        call likwid_markerStartRegion("tridiag")
 #endif
 
-#ifndef DEVICE_POINTER
        call tridiag_band_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
        do_useGPU_tridiag_band, wantDebug, nrThreads, isSkewsymmetric)
-#endif
 
-#ifndef DEVICE_POINTER
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
        call mpi_bcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
        call mpi_bcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
-#endif
 
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("tridiag")
@@ -962,7 +1023,6 @@
        call likwid_markerStartRegion("solve")
 #endif
 
-#ifndef DEVICE_POINTER
        call solve_tridi_&
        &PRECISION &
        (obj, na, nev, ev, e, &
@@ -974,8 +1034,6 @@
 #endif
        nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, &
                success, nrThreads)
-#endif
-
 
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("solve")
@@ -1007,14 +1065,12 @@
             stop
          endif
 
-#ifndef DEVICE_POINTER
          check_pd = 0
          do i = 1, na
            if (ev(i) .gt. thres_pd) then
              check_pd = check_pd + 1
            endif
          enddo
-#endif
          if (check_pd .lt. na) then
            ! not positiv definite => eigenvectors needed
            do_trans_to_band = .true.
@@ -1029,9 +1085,7 @@
 #if COMPLEXCASE == 1
      if (do_trans_to_band) then
        ! q must be given thats why from here on we can use q and not q_actual
-#ifndef DEVICE_POINTER
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
-#endif
      endif
 
      ! make sure q_real is deallocated when using check_pd
@@ -1042,7 +1096,6 @@
 #endif
 
        if (isSkewsymmetric) then
-#ifndef DEVICE_POINTER
        ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
        ! This makes the eigenvectors complex.
        ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
@@ -1065,7 +1118,6 @@
               q(i,1:matrixCols) = 0
            end if
          end do
-#endif
        endif
        ! Backtransform stage 1
      if (do_trans_to_band) then
@@ -1073,7 +1125,6 @@
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("trans_ev_to_band")
 #endif
-#ifndef DEVICE_POINTER
        ! In the skew-symmetric case this transforms the real part
        call trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
@@ -1082,7 +1133,6 @@
        (obj, na, nev, nblk, nbw, q, &
        matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
-#endif
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("trans_ev_to_band")
 #endif
@@ -1102,7 +1152,6 @@
 
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
-#ifndef DEVICE_POINTER
        call trans_ev_band_to_full_&
        &MATH_DATATYPE&
        &_&
@@ -1114,7 +1163,6 @@
        , useQRActual  &
 #endif
        )
-#endif
        call obj%timer%stop("trans_ev_to_full")
      endif ! do_trans_to_full
 ! #ifdef DOUBLE_PRECISION_REAL
@@ -1125,7 +1173,6 @@
        if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
-#ifndef DEVICE_POINTER
            call trans_ev_tridi_to_band_&
            &MATH_DATATYPE&
            &_&
@@ -1133,7 +1180,6 @@
            (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
            matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
-#endif
          endif
               ! We can now deallocate the stored householder vectors
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
@@ -1145,7 +1191,6 @@
        if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
-#ifndef DEVICE_POINTER
          call trans_ev_band_to_full_&
          &MATH_DATATYPE&
          &_&
@@ -1157,7 +1202,6 @@
          , useQRActual  &
 #endif
          )
-#endif
        endif
 
 #ifdef HAVE_LIKWID
@@ -1182,7 +1226,6 @@
     call omp_set_num_threads(omp_threads_caller)
 #endif
 
-#ifndef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
    ! redistribute back if necessary
    if (doRedistributeMatrix) then
@@ -1222,8 +1265,48 @@
      call blacs_gridexit(blacs_ctxt_)
    endif
 #endif /* REDISTRIBUTE_MATRIX */
+
+#if defined(DEVICE_POINTER) || defined(REDISTRIBUTE_MATRIX)
+
+#ifdef DEVICE_POINTER
+   !copy qIntern and ev to provided device pointers
+   successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), obj%local_nrows*obj%local_ncols*size_of_datatype, &
+                             gpuMemcpyHostToDevice)
+   check_memcpy_gpu("elpa1: qIntern -> qExtern", successGPU)
+   successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_datatype, &
+                             gpuMemcpyHostToDevice)
+   check_memcpy_gpu("elpa1: ev -> evExtern", successGPU)
 #endif
 
+#if defined(REDISTRIBUTE_MATRIX)
+   if (doRedistributeMatrix) then
+#endif
+
+     deallocate(aIntern)
+     !deallocate(evIntern)
+     nullify(evIntern)
+     if (present(qExtern)) then
+       deallocate(qIntern)
+     endif
+#if defined(REDISTRIBUTE_MATRIX)
+   endif
+#endif
+
+#endif /* defined(DEVICE_POINTER) || defined(REDISTRIBUTE_MATRIX) */
+
+#if !defined(DEVICE_POINTER) && !defined(REDISTRIBUTE_MATRIX)
+   nullify(aIntern)
+   nullify(evIntern)
+   if (present(qExtern)) then
+     nullify(qIntern)
+   endif
+#endif
+
+   nullify(ev)
+   nullify(a)
+   nullify(q)
+
+  nullify(q_actual)
 
 #ifdef ACTIVATE_SKEW
      call obj%timer%stop("elpa_solve_skew_evp_&
