@@ -719,9 +719,9 @@
         do np = 1, npc_n
           ! Do a ring send of qtmp1
 
-          if (np>1) then
+          if (np > 1) then
 
-            if (np_rem==npc_0) then
+            if (np_rem == npc_0) then
               np_rem = npc_0+npc_n-1
             else
               np_rem = np_rem-1
@@ -736,6 +736,7 @@
           endif
 
           if (useGPU .and. .not.(useIntelGPU)) then
+            ! copy back after sendrecv
             successGPU = gpu_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice)
             check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
@@ -752,13 +753,13 @@
           nnzu = 0
           nnzl = 0
           do i=1,na1
-            if (p_col(idx1(i))==np_rem) then
-              if (coltyp(idx1(i))==1 .or. coltyp(idx1(i))==2) then
+            if (p_col(idx1(i)) == np_rem) then
+              if (coltyp(idx1(i)) == 1 .or. coltyp(idx1(i)) == 2) then
                 nnzu = nnzu+1
                 d1u(nnzu) = d1(i)
                 zu (nnzu) = z (i)
               endif
-              if (coltyp(idx1(i))==3 .or. coltyp(idx1(i))==2) then
+              if (coltyp(idx1(i)) == 3 .or. coltyp(idx1(i)) == 2) then
                 nnzl = nnzl+1
                 d1l(nnzl) = d1(i)
                 zl (nnzl) = z (i)
@@ -772,9 +773,9 @@
           do i = 1, na
             j = idx(i)
             if (j>na1) then
-              if (p_col(idx2(j-na1))==np_rem) then
+              if (p_col(idx2(j-na1)) == np_rem) then
                 ndef = ndef+1
-                if (p_col_out(i)==my_pcol) &
+                if (p_col_out(i) == my_pcol) &
                       q(l_rqs:l_rqe,l_col_out(i)) = qtmp1(1:l_rows,ndef)
               endif
             endif
@@ -806,6 +807,7 @@
 
             if(useGPU .and. .not.(useIntelGPU) ) then
               !TODO: it should be enough to copy l_rows x ncnt
+              ! copy to device
               successGPU = gpu_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
               check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
@@ -921,6 +923,8 @@
             if (useGPU .and. .not.(useIntelGPU) ) then
               !TODO either copy only half of the matrix here, and get rid of the
               !previous copy or copy whole array here
+
+              ! COPY BACK
               successGPU = gpu_memcpy(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyDeviceToHost)
               check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)

@@ -84,36 +84,6 @@ module mod_check_for_gpu
         stop
       endif
 
-      success = .true.
-      numberOfDevices = -1
-#ifdef WITH_NVIDIA_GPU_VERSION
-      ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
-      success = cuda_getdevicecount(numberOfDevices)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-      ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
-      success = hip_getdevicecount(numberOfDevices)
-#endif
-      if (.not.(success)) then
-#ifdef WITH_NVIDIA_GPU_VERSION
-        print *,"error in cuda_getdevicecount"
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-        print *,"error in hip_getdevicecount"
-#endif
-        stop 1
-      endif
-#ifdef  WITH_INTEL_GPU_VERSION
-      gpuAvailable = .false.
-      numberOfDevices = -1
-
-      numberOfDevices = 1
-      print *,"Manually setting",numberOfDevices," of GPUs"
-      if (numberOfDevices .ge. 1) then
-        gpuAvailable = .true.
-      endif
-#endif
-
       if (obj%is_set("use_gpu_id") == 1) then
         call obj%get("use_gpu_id", use_gpu_id, error)
         if (use_gpu_id == -99) then
@@ -133,18 +103,12 @@ module mod_check_for_gpu
 #endif
         gpuAvailable = .true.
 
-        if (myid==0) then
-          if (wantDebugMessage) then
-            print *
-            print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
-          endif
-        endif
-
-        if (use_gpu_id+1 .gt. numberOfDevices) then
-          print *,"Task=",myid," wants to use GPU id=",use_gpu_id," allowed (0:#GPUs-1)"
-          print *,"However, there are only ",numberOfDevices," on the node"
-          stop 1
-        endif
+        !if (myid==0) then
+        !  if (wantDebugMessage) then
+        !    print *
+        !    print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+        !  endif
+        !endif
 
         success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -163,7 +127,7 @@ module mod_check_for_gpu
           stop 1
         endif
         if (wantDebugMessage) then
-          print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
+          print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', use_gpu_id
         endif
  
         success = .true.        
@@ -231,6 +195,8 @@ module mod_check_for_gpu
         gpuAvailable = .true.
       endif
 #endif
+
+
         ! make sure that all nodes have the same number of GPU's, otherwise
         ! we run into loadbalancing trouble
 #ifdef WITH_MPI
@@ -274,7 +240,7 @@ module mod_check_for_gpu
           if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
           endif
-          
+
 #ifdef WITH_NVIDIA_GPU_VERSION
           success = cublas_create(cublasHandle)
 #endif
@@ -292,7 +258,6 @@ module mod_check_for_gpu
           endif
           
         endif
-
-      endif  
+      endif
     end function
 end module

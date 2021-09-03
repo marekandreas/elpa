@@ -221,7 +221,7 @@ last_stripe_width, kernel)
     ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
     if (ncols < 1) then
       if (wantDebug) then
-        print *, "Returning early from compute_hh_trafo"
+        !print *, "Returning early from compute_hh_trafo"
       endif
       return
     endif

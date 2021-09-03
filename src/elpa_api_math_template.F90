@@ -81,7 +81,7 @@
 #endif
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_eigenvectors_&
+    subroutine elpa_eigenvectors_all_host_arrays_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
       use, intrinsic :: iso_c_binding
@@ -95,6 +95,58 @@
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
       real(kind=C_REAL_DATATYPE) :: ev(self%na)
+
+#ifdef USE_FORTRAN2008
+      integer, optional   :: error
+#else
+      integer             :: error
+#endif
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of interface to solve double real eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d
+  !> \param   a           double real matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \param   q           double real matrix q: on output stores the eigenvectors
+#endif
+#if ELPA_IMPL_SUFFIX == f
+  !> \param   a           single real matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \param   q           single real matrix q: on output stores the eigenvectors
+#endif  
+#if ELPA_IMPL_SUFFIX == dc
+  !> \param   a           double complex matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \param   q           double complex matrix q: on output stores the eigenvectors
+#endif  
+#if ELPA_IMPL_SUFFIX == fc
+  !> \param   a           single complex matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \param   q           single complex matrix q: on output stores the eigenvectors
+#endif
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_eigenvectors_device_pointer_&
+           &ELPA_IMPL_SUFFIX&
+           &_i(self, a, ev, q, error)
+      use, intrinsic :: iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)       :: self
+
+      type(c_ptr)         :: a, q, ev
 
 #ifdef USE_FORTRAN2008
       integer, optional   :: error
@@ -129,7 +181,7 @@
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_skew_eigenvectors_&
+    subroutine elpa_skew_eigenvectors_all_host_arrays_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
       use, intrinsic :: iso_c_binding
@@ -151,6 +203,49 @@
 #endif
     end subroutine
   end interface
+
+  !> \brief abstract definition of interface to solve double real skew-symmetric eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d
+  !> \param   a           double real matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \param   q           double real matrix q: on output stores the eigenvectors
+#endif
+#if ELPA_IMPL_SUFFIX == f
+  !> \param   a           single real matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \param   q           single real matrix q: on output stores the eigenvectors
+#endif  
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_skew_eigenvectors_device_pointer_&
+           &ELPA_IMPL_SUFFIX&
+           &_i(self, a, ev, q, error)
+      use, intrinsic :: iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)       :: self
+
+      type(c_ptr)         :: a, q, ev
+
+#ifdef USE_FORTRAN2008
+      integer, optional   :: error
+#else
+      integer             :: error
+#endif
+    end subroutine
+  end interface
+  
 #endif /* HAVE_SKEWSYMMETRIC */
 
   !> \brief abstract definition of interface to solve a eigenvalue problem
@@ -183,7 +278,7 @@
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_eigenvalues_&
+    subroutine elpa_eigenvalues_all_host_arrays_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
       use, intrinsic :: iso_c_binding
@@ -196,6 +291,53 @@
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=C_REAL_DATATYPE) :: ev(self%na)
+
+#ifdef USE_FORTRAN2008
+      integer, optional   :: error
+#else
+      integer             :: error
+#endif
+    end subroutine
+  end interface       
+
+  !> \brief abstract definition of interface to solve a eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d
+  !> \param   a           double real matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == f
+  !> \param   a           single real matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == dc
+  !> \param   a           double complex matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+#endif  
+#if ELPA_IMPL_SUFFIX ==fc
+  !> \param   a           single complex matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+#endif  
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_eigenvalues_device_pointer_&
+        &ELPA_IMPL_SUFFIX&
+        &_i(self, a, ev, error)
+      use, intrinsic :: iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)       :: self
+      type(c_ptr)         :: a, ev
 
 #ifdef USE_FORTRAN2008
       integer, optional   :: error
@@ -228,7 +370,7 @@
 #endif
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_skew_eigenvalues_&
+    subroutine elpa_skew_eigenvalues_all_host_arrays_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
       use, intrinsic :: iso_c_binding
@@ -241,6 +383,45 @@
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols)
 #endif
       real(kind=C_REAL_DATATYPE) :: ev(self%na)
+
+#ifdef USE_FORTRAN2008
+      integer, optional   :: error
+#else
+      integer             :: error
+#endif
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of interface to solve a skew-symmetric eigenvalue problem
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d
+  !> \param   a           double real matrix a: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == f
+  !> \param   a           single real matrix a: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+#endif
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_skew_eigenvalues_device_pointer_&
+        &ELPA_IMPL_SUFFIX&
+        &_i(self, a, ev, error)
+      use, intrinsic :: iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)       :: self
+      type(c_ptr)         :: a, ev
 
 #ifdef USE_FORTRAN2008
       integer, optional   :: error

@@ -99,10 +99,12 @@
 #undef  gpublas_PRECISION_TRMM
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
+#undef  gpublas_PRECISION_COPY
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
+#undef  cublas_PRECISION_COPY
 #undef  mkl_offload_PRECISION_GEMM
 #undef  mkl_offload_PRECISION_GEMV
 #undef  mkl_offload_PRECISION_TRMM
@@ -176,10 +178,12 @@
 #define  gpublas_PRECISION_TRMM gpublas_DTRMM
 #define  gpublas_PRECISION_GEMV gpublas_DGEMV
 #define  gpublas_PRECISION_SYMV gpublas_DSYMV
+#define  gpublas_PRECISION_COPY gpublas_DCOPY
 #define  cublas_PRECISION_GEMM cublas_DGEMM
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
 #define  cublas_PRECISION_SYMV cublas_DSYMV
+#define  cublas_PRECISION_COPY cublas_DCOPY
 #define  mkl_offload_PRECISION_GEMM mkl_offload_DGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_DGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_DTRMM
@@ -250,10 +254,12 @@
 #define  gpublas_PRECISION_TRMM gpublas_STRMM
 #define  gpublas_PRECISION_GEMV gpublas_SGEMV
 #define  gpublas_PRECISION_SYMV gpublas_SSYMV
+#define  gpublas_PRECISION_COPY gpublas_SCOPY
 #define  cublas_PRECISION_GEMM cublas_SGEMM
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
 #define  cublas_PRECISION_SYMV cublas_SSYMV
+#define  cublas_PRECISION_COPY cublas_SCOPY
 #define  mkl_offload_PRECISION_GEMM mkl_offload_SGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_SGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_STRMM
@@ -337,10 +343,12 @@
 #undef  gpublas_PRECISION_TRMM
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
+#undef  gpublas_PRECISION_COPY
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
+#undef  cublas_PRECISION_COPY
 #undef  mkl_offload_PRECISION_GEMM 
 #undef  mkl_offload_PRECISION_GEMV 
 #undef  mkl_offload_PRECISION_TRMM 
@@ -424,10 +432,12 @@
 #define  gpublas_PRECISION_TRMM gpublas_ZTRMM
 #define  gpublas_PRECISION_GEMV gpublas_ZGEMV
 #define  gpublas_PRECISION_SYMV gpublas_ZSYMV
+#define  gpublas_PRECISION_COPY gpublas_ZCOPY
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
 #define  cublas_PRECISION_SYMV cublas_ZSYMV
+#define  cublas_PRECISION_COPY cublas_ZCOPY
 #define  mkl_offload_PRECISION_GEMM mkl_offload_ZGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_ZGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_ZTRMM
@@ -502,10 +512,12 @@
 #define  gpublas_PRECISION_TRMM gpublas_CTRMM
 #define  gpublas_PRECISION_GEMV gpublas_CGEMV
 #define  gpublas_PRECISION_SYMV gpublas_CSYMV
+#define  gpublas_PRECISION_COPY gpublas_CCOPY
 #define  cublas_PRECISION_GEMM cublas_CGEMM
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
 #define  cublas_PRECISION_SYMV cublas_CSYMV
+#define  cublas_PRECISION_COPY cublas_CCOPY
 #define  mkl_offload_PRECISION_GEMM mkl_offload_CGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_CGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_CTRMM
