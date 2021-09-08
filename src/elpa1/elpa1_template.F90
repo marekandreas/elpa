@@ -247,6 +247,20 @@ function elpa_solve_evp_&
    &PRECISION&
    &")
 
+#ifdef ACTIVATE_SKEW
+   call obj%set("isSkew", 1, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
+#else
+   call obj%set("isSkew", 0, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
+#endif
+
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
    if (error .ne. ELPA_OK) then
      print *,"Problem getting option. Aborting..."

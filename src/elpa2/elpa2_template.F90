@@ -288,6 +288,20 @@
     &PRECISION&
     &")
 
+#ifdef ACTIVATE_SKEW
+   call obj%set("isSkew", 1, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
+#else
+   call obj%set("isSkew", 0, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option. Aborting..."
+     stop
+   endif
+#endif
+
     useNonBlockingCollectivesAll = .true.
 
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)

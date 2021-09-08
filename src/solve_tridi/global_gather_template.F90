@@ -28,15 +28,16 @@ subroutine global_gather_&
   integer(kind=c_int)                        :: non_blocking_collectives_rows, error, &
                                                 non_blocking_collectives_cols
 
-  call obj%get("nbc_rows_global_gather", non_blocking_collectives_rows, error)
+  call obj%get("nbc_row_global_gather", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in global_gather. Aborting..."
+    print *, error, ELPA_OK
+    print *,"Problem getting option for non blocking collectives for rows in global_gather. Aborting..."
     stop
   endif
 
-  call obj%get("nbc_cols_global_gather", non_blocking_collectives_cols, error)
+  call obj%get("nbc_col_global_gather", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in global_gather. Aborting..."
+    print *,"Problem getting option for non blocking collectives for cols in global_gather. Aborting..."
     stop
   endif
 

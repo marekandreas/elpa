@@ -619,6 +619,9 @@ module elpa_impl
 
       error = ELPA_OK
 
+      call self%set("isSkew", 0, error)
+      if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
       ! In most cases, we actually need the parent communicator to be supplied,
       ! ELPA internally requires it when either GPU is enabled or when ELPA2 is
       ! used. It thus seems reasonable that we should ALLWAYS require it. It
