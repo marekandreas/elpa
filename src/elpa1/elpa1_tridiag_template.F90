@@ -188,12 +188,22 @@ subroutine tridiag_&
                                                                       &_&
                                                                       &MATH_DATATYPE
   logical                                       :: useIntelGPU
+  integer(kind=MPI_KIND)                        :: bcast_request1, bcast_request2, bcast_request3
+  integer(kind=MPI_KIND)                        :: allreduce_request1, allreduce_request2, allreduce_request3
+  integer(kind=MPI_KIND)                        :: allreduce_request4, allreduce_request5, allreduce_request6, &
+                                                   allreduce_request7
+  logical                                       :: useNonBlockingCollectivesCols
+  logical                                       :: useNonBlockingCollectivesRows
+
 
   if(useGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
   endif
+
+  useNonBlockingCollectivesCols = .true.
+  useNonBlockingCollectivesRows = .true.
 
   useIntelGPU = .false.
   if (useGPU) then
@@ -561,10 +571,18 @@ subroutine tridiag_&
       endif
 
 #ifdef WITH_MPI
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+      if (useNonBlockingCollectivesRows) then
+        if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
+        call mpi_iallreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
+        call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+      else
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+      endif
 #else /* WITH_MPI */
       aux2 = aux1
 #endif /* WITH_MPI */
@@ -612,9 +630,17 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
     if (wantDebug) call obj%timer%start("mpi_communication")
-    ! Broadcast the Householder Vector (and tau) along columns
-    call MPI_Bcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                   int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+    if (useNonBlockingCollectivesCols) then
+      ! Broadcast the Householder Vector (and tau) along columns
+      call mpi_ibcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                   int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
+                   bcast_request1, mpierr)
+      call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+    else
+      call mpi_bcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                   int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
+                   mpierr)
+    endif
     if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -627,7 +653,7 @@ subroutine tridiag_&
         &_&
         &PRECISION &
               (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-               1, istep-1, 1, nblk, max_threads)
+               1, istep-1, 1, nblk, max_threads, .true.)
 
     ! Calculate u = (A + VU**T + UV**T)*v
 
@@ -966,8 +992,14 @@ subroutine tridiag_&
          tmp(1:l_cols) = u_col(1:l_cols)
 #ifdef WITH_MPI
          if (wantDebug) call obj%timer%start("mpi_communication")
-         call mpi_allreduce(tmp, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+         if (useNonBlockingCollectivesRows) then
+           call mpi_iallreduce(tmp, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
+           call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+         else
+           call mpi_allreduce(tmp, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+         endif
          if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
          u_col = tmp
@@ -979,14 +1011,14 @@ subroutine tridiag_&
           &_&
           &PRECISION &
           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
+           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false.)
        else
           call elpa_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
           &PRECISION &
           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads)
+           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false.)
        endif
 
        ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
@@ -996,7 +1028,14 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
        if (wantDebug) call obj%timer%start("mpi_communication")
-       call mpi_allreduce(x, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+       if (useNonBlockingCollectivesCols) then
+         call mpi_iallreduce(x, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
+               allreduce_request3, mpierr)
+         call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
+       else
+         call mpi_allreduce(x, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
+                mpierr)
+       endif
        if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -1236,8 +1275,14 @@ subroutine tridiag_&
      endif
 #ifdef WITH_MPI
      if (wantDebug) call obj%timer%start("mpi_communication")
-     call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
-                   int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+     if (useNonBlockingCollectivesRows) then
+       call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
+                   int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
+       call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
+     else
+       call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
+                   int(mpi_comm_rows,kind=MPI_KIND),  mpierr)
+     endif
      if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -1245,8 +1290,14 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
    if (wantDebug) call obj%timer%start("mpi_communication")
-   call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
+   if (useNonBlockingCollectivesCols) then
+     call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
+                  int(mpi_comm_cols,kind=MPI_KIND), bcast_request3, mpierr)
+     call mpi_wait(bcast_request3, MPI_STATUS_IGNORE, mpierr)
+   else
+     call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
                   int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+   endif
    if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -1345,18 +1396,41 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
   if (wantDebug) call obj%timer%start("mpi_communication")
-  tmp_real = d_vec
-  call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                     int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-  tmp_real = d_vec
-  call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                     int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-  tmp_real = e_vec
-  call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                     int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-  tmp_real = e_vec
-  call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                     int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+  if (useNonBlockingCollectivesRows) then
+    tmp_real = d_vec
+    call mpi_iallreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
+    call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
+    tmp_real = e_vec
+    call mpi_iallreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
+    call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
+  else
+    tmp_real = d_vec
+    call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+    tmp_real = e_vec
+    call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+  endif
+  if (useNonBlockingCollectivesCols) then
+    tmp_real = d_vec
+    call mpi_iallreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
+    call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
+
+    tmp_real = e_vec
+    call mpi_iallreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
+    call mpi_wait(allreduce_request7, MPI_STATUS_IGNORE, mpierr)
+  else
+    tmp_real = d_vec
+    call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+    tmp_real = e_vec
+    call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+  endif
   if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 

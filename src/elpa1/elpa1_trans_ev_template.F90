@@ -149,12 +149,18 @@ subroutine trans_ev_&
                                                                       &MATH_DATATYPE
   integer(kind=ik)                              :: error
   logical                                       :: useIntelGPU
+  integer(kind=MPI_KIND)                        :: bcast_request1, allreduce_request1, allreduce_request2
+  logical                                       :: useNonBlockingCollectivesCols
+  logical                                       :: useNonBlockingCollectivesRows
 
   if(useGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
   endif
+
+  useNonBlockingCollectivesCols = .true.
+  useNonBlockingCollectivesRows = .true.
 
   useIntelGPU = .false.
   if (useGPU) then
@@ -343,9 +349,16 @@ subroutine trans_ev_&
 
 #ifdef WITH_MPI
     call obj%timer%start("mpi_communication")
-    if (nb>0) &
-    call MPI_Bcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
+    if (nb>0) then
+      if (useNonBlockingCollectivesCols) then
+        call mpi_ibcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
+                   int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
+        call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+       else
+        call mpi_bcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
                    int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+      endif
+    endif
     call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
@@ -385,8 +398,16 @@ subroutine trans_ev_&
       enddo
 #ifdef WITH_MPI
       call obj%timer%start("mpi_communication")
-      if (nc>0) call mpi_allreduce( h1, h2, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+      if (nc>0) then
+        if (useNonBlockingCollectivesRows) then
+          call mpi_iallreduce( h1, h2, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                                   int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
+          call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+        else
+          call mpi_allreduce( h1, h2, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                                    int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        endif
+      endif
       call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 
@@ -512,13 +533,24 @@ subroutine trans_ev_&
       !endif
 
       call obj%timer%start("mpi_communication")
+      if (useNonBlockingCollectivesRows) then
 #ifndef WITH_CUDA_AWARE_MPI
-      call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+        call mpi_iallreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
+#else
+        call mpi_iallreduce(mpi_in_place, tmp_mpi, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
+#endif
+        call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+      else
+#ifndef WITH_CUDA_AWARE_MPI
+        call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 #else
-      call mpi_allreduce(mpi_in_place, tmp_mpi, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+        call mpi_allreduce(mpi_in_place, tmp_mpi, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 #endif
+      endif
       call obj%timer%stop("mpi_communication")
 
       if (useGPU .and. .not.(useIntelGPU)) then

@@ -396,7 +396,14 @@ subroutine solve_tridi_&
 
       integer(kind=ik), intent(in)  :: max_threads
 
+      integer(kind=MPI_KIND)        :: bcast_request1, bcast_request2
+      logical                       :: useNonBlockingCollectivesRows
+
+
       call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
+
+      useNonBlockingCollectivesRows = .true.
+
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
       call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
@@ -498,13 +505,27 @@ subroutine solve_tridi_&
           noff = limits(np)
           nlen = limits(np+1)-noff
 #ifdef WITH_MPI
-          call obj%timer%start("mpi_communication")
-          call MPI_Bcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+          if (useNonBlockingCollectivesRows) then
+            call obj%timer%start("mpi_communication_non_blocking")
+            call mpi_ibcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+                         int(mpi_comm_rows,kind=MPI_KIND), bcast_request1, mpierr)
+            call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+
+            qmat2 = qmat1
+            call mpi_ibcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+                         int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
+            call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
+            call obj%timer%stop("mpi_communication_non_blocking")
+          else
+            call obj%timer%start("mpi_communication")
+            call mpi_bcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          qmat2 = qmat1
-          call MPI_Bcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+
+            qmat2 = qmat1
+            call mpi_bcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          call obj%timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_communication")
+          endif
 #else /* WITH_MPI */
 !          qmat2 = qmat1 ! is this correct
 #endif /* WITH_MPI */

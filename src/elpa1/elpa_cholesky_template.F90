@@ -306,7 +306,7 @@
     &PRECISION &
     (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
     tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-    n, na, nblk, nblk, nrThreads)
+    n, na, nblk, nblk, nrThreads, .false.)
 
     do i=0,(na-1)/tile_size
       lcs = max(l_colx,i*l_cols_tile+1)

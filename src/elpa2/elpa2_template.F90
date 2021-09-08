@@ -239,6 +239,8 @@
    logical                                                            :: reDistributeMatrix, doRedistributeMatrix
    integer(kind=ik)                                                   :: pinningInfo
 
+   integer(kind=MPI_KIND)                                             :: bcast_request1, bcast_request2, allreduce_request1
+   logical                                                            :: useNonBlockingCollectivesAll
 
 #if REALCASE == 1
 #undef GPU_KERNEL
@@ -285,6 +287,8 @@
     &_2stage_&
     &PRECISION&
     &")
+
+    useNonBlockingCollectivesAll = .true.
 
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
     if (error .ne. ELPA_OK) then
@@ -756,7 +760,13 @@ print *,"Device pointer + REDIST"
      simdSetAvailable(:) = 0
      call get_cpuid_set(simdSetAvailable, NUMBER_OF_INSTR)
 #ifdef WITH_MPI
-     call MPI_ALLREDUCE(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+     if (useNonBlockingCollectivesAll) then
+       call mpi_iallreduce(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, int(mpi_comm_all,kind=MPI_KIND), &
+       allreduce_request1, mpierr)
+       call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+     else
+       call mpi_allreduce(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+     endif
 #endif
 
      ! compare user chosen kernel with possible kernels
@@ -995,8 +1005,16 @@ print *,"Device pointer + REDIST"
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
-       call mpi_bcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-       call mpi_bcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       if (useNonBlockingCollectivesAll) then
+         call mpi_ibcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), bcast_request1, mpierr)
+         call mpi_ibcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), bcast_request2, mpierr)
+
+         call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+         call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
+       else
+         call mpi_bcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+         call mpi_bcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       endif
        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 

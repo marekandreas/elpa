@@ -1540,8 +1540,10 @@ module elpa_impl
 #ifdef WITH_MPI
       character(len=MPI_MAX_ERROR_STRING)           :: mpierr_string
 #endif
+       integer(kind=MPI_KIND)                       :: allreduce_request1
+       logical                                      :: useNonBlockingCollectivesAll
 
-
+       useNonBlockingCollectivesAll = .true.
 #ifdef USE_FORTRAN2008
       if (present(error)) then
         error = ELPA_OK
@@ -1599,7 +1601,14 @@ module elpa_impl
         endif
 
         sendbuf(1) = time_spent
-        call MPI_Allreduce(sendbuf, recvbuf, 1_MPI_KIND, MPI_REAL8, MPI_SUM, int(mpi_comm_parent,kind=MPI_KIND), mpierr)
+        if (useNonBlockingCollectivesAll) then
+          call mpi_iallreduce(sendbuf, recvbuf, 1_MPI_KIND, MPI_REAL8, MPI_SUM, int(mpi_comm_parent,kind=MPI_KIND), &
+                            allreduce_request1, mpierr)
+          call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+        else
+          call mpi_allreduce(sendbuf, recvbuf, 1_MPI_KIND, MPI_REAL8, MPI_SUM, int(mpi_comm_parent,kind=MPI_KIND), &
+                             mpierr)
+        endif
         if (mpierr .ne. MPI_SUCCESS) then
           call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_lengthMPI, mpierr2)
           mpi_string_length = int(mpi_string_lengthMPI,kind=c_int)

@@ -63,7 +63,7 @@ subroutine ROUTINE_NAME&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads)
+(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows)
 
 !-------------------------------------------------------------------------------
 ! This routine transposes an array of vectors which are distributed in
@@ -109,6 +109,11 @@ subroutine ROUTINE_NAME&
   integer(kind=ik)                                  :: istat
   character(200)                                    :: errorMessage
 
+  integer(kind=MPI_KIND)                            :: bcast_request1
+  logical                                           :: useNonBlockingCollectives
+  logical                                           :: useNonBlockingCollectivesRows
+  logical                                           :: useNonBlockingCollectivesCols
+  logical, intent(in)                               :: comm_s_isRows
   call obj%timer%start("&
           &ROUTINE_NAME&
   &MATH_DATATYPE&
@@ -116,6 +121,15 @@ subroutine ROUTINE_NAME&
   &PRECISION_SUFFIX &
   )
 
+  useNonBlockingCollectivesCols = .true.
+  useNonBlockingCollectivesRows = .true.
+
+  if (useNonBlockingCollectives) then
+    useNonBlockingCollectives = useNonBlockingCollectivesRows
+  else
+    useNonBlockingCollectives = useNonBlockingCollectivesCols
+  endif
+  
   call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
   call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
@@ -150,9 +164,10 @@ subroutine ROUTINE_NAME&
 #ifdef WITH_OPENMP_TRADITIONAL
   !$omp parallel &
   !$omp default(none) &
-  !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n) &
+  !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
-  !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr)
+  !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, useNonBlockingCollectives, &
+  !$omp&       MPI_STATUS_IGNORE)
 #endif
   do n = 0, lcm_s_t-1
 
@@ -188,17 +203,26 @@ subroutine ROUTINE_NAME&
 
 #ifdef WITH_MPI
         call obj%timer%start("mpi_communication")
-
-        call MPI_Bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
+        if (useNonBlockingCollectives) then
+          call mpi_ibcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
 #if REALCASE == 1
                       MPI_REAL_PRECISION,    &
 #endif
 #if COMPLEXCASE == 1
                       MPI_COMPLEX_PRECISION, &
 #endif
-                      int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND), mpierr)
-
-
+                      int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND), bcast_request1, mpierr)
+          call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+        else
+          call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
+#if REALCASE == 1
+                      MPI_REAL_PRECISION,    &
+#endif
+#if COMPLEXCASE == 1
+                      MPI_COMPLEX_PRECISION, &
+#endif
+                      int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND),  mpierr)
+        endif
         call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 

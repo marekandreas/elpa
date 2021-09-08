@@ -54,7 +54,7 @@
 
 subroutine herm_matrix_allreduce_&
 &PRECISION &
-                               (obj, n, a, lda, ldb, comm)
+                               (obj, n, a, lda, ldb, comm, isRows)
 !-------------------------------------------------------------------------------
 !  herm_matrix_allreduce: Does an mpi_allreduce for a hermitian matrix A.
 !  On entry, only the upper half of A needs to be set
@@ -69,8 +69,22 @@ subroutine herm_matrix_allreduce_&
   integer(kind=ik)               :: i, nc
   integer(kind=MPI_KIND)         :: mpierr
   complex(kind=COMPLEX_DATATYPE) :: h1(n*n), h2(n*n)
+  integer(kind=MPI_KIND)         :: allreduce_request1
+  logical                        :: useNonBlockingCollectivesCols
+  logical                        :: useNonBlockingCollectivesRows
+  logical                        :: useNonBlockingCollectives
+  logical, intent(in)            :: isRows
 
   call obj%timer%start("herm_matrix_allreduce" // PRECISION_SUFFIX)
+
+  useNonBlockingCollectivesCols = .true.
+  useNonBlockingCollectivesRows = .true.
+
+  if (isRows) then
+    useNonBlockingCollectives = useNonBlockingCollectivesRows
+  else
+    useNonBlockingCollectives = useNonBlockingCollectivesCols
+  endif
 
   nc = 0
   do i=1,n
@@ -78,10 +92,18 @@ subroutine herm_matrix_allreduce_&
     nc = nc+i
   enddo
 #ifdef WITH_MPI
-  call obj%timer%start("mpi_communication")
-  call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
+  if (useNonBlockingCollectives) then
+    call obj%timer%start("mpi_communication_non_blocking")
+    call mpi_iallreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
+                     int(comm,kind=MPI_KIND), allreduce_request1, mpierr)
+    call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+    call obj%timer%stop("mpi_communication_non_blocking")
+  else
+    call obj%timer%start("mpi_communication")
+    call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
                      int(comm,kind=MPI_KIND), mpierr)
-  call obj%timer%stop("mpi_communication")
+    call obj%timer%stop("mpi_communication")
+  endif
 
   nc = 0
   do i=1,n

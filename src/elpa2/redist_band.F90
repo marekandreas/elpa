@@ -52,7 +52,7 @@ subroutine redist_band_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab)
+(obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, ab)
 
   use elpa_abstract_impl
   use elpa2_workload
@@ -64,7 +64,7 @@ subroutine redist_band_&
 
   class(elpa_abstract_impl_t), intent(inout)       :: obj
   !logical, intent(in)                              :: useGPU
-  integer(kind=ik), intent(in)                     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
+  integer(kind=ik), intent(in)                     :: lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)  :: a_mat(lda, matrixCols)
   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(out) :: ab(:,:)
 
@@ -87,6 +87,9 @@ subroutine redist_band_&
   !                                                                     &PRECISION&
   !                                                                     &_&
   !                                                                     &MATH_DATATYPE
+  integer(kind=MPI_KIND)                           :: allreduce_request1, allreduce_request2
+  logical                                          :: useNonBlockingCollectivesAll
+
 
   call obj%timer%start("redist_band_&
   &MATH_DATATYPE&
@@ -94,10 +97,11 @@ subroutine redist_band_&
   &PRECISION_SUFFIX &
   )
 
+  useNonBlockingCollectivesAll = .true.
 
   call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(communicator,kind=MPI_KIND), my_peMPI, mpierr)
-  call mpi_comm_size(int(communicator,kind=MPI_KIND), n_pesMPI, mpierr)
+  call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
+  call mpi_comm_size(int(mpi_comm_all,kind=MPI_KIND), n_pesMPI, mpierr)
 
   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
@@ -127,13 +131,26 @@ subroutine redist_band_&
   call obj%timer%start("mpi_communication")
 #ifdef WITH_OPENMP_TRADITIONAL
   global_id_tmp(:,:) = global_id(:,:)
-  call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
-                     int(communicator,kind=MPI_KIND), mpierr)
+  if (useNonBlockingCollectivesAll) then
+    call mpi_iallreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
+                     int(mpi_comm_all,kind=MPI_KIND), allreduce_request1, mpierr)
+    call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+  else
+    call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
+                     int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  endif
+
   deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
   check_deallocate("redist_band: global_id_tmp", istat, errorMessage)
 #else
-  call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
-                     int(communicator,kind=MPI_KIND), mpierr)
+  if (useNonBlockingCollectivesAll) then
+    call mpi_iallreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
+                     int(mpi_comm_all,kind=MPI_KIND), allreduce_request2, mpierr)
+    call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+  else
+    call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
+                     int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  endif
 #endif
   call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
@@ -249,7 +266,7 @@ subroutine redist_band_&
 
   call MPI_Alltoallv(sbuf, int(ncnt_s,kind=MPI_KIND), int(nstart_s,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                      rbuf, int(ncnt_r,kind=MPI_KIND), int(nstart_r,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                     int(communicator,kind=MPI_KIND), mpierr)
+                     int(mpi_comm_all,kind=MPI_KIND), mpierr)
 
   call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */

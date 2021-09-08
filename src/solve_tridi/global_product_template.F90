@@ -20,6 +20,12 @@ subroutine global_product_&
 
   real(kind=REAL_DATATYPE)                   :: tmp(n)
   integer(kind=ik)                           :: np
+  integer(kind=MPI_KIND)                     :: allreduce_request1, allreduce_request2
+  logical                                    :: useNonBlockingCollectivesCols
+  logical                                    :: useNonBlockingCollectivesRows
+
+  useNonBlockingCollectivesCols = .true.
+  useNonBlockingCollectivesRows = .true.
 
 #ifdef WITH_MPI
   call obj%timer%start("mpi_communication")
@@ -39,11 +45,19 @@ subroutine global_product_&
 
   ! Do an mpi_allreduce over processor rows
 #ifdef WITH_MPI
-  call obj%timer%start("mpi_communication")
 
-
-  call mpi_allreduce(z, tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_PROD, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-  call obj%timer%stop("mpi_communication")
+  if (useNonBlockingCollectivesRows) then
+    call obj%timer%start("mpi_communication_non_blocking")
+    call mpi_iallreduce(z, tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_PROD, int(mpi_comm_rows,kind=MPI_KIND), &
+           allreduce_request1, mpierr)
+    call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+    call obj%timer%stop("mpi_communication_non_blocking")
+  else
+    call obj%timer%start("mpi_communication")
+    call mpi_allreduce(z, tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_PROD, int(mpi_comm_rows,kind=MPI_KIND), &
+           mpierr)
+    call obj%timer%stop("mpi_communication")
+  endif
 #else /* WITH_MPI */
   tmp = z
 #endif /* WITH_MPI */
@@ -57,9 +71,18 @@ subroutine global_product_&
   ! If all processor columns are involved, we can use mpi_allreduce
   if (npc_n==np_cols) then
 #ifdef WITH_MPI
-    call obj%timer%start("mpi_communication")
-    call mpi_allreduce(tmp, z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_PROD, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-    call obj%timer%stop("mpi_communication")
+    if (useNonBlockingCollectivesCols) then
+      call obj%timer%start("mpi_communication_non_blocking")
+      call mpi_iallreduce(tmp, z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_PROD, int(mpi_comm_cols,kind=MPI_KIND), &
+            allreduce_request2, mpierr)
+      call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+      call obj%timer%stop("mpi_communication_non_blocking")
+    else
+      call obj%timer%start("mpi_communication")
+      call mpi_allreduce(tmp, z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_PROD, int(mpi_comm_cols,kind=MPI_KIND), &
+             mpierr)
+      call obj%timer%stop("mpi_communication")
+    endif
 #else /* WITH_MPI */
     z = tmp
 #endif /* WITH_MPI */

@@ -54,7 +54,7 @@
 
 subroutine ssymm_matrix_allreduce_&
 &PRECISION &
-                    (obj, n, a, lda, ldb, comm)
+                    (obj, n, a, lda, ldb, comm, isRows)
 !-------------------------------------------------------------------------------
 !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
 !  On entry, only the upper half of A needs to be set
@@ -72,8 +72,22 @@ subroutine ssymm_matrix_allreduce_&
 #endif
   integer(kind=ik)             :: i, nc, mpierr
   real(kind=REAL_DATATYPE)     :: h1(n*n), h2(n*n)
+  logical                      :: useNonBlockingCollective
+  logical                      :: useNonBlockingCollectiveRows
+  logical                      :: useNonBlockingCollectiveCols
+  logical, intent(in)          :: isRows
+  integer(kind=MPI_KIND)       :: allreduce_request1
 
   call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
+
+  useNonBlockingCollectivesCols = .true.
+  useNonBlockingCollectivesRows = .true.
+
+  if (isRows) then
+    useNonBlockingCollectives = useNonBlockingCollectivesRows
+  else
+    useNonBlockingCollectives = useNonBlockingCollectivesCols
+  endif
 
   nc = 0
   do i=1,n
@@ -83,7 +97,12 @@ subroutine ssymm_matrix_allreduce_&
 
 #ifdef WITH_MPI
   call obj%timer%start("mpi_communication")
-  call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
+  if (useNonBlockingCollective) then
+    call mpi_iallreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, allreduce_request, mpierr)
+    call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+  else
+    call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
+  endif
   call obj%timer%stop("mpi_communication")
   nc = 0
   do i=1,n
