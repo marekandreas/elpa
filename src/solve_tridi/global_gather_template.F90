@@ -25,21 +25,32 @@ subroutine global_gather_&
   integer(kind=MPI_KIND)                     :: allreduce_request1, allreduce_request2
   logical                                    :: useNonBlockingCollectivesCols
   logical                                    :: useNonBlockingCollectivesRows
-  integer(kind=c_int)                        :: non_blocking_collectives, error
+  integer(kind=c_int)                        :: non_blocking_collectives_rows, error, &
+                                                non_blocking_collectives_cols
 
-   call obj%get("nbc_global_gather", non_blocking_collectives, error)
- if (error .ne. ELPA_OK) then
-   print *,"Problem setting option for non blocking collectives in global_gather. Aborting..."
-   stop
- endif
+  call obj%get("nbc_rows_global_gather", non_blocking_collectives_rows, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for rows in global_gather. Aborting..."
+    stop
+  endif
 
- if (non_blocking_collectives .eq. 1) then
-   useNonBlockingCollectivesRows = .true.
-   useNonBlockingCollectivesCols = .true.
- else
-   useNonBlockingCollectivesRows = .false.
-   useNonBlockingCollectivesCols = .false.
- endif
+  call obj%get("nbc_cols_global_gather", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for cols in global_gather. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives_rows .eq. 1) then
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+  endif
 
 #ifdef WITH_MPI
   call obj%timer%start("mpi_communication")

@@ -74,22 +74,32 @@ subroutine herm_matrix_allreduce_&
   logical                        :: useNonBlockingCollectivesRows
   logical                        :: useNonBlockingCollectives
   logical, intent(in)            :: isRows
-  integer(kind=c_int)            :: non_blocking_collectives, error
+  integer(kind=c_int)            :: non_blocking_collectives_rows, error, &
+                                    non_blocking_collectives_cols
 
   call obj%timer%start("herm_matrix_allreduce" // PRECISION_SUFFIX)
 
-  call obj%get("nbc_herm_allreduce", non_blocking_collectives, error)
+  call obj%get("nbc_row_herm_allreduce", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives in elpa_herm_allreduce. Aborting..."
+    print *,"Problem setting option for non blocking collectives for rows in elpa_herm_allreduce. Aborting..."
+    stop
+  endif
+  call obj%get("nbc_col_herm_allreduce", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for cols in elpa_herm_allreduce. Aborting..."
     stop
   endif
 
-  if (non_blocking_collectives .eq. 1) then
-    useNonBlockingCollectivesCols = .true.
+  if (non_blocking_collectives_rows .eq. 1) then
     useNonBlockingCollectivesRows = .true.
   else
-    useNonBlockingCollectivesCols = .false.
     useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
   endif
 
   if (isRows) then

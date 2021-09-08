@@ -194,7 +194,7 @@ subroutine tridiag_&
                                                    allreduce_request7
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
-  integer(kind=c_int)                           :: non_blocking_collectives
+  integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
 
 
   if(useGPU) then
@@ -216,18 +216,28 @@ subroutine tridiag_&
     endif
   endif
 
-  call obj%get("nbc_elpa1_tridiag", non_blocking_collectives, error)
+  call obj%get("nbc_row_elpa1_tridiag", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives in elpa1_tridiag. Aborting..."
+    print *,"Problem setting option for non blocking collectives for rows in elpa1_tridiag. Aborting..."
     stop
   endif
 
-  if (non_blocking_collectives .eq. 1) then
-    useNonBlockingCollectivesCols = .true.
+  call obj%get("nbc_col_elpa1_tridiag", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for cols in elpa1_tridiag. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives_rows .eq. 1) then
     useNonBlockingCollectivesRows = .true.
   else
-    useNonBlockingCollectivesCols = .false.
     useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
   endif
 
 

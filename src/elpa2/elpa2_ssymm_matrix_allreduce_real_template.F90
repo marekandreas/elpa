@@ -77,22 +77,33 @@ subroutine ssymm_matrix_allreduce_&
   logical                      :: useNonBlockingCollectiveCols
   logical, intent(in)          :: isRows
   integer(kind=MPI_KIND)       :: allreduce_request1
-  integer(kind=c_int)          :: non_blocking_collectives, error
+  integer(kind=c_int)          :: non_blocking_collectives_rows, error, &
+                                  non_blocking_collectives_cols
 
   call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
-  call obj%get("nbc_ssym_allreduce", non_blocking_collectives, error)
+  call obj%get("nbc_row_ssym_allreduce", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives in elpa_ssym_allreduce. Aborting..."
+    print *,"Problem setting option for non blocking collectives for rows in elpa_ssym_allreduce. Aborting..."
     stop
   endif
 
-  if (non_blocking_collectives .eq. 1) then
-    useNonBlockingCollectivesCols = .true.
+  call obj%get("nbc_col_ssym_allreduce", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for cols in elpa_ssym_allreduce. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives_rows .eq. 1) then
     useNonBlockingCollectivesRows = .true.
   else
-    useNonBlockingCollectivesCols = .false.
     useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
   endif
 
   if (isRows) then

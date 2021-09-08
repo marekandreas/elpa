@@ -114,7 +114,8 @@ subroutine ROUTINE_NAME&
   logical                                           :: useNonBlockingCollectivesRows
   logical                                           :: useNonBlockingCollectivesCols
   logical, intent(in)                               :: comm_s_isRows
-  integer(kind=c_int)                               :: non_blocking_collectives, error
+  integer(kind=c_int)                               :: non_blocking_collectives_rows, error, &
+                                                       non_blocking_collectives_cols
 
   call obj%timer%start("&
           &ROUTINE_NAME&
@@ -123,18 +124,28 @@ subroutine ROUTINE_NAME&
   &PRECISION_SUFFIX &
   )
 
-  call obj%get("nbc_transpose_vectors", non_blocking_collectives, error)
+  call obj%get("nbc_row_transpose_vectors", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives in transpose_vectors. Aborting..."
+    print *,"Problem setting option for non blocking collectives for_rows in transpose_vectors. Aborting..."
     stop
   endif
 
-  if (non_blocking_collectives .eq. 1) then
-    useNonBlockingCollectivesCols = .true.
+  call obj%get("nbc_col_transpose_vectors", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for_cols in transpose_vectors. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives_rows .eq. 1) then
     useNonBlockingCollectivesRows = .true.
   else
-    useNonBlockingCollectivesCols = .false.
     useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
   endif
 
   if (comm_s_isRows) then

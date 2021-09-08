@@ -167,8 +167,7 @@ subroutine tridiag_band_&
     endif
   endif
 
-
-  call obj%get("nbc_elpa2_band_to_tridi", non_blocking_collectives, error)
+  call obj%get("nbc_all_elpa2_band_to_tridi", non_blocking_collectives, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem setting option for non blocking collectives in elpa2_band_to_tridi. Aborting..."
     stop

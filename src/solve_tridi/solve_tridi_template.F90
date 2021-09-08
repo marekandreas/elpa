@@ -402,9 +402,9 @@ subroutine solve_tridi_&
 
       call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
 
-      call obj%get("nbc_solve_tridi", non_blocking_collectives, error)
+      call obj%get("nbc_row_solve_tridi", non_blocking_collectives, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem setting option for non blocking collectives in solve_tridi. Aborting..."
+        print *,"Problem setting option for non blocking collectives for rows in solve_tridi. Aborting..."
         stop
       endif
 

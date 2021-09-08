@@ -152,7 +152,7 @@ subroutine trans_ev_&
   integer(kind=MPI_KIND)                        :: bcast_request1, allreduce_request1, allreduce_request2
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
-  integer(kind=c_int)                           :: non_blocking_collectives
+  integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -166,18 +166,28 @@ subroutine trans_ev_&
   &PRECISION_SUFFIX //&
   gpuString)
 
-  call obj%get("nbc_elpa1_tridi_to_full", non_blocking_collectives, error)
+  call obj%get("nbc_row_elpa1_tridi_to_full", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives in elpa1_tridi_to_full. Aborting..."
+    print *,"Problem setting option for non blocking collectives for rows in elpa1_tridi_to_full. Aborting..."
     stop
   endif
 
-  if (non_blocking_collectives .eq. 1) then
-    useNonBlockingCollectivesCols = .true.
+  call obj%get("nbc_col_elpa1_tridi_to_full", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for cols in elpa1_tridi_to_full. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives_rows .eq. 1) then
     useNonBlockingCollectivesRows = .true.
   else
-    useNonBlockingCollectivesCols = .false.
     useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
   endif
 
   useIntelGPU = .false.

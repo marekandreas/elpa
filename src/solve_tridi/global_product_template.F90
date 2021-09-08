@@ -23,19 +23,30 @@ subroutine global_product_&
   integer(kind=MPI_KIND)                     :: allreduce_request1, allreduce_request2
   logical                                    :: useNonBlockingCollectivesCols
   logical                                    :: useNonBlockingCollectivesRows
-  integer(kind=c_int)                        :: non_blocking_collectives, error
+  integer(kind=c_int)                        :: non_blocking_collectives_rows, error, &
+                                                non_blocking_collectives_cols
 
- call obj%get("nbc_global_product", non_blocking_collectives, error)
+ call obj%get("nbc_row_global_product", non_blocking_collectives_rows, error)
  if (error .ne. ELPA_OK) then
-   print *,"Problem setting option for non blocking collectives in global_product. Aborting..."
+   print *,"Problem setting option for non blocking collectives for rows in global_product. Aborting..."
    stop
  endif
 
- if (non_blocking_collectives .eq. 1) then
+ call obj%get("nbc_col_global_product", non_blocking_collectives_cols, error)
+ if (error .ne. ELPA_OK) then
+   print *,"Problem setting option for non blocking collectives for cols in global_product. Aborting..."
+   stop
+ endif
+
+ if (non_blocking_collectives_rows .eq. 1) then
    useNonBlockingCollectivesRows = .true.
-   useNonBlockingCollectivesCols = .true.
  else
    useNonBlockingCollectivesRows = .false.
+ endif
+
+ if (non_blocking_collectives_cols .eq. 1) then
+   useNonBlockingCollectivesCols = .true.
+ else
    useNonBlockingCollectivesCols = .false.
  endif
 
