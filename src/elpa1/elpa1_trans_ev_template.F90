@@ -152,6 +152,7 @@ subroutine trans_ev_&
   integer(kind=MPI_KIND)                        :: bcast_request1, allreduce_request1, allreduce_request2
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
+  integer(kind=c_int)                           :: non_blocking_collectives
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -159,8 +160,25 @@ subroutine trans_ev_&
     gpuString = ""
   endif
 
-  useNonBlockingCollectivesCols = .true.
-  useNonBlockingCollectivesRows = .true.
+  call obj%timer%start("trans_ev_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX //&
+  gpuString)
+
+  call obj%get("nbc_elpa1_tridi_to_full", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in elpa1_tridi_to_full. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+    useNonBlockingCollectivesRows = .false.
+  endif
 
   useIntelGPU = .false.
   if (useGPU) then
@@ -169,11 +187,6 @@ subroutine trans_ev_&
     endif
   endif
 
-  call obj%timer%start("trans_ev_&
-  &MATH_DATATYPE&
-  &" // &
-  &PRECISION_SUFFIX //&
-  gpuString)
 
   call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)

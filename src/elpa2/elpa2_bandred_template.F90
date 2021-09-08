@@ -211,20 +211,12 @@ max_threads, isSkewsymmetric)
 
   logical                                     :: useNonBlockingCollectivesCols
   logical                                     :: useNonBlockingCollectivesRows
+  integer(kind=c_int)                         :: non_blocking_collectives
+
   if(useGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
-  endif
-
-  useNonBlockingCollectivesCols = .true.
-  useNonBlockingCollectivesRows = .true.
-
-  useIntelGPU = .false.
-  if (useGPU) then
-    if (gpu_vendor() == INTEL_GPU) then
-      useIntelGPU = .true.
-    endif
   endif
 
   call obj%timer%start("bandred_&
@@ -232,6 +224,27 @@ max_threads, isSkewsymmetric)
   &" // &
   PRECISION_SUFFIX // &
   gpuString )
+
+  call obj%get("nbc_elpa2_bandred", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in elpa2_bandred. Aborting..."
+    stop
+  endif
+ 
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+    useNonBlockingCollectivesRows = .false.
+  endif
+
+  useIntelGPU = .false.
+  if (useGPU) then
+    if (gpu_vendor() == INTEL_GPU) then
+      useIntelGPU = .true.
+    endif
+  endif
 
   useGPU_reduction_lower_block_to_tridiagonal = .false.
 
@@ -774,7 +787,10 @@ max_threads, isSkewsymmetric)
         !$omp  default(none) &
         !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
         !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj, &
-        !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols, MPI_STATUS_IGNORE) &
+#ifdef WITH_MPI
+        !$omp&  MPI_STATUS_IGNORE, &
+#endif
+        !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols) &
         !$omp private(mynlc, j, lcx, ii, pp, mpierr, allreduce_request2)        
         mynlc = 0 ! number of local columns
 

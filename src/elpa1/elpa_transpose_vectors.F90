@@ -114,6 +114,8 @@ subroutine ROUTINE_NAME&
   logical                                           :: useNonBlockingCollectivesRows
   logical                                           :: useNonBlockingCollectivesCols
   logical, intent(in)                               :: comm_s_isRows
+  integer(kind=c_int)                               :: non_blocking_collectives, error
+
   call obj%timer%start("&
           &ROUTINE_NAME&
   &MATH_DATATYPE&
@@ -121,15 +123,26 @@ subroutine ROUTINE_NAME&
   &PRECISION_SUFFIX &
   )
 
-  useNonBlockingCollectivesCols = .true.
-  useNonBlockingCollectivesRows = .true.
+  call obj%get("nbc_transpose_vectors", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in transpose_vectors. Aborting..."
+    stop
+  endif
 
-  if (useNonBlockingCollectives) then
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+    useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (comm_s_isRows) then
     useNonBlockingCollectives = useNonBlockingCollectivesRows
   else
     useNonBlockingCollectives = useNonBlockingCollectivesCols
   endif
-  
+
   call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
   call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
@@ -166,8 +179,11 @@ subroutine ROUTINE_NAME&
   !$omp default(none) &
   !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
-  !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, useNonBlockingCollectives, &
-  !$omp&       MPI_STATUS_IGNORE)
+  !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
+#ifdef WITH_MPI
+  !$omp&       MPI_STATUS_IGNORE, &
+#endif
+  !$omp&       useNonBlockingCollectives)
 #endif
   do n = 0, lcm_s_t-1
 

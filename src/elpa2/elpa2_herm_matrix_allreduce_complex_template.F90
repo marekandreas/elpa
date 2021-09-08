@@ -74,11 +74,29 @@ subroutine herm_matrix_allreduce_&
   logical                        :: useNonBlockingCollectivesRows
   logical                        :: useNonBlockingCollectives
   logical, intent(in)            :: isRows
+  integer(kind=c_int)            :: non_blocking_collectives, error
 
   call obj%timer%start("herm_matrix_allreduce" // PRECISION_SUFFIX)
 
-  useNonBlockingCollectivesCols = .true.
-  useNonBlockingCollectivesRows = .true.
+  call obj%get("nbc_herm_allreduce", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in elpa_herm_allreduce. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+    useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (isRows) then
+    useNonBlockingCollectives = useNonBlockingCollectivesRows
+  else
+    useNonBlockingCollectives = useNonBlockingCollectivesCols
+  endif
 
   if (isRows) then
     useNonBlockingCollectives = useNonBlockingCollectivesRows

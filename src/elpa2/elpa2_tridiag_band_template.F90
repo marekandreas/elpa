@@ -146,13 +146,19 @@ subroutine tridiag_band_&
 
    integer(kind=MPI_KIND)                      :: allreduce_request1, allreduce_request2
    logical                                     :: useNonBlockingCollectivesAll
+   integer(kind=c_int)                         :: non_blocking_collectives, error
+
   if(useGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
   endif
 
-  useNonBlockingCollectivesAll = .true.
+  call obj%timer%start("tridiag_band_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX //&
+  gpuString)
 
   useIntelGPU = .false.
   if (useGPU) then
@@ -161,11 +167,18 @@ subroutine tridiag_band_&
     endif
   endif
 
-  call obj%timer%start("tridiag_band_&
-  &MATH_DATATYPE&
-  &" // &
-  &PRECISION_SUFFIX //&
-  gpuString)
+
+  call obj%get("nbc_elpa2_band_to_tridi", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in elpa2_band_to_tridi. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesAll = .true.
+  else
+    useNonBlockingCollectivesAll = .false.
+  endif
 
   if (wantDebug) call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND) ,my_peMPI ,mpierr)

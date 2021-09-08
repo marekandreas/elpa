@@ -25,9 +25,22 @@ subroutine global_gather_&
   integer(kind=MPI_KIND)                     :: allreduce_request1, allreduce_request2
   logical                                    :: useNonBlockingCollectivesCols
   logical                                    :: useNonBlockingCollectivesRows
+  integer(kind=c_int)                        :: non_blocking_collectives, error
 
-  useNonBlockingCollectivesCols = .true. 
-  useNonBlockingCollectivesRows = .true. 
+   call obj%get("nbc_global_gather", non_blocking_collectives, error)
+ if (error .ne. ELPA_OK) then
+   print *,"Problem setting option for non blocking collectives in global_gather. Aborting..."
+   stop
+ endif
+
+ if (non_blocking_collectives .eq. 1) then
+   useNonBlockingCollectivesRows = .true.
+   useNonBlockingCollectivesCols = .true.
+ else
+   useNonBlockingCollectivesRows = .false.
+   useNonBlockingCollectivesCols = .false.
+ endif
+
 #ifdef WITH_MPI
   call obj%timer%start("mpi_communication")
   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)

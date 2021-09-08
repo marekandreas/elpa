@@ -166,6 +166,7 @@ subroutine trans_ev_band_to_full_&
   integer(kind=MPI_KIND)                 :: bcast_request1, allreduce_request1, allreduce_request2
   logical                                :: useNonBlockingCollectivesCols
   logical                                :: useNonBlockingCollectivesRows
+  integer(kind=c_int)                    :: non_blocking_collectives
 
 
   if(useGPU) then
@@ -174,8 +175,11 @@ subroutine trans_ev_band_to_full_&
     gpuString = ""
   endif
 
-  useNonBlockingCollectivesCols = .true.
-  useNonBlockingCollectivesRows = .true.
+  call obj%timer%start("trans_ev_band_to_full_&
+  &MATH_DATATYPE&
+  &" // &
+  &PRECISION_SUFFIX //&
+  gpuString)
 
   useIntelGPU = .false.
   if (useGPU) then
@@ -184,12 +188,20 @@ subroutine trans_ev_band_to_full_&
     endif
   endif
 
+  call obj%get("nbc_elpa2_band_to_full", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in elpa2_band_to_full. Aborting..."
+    stop
+  endif
 
-  call obj%timer%start("trans_ev_band_to_full_&
-  &MATH_DATATYPE&
-  &" // &
-  &PRECISION_SUFFIX //&
-  gpuString)
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+    useNonBlockingCollectivesRows = .false.
+  endif
+
 
 #ifdef BAND_TO_FULL_BLOCKING
   call obj%get("blocking_in_band_to_full",blocking_factor,error)

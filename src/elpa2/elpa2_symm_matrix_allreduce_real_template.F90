@@ -90,14 +90,33 @@ subroutine symm_matrix_allreduce_&
   logical                      :: useNonBlockingCollectivesCols
   logical                      :: useNonBlockingCollectivesRows
   logical, intent(in)          :: isRows
+  integer(kind=c_int)          :: non_blocking_collectives, error
 
   call obj%timer%start("&
           &ROUTINE_NAME&
           &" // &
           &PRECISION_SUFFIX&
           )
-  useNonBlockingCollectivesCols = .true.
-  useNonBlockingCollectivesRows = .true.
+
+  call obj%get("nbc_sym_allreduce", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in elpa_sym_allreduce. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+    useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (isRows) then
+    useNonBlockingCollectives = useNonBlockingCollectivesRows
+  else
+    useNonBlockingCollectives = useNonBlockingCollectivesCols
+  endif
 
   if (isRows) then
     useNonBlockingCollectives = useNonBlockingCollectivesRows

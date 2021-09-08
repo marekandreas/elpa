@@ -194,6 +194,7 @@ subroutine tridiag_&
                                                    allreduce_request7
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
+  integer(kind=c_int)                           :: non_blocking_collectives
 
 
   if(useGPU) then
@@ -202,8 +203,11 @@ subroutine tridiag_&
     gpuString = ""
   endif
 
-  useNonBlockingCollectivesCols = .true.
-  useNonBlockingCollectivesRows = .true.
+  call obj%timer%start("tridiag_&
+  &MATH_DATATYPE&
+  &" // &
+  PRECISION_SUFFIX // &
+  gpuString )
 
   useIntelGPU = .false.
   if (useGPU) then
@@ -212,11 +216,20 @@ subroutine tridiag_&
     endif
   endif
 
-  call obj%timer%start("tridiag_&
-  &MATH_DATATYPE&
-  &" // &
-  PRECISION_SUFFIX // &
-  gpuString )
+  call obj%get("nbc_elpa1_tridiag", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in elpa1_tridiag. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+    useNonBlockingCollectivesRows = .false.
+  endif
+
 
   if (wantDebug) call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)

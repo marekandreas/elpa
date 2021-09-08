@@ -398,11 +398,21 @@ subroutine solve_tridi_&
 
       integer(kind=MPI_KIND)        :: bcast_request1, bcast_request2
       logical                       :: useNonBlockingCollectivesRows
-
+      integer(kind=c_int)           :: non_blocking_collectives, error
 
       call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
 
-      useNonBlockingCollectivesRows = .true.
+      call obj%get("nbc_solve_tridi", non_blocking_collectives, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem setting option for non blocking collectives in solve_tridi. Aborting..."
+        stop
+      endif
+
+      if (non_blocking_collectives .eq. 1) then
+        useNonBlockingCollectivesRows = .true.
+      else
+        useNonBlockingCollectivesRows = .false.
+      endif
 
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)

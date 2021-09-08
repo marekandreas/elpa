@@ -144,6 +144,7 @@ static int nev_is_valid(elpa_index_t index, int n, int new_value);
 static int bw_is_valid(elpa_index_t index, int n, int new_value);
 static int output_build_config_is_valid(elpa_index_t index, int n, int new_value);
 static int gpu_is_valid(elpa_index_t index, int n, int new_value);
+static int nbc_is_valid(elpa_index_t index, int n, int new_value);
 static int verbose_is_valid(elpa_index_t index, int n, int new_value);
 
 static int is_positive(elpa_index_t index, int n, int new_value);
@@ -243,6 +244,34 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, gpu_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
+        INT_ENTRY("nbc_global_gather", "Use non blocking collectives in global_gather", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_global_product", "Use non blocking collectives in global_product", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_solve_tridi", "Use non blocking collectives in solve_tridi", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_transpose_vectors", "Use non blocking collectives in transpose_vectors", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_herm_allreduce", "Use non blocking collectives in herm_allreduce", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_sym_allreduce", "Use non blocking collectives in sym_allreduce", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_ssym_allreduce", "Use non blocking collectives in ssym_allreduce", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_elpa1_tridiag", "Use non blocking collectives in elpa1_tridiag", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_elpa1_tridi_to_full", "Use non blocking collectives in elpa1_tridi_to_full", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_elpa2_bandred", "Use non blocking collectives in elpa2_bandred", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_elpa2_band_to_tridi", "Use non blocking collectives in elpa2_band_to_tridi", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_elpa2_tridi_to_band", "Use non blocking collectives in elpa2_tridi_to_band", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_elpa2_band_to_full", "Use non blocking collectives in elpa2_band_to_full", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nbc_elpa2_redist_band", "Use non blocking collectives in elpa2_redist_band", 0, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
+                        cardinality_bool, enumerate_identity, nbc_is_valid, NULL, PRINT_YES),
         INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
         INT_ENTRY("gpu_solve_tridi", "Use GPU acceleration for ELPA solve tridi", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_DOMAIN_ANY, \
@@ -912,6 +941,10 @@ static int output_build_config_is_valid(elpa_index_t index, int n, int new_value
 }
 
 static int gpu_is_valid(elpa_index_t index, int n, int new_value) {
+        return new_value == 0 || new_value == 1;
+}
+
+static int nbc_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value == 0 || new_value == 1;
 }
 
